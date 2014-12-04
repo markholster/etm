@@ -1,0 +1,40 @@
+create table telemetryevent ( 
+    id uuid primary key, 
+    application text, 
+    content text, 
+    correlationId uuid, 
+    endpoint text, 
+    eventName text,
+    eventTime timestamp, 
+    sourceId text, 
+    sourceCorrelationId text, 
+    transactionId uuid, 
+    transactionName text,
+    responsetime bigint 
+);
+
+create table correlation (
+    sourceId text primary key,
+    id uuid
+);
+
+create table application_counter (
+    application text,
+    timeunit timestamp,
+    count counter,
+    primary key (application, timeunit)
+);
+
+create table eventname_counter (
+    eventName text,
+    timeunit timestamp,
+    count counter,
+    primary key (eventName, timeunit)
+);
+
+create table transactionname_counter (
+    transactionName text,
+    timeunit timestamp,
+    count counter,
+    primary key (transactionName, timeunit)
+);
