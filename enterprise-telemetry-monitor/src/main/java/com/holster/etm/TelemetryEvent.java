@@ -3,6 +3,8 @@ package com.holster.etm;
 import java.util.Date;
 import java.util.UUID;
 
+import com.datastax.driver.core.utils.UUIDs;
+
 
 public class TelemetryEvent {
 
@@ -20,6 +22,11 @@ public class TelemetryEvent {
 	 * The name of the event.
 	 */
 	public String eventName;
+	
+	/**
+	 * The type of event.
+	 */
+	public TelemetryEventType eventType;
 	
 	/**
 	 * The ID of the transaction this event belongs to. Transactions are groups of events that belong to a single unit of work.
@@ -61,18 +68,14 @@ public class TelemetryEvent {
 	 */
 	public String sourceCorrelationId;
 	
-	/**
-	 * The source object of this event, for example a <code>javax.jms.Message</code> instance.;
-	 */
-	public Object source;
-	
 	// Processing state.
 	public boolean ignore;
 	
 	
 	public void initialize() {
-		this.id = UUID.randomUUID();
+		this.id = UUIDs.timeBased();
 		this.eventName = null;
+		this.eventType = null;
 		this.correlationId = null;
 		this.transactionId = null;
 		this.transactionName = null;
@@ -82,7 +85,6 @@ public class TelemetryEvent {
 		this.eventTime.setTime(0);
 		this.sourceId = null;
 		this.sourceCorrelationId = null;
-		this.source = null;
 		this.ignore = false;
 	}
 
@@ -90,6 +92,7 @@ public class TelemetryEvent {
 	public void initialize(TelemetryEvent copy) {
 	    initialize();
 	    this.eventName = copy.eventName;
+	    this.eventType = copy.eventType;
 	    this.correlationId = copy.correlationId;
 	    this.transactionId = copy.transactionId;
 	    this.transactionName = copy.transactionName;
@@ -99,6 +102,5 @@ public class TelemetryEvent {
 	    this.eventTime.setTime(copy.eventTime.getTime());
 	    this.sourceId = copy.sourceId;
 	    this.sourceCorrelationId = copy.sourceCorrelationId;
-	    this.source = copy.source;
     }
 }

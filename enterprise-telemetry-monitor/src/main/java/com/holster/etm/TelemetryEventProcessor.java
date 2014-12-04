@@ -1,6 +1,7 @@
 package com.holster.etm;
 
 import java.nio.channels.IllegalSelectorException;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 import javax.jms.Message;
@@ -35,10 +36,10 @@ public class TelemetryEventProcessor {
 			indexingEventHandlers[i] = new IndexingEventHandler(server, i, indexingHandlerCount);
 		}
 		
-		final PreparedStatement insertStatement = PersistingEventHandler.createInsertStatement(session);
+		final Map<String, PreparedStatement> statements = PersistingEventHandler.createPreparedStatements(session);
 		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount];
 		for (int i=0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(session, insertStatement, i, persistingHandlerCount);
+			persistingEventHandlers[i] = new PersistingEventHandler(session, statements, i, persistingHandlerCount);
 		}
 		
 		this.disruptor.handleEventsWith(indexingEventHandlers);
@@ -63,7 +64,6 @@ public class TelemetryEventProcessor {
 		try {
 			TelemetryEvent telemetryEvent = this.ringBuffer.get(sequence);
 			telemetryEvent.initialize();
-			telemetryEvent.source = message;
 			telemetryEvent.sourceId = message.getStringProperty("ETM_SourceID");
 			if (telemetryEvent.sourceId == null) {
 				telemetryEvent.sourceId = message.getJMSMessageID();
@@ -77,12 +77,20 @@ public class TelemetryEventProcessor {
 			telemetryEvent.eventName = message.getStringProperty("ETM_EventName");
 			telemetryEvent.eventTime.setTime(message.getJMSTimestamp());
 			telemetryEvent.transactionName = message.getStringProperty("ETM_TransactionName");
+			int ibmMsgType = message.getIntProperty("JMS_IBM_MsgType");
+			if (ibmMsgType == 1) {
+				telemetryEvent.eventType = TelemetryEventType.MESSAGE_REQUEST;
+			} else if (ibmMsgType == 2) {
+				telemetryEvent.eventType = TelemetryEventType.MESSAGE_RESPONSE;
+			} else if (ibmMsgType == 8) {
+				telemetryEvent.eventType = TelemetryEventType.MESSAGE_DATAGRAM;
+			}
 			if (message instanceof TextMessage) {
 				TextMessage textMessage = (TextMessage) message;
 				telemetryEvent.content = textMessage.getText();
 			}
 		} catch (Throwable t) {
-			// TODO logging.
+			t.printStackTrace();
 		} finally {
 			this.ringBuffer.publish(sequence);
 			
@@ -97,7 +105,6 @@ public class TelemetryEventProcessor {
 		try {
 			TelemetryEvent target = this.ringBuffer.get(sequence);
 			target.initialize(telemetryEvent);
-			target.source = telemetryEvent;
 		} finally {
 			this.ringBuffer.publish(sequence);
 		}		
