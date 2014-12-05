@@ -41,22 +41,21 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_INSERT_SOURCE_ID, statement);
 
-		statement = session.prepare("update " + keySpace + ".application_counter set counter = counter + 1 where application = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".application_counter set count = count + 1, messageRequestCount = messageRequestCount + (?), messageResponseCount = messageResponseCount + (?), messageDatagramCount = messageDatagramCount + (?) where application = ? and timestamp = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_APPLICATION_COUNTER, statement);
 
-		statement = session.prepare("update " + keySpace + ".eventname_counter set counter = counter + 1 where eventName = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".eventname_counter set count = count + 1, messageRequestCount = messageRequestCount + (?), messageResponseCount = messageResponseCount + (?), messageDatagramCount = messageDatagramCount + (?) where eventName = ? and timestamp = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_EVENT_NAME_COUNTER, statement);
 
-		statement = session.prepare("update " + keySpace + ".application_event_counter set counter = counter + 1 where application = ? and eventName = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".application_event_counter set count = count + 1, messageRequestCount = messageRequestCount + (?), messageResponseCount = messageResponseCount + (?), messageDatagramCount = messageDatagramCount + (?) where application = ? and eventName = ? and timestamp = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_APPLICATION_EVENT_NAME_COUNTER, statement);
 
-		statement = session.prepare("update " + keySpace + ".transactionname_counter set counter = counter + 1 where transactionName = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".transactionname_counter set count = count + 1 where transactionName = ? and timestamp = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_TRANSACTION_NAME_COUNTER, statement);
-
 		return statements;
 	}
 
@@ -83,14 +82,17 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.sourceId != null) {
 			this.session.executeAsync(this.insertSourceIdIdStatement.bind(event.sourceId, event.id));
 		}
+		int requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
+		int responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) ? 1 : 0;
+		int datagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) ? 1 : 0;
 		if (event.application != null) {
-			this.session.executeAsync(this.updateApplicationCounterStatement.bind(event.application, this.timestamp));
+			this.session.executeAsync(this.updateApplicationCounterStatement.bind(requestCount, responseCount, datagramCount, event.application, this.timestamp));
 		}
 		if (event.eventName != null) {
-			this.session.executeAsync(this.updateEventNameCounterStatement.bind(event.eventName, this.timestamp));
+			this.session.executeAsync(this.updateEventNameCounterStatement.bind(requestCount, responseCount, datagramCount, event.eventName, this.timestamp));
 		}
 		if (event.application != null && event.eventName != null) {
-			this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(event.application, event.eventName, this.timestamp));
+			this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(requestCount, responseCount, datagramCount, event.application, event.eventName, this.timestamp));
 		}
 		if (event.transactionName != null && event.correlationId == null) {
 			// event belongs to a transaction, but is not correlated so it's the start event of the transaction

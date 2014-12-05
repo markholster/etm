@@ -4,6 +4,7 @@ import java.nio.channels.IllegalSelectorException;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 
@@ -17,7 +18,7 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
 public class TelemetryEventProcessor {
-
+	
 	private Disruptor<TelemetryEvent> disruptor;
 	private RingBuffer<TelemetryEvent> ringBuffer;
 	private boolean started = false;
@@ -64,31 +65,24 @@ public class TelemetryEventProcessor {
 		try {
 			TelemetryEvent telemetryEvent = this.ringBuffer.get(sequence);
 			telemetryEvent.initialize();
-			telemetryEvent.sourceId = message.getStringProperty("ETM_SourceID");
-			if (telemetryEvent.sourceId == null) {
-				telemetryEvent.sourceId = message.getJMSMessageID();
-			}
-			telemetryEvent.sourceCorrelationId = message.getStringProperty("ETM_SourceCorrelationID");
-			if (telemetryEvent.sourceCorrelationId == null) { 
-				telemetryEvent.sourceCorrelationId = message.getJMSCorrelationID();
-			}
-			telemetryEvent.endpoint = message.getStringProperty("ETM_Endpoint");
-			telemetryEvent.application = message.getStringProperty("ETM_Application");
-			telemetryEvent.eventName = message.getStringProperty("ETM_EventName");
-			telemetryEvent.eventTime.setTime(message.getJMSTimestamp());
-			telemetryEvent.transactionName = message.getStringProperty("ETM_TransactionName");
-			int ibmMsgType = message.getIntProperty("JMS_IBM_MsgType");
-			if (ibmMsgType == 1) {
-				telemetryEvent.eventType = TelemetryEventType.MESSAGE_REQUEST;
-			} else if (ibmMsgType == 2) {
-				telemetryEvent.eventType = TelemetryEventType.MESSAGE_RESPONSE;
-			} else if (ibmMsgType == 8) {
-				telemetryEvent.eventType = TelemetryEventType.MESSAGE_DATAGRAM;
-			}
 			if (message instanceof TextMessage) {
 				TextMessage textMessage = (TextMessage) message;
 				telemetryEvent.content = textMessage.getText();
 			}
+			telemetryEvent.sourceId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_SOURCE_ID);
+			if (telemetryEvent.sourceId == null) {
+				telemetryEvent.sourceId = message.getJMSMessageID();
+			}
+			telemetryEvent.sourceCorrelationId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_SOURCE_CORRELATION_ID);
+			if (telemetryEvent.sourceCorrelationId == null) { 
+				telemetryEvent.sourceCorrelationId = message.getJMSCorrelationID();
+			}
+			telemetryEvent.endpoint = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_ENDPOINT);
+			telemetryEvent.application = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_APPLICATION);
+			telemetryEvent.eventName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_NAME);
+			telemetryEvent.eventTime.setTime(message.getJMSTimestamp());
+			telemetryEvent.transactionName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_NAME);
+			determineEventType(telemetryEvent, message);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		} finally {
@@ -97,7 +91,26 @@ public class TelemetryEventProcessor {
 		}
 	}
 	
-	public void processTelemetryEvent(TelemetryEvent telemetryEvent) {
+	private void determineEventType(TelemetryEvent telemetryEvent, Message message) throws JMSException {
+		String messageType = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_MESSAGE_TYPE);
+		if (messageType != null) {
+			try {
+				telemetryEvent.eventType = TelemetryEventType.valueOf(messageType);
+				return;
+			} catch (IllegalArgumentException e) {
+			}
+		}
+		int ibmMsgType = message.getIntProperty("JMS_IBM_MsgType");
+		if (ibmMsgType == 1) {
+			telemetryEvent.eventType = TelemetryEventType.MESSAGE_REQUEST;
+		} else if (ibmMsgType == 2) {
+			telemetryEvent.eventType = TelemetryEventType.MESSAGE_RESPONSE;
+		} else if (ibmMsgType == 8) {
+			telemetryEvent.eventType = TelemetryEventType.MESSAGE_DATAGRAM;
+		}
+    }
+
+	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}

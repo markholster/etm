@@ -23,6 +23,9 @@ create table application_counter (
     application text,
     timeunit timestamp,
     count counter,
+    messageRequestCount counter,
+    messageResponseCount counter,
+    messageDatagramCount counter,
     primary key (application, timeunit)
 );
 
@@ -30,6 +33,9 @@ create table eventname_counter (
     eventName text,
     timeunit timestamp,
     count counter,
+    messageRequestCount counter,
+    messageResponseCount counter,
+    messageDatagramCount counter,
     primary key (eventName, timeunit)
 );
 
@@ -38,6 +44,9 @@ create table application_event_counter (
     eventName text,
     timeunit timestamp,
     count counter,
+    messageRequestCount counter,
+    messageResponseCount counter,
+    messageDatagramCount counter,
     primary key (application, eventName, timeunit)
 );
 
