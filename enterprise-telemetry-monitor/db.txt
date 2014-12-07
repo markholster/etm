@@ -10,15 +10,15 @@ create table telemetryevent (
     sourceCorrelationId text, 
     transactionId timeuuid, 
     transactionName text,
-    type text,
-    responsetime bigint 
+    type text
 );
 
 create table sourceid_id_correlation (
     sourceId text primary key,
     id timeuuid,
     transactionId timeuuid,
-    transactionName text
+    transactionName text,
+    eventTime timestamp
 );
 
 create table application_counter (
@@ -57,4 +57,10 @@ create table transactionname_counter (
     timeunit timestamp,
     count counter,
     primary key (transactionName, timeunit)
+);
+
+create table endpoint_config (
+    endpoint text primary key,
+    application text,
+    eventNameParsers list<text>
 );

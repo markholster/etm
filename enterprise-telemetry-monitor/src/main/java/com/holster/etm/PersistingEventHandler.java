@@ -34,7 +34,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		final String keySpace = "etm";
 		Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
 		
-		PreparedStatement statement = session.prepare("insert into " + keySpace + ".telemetryevent (id, application, content, correlationId, endpoint, eventTime, sourceId, sourceCorrelationId, transactionId, transactionName, type) values (?,?,?,?,?,?,?,?,?,?,?);");
+		PreparedStatement statement = session.prepare("insert into " + keySpace + ".telemetryevent (id, application, content, correlationId, endpoint, eventName, eventTime, sourceId, sourceCorrelationId, transactionId, transactionName, type) values (?,?,?,?,?,?,?,?,?,?,?,?);");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_INSERT_TELEMETRTY_EVENT, statement);
 		
@@ -79,7 +79,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		}
 		this.timestamp.setTime(normalizeTime(System.currentTimeMillis()));
 		this.session.executeAsync(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.endpoint,
-		        event.eventTime, event.sourceId, event.sourceCorrelationId, event.transactionId, event.transactionName, event.eventType != null ? event.eventType.name() : null));
+		        event.eventName, event.eventTime, event.sourceId, event.sourceCorrelationId, event.transactionId, event.transactionName, event.eventType != null ? event.eventType.name() : null));
 		if (event.sourceId != null) {
 			this.session.executeAsync(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName));
 		}
