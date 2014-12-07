@@ -1,6 +1,8 @@
 package com.holster.etm;
 
 import java.nio.channels.IllegalSelectorException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
@@ -12,6 +14,7 @@ import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
+import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -23,7 +26,7 @@ public class TelemetryEventProcessor {
 	private RingBuffer<TelemetryEvent> ringBuffer;
 	private boolean started = false;
 
-    public void start(final Executor executor, final Session session, final SolrServer server, final int indexingHandlerCount, final int persistingHandlerCount) {
+    public void start(final Executor executor, final Session session, final SolrServer server, final int correlatingHandlerCount, final int indexingHandlerCount, final int persistingHandlerCount) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
@@ -32,19 +35,26 @@ public class TelemetryEventProcessor {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, 4096, executor, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 		
-		final IndexingEventHandler[] indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount];
+		
+		final Map<String, PreparedStatement> correlatingEventHandlerStatements = EnhancingEventHandler.createPreparedStatements(session);
+		final EnhancingEventHandler[] correlatingEventHandlers = new EnhancingEventHandler[correlatingHandlerCount];
+		for (int i=0; i < correlatingHandlerCount; i++) {
+			correlatingEventHandlers[i] = new EnhancingEventHandler(session, correlatingEventHandlerStatements, i, correlatingHandlerCount);
+		}
+		
+		final List<EventHandler<TelemetryEvent>> step2handlers = new ArrayList<EventHandler<TelemetryEvent>>();
 		for (int i=0; i < indexingHandlerCount; i++) {
-			indexingEventHandlers[i] = new IndexingEventHandler(server, i, indexingHandlerCount);
+			step2handlers.add(new IndexingEventHandler(server, i, indexingHandlerCount));
 		}
 		
-		final Map<String, PreparedStatement> statements = PersistingEventHandler.createPreparedStatements(session);
-		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount];
+		final Map<String, PreparedStatement> persistingEventHandlerStatements = PersistingEventHandler.createPreparedStatements(session);
 		for (int i=0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(session, statements, i, persistingHandlerCount);
+			step2handlers.add(new PersistingEventHandler(session, persistingEventHandlerStatements, i, persistingHandlerCount));
 		}
 		
-		this.disruptor.handleEventsWith(indexingEventHandlers);
-		this.disruptor.handleEventsWith(persistingEventHandlers);
+		@SuppressWarnings("unchecked")
+        EventHandler<TelemetryEvent>[] eventHandlers = new EventHandler[indexingHandlerCount + persistingHandlerCount];
+		this.disruptor.handleEventsWith(correlatingEventHandlers).then(step2handlers.toArray(eventHandlers));
 		this.ringBuffer = this.disruptor.start();
 		
 		

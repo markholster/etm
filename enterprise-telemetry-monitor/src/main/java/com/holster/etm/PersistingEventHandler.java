@@ -1,5 +1,6 @@
 package com.holster.etm;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +28,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
 	private final PreparedStatement updateTransactionNameCounterStatement;
 	
-	private long timestamp;
+	private final Date timestamp = new Date();
 	
 	public static final Map<String,PreparedStatement> createPreparedStatements(Session session) {
 		final String keySpace = "etm";
@@ -37,23 +38,23 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_INSERT_TELEMETRTY_EVENT, statement);
 		
-		statement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation (sourceId, id) values (?,?);");
+		statement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation (sourceId, id, transactionId, transactionName) values (?,?,?,?);");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_INSERT_SOURCE_ID, statement);
 
-		statement = session.prepare("update " + keySpace + ".application_counter set count = count + 1, messageRequestCount = messageRequestCount + (?), messageResponseCount = messageResponseCount + (?), messageDatagramCount = messageDatagramCount + (?) where application = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".application_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ? where application = ? and timeunit = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_APPLICATION_COUNTER, statement);
 
-		statement = session.prepare("update " + keySpace + ".eventname_counter set count = count + 1, messageRequestCount = messageRequestCount + (?), messageResponseCount = messageResponseCount + (?), messageDatagramCount = messageDatagramCount + (?) where eventName = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".eventname_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ? where eventName = ? and timeunit = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_EVENT_NAME_COUNTER, statement);
 
-		statement = session.prepare("update " + keySpace + ".application_event_counter set count = count + 1, messageRequestCount = messageRequestCount + (?), messageResponseCount = messageResponseCount + (?), messageDatagramCount = messageDatagramCount + (?) where application = ? and eventName = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".application_event_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ? where application = ? and eventName = ? and timeunit = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_APPLICATION_EVENT_NAME_COUNTER, statement);
 
-		statement = session.prepare("update " + keySpace + ".transactionname_counter set count = count + 1 where transactionName = ? and timestamp = ?;");
+		statement = session.prepare("update " + keySpace + ".transactionname_counter set count = count + 1 where transactionName = ? and timeunit = ?;");
 		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
 		statements.put(STATEMENT_UPDATE_TRANSACTION_NAME_COUNTER, statement);
 		return statements;
@@ -76,15 +77,15 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.ignore || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
-		this.timestamp = normalizeTime(System.currentTimeMillis());
+		this.timestamp.setTime(normalizeTime(System.currentTimeMillis()));
 		this.session.executeAsync(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.endpoint,
 		        event.eventTime, event.sourceId, event.sourceCorrelationId, event.transactionId, event.transactionName, event.eventType != null ? event.eventType.name() : null));
 		if (event.sourceId != null) {
-			this.session.executeAsync(this.insertSourceIdIdStatement.bind(event.sourceId, event.id));
+			this.session.executeAsync(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName));
 		}
-		int requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
-		int responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) ? 1 : 0;
-		int datagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) ? 1 : 0;
+		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
+		long responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) ? 1 : 0;
+		long datagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) ? 1 : 0;
 		if (event.application != null) {
 			this.session.executeAsync(this.updateApplicationCounterStatement.bind(requestCount, responseCount, datagramCount, event.application, this.timestamp));
 		}

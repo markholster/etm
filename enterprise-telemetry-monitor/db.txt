@@ -8,7 +8,7 @@ create table telemetryevent (
     eventTime timestamp, 
     sourceId text, 
     sourceCorrelationId text, 
-    transactionId uuid, 
+    transactionId timeuuid, 
     transactionName text,
     type text,
     responsetime bigint 
@@ -16,7 +16,9 @@ create table telemetryevent (
 
 create table sourceid_id_correlation (
     sourceId text primary key,
-    id timeuuid
+    id timeuuid,
+    transactionId timeuuid,
+    transactionName text
 );
 
 create table application_counter (
