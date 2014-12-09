@@ -81,7 +81,7 @@ public class TelemetryEvent {
 	public boolean ignore;
 	
 	
-	public void initialize() {
+	public TelemetryEvent initialize() {
 		this.id = UUIDs.timeBased();
 		this.eventName = null;
 		this.eventType = null;
@@ -95,10 +95,11 @@ public class TelemetryEvent {
 		this.sourceId = null;
 		this.sourceCorrelationId = null;
 		this.ignore = false;
+		return this;
 	}
 
 
-	public void initialize(TelemetryEvent copy) {
+	public TelemetryEvent initialize(TelemetryEvent copy) {
 	    initialize();
 	    this.eventName = copy.eventName;
 	    this.eventType = copy.eventType;
@@ -111,5 +112,6 @@ public class TelemetryEvent {
 	    this.eventTime.setTime(copy.eventTime.getTime());
 	    this.sourceId = copy.sourceId;
 	    this.sourceCorrelationId = copy.sourceCorrelationId;
+	    return this;
     }
 }

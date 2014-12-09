@@ -3,7 +3,6 @@ package com.holster.etm;
 import java.nio.channels.IllegalSelectorException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
@@ -13,7 +12,6 @@ import javax.jms.TextMessage;
 
 import org.apache.solr.client.solrj.SolrServer;
 
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.holster.etm.repository.TelemetryEventRepository;
 import com.holster.etm.repository.TelemetryEventRepositoryCassandraImpl;
@@ -38,10 +36,10 @@ public class TelemetryEventProcessor {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, 4096, executor, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 		
-		final Map<String, PreparedStatement> correlatingEventHandlerStatements = EnhancingEventHandler.createPreparedStatements(session);
+		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session);
 		final EnhancingEventHandler[] correlatingEventHandlers = new EnhancingEventHandler[correlatingHandlerCount];
 		for (int i=0; i < correlatingHandlerCount; i++) {
-			correlatingEventHandlers[i] = new EnhancingEventHandler(session, correlatingEventHandlerStatements, i, correlatingHandlerCount);
+			correlatingEventHandlers[i] = new EnhancingEventHandler(telemetryEventRepository, i, correlatingHandlerCount);
 		}
 		
 		final List<EventHandler<TelemetryEvent>> step2handlers = new ArrayList<EventHandler<TelemetryEvent>>();
@@ -49,7 +47,7 @@ public class TelemetryEventProcessor {
 			step2handlers.add(new IndexingEventHandler(server, i, indexingHandlerCount));
 		}
 		
-		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session);
+		
 		for (int i=0; i < persistingHandlerCount; i++) {
 			step2handlers.add(new PersistingEventHandler(telemetryEventRepository, i, persistingHandlerCount));
 		}

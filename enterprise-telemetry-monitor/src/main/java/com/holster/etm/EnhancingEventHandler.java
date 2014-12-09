@@ -16,43 +16,27 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.holster.etm.repository.CorrelationBySourceIdResult;
+import com.holster.etm.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
 public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 
-	private static final String STATEMENT_FIND_PARENT_TELEMETRTY_EVENT = "findParentTelementryEvent";
-	private static final String STATEMENT_FIND_ENDPOINT_CONFIG = "findEndpointConfig";
 	
-	private final Session session;
 	private final long ordinal;
 	private final long numberOfConsumers;
-	private final PreparedStatement findParentStatement;
-	private final PreparedStatement findEndpointConfigStatement;
+	
 	private final XPath xPath;
+	private final TelemetryEventRepository telemetryEventRepository;
+	private final CorrelationBySourceIdResult correlationBySourceIdResult;
 	
-	public static final Map<String,PreparedStatement> createPreparedStatements(Session session) {
-		final String keySpace = "etm";
-		Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
-		
-		PreparedStatement statement = session.prepare("select id, transactionId, transactionName from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
-		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
-		statements.put(STATEMENT_FIND_PARENT_TELEMETRTY_EVENT, statement);
-
-		statement = session.prepare("select application, eventNameParsers from " + keySpace + ".endpoint_config where endpoint = ?;");
-		statement.setRetryPolicy(DefaultRetryPolicy.INSTANCE);
-		statements.put(STATEMENT_FIND_ENDPOINT_CONFIG, statement);
-
-		return statements;
-	}
-	
-	public EnhancingEventHandler(final Session session, final Map<String,PreparedStatement> statements, final long ordinal, final long numberOfConsumers) {
-		this.session = session;
+	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers) {
+		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
-		this.findParentStatement = statements.get(STATEMENT_FIND_PARENT_TELEMETRTY_EVENT);
-		this.findEndpointConfigStatement = statements.get(STATEMENT_FIND_ENDPOINT_CONFIG);
 		XPathFactory xpf = XPathFactory.newInstance();
 		this.xPath = xpf.newXPath();
+		this.correlationBySourceIdResult = new CorrelationBySourceIdResult();
 	}
 
 	@Override
@@ -64,32 +48,29 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			event.eventTime.setTime(System.currentTimeMillis());
 		}
 		if (event.sourceCorrelationId != null && (event.correlationId == null || event.transactionId == null || event.transactionName == null)) {
-			ResultSet resultSet = this.session.execute(this.findParentStatement.bind(event.sourceCorrelationId));
-			Row row = resultSet.one();
-			if (row != null) {
-				if (event.correlationId == null) {
-					event.correlationId = row.getUUID(0);
-				}
-				if (event.transactionId == null) {
-					event.transactionId = row.getUUID(1);
-				}
-				if (event.transactionName == null) {
-					event.transactionName = row.getString(2);
-				}
+			this.telemetryEventRepository.findParent(event.sourceCorrelationId, this.correlationBySourceIdResult.initialize());
+			if (event.correlationId == null) {
+				event.correlationId = this.correlationBySourceIdResult.id;
+			}
+			if (event.transactionId == null) {
+				event.transactionId = this.correlationBySourceIdResult.transactionId;
+			}
+			if (event.transactionName == null) {
+				event.transactionName = this.correlationBySourceIdResult.transactionName;
 			}
 		}
-		if (event.endpoint != null && (event.application == null || event.eventName == null)) {
-			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(event.endpoint));
-			Row row = resultSet.one();
-			if (row != null) {
-				if (event.application == null) {
-					event.application = row.getString(0);
-				}
-				if (event.eventName == null && event.content != null) {
-					event.eventName = parseValue(row.getList(1, String.class), event.content); 
-				}
-			}
-		}
+//		if (event.endpoint != null && (event.application == null || event.eventName == null)) {
+//			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(event.endpoint));
+//			Row row = resultSet.one();
+//			if (row != null) {
+//				if (event.application == null) {
+//					event.application = row.getString(0);
+//				}
+//				if (event.eventName == null && event.content != null) {
+//					event.eventName = parseValue(row.getList(1, String.class), event.content); 
+//				}
+//			}
+//		}
 	}
 
 	private String parseValue(List<String> expressions, String content) {
