@@ -86,32 +86,46 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 					event.application = row.getString(0);
 				}
 				if (event.eventName == null && event.content != null) {
-					parseEventName(row.getList(1, String.class), event);
+					event.eventName = parseValue(row.getList(1, String.class), event.content); 
 				}
 			}
 		}
 	}
 
-	private void parseEventName(List<String> expressions, TelemetryEvent event) {
-		if (event.content == null) {
-			return;
+	private String parseValue(List<String> expressions, String content) {
+		if (content == null) {
+			return null;
 		}
 		for (String expression : expressions) {
 			if (expression.length() > 6) {
-				if (expression.charAt(0) == 'x' &&
+				if (expression.charAt(0) == 'v' &&
+						expression.charAt(1) == 'a' &&
+						expression.charAt(2) == 'l' &&
+						expression.charAt(3) == 'u' &&
+						expression.charAt(4) == 'e' &&
+						expression.charAt(5) == ':') {
+					return expression.substring(6);
+				} else if (expression.charAt(0) == 'x' &&
 					expression.charAt(1) == 'p' &&
 					expression.charAt(2) == 'a' &&
 					expression.charAt(3) == 't' &&
 					expression.charAt(4) == 'h' &&
 					expression.charAt(5) == ':') {
-					event.eventName = evaluateXpath(expression.substring(6), event.content);
-					if (event.eventName != null) {
-						return;
+					String value = evaluateXpath(expression.substring(6), content);
+					if (value != null) {
+						return value;
 					}
+				} else if (expression.charAt(0) == 'f' &&
+					expression.charAt(1) == 'i' &&
+					expression.charAt(2) == 'x' &&
+					expression.charAt(3) == 'e' &&
+					expression.charAt(4) == 'd' &&
+					expression.charAt(5) == ':') {
+					// TODO implement an expression at a fixed position.
 				}
 			}
-			
 		}
+		return null;
     }
 
 	private String evaluateXpath(String expression, String content) {

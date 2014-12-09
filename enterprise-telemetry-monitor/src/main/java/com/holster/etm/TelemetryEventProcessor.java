@@ -4,6 +4,7 @@ import java.nio.channels.IllegalSelectorException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 
 import javax.jms.JMSException;
@@ -14,6 +15,8 @@ import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
+import com.holster.etm.repository.TelemetryEventRepository;
+import com.holster.etm.repository.TelemetryEventRepositoryCassandraImpl;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
@@ -35,7 +38,6 @@ public class TelemetryEventProcessor {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, 4096, executor, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 		
-		
 		final Map<String, PreparedStatement> correlatingEventHandlerStatements = EnhancingEventHandler.createPreparedStatements(session);
 		final EnhancingEventHandler[] correlatingEventHandlers = new EnhancingEventHandler[correlatingHandlerCount];
 		for (int i=0; i < correlatingHandlerCount; i++) {
@@ -47,9 +49,9 @@ public class TelemetryEventProcessor {
 			step2handlers.add(new IndexingEventHandler(server, i, indexingHandlerCount));
 		}
 		
-		final Map<String, PreparedStatement> persistingEventHandlerStatements = PersistingEventHandler.createPreparedStatements(session);
+		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session);
 		for (int i=0; i < persistingHandlerCount; i++) {
-			step2handlers.add(new PersistingEventHandler(session, persistingEventHandlerStatements, i, persistingHandlerCount));
+			step2handlers.add(new PersistingEventHandler(telemetryEventRepository, i, persistingHandlerCount));
 		}
 		
 		@SuppressWarnings("unchecked")
@@ -92,6 +94,7 @@ public class TelemetryEventProcessor {
 			telemetryEvent.eventName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_NAME);
 			telemetryEvent.eventTime.setTime(message.getJMSTimestamp());
 			telemetryEvent.transactionName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_NAME);
+			telemetryEvent.transactionId = (UUID) message.getObjectProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_ID);
 			determineEventType(telemetryEvent, message);
 		} catch (Throwable t) {
 			t.printStackTrace();
