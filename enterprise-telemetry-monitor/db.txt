@@ -1,6 +1,7 @@
 create table telemetryevent ( 
     id timeuuid primary key, 
-    application text, 
+    application text,
+    correlationTimeDifference bigint, 
     content text, 
     correlationId timeuuid, 
     endpoint text, 

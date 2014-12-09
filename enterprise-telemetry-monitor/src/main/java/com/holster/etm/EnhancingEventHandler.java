@@ -2,9 +2,6 @@ package com.holster.etm;
 
 import java.util.List;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathFactory;
-
 import com.holster.etm.repository.CorrelationBySourceIdResult;
 import com.holster.etm.repository.EndpointConfigResult;
 import com.holster.etm.repository.TelemetryEventRepository;
@@ -16,7 +13,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	private final long ordinal;
 	private final long numberOfConsumers;
 	
-	private final XPath xPath;
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final CorrelationBySourceIdResult correlationBySourceIdResult;
 	private final EndpointConfigResult endpointConfigResult;
@@ -25,8 +21,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
-		XPathFactory xpf = XPathFactory.newInstance();
-		this.xPath = xpf.newXPath();
 		this.correlationBySourceIdResult = new CorrelationBySourceIdResult();
 		this.endpointConfigResult = new EndpointConfigResult();
 	}
@@ -49,6 +43,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			}
 			if (event.transactionName == null) {
 				event.transactionName = this.correlationBySourceIdResult.transactionName;
+			}
+			if (this.correlationBySourceIdResult.eventTime.getTime() != 0) {
+				event.correlationTimeDifference = event.eventTime.getTime() - this.correlationBySourceIdResult.eventTime.getTime(); 
 			}
 		}
 		if (event.endpoint != null && (event.application == null || event.eventName == null)) {

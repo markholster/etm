@@ -16,6 +16,7 @@ import javax.jms.TextMessage;
 import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.repository.CorrelationBySourceIdResult;
 import com.holster.etm.repository.TelemetryEventRepository;
 import com.holster.etm.repository.TelemetryEventRepositoryCassandraImpl;
 import com.lmax.disruptor.EventHandler;
@@ -31,7 +32,7 @@ public class TelemetryEventProcessor {
 	private boolean started = false;
 	
 	//TODO proberen dit niet in een synchronised map te plaatsen.
-	private final Map<String, UUID> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, UUID>()); 
+	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, CorrelationBySourceIdResult>()); 
 
 	@SuppressWarnings("unchecked")
 	public void start(final Executor executor, final Session session, final SolrServer server, final int correlatingHandlerCount,
@@ -100,7 +101,7 @@ public class TelemetryEventProcessor {
 			telemetryEvent.transactionId = (UUID) message.getObjectProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_ID);
 			determineEventType(telemetryEvent, message);
 			if (telemetryEvent.sourceId != null) {
-				this.sourceCorrelations.put(telemetryEvent.sourceId, telemetryEvent.id);
+				this.sourceCorrelations.put(telemetryEvent.sourceId, new CorrelationBySourceIdResult(telemetryEvent.id, telemetryEvent.eventTime.getTime()));
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -137,8 +138,12 @@ public class TelemetryEventProcessor {
 		try {
 			TelemetryEvent target = this.ringBuffer.get(sequence);
 			target.initialize(telemetryEvent);
+			if (target.eventTime.getTime() == 0) {
+				target.eventTime.setTime(System.currentTimeMillis());
+			}
 			if (target.sourceId != null) {
-				this.sourceCorrelations.put(target.sourceId, target.id);
+				
+				this.sourceCorrelations.put(target.sourceId, new CorrelationBySourceIdResult(target.id, target.eventTime.getTime()));
 			}
 		} finally {
 			this.ringBuffer.publish(sequence);

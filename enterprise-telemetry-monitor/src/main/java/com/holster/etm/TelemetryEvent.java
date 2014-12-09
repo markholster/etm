@@ -77,21 +77,27 @@ public class TelemetryEvent {
 	 */
 	public String sourceCorrelationId;
 	
+	/**
+	 * The time difference between the correlating event 's event time, and this event's event time.
+	 */
+	public long correlationTimeDifference;
+	
 	// Processing state.
 	public boolean ignore;
 	
 	
 	public TelemetryEvent initialize() {
 		this.id = UUIDs.timeBased();
-		this.eventName = null;
-		this.eventType = null;
+		this.content = null;
+		this.correlationTimeDifference = 0;
 		this.correlationId = null;
 		this.transactionId = null;
 		this.transactionName = null;
-		this.content = null;
 		this.endpoint = null;
 		this.application = null;
+		this.eventName = null;
 		this.eventTime.setTime(0);
+		this.eventType = null;
 		this.sourceId = null;
 		this.sourceCorrelationId = null;
 		this.ignore = false;
@@ -101,15 +107,16 @@ public class TelemetryEvent {
 
 	public TelemetryEvent initialize(TelemetryEvent copy) {
 	    initialize();
-	    this.eventName = copy.eventName;
-	    this.eventType = copy.eventType;
+	    this.content = copy.content;
+	    this.correlationTimeDifference = copy.correlationTimeDifference;
 	    this.correlationId = copy.correlationId;
 	    this.transactionId = copy.transactionId;
 	    this.transactionName = copy.transactionName;
-	    this.content = copy.content;
 	    this.endpoint = copy.endpoint;
 	    this.application = copy.application;
+	    this.eventName = copy.eventName;
 	    this.eventTime.setTime(copy.eventTime.getTime());
+	    this.eventType = copy.eventType;
 	    this.sourceId = copy.sourceId;
 	    this.sourceCorrelationId = copy.sourceCorrelationId;
 	    return this;

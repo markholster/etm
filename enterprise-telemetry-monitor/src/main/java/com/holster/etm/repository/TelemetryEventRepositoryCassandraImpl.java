@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
@@ -24,7 +23,7 @@ import com.holster.etm.XPathExpressionParser;
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
 	private final Session session;
-	private final Map<String, UUID> sourceCorrelations;
+	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
 	
 	
 	private final PreparedStatement insertTelemetryEventStatement;
@@ -41,18 +40,18 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	private final XPath xPath;
 	
 	
-	public TelemetryEventRepositoryCassandraImpl(final Session session, final Map<String, UUID> sourceCorrelations) {
+	public TelemetryEventRepositoryCassandraImpl(final Session session, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
 		this.session = session;
 		this.sourceCorrelations = sourceCorrelations;
 		final String keySpace = "etm";
 		
-		this.insertTelemetryEventStatement = session.prepare("insert into " + keySpace + ".telemetryevent (id, application, content, correlationId, endpoint, eventName, eventTime, sourceId, sourceCorrelationId, transactionId, transactionName, type) values (?,?,?,?,?,?,?,?,?,?,?,?);");
-		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation (sourceId, id, transactionId, transactionName) values (?,?,?,?);");
+		this.insertTelemetryEventStatement = session.prepare("insert into " + keySpace + ".telemetryevent (id, application, content, correlationId, correlationTimeDifference, endpoint, eventName, eventTime, sourceId, sourceCorrelationId, transactionId, transactionName, type) values (?,?,?,?,?,?,?,?,?,?,?,?,?);");
+		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation (sourceId, id, transactionId, transactionName, eventTime) values (?,?,?,?,?);");
 		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ? where application = ? and timeunit = ?;");
 		this.updateEventNameCounterStatement = session.prepare("update " + keySpace + ".eventname_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ? where eventName = ? and timeunit = ?;");
 		this.updateApplicationEventNameCounterStatement = session.prepare("update " + keySpace + ".application_event_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ? where application = ? and eventName = ? and timeunit = ?;");
 		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set count = count + 1 where transactionName = ? and timeunit = ?;");
-		this.findParentStatement = session.prepare("select id, transactionId, transactionName from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
+		this.findParentStatement = session.prepare("select id, transactionId, transactionName, eventTime from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select application, eventNameParsers from " + keySpace + ".endpoint_config where endpoint = ?;");
 		XPathFactory xpf = XPathFactory.newInstance();
 		this.xPath = xpf.newXPath();
@@ -61,10 +60,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
 		this.timestamp.setTime(normalizeTime(event.eventTime.getTime()));
-		this.session.executeAsync(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.endpoint,
+		this.session.executeAsync(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.correlationTimeDifference, event.endpoint,
 		        event.eventName, event.eventTime, event.sourceId, event.sourceCorrelationId, event.transactionId, event.transactionName, event.eventType != null ? event.eventType.name() : null));
 		if (event.sourceId != null) {
-			this.session.execute(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName));
+			this.session.execute(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName, event.eventTime));
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
@@ -94,9 +93,12 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		if (sourceId == null) {
 			return;
 		}
-		UUID uuid = this.sourceCorrelations.get(sourceId);
-		if (uuid != null) {
-			result.id = uuid;
+		CorrelationBySourceIdResult parent = this.sourceCorrelations.get(sourceId);
+		if (parent != null) {
+			result.id = parent.id;
+			result.transactionId = parent.transactionId;
+			result.transactionName = parent.transactionName;
+			result.eventTime = parent.eventTime;
 			return;
 		}
 		ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId));
@@ -105,6 +107,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.id = row.getUUID(0);
 			result.transactionId = row.getUUID(1);
 			result.transactionName = row.getString(2);
+			result.eventTime = row.getDate(3);
 		}
     }
 
