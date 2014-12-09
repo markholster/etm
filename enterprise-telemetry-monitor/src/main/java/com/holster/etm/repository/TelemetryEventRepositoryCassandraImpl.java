@@ -1,9 +1,6 @@
 package com.holster.etm.repository;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
@@ -27,9 +24,6 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	
 	private final Date timestamp = new Date();
 	
-	private static final long cacheTimeout = 100;
-	private static final List<SourceCorrelationRow> sourceCorrelationCache = new ArrayList<SourceCorrelationRow>();
-	
 	public TelemetryEventRepositoryCassandraImpl(final Session session) {
 		this.session = session;
 		final String keySpace = "etm";
@@ -47,11 +41,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
 		this.timestamp.setTime(normalizeTime(event.eventTime.getTime()));
-		this.session.executeAsync(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.endpoint,
+		this.session.execute(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.endpoint,
 		        event.eventName, event.eventTime, event.sourceId, event.sourceCorrelationId, event.transactionId, event.transactionName, event.eventType != null ? event.eventType.name() : null));
 		if (event.sourceId != null) {
-			addToSourceCorrelationCache(event);
-			this.session.executeAsync(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName));
+			this.session.execute(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
 		long responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) ? 1 : 0;
@@ -80,11 +73,6 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		if (sourceId == null) {
 			return;
 		}
-		for (int i=0; i < 3; i++) {
-			if (getFromSourceCorrelationCache(sourceId, result)) {
-				return;
-			}
-		}
 		ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId));
 		Row row = resultSet.one();
 		if (row != null) {
@@ -93,58 +81,4 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.transactionName = row.getString(2);
 		}
     }
-
-	private void addToSourceCorrelationCache(TelemetryEvent event) {
-		final long invalidateBefore = System.currentTimeMillis() - cacheTimeout; 
-		for (int i=0; i < sourceCorrelationCache.size(); i++) {
-			SourceCorrelationRow sourceCorrelationRow = sourceCorrelationCache.get(i);
-			if (sourceCorrelationRow.time < invalidateBefore) {
-				sourceCorrelationRow.setEvent(event);
-				return;
-			}
-		}
-		SourceCorrelationRow sourceCorrelationRow = new SourceCorrelationRow(event);
-		sourceCorrelationCache.add(sourceCorrelationRow);
-    }
-	
-	private boolean getFromSourceCorrelationCache(String sourceId, CorrelationBySourceIdResult result) {
-		for (int i=0; i < sourceCorrelationCache.size(); i++) {
-			SourceCorrelationRow sourceCorrelationRow = sourceCorrelationCache.get(i);
-			long evaluateTime = sourceCorrelationRow.time;
-			if (sourceId.equals(sourceCorrelationRow.sourceId)) {
-				result.id = sourceCorrelationRow.id;
-				result.transactionId = sourceCorrelationRow.transactionId;
-				result.transactionName = sourceCorrelationRow.transactionName;
-				if (evaluateTime == sourceCorrelationRow.time) {
-					// make sure no other thread has altered the cache row.
-					return true;
-				} else {
-					result.initialize();
-					return false;
-				}
-			}
-		}
-		return false;
-	}
-
-
-	private class SourceCorrelationRow {
-		public long time;
-		public String sourceId;
-		public UUID id;
-		public UUID transactionId;
-		public String transactionName;
-		
-		public SourceCorrelationRow(TelemetryEvent event) {
-			setEvent(event);
-		}
-		
-		public void setEvent(TelemetryEvent event) {
-			this.time = System.currentTimeMillis();
-			this.sourceId = event.sourceId;
-			this.id = event.id;
-			this.transactionId = event.transactionId;
-			this.transactionName = event.transactionName;			
-		}
-	}
 }
