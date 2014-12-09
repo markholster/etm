@@ -1,6 +1,8 @@
 package com.holster.etm.repository;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
@@ -12,6 +14,8 @@ import com.holster.etm.TelemetryEventType;
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
 	private final Session session;
+	private final Map<String, UUID> sourceCorrelations;
+	
 	
 	private final PreparedStatement insertTelemetryEventStatement;
 	private final PreparedStatement insertSourceIdIdStatement;
@@ -24,8 +28,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	
 	private final Date timestamp = new Date();
 	
-	public TelemetryEventRepositoryCassandraImpl(final Session session) {
+	
+	public TelemetryEventRepositoryCassandraImpl(final Session session, final Map<String, UUID> sourceCorrelations) {
 		this.session = session;
+		this.sourceCorrelations = sourceCorrelations;
 		final String keySpace = "etm";
 		
 		this.insertTelemetryEventStatement = session.prepare("insert into " + keySpace + ".telemetryevent (id, application, content, correlationId, endpoint, eventName, eventTime, sourceId, sourceCorrelationId, transactionId, transactionName, type) values (?,?,?,?,?,?,?,?,?,?,?,?);");
@@ -41,10 +47,11 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
 		this.timestamp.setTime(normalizeTime(event.eventTime.getTime()));
-		this.session.execute(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.endpoint,
+		this.session.executeAsync(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.endpoint,
 		        event.eventName, event.eventTime, event.sourceId, event.sourceCorrelationId, event.transactionId, event.transactionName, event.eventType != null ? event.eventType.name() : null));
 		if (event.sourceId != null) {
 			this.session.execute(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName));
+			this.sourceCorrelations.remove(event.sourceId);
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
 		long responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) ? 1 : 0;
@@ -71,6 +78,11 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	@Override
     public void findParent(String sourceId, CorrelationBySourceIdResult result) {
 		if (sourceId == null) {
+			return;
+		}
+		UUID uuid = this.sourceCorrelations.get(sourceId);
+		if (uuid != null) {
+			result.id = uuid;
 			return;
 		}
 		ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId));

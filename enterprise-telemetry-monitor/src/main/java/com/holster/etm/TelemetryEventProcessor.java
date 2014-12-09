@@ -17,12 +17,9 @@ import org.apache.solr.client.solrj.SolrServer;
 import com.datastax.driver.core.Session;
 import com.holster.etm.repository.TelemetryEventRepository;
 import com.holster.etm.repository.TelemetryEventRepositoryCassandraImpl;
-import com.lmax.disruptor.AlertException;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.SequenceBarrier;
 import com.lmax.disruptor.SleepingWaitStrategy;
-import com.lmax.disruptor.TimeoutException;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -31,9 +28,8 @@ public class TelemetryEventProcessor {
 	private Disruptor<TelemetryEvent> disruptor;
 	private RingBuffer<TelemetryEvent> ringBuffer;
 	private boolean started = false;
-	private SequenceBarrier sequenceBarrier;
 	
-	private final Map<String, Long> sourceCorrelations = new HashMap<String, Long>(); 
+	private final Map<String, UUID> sourceCorrelations = new HashMap<String, UUID>(); 
 
 	@SuppressWarnings("unchecked")
 	public void start(final Executor executor, final Session session, final SolrServer server, final int correlatingHandlerCount,
@@ -46,7 +42,7 @@ public class TelemetryEventProcessor {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, 2048, executor, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 
-		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session);
+		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session, this.sourceCorrelations);
 		final EnhancingEventHandler[] correlatingEventHandlers = new EnhancingEventHandler[correlatingHandlerCount];
 		for (int i = 0; i < correlatingHandlerCount; i++) {
 			correlatingEventHandlers[i] = new EnhancingEventHandler(telemetryEventRepository, i, correlatingHandlerCount);
@@ -58,12 +54,11 @@ public class TelemetryEventProcessor {
 		}
 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			step2handlers.add(new PersistingEventHandler(telemetryEventRepository, this.sourceCorrelations, i, persistingHandlerCount));
+			step2handlers.add(new PersistingEventHandler(telemetryEventRepository, i, persistingHandlerCount));
 		}
 
 		EventHandler<TelemetryEvent>[] eventHandlers = new EventHandler[indexingHandlerCount + persistingHandlerCount];
-		this.sequenceBarrier = this.disruptor.handleEventsWith(correlatingEventHandlers).then(step2handlers.toArray(eventHandlers))
-		        .asSequenceBarrier();
+		this.disruptor.handleEventsWith(correlatingEventHandlers).then(step2handlers.toArray(eventHandlers));
 		this.ringBuffer = this.disruptor.start();
 	}
 
@@ -79,7 +74,6 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
-		String sourceCorrelationId = determineSourceCorrelationId(message);
 		
 		long sequence = this.ringBuffer.next();
 		try {
@@ -93,7 +87,10 @@ public class TelemetryEventProcessor {
 			if (telemetryEvent.sourceId == null) {
 				telemetryEvent.sourceId = message.getJMSMessageID();
 			}
-			telemetryEvent.sourceCorrelationId = sourceCorrelationId;
+			telemetryEvent.sourceCorrelationId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_SOURCE_CORRELATION_ID);
+			if (telemetryEvent.sourceCorrelationId == null) {
+				telemetryEvent.sourceCorrelationId = message.getJMSCorrelationID();
+			}
 			telemetryEvent.endpoint = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_ENDPOINT);
 			telemetryEvent.application = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_APPLICATION);
 			telemetryEvent.eventName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_NAME);
@@ -101,27 +98,15 @@ public class TelemetryEventProcessor {
 			telemetryEvent.transactionName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_NAME);
 			telemetryEvent.transactionId = (UUID) message.getObjectProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_ID);
 			determineEventType(telemetryEvent, message);
-			checkAndWaitForCorrelation(telemetryEvent.sourceCorrelationId);
-			sourceCorrelations.put(telemetryEvent.sourceId, sequence);
+			if (telemetryEvent.sourceId != null) {
+				this.sourceCorrelations.put(telemetryEvent.sourceId, telemetryEvent.id);
+			}
 		} catch (Throwable t) {
 			t.printStackTrace();
 		} finally {
 			this.ringBuffer.publish(sequence);
 
 		}
-	}
-
-	private String determineSourceCorrelationId(Message message) {
-		try {
-			String sourceCorrelationId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_SOURCE_CORRELATION_ID);
-			if (sourceCorrelationId == null) {
-				sourceCorrelationId = message.getJMSCorrelationID();
-			}
-			return sourceCorrelationId;
-		} catch (JMSException e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 	private void determineEventType(TelemetryEvent telemetryEvent, Message message) throws JMSException {
@@ -152,27 +137,10 @@ public class TelemetryEventProcessor {
 			TelemetryEvent target = this.ringBuffer.get(sequence);
 			target.initialize(telemetryEvent);
 			if (target.sourceId != null) {
-				sourceCorrelations.put(telemetryEvent.sourceId, sequence);
+				sourceCorrelations.put(telemetryEvent.sourceId, target.id);
 			}
-			checkAndWaitForCorrelation(target.sourceCorrelationId);
 		} finally {
 			this.ringBuffer.publish(sequence);
 		}
 	}
-
-	private void checkAndWaitForCorrelation(String sourceId) {
-		Long sequence = this.sourceCorrelations.get(sourceId);
-		if (sequence != null) {
-			try {
-	            this.sequenceBarrier.waitFor(sequence);
-            } catch (AlertException e) {
-	            e.printStackTrace();
-            } catch (InterruptedException e) {
-	            e.printStackTrace();
-            } catch (TimeoutException e) {
-	            e.printStackTrace();
-            }
-			this.sourceCorrelations.remove(sourceId);
-		}
-    }
 }
