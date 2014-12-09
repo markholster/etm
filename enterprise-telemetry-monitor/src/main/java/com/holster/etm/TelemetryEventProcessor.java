@@ -2,6 +2,7 @@ package com.holster.etm;
 
 import java.nio.channels.IllegalSelectorException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,8 @@ public class TelemetryEventProcessor {
 	private RingBuffer<TelemetryEvent> ringBuffer;
 	private boolean started = false;
 	
-	private final Map<String, UUID> sourceCorrelations = new HashMap<String, UUID>(); 
+	//TODO proberen dit niet in een synchronised map te plaatsen.
+	private final Map<String, UUID> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, UUID>()); 
 
 	@SuppressWarnings("unchecked")
 	public void start(final Executor executor, final Session session, final SolrServer server, final int correlatingHandlerCount,
@@ -39,7 +41,7 @@ public class TelemetryEventProcessor {
 		}
 		this.started = true;
 
-		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, 2048, executor, ProducerType.MULTI, new SleepingWaitStrategy());
+		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, 4096, executor, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 
 		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session, this.sourceCorrelations);
@@ -66,7 +68,6 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
-		System.out.println(this.sourceCorrelations.size());
 		this.disruptor.shutdown();
 	}
 
@@ -137,7 +138,7 @@ public class TelemetryEventProcessor {
 			TelemetryEvent target = this.ringBuffer.get(sequence);
 			target.initialize(telemetryEvent);
 			if (target.sourceId != null) {
-				sourceCorrelations.put(telemetryEvent.sourceId, target.id);
+				this.sourceCorrelations.put(target.sourceId, target.id);
 			}
 		} finally {
 			this.ringBuffer.publish(sequence);

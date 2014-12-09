@@ -1,15 +1,25 @@
 package com.holster.etm.repository;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.holster.etm.ExpressionParser;
+import com.holster.etm.FixedValueExpressionParser;
 import com.holster.etm.TelemetryEvent;
 import com.holster.etm.TelemetryEventType;
+import com.holster.etm.XPathExpressionParser;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
@@ -27,6 +37,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	private final PreparedStatement findEndpointConfigStatement;
 	
 	private final Date timestamp = new Date();
+	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
+	private final XPath xPath;
 	
 	
 	public TelemetryEventRepositoryCassandraImpl(final Session session, final Map<String, UUID> sourceCorrelations) {
@@ -42,6 +54,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set count = count + 1 where transactionName = ? and timeunit = ?;");
 		this.findParentStatement = session.prepare("select id, transactionId, transactionName from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select application, eventNameParsers from " + keySpace + ".endpoint_config where endpoint = ?;");
+		XPathFactory xpf = XPathFactory.newInstance();
+		this.xPath = xpf.newXPath();
     }
 	
 	@Override
@@ -93,4 +107,62 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.transactionName = row.getString(2);
 		}
     }
+
+	@Override
+    public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
+		EndpointConfigResult cachedResult = this.endpointConfigs.get(endpoint);
+		if (cachedResult == null || System.currentTimeMillis() - cachedResult.retrieved > 60000) {
+			if (cachedResult == null) {
+				cachedResult = new EndpointConfigResult();
+			}
+			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(endpoint));
+			Row row = resultSet.one();
+			if (row != null) {
+				cachedResult.applicationParsers = createExpressionParsers(row.getList(0, String.class));
+				cachedResult.eventNameParsers = createExpressionParsers(row.getList(1, String.class));
+			}
+			cachedResult.retrieved = System.currentTimeMillis();
+			this.endpointConfigs.put(endpoint, cachedResult);
+		} 
+		result.applicationParsers = cachedResult.applicationParsers;
+		result.eventNameParsers = cachedResult.eventNameParsers;
+    }
+	
+	private List<ExpressionParser> createExpressionParsers(List<String> expressions) {
+		if (expressions == null) {
+			return null;
+		}
+		List<ExpressionParser> expressionParsers = new ArrayList<ExpressionParser>(expressions.size());
+		for (String expression : expressions) {
+			expressionParsers.add(createExpressionParser(expression));
+		}
+		return expressionParsers;
+	}
+	
+	private ExpressionParser createExpressionParser(String expression) {
+		if (expression.length() > 6) {
+			if (expression.charAt(0) == 'x' &&
+				expression.charAt(1) == 'p' &&
+				expression.charAt(2) == 'a' &&
+				expression.charAt(3) == 't' &&
+				expression.charAt(4) == 'h' &&
+				expression.charAt(5) == ':') {
+				try {
+	                return new XPathExpressionParser(this.xPath, expression.substring(6));
+                } catch (XPathExpressionException e) {
+                	// TODO logging
+                	new FixedValueExpressionParser(null);
+                }
+			} else if (expression.charAt(0) == 'f' &&
+				expression.charAt(1) == 'i' &&
+				expression.charAt(2) == 'x' &&
+				expression.charAt(3) == 'e' &&
+				expression.charAt(4) == 'd' &&
+				expression.charAt(5) == ':') {
+				return null;
+				// TODO implement an expression at a fixed position.
+			}
+		}
+		return new FixedValueExpressionParser(expression);
+	}
 }

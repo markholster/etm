@@ -1,22 +1,12 @@
 package com.holster.etm;
 
-import java.io.StringReader;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.xml.sax.InputSource;
-
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.holster.etm.repository.CorrelationBySourceIdResult;
+import com.holster.etm.repository.EndpointConfigResult;
 import com.holster.etm.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
@@ -29,6 +19,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	private final XPath xPath;
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final CorrelationBySourceIdResult correlationBySourceIdResult;
+	private final EndpointConfigResult endpointConfigResult;
 	
 	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers) {
 		this.telemetryEventRepository = telemetryEventRepository;
@@ -37,6 +28,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		XPathFactory xpf = XPathFactory.newInstance();
 		this.xPath = xpf.newXPath();
 		this.correlationBySourceIdResult = new CorrelationBySourceIdResult();
+		this.endpointConfigResult = new EndpointConfigResult();
 	}
 
 	@Override
@@ -59,60 +51,26 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				event.transactionName = this.correlationBySourceIdResult.transactionName;
 			}
 		}
-//		if (event.endpoint != null && (event.application == null || event.eventName == null)) {
-//			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(event.endpoint));
-//			Row row = resultSet.one();
-//			if (row != null) {
-//				if (event.application == null) {
-//					event.application = row.getString(0);
-//				}
-//				if (event.eventName == null && event.content != null) {
-//					event.eventName = parseValue(row.getList(1, String.class), event.content); 
-//				}
-//			}
-//		}
-	}
-
-	private String parseValue(List<String> expressions, String content) {
-		if (content == null) {
-			return null;
-		}
-		for (String expression : expressions) {
-			if (expression.length() > 6) {
-				if (expression.charAt(0) == 'v' &&
-						expression.charAt(1) == 'a' &&
-						expression.charAt(2) == 'l' &&
-						expression.charAt(3) == 'u' &&
-						expression.charAt(4) == 'e' &&
-						expression.charAt(5) == ':') {
-					return expression.substring(6);
-				} else if (expression.charAt(0) == 'x' &&
-					expression.charAt(1) == 'p' &&
-					expression.charAt(2) == 'a' &&
-					expression.charAt(3) == 't' &&
-					expression.charAt(4) == 'h' &&
-					expression.charAt(5) == ':') {
-					String value = evaluateXpath(expression.substring(6), content);
-					if (value != null) {
-						return value;
-					}
-				} else if (expression.charAt(0) == 'f' &&
-					expression.charAt(1) == 'i' &&
-					expression.charAt(2) == 'x' &&
-					expression.charAt(3) == 'e' &&
-					expression.charAt(4) == 'd' &&
-					expression.charAt(5) == ':') {
-					// TODO implement an expression at a fixed position.
-				}
+		if (event.endpoint != null && (event.application == null || event.eventName == null)) {
+			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
+			if (event.application == null) {
+				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
+			}
+			if (event.eventName == null && event.content != null) {
+				event.eventName = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
 			}
 		}
-		return null;
-    }
+	}
 
-	private String evaluateXpath(String expression, String content) {
-		try (StringReader reader = new StringReader(content)) {
-			return this.xPath.evaluate(expression, new InputSource(reader));
-		} catch (XPathExpressionException e) {
+	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
+		if (content == null || expressionParsers == null) {
+			return null;
+		}
+		for (ExpressionParser expressionParser : expressionParsers) {
+			String value = expressionParser.evaluate(content);
+			if (value != null) {
+				return value;
+			}
 		}
 		return null;
     }

@@ -61,6 +61,8 @@ create table transactionname_counter (
 
 create table endpoint_config (
     endpoint text primary key,
-    application text,
+    application list<text>,
     eventNameParsers list<text>
 );
+
+insert into endpoint_config(endpoint, application, eventNameParsers) values ('KCS.REQ.ESB', ['KCS'], ['xpath:local-name(/*)']);
