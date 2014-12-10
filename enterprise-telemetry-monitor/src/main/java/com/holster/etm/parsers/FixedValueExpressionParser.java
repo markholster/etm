@@ -1,4 +1,4 @@
-package com.holster.etm;
+package com.holster.etm.parsers;
 
 public class FixedValueExpressionParser implements ExpressionParser {
 

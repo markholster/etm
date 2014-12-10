@@ -2,6 +2,7 @@ package com.holster.etm;
 
 import java.util.List;
 
+import com.holster.etm.parsers.ExpressionParser;
 import com.holster.etm.repository.CorrelationBySourceIdResult;
 import com.holster.etm.repository.EndpointConfigResult;
 import com.holster.etm.repository.TelemetryEventRepository;

@@ -14,11 +14,12 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.holster.etm.ExpressionParser;
-import com.holster.etm.FixedValueExpressionParser;
 import com.holster.etm.TelemetryEvent;
 import com.holster.etm.TelemetryEventType;
-import com.holster.etm.XPathExpressionParser;
+import com.holster.etm.parsers.ExpressionParser;
+import com.holster.etm.parsers.FixedPositionExpressionParser;
+import com.holster.etm.parsers.FixedValueExpressionParser;
+import com.holster.etm.parsers.XPathExpressionParser;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
@@ -166,8 +167,26 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				expression.charAt(3) == 'e' &&
 				expression.charAt(4) == 'd' &&
 				expression.charAt(5) == ':') {
-				return null;
-				// TODO implement an expression at a fixed position.
+				String range = expression.substring(6);
+				String[] values = range.split("-");
+				if (values.length != 2) {
+                	// TODO logging
+                	new FixedValueExpressionParser(null);					
+				}
+				try {
+					Integer start = null;
+					Integer end = null;
+					if (values[0].length() != 0) {
+						start = Integer.valueOf(values[0]);
+					} 
+					if (values[1].length() != 0) {
+						end = Integer.valueOf(values[0]);
+					} 
+					return new FixedPositionExpressionParser(start, end);
+				} catch (NumberFormatException e) {
+                	// TODO logging
+                	new FixedValueExpressionParser(null);										
+				}
 			}
 		}
 		return new FixedValueExpressionParser(expression);

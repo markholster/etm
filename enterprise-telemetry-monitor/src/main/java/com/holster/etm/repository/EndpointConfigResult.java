@@ -2,7 +2,7 @@ package com.holster.etm.repository;
 
 import java.util.List;
 
-import com.holster.etm.ExpressionParser;
+import com.holster.etm.parsers.ExpressionParser;
 
 public class EndpointConfigResult {
 
