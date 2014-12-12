@@ -164,7 +164,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (!event.correlationData.isEmpty()) {
-			event.correlationData.forEach((k,v) -> this.session.execute(this.insertCorrelationDataStatement.bind(event.id, k, v, event.transactionId, event.transactionName)));
+			event.correlationData.forEach((k,v) -> this.session.executeAsync(this.insertCorrelationDataStatement.bind(event.id, k, v, event.transactionId, event.transactionName)));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) && TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? 1 : 0;
