@@ -35,7 +35,7 @@ public class TelemetryEventProcessor {
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, CorrelationBySourceIdResult>()); 
 
 	@SuppressWarnings("unchecked")
-	public void start(final Executor executor, final Session session, final SolrServer server, final int correlatingHandlerCount,
+	public void start(final Executor executor, final Session session, final SolrServer server, final int enhancingHandlerCount,
 	        final int indexingHandlerCount, final int persistingHandlerCount) {
 		if (this.started) {
 			throw new IllegalStateException();
@@ -46,9 +46,9 @@ public class TelemetryEventProcessor {
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 
 		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session, this.sourceCorrelations);
-		final EnhancingEventHandler[] correlatingEventHandlers = new EnhancingEventHandler[correlatingHandlerCount];
-		for (int i = 0; i < correlatingHandlerCount; i++) {
-			correlatingEventHandlers[i] = new EnhancingEventHandler(telemetryEventRepository, i, correlatingHandlerCount);
+		final EnhancingEventHandler[] correlatingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
+		for (int i = 0; i < enhancingHandlerCount; i++) {
+			correlatingEventHandlers[i] = new EnhancingEventHandler(telemetryEventRepository, i, enhancingHandlerCount);
 		}
 
 		final List<EventHandler<TelemetryEvent>> step2handlers = new ArrayList<EventHandler<TelemetryEvent>>();
@@ -100,9 +100,7 @@ public class TelemetryEventProcessor {
 			telemetryEvent.transactionName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_NAME);
 			telemetryEvent.transactionId = (UUID) message.getObjectProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_ID);
 			determineEventType(telemetryEvent, message);
-			if (telemetryEvent.sourceId != null) {
-				this.sourceCorrelations.put(telemetryEvent.sourceId, new CorrelationBySourceIdResult(telemetryEvent.id, telemetryEvent.eventTime.getTime()));
-			}
+			preProcess(telemetryEvent);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		} finally {
@@ -138,15 +136,22 @@ public class TelemetryEventProcessor {
 		try {
 			TelemetryEvent target = this.ringBuffer.get(sequence);
 			target.initialize(telemetryEvent);
-			if (target.eventTime.getTime() == 0) {
-				target.eventTime.setTime(System.currentTimeMillis());
-			}
-			if (target.sourceId != null) {
-				
-				this.sourceCorrelations.put(target.sourceId, new CorrelationBySourceIdResult(target.id, target.eventTime.getTime()));
-			}
+			preProcess(target);
 		} finally {
 			this.ringBuffer.publish(sequence);
 		}
+	}
+	
+	private void preProcess(TelemetryEvent event) {
+		if (event.eventTime.getTime() == 0) {
+			event.eventTime.setTime(System.currentTimeMillis());
+		}
+		if (event.transactionName != null && event.transactionId == null) {
+			event.transactionId = event.id;
+		}
+		if (event.sourceId != null) {
+			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.transactionId, event.transactionName, event.eventTime.getTime()));
+		}
+		
 	}
 }

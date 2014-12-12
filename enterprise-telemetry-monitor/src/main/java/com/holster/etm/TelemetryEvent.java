@@ -1,6 +1,8 @@
 package com.holster.etm;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import com.datastax.driver.core.utils.UUIDs;
@@ -82,6 +84,11 @@ public class TelemetryEvent {
 	 */
 	public long correlationTimeDifference;
 	
+	/**
+	 * Data to be used for correlating event's that aren't correlated by the correlation id.
+	 */
+	public Map<String, String> correlationData = new HashMap<String, String>();
+	
 	// Processing state.
 	public boolean ignore;
 	
@@ -101,6 +108,7 @@ public class TelemetryEvent {
 		this.sourceId = null;
 		this.sourceCorrelationId = null;
 		this.ignore = false;
+		this.correlationData.clear();
 		return this;
 	}
 
@@ -119,6 +127,7 @@ public class TelemetryEvent {
 	    this.eventType = copy.eventType;
 	    this.sourceId = copy.sourceId;
 	    this.sourceCorrelationId = copy.sourceCorrelationId;
+	    this.correlationData.putAll(copy.correlationData);
 	    return this;
     }
 }

@@ -10,9 +10,11 @@ public class CorrelationBySourceIdResult {
 	public String transactionName;
 	public Date eventTime = new Date(0);
 	
-	public CorrelationBySourceIdResult(UUID id, long eventTime) {
+	public CorrelationBySourceIdResult(UUID id, UUID transactionId, String transactionName, long eventTime) {
 		this();
 	    this.id = id;
+	    this.transactionId = transactionId;
+	    this.transactionName = transactionName;
 	    this.eventTime.setTime(eventTime);
     }
 	

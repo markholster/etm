@@ -45,18 +45,24 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			if (event.transactionName == null) {
 				event.transactionName = this.correlationBySourceIdResult.transactionName;
 			}
-			if (this.correlationBySourceIdResult.eventTime.getTime() != 0) {
-				event.correlationTimeDifference = event.eventTime.getTime() - this.correlationBySourceIdResult.eventTime.getTime(); 
-			}
+			event.correlationTimeDifference = event.eventTime.getTime() - this.correlationBySourceIdResult.eventTime.getTime(); 
 		}
+		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
 		if (event.endpoint != null && (event.application == null || event.eventName == null)) {
-			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
 			if (event.application == null) {
 				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
 			}
 			if (event.eventName == null && event.content != null) {
 				event.eventName = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
 			}
+		}
+		if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
+			this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
+				String parsedValue = parseValue(v, event.content);
+				if (parsedValue != null) {
+					event.correlationData.put(k, parsedValue);
+				}
+			});
 		}
 	}
 
@@ -72,4 +78,11 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		}
 		return null;
     }
+	
+	private String parseValue(ExpressionParser expressionParser, String content) {
+		if (expressionParser == null || content == null) {
+			return null;
+		}
+		return expressionParser.evaluate(content);
+	}
 }
