@@ -16,6 +16,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.holster.etm.TelemetryEvent;
+import com.holster.etm.TelemetryEventDirection;
 import com.holster.etm.TelemetryEventType;
 import com.holster.etm.parsers.ExpressionParser;
 import com.holster.etm.parsers.FixedPositionExpressionParser;
@@ -26,7 +27,6 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 
 	private final Session session;
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
-	
 	
 	private final PreparedStatement insertTelemetryEventStatement;
 	private final PreparedStatement insertSourceIdIdStatement;
@@ -48,15 +48,89 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		this.sourceCorrelations = sourceCorrelations;
 		final String keySpace = "etm";
 		
-		this.insertTelemetryEventStatement = session.prepare("insert into " + keySpace + ".telemetry_event (id, application, content, correlationId, correlationTimeDifference, endpoint, eventName, eventTime, sourceId, sourceCorrelationId, transactionId, transactionName, type) values (?,?,?,?,?,?,?,?,?,?,?,?,?);");
-		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation (sourceId, id, transactionId, transactionName, eventTime) values (?,?,?,?,?);");
-		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data (id, name, value, transactionId, transactionName) values (?,?,?,?,?);");
-		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ?, messageResponseTime = messageResponseTime + ? where application = ? and timeunit = ?;");
-		this.updateEventNameCounterStatement = session.prepare("update " + keySpace + ".eventname_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ?, messageResponseTime = messageResponseTime + ? where eventName = ? and timeunit = ?;");
-		this.updateApplicationEventNameCounterStatement = session.prepare("update " + keySpace + ".application_event_counter set count = count + 1, messageRequestCount = messageRequestCount + ?, messageResponseCount = messageResponseCount + ?, messageDatagramCount = messageDatagramCount + ?, messageResponseTime = messageResponseTime + ? where application = ? and eventName = ? and timeunit = ?;");
-		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set count = count + 1 where transactionName = ? and timeunit = ?;");
-		this.findParentStatement = session.prepare("select id, transactionId, transactionName, eventTime from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
-		this.findEndpointConfigStatement = session.prepare("select applicationParsers, eventNameParsers, correlationParsers from " + keySpace + ".endpoint_config where endpoint = ?;");
+		this.insertTelemetryEventStatement = session.prepare("insert into " + keySpace + ".telemetry_event ("
+				+ "id, "
+				+ "application, "
+				+ "content, "
+				+ "correlationId, "
+				+ "correlationTimeDifference, "
+				+ "direction, "
+				+ "endpoint, "
+				+ "eventName, "
+				+ "eventTime, "
+				+ "sourceId, "
+				+ "sourceCorrelationId, "
+				+ "transactionId, "
+				+ "transactionName, "
+				+ "type"
+				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation ("
+				+ "sourceId, "
+				+ "id, "
+				+ "transactionId, "
+				+ "transactionName, "
+				+ "eventTime"
+				+ ") values (?,?,?,?,?);");
+		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data ("
+				+ "id, "
+				+ "name, "
+				+ "value, "
+				+ "transactionId, "
+				+ "transactionName"
+				+ ") values (?,?,?,?,?);");
+		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set "
+				+ "count = count + 1, "
+				+ "messageRequestCount = messageRequestCount + ?, "
+				+ "incomingMessageRequestCount = incomingMessageRequestCount + ?, "
+				+ "outgoingMessageRequestCount = outgoingMessageRequestCount + ?, "
+				+ "messageResponseCount = messageResponseCount + ?, "
+				+ "incomingMessageResponseCount = incomingMessageResponseCount + ?, "
+				+ "outgoingMessageResponseCount = outgoingMessageResponseCount + ?, "
+				+ "messageDatagramCount = messageDatagramCount + ?, "
+				+ "incomingMessageDatagramCount = incomingMessageDatagramCount + ?, "
+				+ "outgoingMessageDatagramCount = outgoingMessageDatagramCount + ?, "
+				+ "messageResponseTime = messageResponseTime + ?, "
+				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
+				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
+				+ "where application = ? and timeunit = ?;");
+		this.updateEventNameCounterStatement = session.prepare("update " + keySpace + ".eventname_counter set "
+				+ "count = count + 1, "
+				+ "messageRequestCount = messageRequestCount + ?, "
+				+ "messageResponseCount = messageResponseCount + ?, "
+				+ "messageDatagramCount = messageDatagramCount + ?, "
+				+ "messageResponseTime = messageResponseTime + ? "
+				+ "where eventName = ? and timeunit = ?;");
+		this.updateApplicationEventNameCounterStatement = session.prepare("update " + keySpace + ".application_event_counter set "
+				+ "count = count + 1, "
+				+ "messageRequestCount = messageRequestCount + ?, "
+				+ "incomingMessageRequestCount = incomingMessageRequestCount + ?, "
+				+ "outgoingMessageRequestCount = outgoingMessageRequestCount + ?, "
+				+ "messageResponseCount = messageResponseCount + ?, "
+				+ "incomingMessageResponseCount = incomingMessageResponseCount + ?, "
+				+ "outgoingMessageResponseCount = outgoingMessageResponseCount + ?, "
+				+ "messageDatagramCount = messageDatagramCount + ?, "
+				+ "incomingMessageDatagramCount = incomingMessageDatagramCount + ?, "
+				+ "outgoingMessageDatagramCount = outgoingMessageDatagramCount + ?, "
+				+ "messageResponseTime = messageResponseTime + ?, "
+				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
+				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
+				+ "where application = ? and eventName = ? and timeunit = ?;");
+		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set "
+				+ "count = count + 1, "
+				+ "transactionResponseTime = transactionResponseTime + ? "
+				+ "where transactionName = ? and timeunit = ?;");
+		this.findParentStatement = session.prepare("select "
+				+ "id, "
+				+ "transactionId, "
+				+ "transactionName, "
+				+ "eventTime "
+				+ "from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
+		this.findEndpointConfigStatement = session.prepare("select "
+				+ "direction, "
+				+ "applicationParsers, "
+				+ "eventNameParsers, "
+				+ "correlationParsers "
+				+ "from " + keySpace + ".endpoint_config where endpoint = ?;");
 		XPathFactory xpf = XPathFactory.newInstance();
 		this.xPath = xpf.newXPath();
     }
@@ -64,35 +138,98 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
 		this.timestamp.setTime(normalizeTime(event.eventTime.getTime()));
-		this.session.executeAsync(this.insertTelemetryEventStatement.bind(event.id, event.application, event.content, event.correlationId, event.correlationTimeDifference, event.endpoint,
-		        event.eventName, event.eventTime, event.sourceId, event.sourceCorrelationId, event.transactionId, event.transactionName, event.eventType != null ? event.eventType.name() : null));
+		this.session.executeAsync(this.insertTelemetryEventStatement.bind(
+				event.id, 
+				event.application, 
+				event.content, 
+				event.correlationId,
+		        event.correlationTimeDifference, 
+		        event.eventDirection != null ? event.eventDirection.name() : null, 
+		        event.endpoint,
+		        event.eventName, 
+		        event.eventTime, 
+		        event.sourceId, 
+		        event.sourceCorrelationId, 
+		        event.transactionId, 
+		        event.transactionName,
+		        event.eventType != null ? event.eventType.name() : null));
 		if (event.sourceId != null) {
 			// Synchronouse execution because soureCorrelationd list needs to be cleared with this event after the data is present in the database.
-			this.session.execute(this.insertSourceIdIdStatement.bind(event.sourceId, event.id, event.transactionId, event.transactionName, event.eventTime));
+			this.session.execute(this.insertSourceIdIdStatement.bind(
+					event.sourceId, 
+					event.id, 
+					event.transactionId, 
+					event.transactionName, 
+					event.eventTime));
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (!event.correlationData.isEmpty()) {
 			event.correlationData.forEach((k,v) -> this.session.execute(this.insertCorrelationDataStatement.bind(event.id, k, v, event.transactionId, event.transactionName)));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
+		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) && TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? 1 : 0;
+		long outgoingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) && TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? 1 : 0;
 		long responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) ? 1 : 0;
+		long incomingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) && TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? 1 : 0;
+		long outgoingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) && TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? 1 : 0;
 		long datagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) ? 1 : 0;
+		long incomingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) && TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? 1 : 0;
+		long outgoingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) && TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? 1 : 0;
 		long responseTime = 0;
+		long incomingResponseTime = 0;
+		long outgoingResponseTime = 0;
 		if (responseCount > 0) {
 			responseTime = event.correlationTimeDifference;
+			incomingResponseTime = TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? event.correlationTimeDifference : 0;
+			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? event.correlationTimeDifference : 0;
 		}
 		if (event.application != null) {
-			this.session.executeAsync(this.updateApplicationCounterStatement.bind(requestCount, responseCount, datagramCount, responseTime, event.application, this.timestamp));
+			this.session.executeAsync(this.updateApplicationCounterStatement.bind(
+					requestCount, 
+					incomingRequestCount, 
+					outgoingRequestCount,
+			        responseCount, 
+			        incomingResponseCount, 
+			        outgoingResponseCount, 
+			        datagramCount, 
+			        incomingDatagramCount,
+			        outgoingDatagramCount, 
+			        responseTime, 
+			        incomingResponseTime, 
+			        outgoingResponseTime, 
+			        event.application, 
+			        this.timestamp));
 		}
 		if (event.eventName != null) {
-			this.session.executeAsync(this.updateEventNameCounterStatement.bind(requestCount, responseCount, datagramCount, responseTime, event.eventName, this.timestamp));
+			this.session.executeAsync(this.updateEventNameCounterStatement.bind(
+					requestCount, 
+					responseCount, 
+					datagramCount, 
+					responseTime, 
+					event.eventName, 
+					this.timestamp));
 		}
 		if (event.application != null && event.eventName != null) {
-			this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(requestCount, responseCount, datagramCount, responseTime, event.application, event.eventName, this.timestamp));
+			this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(
+					requestCount, 
+					incomingRequestCount, 
+					outgoingRequestCount,
+			        responseCount, 
+			        incomingResponseCount, 
+			        outgoingResponseCount, 
+			        datagramCount, 
+			        incomingDatagramCount,
+			        outgoingDatagramCount, 
+			        responseTime, 
+			        incomingResponseTime, 
+			        outgoingResponseTime, 
+					event.application, 
+					event.eventName, 
+					this.timestamp));
 		}
-		if (event.transactionName != null && event.correlationId == null) {
-			// event belongs to a transaction, but is not correlated so it's the start event of the transaction
-			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(event.transactionName, this.timestamp));
+		if (event.transactionName != null && event.correlationId != null) {
+			// event belongs to a transaction, and is correlated so it's the end of a transaction
+			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(responseTime, event.transactionName, this.timestamp));
 		}
     }
 
@@ -130,19 +267,17 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			if (cachedResult == null) {
 				cachedResult = new EndpointConfigResult();
 			}
-			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(endpoint));
+			cachedResult.correlationDataParsers.clear();
+			// First check the global configuration
+			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind("*"));
 			Row row = resultSet.one();
 			if (row != null) {
-				cachedResult.applicationParsers = createExpressionParsers(row.getList(0, String.class));
-				cachedResult.eventNameParsers = createExpressionParsers(row.getList(1, String.class));
-				cachedResult.correlationDataParsers.clear();
-				Map<String, String> map = row.getMap(2, String.class, String.class);
-				Iterator<String> iterator = map.keySet().iterator();
-				while (iterator.hasNext()) {
-					String key = iterator.next();
-					cachedResult.correlationDataParsers.put(key, createExpressionParser(map.get(key)));
-				}
-				
+				mergeRowIntoEndpointConfig(row, cachedResult);
+			}
+			resultSet = this.session.execute(this.findEndpointConfigStatement.bind(endpoint));
+			row = resultSet.one();
+			if (row != null) {
+				mergeRowIntoEndpointConfig(row, cachedResult);
 			}
 			cachedResult.retrieved = System.currentTimeMillis();
 			this.endpointConfigs.put(endpoint, cachedResult);
@@ -150,8 +285,32 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		result.applicationParsers = cachedResult.applicationParsers;
 		result.eventNameParsers = cachedResult.eventNameParsers;
 		result.correlationDataParsers = cachedResult.correlationDataParsers;
+		result.eventDirection = cachedResult.eventDirection;
     }
 	
+	private void mergeRowIntoEndpointConfig(Row row, EndpointConfigResult result) {
+		String direction = row.getString(0);
+		if (direction != null) {
+			result.eventDirection = TelemetryEventDirection.valueOf(direction);
+		}
+		if (result.applicationParsers == null) {
+			result.applicationParsers = createExpressionParsers(row.getList(1, String.class));
+		} else {
+			result.applicationParsers.addAll(0, createExpressionParsers(row.getList(1, String.class)));
+		}
+		if (result.eventNameParsers == null) {
+			result.eventNameParsers = createExpressionParsers(row.getList(2, String.class));
+		} else {
+			result.eventNameParsers.addAll(0, createExpressionParsers(row.getList(2, String.class)));
+		}
+		Map<String, String> map = row.getMap(3, String.class, String.class);
+		Iterator<String> iterator = map.keySet().iterator();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			result.correlationDataParsers.put(key, createExpressionParser(map.get(key)));
+		}
+    }
+
 	private List<ExpressionParser> createExpressionParsers(List<String> expressions) {
 		if (expressions == null) {
 			return null;

@@ -48,14 +48,17 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			event.correlationTimeDifference = event.eventTime.getTime() - this.correlationBySourceIdResult.eventTime.getTime(); 
 		}
 		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
-		if (event.endpoint != null && (event.application == null || event.eventName == null)) {
+		if (event.endpoint != null && (event.application == null || event.eventName == null || event.eventDirection == null)) {
 			if (event.application == null) {
 				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
 			}
 			if (event.eventName == null && event.content != null) {
 				event.eventName = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
 			}
-		}
+			if (event.eventDirection == null) {
+				event.eventDirection = this.endpointConfigResult.eventDirection;
+			}
+ 		}
 		if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
 			this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
 				String parsedValue = parseValue(v, event.content);
@@ -71,7 +74,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			return null;
 		}
 		for (ExpressionParser expressionParser : expressionParsers) {
-			String value = expressionParser.evaluate(content);
+			String value = parseValue(expressionParser, content);
 			if (value != null) {
 				return value;
 			}
@@ -83,6 +86,10 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (expressionParser == null || content == null) {
 			return null;
 		}
-		return expressionParser.evaluate(content);
+		String value = expressionParser.evaluate(content);
+		if (value != null && value.trim().length() > 0) {
+			return value;
+		}
+		return null;
 	}
 }

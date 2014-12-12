@@ -100,6 +100,7 @@ public class TelemetryEventProcessor {
 			telemetryEvent.transactionName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_NAME);
 			telemetryEvent.transactionId = (UUID) message.getObjectProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_ID);
 			determineEventType(telemetryEvent, message);
+			determineDirectionType(telemetryEvent, message);
 			preProcess(telemetryEvent);
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -126,6 +127,17 @@ public class TelemetryEventProcessor {
 		} else if (ibmMsgType == 8) {
 			telemetryEvent.eventType = TelemetryEventType.MESSAGE_DATAGRAM;
 		}
+	}
+	
+	private void determineDirectionType(TelemetryEvent telemetryEvent, Message message) throws JMSException {
+		String direction = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_DIRECTION);
+		if (direction != null) {
+			try {
+				telemetryEvent.eventDirection = TelemetryEventDirection.valueOf(direction);
+				return;
+			} catch (IllegalArgumentException e) {
+			}
+		}		
 	}
 
 	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {

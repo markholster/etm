@@ -5,7 +5,8 @@ create table telemetry_event (
     application text,
     correlationTimeDifference bigint, 
     content text, 
-    correlationId timeuuid, 
+    correlationId timeuuid,
+    direction text, 
     endpoint text, 
     eventName text,
     eventTime timestamp, 
@@ -29,9 +30,17 @@ create table application_counter (
     timeunit timestamp,
     count counter,
     messageRequestCount counter,
+    incomingMessageRequestCount counter,
+    outgoingMessageRequestCount counter,
     messageResponseCount counter,
+    incomingMessageResponseCount counter,
+    outgoingMessageResponseCount counter,
     messageDatagramCount counter,
+    incomingMessageDatagramCount counter,
+    outgoingMessageDatagramCount counter,
     messageResponseTime counter,
+    incomingMessageResponseTime counter,
+    outgoingMessageResponseTime counter,
     primary key (application, timeunit)
 );
 
@@ -52,9 +61,17 @@ create table application_event_counter (
     timeunit timestamp,
     count counter,
     messageRequestCount counter,
+    incomingMessageRequestCount counter,
+    outgoingMessageRequestCount counter,
     messageResponseCount counter,
+    incomingMessageResponseCount counter,
+    outgoingMessageResponseCount counter,
     messageDatagramCount counter,
+    incomingMessageDatagramCount counter,
+    outgoingMessageDatagramCount counter,
     messageResponseTime counter,
+    incomingMessageResponseTime counter,
+    outgoingMessageResponseTime counter,
     primary key (application, eventName, timeunit)
 );
 
@@ -62,11 +79,13 @@ create table transactionname_counter (
     transactionName text,
     timeunit timestamp,
     count counter,
+    transactionResponseTime counter,
     primary key (transactionName, timeunit)
 );
 
 create table endpoint_config (
     endpoint text primary key,
+    direction text,
     applicationParsers list<text>,
     eventNameParsers list<text>,
     correlationParsers map<text, text>
@@ -81,4 +100,10 @@ create table correlation_data (
     primary key (id, name, value)
 );
 
-insert into endpoint_config(endpoint, applicationParsers, eventNameParsers, correlationParsers) values ('KCS.REQ.ESB', ['KCS'], ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer'});
+insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer'});
+insert into endpoint_config(endpoint, direction, applicationParsers) values ('KCS.REQ.ESB', 'OUTGOING', ['KCS']);
+insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.LG5', 'INCOMING', ['Nieuw Woon']);
+insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG5.REQ.ESB', 'OUTGOING', ['Nieuw Woon']);
+insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.RPL.LG5', 'INCOMING', ['Nieuw Woon']);
+insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG5.RPL.ESB', 'OUTGOING', ['Nieuw Woon']);
+insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.RPL.KCS', 'INCOMING', ['KCS']);

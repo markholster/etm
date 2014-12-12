@@ -18,6 +18,7 @@ public class TelemetryEvent {
 	public static final String JMS_PROPERTY_KEY_TRANSACTION_ID = "JMS_ETM_TransactionID";
 	public static final String JMS_PROPERTY_KEY_TRANSACTION_NAME = "JMS_ETM_TransactionName";
 	public static final String JMS_PROPERTY_KEY_MESSAGE_TYPE = "JMS_ETM_MessageType";
+	public static final String JMS_PROPERTY_KEY_DIRECTION = "JMS_ETM_Direction";
 
 	/**
 	 * The unique ID of the event.
@@ -38,6 +39,12 @@ public class TelemetryEvent {
 	 * The type of event.
 	 */
 	public TelemetryEventType eventType;
+
+	/**
+	 * The direction of the event.
+	 */
+	public TelemetryEventDirection eventDirection;
+
 	
 	/**
 	 * The ID of the transaction this event belongs to. Transactions are groups of events that belong to a single unit of work.
