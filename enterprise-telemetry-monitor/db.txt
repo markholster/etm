@@ -1,4 +1,5 @@
 create keyspace etm with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+use etm;
 
 create table telemetry_event ( 
     id timeuuid primary key, 
@@ -23,6 +24,23 @@ create table sourceid_id_correlation (
     transactionId timeuuid,
     transactionName text,
     eventTime timestamp
+);
+
+create table endpoint_config (
+    endpoint text primary key,
+    direction text,
+    applicationParsers list<text>,
+    eventNameParsers list<text>,
+    correlationParsers map<text, text>
+);
+
+create table correlation_data (
+    id timeuuid,
+    name text,
+    value text,
+    transactionId timeuuid, 
+    transactionName text,
+    primary key (id, name, value)
 );
 
 create table application_counter (
@@ -81,23 +99,6 @@ create table transactionname_counter (
     count counter,
     transactionResponseTime counter,
     primary key (transactionName, timeunit)
-);
-
-create table endpoint_config (
-    endpoint text primary key,
-    direction text,
-    applicationParsers list<text>,
-    eventNameParsers list<text>,
-    correlationParsers map<text, text>
-);
-
-create table correlation_data (
-    id timeuuid,
-    name text,
-    value text,
-    transactionId timeuuid, 
-    transactionName text,
-    primary key (id, name, value)
 );
 
 insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer'});

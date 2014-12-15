@@ -1,10 +1,8 @@
 package com.holster.etm;
 
 import java.nio.channels.IllegalSelectorException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -16,16 +14,22 @@ import javax.jms.TextMessage;
 import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.logging.LogFactory;
+import com.holster.etm.logging.LogWrapper;
 import com.holster.etm.repository.CorrelationBySourceIdResult;
 import com.holster.etm.repository.TelemetryEventRepository;
 import com.holster.etm.repository.TelemetryEventRepositoryCassandraImpl;
-import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
 public class TelemetryEventProcessor {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessor.class);
 
 	private Disruptor<TelemetryEvent> disruptor;
 	private RingBuffer<TelemetryEvent> ringBuffer;
@@ -34,7 +38,6 @@ public class TelemetryEventProcessor {
 	//TODO proberen dit niet in een synchronised map te plaatsen.
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, CorrelationBySourceIdResult>()); 
 
-	@SuppressWarnings("unchecked")
 	public void start(final Executor executor, final Session session, final SolrServer server, final int enhancingHandlerCount,
 	        final int indexingHandlerCount, final int persistingHandlerCount) {
 		if (this.started) {
@@ -51,20 +54,21 @@ public class TelemetryEventProcessor {
 			correlatingEventHandlers[i] = new EnhancingEventHandler(telemetryEventRepository, i, enhancingHandlerCount);
 		}
 
-		final List<EventHandler<TelemetryEvent>> step2handlers = new ArrayList<EventHandler<TelemetryEvent>>();
+		final IndexingEventHandler[] indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
 		for (int i = 0; i < indexingHandlerCount; i++) {
-			step2handlers.add(new IndexingEventHandler(server, i, indexingHandlerCount));
+			indexingEventHandlers[i] = new IndexingEventHandler(server, i, indexingHandlerCount);
 		}
-
+		
+		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			step2handlers.add(new PersistingEventHandler(telemetryEventRepository, i, persistingHandlerCount));
+			persistingEventHandlers[i] = new PersistingEventHandler(telemetryEventRepository, i, persistingHandlerCount);
 		}
-
-		EventHandler<TelemetryEvent>[] eventHandlers = new EventHandler[indexingHandlerCount + persistingHandlerCount];
-		this.disruptor.handleEventsWith(correlatingEventHandlers).then(step2handlers.toArray(eventHandlers));
+		this.disruptor.handleEventsWith(correlatingEventHandlers);
+		this.disruptor.after(correlatingEventHandlers).handleEventsWith(persistingEventHandlers);
+		this.disruptor.after(correlatingEventHandlers).handleEventsWith(indexingEventHandlers);
 		this.ringBuffer = this.disruptor.start();
 	}
-
+	
 	public void stop() {
 		if (!this.started) {
 			throw new IllegalSelectorException();
@@ -103,7 +107,9 @@ public class TelemetryEventProcessor {
 			determineDirectionType(telemetryEvent, message);
 			preProcess(telemetryEvent);
 		} catch (Throwable t) {
-			t.printStackTrace();
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage(t.getMessage(), t);
+			}
 		} finally {
 			this.ringBuffer.publish(sequence);
 
