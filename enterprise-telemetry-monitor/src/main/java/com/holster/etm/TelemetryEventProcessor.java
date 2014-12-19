@@ -4,7 +4,6 @@ import java.nio.channels.IllegalSelectorException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 
 import javax.jms.JMSException;
@@ -89,20 +88,20 @@ public class TelemetryEventProcessor {
 				TextMessage textMessage = (TextMessage) message;
 				telemetryEvent.content = textMessage.getText();
 			}
-			telemetryEvent.sourceId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_SOURCE_ID);
+			telemetryEvent.sourceId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_SOURCE_ID);
 			if (telemetryEvent.sourceId == null) {
 				telemetryEvent.sourceId = message.getJMSMessageID();
 			}
-			telemetryEvent.sourceCorrelationId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_SOURCE_CORRELATION_ID);
+			telemetryEvent.sourceCorrelationId = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID);
 			if (telemetryEvent.sourceCorrelationId == null) {
 				telemetryEvent.sourceCorrelationId = message.getJMSCorrelationID();
 			}
-			telemetryEvent.endpoint = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_ENDPOINT);
-			telemetryEvent.application = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_APPLICATION);
-			telemetryEvent.eventName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_NAME);
-			telemetryEvent.eventTime.setTime(message.getJMSTimestamp());
-			telemetryEvent.transactionName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_NAME);
-			telemetryEvent.transactionId = (UUID) message.getObjectProperty(TelemetryEvent.JMS_PROPERTY_KEY_TRANSACTION_ID);
+			telemetryEvent.endpoint = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_ENDPOINT);
+			telemetryEvent.application = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_APPLICATION);
+			telemetryEvent.name = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_NAME);
+			telemetryEvent.creationTime.setTime(message.getJMSDeliveryTime());
+			telemetryEvent.expiryTime.setTime(message.getJMSExpiration());
+			telemetryEvent.transactionName = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME);
 			determineEventType(telemetryEvent, message);
 			determineDirectionType(telemetryEvent, message);
 			preProcess(telemetryEvent);
@@ -117,29 +116,29 @@ public class TelemetryEventProcessor {
 	}
 
 	private void determineEventType(TelemetryEvent telemetryEvent, Message message) throws JMSException {
-		String messageType = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_MESSAGE_TYPE);
+		String messageType = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_TYPE);
 		if (messageType != null) {
 			try {
-				telemetryEvent.eventType = TelemetryEventType.valueOf(messageType);
+				telemetryEvent.type = TelemetryEventType.valueOf(messageType);
 				return;
 			} catch (IllegalArgumentException e) {
 			}
 		}
 		int ibmMsgType = message.getIntProperty("JMS_IBM_MsgType");
 		if (ibmMsgType == 1) {
-			telemetryEvent.eventType = TelemetryEventType.MESSAGE_REQUEST;
+			telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
 		} else if (ibmMsgType == 2) {
-			telemetryEvent.eventType = TelemetryEventType.MESSAGE_RESPONSE;
+			telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
 		} else if (ibmMsgType == 8) {
-			telemetryEvent.eventType = TelemetryEventType.MESSAGE_DATAGRAM;
+			telemetryEvent.type = TelemetryEventType.MESSAGE_DATAGRAM;
 		}
 	}
 	
 	private void determineDirectionType(TelemetryEvent telemetryEvent, Message message) throws JMSException {
-		String direction = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_DIRECTION);
+		String direction = message.getStringProperty(TelemetryEvent.JMS_PROPERTY_KEY_EVENT_DIRECTION);
 		if (direction != null) {
 			try {
-				telemetryEvent.eventDirection = TelemetryEventDirection.valueOf(direction);
+				telemetryEvent.direction = TelemetryEventDirection.valueOf(direction);
 				return;
 			} catch (IllegalArgumentException e) {
 			}
@@ -161,14 +160,14 @@ public class TelemetryEventProcessor {
 	}
 	
 	private void preProcess(TelemetryEvent event) {
-		if (event.eventTime.getTime() == 0) {
-			event.eventTime.setTime(System.currentTimeMillis());
+		if (event.creationTime.getTime() == 0) {
+			event.creationTime.setTime(System.currentTimeMillis());
 		}
-		if (event.transactionName != null && event.transactionId == null) {
+		if (event.transactionName != null) {
 			event.transactionId = event.id;
 		}
 		if (event.sourceId != null) {
-			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.transactionId, event.transactionName, event.eventTime.getTime()));
+			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.transactionId, event.transactionName, event.creationTime.getTime()));
 		}
 		
 	}

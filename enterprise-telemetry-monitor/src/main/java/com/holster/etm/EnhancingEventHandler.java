@@ -31,32 +31,35 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.ignore || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
-		if (event.eventTime.getTime() == 0) {
-			event.eventTime.setTime(System.currentTimeMillis());
-		}
-		if (event.sourceCorrelationId != null && (event.correlationId == null || event.transactionId == null || event.transactionName == null)) {
+		if (needsCorrelation(event)) {
+			// Find the correlation event.
 			this.telemetryEventRepository.findParent(event.sourceCorrelationId, this.correlationBySourceIdResult.initialize());
 			if (event.correlationId == null) {
 				event.correlationId = this.correlationBySourceIdResult.id;
 			}
-			if (event.transactionId == null) {
-				event.transactionId = this.correlationBySourceIdResult.transactionId;
+			if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
+				// if this is a response, set the transactiondata from the parent, and calculate the response time.
+				if (event.transactionId == null) {
+					event.transactionId = this.correlationBySourceIdResult.transactionId;
+				}
+				if (event.transactionName == null) {
+					event.transactionName = this.correlationBySourceIdResult.transactionName;
+				}
+				if (event.responseTime != 0) {
+					event.responseTime = event.creationTime.getTime() - this.correlationBySourceIdResult.creationTime.getTime();
+				}
 			}
-			if (event.transactionName == null) {
-				event.transactionName = this.correlationBySourceIdResult.transactionName;
-			}
-			event.correlationTimeDifference = event.eventTime.getTime() - this.correlationBySourceIdResult.eventTime.getTime(); 
 		}
 		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
-		if (event.endpoint != null && (event.application == null || event.eventName == null || event.eventDirection == null)) {
+		if (event.endpoint != null && (event.application == null || event.name == null || event.direction == null)) {
 			if (event.application == null) {
 				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
 			}
-			if (event.eventName == null && event.content != null) {
-				event.eventName = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
+			if (event.name == null && event.content != null) {
+				event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
 			}
-			if (event.eventDirection == null) {
-				event.eventDirection = this.endpointConfigResult.eventDirection;
+			if (event.direction == null) {
+				event.direction = this.endpointConfigResult.eventDirection;
 			}
  		}
 		if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
@@ -67,6 +70,20 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				}
 			});
 		}
+//		if (event.sourceId != null) {
+//			event.correlationData.put(TelemetryEvent.CORRELATION_KEY_SOURCE_ID, event.sourceId);
+//		}
+	}
+	
+	private boolean needsCorrelation(final TelemetryEvent event) {
+		if (event.sourceCorrelationId != null && event.correlationId == null) {
+			return true;
+		} else if (event.sourceCorrelationId != null
+		        && ((event.transactionId == null || event.transactionName == null || event.responseTime == 0) && TelemetryEventType.MESSAGE_RESPONSE
+		                .equals(event.type))) {
+			return true;
+		}
+		return false;
 	}
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {

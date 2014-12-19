@@ -8,14 +8,14 @@ public class CorrelationBySourceIdResult {
 	public UUID id;
 	public UUID transactionId;
 	public String transactionName;
-	public Date eventTime = new Date(0);
+	public Date creationTime = new Date(0);
 	
-	public CorrelationBySourceIdResult(UUID id, UUID transactionId, String transactionName, long eventTime) {
+	public CorrelationBySourceIdResult(UUID id, UUID transactionId, String transactionName, long creationTime) {
 		this();
 	    this.id = id;
 	    this.transactionId = transactionId;
 	    this.transactionName = transactionName;
-	    this.eventTime.setTime(eventTime);
+	    this.creationTime.setTime(creationTime);
     }
 	
 	public CorrelationBySourceIdResult() {
@@ -25,7 +25,7 @@ public class CorrelationBySourceIdResult {
 		this.id = null;
 		this.transactionId = null;
 		this.transactionName = null;
-		this.eventTime.setTime(0);
+		this.creationTime.setTime(0);
 		return this;
 	}
 

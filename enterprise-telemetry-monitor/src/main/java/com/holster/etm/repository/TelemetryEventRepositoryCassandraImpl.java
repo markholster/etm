@@ -53,23 +53,24 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				+ "application, "
 				+ "content, "
 				+ "correlationId, "
-				+ "correlationTimeDifference, "
+				+ "creationTime, "
 				+ "direction, "
 				+ "endpoint, "
-				+ "eventName, "
-				+ "eventTime, "
-				+ "sourceId, "
+				+ "expiryTime, "
+				+ "name, "
+				+ "responseTime, "
 				+ "sourceCorrelationId, "
+				+ "sourceId, "
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "type"
-				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation ("
 				+ "sourceId, "
+				+ "creationTime, "
 				+ "id, "
 				+ "transactionId, "
-				+ "transactionName, "
-				+ "eventTime"
+				+ "transactionName"
 				+ ") values (?,?,?,?,?);");
 		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data ("
 				+ "id, "
@@ -117,13 +118,15 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				+ "where application = ? and eventName = ? and timeunit = ?;");
 		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set "
 				+ "count = count + 1, "
+				+ "transactionStart = transactionStart + ?, "
+				+ "transactionFinish = transactionFinish + ?, "
 				+ "transactionResponseTime = transactionResponseTime + ? "
 				+ "where transactionName = ? and timeunit = ?;");
 		this.findParentStatement = session.prepare("select "
 				+ "id, "
 				+ "transactionId, "
 				+ "transactionName, "
-				+ "eventTime "
+				+ "creationTime "
 				+ "from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
 				+ "direction, "
@@ -137,51 +140,52 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
-		this.timestamp.setTime(normalizeTime(event.eventTime.getTime()));
+		this.timestamp.setTime(normalizeTime(event.creationTime.getTime()));
 		this.session.executeAsync(this.insertTelemetryEventStatement.bind(
 				event.id, 
 				event.application, 
 				event.content, 
 				event.correlationId,
-		        event.correlationTimeDifference, 
-		        event.eventDirection != null ? event.eventDirection.name() : null, 
+				event.creationTime, 
+		        event.direction != null ? event.direction.name() : null, 
 		        event.endpoint,
-		        event.eventName, 
-		        event.eventTime, 
-		        event.sourceId, 
+		        event.expiryTime,
+		        event.name, 
+		        event.responseTime, 
 		        event.sourceCorrelationId, 
+		        event.sourceId, 
 		        event.transactionId, 
 		        event.transactionName,
-		        event.eventType != null ? event.eventType.name() : null));
+		        event.type != null ? event.type.name() : null));
 		if (event.sourceId != null) {
 			// Synchronouse execution because soureCorrelationd list needs to be cleared with this event after the data is present in the database.
 			this.session.execute(this.insertSourceIdIdStatement.bind(
-					event.sourceId, 
+					event.sourceId,
+					event.creationTime,
 					event.id, 
 					event.transactionId, 
-					event.transactionName, 
-					event.eventTime));
+					event.transactionName));
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (!event.correlationData.isEmpty()) {
 			event.correlationData.forEach((k,v) -> this.session.executeAsync(this.insertCorrelationDataStatement.bind(event.id, k, v, event.transactionId, event.transactionName)));
 		}
-		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) ? 1 : 0;
-		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) && TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? 1 : 0;
-		long outgoingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.eventType) && TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? 1 : 0;
-		long responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) ? 1 : 0;
-		long incomingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) && TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? 1 : 0;
-		long outgoingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.eventType) && TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? 1 : 0;
-		long datagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) ? 1 : 0;
-		long incomingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) && TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? 1 : 0;
-		long outgoingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.eventType) && TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? 1 : 0;
+		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
+		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
+		long outgoingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.OUTGOING.equals(event.direction) ? 1 : 0;
+		long responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) ? 1 : 0;
+		long incomingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
+		long outgoingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && TelemetryEventDirection.OUTGOING.equals(event.direction) ? 1 : 0;
+		long datagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) ? 1 : 0;
+		long incomingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
+		long outgoingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && TelemetryEventDirection.OUTGOING.equals(event.direction) ? 1 : 0;
 		long responseTime = 0;
 		long incomingResponseTime = 0;
 		long outgoingResponseTime = 0;
 		if (responseCount > 0) {
-			responseTime = event.correlationTimeDifference;
-			incomingResponseTime = TelemetryEventDirection.INCOMING.equals(event.eventDirection) ? event.correlationTimeDifference : 0;
-			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.eventDirection) ? event.correlationTimeDifference : 0;
+			responseTime = event.responseTime;
+			incomingResponseTime = TelemetryEventDirection.INCOMING.equals(event.direction) ? event.responseTime : 0;
+			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.direction) ? event.responseTime : 0;
 		}
 		if (event.application != null) {
 			this.session.executeAsync(this.updateApplicationCounterStatement.bind(
@@ -200,16 +204,16 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        event.application, 
 			        this.timestamp));
 		}
-		if (event.eventName != null) {
+		if (event.name != null) {
 			this.session.executeAsync(this.updateEventNameCounterStatement.bind(
 					requestCount, 
 					responseCount, 
 					datagramCount, 
 					responseTime, 
-					event.eventName, 
+					event.name, 
 					this.timestamp));
 		}
-		if (event.application != null && event.eventName != null) {
+		if (event.application != null && event.name != null) {
 			this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(
 					requestCount, 
 					incomingRequestCount, 
@@ -224,12 +228,12 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        incomingResponseTime, 
 			        outgoingResponseTime, 
 					event.application, 
-					event.eventName, 
+					event.name, 
 					this.timestamp));
 		}
-		if (event.transactionName != null && event.correlationId != null) {
+		if (event.transactionName != null) {
 			// event belongs to a transaction, and is correlated so it's the end of a transaction
-			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(responseTime, event.transactionName, this.timestamp));
+			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(responseTime, requestCount, responseCount, event.transactionName, this.timestamp));
 		}
     }
 
@@ -247,7 +251,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.id = parent.id;
 			result.transactionId = parent.transactionId;
 			result.transactionName = parent.transactionName;
-			result.eventTime = parent.eventTime;
+			result.creationTime = parent.creationTime;
 			return;
 		}
 		ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId));
@@ -256,7 +260,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.id = row.getUUID(0);
 			result.transactionId = row.getUUID(1);
 			result.transactionName = row.getString(2);
-			result.eventTime = row.getDate(3);
+			result.creationTime = row.getDate(3);
 		}
     }
 

@@ -4,15 +4,16 @@ use etm;
 create table telemetry_event ( 
     id timeuuid primary key, 
     application text,
-    correlationTimeDifference bigint, 
     content text, 
     correlationId timeuuid,
+    creationTime timestamp,
     direction text, 
     endpoint text, 
-    eventName text,
-    eventTime timestamp, 
-    sourceId text, 
+    expiryTime timestamp, 
+    name text,
+    responseTime bigint, 
     sourceCorrelationId text, 
+    sourceId text, 
     transactionId timeuuid, 
     transactionName text,
     type text
@@ -20,18 +21,10 @@ create table telemetry_event (
 
 create table sourceid_id_correlation (
     sourceId text primary key,
+    creationTime timestamp,
     id timeuuid,
     transactionId timeuuid,
-    transactionName text,
-    eventTime timestamp
-);
-
-create table endpoint_config (
-    endpoint text primary key,
-    direction text,
-    applicationParsers list<text>,
-    eventNameParsers list<text>,
-    correlationParsers map<text, text>
+    transactionName text
 );
 
 create table correlation_data (
@@ -41,6 +34,14 @@ create table correlation_data (
     transactionId timeuuid, 
     transactionName text,
     primary key (id, name, value)
+);
+
+create table endpoint_config (
+    endpoint text primary key,
+    direction text,
+    applicationParsers list<text>,
+    eventNameParsers list<text>,
+    correlationParsers map<text, text>
 );
 
 create table application_counter (
@@ -97,6 +98,8 @@ create table transactionname_counter (
     transactionName text,
     timeunit timestamp,
     count counter,
+    transactionStart counter,
+    transactionFinish counter,
     transactionResponseTime counter,
     primary key (transactionName, timeunit)
 );
