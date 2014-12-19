@@ -165,7 +165,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		        event.transactionName,
 		        event.type != null ? event.type.name() : null));
 		if (event.sourceId != null) {
-			// Synchronous execution because soureCorrelationd list needs to be cleared with this event after the data is present in the database.
+			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
 			this.session.execute(this.insertSourceIdIdStatement.bind(
 					event.sourceId,
 					event.creationTime,
