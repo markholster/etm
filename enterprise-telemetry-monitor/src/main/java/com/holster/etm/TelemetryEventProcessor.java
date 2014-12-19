@@ -48,9 +48,9 @@ public class TelemetryEventProcessor {
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 
 		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(session, this.sourceCorrelations);
-		final EnhancingEventHandler[] correlatingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
+		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			correlatingEventHandlers[i] = new EnhancingEventHandler(telemetryEventRepository, i, enhancingHandlerCount);
+			enhancingEvntHandler[i] = new EnhancingEventHandler(telemetryEventRepository, i, enhancingHandlerCount);
 		}
 
 		final IndexingEventHandler[] indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
@@ -62,9 +62,9 @@ public class TelemetryEventProcessor {
 		for (int i = 0; i < persistingHandlerCount; i++) {
 			persistingEventHandlers[i] = new PersistingEventHandler(telemetryEventRepository, i, persistingHandlerCount);
 		}
-		this.disruptor.handleEventsWith(correlatingEventHandlers);
-		this.disruptor.after(correlatingEventHandlers).handleEventsWith(persistingEventHandlers);
-		this.disruptor.after(correlatingEventHandlers).handleEventsWith(indexingEventHandlers);
+		this.disruptor.handleEventsWith(enhancingEvntHandler);
+		this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);
+		this.disruptor.after(enhancingEvntHandler).handleEventsWith(indexingEventHandlers);
 		this.ringBuffer = this.disruptor.start();
 	}
 	

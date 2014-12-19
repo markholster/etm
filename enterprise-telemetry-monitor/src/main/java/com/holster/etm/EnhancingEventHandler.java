@@ -45,7 +45,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				if (event.transactionName == null) {
 					event.transactionName = this.correlationBySourceIdResult.transactionName;
 				}
-				if (event.responseTime != 0) {
+				if (event.responseTime == 0) {
 					event.responseTime = event.creationTime.getTime() - this.correlationBySourceIdResult.creationTime.getTime();
 				}
 			}
