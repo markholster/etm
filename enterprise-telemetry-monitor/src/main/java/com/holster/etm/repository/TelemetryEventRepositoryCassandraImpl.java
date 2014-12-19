@@ -233,7 +233,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		}
 		if (event.transactionName != null) {
 			// event belongs to a transaction, and is correlated so it's the end of a transaction
-			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(responseTime, requestCount, responseCount, event.transactionName, this.timestamp));
+			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount, responseTime, event.transactionName, this.timestamp));
 		}
     }
 
