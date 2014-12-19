@@ -18,6 +18,8 @@ import com.datastax.driver.core.Session;
 import com.holster.etm.TelemetryEvent;
 import com.holster.etm.TelemetryEventDirection;
 import com.holster.etm.TelemetryEventType;
+import com.holster.etm.logging.LogFactory;
+import com.holster.etm.logging.LogWrapper;
 import com.holster.etm.parsers.ExpressionParser;
 import com.holster.etm.parsers.FixedPositionExpressionParser;
 import com.holster.etm.parsers.FixedValueExpressionParser;
@@ -25,6 +27,11 @@ import com.holster.etm.parsers.XPathExpressionParser;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventRepositoryCassandraImpl.class);
+	
 	private final Session session;
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
 	
@@ -158,7 +165,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		        event.transactionName,
 		        event.type != null ? event.type.name() : null));
 		if (event.sourceId != null) {
-			// Synchronouse execution because soureCorrelationd list needs to be cleared with this event after the data is present in the database.
+			// Synchronous execution because soureCorrelationd list needs to be cleared with this event after the data is present in the database.
 			this.session.execute(this.insertSourceIdIdStatement.bind(
 					event.sourceId,
 					event.creationTime,
@@ -232,7 +239,6 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					this.timestamp));
 		}
 		if (event.transactionName != null) {
-			// event belongs to a transaction, and is correlated so it's the end of a transaction
 			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount, responseTime, event.transactionName, this.timestamp));
 		}
     }
@@ -337,7 +343,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				try {
 	                return new XPathExpressionParser(this.xPath, expression.substring(6));
                 } catch (XPathExpressionException e) {
-                	// TODO logging
+                	if (log.isErrorLevelEnabled()) {
+                		log.logErrorMessage("Could not create XPathExpressionParser. Using FixedValueExpressionParser instead.", e);
+                	}
                 	new FixedValueExpressionParser(null);
                 }
 			} else if (expression.charAt(0) == 'f' &&
@@ -349,7 +357,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				String range = expression.substring(6);
 				String[] values = range.split("-");
 				if (values.length != 2) {
-                	// TODO logging
+                	if (log.isErrorLevelEnabled()) {
+                		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.");
+                	}
                 	new FixedValueExpressionParser(null);					
 				}
 				try {
@@ -363,7 +373,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					} 
 					return new FixedPositionExpressionParser(start, end);
 				} catch (NumberFormatException e) {
-                	// TODO logging
+                	if (log.isErrorLevelEnabled()) {
+                		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.", e);
+                	}
                 	new FixedValueExpressionParser(null);										
 				}
 			}
