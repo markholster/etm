@@ -12,7 +12,7 @@
 	<artifactId>etm-processor-mdb</artifactId>
 	<packaging>jar</packaging>
 	<description>An MDB that takes events from an queue and passes them to the processor.</description>
-	<name>Enterprise Telemetry Monitor - processor</name>
+	<name>Enterprise Telemetry Monitor - processor mdb</name>
 	<dependencies>
 		<dependency>
 			<groupId>com.holster.etm</groupId>
