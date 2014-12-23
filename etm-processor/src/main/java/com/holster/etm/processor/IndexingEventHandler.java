@@ -1,8 +1,9 @@
-package com.holster.etm;
+package com.holster.etm.processor;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.common.SolrInputDocument;
 
+import com.holster.etm.TelemetryEvent;
 import com.lmax.disruptor.EventHandler;
 
 public class IndexingEventHandler implements EventHandler<TelemetryEvent> {

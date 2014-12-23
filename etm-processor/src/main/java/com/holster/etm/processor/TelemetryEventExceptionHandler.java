@@ -1,5 +1,7 @@
-package com.holster.etm;
+package com.holster.etm.processor;
 
+import com.holster.etm.EtmException;
+import com.holster.etm.TelemetryEvent;
 import com.lmax.disruptor.ExceptionHandler;
 
 public class TelemetryEventExceptionHandler implements ExceptionHandler {

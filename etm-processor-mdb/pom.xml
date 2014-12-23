@@ -9,31 +9,19 @@
 		<relativePath>../etm-aggregator/pom.xml</relativePath>
 	</parent>	
 	<groupId>com.holster.etm</groupId>
-	<artifactId>etm-processor</artifactId>
+	<artifactId>etm-processor-mdb</artifactId>
 	<packaging>jar</packaging>
-	<description>The etm-processor handles events that need to be stored.</description>
+	<description>An MDB that takes events from an queue and passes them to the processor.</description>
 	<name>Enterprise Telemetry Monitor - processor</name>
 	<dependencies>
 		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
+			<groupId>com.holster.etm</groupId>
+			<artifactId>etm-processor</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.datastax.cassandra</groupId>
-			<artifactId>cassandra-driver-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.lmax</groupId>
-			<artifactId>disruptor</artifactId>
-		</dependency>
-		<dependency>
-			<artifactId>solr-solrj</artifactId>
-			<groupId>org.apache.solr</groupId>
-		</dependency>		
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+		</dependency>		        
 	</dependencies>
 	<build>
 		<plugins>
@@ -53,11 +41,10 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 			</plugin>
-<!--			<plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-eclipse-plugin</artifactId>
 			</plugin>
--->
 		</plugins>
 	</build>
 </project>

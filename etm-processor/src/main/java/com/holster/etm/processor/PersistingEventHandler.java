@@ -1,5 +1,6 @@
-package com.holster.etm;
+package com.holster.etm.processor;
 
+import com.holster.etm.TelemetryEvent;
 import com.holster.etm.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
