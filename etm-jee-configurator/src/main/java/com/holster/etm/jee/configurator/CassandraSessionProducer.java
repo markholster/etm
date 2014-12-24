@@ -24,7 +24,7 @@ public class CassandraSessionProducer {
 		synchronized (this) {
 			if (this.session == null) {
 				Builder builder = Cluster.builder();
-				String contactPoints = this.configuration.getProperty("cassandra.contact_points");
+				String contactPoints = this.configuration.getProperty("cassandra.contact_points", "127.0.0.1");
 				String[] split = contactPoints.split(",");
 				for (String contactPoint : split) {
 					builder = builder.addContactPoint(contactPoint.trim());

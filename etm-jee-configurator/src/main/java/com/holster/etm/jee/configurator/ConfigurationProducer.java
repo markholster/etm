@@ -29,11 +29,10 @@ public class ConfigurationProducer {
 					} else {
 						settingsStream = getClass().getResourceAsStream("/etm.properties");
 					}
-					if (settingsStream == null) {
-						throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION);	
-					}
 					this.properties = new Properties();
-					this.properties.load(settingsStream);
+					if (settingsStream != null) {
+						this.properties.load(settingsStream);
+					}
 				} catch (IOException e) {
 					throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION, e);
 				} finally {

@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.util.Properties;
 
 import javax.annotation.ManagedBean;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.apache.solr.client.solrj.SolrServer;
@@ -20,10 +21,11 @@ public class SolrServerProducer {
 	
 	private SolrServer solrServer;
 	
+	@Produces
 	public SolrServer getSolrServer() {
 		synchronized (this) {
 			if (this.solrServer == null) {
-				String serverUrls = this.configuration.getProperty("solr.server_urls");
+				String serverUrls = this.configuration.getProperty("solr.server_urls", "http://127.0.0.1:8983/solr/");
 				String[] split = serverUrls.split(",");
 				try {
 	                this.solrServer = new LBHttpSolrServer(split);
