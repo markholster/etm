@@ -82,12 +82,13 @@ public class RestTelemetryEventProcessor {
 				}
 			}
 			this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
-			return "{ \"status\": \"ok\" }";
+			return "{ \"status\": \"success\" }";
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Not processing rest message.", e);
 			}
-			return "{ \"status\": \"error\", \"error\": \"" + e.getMessage() + "\" }";
+			// TODO find out how error handling works in the rest-api
+			return "{ \"status\": \"failure\", \"error\": \"" + e.getMessage() + "\" }";
 		}
 	}
 
