@@ -21,7 +21,7 @@ import com.holster.etm.processor.processor.TelemetryEventProcessor;
 	    @ActivationConfigProperty(propertyName = "destinationType",
 	            propertyValue = "javax.jms.Queue")
 	})
-public class JMSTelemetryEventProccessor implements MessageListener {
+public class JMSTelemetryEventProcessor implements MessageListener {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.

@@ -13,9 +13,10 @@
 		<url>https://zwolle.cleme.nl/bamboo/browse/ETM</url>
 	</ciManagement>
 	<modules>
+		<module>../etm-jee-configurator</module>
 		<module>../etm-processor</module>
 		<module>../etm-processor-mdb</module>
-		<module>../etm-jee-configurator</module>
+		<module>../etm-processor-rest</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -54,6 +55,11 @@
 				<artifactId>Saxon-HE</artifactId>
 				<version>9.6.0-3</version>
 			</dependency>
+            <dependency>
+                <groupId>org.codehaus.jackson</groupId>
+                <artifactId>jackson-lgpl</artifactId>
+                <version>0.9.5</version>
+            </dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
