@@ -14,26 +14,22 @@
 	<description>The etm-processor handles events that need to be stored.</description>
 	<name>Enterprise Telemetry Monitor - processor</name>
 	<dependencies>
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.datastax.cassandra</groupId>
-			<artifactId>cassandra-driver-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.lmax</groupId>
-			<artifactId>disruptor</artifactId>
-		</dependency>
-		<dependency>
-			<artifactId>solr-solrj</artifactId>
-			<groupId>org.apache.solr</groupId>
-		</dependency>		
+        <dependency>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.lmax</groupId>
+            <artifactId>disruptor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+        </dependency>       
 	</dependencies>
 	<build>
 		<plugins>

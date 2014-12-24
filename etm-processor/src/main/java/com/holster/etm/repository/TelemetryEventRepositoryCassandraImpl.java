@@ -11,6 +11,8 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import net.sf.saxon.xpath.XPathFactoryImpl;
+
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -139,9 +141,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				+ "direction, "
 				+ "applicationParsers, "
 				+ "eventNameParsers, "
-				+ "correlationParsers "
+				+ "correlationParsers, "
+				+ "transactionNameParsers "
 				+ "from " + keySpace + ".endpoint_config where endpoint = ?;");
-		XPathFactory xpf = XPathFactory.newInstance();
+		XPathFactory xpf = new XPathFactoryImpl();
 		this.xPath = xpf.newXPath();
     }
 	
@@ -318,6 +321,11 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		while (iterator.hasNext()) {
 			String key = iterator.next();
 			result.correlationDataParsers.put(key, createExpressionParser(map.get(key)));
+		}
+		if (result.transactionNameParsers == null) {
+			result.transactionNameParsers = createExpressionParsers(row.getList(4, String.class));
+		} else {
+			result.transactionNameParsers.addAll(0, createExpressionParsers(row.getList(4, String.class)));
 		}
     }
 

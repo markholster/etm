@@ -41,7 +41,8 @@ create table endpoint_config (
     direction text,
     applicationParsers list<text>,
     eventNameParsers list<text>,
-    correlationParsers map<text, text>
+    correlationParsers map<text, text>,
+    transactionNameParsers list<text>,
 );
 
 create table application_counter (

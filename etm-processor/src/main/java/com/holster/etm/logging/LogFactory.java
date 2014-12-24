@@ -19,7 +19,7 @@ public class LogFactory {
 	 * @return A <code>LogWrapper</code> instance.
 	 */
 	public static LogWrapper getLogger(String loggerName) {
-		return new Log4jLogWrapper(loggerName);
+		return new Slf4jLogWrapper(loggerName);
 	}
 	
 	/**
@@ -40,8 +40,7 @@ public class LogFactory {
 	 * @return A <code>List</code> with currently known logger names.
 	 */
 	public static List<String> getCurrentLoggerNames() {
-		List<String> loggerNames = Log4jLogWrapper.getCurrentLoggerNames();
-		Collections.sort(loggerNames);
+		List<String> loggerNames = Collections.emptyList();
 		return loggerNames;
 	}
 

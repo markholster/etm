@@ -53,7 +53,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			}
 		}
 		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
-		if (event.endpoint != null && (event.application == null || event.name == null || event.direction == null)) {
+		if (event.endpoint != null && (event.application == null || event.name == null || event.direction == null || event.transactionName == null)) {
 			if (event.application == null) {
 				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
 			}
@@ -62,6 +62,12 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			}
 			if (event.direction == null) {
 				event.direction = this.endpointConfigResult.eventDirection;
+			}
+			if (event.transactionName == null) {
+				event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
+				if (event.transactionName != null) {
+					event.transactionId = event.id;
+				}
 			}
  		}
 		if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
@@ -72,9 +78,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				}
 			});
 		}
-//		if (event.sourceId != null) {
-//			event.correlationData.put(TelemetryEvent.CORRELATION_KEY_SOURCE_ID, event.sourceId);
-//		}
 	}
 	
 	private boolean needsCorrelation(final TelemetryEvent event) {

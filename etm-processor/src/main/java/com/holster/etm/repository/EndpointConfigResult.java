@@ -11,6 +11,7 @@ public class EndpointConfigResult {
 
 	public List<ExpressionParser> applicationParsers;
 	public List<ExpressionParser> eventNameParsers;
+	public List<ExpressionParser> transactionNameParsers;
 	public Map<String, ExpressionParser> correlationDataParsers = new HashMap<String, ExpressionParser>();
 	public TelemetryEventDirection eventDirection;
 	

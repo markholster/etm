@@ -22,41 +22,42 @@
 	</properties>
 	<dependencyManagement>
 		<dependencies>
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-core</artifactId>
+                <version>2.1.2</version>
+            </dependency>
 			<dependency>
 				<groupId>com.holster.etm</groupId>
 				<artifactId>etm-processor</artifactId>
 				<version>${project.version}</version>
 			</dependency>		  
-			<dependency>
-				<groupId>log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>1.2.17</version>
-			</dependency>
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>3.3.0</version>
+            </dependency>
+            <dependency>
+                <groupId>javax</groupId>
+                <artifactId>javaee-api</artifactId>
+                <version>7.0</version>
+                <scope>provided</scope>
+            </dependency>               
+            <dependency>
+                <groupId>net.sf.saxon</groupId>
+                <artifactId>Saxon-HE</artifactId>
+                <version>9.6.0-3</version>
+            </dependency>           
 			<dependency>
 				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-log4j12</artifactId>
-				<version>1.7.7</version>
-			</dependency>
-			<dependency>
-				<groupId>com.datastax.cassandra</groupId>
-				<artifactId>cassandra-driver-core</artifactId>
-				<version>2.1.2</version>
-			</dependency>
-			<dependency>
-				<groupId>com.lmax</groupId>
-				<artifactId>disruptor</artifactId>
-				<version>3.3.0</version>
+				<artifactId>slf4j-api</artifactId>
+				<version>1.7.9</version>
 			</dependency>
 			<dependency>
 				<artifactId>solr-solrj</artifactId>
 				<groupId>org.apache.solr</groupId>
 				<version>4.10.2</version>
 			</dependency>		
-			<dependency>
-				<groupId>javax</groupId>
-				<artifactId>javaee-api</artifactId>
-				<version>7.0</version>
-			</dependency>		        
 		</dependencies>
 	</dependencyManagement>
 	<build>

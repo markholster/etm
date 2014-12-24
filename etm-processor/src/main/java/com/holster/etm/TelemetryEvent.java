@@ -19,8 +19,6 @@ public class TelemetryEvent {
 	public static final String JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME = "JMS_ETM_TransactionName";
 	public static final String JMS_PROPERTY_KEY_EVENT_TYPE = "JMS_ETM_Type";
 	
-	public static final String CORRELATION_KEY_SOURCE_ID = "ETM__Source_ID";
-
 	/**
 	 * The unique ID of the event.
 	 */
