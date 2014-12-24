@@ -18,6 +18,10 @@
 			<groupId>com.holster.etm</groupId>
 			<artifactId>etm-processor</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>com.holster.etm</groupId>
+            <artifactId>etm-jee-configurator</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>

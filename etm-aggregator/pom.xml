@@ -16,39 +16,44 @@
 		<module>../etm-processor</module>
 		<module>../etm-processor-mdb</module>
 		<module>../etm-jee-configurator</module>
-	</modules>	
+	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.jdk.level>1.8</project.jdk.level>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
-            <dependency>
-                <groupId>com.datastax.cassandra</groupId>
-                <artifactId>cassandra-driver-core</artifactId>
-                <version>2.1.2</version>
-            </dependency>
+			<dependency>
+				<groupId>com.datastax.cassandra</groupId>
+				<artifactId>cassandra-driver-core</artifactId>
+				<version>2.1.2</version>
+			</dependency>
+			<dependency>
+				<groupId>com.holster.etm</groupId>
+				<artifactId>etm-jee-configurator</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>com.holster.etm</groupId>
 				<artifactId>etm-processor</artifactId>
 				<version>${project.version}</version>
-			</dependency>		  
-            <dependency>
-                <groupId>com.lmax</groupId>
-                <artifactId>disruptor</artifactId>
-                <version>3.3.0</version>
-            </dependency>
-            <dependency>
-                <groupId>javax</groupId>
-                <artifactId>javaee-api</artifactId>
-                <version>7.0</version>
-                <scope>provided</scope>
-            </dependency>               
-            <dependency>
-                <groupId>net.sf.saxon</groupId>
-                <artifactId>Saxon-HE</artifactId>
-                <version>9.6.0-3</version>
-            </dependency>           
+			</dependency>
+			<dependency>
+				<groupId>com.lmax</groupId>
+				<artifactId>disruptor</artifactId>
+				<version>3.3.0</version>
+			</dependency>
+			<dependency>
+				<groupId>javax</groupId>
+				<artifactId>javaee-api</artifactId>
+				<version>7.0</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>net.sf.saxon</groupId>
+				<artifactId>Saxon-HE</artifactId>
+				<version>9.6.0-3</version>
+			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
@@ -58,7 +63,7 @@
 				<artifactId>solr-solrj</artifactId>
 				<groupId>org.apache.solr</groupId>
 				<version>4.10.2</version>
-			</dependency>		
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<build>
@@ -108,7 +113,8 @@
 							</manifest>
 							<manifestEntries>
 								<Specification-Title>${project.name}</Specification-Title>
-								<Specification-Version>${project.version}</Specification-Version>
+								<Specification-Version>${project.version}
+								</Specification-Version>
 								<Implementation-Version>${buildNumber}</Implementation-Version>
 							</manifestEntries>
 						</archive>
@@ -127,7 +133,8 @@
 							</manifest>
 							<manifestEntries>
 								<Specification-Title>${project.name}</Specification-Title>
-								<Specification-Version>${project.version}</Specification-Version>
+								<Specification-Version>${project.version}
+								</Specification-Version>
 								<Implementation-Version>${buildNumber}</Implementation-Version>
 							</manifestEntries>
 						</archive>
@@ -160,6 +167,6 @@
 					</configuration>
 				</plugin>
 			</plugins>
-		</pluginManagement>	
+		</pluginManagement>
 	</build>
 </project>
