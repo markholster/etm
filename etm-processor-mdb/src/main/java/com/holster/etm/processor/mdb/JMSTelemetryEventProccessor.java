@@ -8,12 +8,12 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
-import com.holster.etm.TelemetryEvent;
-import com.holster.etm.TelemetryEventDirection;
-import com.holster.etm.TelemetryEventType;
-import com.holster.etm.logging.LogFactory;
-import com.holster.etm.logging.LogWrapper;
-import com.holster.etm.processor.TelemetryEventProcessor;
+import com.holster.etm.processor.TelemetryEvent;
+import com.holster.etm.processor.TelemetryEventDirection;
+import com.holster.etm.processor.TelemetryEventType;
+import com.holster.etm.processor.logging.LogFactory;
+import com.holster.etm.processor.logging.LogWrapper;
+import com.holster.etm.processor.processor.TelemetryEventProcessor;
 
 @MessageDriven(activationConfig = {
 	    @ActivationConfigProperty(propertyName = "destinationLookup",
