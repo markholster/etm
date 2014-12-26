@@ -10,8 +10,7 @@
 	</parent>	
 	<groupId>com.holster.etm</groupId>
 	<artifactId>etm-processor-mdb</artifactId>
-	<packaging>ejb</packaging>
-	<!--  TODO MDB kan ook prima als een WAR gedeployed worden -->
+	<packaging>war</packaging>
 	<description>An MDB that takes events from an queue and passes them to the processor.</description>
 	<name>Enterprise Telemetry Monitor - processor mdb</name>
 	<dependencies>
@@ -31,17 +30,30 @@
     <build>
         <plugins>
             <plugin>
-	            <groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-ejb-plugin</artifactId>            
-            </plugin>        
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <configuration>
+<!--                 
+                    <packagingExcludes>WEB-INF/lib/*.jar</packagingExcludes>
+ -->                    
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Specification-Title>${project.name}</Specification-Title>
+                            <Specification-Version>${project.version}</Specification-Version>
+                            <Implementation-Version>${buildNumber}</Implementation-Version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>       
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-eclipse-plugin</artifactId>
                 <configuration>
                     <jeeversion>7.0</jeeversion>
-                    <additionalProjectFacets>
-                        <jst.ejb>3.2</jst.ejb>
-                    </additionalProjectFacets>
                     <buildcommands>
                         <buildcommand>org.eclipse.wst.common.project.facet.core.builder</buildcommand>
                         <buildcommand>org.eclipse.jdt.core.javabuilder</buildcommand>

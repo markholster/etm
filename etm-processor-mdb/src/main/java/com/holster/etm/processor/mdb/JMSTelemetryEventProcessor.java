@@ -17,7 +17,7 @@ import com.holster.etm.processor.processor.TelemetryEventProcessor;
 
 @MessageDriven(activationConfig = {
 	    @ActivationConfigProperty(propertyName = "destinationLookup",
-	            propertyValue = "jms/EtmQueue"),
+	            propertyValue = "jms/queue/EtmNotification"),
 	    @ActivationConfigProperty(propertyName = "destinationType",
 	            propertyValue = "javax.jms.Queue")
 	})
