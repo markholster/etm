@@ -11,6 +11,7 @@
 	<groupId>com.holster.etm</groupId>
 	<artifactId>etm-processor-mdb</artifactId>
 	<packaging>ejb</packaging>
+	<!--  TODO MDB kan ook prima als een WAR gedeployed worden -->
 	<description>An MDB that takes events from an queue and passes them to the processor.</description>
 	<name>Enterprise Telemetry Monitor - processor mdb</name>
 	<dependencies>
