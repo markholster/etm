@@ -17,6 +17,7 @@
 		<module>../etm-processor</module>
 		<module>../etm-processor-mdb</module>
 		<module>../etm-processor-rest</module>
+		<module>../etm-processor-ws</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

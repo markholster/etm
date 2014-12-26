@@ -6,6 +6,7 @@ public class EtmException extends RuntimeException {
 	
 	public static final int WRAPPED_EXCEPTION 				= 100_000;
 	public static final int CONFIGURATION_LOAD_EXCEPTION 	= 100_001;
+	public static final int UNMARSHALLER_CREATE_EXCEPTION 	= 100_002;
 
 	private int errorCode;
 

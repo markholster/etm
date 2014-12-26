@@ -10,15 +10,6 @@ import com.datastax.driver.core.utils.UUIDs;
 
 public class TelemetryEvent {
 	
-	public static final String JMS_PROPERTY_KEY_EVENT_APPLICATION = "JMS_ETM_Application";
-	public static final String JMS_PROPERTY_KEY_EVENT_DIRECTION = "JMS_ETM_Direction";
-	public static final String JMS_PROPERTY_KEY_EVENT_ENDPOINT = "JMS_ETM_Endpoint";
-	public static final String JMS_PROPERTY_KEY_EVENT_NAME = "JMS_ETM_Name";
-	public static final String JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID = "JMS_ETM_SourceCorrelationID";
-	public static final String JMS_PROPERTY_KEY_EVENT_SOURCE_ID = "JMS_ETM_SourceID";
-	public static final String JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME = "JMS_ETM_TransactionName";
-	public static final String JMS_PROPERTY_KEY_EVENT_TYPE = "JMS_ETM_Type";
-	
 	/**
 	 * The unique ID of the event.
 	 */

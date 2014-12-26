@@ -1,0 +1,14 @@
+<webservices xmlns="http://www.jboss.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/schema/jbossas/jbossws-web-services_1_0.xsd">	
+	<context-root>/nast/ws</context-root>
+	<config-name>NastEndpointConfig</config-name>
+	<config-file>META-INF/jaxws-endpoint-config.xml</config-file>
+	<port-component>	
+		<ejb-name>ProcessorService</ejb-name>
+		<port-component-name>ProcessorServicePort</port-component-name>
+		<port-component-uri>/processorservice/*</port-component-uri>
+		<transport-guarantee>NONE</transport-guarantee>
+		<secure-wsdl-access>false</secure-wsdl-access>		
+	</port-component>
+</webservices>
