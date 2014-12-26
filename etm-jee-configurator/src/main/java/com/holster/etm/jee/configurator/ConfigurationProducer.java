@@ -8,10 +8,12 @@ import java.util.Properties;
 
 import javax.annotation.ManagedBean;
 import javax.enterprise.inject.Produces;
+import javax.inject.Singleton;
 
 import com.holster.etm.processor.EtmException;
 
 @ManagedBean
+@Singleton
 public class ConfigurationProducer {
 
 	private Properties properties;

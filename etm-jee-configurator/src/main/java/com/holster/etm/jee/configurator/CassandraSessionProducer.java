@@ -5,12 +5,14 @@ import java.util.Properties;
 import javax.annotation.ManagedBean;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Session;
 
 @ManagedBean
+@Singleton
 public class CassandraSessionProducer {
 
 	@EtmConfiguration

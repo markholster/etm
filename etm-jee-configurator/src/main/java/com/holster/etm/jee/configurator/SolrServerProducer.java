@@ -1,18 +1,17 @@
 package com.holster.etm.jee.configurator;
 
-import java.net.MalformedURLException;
 import java.util.Properties;
 
 import javax.annotation.ManagedBean;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.LBHttpSolrServer;
-
-import com.holster.etm.processor.EtmException;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
 
 @ManagedBean
+@Singleton
 public class SolrServerProducer {
 
 	@EtmConfiguration
@@ -25,13 +24,8 @@ public class SolrServerProducer {
 	public SolrServer getSolrServer() {
 		synchronized (this) {
 			if (this.solrServer == null) {
-				String serverUrls = this.configuration.getProperty("solr.server_urls", "http://127.0.0.1:8983/solr/");
-				String[] split = serverUrls.split(",");
-				try {
-	                this.solrServer = new LBHttpSolrServer(split);
-                } catch (MalformedURLException e) {
-                	throw new EtmException(EtmException.SOLR_URL_EXCEPTION, e);
-                }
+				String zookeeperHost = this.configuration.getProperty("solr.zookeeper_host", "127.0.0.1:9983");
+	            this.solrServer = new CloudSolrServer(zookeeperHost);
 			}
 		}
 		return this.solrServer;

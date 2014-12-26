@@ -4,8 +4,10 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 
 import javax.annotation.ManagedBean;
+import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.solr.client.solrj.SolrServer;
 
@@ -13,6 +15,7 @@ import com.datastax.driver.core.Session;
 import com.holster.etm.processor.processor.TelemetryEventProcessor;
 
 @ManagedBean
+@Singleton
 public class TelemetryEventProcessorProducer {
 
 	@EtmConfiguration
@@ -40,5 +43,12 @@ public class TelemetryEventProcessorProducer {
 	        }
         }
 		return this.telemetryEventProcessor;
+	}
+	
+	@PreDestroy
+	public void preDestroy() {
+		if (this.telemetryEventProcessor != null) {
+			this.telemetryEventProcessor.stopAll();
+		}
 	}
 }
