@@ -40,7 +40,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
+<!--                 
                     <packagingExcludes>WEB-INF/lib/*.jar</packagingExcludes>
+ -->                    
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
@@ -59,9 +61,6 @@
 				<artifactId>maven-eclipse-plugin</artifactId>
 				<configuration>
 					<jeeversion>7.0</jeeversion>
-					<additionalProjectFacets>
-						<jst.ejb>3.2</jst.ejb>
-					</additionalProjectFacets>
 					<buildcommands>
 						<buildcommand>org.eclipse.wst.common.project.facet.core.builder</buildcommand>
 						<buildcommand>org.eclipse.jdt.core.javabuilder</buildcommand>
