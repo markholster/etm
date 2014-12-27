@@ -45,6 +45,13 @@ create table endpoint_config (
     transactionNameParsers list<text>,
 );
 
+create table event_occurrences (
+    timeunit timestamp,
+    type text,
+    name text,
+    primary key (timeunit, type, name)
+);
+
 create table application_counter (
     application text,
     timeunit timestamp,
@@ -96,13 +103,13 @@ create table application_event_counter (
 );
 
 create table transactionname_counter (
-    timeunit timestamp,
     transactionName text,
+    timeunit timestamp,
     count counter,
     transactionStart counter,
     transactionFinish counter,
     transactionResponseTime counter,
-    primary key (timeunit, transactionName)
+    primary key (transactionName, timeunit)
 );
 
 insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer'});

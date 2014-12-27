@@ -2,7 +2,6 @@ package com.holster.etm.gui.rest;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -32,11 +31,11 @@ public class StatisticsService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getTransactionsFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
 		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getTransactionStatistics(startTime, endTime, 5);
-		Writer writer = new StringWriter();
+		StringWriter writer = new StringWriter();
 		try {
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartArray();
 	        for (String name : statistics.keySet()) {
-	        	
 	        	generator.writeStartObject();
 	        	generator.writeStringField("name", name);
 	        	generator.writeArrayFieldStart("data");
@@ -45,11 +44,13 @@ public class StatisticsService {
 	        		generator.writeStartArray();
 	        		generator.writeNumber(time);
 	        		generator.writeNumber(values.get(time));
-	        		generator.writeStartArray();
+	        		generator.writeEndArray();
 	        	}
 	        	generator.writeEndArray();
 	        	generator.writeEndObject();
 	        }
+	        generator.writeEndArray();
+	        generator.close();
         } catch (IOException e) {
         }
 		return writer.toString();

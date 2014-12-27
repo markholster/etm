@@ -40,6 +40,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	private final PreparedStatement insertTelemetryEventStatement;
 	private final PreparedStatement insertSourceIdIdStatement;
 	private final PreparedStatement insertCorrelationDataStatement;
+	private final PreparedStatement insertEventOccurrencesStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
@@ -47,7 +48,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	private final PreparedStatement findParentStatement;
 	private final PreparedStatement findEndpointConfigStatement;
 	
-	private final Date timestamp = new Date();
+	private final Date secondTimestamp = new Date();
+	private final Date hourTimestamp = new Date();
+	private final long normalizeSecondFactor = 1000;
+	private final long normalizeHourFactor = 1000 * 60 * 60;
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
 	private final XPath xPath;
 	
@@ -88,6 +92,11 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				+ "transactionId, "
 				+ "transactionName"
 				+ ") values (?,?,?,?,?);");
+		this.insertEventOccurrencesStatement = session.prepare("insert into " + keySpace + ".event_occurrences ("
+				+ "timeunit, "
+				+ "type, "
+				+ "name"
+				+ ") values (?,?,?);");
 		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
@@ -150,7 +159,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
-		this.timestamp.setTime(normalizeTime(event.creationTime.getTime()));
+		this.secondTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeSecondFactor));
+		this.hourTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeHourFactor));
 		this.session.executeAsync(this.insertTelemetryEventStatement.bind(
 				event.id, 
 				event.application, 
@@ -212,7 +222,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        incomingResponseTime, 
 			        outgoingResponseTime, 
 			        event.application, 
-			        this.timestamp));
+			        this.secondTimestamp));
 		}
 		if (event.name != null) {
 			this.session.executeAsync(this.updateEventNameCounterStatement.bind(
@@ -221,7 +231,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					datagramCount, 
 					responseTime, 
 					event.name, 
-					this.timestamp));
+					this.secondTimestamp));
+			this.session.executeAsync(this.insertEventOccurrencesStatement.bind(this.hourTimestamp, "EventName", event.name));
 		}
 		if (event.application != null && event.name != null) {
 			this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(
@@ -239,15 +250,17 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        outgoingResponseTime, 
 					event.application, 
 					event.name, 
-					this.timestamp));
+					this.secondTimestamp));
+			this.session.executeAsync(this.insertEventOccurrencesStatement.bind(this.hourTimestamp, "Application", event.application));
 		}
 		if (event.transactionName != null) {
-			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount, responseTime, event.transactionName, this.timestamp));
+			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount, responseTime, event.transactionName, this.secondTimestamp));
+			this.session.executeAsync(this.insertEventOccurrencesStatement.bind(this.hourTimestamp, "TransactionName", event.transactionName));
 		}
     }
 
-	private long normalizeTime(long currentTimeMillis) {
-		return (currentTimeMillis / 1000) * 1000;
+	private long normalizeTime(long timeInMillis, long factor) {
+		return (timeInMillis / factor) * factor;
     }
 
 	@Override

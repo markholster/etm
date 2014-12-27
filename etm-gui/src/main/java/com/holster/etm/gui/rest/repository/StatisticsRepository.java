@@ -1,6 +1,7 @@
 package com.holster.etm.gui.rest.repository;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -8,32 +9,55 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 public class StatisticsRepository {
 
-	private final PreparedStatement selectTransactionStatisticsStatement;
+	private final long normalizeSecondFactor = 1000;
+	private final long normalizeHourFactor = 1000 * 60 * 60;
+	final String keyspace = "etm";
+	
 	private final Session session; 
 	
 	public StatisticsRepository(Session session) {
 		this.session = session;
-		final String keyspace = "etm";
-		this.selectTransactionStatisticsStatement = session.prepare("select transactionName, timeunit, transactionStart from " + keyspace + ".transactionname_counter where token(timeunit) >= token(?) and token(timeunit) <= token(?)");
 	}
 
 	public Map<String, Map<Long, Long>> getTransactionStatistics(Long startTime, Long endTime, int topTransactions) {
-		final ResultSet resultSet = this.session.execute(this.selectTransactionStatisticsStatement.bind(new Date(startTime), new Date(endTime)));
-		final Map<String, Long> totals = new HashMap<String, Long>();
-		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
+		if (startTime > endTime) {
+			return Collections.emptyMap();
+		}
+		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
+		List<Object> transactionNames = new ArrayList<Object>();
+		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
 		while (iterator.hasNext()) {
 			Row row = iterator.next();
-			String name = row.getString(1);
-			long timeUnit = normalizeTimeToMinute(row.getDate(2).getTime());
-			long count = row.getLong(3);
+			String name = row.getString(0);
+			if (!transactionNames.contains(name)) {
+				transactionNames.add(name);
+			}
+		}
+		if (transactionNames.size() == 0) {
+			return Collections.emptyMap();
+		}
+		builtStatement = QueryBuilder.select("transactionName", "timeunit", "transactionStart")
+		        .from(this.keyspace, "transactionname_counter")
+		        .where(QueryBuilder.in("transactionName", transactionNames))
+		        .and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
+		resultSet = this.session.execute(builtStatement);
+		final Map<String, Long> totals = new HashMap<String, Long>();
+		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
+		iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			String name = row.getString(0);
+			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeSecondFactor);
+			long count = row.getLong(2);
 			if (!totals.containsKey(name)) {
 				totals.put(name, count);
 			} else {
@@ -71,7 +95,22 @@ public class StatisticsRepository {
 		return data;
     }
 	
-	private long normalizeTimeToMinute(long timeMillis) {
-		return (timeMillis / 60000) * 60000;
+	private List<Object> determineHours(long startTime, long endTime) {
+	    Calendar startCalendar = Calendar.getInstance();
+	    Calendar endCalendar = Calendar.getInstance();
+	    startCalendar.setTimeInMillis(startTime);
+	    endCalendar.setTimeInMillis(endTime);
+	    // For unknown reasons cassandra gives an error when the arraylist is created with the Date generic type.
+	    List<Object> result = new ArrayList<Object>();
+	    do {
+	    	result.add(new Date(normalizeTime(startCalendar.getTime().getTime(), this.normalizeHourFactor)));
+	    	startCalendar.add(Calendar.HOUR, 1);
+	    } while (startCalendar.before(endCalendar) || (!startCalendar.before(endCalendar) && startCalendar.get(Calendar.HOUR_OF_DAY) == endCalendar.get(Calendar.HOUR_OF_DAY)));
+	    return result;
     }
+
+	private long normalizeTime(long timeInMillis, long factor) {
+		return (timeInMillis / factor) * factor;
+    }
+	
 }
