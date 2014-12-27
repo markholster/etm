@@ -41,6 +41,9 @@
         <dependent-module archiveName="etm-core.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-core/etm-core">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="etm-jee-configurator-core.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-jee-configurator-core/etm-jee-configurator-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <property name="context-root" value="/etm/processor/ws"/>
         <property name="java-output-path" value="/etm-processor-ws/bin"/>
     </wb-module>

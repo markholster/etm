@@ -14,6 +14,10 @@
 	<description>JEE configurator project for ETM processors.</description>
 	<name>Enterprise Telemetry Monitor - processor jee configurator</name>
 	<dependencies>
+        <dependency>
+            <groupId>com.holster.etm</groupId>
+            <artifactId>etm-jee-configurator-core</artifactId>
+        </dependency>       	
 		<dependency>
 			<groupId>com.holster.etm</groupId>
 			<artifactId>etm-processor</artifactId>

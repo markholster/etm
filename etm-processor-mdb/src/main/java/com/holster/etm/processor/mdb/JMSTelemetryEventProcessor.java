@@ -17,6 +17,7 @@ import javax.xml.bind.Unmarshaller;
 import com.holster.etm.core.EtmException;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.TelemetryEventDirection;
 import com.holster.etm.processor.TelemetryEventType;
@@ -48,6 +49,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessor.class);
 
 	@Inject
+	@ProcessorConfiguration
 	private TelemetryEventProcessor telemetryEventProcessor;
 
 	private final TelemetryEvent telemetryEvent = new TelemetryEvent();

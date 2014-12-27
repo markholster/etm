@@ -9,31 +9,15 @@
 		<relativePath>../etm-aggregator/pom.xml</relativePath>
 	</parent>	
 	<groupId>com.holster.etm</groupId>
-	<artifactId>etm-gui-jee-configurator</artifactId>
+	<artifactId>etm-jee-configurator-core</artifactId>
 	<packaging>jar</packaging>
-	<description>JEE configurator project for the ETM gui.</description>
-	<name>Enterprise Telemetry Monitor - gui jee configurator</name>
+	<description>JEE configurator core project.</description>
+	<name>Enterprise Telemetry Monitor - jee configurator core</name>
 	<dependencies>
-		<dependency>
-		    <groupId>com.datastax.cassandra</groupId>
-		    <artifactId>cassandra-driver-core</artifactId>
-		</dependency>	  
-        <dependency>
-            <groupId>com.holster.etm</groupId>
-            <artifactId>etm-core</artifactId>
-        </dependency>		
-        <dependency>
-            <groupId>com.holster.etm</groupId>
-            <artifactId>etm-jee-configurator-core</artifactId>
-        </dependency>       
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
 		</dependency>
-		<dependency>
-		    <groupId>org.apache.solr</groupId>
-		    <artifactId>solr-solrj</artifactId>
-		</dependency>		
 	</dependencies>
     <build>
         <plugins>

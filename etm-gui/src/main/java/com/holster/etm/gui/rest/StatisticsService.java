@@ -30,7 +30,7 @@ public class StatisticsService {
 	@Path("/transactions/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String transaction(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
+	public String getTransactionsFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
 		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getTransactionStatistics(startTime, endTime, 5);
 		Writer writer = new StringWriter();
 		try {
@@ -53,6 +53,25 @@ public class StatisticsService {
         } catch (IOException e) {
         }
 		return writer.toString();
+	}
+	
+	@GET
+	@Path("/transactions/{starttime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getTransactionsFromTime(@PathParam("starttime") Long startTime) {
+		long endTime = System.currentTimeMillis();
+		return getTransactionsFromTimePeriod(startTime, endTime);
+	}
+	
+	@GET
+	@Path("/transactions")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getTransaction() {
+		long endTime = System.currentTimeMillis();
+		long startTime = endTime - (1000 * 60 * 5);
+		return getTransactionsFromTimePeriod(startTime, endTime);
 	}
 
 }

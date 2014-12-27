@@ -6,12 +6,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
 @Singleton
 public class RepositoryProducer {
 
 	@Inject
+	@GuiConfiguration
 	private Session session;
 	
 	private StatisticsRepository statisticsRepository;

@@ -11,13 +11,16 @@
         <dependent-module archiveName="solr-solrj-4.10.3.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/solr/solr-solrj/4.10.3/solr-solrj-4.10.3.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="etm-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-gui-jee-configurator/etm-gui-jee-configurator">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="etm-processor.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-core/etm-core">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
         <dependent-module archiveName="metrics-core-3.0.2.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="etm-gui-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-jee-configurator-core/etm-jee-configurator-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="etm-jee-configurator-core.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-gui-jee-configurator/etm-gui-jee-configurator">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="etm-core.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-core/etm-core">
             <dependency-type>uses</dependency-type>
         </dependent-module>        
         <property name="context-root" value="/etm"/>

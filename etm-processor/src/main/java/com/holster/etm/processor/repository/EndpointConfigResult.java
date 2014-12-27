@@ -17,6 +17,22 @@ public class EndpointConfigResult {
 	
 	// process state
 	public long retrieved;
+
+	public void initialize() {
+	    if (this.applicationParsers != null) {
+	    	this.applicationParsers.clear();
+	    }
+	    if (this.eventNameParsers != null) {
+	    	this.eventNameParsers.clear();
+	    }
+	    if (this.transactionNameParsers != null) {
+	    	this.transactionNameParsers.clear();
+	    }
+	    if (this.correlationDataParsers != null) {
+	    	this.correlationDataParsers.clear();
+	    }
+	    this.eventDirection = null;
+    }
 	
 	
 }

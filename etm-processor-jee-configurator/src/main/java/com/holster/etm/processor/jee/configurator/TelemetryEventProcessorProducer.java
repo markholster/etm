@@ -14,25 +14,29 @@ import javax.inject.Singleton;
 import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 import com.holster.etm.processor.processor.TelemetryEventProcessor;
 
 @ManagedBean
 @Singleton
 public class TelemetryEventProcessorProducer {
 
-	@EtmConfiguration
+	@ProcessorConfiguration
 	@Inject
 	private Properties configration;
 
+	@ProcessorConfiguration
 	@Inject
 	private Session session;
 
+	@ProcessorConfiguration
 	@Inject
 	private SolrServer solrServer;
 
 	private TelemetryEventProcessor telemetryEventProcessor;
 
 	@Produces
+	@ProcessorConfiguration
 	public TelemetryEventProcessor getTelemetryEventProcessor() {
 		synchronized (this) {
 			if (this.telemetryEventProcessor == null) {

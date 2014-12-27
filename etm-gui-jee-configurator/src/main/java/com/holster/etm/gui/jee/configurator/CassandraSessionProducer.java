@@ -10,17 +10,19 @@ import javax.inject.Singleton;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Session;
+import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
 @Singleton
 public class CassandraSessionProducer {
 
-	@EtmConfiguration
+	@GuiConfiguration
 	@Inject
 	private Properties configuration;
 
 	private Session session;
 
+	@GuiConfiguration
 	@Produces
 	public Session getSession() {
 		synchronized (this) {

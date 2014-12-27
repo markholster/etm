@@ -16,6 +16,7 @@ import org.codehaus.jackson.JsonToken;
 
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.TelemetryEventDirection;
 import com.holster.etm.processor.TelemetryEventType;
@@ -30,6 +31,7 @@ public class RestTelemetryEventProcessor {
 	private static final LogWrapper log = LogFactory.getLogger(RestTelemetryEventProcessor.class);
 
 	@Inject
+	@ProcessorConfiguration
 	private TelemetryEventProcessor telemetryEventProcessor;
 
 	private final TelemetryEvent telemetryEvent = new TelemetryEvent();

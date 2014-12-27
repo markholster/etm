@@ -280,7 +280,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			if (cachedResult == null) {
 				cachedResult = new EndpointConfigResult();
 			}
-			cachedResult.correlationDataParsers.clear();
+			cachedResult.initialize();
 			// First check the global configuration
 			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind("*"));
 			Row row = resultSet.one();
@@ -299,6 +299,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		result.eventNameParsers = cachedResult.eventNameParsers;
 		result.correlationDataParsers = cachedResult.correlationDataParsers;
 		result.eventDirection = cachedResult.eventDirection;
+		result.transactionNameParsers = cachedResult.transactionNameParsers;
     }
 	
 	private void mergeRowIntoEndpointConfig(Row row, EndpointConfigResult result) {

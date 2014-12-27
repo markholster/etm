@@ -11,6 +11,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
 import com.holster.etm.core.EtmException;
+import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
 @Singleton
@@ -19,7 +20,7 @@ public class ConfigurationProducer {
 	private Properties properties;
 
 	@Produces
-	@EtmConfiguration
+	@GuiConfiguration
 	public Properties getEtmConfiguration() {
 		synchronized (this) {
 			if (this.properties == null) {

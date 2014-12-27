@@ -10,17 +10,20 @@ import javax.inject.Singleton;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 
+import com.holster.etm.jee.configurator.core.GuiConfiguration;
+
 @ManagedBean
 @Singleton
 public class SolrServerProducer {
 
-	@EtmConfiguration
+	@GuiConfiguration
 	@Inject
 	private Properties configuration;
 	
 	private SolrServer solrServer;
 	
 	@Produces
+	@GuiConfiguration
 	public SolrServer getSolrServer() {
 		synchronized (this) {
 			if (this.solrServer == null) {

@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import javax.jws.WebService;
 import javax.xml.ws.BindingType;
 
+import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.processor.TelemetryEventProcessor;
 
@@ -19,6 +20,7 @@ public class ProcessorServiceJaxwsImpl implements ProcessorService {
 
 	
 	@Inject
+	@ProcessorConfiguration
 	private TelemetryEventProcessor telemetryEventProcessor;
 
 	private final TelemetryEvent telemetryEvent = new TelemetryEvent();
