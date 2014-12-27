@@ -1,6 +1,6 @@
 package com.holster.etm.processor.processor;
 
-import com.holster.etm.processor.EtmException;
+import com.holster.etm.core.EtmException;
 import com.holster.etm.processor.TelemetryEvent;
 import com.lmax.disruptor.ExceptionHandler;
 

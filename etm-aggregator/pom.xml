@@ -13,11 +13,14 @@
 		<url>https://zwolle.cleme.nl/bamboo/browse/ETM</url>
 	</ciManagement>
 	<modules>
-		<module>../etm-jee-configurator</module>
+		<module>../etm-core</module>
+		<module>../etm-processor-jee-configurator</module>
 		<module>../etm-processor</module>
 		<module>../etm-processor-mdb</module>
 		<module>../etm-processor-rest</module>
 		<module>../etm-processor-ws</module>
+		<module>../etm-gui-jee-configurator</module>
+		<module>../etm-gui</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -31,8 +34,18 @@
 				<version>2.1.4</version>
 			</dependency>
 			<dependency>
+			    <groupId>com.holster.etm</groupId>
+			    <artifactId>etm-core</artifactId>
+			    <version>${project.version}</version>
+			</dependency>			
+			<dependency>
+			    <groupId>com.holster.etm</groupId>
+			    <artifactId>etm-gui-jee-configurator</artifactId>
+			    <version>${project.version}</version>
+			</dependency>			
+			<dependency>
 				<groupId>com.holster.etm</groupId>
-				<artifactId>etm-jee-configurator</artifactId>
+				<artifactId>etm-processor-jee-configurator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>

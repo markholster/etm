@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="etm-gui">
+        <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
+        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
+        <dependent-module archiveName="cassandra-driver-core-2.1.4.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/datastax/cassandra/cassandra-driver-core/2.1.4/cassandra-driver-core-2.1.4.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="guava-14.0.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/google/guava/guava/14.0.1/guava-14.0.1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>        
+        <dependent-module archiveName="solr-solrj-4.10.3.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/solr/solr-solrj/4.10.3/solr-solrj-4.10.3.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="etm-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-gui-jee-configurator/etm-gui-jee-configurator">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="etm-processor.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-core/etm-core">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="metrics-core-3.0.2.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/codahale/metrics/metrics-core/3.0.2/metrics-core-3.0.2.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>        
+        <property name="context-root" value="/etm"/>
+        <property name="java-output-path" value="/etm-gui/bin"/>
+    </wb-module>
+</project-modules>

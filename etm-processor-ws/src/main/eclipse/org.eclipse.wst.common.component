@@ -5,9 +5,6 @@
         <dependent-module archiveName="etm-processor.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-processor/etm-processor">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="etm-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-jee-configurator/etm-jee-configurator">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
         <dependent-module archiveName="cassandra-driver-core-2.1.4.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/datastax/cassandra/cassandra-driver-core/2.1.4/cassandra-driver-core-2.1.4.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
@@ -36,6 +33,12 @@
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="httpclient-4.3.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/httpcomponents/httpclient/4.3.1/httpclient-4.3.1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="etm-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-processor-jee-configurator/etm-processor-jee-configurator">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="etm-core.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-core/etm-core">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <property name="context-root" value="/etm/processor/ws"/>

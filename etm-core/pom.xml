@@ -9,32 +9,16 @@
 		<relativePath>../etm-aggregator/pom.xml</relativePath>
 	</parent>	
 	<groupId>com.holster.etm</groupId>
-	<artifactId>etm-processor</artifactId>
+	<artifactId>etm-core</artifactId>
 	<packaging>jar</packaging>
-	<description>The etm-processor handles events that need to be stored.</description>
-	<name>Enterprise Telemetry Monitor - processor</name>
-	<dependencies>
+	<description>The etm core project.</description>
+	<name>Enterprise Telemetry Monitor - core</name>
+    <dependencies>
         <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.holster.etm</groupId>
-            <artifactId>etm-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.lmax</groupId>
-            <artifactId>disruptor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.saxon</groupId>
-            <artifactId>Saxon-HE</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.solr</groupId>
-            <artifactId>solr-solrj</artifactId>
-        </dependency>       
-	</dependencies>
+    </dependencies>    	
 	<build>
 		<plugins>
 			<plugin>
