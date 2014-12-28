@@ -7,46 +7,56 @@
         <script src="http://code.highcharts.com/highcharts.js"></script>
     </head>
     <body>
-        <div id="container" style="width:100%; height:400px;"></div>
+        <div id="toptransactions"></div>
         <script>
-
 $(function () {
-	 Highcharts.setOptions({
-		 global: {
-		  useUTC: false
-		 }
-	  }); 	
-	  var chart;
-	  $(document).ready(function() {
-	    var options = {
-	      chart: {
-	        renderTo: 'container',
-	        type: 'line',
-	        marginRight: 130,
-	        marginBottom: 25
-	      },
-	      title: {
-	        text: 'Top transaction count',
-	        x: -20 //center
-	      },
-	      yAxis: {
-	        title: {
-	          text: 'Transaction count'
-	        }
-	      },
-	      xAxis: {
-	            type: 'datetime',
-	       },	      
-	      series: []
-	    };  
-
-	    $.getJSON('http://localhost:8080/etm/rest/statistics/transactions', function(data) {
-	      // Populate series
-	      options.series = data;    
-	      // Create the chart
-	      chart = new Highcharts.Chart(options);
-	    });
-	  });
+    Highcharts.setOptions({
+        global: {
+            useUTC: false
+        }
+    });
+    var lastTime = new Date().getTime();
+    lastTime = Math.floor(lastTime/1000)*1000;
+    var url = 'http://localhost:8080/etm/rest/statistics/transactions/' + (lastTime - 3600000) + '/' + lastTime + '/';
+    $.getJSON(url, function (data) {
+        $('#toptransactions').highcharts({
+            chart: {
+                type: 'spline',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10,
+                events: {
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: 'Top transactions'
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            yAxis: {
+                title: {
+                    text: 'Transaction count'
+                }
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Count: ' +
+                        Highcharts.numberFormat(this.y, 0);
+                }
+            },
+            legend: {
+                enabled: true
+            },
+            exporting: {
+                enabled: false
+            },
+            series: data
+        });
+    });
 });
         </script>
     </body>
