@@ -3,6 +3,8 @@ package com.holster.etm.gui.rest;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -40,7 +42,8 @@ public class StatisticsService {
 	        	generator.writeStringField("name", name);
 	        	generator.writeArrayFieldStart("data");
 	        	Map<Long, Long> values = statistics.get(name);
-	        	for (long time : values.keySet()) {
+	        	SortedSet<Long> keys = new TreeSet<Long>(values.keySet());
+	        	for (long time: keys) { 
 	        		generator.writeStartArray();
 	        		generator.writeNumber(time);
 	        		generator.writeNumber(values.get(time));

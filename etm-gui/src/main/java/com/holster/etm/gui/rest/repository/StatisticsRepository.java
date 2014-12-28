@@ -17,7 +17,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 public class StatisticsRepository {
 
-	private final long normalizeSecondFactor = 1000;
+	private final long normalizeMinuteFactor = 1000 * 60;
 	private final long normalizeHourFactor = 1000 * 60 * 60;
 	final String keyspace = "etm";
 	
@@ -56,7 +56,7 @@ public class StatisticsRepository {
 		while (iterator.hasNext()) {
 			Row row = iterator.next();
 			String name = row.getString(0);
-			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeSecondFactor);
+			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeMinuteFactor);
 			long count = row.getLong(2);
 			if (!totals.containsKey(name)) {
 				totals.put(name, count);
