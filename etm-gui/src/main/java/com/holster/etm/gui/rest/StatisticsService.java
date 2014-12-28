@@ -40,14 +40,16 @@ public class StatisticsService {
 	        for (String name : statistics.keySet()) {
 	        	generator.writeStartObject();
 	        	generator.writeStringField("name", name);
+	        	generator.writeStringField("id", name);
 	        	generator.writeArrayFieldStart("data");
 	        	Map<Long, Long> values = statistics.get(name);
 	        	SortedSet<Long> keys = new TreeSet<Long>(values.keySet());
 	        	for (long time: keys) { 
-	        		generator.writeStartArray();
-	        		generator.writeNumber(time);
-	        		generator.writeNumber(values.get(time));
-	        		generator.writeEndArray();
+	        		generator.writeStartObject();
+	        		generator.writeNumberField("id",time);
+	        		generator.writeNumberField("x",time);
+	        		generator.writeNumberField("y", values.get(time));
+	        		generator.writeEndObject();
 	        	}
 	        	generator.writeEndArray();
 	        	generator.writeEndObject();

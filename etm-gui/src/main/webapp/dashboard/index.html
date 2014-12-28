@@ -17,14 +17,38 @@ $(function () {
     });
     var lastTime = new Date().getTime();
     lastTime = Math.floor(lastTime/1000)*1000;
-    var url = 'http://localhost:8080/etm/rest/statistics/transactions/' + (lastTime - 3600000) + '/' + lastTime + '/';
-    $.getJSON(url, function (data) {
+    $.getJSON('http://localhost:8080/etm/rest/statistics/transactions/' + (lastTime - 3600000) + '/' + lastTime + '/', function (data) {
         $('#toptransactions').highcharts({
             chart: {
                 type: 'spline',
                 animation: Highcharts.svg, // don't animate in old IE
                 marginRight: 10,
                 events: {
+                    load: function () {
+                        // set up the updating of the chart each second
+                        var chart = this;
+                        setInterval(function () {
+                            var newTime = new Date().getTime();
+                            newTime = Math.floor(newTime/1000)*1000;
+                        	$.getJSON('http://localhost:8080/etm/rest/statistics/transactions/' + lastTime + '/' + newTime + '/', function (data) {
+                            	if (!$.isEmptyObject(data)) {
+                            		$.each( data, function(index, serieData) {
+                            			var serie = chart.get(serieData.id);
+                            			$.each( serieData.data, function(index, pointData) {
+                            				var point = chart.get(pointData.id);
+                            				if ($.isEmptyObject(point)) {
+                            					serie.addPoint(pointData);
+                                			} else {
+                                    			point.y = point.y + pointData.y;
+                                    			point.update(true);
+                                    		}		
+                            			});
+                            		});
+                            	}                        	                                	
+                        	});
+                        	lastTime = newTime;
+                        }, 5000);
+                    }
                 }
             },
             credits: {
