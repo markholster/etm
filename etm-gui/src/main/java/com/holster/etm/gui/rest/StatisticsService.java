@@ -45,11 +45,10 @@ public class StatisticsService {
 	        	Map<Long, Long> values = statistics.get(name);
 	        	SortedSet<Long> keys = new TreeSet<Long>(values.keySet());
 	        	for (long time: keys) { 
-	        		generator.writeStartObject();
-	        		generator.writeNumberField("id",time);
-	        		generator.writeNumberField("x",time);
-	        		generator.writeNumberField("y", values.get(time));
-	        		generator.writeEndObject();
+	        		generator.writeStartArray();
+	        		generator.writeNumber(time);
+	        		generator.writeNumber(values.get(time));
+	        		generator.writeEndArray();
 	        	}
 	        	generator.writeEndArray();
 	        	generator.writeEndObject();
