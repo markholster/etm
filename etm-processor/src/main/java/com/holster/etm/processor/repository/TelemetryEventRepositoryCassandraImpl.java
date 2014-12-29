@@ -52,7 +52,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		long outgoingResponseTime = 0;
 		if (responseCount > 0) {
 			if (event.creationTime.getTime() != 0 && event.correlationCreationTime.getTime() != 0) {
-				responseTime = event.correlationCreationTime.getTime() - event.creationTime.getTime(); 
+				responseTime = event.creationTime.getTime() - event.correlationCreationTime.getTime(); 
 			}
 			incomingResponseTime = TelemetryEventDirection.INCOMING.equals(event.direction) ? responseTime : 0;
 			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.direction) ? responseTime : 0;
