@@ -27,7 +27,7 @@ public class StatisticsRepository {
 		this.session = session;
 	}
 
-	public Map<String, Map<Long, Long>> getTransactionCountStatistics(Long startTime, Long endTime, int topTransactions) {
+	public Map<String, Map<Long, Long>> getTransactionCountStatistics(Long startTime, Long endTime, int maxTransactions) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
@@ -69,10 +69,11 @@ public class StatisticsRepository {
 			}
 		}
 		List<Long> values = new ArrayList<>(totals.values().size());
+		values.addAll(totals.values());
 		Collections.sort(values);
 		Collections.reverse(values);
-		if (values.size() > topTransactions) {
-			for (int i = topTransactions; i <= values.size(); i++) {
+		if (values.size() > maxTransactions) {
+			for (int i = maxTransactions; i < values.size(); i++) {
 				Long valueToRemove = values.get(i);
 				for (String name : totals.keySet()) {
 					if (totals.get(name) == valueToRemove) {
@@ -85,7 +86,7 @@ public class StatisticsRepository {
 		return data;
     }
 	
-	public Map<String, Map<Long, Long>> getEventsCountStatistics(Long startTime, Long endTime, int topTransactions) {
+	public Map<String, Map<Long, Long>> getEventsCountStatistics(Long startTime, Long endTime, int maxEvents) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
@@ -127,10 +128,11 @@ public class StatisticsRepository {
 			}
 		}
 		List<Long> values = new ArrayList<>(totals.values().size());
+		values.addAll(totals.values());
 		Collections.sort(values);
 		Collections.reverse(values);
-		if (values.size() > topTransactions) {
-			for (int i = topTransactions; i <= values.size(); i++) {
+		if (values.size() > maxEvents) {
+			for (int i = maxEvents; i < values.size(); i++) {
 				Long valueToRemove = values.get(i);
 				for (String name : totals.keySet()) {
 					if (totals.get(name) == valueToRemove) {
@@ -144,7 +146,7 @@ public class StatisticsRepository {
     }
 	
 	
-	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int topTransactions) {
+	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
@@ -205,10 +207,11 @@ public class StatisticsRepository {
 			}
 		}
 		List<Long> values = new ArrayList<>(highest.values().size());
+		values.addAll(highest.values());
 		Collections.sort(values);
 		Collections.reverse(values);
-		if (values.size() > topTransactions) {
-			for (int i = topTransactions; i <= values.size(); i++) {
+		if (values.size() > maxTransactions) {
+			for (int i = maxTransactions; i < values.size(); i++) {
 				Long valueToRemove = values.get(i);
 				for (String name : highest.keySet()) {
 					if (highest.get(name) == valueToRemove) {

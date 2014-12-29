@@ -10,6 +10,7 @@
         <div id="transactionscount"></div>
         <div id="transactionsperformance"></div>
         <div id="eventscount"></div>
+        <div id="eventsperformance"></div>
         <script>
 $(function () {
     Highcharts.setOptions({
@@ -53,7 +54,8 @@ $(function () {
                             });
                         }, 60000);
                     }
-                }
+                },
+                zoomType: 'x'
             },
             credits: {
                 enabled: false
@@ -120,7 +122,8 @@ $(function () {
                             });
                         }, 60000);
                     }
-                }
+                },
+                zoomType: 'x'
             },
             credits: {
                 enabled: false
@@ -187,7 +190,8 @@ $(function () {
                             });
                         }, 60000);
                     }
-                }
+                },
+                zoomType: 'x'
             },
             credits: {
                 enabled: false
