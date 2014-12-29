@@ -7,8 +7,9 @@
         <script src="http://code.highcharts.com/highcharts.js"></script>
     </head>
     <body>
-        <div id="toptransactions"></div>
-        <div id="transactionperformance"></div>
+        <div id="transactionscount"></div>
+        <div id="transactionsperformance"></div>
+        <div id="eventscount"></div>
         <script>
 $(function () {
     Highcharts.setOptions({
@@ -20,7 +21,7 @@ $(function () {
     var lastTime = new Date().getTime();
     lastTime = Math.floor(lastTime/1000)*1000;
     $.ajax('../rest/statistics/transactions/count/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
-        $('#toptransactions').highcharts({
+        $('#transactionscount').highcharts({
             chart: {
                 type: 'spline',
                 animation: Highcharts.svg, // don't animate in old IE
@@ -87,7 +88,7 @@ $(function () {
 
 
     $.ajax('../rest/statistics/transactions/performance/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
-        $('#transactionperformance').highcharts({
+        $('#transactionsperformance').highcharts({
             chart: {
                 type: 'spline',
                 animation: Highcharts.svg, // don't animate in old IE
@@ -151,6 +152,74 @@ $(function () {
             series: data
         });
     }});
+
+    
+    $.ajax('../rest/statistics/events/count/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
+        $('#eventscount').highcharts({
+            chart: {
+                type: 'spline',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function () {
+                        var chart = this;
+                        setInterval(function () {
+                            var updateTime = new Date().getTime();
+                            updateTime = Math.floor(updateTime/1000)*1000;
+                            $.getJSON('../rest/statistics/events/count/' + (updateTime - timeRange) + '/' + updateTime + '/', function (data) {
+                                $.each( data, function(index, serieData) {
+                                    var serie = chart.get(serieData.id);
+                                    if ($.isEmptyObject(serie)) {
+                                        chart.addSeries(serieData);                                      
+                                    } else {
+                                        serie.setData(serieData.data);
+                                    }
+                                });
+                                // Remove series that aren't available in the data.
+                                $.each(chart.series, function(index, serie) {
+                                    var present = $.grep( data, function( n, i ) {
+                                        return n.name == serie.name;
+                                    });
+                                    if($.isEmptyObject(present)) {
+                                        chart.get(serie.name).remove();
+                                    }
+                                });
+                            });
+                        }, 60000);
+                    }
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: 'Events count'
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            yAxis: {
+                title: {
+                    text: 'Event count'
+                }
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Count: ' +
+                        Highcharts.numberFormat(this.y, 0);
+                }
+            },
+            legend: {
+                enabled: true
+            },
+            exporting: {
+                enabled: false
+            },
+            series: data
+        });
+    }});
+    
     
 });
         </script>

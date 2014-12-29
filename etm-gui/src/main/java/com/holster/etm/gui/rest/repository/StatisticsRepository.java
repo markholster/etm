@@ -31,7 +31,7 @@ public class StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<Object> transactionNames = getTransactions(startTime, endTime);
+		List<Object> transactionNames = getTransactionNames(startTime, endTime);
 		if (transactionNames.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -85,12 +85,70 @@ public class StatisticsRepository {
 		return data;
     }
 	
+	public Map<String, Map<Long, Long>> getEventsCountStatistics(Long startTime, Long endTime, int topTransactions) {
+		if (startTime > endTime) {
+			return Collections.emptyMap();
+		}
+		List<Object> eventNames = getEventNames(startTime, endTime);
+		if (eventNames.size() == 0) {
+			return Collections.emptyMap();
+		}
+		final Map<String, Long> totals = new HashMap<String, Long>();
+		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
+		BuiltStatement builtStatement = QueryBuilder.select("eventName", "timeunit", "count")
+		        .from(this.keyspace, "eventname_counter")
+		        .where(QueryBuilder.in("eventName", eventNames))
+		        .and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
+		ResultSet resultSet = this.session.execute(builtStatement);
+		Iterator<Row> iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			String name = row.getString(0);
+			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeMinuteFactor);
+			long count = row.getLong(2);
+			if (!totals.containsKey(name)) {
+				totals.put(name, count);
+			} else {
+				Long currentValue = totals.get(name);
+				totals.put(name, currentValue + count);
+			}
+			if (!data.containsKey(name)) {
+				Map<Long, Long> values = new HashMap<Long, Long>();
+				values.put(timeUnit, count);
+				data.put(name, values);
+			} else {
+				Map<Long, Long> values = data.get(name);
+				if (!values.containsKey(timeUnit)) {
+					values.put(timeUnit, count);
+				} else {
+					Long currentValue = values.get(timeUnit);
+					values.put(timeUnit, currentValue + count);
+				}
+			}
+		}
+		List<Long> values = new ArrayList<>(totals.values().size());
+		Collections.sort(values);
+		Collections.reverse(values);
+		if (values.size() > topTransactions) {
+			for (int i = topTransactions; i <= values.size(); i++) {
+				Long valueToRemove = values.get(i);
+				for (String name : totals.keySet()) {
+					if (totals.get(name) == valueToRemove) {
+						data.remove(name);
+						break;
+					}
+				}
+			}
+		}
+		return data;
+    }
+	
 	
 	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int topTransactions) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<Object> transactionNames = getTransactions(startTime, endTime);
+		List<Object> transactionNames = getTransactionNames(startTime, endTime);
 		if (transactionNames.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -164,7 +222,7 @@ public class StatisticsRepository {
 
     }
 	
-	private List<Object> getTransactions(long startTime, long endTime) {
+	private List<Object> getTransactionNames(long startTime, long endTime) {
 		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
 		List<Object> transactionNames = new ArrayList<Object>();
 		ResultSet resultSet = this.session.execute(builtStatement);
@@ -177,6 +235,21 @@ public class StatisticsRepository {
 			}
 		}
 		return transactionNames;
+	}
+	
+	private List<Object> getEventNames(long startTime, long endTime) {
+		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "EventName"));
+		List<Object> eventNames = new ArrayList<Object>();
+		ResultSet resultSet = this.session.execute(builtStatement);
+		Iterator<Row> iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			String name = row.getString(0);
+			if (!eventNames.contains(name)) {
+				eventNames.add(name);
+			}
+		}
+		return eventNames;
 	}
 	
 	private List<Object> determineHours(long startTime, long endTime) {

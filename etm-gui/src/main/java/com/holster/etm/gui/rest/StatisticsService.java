@@ -2,6 +2,7 @@ package com.holster.etm.gui.rest;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -43,32 +44,7 @@ public class StatisticsService {
 	public String getTransactionsCountFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
 		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getTransactionCountStatistics(startTime, endTime, 5);
 		StringWriter writer = new StringWriter();
-		try {
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
-	        generator.writeStartArray();
-	        for (String name : statistics.keySet()) {
-	        	generator.writeStartObject();
-	        	generator.writeStringField("name", name);
-	        	generator.writeStringField("id", name);
-	        	generator.writeArrayFieldStart("data");
-	        	Map<Long, Long> values = statistics.get(name);
-	        	SortedSet<Long> keys = new TreeSet<Long>(values.keySet());
-	        	for (long time: keys) { 
-	        		generator.writeStartArray();
-	        		generator.writeNumber(time);
-	        		generator.writeNumber(values.get(time));
-	        		generator.writeEndArray();
-	        	}
-	        	generator.writeEndArray();
-	        	generator.writeEndObject();
-	        }
-	        generator.writeEndArray();
-	        generator.close();
-        } catch (IOException e) {
-        	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Unable to generate statistics count response.", e);
-        	}
-        }
+		writeCountStatistics(writer, statistics);
 		return writer.toString();
 	}
 	
@@ -98,6 +74,89 @@ public class StatisticsService {
 	public String getTransactionsPerformanceFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
 		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getTransactionPerformanceStatistics(startTime, endTime, 5);
 		StringWriter writer = new StringWriter();
+		writeAverageStatistics(writer, statistics);
+		return writer.toString();
+	}
+
+	@GET
+	@Path("/transactions/performance/{starttime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getTransactionsPerformanceFromTime(@PathParam("starttime") Long startTime) {
+		long endTime = System.currentTimeMillis();
+		return getTransactionsPerformanceFromTimePeriod(startTime, endTime);
+	}
+	
+	@GET
+	@Path("/transactions/performance/")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getTransactionsPerformanceCount() {
+		long endTime = System.currentTimeMillis();
+		long startTime = endTime - (1000 * 60 * 5);
+		return getTransactionsPerformanceFromTimePeriod(startTime, endTime);
+	}
+	
+	@GET
+	@Path("/events/count/{starttime}/{endtime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEventsCountFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
+		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getEventsCountStatistics(startTime, endTime, 5);
+		StringWriter writer = new StringWriter();
+		writeCountStatistics(writer, statistics);
+		return writer.toString();
+	}
+	
+	@GET
+	@Path("/events/count/{starttime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEventsCountFromTime(@PathParam("starttime") Long startTime) {
+		long endTime = System.currentTimeMillis();
+		return getEventsCountFromTimePeriod(startTime, endTime);
+	}
+	
+	@GET
+	@Path("/events/count/")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEventsCount() {
+		long endTime = System.currentTimeMillis();
+		long startTime = endTime - (1000 * 60 * 5);
+		return getEventsCountFromTimePeriod(startTime, endTime);
+	}
+	
+	private void writeCountStatistics(Writer writer, Map<String, Map<Long, Long>> statistics) {
+		try {
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartArray();
+	        for (String name : statistics.keySet()) {
+	        	generator.writeStartObject();
+	        	generator.writeStringField("name", name);
+	        	generator.writeStringField("id", name);
+	        	generator.writeArrayFieldStart("data");
+	        	Map<Long, Long> values = statistics.get(name);
+	        	SortedSet<Long> keys = new TreeSet<Long>(values.keySet());
+	        	for (long time: keys) { 
+	        		generator.writeStartArray();
+	        		generator.writeNumber(time);
+	        		generator.writeNumber(values.get(time));
+	        		generator.writeEndArray();
+	        	}
+	        	generator.writeEndArray();
+	        	generator.writeEndObject();
+	        }
+	        generator.writeEndArray();
+	        generator.close();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to generate count statistics.", e);
+        	}
+        }		
+	}
+	
+	private void writeAverageStatistics(Writer writer, Map<String, Map<Long, Average>> statistics) {
 		try {
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
 	        generator.writeStartArray();
@@ -121,28 +180,9 @@ public class StatisticsService {
 	        generator.close();
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Unable to generate statistics performance response.", e);
+        		log.logErrorMessage("Unable to generate performance statistics.", e);
         	}
         }
-		return writer.toString();
-	}
 
-	@GET
-	@Path("/transactions/performance/{starttime}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getTransactionsPerformanceFromTime(@PathParam("starttime") Long startTime) {
-		long endTime = System.currentTimeMillis();
-		return getTransactionsPerformanceFromTimePeriod(startTime, endTime);
-	}
-	
-	@GET
-	@Path("/transactions/performance/")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getTransactionsPerformanceCount() {
-		long endTime = System.currentTimeMillis();
-		long startTime = endTime - (1000 * 60 * 5);
-		return getTransactionsPerformanceFromTimePeriod(startTime, endTime);
 	}
 }
