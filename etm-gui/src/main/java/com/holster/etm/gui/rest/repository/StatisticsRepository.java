@@ -26,6 +26,16 @@ public class StatisticsRepository {
 	public StatisticsRepository(Session session) {
 		this.session = session;
 	}
+	
+	public Map<String, Map<Long, Long>> getTransactionCountStatistics(String transactionName, Long startTime, Long endTime) {
+		List<Object> transactionNames = getTransactionNames(startTime, endTime);
+		if (transactionNames.size() == 0 || !transactionNames.contains(transactionNames)) {
+			return Collections.emptyMap();
+		}
+		transactionNames.clear();
+		transactionNames.add(transactionName);
+		return getTransactionCountStatistics(transactionNames, startTime, endTime, 1);
+    }
 
 	public Map<String, Map<Long, Long>> getTransactionCountStatistics(Long startTime, Long endTime, int maxTransactions) {
 		if (startTime > endTime) {
@@ -35,6 +45,10 @@ public class StatisticsRepository {
 		if (transactionNames.size() == 0) {
 			return Collections.emptyMap();
 		}
+		return getTransactionCountStatistics(transactionNames, startTime, endTime, maxTransactions);
+    }
+	
+	private Map<String, Map<Long, Long>> getTransactionCountStatistics(List<Object> transactionNames, Long startTime, Long endTime, int maxTransactions) {
 		final Map<String, Long> totals = new HashMap<String, Long>();
 		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
 		BuiltStatement builtStatement = QueryBuilder.select("transactionName", "timeunit", "transactionStart")
@@ -48,6 +62,9 @@ public class StatisticsRepository {
 			String name = row.getString(0);
 			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeMinuteFactor);
 			long count = row.getLong(2);
+			if (count == 0) {
+				continue;
+			}
 			if (!totals.containsKey(name)) {
 				totals.put(name, count);
 			} else {
@@ -69,8 +86,8 @@ public class StatisticsRepository {
 			}
 		}
 		filterCountsToMaxResults(maxTransactions, totals, data);
-		return data;
-    }
+		return data;		
+	}
 	
 	public Map<String, Map<Long, Long>> getMessagesCountStatistics(Long startTime, Long endTime, int maxMessages) {
 		if (startTime > endTime) {
@@ -93,6 +110,9 @@ public class StatisticsRepository {
 			String name = row.getString(0);
 			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeMinuteFactor);
 			long count = row.getLong(2) + row.getLong(3);
+			if (count == 0) {
+				continue;
+			}
 			if (!totals.containsKey(name)) {
 				totals.put(name, count);
 			} else {
@@ -232,8 +252,9 @@ public class StatisticsRepository {
 			for (int i = maxResults; i < values.size(); i++) {
 				Long valueToRemove = values.get(i);
 				for (String name : highest.keySet()) {
-					if (highest.get(name) == valueToRemove) {
+					if (highest.get(name).equals(valueToRemove)) {
 						data.remove(name);
+						highest.remove(name);
 						break;
 					}
 				}
@@ -250,8 +271,9 @@ public class StatisticsRepository {
 			for (int i = maxResults; i < values.size(); i++) {
 				Long valueToRemove = values.get(i);
 				for (String name : highest.keySet()) {
-					if (highest.get(name) == valueToRemove) {
+					if (highest.get(name).equals(valueToRemove)) {
 						data.remove(name);
+						highest.remove(name);
 						break;
 					}
 				}
