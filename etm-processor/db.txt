@@ -11,12 +11,28 @@ create table telemetry_event (
     endpoint text, 
     expiryTime timestamp, 
     name text,
-    responseTime bigint, 
+    correlationCreationTime timestamp, 
     sourceCorrelationId text, 
     sourceId text, 
     transactionId timeuuid, 
     transactionName text,
     type text
+);
+
+create table transaction_event (
+    transactionName text,
+    transactionId timeuuid,
+    startTime timestamp,
+    expiryTime timestamp,
+    finishTime timestamp,
+    primary key (transactionName, startTime, transactionId)
+);
+
+create table event_occurrences (
+    timeunit timestamp,
+    type text,
+    name text,
+    primary key (timeunit, type, name)
 );
 
 create table sourceid_id_correlation (
@@ -43,13 +59,6 @@ create table endpoint_config (
     eventNameParsers list<text>,
     correlationParsers map<text, text>,
     transactionNameParsers list<text>,
-);
-
-create table event_occurrences (
-    timeunit timestamp,
-    type text,
-    name text,
-    primary key (timeunit, type, name)
 );
 
 create table application_counter (

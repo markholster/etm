@@ -47,8 +47,8 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				if (event.transactionName == null) {
 					event.transactionName = this.correlationBySourceIdResult.transactionName;
 				}
-				if (event.responseTime == 0) {
-					event.responseTime = event.creationTime.getTime() - this.correlationBySourceIdResult.creationTime.getTime();
+				if (event.correlationCreationTime.getTime() == 0) {
+					event.correlationCreationTime.setTime(this.correlationBySourceIdResult.creationTime.getTime());
 				}
 			}
 		}
@@ -84,7 +84,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.sourceCorrelationId != null && event.correlationId == null) {
 			return true;
 		} else if (event.sourceCorrelationId != null
-		        && ((event.transactionId == null || event.transactionName == null || event.responseTime == 0) && TelemetryEventType.MESSAGE_RESPONSE
+		        && ((event.transactionId == null || event.transactionName == null || event.correlationCreationTime.getTime() == 0) && TelemetryEventType.MESSAGE_RESPONSE
 		                .equals(event.type))) {
 			return true;
 		}

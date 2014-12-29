@@ -81,9 +81,9 @@ public class TelemetryEvent {
 	public String sourceCorrelationId;
 	
 	/**
-	 * The time the response took.
+	 * The creationTime of the event this event is correlated to.
 	 */
-	public long responseTime;
+	public Date correlationCreationTime = new Date(0);
 	
 	/**
 	 * Data to be used for correlating event's that aren't correlated by the correlation id.
@@ -110,7 +110,7 @@ public class TelemetryEvent {
 		this.transactionId = null;
 		this.transactionName = null;
 		this.type = null;
-		this.responseTime = 0;
+		this.correlationCreationTime.setTime(0);
 		this.ignore = false;
 		return this;
 	}
@@ -132,7 +132,7 @@ public class TelemetryEvent {
 		this.transactionId = copy.transactionId;
 		this.transactionName = copy.transactionName;
 		this.type = copy.type;
-		this.responseTime = copy.responseTime;
+		this.correlationCreationTime.setTime(copy.correlationCreationTime.getTime());
 	    return this;
     }
 }

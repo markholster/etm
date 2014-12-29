@@ -11,7 +11,7 @@ import org.apache.solr.client.solrj.SolrServer;
 import com.datastax.driver.core.Session;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.repository.CorrelationBySourceIdResult;
-import com.holster.etm.processor.repository.TelemetryEventRepository;
+import com.holster.etm.processor.repository.StatementExecutor;
 import com.holster.etm.processor.repository.TelemetryEventRepositoryCassandraImpl;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
@@ -43,11 +43,10 @@ public class TelemetryEventProcessor {
 		
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, ringbufferSize, this.executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
-
-		final TelemetryEventRepository telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(this.cassandraSession, this.sourceCorrelations);
+		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession, "etm");
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEvntHandler[i] = new EnhancingEventHandler(telemetryEventRepository, i, enhancingHandlerCount);
+			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, enhancingHandlerCount);
 		}
 
 		final IndexingEventHandler[] indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
@@ -57,7 +56,7 @@ public class TelemetryEventProcessor {
 		
 		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(telemetryEventRepository, i, persistingHandlerCount);
+			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, persistingHandlerCount);
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
 		this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);

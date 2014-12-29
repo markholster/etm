@@ -67,8 +67,9 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.type != null) {
 			this.document.addField("type", event.type.name());
 		}
-		if (event.responseTime != 0) {
-			this.document.addField("responseTime", event.responseTime);
+		if (event.creationTime.getTime() != 0 && event.correlationCreationTime.getTime() != 0) {
+			long responseTime = event.correlationCreationTime.getTime() - event.creationTime.getTime();
+			this.document.addField("responseTime", responseTime);
 		}
 //		this.server.add(this.document);
 	}

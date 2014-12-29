@@ -1,194 +1,42 @@
 package com.holster.etm.processor.repository;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import net.sf.saxon.xpath.XPathFactoryImpl;
-
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.holster.etm.core.logging.LogFactory;
-import com.holster.etm.core.logging.LogWrapper;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.TelemetryEventDirection;
 import com.holster.etm.processor.TelemetryEventType;
-import com.holster.etm.processor.parsers.ExpressionParser;
-import com.holster.etm.processor.parsers.FixedPositionExpressionParser;
-import com.holster.etm.processor.parsers.FixedValueExpressionParser;
-import com.holster.etm.processor.parsers.XPathExpressionParser;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventRepositoryCassandraImpl.class);
-	
-	private final Session session;
+	private final StatementExecutor statementExecutor;
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
-	
-	private final PreparedStatement insertTelemetryEventStatement;
-	private final PreparedStatement insertSourceIdIdStatement;
-	private final PreparedStatement insertCorrelationDataStatement;
-	private final PreparedStatement insertEventOccurrencesStatement;
-	private final PreparedStatement updateApplicationCounterStatement;
-	private final PreparedStatement updateEventNameCounterStatement;
-	private final PreparedStatement updateApplicationEventNameCounterStatement;
-	private final PreparedStatement updateTransactionNameCounterStatement;
-	private final PreparedStatement findParentStatement;
-	private final PreparedStatement findEndpointConfigStatement;
 	
 	private final Date secondTimestamp = new Date();
 	private final Date hourTimestamp = new Date();
 	private final long normalizeSecondFactor = 1000;
 	private final long normalizeHourFactor = 1000 * 60 * 60;
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
-	private final XPath xPath;
 	
 	
-	public TelemetryEventRepositoryCassandraImpl(final Session session, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
-		this.session = session;
+	public TelemetryEventRepositoryCassandraImpl(final StatementExecutor statementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+		this.statementExecutor = statementExecutor;
 		this.sourceCorrelations = sourceCorrelations;
-		final String keySpace = "etm";
-		
-		this.insertTelemetryEventStatement = session.prepare("insert into " + keySpace + ".telemetry_event ("
-				+ "id, "
-				+ "application, "
-				+ "content, "
-				+ "correlationId, "
-				+ "creationTime, "
-				+ "direction, "
-				+ "endpoint, "
-				+ "expiryTime, "
-				+ "name, "
-				+ "responseTime, "
-				+ "sourceCorrelationId, "
-				+ "sourceId, "
-				+ "transactionId, "
-				+ "transactionName, "
-				+ "type"
-				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
-		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation ("
-				+ "sourceId, "
-				+ "creationTime, "
-				+ "id, "
-				+ "transactionId, "
-				+ "transactionName"
-				+ ") values (?,?,?,?,?);");
-		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data ("
-				+ "id, "
-				+ "name, "
-				+ "value, "
-				+ "transactionId, "
-				+ "transactionName"
-				+ ") values (?,?,?,?,?);");
-		this.insertEventOccurrencesStatement = session.prepare("insert into " + keySpace + ".event_occurrences ("
-				+ "timeunit, "
-				+ "type, "
-				+ "name"
-				+ ") values (?,?,?);");
-		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set "
-				+ "count = count + 1, "
-				+ "messageRequestCount = messageRequestCount + ?, "
-				+ "incomingMessageRequestCount = incomingMessageRequestCount + ?, "
-				+ "outgoingMessageRequestCount = outgoingMessageRequestCount + ?, "
-				+ "messageResponseCount = messageResponseCount + ?, "
-				+ "incomingMessageResponseCount = incomingMessageResponseCount + ?, "
-				+ "outgoingMessageResponseCount = outgoingMessageResponseCount + ?, "
-				+ "messageDatagramCount = messageDatagramCount + ?, "
-				+ "incomingMessageDatagramCount = incomingMessageDatagramCount + ?, "
-				+ "outgoingMessageDatagramCount = outgoingMessageDatagramCount + ?, "
-				+ "messageResponseTime = messageResponseTime + ?, "
-				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
-				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
-				+ "where application = ? and timeunit = ?;");
-		this.updateEventNameCounterStatement = session.prepare("update " + keySpace + ".eventname_counter set "
-				+ "count = count + 1, "
-				+ "messageRequestCount = messageRequestCount + ?, "
-				+ "messageResponseCount = messageResponseCount + ?, "
-				+ "messageDatagramCount = messageDatagramCount + ?, "
-				+ "messageResponseTime = messageResponseTime + ? "
-				+ "where eventName = ? and timeunit = ?;");
-		this.updateApplicationEventNameCounterStatement = session.prepare("update " + keySpace + ".application_event_counter set "
-				+ "count = count + 1, "
-				+ "messageRequestCount = messageRequestCount + ?, "
-				+ "incomingMessageRequestCount = incomingMessageRequestCount + ?, "
-				+ "outgoingMessageRequestCount = outgoingMessageRequestCount + ?, "
-				+ "messageResponseCount = messageResponseCount + ?, "
-				+ "incomingMessageResponseCount = incomingMessageResponseCount + ?, "
-				+ "outgoingMessageResponseCount = outgoingMessageResponseCount + ?, "
-				+ "messageDatagramCount = messageDatagramCount + ?, "
-				+ "incomingMessageDatagramCount = incomingMessageDatagramCount + ?, "
-				+ "outgoingMessageDatagramCount = outgoingMessageDatagramCount + ?, "
-				+ "messageResponseTime = messageResponseTime + ?, "
-				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
-				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
-				+ "where application = ? and eventName = ? and timeunit = ?;");
-		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set "
-				+ "count = count + 1, "
-				+ "transactionStart = transactionStart + ?, "
-				+ "transactionFinish = transactionFinish + ?, "
-				+ "transactionResponseTime = transactionResponseTime + ? "
-				+ "where transactionName = ? and timeunit = ?;");
-		this.findParentStatement = session.prepare("select "
-				+ "id, "
-				+ "transactionId, "
-				+ "transactionName, "
-				+ "creationTime "
-				+ "from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
-		this.findEndpointConfigStatement = session.prepare("select "
-				+ "direction, "
-				+ "applicationParsers, "
-				+ "eventNameParsers, "
-				+ "correlationParsers, "
-				+ "transactionNameParsers "
-				+ "from " + keySpace + ".endpoint_config where endpoint = ?;");
-		XPathFactory xpf = new XPathFactoryImpl();
-		this.xPath = xpf.newXPath();
     }
 	
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
 		this.secondTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeSecondFactor));
 		this.hourTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeHourFactor));
-		this.session.executeAsync(this.insertTelemetryEventStatement.bind(
-				event.id, 
-				event.application, 
-				event.content, 
-				event.correlationId,
-				event.creationTime, 
-		        event.direction != null ? event.direction.name() : null, 
-		        event.endpoint,
-		        event.expiryTime,
-		        event.name, 
-		        event.responseTime, 
-		        event.sourceCorrelationId, 
-		        event.sourceId, 
-		        event.transactionId, 
-		        event.transactionName,
-		        event.type != null ? event.type.name() : null));
+		this.statementExecutor.insertTelemetryEvent(event, true);
 		if (event.sourceId != null) {
 			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
-			this.session.execute(this.insertSourceIdIdStatement.bind(
-					event.sourceId,
-					event.creationTime,
-					event.id, 
-					event.transactionId, 
-					event.transactionName));
+			this.statementExecutor.insertSourceIdCorrelationData(event, false);
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (!event.correlationData.isEmpty()) {
-			event.correlationData.forEach((k,v) -> this.session.executeAsync(this.insertCorrelationDataStatement.bind(event.id, k, v, event.transactionId, event.transactionName)));
+			event.correlationData.forEach((k,v) ->  this.statementExecutor.insertCorrelationData(event, k, v, true));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
@@ -203,12 +51,14 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		long incomingResponseTime = 0;
 		long outgoingResponseTime = 0;
 		if (responseCount > 0) {
-			responseTime = event.responseTime;
-			incomingResponseTime = TelemetryEventDirection.INCOMING.equals(event.direction) ? event.responseTime : 0;
-			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.direction) ? event.responseTime : 0;
+			if (event.creationTime.getTime() != 0 && event.correlationCreationTime.getTime() != 0) {
+				responseTime = event.correlationCreationTime.getTime() - event.creationTime.getTime(); 
+			}
+			incomingResponseTime = TelemetryEventDirection.INCOMING.equals(event.direction) ? responseTime : 0;
+			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.direction) ? responseTime : 0;
 		}
 		if (event.application != null) {
-			this.session.executeAsync(this.updateApplicationCounterStatement.bind(
+			this.statementExecutor.updateApplicationCounter(
 					requestCount, 
 					incomingRequestCount, 
 					outgoingRequestCount,
@@ -222,20 +72,22 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        incomingResponseTime, 
 			        outgoingResponseTime, 
 			        event.application, 
-			        this.secondTimestamp));
+			        this.secondTimestamp,
+			        true);
 		}
 		if (event.name != null) {
-			this.session.executeAsync(this.updateEventNameCounterStatement.bind(
+			this.statementExecutor.updateEventNameCounter(
 					requestCount, 
 					responseCount, 
 					datagramCount, 
 					responseTime, 
 					event.name, 
-					this.secondTimestamp));
-			this.session.executeAsync(this.insertEventOccurrencesStatement.bind(this.hourTimestamp, "EventName", event.name));
+					this.secondTimestamp,
+					true);
+			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "EventName", event.name, true);
 		}
 		if (event.application != null && event.name != null) {
-			this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(
+			this.statementExecutor.updateApplicationEventNameCounter(
 					requestCount, 
 					incomingRequestCount, 
 					outgoingRequestCount,
@@ -250,12 +102,18 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        outgoingResponseTime, 
 					event.application, 
 					event.name, 
-					this.secondTimestamp));
-			this.session.executeAsync(this.insertEventOccurrencesStatement.bind(this.hourTimestamp, "Application", event.application));
+					this.secondTimestamp,
+					true);
+			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "Application", event.application, true);
 		}
 		if (event.transactionName != null) {
-			this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount, responseTime, event.transactionName, this.secondTimestamp));
-			this.session.executeAsync(this.insertEventOccurrencesStatement.bind(this.hourTimestamp, "TransactionName", event.transactionName));
+			this.statementExecutor.updateTransactionNameCounter(requestCount, responseCount, responseTime, event.transactionName, this.secondTimestamp, true);
+			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "TransactionName", event.transactionName, true);
+			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
+				this.statementExecutor.insertTransactionEventStart(event, true);
+			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
+//				this.session.executeAsync(this.insertTransactionEventFinishStatement.bind(event.transactionName.));
+			}
 		}
     }
 
@@ -276,14 +134,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.creationTime = parent.creationTime;
 			return;
 		}
-		ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId));
-		Row row = resultSet.one();
-		if (row != null) {
-			result.id = row.getUUID(0);
-			result.transactionId = row.getUUID(1);
-			result.transactionName = row.getString(2);
-			result.creationTime = row.getDate(3);
-		}
+		this.statementExecutor.findParent(sourceId, result);;
     }
 
 	@Override
@@ -295,16 +146,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			}
 			cachedResult.initialize();
 			// First check the global configuration
-			ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind("*"));
-			Row row = resultSet.one();
-			if (row != null) {
-				mergeRowIntoEndpointConfig(row, cachedResult);
-			}
-			resultSet = this.session.execute(this.findEndpointConfigStatement.bind(endpoint));
-			row = resultSet.one();
-			if (row != null) {
-				mergeRowIntoEndpointConfig(row, cachedResult);
-			}
+			this.statementExecutor.findAndMergeEndpointConfig("*", cachedResult);
+			this.statementExecutor.findAndMergeEndpointConfig(endpoint, cachedResult);
 			cachedResult.retrieved = System.currentTimeMillis();
 			this.endpointConfigs.put(endpoint, cachedResult);
 		} 
@@ -315,93 +158,5 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		result.transactionNameParsers = cachedResult.transactionNameParsers;
     }
 	
-	private void mergeRowIntoEndpointConfig(Row row, EndpointConfigResult result) {
-		String direction = row.getString(0);
-		if (direction != null) {
-			result.eventDirection = TelemetryEventDirection.valueOf(direction);
-		}
-		if (result.applicationParsers == null) {
-			result.applicationParsers = createExpressionParsers(row.getList(1, String.class));
-		} else {
-			result.applicationParsers.addAll(0, createExpressionParsers(row.getList(1, String.class)));
-		}
-		if (result.eventNameParsers == null) {
-			result.eventNameParsers = createExpressionParsers(row.getList(2, String.class));
-		} else {
-			result.eventNameParsers.addAll(0, createExpressionParsers(row.getList(2, String.class)));
-		}
-		Map<String, String> map = row.getMap(3, String.class, String.class);
-		Iterator<String> iterator = map.keySet().iterator();
-		while (iterator.hasNext()) {
-			String key = iterator.next();
-			result.correlationDataParsers.put(key, createExpressionParser(map.get(key)));
-		}
-		if (result.transactionNameParsers == null) {
-			result.transactionNameParsers = createExpressionParsers(row.getList(4, String.class));
-		} else {
-			result.transactionNameParsers.addAll(0, createExpressionParsers(row.getList(4, String.class)));
-		}
-    }
 
-	private List<ExpressionParser> createExpressionParsers(List<String> expressions) {
-		if (expressions == null) {
-			return null;
-		}
-		List<ExpressionParser> expressionParsers = new ArrayList<ExpressionParser>(expressions.size());
-		for (String expression : expressions) {
-			expressionParsers.add(createExpressionParser(expression));
-		}
-		return expressionParsers;
-	}
-	
-	private ExpressionParser createExpressionParser(String expression) {
-		if (expression.length() > 6) {
-			if (expression.charAt(0) == 'x' &&
-				expression.charAt(1) == 'p' &&
-				expression.charAt(2) == 'a' &&
-				expression.charAt(3) == 't' &&
-				expression.charAt(4) == 'h' &&
-				expression.charAt(5) == ':') {
-				try {
-	                return new XPathExpressionParser(this.xPath, expression.substring(6));
-                } catch (XPathExpressionException e) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create XPathExpressionParser. Using FixedValueExpressionParser instead.", e);
-                	}
-                	new FixedValueExpressionParser(null);
-                }
-			} else if (expression.charAt(0) == 'f' &&
-					   expression.charAt(1) == 'i' &&
-					   expression.charAt(2) == 'x' &&
-					   expression.charAt(3) == 'e' &&
-					   expression.charAt(4) == 'd' &&
-					   expression.charAt(5) == ':') {
-				String range = expression.substring(6);
-				String[] values = range.split("-");
-				if (values.length != 2) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.");
-                	}
-                	new FixedValueExpressionParser(null);					
-				}
-				try {
-					Integer start = null;
-					Integer end = null;
-					if (values[0].length() != 0) {
-						start = Integer.valueOf(values[0]);
-					} 
-					if (values[1].length() != 0) {
-						end = Integer.valueOf(values[0]);
-					} 
-					return new FixedPositionExpressionParser(start, end);
-				} catch (NumberFormatException e) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.", e);
-                	}
-                	new FixedValueExpressionParser(null);										
-				}
-			}
-		}
-		return new FixedValueExpressionParser(expression);
-	}
 }
