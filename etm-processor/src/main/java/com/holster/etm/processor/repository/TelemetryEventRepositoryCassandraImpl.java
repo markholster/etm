@@ -84,7 +84,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.name, 
 					this.secondTimestamp,
 					true);
-			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "EventName", event.name, true);
+			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
+			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
+				this.statementExecutor.insertEventOccurence(this.hourTimestamp, "MessageName", event.name, true);
+			}
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 				this.statementExecutor.insertMessageEventStart(event, true);
 			}

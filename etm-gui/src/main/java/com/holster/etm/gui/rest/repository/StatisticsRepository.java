@@ -68,35 +68,21 @@ public class StatisticsRepository {
 				}
 			}
 		}
-		List<Long> values = new ArrayList<>(totals.values().size());
-		values.addAll(totals.values());
-		Collections.sort(values);
-		Collections.reverse(values);
-		if (values.size() > maxTransactions) {
-			for (int i = maxTransactions; i < values.size(); i++) {
-				Long valueToRemove = values.get(i);
-				for (String name : totals.keySet()) {
-					if (totals.get(name) == valueToRemove) {
-						data.remove(name);
-						break;
-					}
-				}
-			}
-		}
+		filterCountsToMaxResults(maxTransactions, totals, data);
 		return data;
     }
 	
-	public Map<String, Map<Long, Long>> getEventsCountStatistics(Long startTime, Long endTime, int maxEvents) {
+	public Map<String, Map<Long, Long>> getMessagesCountStatistics(Long startTime, Long endTime, int maxMessages) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<Object> eventNames = getEventNames(startTime, endTime);
+		List<Object> eventNames = getMessageNames(startTime, endTime);
 		if (eventNames.size() == 0) {
 			return Collections.emptyMap();
 		}
 		final Map<String, Long> totals = new HashMap<String, Long>();
 		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
-		BuiltStatement builtStatement = QueryBuilder.select("eventName", "timeunit", "count")
+		BuiltStatement builtStatement = QueryBuilder.select("eventName", "timeunit", "messageRequestCount", "messageDatagramCount")
 		        .from(this.keyspace, "eventname_counter")
 		        .where(QueryBuilder.in("eventName", eventNames))
 		        .and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
@@ -106,7 +92,7 @@ public class StatisticsRepository {
 			Row row = iterator.next();
 			String name = row.getString(0);
 			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeMinuteFactor);
-			long count = row.getLong(2);
+			long count = row.getLong(2) + row.getLong(3);
 			if (!totals.containsKey(name)) {
 				totals.put(name, count);
 			} else {
@@ -127,25 +113,10 @@ public class StatisticsRepository {
 				}
 			}
 		}
-		List<Long> values = new ArrayList<>(totals.values().size());
-		values.addAll(totals.values());
-		Collections.sort(values);
-		Collections.reverse(values);
-		if (values.size() > maxEvents) {
-			for (int i = maxEvents; i < values.size(); i++) {
-				Long valueToRemove = values.get(i);
-				for (String name : totals.keySet()) {
-					if (totals.get(name) == valueToRemove) {
-						data.remove(name);
-						break;
-					}
-				}
-			}
-		}
+		filterCountsToMaxResults(maxMessages, totals, data);
 		return data;
     }
-	
-	
+
 	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
@@ -169,20 +140,9 @@ public class StatisticsRepository {
 			Date transactionFinishTime = row.getDate(2);
 			Date transactionExpiryTime = row.getDate(3);
 			long timeUnit = normalizeTime(transactionStartTime.getTime(), this.normalizeMinuteFactor);
-			long responseTime = 0;
-			if (transactionFinishTime != null && transactionFinishTime.getTime() != 0) {
-				responseTime = transactionFinishTime.getTime() - transactionStartTime.getTime(); 
-			} else if (transactionExpiryTime != null && transactionExpiryTime.getTime() != 0) {
-				if (transactionExpiryTime.getTime() < System.currentTimeMillis()) {
-					// transaction expired, set reponse time to expiry time.
-					responseTime = transactionExpiryTime.getTime() - transactionStartTime.getTime();
-				} else {
-					// transaction not yet finished, and transaction not expired. Ignore this one.
+			long responseTime = determineResponseTime(transactionStartTime, transactionFinishTime, transactionExpiryTime);
+			if (responseTime == -1) {
 					continue;
-				}
-			} else {
-				// transaction not yet finished, and no expiry time available. Ignore this one.
-				continue;
 			}
 			if (!highest.containsKey(transactionName)) {
 				highest.put(transactionName, responseTime);
@@ -206,12 +166,70 @@ public class StatisticsRepository {
 				}
 			}
 		}
+		filterAveragesToMaxResults(maxTransactions, highest, data);
+		return data;
+    }
+
+	public Map<String, Map<Long, Average>> getMessagesPerformanceStatistics(Long startTime, Long endTime, int maxMessages) {
+		if (startTime > endTime) {
+			return Collections.emptyMap();
+		}
+		List<Object> messagesNames = getMessageNames(startTime, endTime);
+		if (messagesNames.size() == 0) {
+			return Collections.emptyMap();
+		}
+		final Map<String, Long> highest = new HashMap<String, Long>();
+		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
+		BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime")
+				.from(this.keyspace, "message_performance")
+				.where(QueryBuilder.in("name", messagesNames))
+				.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
+		ResultSet resultSet = this.session.execute(builtStatement);
+		Iterator<Row> iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			String messageName = row.getString(0);
+			Date messageStartTime = row.getDate(1);
+			Date messageFinishTime = row.getDate(2);
+			Date messageExpiryTime = row.getDate(3);
+			long timeUnit = normalizeTime(messageStartTime.getTime(), this.normalizeMinuteFactor);
+			long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
+			if (responseTime == -1) {
+					continue;
+			}
+			if (!highest.containsKey(messageName)) {
+				highest.put(messageName, responseTime);
+			} else {
+				Long currentValue = highest.get(messageName);
+				if (responseTime > currentValue) {
+					highest.put(messageName, responseTime);
+				}
+			}
+			if (!data.containsKey(messageName)) {
+				Map<Long, Average> values = new HashMap<Long, Average>();
+				values.put(timeUnit, new Average(responseTime));
+				data.put(messageName, values);
+			} else {
+				Map<Long, Average> values = data.get(messageName);
+				if (!values.containsKey(timeUnit)) {
+					values.put(timeUnit, new Average(responseTime));
+				} else {
+					Average currentValue = values.get(timeUnit);
+					currentValue.add(responseTime);
+				}
+			}
+		}
+		filterAveragesToMaxResults(maxMessages, highest, data);
+		return data;
+    }
+	
+	public void filterCountsToMaxResults(int maxResults, Map<String, Long> highest, Map<String, Map<Long, Long>> data) {
 		List<Long> values = new ArrayList<>(highest.values().size());
 		values.addAll(highest.values());
 		Collections.sort(values);
 		Collections.reverse(values);
-		if (values.size() > maxTransactions) {
-			for (int i = maxTransactions; i < values.size(); i++) {
+		if (values.size() > maxResults) {
+			for (int i = maxResults; i < values.size(); i++) {
 				Long valueToRemove = values.get(i);
 				for (String name : highest.keySet()) {
 					if (highest.get(name) == valueToRemove) {
@@ -221,9 +239,41 @@ public class StatisticsRepository {
 				}
 			}
 		}
-		return data;
-
-    }
+	}
+	
+	public void filterAveragesToMaxResults(int maxResults, Map<String, Long> highest, Map<String, Map<Long, Average>> data) {
+		List<Long> values = new ArrayList<>(highest.values().size());
+		values.addAll(highest.values());
+		Collections.sort(values);
+		Collections.reverse(values);
+		if (values.size() > maxResults) {
+			for (int i = maxResults; i < values.size(); i++) {
+				Long valueToRemove = values.get(i);
+				for (String name : highest.keySet()) {
+					if (highest.get(name) == valueToRemove) {
+						data.remove(name);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	private long determineResponseTime(Date startTime, Date finishTime, Date expiryTime) {
+		if (finishTime != null && finishTime.getTime() != 0) {
+			return finishTime.getTime() - startTime.getTime(); 
+		} else if (expiryTime != null && expiryTime.getTime() != 0) {
+			if (expiryTime.getTime() < System.currentTimeMillis()) {
+				// transaction expired, set reponse time to expiry time.
+				return expiryTime.getTime() - startTime.getTime();
+			} else {
+				// transaction not yet finished, and transaction not expired. Ignore this one.
+				return -1;
+			}
+		} 
+		// transaction not yet finished, and no expiry time available. Ignore this one.
+		return -1;
+	}
 	
 	private List<Object> getTransactionNames(long startTime, long endTime) {
 		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
@@ -240,8 +290,8 @@ public class StatisticsRepository {
 		return transactionNames;
 	}
 	
-	private List<Object> getEventNames(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "EventName"));
+	private List<Object> getMessageNames(long startTime, long endTime) {
+		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
 		List<Object> eventNames = new ArrayList<Object>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();

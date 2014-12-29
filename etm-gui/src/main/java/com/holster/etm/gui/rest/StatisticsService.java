@@ -98,34 +98,65 @@ public class StatisticsService {
 	}
 	
 	@GET
-	@Path("/events/count/{starttime}/{endtime}")
+	@Path("/messages/count/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEventsCountFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
-		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getEventsCountStatistics(startTime, endTime, 5);
+	public String getMessagesCountFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
+		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getMessagesCountStatistics(startTime, endTime, 5);
 		StringWriter writer = new StringWriter();
 		writeCountStatistics(writer, statistics);
 		return writer.toString();
 	}
 	
 	@GET
-	@Path("/events/count/{starttime}")
+	@Path("/messages/count/{starttime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEventsCountFromTime(@PathParam("starttime") Long startTime) {
+	public String getMessagesCountFromTime(@PathParam("starttime") Long startTime) {
 		long endTime = System.currentTimeMillis();
-		return getEventsCountFromTimePeriod(startTime, endTime);
+		return getMessagesCountFromTimePeriod(startTime, endTime);
 	}
 	
 	@GET
-	@Path("/events/count/")
+	@Path("/messages/count/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEventsCount() {
+	public String getMessagesCount() {
 		long endTime = System.currentTimeMillis();
 		long startTime = endTime - (1000 * 60 * 5);
-		return getEventsCountFromTimePeriod(startTime, endTime);
+		return getMessagesCountFromTimePeriod(startTime, endTime);
 	}
+
+	@GET
+	@Path("/messages/performance/{starttime}/{endtime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getMessagesPerformanceFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
+		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getMessagesPerformanceStatistics(startTime, endTime, 5);
+		StringWriter writer = new StringWriter();
+		writeAverageStatistics(writer, statistics);
+		return writer.toString();
+	}
+
+	@GET
+	@Path("/messages/performance/{starttime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getMessagesPerformanceFromTime(@PathParam("starttime") Long startTime) {
+		long endTime = System.currentTimeMillis();
+		return getMessagesPerformanceFromTimePeriod(startTime, endTime);
+	}
+	
+	@GET
+	@Path("/messages/performance/")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getMessagesPerformanceCount() {
+		long endTime = System.currentTimeMillis();
+		long startTime = endTime - (1000 * 60 * 5);
+		return getMessagesPerformanceFromTimePeriod(startTime, endTime);
+	}
+
 	
 	private void writeCountStatistics(Writer writer, Map<String, Map<Long, Long>> statistics) {
 		try {
