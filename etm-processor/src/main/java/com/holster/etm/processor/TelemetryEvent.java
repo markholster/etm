@@ -84,6 +84,11 @@ public class TelemetryEvent {
 	 * The creationTime of the event this event is correlated to.
 	 */
 	public Date correlationCreationTime = new Date(0);
+
+	/**
+	 * The name of the event this event is correlated to.
+	 */
+	public String correlationName;
 	
 	/**
 	 * Data to be used for correlating event's that aren't correlated by the correlation id.
@@ -100,6 +105,7 @@ public class TelemetryEvent {
 		this.content = null;
 		this.correlationData.clear();
 		this.correlationId = null;
+		this.correlationName = null;
 		this.creationTime.setTime(0);
 		this.direction = null;
 		this.endpoint = null;
@@ -122,6 +128,7 @@ public class TelemetryEvent {
 		this.content = copy.content;
 		this.correlationData.putAll(copy.correlationData);
 		this.correlationId = copy.correlationId;
+		this.correlationName = copy.correlationName;
 		this.creationTime.setTime(copy.creationTime.getTime());
 		this.direction = copy.direction;
 		this.endpoint = copy.endpoint;

@@ -157,7 +157,7 @@ public class StatisticsRepository {
 		final Map<String, Long> highest = new HashMap<String, Long>();
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		BuiltStatement builtStatement = QueryBuilder.select("transactionName", "startTime", "finishTime", "expiryTime")
-				.from(this.keyspace, "transaction_event")
+				.from(this.keyspace, "transaction_performance")
 				.where(QueryBuilder.in("transactionName", transactionNames))
 				.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
 		ResultSet resultSet = this.session.execute(builtStatement);

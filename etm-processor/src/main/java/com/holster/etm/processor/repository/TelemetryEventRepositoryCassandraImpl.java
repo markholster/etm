@@ -85,6 +85,14 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					this.secondTimestamp,
 					true);
 			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "EventName", event.name, true);
+			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
+				this.statementExecutor.insertMessageEventStart(event, true);
+			}
+		}
+		if (event.correlationName != null) {
+			if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
+				this.statementExecutor.insertMessageEventFinish(event, true);
+			}
 		}
 		if (event.application != null && event.name != null) {
 			this.statementExecutor.updateApplicationEventNameCounter(
@@ -107,7 +115,12 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "Application", event.application, true);
 		}
 		if (event.transactionName != null) {
-			this.statementExecutor.updateTransactionNameCounter(requestCount, responseCount, responseTime, event.transactionName, this.secondTimestamp, true);
+			this.statementExecutor.updateTransactionNameCounter(
+					requestCount, 
+					responseCount, 
+					responseTime, 
+					event.transactionName, 
+					this.secondTimestamp, true);
 			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "TransactionName", event.transactionName, true);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 				this.statementExecutor.insertTransactionEventStart(event, true);
@@ -132,9 +145,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.transactionId = parent.transactionId;
 			result.transactionName = parent.transactionName;
 			result.creationTime = parent.creationTime;
+			result.name = parent.name;
 			return;
 		}
-		this.statementExecutor.findParent(sourceId, result);;
+		this.statementExecutor.findParent(sourceId, result);
     }
 
 	@Override

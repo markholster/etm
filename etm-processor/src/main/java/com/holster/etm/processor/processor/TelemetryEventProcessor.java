@@ -110,16 +110,20 @@ public class TelemetryEventProcessor {
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
-		if (event.transactionName == null && TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
+		if ((event.transactionName == null || event.name == null)&& TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 			// A little bit of enhancement before the event is processed by the
-			// disruptor. We need to make sure the eventName is determined
-			// because the correlation of the transaction data on the response
-			// will fail if the request and response are processed at exactly
-			// the same time. By determining the transaction name at this point,
-			// the only requiremend is that the request is offered to ETM before
-			// the response, which is quite logical.
+			// disruptor. We need to make sure the eventName & transactionName
+			// is determined because the correlation of the transaction data on
+			// the response will fail if the request and response are processed
+			// at exactly the same time. By determining the event name &
+			// transaction name at this point, the only requirement is that the
+			// request is offered to ETM before the response, which is quite
+			// logical.
 			EndpointConfigResult result = new EndpointConfigResult();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, result);
+			if (result.eventNameParsers != null && result.eventNameParsers.size() > 0) {
+				event.name = parseValue(result.eventNameParsers, event.content);
+			}
 			if (result.transactionNameParsers != null && result.transactionNameParsers.size() > 0) {
 				event.transactionName = parseValue(result.transactionNameParsers, event.content);
 			}
@@ -128,7 +132,7 @@ public class TelemetryEventProcessor {
 			event.transactionId = event.id;
 		}
 		if (event.sourceId != null) {
-			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.transactionId, event.transactionName, event.creationTime.getTime()));
+			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId, event.transactionName, event.creationTime.getTime()));
 		}
 	}
 	

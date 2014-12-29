@@ -40,6 +40,8 @@ public class StatementExecutor {
 	private final PreparedStatement insertEventOccurrenceStatement;
 	private final PreparedStatement insertTransactionEventStartStatement;
 	private final PreparedStatement insertTransactionEventFinishStatement;
+	private final PreparedStatement insertMessageEventStartStatement;
+	private final PreparedStatement insertMessageEventFinishStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
@@ -57,6 +59,7 @@ public class StatementExecutor {
 				+ "content, "
 				+ "correlationCreationTime, "
 				+ "correlationId, "
+				+ "correlationName, "
 				+ "creationTime, "
 				+ "direction, "
 				+ "endpoint, "
@@ -67,14 +70,15 @@ public class StatementExecutor {
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "type"
-				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation ("
 				+ "sourceId, "
 				+ "creationTime, "
 				+ "id, "
 				+ "transactionId, "
-				+ "transactionName"
-				+ ") values (?,?,?,?,?);");
+				+ "transactionName, "
+				+ "name"
+				+ ") values (?,?,?,?,?,?);");
 		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data ("
 				+ "id, "
 				+ "name, "
@@ -87,14 +91,24 @@ public class StatementExecutor {
 				+ "type, "
 				+ "name"
 				+ ") values (?,?,?);");
-		this.insertTransactionEventStartStatement = session.prepare("insert into " + keySpace + ".transaction_event ("
+		this.insertTransactionEventStartStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
 				+ "transactionName, "
 				+ "transactionId, "
 				+ "startTime, "
 				+ "expiryTime) values (?, ?, ?, ?);");
-		this.insertTransactionEventFinishStatement = session.prepare("insert into " + keySpace + ".transaction_event ("
+		this.insertTransactionEventFinishStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
 				+ "transactionName, "
 				+ "transactionId, "
+				+ "startTime, "
+				+ "finishTime) values (?, ?, ?, ?);");
+		this.insertMessageEventStartStatement = session.prepare("insert into " + keySpace + ".message_performance ("
+				+ "name, "
+				+ "id, "
+				+ "startTime, "
+				+ "expiryTime) values (?, ?, ?, ?);");
+		this.insertMessageEventFinishStatement = session.prepare("insert into " + keySpace + ".message_performance ("
+				+ "name, "
+				+ "id, "
 				+ "startTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
 		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set "
@@ -144,7 +158,8 @@ public class StatementExecutor {
 				+ "id, "
 				+ "transactionId, "
 				+ "transactionName, "
-				+ "creationTime "
+				+ "creationTime, "
+				+ "name "
 				+ "from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
 				+ "direction, "
@@ -165,6 +180,7 @@ public class StatementExecutor {
 				event.content,
 				event.correlationCreationTime,
 				event.correlationId,
+				event.correlationName,
 				event.creationTime, 
 		        event.direction != null ? event.direction.name() : null, 
 		        event.endpoint,
@@ -186,7 +202,8 @@ public class StatementExecutor {
 				event.creationTime,
 				event.id, 
 				event.transactionId, 
-				event.transactionName));
+				event.transactionName,
+				event.name));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
@@ -235,6 +252,29 @@ public class StatementExecutor {
 			resultSetFuture.getUninterruptibly();
 		}
 	}
+
+	public void insertMessageEventStart(TelemetryEvent event, boolean async) {
+		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventStartStatement.bind(
+				event.name,
+				event.id, 
+		        event.creationTime, 
+		        event.expiryTime));
+		if (!async) {
+			resultSetFuture.getUninterruptibly();
+		}
+	}
+	
+	public void insertMessageEventFinish(TelemetryEvent event, boolean async) {
+		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventFinishStatement.bind(
+				event.correlationName,
+				event.correlationId,
+				event.correlationCreationTime,
+		        event.creationTime));
+		if (!async) {
+			resultSetFuture.getUninterruptibly();
+		}
+	}
+
 	
 	public void updateApplicationCounter(final long requestCount, final long incomingRequestCount, final long outgoingRequestCount,
 	        final long responseCount, final long incomingResponseCount, final long outgoingResponseCount, final long datagramCount,
@@ -321,6 +361,7 @@ public class StatementExecutor {
 			result.transactionId = row.getUUID(1);
 			result.transactionName = row.getString(2);
 			result.creationTime = row.getDate(3);
+			result.name = row.getString(4);
 		}
 	}
 	
