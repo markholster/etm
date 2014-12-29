@@ -112,7 +112,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 				this.statementExecutor.insertTransactionEventStart(event, true);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-//				this.session.executeAsync(this.insertTransactionEventFinishStatement.bind(event.transactionName.));
+				this.statementExecutor.insertTransactionEventFinish(event, true);
 			}
 		}
     }

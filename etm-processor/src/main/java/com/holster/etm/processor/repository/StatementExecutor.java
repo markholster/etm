@@ -33,7 +33,6 @@ public class StatementExecutor {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(StatementExecutor.class);
 
-
 	private final Session session;
 	private final PreparedStatement insertTelemetryEventStatement;
 	private final PreparedStatement insertSourceIdIdStatement;
@@ -56,13 +55,13 @@ public class StatementExecutor {
 				+ "id, "
 				+ "application, "
 				+ "content, "
+				+ "correlationCreationTime, "
 				+ "correlationId, "
 				+ "creationTime, "
 				+ "direction, "
 				+ "endpoint, "
 				+ "expiryTime, "
 				+ "name, "
-				+ "responseTime, "
 				+ "sourceCorrelationId, "
 				+ "sourceId, "
 				+ "transactionId, "
@@ -97,7 +96,7 @@ public class StatementExecutor {
 				+ "transactionName, "
 				+ "transactionId, "
 				+ "startTime, "
-				+ "finishTime) values (?, ?, ?);");
+				+ "finishTime) values (?, ?, ?, ?);");
 		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
@@ -163,14 +162,14 @@ public class StatementExecutor {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTelemetryEventStatement.bind(
 				event.id, 
 				event.application, 
-				event.content, 
+				event.content,
+				event.correlationCreationTime,
 				event.correlationId,
 				event.creationTime, 
 		        event.direction != null ? event.direction.name() : null, 
 		        event.endpoint,
 		        event.expiryTime,
 		        event.name, 
-		        event.correlationCreationTime, 
 		        event.sourceCorrelationId, 
 		        event.sourceId, 
 		        event.transactionId, 
@@ -326,6 +325,9 @@ public class StatementExecutor {
 	}
 	
 	public void findAndMergeEndpointConfig(final String endpoint, final EndpointConfigResult result) {
+		if (endpoint == null) {
+			return;
+		}
 		final ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(endpoint));
 		Row row = resultSet.one();
 		if (row != null) {

@@ -21,8 +21,8 @@ create table telemetry_event (
 
 create table transaction_event (
     transactionName text,
-    transactionId timeuuid,
     startTime timestamp,
+    transactionId timeuuid,
     expiryTime timestamp,
     finishTime timestamp,
     primary key (transactionName, startTime, transactionId)

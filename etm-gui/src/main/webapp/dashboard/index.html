@@ -8,6 +8,7 @@
     </head>
     <body>
         <div id="toptransactions"></div>
+        <div id="transactionperformance"></div>
         <script>
 $(function () {
     Highcharts.setOptions({
@@ -15,9 +16,10 @@ $(function () {
             useUTC: false
         }
     });
+    var timeRange = 1000 * 60 * 60;
     var lastTime = new Date().getTime();
     lastTime = Math.floor(lastTime/1000)*1000;
-    $.getJSON('http://localhost:8080/etm/rest/statistics/transactions/' + (lastTime - 3600000) + '/' + lastTime + '/', function (data) {
+    $.ajax('../rest/statistics/transactions/count/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
         $('#toptransactions').highcharts({
             chart: {
                 type: 'spline',
@@ -27,9 +29,9 @@ $(function () {
                     load: function () {
                         var chart = this;
                         setInterval(function () {
-                            lastTime = new Date().getTime();
-                            lastTime = Math.floor(lastTime/1000)*1000;
-                        	$.getJSON('http://localhost:8080/etm/rest/statistics/transactions/' + (lastTime - 3600000) + '/' + lastTime + '/', function (data) {
+                            var updateTime = new Date().getTime();
+                            updateTime = Math.floor(updateTime/1000)*1000;
+                        	$.getJSON('../rest/statistics/transactions/count/' + (updateTime - timeRange) + '/' + updateTime + '/', function (data) {
                         		$.each( data, function(index, serieData) {
                                     var serie = chart.get(serieData.id);
                                     if ($.isEmptyObject(serie)) {
@@ -56,7 +58,7 @@ $(function () {
                 enabled: false
             },
             title: {
-                text: 'Top transactions'
+                text: 'Transactions count'
             },
             xAxis: {
                 type: 'datetime',
@@ -81,7 +83,75 @@ $(function () {
             },
             series: data
         });
-    });
+    }});
+
+
+    $.ajax('../rest/statistics/transactions/performance/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
+        $('#transactionperformance').highcharts({
+            chart: {
+                type: 'spline',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function () {
+                        var chart = this;
+                        setInterval(function () {
+                            var updateTime = new Date().getTime();
+                            updateTime = Math.floor(updateTime/1000)*1000;
+                            $.getJSON('../rest/statistics/transactions/performance/' + (updateTime - timeRange) + '/' + updateTime + '/', function (data) {
+                                $.each( data, function(index, serieData) {
+                                    var serie = chart.get(serieData.id);
+                                    if ($.isEmptyObject(serie)) {
+                                        chart.addSeries(serieData);                                      
+                                    } else {
+                                        serie.setData(serieData.data);
+                                    }
+                                });
+                                // Remove series that aren't available in the data.
+                                $.each(chart.series, function(index, serie) {
+                                    var present = $.grep( data, function( n, i ) {
+                                        return n.name == serie.name;
+                                    });
+                                    if($.isEmptyObject(present)) {
+                                        chart.get(serie.name).remove();
+                                    }
+                                });
+                            });
+                        }, 60000);
+                    }
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: 'Transactions performance'
+            },
+            xAxis: {
+                type: 'datetime',
+            },
+            yAxis: {
+                title: {
+                    text: 'Response time (ms)'
+                }
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Response time: ' +
+                        Highcharts.numberFormat(this.y, 2);
+                }
+            },
+            legend: {
+                enabled: true
+            },
+            exporting: {
+                enabled: false
+            },
+            series: data
+        });
+    }});
+    
 });
         </script>
     </body>
