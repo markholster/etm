@@ -29,7 +29,7 @@ public class StatisticsRepository {
 	
 	public Map<String, Map<Long, Long>> getTransactionCountStatistics(String transactionName, Long startTime, Long endTime) {
 		List<Object> transactionNames = getTransactionNames(startTime, endTime);
-		if (transactionNames.size() == 0 || !transactionNames.contains(transactionNames)) {
+		if (transactionNames.size() == 0 || !transactionNames.contains(transactionName)) {
 			return Collections.emptyMap();
 		}
 		transactionNames.clear();
