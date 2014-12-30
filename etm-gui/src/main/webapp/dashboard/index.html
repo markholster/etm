@@ -19,9 +19,10 @@ $(function () {
         }
     });
     var timeRange = 1000 * 60 * 60;
-    var lastTime = new Date().getTime();
-    lastTime = Math.floor(lastTime/1000)*1000;
-    $.ajax('../rest/statistics/transactions/count/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
+    var startTime = new Date().getTime();
+    startTime = Math.floor(startTime/1000)*1000;
+    var maxResults = 5;
+    $.ajax('../rest/statistics/transactions/count/' + (startTime - timeRange) + '/' + startTime + '?max=' + maxResults, { dataType: "json", success: function (data) {
         $('#transactionscount').highcharts({
             chart: {
                 type: 'spline',
@@ -30,29 +31,60 @@ $(function () {
                 events: {
                     load: function () {
                         var chart = this;
+                        var lastTime = startTime;
                         setInterval(function () {
                             var updateTime = new Date().getTime();
                             updateTime = Math.floor(updateTime/1000)*1000;
-                        	$.getJSON('../rest/statistics/transactions/count/' + (updateTime - timeRange) + '/' + updateTime + '/', function (data) {
+                        	$.getJSON('../rest/statistics/transactions/count/' + lastTime + '/' + updateTime + '?max=' + maxResults, function (data) {
+                            	if ($.isEmptyObject(data)) {
+                            	    return false;                                	
+                                }
+                                var hasNew = false;
                         		$.each( data, function(index, serieData) {
                                     var serie = chart.get(serieData.id);
                                     if ($.isEmptyObject(serie)) {
-                                        chart.addSeries(serieData);                       			     
+                                        hasNew = true;
+                                        $.getJSON('../rest/statistics/transaction/' + serieData.name + '/count/' + (updateTime - timeRange) + '/' + updateTime + '/', function (fullSerieData) {
+                                        	chart.addSeries(fullSerieData);
+                                        });
                                     } else {
-                                        serie.setData(serieData.data);
+                                    	$.each( serieData.data, function(index, pointData) {
+                                            var point = chart.get(pointData.id);
+                                            if ($.isEmptyObject(point)) {
+                                                serie.addPoint(pointData);
+                                           } else {
+                                                point.y = pointData.y;
+                                                point.update(!hasNew);
+                                            }
+                                        });
+                                        // Remove outdated points.
+                                        var removeBefore = updateTime - timeRange;
+                                        $.each( serie.data, function(index, point) {
+                                            if (point.x < removeBefore) {
+                                                point.remove(!hasNew);
+                                            } else {
+                                                return false;
+                                            }
+                                        });
                                     }
                                 });
-                                // Remove series that aren't available in the data.
-                                $.each(chart.series, function(index, serie) {
-                                	var present = $.grep( data, function( n, i ) {
-                                		return n.name == serie.name;
-                                	});
-                                	if($.isEmptyObject(present)) {
-                                    	chart.get(serie.name).remove();
+                                if (hasNew) {
+                                	chart.redraw();
+                                    alert(chart.series.length);
+                                    if (chart.series.length > maxResults) { 
+		                                // Remove series with the lowest points until we reach maxResults
+		                                $.each(chart.series, function(index, serie) {
+			                                var total = 0;
+	                                        $.each( serie.data, function(index, point) {
+		                                        total += point.y;
+	                                        });
+	                                        alert(serie.name + ':' + total);	                                
+//		                                    chart.get(serie.name).remove();
+		                                });
                                     }
-                                });
+                                }
                             });
-                        }, 60000);
+                        }, 5000);
                     }
                 },
                 zoomType: 'x'
@@ -89,7 +121,7 @@ $(function () {
     }});
 
 
-    $.ajax('../rest/statistics/transactions/performance/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '/', { dataType: "json", success: function (data) {
         $('#transactionsperformance').highcharts({
             chart: {
                 type: 'spline',
@@ -157,7 +189,7 @@ $(function () {
     }});
 
     
-    $.ajax('../rest/statistics/messages/count/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/messages/count/' + (startTime - timeRange) + '/' + startTime + '/', { dataType: "json", success: function (data) {
         $('#messagescount').highcharts({
             chart: {
                 type: 'spline',
@@ -225,7 +257,7 @@ $(function () {
     }});
     
 
-    $.ajax('../rest/statistics/messages/performance/' + (lastTime - timeRange) + '/' + lastTime + '/', { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/messages/performance/' + (startTime - timeRange) + '/' + startTime + '/', { dataType: "json", success: function (data) {
         $('#messagesperformance').highcharts({
             chart: {
                 type: 'spline',
