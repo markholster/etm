@@ -74,6 +74,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        event.application, 
 			        this.secondTimestamp,
 			        true);
+			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "Application", event.application, true);
 		}
 		if (event.name != null) {
 			this.statementExecutor.updateEventNameCounter(

@@ -2,15 +2,31 @@
 <html>
     <head>
         <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Enterprise Telemetry Monitor - Dashboard</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" />
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
         <script src="http://code.highcharts.com/highcharts.js"></script>
     </head>
     <body>
-        <div id="transactionscount" style="width: 62%; height: 18em;"></div>
-        <div id="transactionsperformance" style="width: 62%; height: 18em;"></div>
-        <div id="messagescount" style="width: 62%; height: 18em;"></div>
-        <div id="messagesperformance" style="width: 62%; height: 18em;"></div>
+    <div class="container-fluid">
+	    <div class="row">
+	        <div class="col-md-4">
+                <div class="row">
+                    <div id="applicationscount" style="width:98%;"></div>
+                </div>
+	        </div>
+	        <div class="col-md-8">
+	            <div class="row">
+	                <div id="transactionsperformance" style="height: 17em; width:98%;"></div>
+	            </div>
+	            <br />        
+	            <div class="row">
+	                <div id="messagesperformance" style="height: 17em; width:98%;"></div>
+	            </div>        
+	        </div>
+	    </div>
+    </div>
         <script>
 $(function () {
     Highcharts.setOptions({
@@ -21,107 +37,12 @@ $(function () {
     var timeRange = 1000 * 60 * 60;
     var startTime = new Date().getTime();
     startTime = Math.floor(startTime/1000)*1000;
-    var maxResults = 5;
-    $.ajax('../rest/statistics/transactions/count/' + (startTime - timeRange) + '/' + startTime + '?max=' + maxResults, { dataType: "json", success: function (data) {
-        $('#transactionscount').highcharts({
-            chart: {
-                type: 'spline',
-                animation: Highcharts.svg, // don't animate in old IE
-                marginRight: 10,
-                events: {
-                    load: function () {
-                        var chart = this;
-                        var lastTime = startTime;
-                        setInterval(function () {
-                            var updateTime = new Date().getTime();
-                            updateTime = Math.floor(updateTime/1000)*1000;
-                        	$.getJSON('../rest/statistics/transactions/count/' + lastTime + '/' + updateTime + '?max=' + maxResults, function (data) {
-                            	if ($.isEmptyObject(data)) {
-                            	    return false;                                	
-                                }
-                                var hasNew = false;
-                        		$.each( data, function(index, serieData) {
-                                    var serie = chart.get(serieData.id);
-                                    if ($.isEmptyObject(serie)) {
-                                        hasNew = true;
-                                        $.getJSON('../rest/statistics/transaction/' + serieData.name + '/count/' + (updateTime - timeRange) + '/' + updateTime + '/', function (fullSerieData) {
-                                        	chart.addSeries(fullSerieData);
-                                        });
-                                    } else {
-                                    	$.each( serieData.data, function(index, pointData) {
-                                            var point = chart.get(pointData.id);
-                                            if ($.isEmptyObject(point)) {
-                                                serie.addPoint(pointData);
-                                           } else {
-                                                point.y = pointData.y;
-                                                point.update(!hasNew);
-                                            }
-                                        });
-                                        // Remove outdated points.
-                                        var removeBefore = updateTime - timeRange;
-                                        $.each( serie.data, function(index, point) {
-                                            if (point.x < removeBefore) {
-                                                point.remove(!hasNew);
-                                            } else {
-                                                return false;
-                                            }
-                                        });
-                                    }
-                                });
-                                if (hasNew) {
-                                	chart.redraw();
-                                    alert(chart.series.length);
-                                    if (chart.series.length > maxResults) { 
-		                                // Remove series with the lowest points until we reach maxResults
-		                                $.each(chart.series, function(index, serie) {
-			                                var total = 0;
-	                                        $.each( serie.data, function(index, point) {
-		                                        total += point.y;
-	                                        });
-	                                        alert(serie.name + ':' + total);	                                
-//		                                    chart.get(serie.name).remove();
-		                                });
-                                    }
-                                }
-                            });
-                        }, 5000);
-                    }
-                },
-                zoomType: 'x'
-            },
-            credits: {
-                enabled: false
-            },
-            title: {
-                text: 'Transactions count'
-            },
-            xAxis: {
-                type: 'datetime',
-            },
-            yAxis: {
-                title: {
-                    text: 'Transaction count'
-                }
-            },
-            tooltip: {
-                formatter: function () {
-                    return '<b>' + this.series.name + '</b><br/>' +
-                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Count: ' +
-                        Highcharts.numberFormat(this.y, 0);
-                }
-            },
-            legend: {
-                enabled: true
-            },
-            exporting: {
-                enabled: false
-            },
-            series: data
-        });
-    }});
+    var transactionPerformanceMaxResults = 5;
+    var messagePerformanceMaxResults = 5;
+    var applicationPerformanceMaxResults = 5;
+    var applicationCountMaxResults = 5;
 
-
-    $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '/', { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + transactionPerformanceMaxResults, { dataType: "json", success: function (data) {
         $('#transactionsperformance').highcharts({
             chart: {
                 type: 'spline',
@@ -133,7 +54,7 @@ $(function () {
                         setInterval(function () {
                             var updateTime = new Date().getTime();
                             updateTime = Math.floor(updateTime/1000)*1000;
-                            $.getJSON('../rest/statistics/transactions/performance/' + (updateTime - timeRange) + '/' + updateTime + '/', function (data) {
+                            $.getJSON('../rest/statistics/transactions/performance/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + transactionPerformanceMaxResults, function (data) {
                                 $.each( data, function(index, serieData) {
                                     var serie = chart.get(serieData.id);
                                     if ($.isEmptyObject(serie)) {
@@ -163,6 +84,9 @@ $(function () {
             title: {
                 text: 'Transactions performance'
             },
+            subtitle: {
+                text: 'Average response time (ms) for the least performant transactions'
+            },
             xAxis: {
                 type: 'datetime',
             },
@@ -188,76 +112,8 @@ $(function () {
         });
     }});
 
-    
-    $.ajax('../rest/statistics/messages/count/' + (startTime - timeRange) + '/' + startTime + '/', { dataType: "json", success: function (data) {
-        $('#messagescount').highcharts({
-            chart: {
-                type: 'spline',
-                animation: Highcharts.svg, // don't animate in old IE
-                marginRight: 10,
-                events: {
-                    load: function () {
-                        var chart = this;
-                        setInterval(function () {
-                            var updateTime = new Date().getTime();
-                            updateTime = Math.floor(updateTime/1000)*1000;
-                            $.getJSON('../rest/statistics/messages/count/' + (updateTime - timeRange) + '/' + updateTime + '/', function (data) {
-                                $.each( data, function(index, serieData) {
-                                    var serie = chart.get(serieData.id);
-                                    if ($.isEmptyObject(serie)) {
-                                        chart.addSeries(serieData);                                      
-                                    } else {
-                                        serie.setData(serieData.data);
-                                    }
-                                });
-                                // Remove series that aren't available in the data.
-                                $.each(chart.series, function(index, serie) {
-                                    var present = $.grep( data, function( n, i ) {
-                                        return n.name == serie.name;
-                                    });
-                                    if($.isEmptyObject(present)) {
-                                        chart.get(serie.name).remove();
-                                    }
-                                });
-                            });
-                        }, 60000);
-                    }
-                },
-                zoomType: 'x'
-            },
-            credits: {
-                enabled: false
-            },
-            title: {
-                text: 'Messages count'
-            },
-            xAxis: {
-                type: 'datetime',
-            },
-            yAxis: {
-                title: {
-                    text: 'Message count'
-                }
-            },
-            tooltip: {
-                formatter: function () {
-                    return '<b>' + this.series.name + '</b><br/>' +
-                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Count: ' +
-                        Highcharts.numberFormat(this.y, 0);
-                }
-            },
-            legend: {
-                enabled: true
-            },
-            exporting: {
-                enabled: false
-            },
-            series: data
-        });
-    }});
-    
 
-    $.ajax('../rest/statistics/messages/performance/' + (startTime - timeRange) + '/' + startTime + '/', { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/messages/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + messagePerformanceMaxResults, { dataType: "json", success: function (data) {
         $('#messagesperformance').highcharts({
             chart: {
                 type: 'spline',
@@ -269,7 +125,7 @@ $(function () {
                         setInterval(function () {
                             var updateTime = new Date().getTime();
                             updateTime = Math.floor(updateTime/1000)*1000;
-                            $.getJSON('../rest/statistics/messages/performance/' + (updateTime - timeRange) + '/' + updateTime + '/', function (data) {
+                            $.getJSON('../rest/statistics/messages/performance/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + messagePerformanceMaxResults, function (data) {
                                 $.each( data, function(index, serieData) {
                                     var serie = chart.get(serieData.id);
                                     if ($.isEmptyObject(serie)) {
@@ -299,6 +155,9 @@ $(function () {
             title: {
                 text: 'Messages performance'
             },
+            subtitle: {
+                text: 'Average response time (ms) for the least performant request messages'
+            },            
             xAxis: {
                 type: 'datetime',
             },
@@ -321,6 +180,81 @@ $(function () {
                 enabled: false
             },
             series: data
+        });
+    }});
+
+
+    $.ajax('../rest/statistics/applications/count/' + (startTime - timeRange) + '/' + startTime + '?max=' + applicationCountMaxResults, { dataType: "json", success: function (data) {
+        
+        $('#applicationscount').highcharts({
+            chart: {
+                type: 'bar',
+                animation: Highcharts.svg, // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function () {
+                        var chart = this;
+                        setInterval(function () {
+                            var updateTime = new Date().getTime();
+                            updateTime = Math.floor(updateTime/1000)*1000;
+                            $.getJSON('../rest/statistics/applications/count/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + applicationCountMaxResults, function (data) {
+                                chart.xAxis[0].setCategories(data.categories);
+                                chart.yAxis[0].setTitle({text: 'Message count since ' + Highcharts.dateFormat('%Y-%m-%d %H:%M', (updateTime - timeRange))});
+                                $.each( data.series, function(index, serieData) {
+                                    var serie = chart.get(serieData.id);
+                                    if ($.isEmptyObject(serie)) {
+                                        chart.addSeries(serieData);                                      
+                                    } else {
+                                        serie.setData(serieData.data);
+                                    }
+                                });
+                                // Remove series that aren't available in the data.
+                                $.each(chart.series, function(index, serie) {
+                                    var present = $.grep( data.series, function( n, i ) {
+                                        return n.name == serie.name;
+                                    });
+                                    if($.isEmptyObject(present)) {
+                                        chart.get(serie.name).remove();
+                                    }
+                                });
+                            });
+                        }, 60000);
+                    }                    
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: 'Message counts'
+            },
+            subtitle: {
+                text: 'Message counts per application for the most busy applications'
+            },
+            xAxis: {
+                categories: data.categories,
+                title: {
+                    text: null
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Message count since ' + Highcharts.dateFormat('%Y-%m-%d %H:%M', (startTime - timeRange))
+                }
+            },
+            tooltip: {
+                formatter: function () {
+                    return '<b>' + this.series.name + '</b><br/>' +
+                        Highcharts.numberFormat(this.y, 0);
+                }
+            },
+            legend: {
+            	enabled: true
+            },            
+            exporting: {
+                enabled: false
+            },
+            series: data.series
         });
     }});
     

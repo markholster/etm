@@ -27,116 +27,6 @@ public class StatisticsRepository {
 		this.session = session;
 	}
 	
-	public Map<String, Map<Long, Long>> getTransactionCountStatistics(String transactionName, Long startTime, Long endTime) {
-		List<Object> transactionNames = getTransactionNames(startTime, endTime);
-		if (transactionNames.size() == 0 || !transactionNames.contains(transactionName)) {
-			return Collections.emptyMap();
-		}
-		transactionNames.clear();
-		transactionNames.add(transactionName);
-		return getTransactionCountStatistics(transactionNames, startTime, endTime, 1);
-    }
-
-	public Map<String, Map<Long, Long>> getTransactionCountStatistics(Long startTime, Long endTime, int maxTransactions) {
-		if (startTime > endTime) {
-			return Collections.emptyMap();
-		}
-		List<Object> transactionNames = getTransactionNames(startTime, endTime);
-		if (transactionNames.size() == 0) {
-			return Collections.emptyMap();
-		}
-		return getTransactionCountStatistics(transactionNames, startTime, endTime, maxTransactions);
-    }
-	
-	private Map<String, Map<Long, Long>> getTransactionCountStatistics(List<Object> transactionNames, Long startTime, Long endTime, int maxTransactions) {
-		final Map<String, Long> totals = new HashMap<String, Long>();
-		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
-		BuiltStatement builtStatement = QueryBuilder.select("transactionName", "timeunit", "transactionStart")
-		        .from(this.keyspace, "transactionname_counter")
-		        .where(QueryBuilder.in("transactionName", transactionNames))
-		        .and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String name = row.getString(0);
-			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeMinuteFactor);
-			long count = row.getLong(2);
-			if (count == 0) {
-				continue;
-			}
-			if (!totals.containsKey(name)) {
-				totals.put(name, count);
-			} else {
-				Long currentValue = totals.get(name);
-				totals.put(name, currentValue + count);
-			}
-			if (!data.containsKey(name)) {
-				Map<Long, Long> values = new HashMap<Long, Long>();
-				values.put(timeUnit, count);
-				data.put(name, values);
-			} else {
-				Map<Long, Long> values = data.get(name);
-				if (!values.containsKey(timeUnit)) {
-					values.put(timeUnit, count);
-				} else {
-					Long currentValue = values.get(timeUnit);
-					values.put(timeUnit, currentValue + count);
-				}
-			}
-		}
-		filterCountsToMaxResults(maxTransactions, totals, data);
-		return data;		
-	}
-	
-	public Map<String, Map<Long, Long>> getMessagesCountStatistics(Long startTime, Long endTime, int maxMessages) {
-		if (startTime > endTime) {
-			return Collections.emptyMap();
-		}
-		List<Object> eventNames = getMessageNames(startTime, endTime);
-		if (eventNames.size() == 0) {
-			return Collections.emptyMap();
-		}
-		final Map<String, Long> totals = new HashMap<String, Long>();
-		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
-		BuiltStatement builtStatement = QueryBuilder.select("eventName", "timeunit", "messageRequestCount", "messageDatagramCount")
-		        .from(this.keyspace, "eventname_counter")
-		        .where(QueryBuilder.in("eventName", eventNames))
-		        .and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String name = row.getString(0);
-			long timeUnit = normalizeTime(row.getDate(1).getTime(), this.normalizeMinuteFactor);
-			long count = row.getLong(2) + row.getLong(3);
-			if (count == 0) {
-				continue;
-			}
-			if (!totals.containsKey(name)) {
-				totals.put(name, count);
-			} else {
-				Long currentValue = totals.get(name);
-				totals.put(name, currentValue + count);
-			}
-			if (!data.containsKey(name)) {
-				Map<Long, Long> values = new HashMap<Long, Long>();
-				values.put(timeUnit, count);
-				data.put(name, values);
-			} else {
-				Map<Long, Long> values = data.get(name);
-				if (!values.containsKey(timeUnit)) {
-					values.put(timeUnit, count);
-				} else {
-					Long currentValue = values.get(timeUnit);
-					values.put(timeUnit, currentValue + count);
-				}
-			}
-		}
-		filterCountsToMaxResults(maxMessages, totals, data);
-		return data;
-    }
-
 	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
@@ -243,18 +133,71 @@ public class StatisticsRepository {
 		return data;
     }
 	
-	public void filterCountsToMaxResults(int maxResults, Map<String, Long> highest, Map<String, Map<Long, Long>> data) {
-		List<Long> values = new ArrayList<>(highest.values().size());
-		values.addAll(highest.values());
+	public Map<String, Map<String, Long>> getApplicationCountStatistics(Long startTime, Long endTime, int maxApplications) {
+		if (startTime > endTime) {
+			return Collections.emptyMap();
+		}
+		List<Object> applicationNames = getApplicationNames(startTime, endTime);
+		if (applicationNames.size() == 0) {
+			return Collections.emptyMap();
+		}
+		final Map<String, Long> totals = new HashMap<String, Long>();
+		final Map<String, Map<String, Long>> data = new HashMap<String, Map<String, Long>>();
+		
+		BuiltStatement builtStatement = QueryBuilder.select("application", "incomingMessageRequestCount", "incomingMessageDatagramCount", "outgoingMessageRequestCount", "outgoingMessageDatagramCount")
+				.from(this.keyspace, "application_counter")
+				.where(QueryBuilder.in("application", applicationNames))
+				.and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
+		ResultSet resultSet = this.session.execute(builtStatement);
+		Iterator<Row> iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			String applicationName = row.getString(0);
+			long incomingMessageRequestCount = row.getLong(1);
+			long incomingMessageDatagramCount = row.getLong(2);
+			long outgoingMessageRequestCount = row.getLong(3);
+			long outgoingMessageDatagramCount = row.getLong(4);
+			long total = incomingMessageRequestCount + incomingMessageDatagramCount + outgoingMessageRequestCount + outgoingMessageDatagramCount;
+			if (total == 0) {
+				continue;
+			}
+			if (!totals.containsKey(applicationName)) {
+				totals.put(applicationName, total);
+			} else {
+				Long currentValue = totals.get(applicationName);
+				totals.put(applicationName, currentValue + total);
+			}
+			if (!data.containsKey(applicationName)) {
+				Map<String, Long> appTotals = new HashMap<String, Long>();
+				appTotals.put("incomingMessageRequest", incomingMessageRequestCount);
+				appTotals.put("incomingDatagramRequest", incomingMessageDatagramCount);
+				appTotals.put("outgoingMessageRequest", outgoingMessageRequestCount);
+				appTotals.put("outgoingDatagramRequest", outgoingMessageDatagramCount);
+				data.put(applicationName, appTotals);
+			} else {
+				Map<String, Long> currentValues = data.get(applicationName);
+				currentValues.put("incomingMessageRequest", currentValues.get("incomingMessageRequest") + incomingMessageRequestCount);
+				currentValues.put("incomingDatagramRequest", currentValues.get("incomingDatagramRequest") + incomingMessageDatagramCount);
+				currentValues.put("outgoingMessageRequest", currentValues.get("outgoingMessageRequest") + outgoingMessageRequestCount);
+				currentValues.put("outgoingDatagramRequest", currentValues.get("outgoingDatagramRequest") + outgoingMessageDatagramCount);				
+			}
+		}
+		filterCountsToMaxResults(maxApplications, totals, data);
+		return data;
+    }
+	
+	private void filterCountsToMaxResults(int maxResults, Map<String, Long> totals, Map<String, Map<String, Long>> data) {
+		List<Long> values = new ArrayList<>(totals.values().size());
+		values.addAll(totals.values());
 		Collections.sort(values);
 		Collections.reverse(values);
 		if (values.size() > maxResults) {
 			for (int i = maxResults; i < values.size(); i++) {
 				Long valueToRemove = values.get(i);
-				for (String name : highest.keySet()) {
-					if (highest.get(name).equals(valueToRemove)) {
+				for (String name : totals.keySet()) {
+					if (totals.get(name).equals(valueToRemove)) {
 						data.remove(name);
-						highest.remove(name);
+						totals.remove(name);
 						break;
 					}
 				}
@@ -262,7 +205,7 @@ public class StatisticsRepository {
 		}
 	}
 	
-	public void filterAveragesToMaxResults(int maxResults, Map<String, Long> highest, Map<String, Map<Long, Average>> data) {
+	private void filterAveragesToMaxResults(int maxResults, Map<String, Long> highest, Map<String, Map<Long, Average>> data) {
 		List<Long> values = new ArrayList<>(highest.values().size());
 		values.addAll(highest.values());
 		Collections.sort(values);
@@ -314,6 +257,21 @@ public class StatisticsRepository {
 	
 	private List<Object> getMessageNames(long startTime, long endTime) {
 		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
+		List<Object> eventNames = new ArrayList<Object>();
+		ResultSet resultSet = this.session.execute(builtStatement);
+		Iterator<Row> iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			String name = row.getString(0);
+			if (!eventNames.contains(name)) {
+				eventNames.add(name);
+			}
+		}
+		return eventNames;
+	}
+	
+	private List<Object> getApplicationNames(long startTime, long endTime) {
+		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
 		List<Object> eventNames = new ArrayList<Object>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
