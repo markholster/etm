@@ -33,6 +33,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.ignore || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
+//		long start = System.nanoTime();
 		if (needsCorrelation(event)) {
 			// Find the correlation event.
 			this.telemetryEventRepository.findParent(event.sourceCorrelationId, this.correlationBySourceIdResult.initialize());
@@ -81,6 +82,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				}
 			});
 		}
+//		Statistics.enhancingTime.addAndGet(System.nanoTime() - start);
 	}
 	
 	private boolean needsCorrelation(final TelemetryEvent event) {

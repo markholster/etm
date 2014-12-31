@@ -26,6 +26,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.ignore || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
+//		long start = System.nanoTime();
 		this.document.clear();
 		this.document.addField("id", event.id.toString());
 		if (event.application != null) {
@@ -72,6 +73,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent> {
 			this.document.addField("responseTime", responseTime);
 		}
 //		this.server.add(this.document);
+//		Statistics.indexingTime.addAndGet(System.nanoTime() - start);
 	}
 
 }

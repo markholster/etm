@@ -22,7 +22,9 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.ignore || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
+//		long start = System.nanoTime();
 		this.telemetryEventRepository.persistTelemetryEvent(event);
+//		Statistics.persistingTime.addAndGet(System.nanoTime() - start);
 	}
 
 }

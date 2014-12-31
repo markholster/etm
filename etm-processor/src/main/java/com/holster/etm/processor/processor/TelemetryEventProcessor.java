@@ -107,6 +107,7 @@ public class TelemetryEventProcessor {
 	}
 	
 	private void preProcess(TelemetryEvent event) {
+//		long start = System.nanoTime();
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
@@ -134,6 +135,7 @@ public class TelemetryEventProcessor {
 		if (event.sourceId != null) {
 			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId, event.transactionName, event.creationTime.getTime()));
 		}
+//		Statistics.preprocessingTime.addAndGet(System.nanoTime() - start);
 	}
 	
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
