@@ -7,6 +7,30 @@
         <link rel="stylesheet" href="../resources/styles/bootstrap-3.3.1.min.css" />
         <script src="../resources/scripts/jquery-1.8.2.min.js"></script>
         <script src="../resources/scripts/highcharts-4.0.4.min.js"></script>
+        <style>
+@-webkit-keyframes new_expiry {
+  from { background-color: red; }
+  to { background-color: inherit; }
+}
+@-moz-keyframes new_expiry {
+  from { background-color: red; }
+  to { background-color: inherit; }
+}
+@-o-keyframes new_expiry {
+  from { background-color: red; }
+  to { background-color: inherit; }
+}
+@keyframes new_expiry {
+  from { background-color: red; }
+  to { background-color: inherit; }
+}
+.new_expiry {
+  -webkit-animation: new_expiry 1s 1; /* Safari 4+ */
+  -moz-animation:    new_expiry 1s 1; /* Fx 5+ */
+  -o-animation:      new_expiry 1s 1; /* Opera 12+ */
+  animation:         new_expiry 1s 1; /* IE 10+ */
+}
+        </style>
     </head>
     <body>
     <div class="container-fluid">
@@ -14,6 +38,17 @@
 	        <div class="col-md-4">
                 <div class="row">
                     <div id="applicationscount" style="width:98%;"></div>
+                </div>
+                <div class="row">
+                    <table id="expiry_table">
+                        <thead>
+                            <tr>
+                                <th>Message name</th><th>Application</th><th>Start time</th><th>Expired at</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
                 </div>
 	        </div>
 	        <div class="col-md-8">
@@ -29,6 +64,14 @@
     </div>
         <script>
 $(function () {
+    setInterval(function () {
+    	var row = $('<tr><td><div style="display: none;">CreateOvereenkomstRequest</div></td><td><div style="display: none;">KCS</div></td><td><div style="display: none;">25-12-2014 12:10:41</div></td><td><div style="display: none;">25-12-2014 12:40:41</div></td></tr>');
+    	$(row).prependTo($('#expiry_table > tbody'));
+    	$("#expiry_table > tbody > :first-child > td > div").slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
+    	$('#expiry_table > tbody > :nth-child(5)').nextAll().hide('slow', function(){ $(this).remove(); });
+    }, 5000);
+
+	
     Highcharts.setOptions({
         global: {
             useUTC: false
