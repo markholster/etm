@@ -40,15 +40,18 @@
                     <div id="applicationscount" style="width:98%;"></div>
                 </div>
                 <div class="row">
-                    <table id="expiry_table">
-                        <thead>
-                            <tr>
-                                <th>Message name</th><th>Application</th><th>Start time</th><th>Expired at</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <p class="text-center" style="color:#333333;font-size:18px;fill:#333333;width:454px;">Expired messages</p>
+	                    <table id="expiry_table" class="table table-condensed">
+	                        <thead>
+	                            <tr>
+	                                <th>Message name</th><th>Application</th><th>Start time</th><th>Expire time</th>
+	                            </tr>
+	                        </thead>
+	                        <tbody>
+	                        </tbody>
+	                    </table>
+                    </div>
                 </div>
 	        </div>
 	        <div class="col-md-8">
@@ -63,9 +66,16 @@
 	    </div>
     </div>
         <script>
+//<![CDATA[        
 $(function () {
+	for (var i=0; i<5; i++) {
+        var row = $('<tr><td><div style="display: none;">CreateOvereenkomstRequest</div></td><td><div style="display: none;">KCS</div></td><td><div style="display: none;">12:10:41</div></td><td><div style="display: none;">12:40:41</div></td></tr>');
+        $(row).prependTo($('#expiry_table > tbody'));
+        $("#expiry_table > tbody > :first-child > td > div").slideDown(500);
+	}
+	
     setInterval(function () {
-    	var row = $('<tr><td><div style="display: none;">CreateOvereenkomstRequest</div></td><td><div style="display: none;">KCS</div></td><td><div style="display: none;">25-12-2014 12:10:41</div></td><td><div style="display: none;">25-12-2014 12:40:41</div></td></tr>');
+    	var row = $('<tr><td><div style="display: none;">CreateOvereenkomstRequest</div></td><td><div style="display: none;">Nieuw woon</div></td><td><div style="display: none;">12:10:41</div></td><td><div style="display: none;">12:40:41</div></td></tr>');
     	$(row).prependTo($('#expiry_table > tbody'));
     	$("#expiry_table > tbody > :first-child > td > div").slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
     	$('#expiry_table > tbody > :nth-child(5)').nextAll().hide('slow', function(){ $(this).remove(); });
@@ -302,6 +312,7 @@ $(function () {
     }});
     
 });
-        </script>
+//]]>
+</script>
     </body>
 </html>
