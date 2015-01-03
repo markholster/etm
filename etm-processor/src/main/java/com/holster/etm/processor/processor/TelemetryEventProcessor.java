@@ -133,7 +133,8 @@ public class TelemetryEventProcessor {
 			event.transactionId = event.id;
 		}
 		if (event.sourceId != null) {
-			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId, event.transactionName, event.creationTime.getTime()));
+			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
+			        event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime()));
 		}
 //		Statistics.preprocessingTime.addAndGet(System.nanoTime() - start);
 	}

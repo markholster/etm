@@ -86,6 +86,11 @@ public class TelemetryEvent {
 	public Date correlationCreationTime = new Date(0);
 
 	/**
+	 * The expiryTime of the event this event is correlated to.
+	 */
+	public Date correlationExpiryTime = new Date(0);
+	
+	/**
 	 * The name of the event this event is correlated to.
 	 */
 	public String correlationName;
@@ -103,7 +108,9 @@ public class TelemetryEvent {
 		this.id = UUIDs.timeBased();
 		this.application = null;
 		this.content = null;
+		this.correlationCreationTime.setTime(0);
 		this.correlationData.clear();
+		this.correlationExpiryTime.setTime(0);
 		this.correlationId = null;
 		this.correlationName = null;
 		this.creationTime.setTime(0);
@@ -116,7 +123,6 @@ public class TelemetryEvent {
 		this.transactionId = null;
 		this.transactionName = null;
 		this.type = null;
-		this.correlationCreationTime.setTime(0);
 		this.ignore = false;
 		return this;
 	}
@@ -126,6 +132,8 @@ public class TelemetryEvent {
 	    initialize();
 		this.application = copy.application;
 		this.content = copy.content;
+		this.correlationCreationTime.setTime(copy.correlationCreationTime.getTime());
+		this.correlationExpiryTime.setTime(copy.correlationExpiryTime.getTime());
 		this.correlationData.putAll(copy.correlationData);
 		this.correlationId = copy.correlationId;
 		this.correlationName = copy.correlationName;
@@ -139,7 +147,6 @@ public class TelemetryEvent {
 		this.transactionId = copy.transactionId;
 		this.transactionName = copy.transactionName;
 		this.type = copy.type;
-		this.correlationCreationTime.setTime(copy.correlationCreationTime.getTime());
 	    return this;
     }
 }

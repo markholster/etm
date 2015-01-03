@@ -8,8 +8,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
@@ -17,8 +21,6 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 public class StatisticsRepository {
 
-	private final long normalizeMinuteFactor = 1000 * 60;
-	private final long normalizeHourFactor = 1000 * 60 * 60;
 	final String keyspace = "etm";
 	
 	private final Session session; 
@@ -27,110 +29,165 @@ public class StatisticsRepository {
 		this.session = session;
 	}
 	
-	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions) {
+	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions, TimeUnit timeUnit) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<Object> transactionNames = getTransactionNames(startTime, endTime);
+		List<String> transactionNames = getTransactionNames(startTime, endTime);
 		if (transactionNames.size() == 0) {
 			return Collections.emptyMap();
 		}
-		final Map<String, Long> highest = new HashMap<String, Long>();
-		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
-		BuiltStatement builtStatement = QueryBuilder.select("transactionName", "startTime", "finishTime", "expiryTime")
-				.from(this.keyspace, "transaction_performance")
-				.where(QueryBuilder.in("transactionName", transactionNames))
-				.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String transactionName = row.getString(0);
-			Date transactionStartTime = row.getDate(1);
-			Date transactionFinishTime = row.getDate(2);
-			Date transactionExpiryTime = row.getDate(3);
-			long timeUnit = normalizeTime(transactionStartTime.getTime(), this.normalizeMinuteFactor);
-			long responseTime = determineResponseTime(transactionStartTime, transactionFinishTime, transactionExpiryTime);
-			if (responseTime == -1) {
-					continue;
-			}
-			if (!highest.containsKey(transactionName)) {
-				highest.put(transactionName, responseTime);
-			} else {
-				Long currentValue = highest.get(transactionName);
-				if (responseTime > currentValue) {
-					highest.put(transactionName, responseTime);
-				}
-			}
-			if (!data.containsKey(transactionName)) {
-				Map<Long, Average> values = new HashMap<Long, Average>();
-				values.put(timeUnit, new Average(responseTime));
-				data.put(transactionName, values);
-			} else {
-				Map<Long, Average> values = data.get(transactionName);
-				if (!values.containsKey(timeUnit)) {
-					values.put(timeUnit, new Average(responseTime));
-				} else {
-					Average currentValue = values.get(timeUnit);
-					currentValue.add(responseTime);
-				}
-			}
+		final Map<String, Long> highest = new ConcurrentHashMap<String, Long>();
+		final Map<String, Map<Long, Average>> data = new ConcurrentHashMap<String, Map<Long, Average>>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+		for (String transactionName : transactionNames) {
+			BuiltStatement builtStatement = QueryBuilder.select("transactionName", "startTime", "finishTime", "expiryTime")
+					.from(this.keyspace, "transaction_performance")
+					.where(QueryBuilder.eq("transactionName", transactionName))
+					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
+			resultSets.add(this.session.executeAsync(builtStatement));
 		}
+		resultSets.parallelStream().forEach(c -> {
+			ResultSet resultSet = c.getUninterruptibly();
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				String transactionName = row.getString(0);
+				Date transactionStartTime = row.getDate(1);
+				Date transactionFinishTime = row.getDate(2);
+				Date transactionExpiryTime = row.getDate(3);
+				long timeUnitValue = normalizeTime(transactionStartTime.getTime(), timeUnit.toMillis(1));
+				long responseTime = determineResponseTime(transactionStartTime, transactionFinishTime, transactionExpiryTime);
+				if (responseTime == -1) {
+						continue;
+				}
+				if (!highest.containsKey(transactionName)) {
+					highest.put(transactionName, responseTime);
+				} else {
+					Long currentValue = highest.get(transactionName);
+					if (responseTime > currentValue) {
+						highest.put(transactionName, responseTime);
+					}
+				}
+				if (!data.containsKey(transactionName)) {
+					Map<Long, Average> values = new HashMap<Long, Average>();
+					values.put(timeUnitValue, new Average(responseTime));
+					data.put(transactionName, values);
+				} else {
+					Map<Long, Average> values = data.get(transactionName);
+					if (!values.containsKey(timeUnitValue)) {
+						values.put(timeUnitValue, new Average(responseTime));
+					} else {
+						Average currentValue = values.get(timeUnitValue);
+						currentValue.add(responseTime);
+					}
+				}
+			}
+		});
 		filterAveragesToMaxResults(maxTransactions, highest, data);
 		return data;
     }
 
-	public Map<String, Map<Long, Average>> getMessagesPerformanceStatistics(Long startTime, Long endTime, int maxMessages) {
+	public Map<String, Map<Long, Average>> getMessagesPerformanceStatistics(Long startTime, Long endTime, int maxMessages, TimeUnit timeUnit) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<Object> messagesNames = getMessageNames(startTime, endTime);
-		if (messagesNames.size() == 0) {
+		List<String> messageNames = getMessageNames(startTime, endTime);
+		if (messageNames.size() == 0) {
 			return Collections.emptyMap();
 		}
-		final Map<String, Long> highest = new HashMap<String, Long>();
-		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
-		BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime")
-				.from(this.keyspace, "message_performance")
-				.where(QueryBuilder.in("name", messagesNames))
-				.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String messageName = row.getString(0);
-			Date messageStartTime = row.getDate(1);
-			Date messageFinishTime = row.getDate(2);
-			Date messageExpiryTime = row.getDate(3);
-			long timeUnit = normalizeTime(messageStartTime.getTime(), this.normalizeMinuteFactor);
-			long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
-			if (responseTime == -1) {
-					continue;
-			}
-			if (!highest.containsKey(messageName)) {
-				highest.put(messageName, responseTime);
-			} else {
-				Long currentValue = highest.get(messageName);
-				if (responseTime > currentValue) {
-					highest.put(messageName, responseTime);
-				}
-			}
-			if (!data.containsKey(messageName)) {
-				Map<Long, Average> values = new HashMap<Long, Average>();
-				values.put(timeUnit, new Average(responseTime));
-				data.put(messageName, values);
-			} else {
-				Map<Long, Average> values = data.get(messageName);
-				if (!values.containsKey(timeUnit)) {
-					values.put(timeUnit, new Average(responseTime));
-				} else {
-					Average currentValue = values.get(timeUnit);
-					currentValue.add(responseTime);
-				}
-			}
+		final Map<String, Long> highest = new ConcurrentHashMap<String, Long>();
+		final Map<String, Map<Long, Average>> data = new ConcurrentHashMap<String, Map<Long, Average>>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+		for (String messageName : messageNames) {
+			BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime")
+					.from(this.keyspace, "message_performance")
+					.where(QueryBuilder.eq("name", messageName))
+					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
+			resultSets.add(this.session.executeAsync(builtStatement));
 		}
+		resultSets.parallelStream().forEach(c -> {
+			ResultSet resultSet = c.getUninterruptibly();
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				String messageName = row.getString(0);
+				Date messageStartTime = row.getDate(1);
+				Date messageFinishTime = row.getDate(2);
+				Date messageExpiryTime = row.getDate(3);
+				long timeUnitValue = normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
+				long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
+				if (responseTime == -1) {
+						continue;
+				}
+				if (!highest.containsKey(messageName)) {
+					highest.put(messageName, responseTime);
+				} else {
+					Long currentValue = highest.get(messageName);
+					if (responseTime > currentValue) {
+						highest.put(messageName, responseTime);
+					}
+				}
+				if (!data.containsKey(messageName)) {
+					Map<Long, Average> values = new HashMap<Long, Average>();
+					values.put(timeUnitValue, new Average(responseTime));
+					data.put(messageName, values);
+				} else {
+					Map<Long, Average> values = data.get(messageName);
+					if (!values.containsKey(timeUnitValue)) {
+						values.put(timeUnitValue, new Average(responseTime));
+					} else {
+						Average currentValue = values.get(timeUnitValue);
+						currentValue.add(responseTime);
+					}
+				}
+			}		
+		});
 		filterAveragesToMaxResults(maxMessages, highest, data);
 		return data;
+    }
+	
+	public List<ExpiredMessage> getMessagesExpirationStatistics(Long startTime, Long endTime, int maxExpirations) {
+		if (startTime > endTime) {
+			return Collections.emptyList();
+		}
+		List<String> messageNames = getMessageNames(startTime, endTime);
+		if (messageNames.size() == 0) {
+			return Collections.emptyList();
+		}
+		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+		for (String messageName : messageNames) {
+			BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime", "application")
+					.from(this.keyspace, "message_expiration")
+					.where(QueryBuilder.eq("name", messageName))
+					.and(QueryBuilder.gte("expiryTime", new Date(startTime))).and(QueryBuilder.lte("expiryTime", new Date(endTime)));
+			resultSets.add(this.session.executeAsync(builtStatement));
+		}
+		resultSets.parallelStream().forEach(c -> {
+			ResultSet resultSet = c.getUninterruptibly();
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				String messageName = row.getString(0);
+				Date messageStartTime = row.getDate(1);
+				Date messageFinishTime = row.getDate(2);
+				Date messageExpiryTime = row.getDate(3);
+				String application = row.getString(4);
+				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
+					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
+						synchronized (expiredMessages) {
+							expiredMessages.add(new ExpiredMessage(messageName, messageStartTime, messageExpiryTime, application));
+                        }
+					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
+						synchronized (expiredMessages) {
+							expiredMessages.add(new ExpiredMessage(messageName, messageStartTime, messageExpiryTime, application));
+                        }
+					}
+				}
+			}
+		});
+		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());
     }
 	
 	public Map<String, Map<String, Long>> getApplicationCountStatistics(Long startTime, Long endTime, int maxApplications) {
@@ -240,9 +297,9 @@ public class StatisticsRepository {
 		return -1;
 	}
 	
-	private List<Object> getTransactionNames(long startTime, long endTime) {
+	private List<String> getTransactionNames(long startTime, long endTime) {
 		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
-		List<Object> transactionNames = new ArrayList<Object>();
+		List<String> transactionNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
 		while (iterator.hasNext()) {
@@ -255,9 +312,9 @@ public class StatisticsRepository {
 		return transactionNames;
 	}
 	
-	private List<Object> getMessageNames(long startTime, long endTime) {
+	private List<String> getMessageNames(long startTime, long endTime) {
 		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
-		List<Object> eventNames = new ArrayList<Object>();
+		List<String> eventNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
 		while (iterator.hasNext()) {
@@ -293,7 +350,7 @@ public class StatisticsRepository {
 	    // For unknown reasons cassandra gives an error when the arraylist is created with the Date generic type.
 	    List<Object> result = new ArrayList<Object>();
 	    do {
-	    	result.add(new Date(normalizeTime(startCalendar.getTime().getTime(), this.normalizeHourFactor)));
+	    	result.add(new Date(normalizeTime(startCalendar.getTime().getTime(), TimeUnit.HOURS.toMillis(1))));
 	    	startCalendar.add(Calendar.HOUR, 1);
 	    } while (startCalendar.before(endCalendar) || (!startCalendar.before(endCalendar) && startCalendar.get(Calendar.HOUR_OF_DAY) == endCalendar.get(Calendar.HOUR_OF_DAY)));
 	    return result;

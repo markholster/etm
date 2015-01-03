@@ -56,11 +56,11 @@
 	        </div>
 	        <div class="col-md-8">
 	            <div class="row">
-	                <div id="transactionsperformance" style="height: 17em; width:98%;"></div>
+	                <div id="transactionsperformance" style="height: 22em; width:98%;"></div>
 	            </div>
 	            <br />        
 	            <div class="row">
-	                <div id="messagesperformance" style="height: 17em; width:98%;"></div>
+	                <div id="messagesperformance" style="height: 22em; width:98%;"></div>
 	            </div>        
 	        </div>
 	    </div>
@@ -68,20 +68,6 @@
         <script>
 //<![CDATA[        
 $(function () {
-	for (var i=0; i<5; i++) {
-        var row = $('<tr><td><div style="display: none;">CreateOvereenkomstRequest</div></td><td><div style="display: none;">KCS</div></td><td><div style="display: none;">12:10:41</div></td><td><div style="display: none;">12:40:41</div></td></tr>');
-        $(row).prependTo($('#expiry_table > tbody'));
-        $("#expiry_table > tbody > :first-child > td > div").slideDown(500);
-	}
-	
-    setInterval(function () {
-    	var row = $('<tr><td><div style="display: none;">CreateOvereenkomstRequest</div></td><td><div style="display: none;">Nieuw woon</div></td><td><div style="display: none;">12:10:41</div></td><td><div style="display: none;">12:40:41</div></td></tr>');
-    	$(row).prependTo($('#expiry_table > tbody'));
-    	$("#expiry_table > tbody > :first-child > td > div").slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
-    	$('#expiry_table > tbody > :nth-child(5)').nextAll().hide('slow', function(){ $(this).remove(); });
-    }, 5000);
-
-	
     Highcharts.setOptions({
         global: {
             useUTC: false
@@ -92,8 +78,8 @@ $(function () {
     startTime = Math.floor(startTime/1000)*1000;
     var transactionPerformanceMaxResults = 5;
     var messagePerformanceMaxResults = 5;
-    var applicationPerformanceMaxResults = 5;
     var applicationCountMaxResults = 5;
+    var expirationCountMaxResults = 5;
 
     $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + transactionPerformanceMaxResults, { dataType: "json", success: function (data) {
         $('#transactionsperformance').highcharts({
@@ -310,7 +296,33 @@ $(function () {
             series: data.series
         });
     }});
-    
+
+
+    $.ajax('../rest/statistics/messages/epxiration/' + (startTime - timeRange) + '/' + startTime + '?max=' + expirationCountMaxResults, { dataType: "json", success: function (data) {
+    	if (!$.isEmptyObject(data)) {
+            $.each(data, function(index, expiration) {
+                var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
+                var rowContent = '<tr><td><div style="display: none;">' + expiration.name + '</div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
+                $(rowContent).prependTo($('#expiry_table > tbody'));
+                $("#expiry_table > tbody > :first-child > td > div").slideDown(500);                
+            });
+    	}
+    	var lastTime = startTime;
+        setInterval(function () {
+            var updateTime = new Date().getTime();
+            updateTime = Math.floor(updateTime/1000)*1000;
+            $.getJSON('../rest/statistics/messages/epxiration/' + lastTime + '/' + updateTime + '?max=' + expirationCountMaxResults, function (data) {
+                $.each(data, function(index, expiration) {
+                	var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
+                    var rowContent = '<tr><td><div style="display: none;">' + expiration.name + '</div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
+                    $(rowContent).prependTo($('#expiry_table > tbody'));
+                    $("#expiry_table > tbody > :first-child > td > div").slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
+                    $('#expiry_table > tbody > :nth-child(5)').nextAll().hide('slow', function(){ $(this).remove(); });                
+                }); 
+            });
+            lastTime = updateTime;
+        }, 5000);
+    }});
 });
 //]]>
 </script>

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -25,6 +26,7 @@ import org.codehaus.jackson.JsonGenerator;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
 import com.holster.etm.gui.rest.repository.Average;
+import com.holster.etm.gui.rest.repository.ExpiredMessage;
 import com.holster.etm.gui.rest.repository.StatisticsRepository;
 
 @Path("/statistics")
@@ -48,10 +50,13 @@ public class StatisticsService {
 	public String getTransactionsPerformanceFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
 		if (max == 0) {
 			max = 5;
-		}		
-		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getTransactionPerformanceStatistics(startTime, endTime, max);
+		}
+		if (startTime > endTime) {
+			return "[]";
+		}
+		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getTransactionPerformanceStatistics(startTime, endTime, max, determineTimeUnit(startTime, endTime));
 		StringWriter writer = new StringWriter();
-		writeLineAverageStatistics(writer, statistics);
+		writeMessagesAverageStatistics(writer, statistics);
 		return writer.toString();
 	}
 	
@@ -63,13 +68,33 @@ public class StatisticsService {
 		if (max == 0) {
 			max = 5;
 		}
-		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getMessagesPerformanceStatistics(startTime, endTime, max);
+		if (startTime > endTime) {
+			return "[]";
+		}
+		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getMessagesPerformanceStatistics(startTime, endTime, max, determineTimeUnit(startTime, endTime));
 		StringWriter writer = new StringWriter();
-		writeLineAverageStatistics(writer, statistics);
+		writeMessagesAverageStatistics(writer, statistics);
+		return writer.toString();
+	}
+	
+	@GET
+	@Path("/messages/epxiration/{starttime}/{endtime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getMessagesExpirationFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+		if (max == 0) {
+			max = 5;
+		}
+		if (startTime > endTime) {
+			return "[]";
+		}
+		List<ExpiredMessage> statistics = this.statisticsRepository.getMessagesExpirationStatistics(startTime, endTime, max);
+		StringWriter writer = new StringWriter();
+		writeMessagesExpirationStatistics(writer, statistics);
 		return writer.toString();
 	}
 
-    @GET
+	@GET
 	@Path("/applications/count/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -138,7 +163,7 @@ public class StatisticsService {
         }		
 	}
 	
-	private void writeLineAverageStatistics(Writer writer, Map<String, Map<Long, Average>> statistics) {
+	private void writeMessagesAverageStatistics(Writer writer, Map<String, Map<Long, Average>> statistics) {
 		try {
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
 	        generator.writeStartArray();
@@ -166,6 +191,41 @@ public class StatisticsService {
         		log.logErrorMessage("Unable to generate performance statistics.", e);
         	}
         }
+	}
 
+    private void writeMessagesExpirationStatistics(StringWriter writer, List<ExpiredMessage> statistics) {
+		try {
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartArray();
+	        for (ExpiredMessage expiredMessage: statistics) {
+	        	generator.writeStartObject();
+	        	generator.writeStringField("name", expiredMessage.getName());
+	        	generator.writeStringField("application", expiredMessage.getApplication());
+	        	generator.writeNumberField("startTime", expiredMessage.getStartTime().getTime());
+	        	generator.writeNumberField("expirationTime", expiredMessage.getExpirationTime().getTime());
+	        	generator.writeEndObject();
+	        }
+	        generator.writeEndArray();
+	        generator.close();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to generate performance statistics.", e);
+        	}
+        }    }
+
+	
+	private TimeUnit determineTimeUnit(long startTime, long endTime) {
+		long duration = endTime - startTime;
+		if (duration >= 864000000l) { // Ten days
+			return TimeUnit.DAYS;
+		} else if (duration >= 36000000l) { // Ten hours
+			return TimeUnit.HOURS;
+		} else if (duration > 600000l) { // Ten minutes
+			return TimeUnit.MINUTES;
+		} else if(duration > 10000l) { // Ten seconds
+			return TimeUnit.SECONDS;
+		} else {
+			return TimeUnit.MILLISECONDS;
+		}
 	}
 }

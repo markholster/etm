@@ -149,6 +149,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.transactionId = parent.transactionId;
 			result.transactionName = parent.transactionName;
 			result.creationTime = parent.creationTime;
+			result.expiryTime = parent.expiryTime;
 			result.name = parent.name;
 			return;
 		}

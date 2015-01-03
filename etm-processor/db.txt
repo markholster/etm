@@ -38,6 +38,16 @@ create table message_performance (
     primary key (name, startTime, id)
 );
 
+create table message_expiration (
+    name text,
+    expiryTime timestamp,
+    id timeuuid,
+    startTime timestamp,
+    finishTime timestamp,
+    application text,
+    primary key (name, expiryTime, id)
+);
+
 create table event_occurrences (
     timeunit timestamp,
     type text,
@@ -48,6 +58,7 @@ create table event_occurrences (
 create table sourceid_id_correlation (
     sourceId text primary key,
     creationTime timestamp,
+    expiryTime timestamp,
     id timeuuid,
     transactionId timeuuid,
     transactionName text,

@@ -40,8 +40,10 @@ public class StatementExecutor {
 	private final PreparedStatement insertEventOccurrenceStatement;
 	private final PreparedStatement insertTransactionEventStartStatement;
 	private final PreparedStatement insertTransactionEventFinishStatement;
-	private final PreparedStatement insertMessageEventStartStatement;
-	private final PreparedStatement insertMessageEventFinishStatement;
+	private final PreparedStatement insertMessageEventPerformanceStartStatement;
+	private final PreparedStatement insertMessageEventPerformanceFinishStatement;
+	private final PreparedStatement insertMessageEventExpirationStartStatement;
+	private final PreparedStatement insertMessageEventExpirationFinishStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
@@ -74,11 +76,12 @@ public class StatementExecutor {
 		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation ("
 				+ "sourceId, "
 				+ "creationTime, "
+				+ "expiryTime, "
 				+ "id, "
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "name"
-				+ ") values (?,?,?,?,?,?);");
+				+ ") values (?,?,?,?,?,?,?);");
 		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data ("
 				+ "id, "
 				+ "name, "
@@ -101,15 +104,26 @@ public class StatementExecutor {
 				+ "transactionId, "
 				+ "startTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
-		this.insertMessageEventStartStatement = session.prepare("insert into " + keySpace + ".message_performance ("
+		this.insertMessageEventPerformanceStartStatement = session.prepare("insert into " + keySpace + ".message_performance ("
 				+ "name, "
 				+ "id, "
 				+ "startTime, "
 				+ "expiryTime) values (?, ?, ?, ?);");
-		this.insertMessageEventFinishStatement = session.prepare("insert into " + keySpace + ".message_performance ("
+		this.insertMessageEventPerformanceFinishStatement = session.prepare("insert into " + keySpace + ".message_performance ("
 				+ "name, "
 				+ "id, "
 				+ "startTime, "
+				+ "finishTime) values (?, ?, ?, ?);");
+		this.insertMessageEventExpirationStartStatement = session.prepare("insert into " + keySpace + ".message_expiration ("
+				+ "name, "
+				+ "id, "
+				+ "expiryTime, "
+				+ "startTime, "
+				+ "application) values (?, ?, ?, ?, ?);");
+		this.insertMessageEventExpirationFinishStatement = session.prepare("insert into " + keySpace + ".message_expiration ("
+				+ "name, "
+				+ "id, "
+				+ "expiryTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
 		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set "
 				+ "count = count + 1, "
@@ -159,6 +173,7 @@ public class StatementExecutor {
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "creationTime, "
+				+ "expiryTime, "
 				+ "name "
 				+ "from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
@@ -200,6 +215,7 @@ public class StatementExecutor {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertSourceIdIdStatement.bind(
 				event.sourceId,
 				event.creationTime,
+				event.expiryTime,
 				event.id, 
 				event.transactionId, 
 				event.transactionName,
@@ -254,7 +270,7 @@ public class StatementExecutor {
 	}
 
 	public void insertMessageEventStart(TelemetryEvent event, boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventStartStatement.bind(
+		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceStartStatement.bind(
 				event.name,
 				event.id, 
 		        event.creationTime, 
@@ -262,13 +278,30 @@ public class StatementExecutor {
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
+		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationStartStatement.bind(
+				event.name,
+				event.id, 
+		        event.expiryTime,
+		        event.creationTime,
+		        event.application));
+		if (!async) {
+			resultSetFuture.getUninterruptibly();
+		}
 	}
 	
 	public void insertMessageEventFinish(TelemetryEvent event, boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventFinishStatement.bind(
+		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceFinishStatement.bind(
 				event.correlationName,
 				event.correlationId,
 				event.correlationCreationTime,
+		        event.creationTime));
+		if (!async) {
+			resultSetFuture.getUninterruptibly();
+		}
+		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationFinishStatement.bind(
+				event.correlationName,
+				event.correlationId,
+				event.correlationExpiryTime,
 		        event.creationTime));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
@@ -361,7 +394,8 @@ public class StatementExecutor {
 			result.transactionId = row.getUUID(1);
 			result.transactionName = row.getString(2);
 			result.creationTime = row.getDate(3);
-			result.name = row.getString(4);
+			result.expiryTime = row.getDate(4);
+			result.name = row.getString(5);
 		}
 	}
 	
