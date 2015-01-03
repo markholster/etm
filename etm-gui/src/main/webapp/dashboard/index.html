@@ -37,30 +37,40 @@
 	    <div class="row">
 	        <div class="col-md-4">
                 <div class="row">
-                    <div id="applicationscount" style="width:98%;"></div>
+                    <div class="panel panel-default" style="margin-left: 0.5em; margin-right: 0.5em;">
+                        <div class="panel-heading">Message counts</div>
+                        <div id="applicationscount" style="height: 22em; width:98%;"></div>
+                    </div>
                 </div>
                 <div class="row">
-                    <div class="table-responsive">
-                        <p class="text-center" style="color:#333333;font-size:18px;fill:#333333;width:454px;">Expired messages</p>
-	                    <table id="expiry_table" class="table table-condensed">
-	                        <thead>
-	                            <tr>
-	                                <th>Message name</th><th>Application</th><th>Start time</th><th>Expiry time</th>
-	                            </tr>
-	                        </thead>
-	                        <tbody>
-	                        </tbody>
-	                    </table>
+                    <div class="panel panel-default" style="margin-left: 0.5em; margin-right: 0.5em;">
+                        <div class="panel-heading">Expired messages</div>
+	                    <div class="table-responsive">
+		                    <table id="expiry_table" class="table table-condensed">
+		                        <thead>
+		                            <tr>
+		                                <th>Message name</th><th>Application</th><th>Start time</th><th>Expiry time</th>
+		                            </tr>
+		                        </thead>
+		                        <tbody>
+		                        </tbody>
+		                    </table>
+	                    </div>
                     </div>
                 </div>
 	        </div>
 	        <div class="col-md-8">
 	            <div class="row">
-	                <div id="transactionsperformance" style="height: 22em; width:98%;"></div>
+                    <div class="panel panel-default" style="margin-left: 0.5em; margin-right: 0.5em;">
+                        <div class="panel-heading">Transaction performance</div>
+	                    <div id="transactionsperformance" style="height: 22em; width:98%;"></div>
+	                </div>
 	            </div>
-	            <br />        
 	            <div class="row">
-	                <div id="messagesperformance" style="height: 22em; width:98%;"></div>
+	                <div class="panel panel-default" style="margin-left: 0.5em; margin-right: 0.5em;">
+	                   <div class="panel-heading">Message performance</div>
+	                   <div id="messagesperformance" style="height: 22em; width:98%;"></div>
+	                </div>   
 	            </div>        
 	        </div>
 	    </div>
@@ -121,7 +131,7 @@ $(function () {
                 enabled: false
             },
             title: {
-                text: 'Transactions performance'
+                text: ''
             },
             subtitle: {
                 text: 'Average response time (ms) for the least performant transactions'
@@ -192,7 +202,7 @@ $(function () {
                 enabled: false
             },
             title: {
-                text: 'Messages performance'
+                text: ''
             },
             subtitle: {
                 text: 'Average response time (ms) for the least performant request messages'
@@ -265,7 +275,7 @@ $(function () {
                 enabled: false
             },
             title: {
-                text: 'Message counts'
+                text: ''
             },
             subtitle: {
                 text: 'Message counts per application for the most busy applications'
