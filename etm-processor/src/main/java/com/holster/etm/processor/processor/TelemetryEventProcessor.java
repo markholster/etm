@@ -10,8 +10,8 @@ import java.util.concurrent.ExecutorService;
 import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.processor.TelemetryEvent;
-import com.holster.etm.processor.TelemetryEventType;
 import com.holster.etm.processor.parsers.ExpressionParser;
 import com.holster.etm.processor.repository.CorrelationBySourceIdResult;
 import com.holster.etm.processor.repository.EndpointConfigResult;

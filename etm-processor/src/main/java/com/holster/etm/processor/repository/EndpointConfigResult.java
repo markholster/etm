@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.holster.etm.processor.TelemetryEventDirection;
+import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.processor.parsers.ExpressionParser;
 
 public class EndpointConfigResult {

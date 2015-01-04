@@ -4,9 +4,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.processor.TelemetryEvent;
-import com.holster.etm.processor.TelemetryEventDirection;
-import com.holster.etm.processor.TelemetryEventType;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 

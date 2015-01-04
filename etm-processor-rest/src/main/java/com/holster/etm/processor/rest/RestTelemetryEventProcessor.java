@@ -14,12 +14,12 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 
+import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
 import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 import com.holster.etm.processor.TelemetryEvent;
-import com.holster.etm.processor.TelemetryEventDirection;
-import com.holster.etm.processor.TelemetryEventType;
 import com.holster.etm.processor.processor.TelemetryEventProcessor;
 
 @Path("/event")

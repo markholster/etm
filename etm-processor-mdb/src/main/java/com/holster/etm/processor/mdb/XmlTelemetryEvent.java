@@ -7,9 +7,9 @@ import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.processor.TelemetryEvent;
-import com.holster.etm.processor.TelemetryEventDirection;
-import com.holster.etm.processor.TelemetryEventType;
 
 @XmlRootElement(name = "TelemetryEvent")
 public class XmlTelemetryEvent {

@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.TelemetryEventType;
 
 
 public class TelemetryEvent {

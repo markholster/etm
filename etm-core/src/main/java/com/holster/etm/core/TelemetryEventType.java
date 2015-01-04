@@ -1,4 +1,4 @@
-package com.holster.etm.processor;
+package com.holster.etm.core;
 
 public enum TelemetryEventType {
 
