@@ -21,7 +21,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 public class StatisticsRepository {
 
-	final String keyspace = "etm";
+	private final String keyspace = "etm";
 	
 	private final Session session; 
 	
