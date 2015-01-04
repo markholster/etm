@@ -48,20 +48,28 @@
 				</div>
 			</div>
 			<div class="panel panel-default">
-				<div class="table-responsive">
-					<table id="result_table" class="table table-condensed table-striped table-hover">
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Application</th>
-								<th>Endpoint</th>
-								<th>Creation time</th>
-							</tr>
-						</thead>
-						<tbody>
-						</tbody>
-					</table>
+				<div class="panel-body">
+				    <div id="result_overview" class="text-center"></div>
+					<div class="table-responsive">
+						<table id="result_table"
+							class="table table-condensed table-striped table-hover">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Application</th>
+									<th>Endpoint</th>
+									<th>Creation time</th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+						
+					</div>
 				</div>
+<!-- 				
+                <div class="panel-footer">Panel footer</div>
+ -->                
 			</div>
 		</div>
 	</div>
@@ -88,6 +96,7 @@ $(function () {
 			$('#search_input').parent().removeClass('has-error');
 			currentStart = 0;
 			$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount, { dataType: "json", success: function (data) {
+				$('#result_overview').html('<p>Found ' + data.numFound + ' events in ' + data.queryTime + 'ms. Showing events ' + (data.start + 1) + ' to '+ (data.end + 1) +'.</p>');
 				$('#result_table > tbody').empty();
 				$.each(data.events, function(index, event) {
 	                var application = $.isEmptyObject(event.application) ? '' : event.application;

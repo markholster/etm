@@ -22,7 +22,7 @@ public class QueryRepository {
 
 	public QueryRepository(Session session) {
 		this.session = session;
-		this.findEventStatement = this.session.prepare("select application, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from " + keyspace + ".telemetry_event where id = ?");
+		this.findEventStatement = this.session.prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from " + keyspace + ".telemetry_event where id = ?");
     }
 
 	public void addEvents(SolrDocumentList results, JsonGenerator generator) throws JsonGenerationException, IOException {

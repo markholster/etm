@@ -2,6 +2,7 @@ package com.holster.etm.gui.rest;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -15,6 +16,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -49,22 +51,26 @@ public class QueryService {
 		query.setSort("creationTime", ORDER.desc);
 		query.setRows(rows);
 		try {
-	        SolrDocumentList results = this.solrServer.query(query).getResults();
+			long startTime = System.nanoTime();
+	        QueryResponse queryResponse = this.solrServer.query(query);
+	        SolrDocumentList results = queryResponse.getResults();
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
 	        generator.writeStartObject();
 	        generator.writeNumberField("numFound", results.getNumFound());
 	        generator.writeNumberField("start", results.getStart());
+	        generator.writeNumberField("end", results.getStart() + results.size() - 1);
 	        generator.writeArrayFieldStart("events");
 	        this.queryRepository.addEvents(results, generator);
 	        generator.writeEndArray();
+	        generator.writeNumberField("queryTime", TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTime, TimeUnit.NANOSECONDS));
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();
         } catch (SolrServerException e) {
-	        // TODO Logging
+	        // TODO Error handling
         } catch (IOException e) {
-        	// TODO Logging
+        	// TODO Error handling
         }
 		return "{}";
 	}
