@@ -12,6 +12,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent> {
 	private final long ordinal;
 	private final long numberOfConsumers;
 	private final SolrInputDocument document;
+	private int count;
 	
 	public IndexingEventHandler(final SolrServer server, final long ordinal, final long numberOfConsumers) {
 		this.server = server;
@@ -72,7 +73,12 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent> {
 			long responseTime = event.correlationCreationTime.getTime() - event.creationTime.getTime();
 			this.document.addField("responseTime", responseTime);
 		}
-//		this.server.add(this.document);
+		if (this.ordinal == 0 && this.count == 1000) {
+			this.server.commit(false, false, true);
+			this.count = 0;
+		}
+		this.server.add(this.document);
+		this.count++;
 //		Statistics.indexingTime.addAndGet(System.nanoTime() - start);
 	}
 

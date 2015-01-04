@@ -28,7 +28,10 @@ public class SolrServerProducer {
 		synchronized (this) {
 			if (this.solrServer == null) {
 				String zookeeperHost = this.configuration.getProperty("solr.zookeeper_host", "127.0.0.1:9983");
-	            this.solrServer = new CloudSolrServer(zookeeperHost);
+				String solrCollection = this.configuration.getProperty("solr.collection", "etm");
+				CloudSolrServer cloudSolrServer = new CloudSolrServer(zookeeperHost);
+				cloudSolrServer.setDefaultCollection(solrCollection);
+	            this.solrServer = cloudSolrServer;
 			}
 		}
 		return this.solrServer;
