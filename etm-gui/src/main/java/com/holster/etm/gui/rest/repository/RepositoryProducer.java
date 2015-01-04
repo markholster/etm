@@ -17,14 +17,25 @@ public class RepositoryProducer {
 	private Session session;
 	
 	private StatisticsRepository statisticsRepository;
+	private QueryRepository queryRepository;
 
 	@Produces
-	public StatisticsRepository getStatementRepository() {
+	public StatisticsRepository getStatisticsRepository() {
 		synchronized (this) {
 	        if (this.statisticsRepository == null) {
 	        	this.statisticsRepository = new StatisticsRepository(this.session);
 	        }
         }
 		return this.statisticsRepository;
+	}
+	
+	@Produces
+	public QueryRepository getQueryRepository() {
+		synchronized (this) {
+	        if (this.queryRepository == null) {
+	        	this.queryRepository = new QueryRepository(this.session);
+	        }
+        }
+		return this.queryRepository;
 	}
 }
