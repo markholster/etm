@@ -87,6 +87,8 @@
 	<script>
 //<![CDATA[        
 $(function () {
+    var currentStart = 0;
+    var rowCount = 25;
 
 	var padNumber = function(str, max) {
 		  str = str.toString();
@@ -96,9 +98,25 @@ $(function () {
 	var formatDate = function(date) {
 		return padNumber(date.getDate(), 2) + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getFullYear() + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
 	};
+
+	var executeQuery = function(start, max) {
+        $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + start + '&rows=' + max, { dataType: "json", success: function (data) {
+            var overView = 'Found ' + data.numFound + ' events in ' + data.queryTime + 'ms.';
+            if (data.start < data.end) {
+                  overView = overView + ' Showing events ' + (data.start + 1) + ' to '+ (data.end + 1) +'.'; 
+            }
+            $('#result_overview').html('<p>' + overView + '</p>');
+            $('#result_table > tbody').empty();
+            $.each(data.events, function(index, event) {
+                var application = $.isEmptyObject(event.application) ? '' : event.application;
+                var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint; 
+                var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '">' + event.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + endpoint + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
+                $(rowContent).appendTo($('#result_table > tbody'));
+                $('#result_table > tbody > :last-child > td > div').slideDown(500);                
+            });
+        }});	
+    };
 	
-	var currentStart = 0;
-	var rowCount = 25;
 	$('#standard_search_btn').click(function() {
 		if( !$('#search_input').val()) {
 			$('#search_input').parent().addClass('has-error');
@@ -106,21 +124,7 @@ $(function () {
 		} else {
 			$('#search_input').parent().removeClass('has-error');
 			currentStart = 0;
-			$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount, { dataType: "json", success: function (data) {
-				var overView = 'Found ' + data.numFound + ' events in ' + data.queryTime + 'ms.';
-				if (data.start < data.end) {
-					  overView = overView + ' Showing events ' + (data.start + 1) + ' to '+ (data.end + 1) +'.'; 
-				}
-				$('#result_overview').html('<p>' + overView + '</p>');
-				$('#result_table > tbody').empty();
-				$.each(data.events, function(index, event) {
-	                var application = $.isEmptyObject(event.application) ? '' : event.application;
-	                var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint; 
-	                var rowContent = '<tr><td><div style="display: none;">' + event.name + '</div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + endpoint + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
-	                $(rowContent).appendTo($('#result_table > tbody'));
-	                $('#result_table > tbody > :last-child > td > div').slideDown(500);                
-				});
-			}});
+		    executeQuery(currentStart, rowCount);
 		}
 	});
 
