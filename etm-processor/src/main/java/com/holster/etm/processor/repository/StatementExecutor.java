@@ -248,6 +248,7 @@ public class StatementExecutor {
 	}
 	
 	public void insertTransactionEventStart(TelemetryEvent event, boolean async) {
+		// TODO transactionname moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien transactionname de partition key is.
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTransactionEventStartStatement.bind(
 				event.transactionName,
 				event.transactionId, 
@@ -259,6 +260,7 @@ public class StatementExecutor {
 	}
 	
 	public void insertTransactionEventFinish(TelemetryEvent event, boolean async) {
+		// TODO transactionname moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien transactionname de partition key is.
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTransactionEventFinishStatement.bind(
 				event.transactionName,
 				event.transactionId,
@@ -270,6 +272,7 @@ public class StatementExecutor {
 	}
 
 	public void insertMessageEventStart(TelemetryEvent event, boolean async) {
+		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceStartStatement.bind(
 				event.name,
 				event.id, 
@@ -278,6 +281,7 @@ public class StatementExecutor {
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
+		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationStartStatement.bind(
 				event.name,
 				event.id, 
@@ -290,6 +294,7 @@ public class StatementExecutor {
 	}
 	
 	public void insertMessageEventFinish(TelemetryEvent event, boolean async) {
+		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceFinishStatement.bind(
 				event.correlationName,
 				event.correlationId,
@@ -298,6 +303,7 @@ public class StatementExecutor {
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
+		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationFinishStatement.bind(
 				event.correlationName,
 				event.correlationId,

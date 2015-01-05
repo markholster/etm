@@ -29,6 +29,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
     public void persistTelemetryEvent(TelemetryEvent event) {
 		this.secondTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeSecondFactor));
 		this.hourTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeHourFactor));
+		// TODO Als dit een response is, dan ook een upsert op de request met als toevoeging het response ID. Op die manier wordt het mogelijk om van een request de correlated events op te halen.
 		this.statementExecutor.insertTelemetryEvent(event, true);
 		if (event.sourceId != null) {
 			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
@@ -58,6 +59,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.direction) ? responseTime : 0;
 		}
 		if (event.application != null) {
+			// TODO event.application moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien application de partition key is.
 			this.statementExecutor.updateApplicationCounter(
 					requestCount, 
 					incomingRequestCount, 
@@ -77,6 +79,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "Application", event.application, true);
 		}
 		if (event.name != null) {
+			// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 			this.statementExecutor.updateEventNameCounter(
 					requestCount, 
 					responseCount, 
@@ -93,12 +96,11 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				this.statementExecutor.insertMessageEventStart(event, true);
 			}
 		}
-		if (event.correlationName != null) {
-			if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-				this.statementExecutor.insertMessageEventFinish(event, true);
-			}
+		if (event.correlationId != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
+			this.statementExecutor.insertMessageEventFinish(event, true);
 		}
 		if (event.application != null && event.name != null) {
+			// TODO event.application moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien application de partition key is.
 			this.statementExecutor.updateApplicationEventNameCounter(
 					requestCount, 
 					incomingRequestCount, 
@@ -119,6 +121,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "Application", event.application, true);
 		}
 		if (event.transactionName != null) {
+			// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 			this.statementExecutor.updateTransactionNameCounter(
 					requestCount, 
 					responseCount, 
