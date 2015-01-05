@@ -41,7 +41,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				event.correlationId = this.correlationBySourceIdResult.id;
 			}
 			if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-				// if this is a response, set the transactiondata from the parent, and calculate the response time.
+				// if this is a response, set the correlating data from the request on the response.
 				if (event.transactionId == null) {
 					event.transactionId = this.correlationBySourceIdResult.transactionId;
 				}
