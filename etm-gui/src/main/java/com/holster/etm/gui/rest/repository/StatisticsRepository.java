@@ -43,7 +43,7 @@ public class StatisticsRepository {
 		for (String transactionName : transactionNames) {
 			BuiltStatement builtStatement = QueryBuilder.select("transactionName", "startTime", "finishTime", "expiryTime")
 					.from(this.keyspace, "transaction_performance")
-					.where(QueryBuilder.eq("transactionName", transactionName))
+					.where(QueryBuilder.eq("transactionName_timeunit", transactionName))
 					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
 			resultSets.add(this.session.executeAsync(builtStatement));
 		}
@@ -102,7 +102,7 @@ public class StatisticsRepository {
 		for (String messageName : messageNames) {
 			BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime")
 					.from(this.keyspace, "message_performance")
-					.where(QueryBuilder.eq("name", messageName))
+					.where(QueryBuilder.eq("name_timeunit", messageName))
 					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
 			resultSets.add(this.session.executeAsync(builtStatement));
 		}
@@ -160,7 +160,7 @@ public class StatisticsRepository {
 		for (String messageName : messageNames) {
 			BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime", "application")
 					.from(this.keyspace, "message_expiration")
-					.where(QueryBuilder.eq("name", messageName))
+					.where(QueryBuilder.eq("name_timeunit", messageName))
 					.and(QueryBuilder.gte("expiryTime", new Date(startTime))).and(QueryBuilder.lte("expiryTime", new Date(endTime)));
 			resultSets.add(this.session.executeAsync(builtStatement));
 		}
@@ -203,7 +203,7 @@ public class StatisticsRepository {
 		
 		BuiltStatement builtStatement = QueryBuilder.select("application", "incomingMessageRequestCount", "incomingMessageDatagramCount", "outgoingMessageRequestCount", "outgoingMessageDatagramCount")
 				.from(this.keyspace, "application_counter")
-				.where(QueryBuilder.in("application", applicationNames))
+				.where(QueryBuilder.in("application_timeunit", applicationNames))
 				.and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();

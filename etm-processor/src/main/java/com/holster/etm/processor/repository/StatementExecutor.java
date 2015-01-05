@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
@@ -37,6 +38,7 @@ public class StatementExecutor {
 	private final PreparedStatement insertTelemetryEventStatement;
 	private final PreparedStatement insertSourceIdIdStatement;
 	private final PreparedStatement insertCorrelationDataStatement;
+	private final PreparedStatement insertCorrelationToParentStatement;
 	private final PreparedStatement insertEventOccurrenceStatement;
 	private final PreparedStatement insertTransactionEventStartStatement;
 	private final PreparedStatement insertTransactionEventFinishStatement;
@@ -89,39 +91,45 @@ public class StatementExecutor {
 				+ "transactionId, "
 				+ "transactionName"
 				+ ") values (?,?,?,?,?);");
+		this.insertCorrelationToParentStatement = session.prepare("update " + keySpace + ".telemetry_event set "
+				+ "correlations = correlations + ? "
+				+ "where id = ?;");
 		this.insertEventOccurrenceStatement = session.prepare("insert into " + keySpace + ".event_occurrences ("
 				+ "timeunit, "
 				+ "type, "
 				+ "name"
 				+ ") values (?,?,?);");
 		this.insertTransactionEventStartStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
-				+ "transactionName, "
-				+ "transactionId, "
+				+ "transactionName_timeunit, "
+				+ "transactionId,"
+				+ "transactionName,  "
 				+ "startTime, "
-				+ "expiryTime) values (?, ?, ?, ?);");
+				+ "expiryTime) values (?, ?, ?, ?, ?);");
 		this.insertTransactionEventFinishStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
-				+ "transactionName, "
+				+ "transactionName_timeunit, "
 				+ "transactionId, "
 				+ "startTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
 		this.insertMessageEventPerformanceStartStatement = session.prepare("insert into " + keySpace + ".message_performance ("
-				+ "name, "
+				+ "name_timeunit, "
 				+ "id, "
-				+ "startTime, "
-				+ "expiryTime) values (?, ?, ?, ?);");
-		this.insertMessageEventPerformanceFinishStatement = session.prepare("insert into " + keySpace + ".message_performance ("
 				+ "name, "
+				+ "startTime, "
+				+ "expiryTime) values (?, ?, ?, ?, ?);");
+		this.insertMessageEventPerformanceFinishStatement = session.prepare("insert into " + keySpace + ".message_performance ("
+				+ "name_timeunit, "
 				+ "id, "
 				+ "startTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
 		this.insertMessageEventExpirationStartStatement = session.prepare("insert into " + keySpace + ".message_expiration ("
-				+ "name, "
+				+ "name_timeunit, "
 				+ "id, "
+				+ "name, "
 				+ "expiryTime, "
 				+ "startTime, "
-				+ "application) values (?, ?, ?, ?, ?);");
+				+ "application) values (?, ?, ?, ?, ?, ?);");
 		this.insertMessageEventExpirationFinishStatement = session.prepare("insert into " + keySpace + ".message_expiration ("
-				+ "name, "
+				+ "name_timeunit, "
 				+ "id, "
 				+ "expiryTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
@@ -139,14 +147,14 @@ public class StatementExecutor {
 				+ "messageResponseTime = messageResponseTime + ?, "
 				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
 				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
-				+ "where application = ? and timeunit = ?;");
+				+ "where application_timeunit = ? and timeunit = ? and application = ?;");
 		this.updateEventNameCounterStatement = session.prepare("update " + keySpace + ".eventname_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
 				+ "messageResponseCount = messageResponseCount + ?, "
 				+ "messageDatagramCount = messageDatagramCount + ?, "
 				+ "messageResponseTime = messageResponseTime + ? "
-				+ "where eventName = ? and timeunit = ?;");
+				+ "where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
 		this.updateApplicationEventNameCounterStatement = session.prepare("update " + keySpace + ".application_event_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
@@ -161,13 +169,13 @@ public class StatementExecutor {
 				+ "messageResponseTime = messageResponseTime + ?, "
 				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
 				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
-				+ "where application = ? and eventName = ? and timeunit = ?;");
+				+ "where application_timeunit = ? and eventName = ? and timeunit = ? and application = ?;");
 		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set "
 				+ "count = count + 1, "
 				+ "transactionStart = transactionStart + ?, "
 				+ "transactionFinish = transactionFinish + ?, "
 				+ "transactionResponseTime = transactionResponseTime + ? "
-				+ "where transactionName = ? and timeunit = ?;");
+				+ "where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
 		this.findParentStatement = session.prepare("select "
 				+ "id, "
 				+ "transactionId, "
@@ -189,7 +197,7 @@ public class StatementExecutor {
 	}
 	
 	public void insertTelemetryEvent(final TelemetryEvent event, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTelemetryEventStatement.bind(
+		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTelemetryEventStatement.bind(
 				event.id, 
 				event.application, 
 				event.content,
@@ -206,6 +214,14 @@ public class StatementExecutor {
 		        event.transactionId, 
 		        event.transactionName,
 		        event.type != null ? event.type.name() : null));
+		if (!async) {
+			resultSetFuture.getUninterruptibly();
+		}
+		if (event.correlationId != null) {
+			final List<UUID> correlation = new ArrayList<UUID>(1);
+			correlation.add(event.id);
+			resultSetFuture = this.session.executeAsync(this.insertCorrelationToParentStatement.bind(correlation, event.correlationId));
+		}
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
@@ -247,11 +263,11 @@ public class StatementExecutor {
 		}
 	}
 	
-	public void insertTransactionEventStart(TelemetryEvent event, boolean async) {
-		// TODO transactionname moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien transactionname de partition key is.
+	public void insertTransactionEventStart(final TelemetryEvent event, final String key, final boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTransactionEventStartStatement.bind(
+				key,
+				event.transactionId,
 				event.transactionName,
-				event.transactionId, 
 		        event.creationTime, 
 		        event.expiryTime));
 		if (!async) {
@@ -259,10 +275,9 @@ public class StatementExecutor {
 		}
 	}
 	
-	public void insertTransactionEventFinish(TelemetryEvent event, boolean async) {
-		// TODO transactionname moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien transactionname de partition key is.
+	public void insertTransactionEventFinish(final TelemetryEvent event, final String key, final boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTransactionEventFinishStatement.bind(
-				event.transactionName,
+				key,
 				event.transactionId,
 				event.correlationCreationTime,
 		        event.creationTime));
@@ -271,20 +286,20 @@ public class StatementExecutor {
 		}
 	}
 
-	public void insertMessageEventStart(TelemetryEvent event, boolean async) {
-		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
+	public void insertMessageEventStart(final TelemetryEvent event, final String key, final boolean async) {
 		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceStartStatement.bind(
-				event.name,
+				key,
 				event.id, 
+				event.name,
 		        event.creationTime, 
 		        event.expiryTime));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
-		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationStartStatement.bind(
+				key,
+				event.id,
 				event.name,
-				event.id, 
 		        event.expiryTime,
 		        event.creationTime,
 		        event.application));
@@ -293,19 +308,17 @@ public class StatementExecutor {
 		}
 	}
 	
-	public void insertMessageEventFinish(TelemetryEvent event, boolean async) {
-		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
+	public void insertMessageEventFinish(final TelemetryEvent event, final String key, final boolean async) {
 		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceFinishStatement.bind(
-				event.correlationName,
+				key,
 				event.correlationId,
 				event.correlationCreationTime,
 		        event.creationTime));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
-		// TODO event.name moet een suffix van het uur van de creation time krijgen. Zo wordt per uur een andere node gebruikt, aangezien eventname de partition key is.
 		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationFinishStatement.bind(
-				event.correlationName,
+				key,
 				event.correlationId,
 				event.correlationExpiryTime,
 		        event.creationTime));
@@ -318,7 +331,7 @@ public class StatementExecutor {
 	public void updateApplicationCounter(final long requestCount, final long incomingRequestCount, final long outgoingRequestCount,
 	        final long responseCount, final long incomingResponseCount, final long outgoingResponseCount, final long datagramCount,
 	        final long incomingDatagramCount, final long outgoingDatagramCount, final long responseTime, final long incomingResponseTime,
-	        final long outgoingResponseTime, final String application, final Date timestamp, final boolean async) {
+	        final long outgoingResponseTime, final String application, final Date timestamp, final String key, final boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateApplicationCounterStatement.bind(
 				requestCount, 
 				incomingRequestCount, 
@@ -332,22 +345,24 @@ public class StatementExecutor {
 		        responseTime, 
 		        incomingResponseTime, 
 		        outgoingResponseTime, 
-		        application, 
-		        timestamp));
+		        key,
+		        timestamp,
+		        application));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
 	}
 	
 	public void updateEventNameCounter(final long requestCount, final long responseCount, final long datagramCount,
-	        final long responseTime, final String eventName, final Date timestamp, final boolean async) {
+	        final long responseTime, final String eventName, final Date timestamp, final String key, final boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateEventNameCounterStatement.bind(
 				requestCount, 
 				responseCount, 
 				datagramCount, 
 				responseTime, 
-				eventName, 
-				timestamp));
+				key, 
+				timestamp,
+				eventName));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
@@ -357,7 +372,7 @@ public class StatementExecutor {
 	        final long outgoingRequestCount, final long responseCount, final long incomingResponseCount, final long outgoingResponseCount,
 	        final long datagramCount, final long incomingDatagramCount, final long outgoingDatagramCount, final long responseTime,
 	        final long incomingResponseTime, final long outgoingResponseTime, final String application, final String eventName,
-	        final Date timestamp, final boolean async) {
+	        final Date timestamp, final String key, final boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(
 				requestCount, 
 				incomingRequestCount, 
@@ -371,22 +386,24 @@ public class StatementExecutor {
 		        responseTime, 
 		        incomingResponseTime, 
 		        outgoingResponseTime, 
-				application, 
+				key, 
 				eventName, 
-				timestamp));
+				timestamp,
+				application));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
 	}
 	
 	public void updateTransactionNameCounter(final long requestCount, final long responseCount, final long responseTime,
-	        final String transactionName, final Date timestamp, final boolean async) {
+	        final String transactionName, final Date timestamp, final String key, final boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(
 				requestCount, 
 				responseCount, 
 				responseTime, 
-				transactionName, 
-				timestamp));
+				key, 
+				timestamp,
+				transactionName));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
@@ -416,7 +433,7 @@ public class StatementExecutor {
 		}
 	}
 	
-	private void mergeRowIntoEndpointConfig(Row row, EndpointConfigResult result) {
+	private void mergeRowIntoEndpointConfig(final Row row, final EndpointConfigResult result) {
 		String direction = row.getString(0);
 		if (direction != null) {
 			result.eventDirection = TelemetryEventDirection.valueOf(direction);
@@ -445,7 +462,7 @@ public class StatementExecutor {
     }
 
 	
-	private List<ExpressionParser> createExpressionParsers(List<String> expressions) {
+	private List<ExpressionParser> createExpressionParsers(final List<String> expressions) {
 		if (expressions == null) {
 			return null;
 		}
@@ -456,7 +473,7 @@ public class StatementExecutor {
 		return expressionParsers;
 	}
 	
-	private ExpressionParser createExpressionParser(String expression) {
+	private ExpressionParser createExpressionParser(final String expression) {
 		if (expression.length() > 6) {
 			if (expression.charAt(0) == 'x' &&
 				expression.charAt(1) == 'p' &&

@@ -8,6 +8,7 @@ create table telemetry_event (
     correlationCreationTime timestamp, 
     correlationId timeuuid,
     correlationName text,
+    correlations list<timeuuid>,
     creationTime timestamp,
     direction text, 
     endpoint text, 
@@ -21,31 +22,34 @@ create table telemetry_event (
 );
 
 create table transaction_performance (
-    transactionName text,
+    transactionName_timeunit text,
     startTime timestamp,
     transactionId timeuuid,
+    transactionName text,
     expiryTime timestamp,
     finishTime timestamp,
-    primary key (transactionName, startTime, transactionId)
+    primary key (transactionName_timeunit, startTime, transactionId)
 );
 
 create table message_performance (
-    name text,
+    name_timeunit text,
     startTime timestamp,
     id timeuuid,
+    name text,
     expiryTime timestamp,
     finishTime timestamp,
-    primary key (name, startTime, id)
+    primary key (name_timeunit, startTime, id)
 );
 
 create table message_expiration (
-    name text,
+    name_timeunit text,
     expiryTime timestamp,
     id timeuuid,
+    name text,
     startTime timestamp,
     finishTime timestamp,
     application text,
-    primary key (name, expiryTime, id)
+    primary key (name_timeunit, expiryTime, id)
 );
 
 create table event_occurrences (
@@ -84,8 +88,9 @@ create table endpoint_config (
 );
 
 create table application_counter (
-    application text,
+    application_timeunit text,
     timeunit timestamp,
+    application text,
     count counter,
     messageRequestCount counter,
     incomingMessageRequestCount counter,
@@ -99,24 +104,26 @@ create table application_counter (
     messageResponseTime counter,
     incomingMessageResponseTime counter,
     outgoingMessageResponseTime counter,
-    primary key (application, timeunit)
+    primary key (application_timeunit, timeunit, application)
 );
 
 create table eventname_counter (
-    eventName text,
+    eventName_timeunit text,
     timeunit timestamp,
+    eventName text,
     count counter,
     messageRequestCount counter,
     messageResponseCount counter,
     messageDatagramCount counter,
     messageResponseTime counter,
-    primary key (eventName, timeunit)
+    primary key (eventName_timeunit, timeunit, eventName)
 );
 
 create table application_event_counter (
-    application text,
+    application_timeunit text,
     eventName text,
     timeunit timestamp,
+    application text,
     count counter,
     messageRequestCount counter,
     incomingMessageRequestCount counter,
@@ -130,17 +137,18 @@ create table application_event_counter (
     messageResponseTime counter,
     incomingMessageResponseTime counter,
     outgoingMessageResponseTime counter,
-    primary key (application, eventName, timeunit)
+    primary key (application_timeunit, eventName, timeunit, application)
 );
 
 create table transactionname_counter (
-    transactionName text,
+    transactionName_timeunit text,
     timeunit timestamp,
+    transactionName text,
     count counter,
     transactionStart counter,
     transactionFinish counter,
     transactionResponseTime counter,
-    primary key (transactionName, timeunit)
+    primary key (transactionName_timeunit, timeunit, transactionName)
 );
 
 insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer'});

@@ -67,8 +67,12 @@ public class TelemetryEventProcessor {
 			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, persistingHandlerCount);
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
-		this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);
-		this.disruptor.after(enhancingEvntHandler).handleEventsWith(indexingEventHandlers);
+		if (persistingEventHandlers.length > 0) {
+			this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);
+		}
+		if (indexingEventHandlers.length > 0) {
+			this.disruptor.after(enhancingEvntHandler).handleEventsWith(indexingEventHandlers);
+		}
 		this.ringBuffer = this.disruptor.start();
 	}
 	
