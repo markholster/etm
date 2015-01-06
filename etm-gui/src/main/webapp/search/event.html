@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Enterprise Telemetry Monitor - Search</title>
+<link rel="stylesheet"
+	href="../resources/styles/bootstrap-3.3.1.min.css" />
+<script src="../resources/scripts/jquery-2.1.3.min.js"></script>
+<script src="../resources/scripts/bootstrap-3.3.1.min.js"></script>
+</head>
+<body>
+	<div class="container" style="margin-top: 0.5em;">
+		<div class="row">
+			<div class="panel panel-default">
+				<div class="panel-heading clearfix">
+					<div id="panel_title" class="panel-title pull-left"></div>
+					<div class="pull-right">
+						<a id="back_lnk" href="#">Back</a>
+					</div>
+				</div>
+				<div class="panel-body">
+					<div id="tabs" role="tabpanel">
+					
+					  <!-- Nav tabs -->
+					  <ul class="nav nav-tabs" role="tablist">
+					    <li role="presentation" class="active"><a href="#event_tab" aria-controls="home" role="tab" data-toggle="tab">Event</a></li>
+					    <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Profile</a></li>
+					    <li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Messages</a></li>
+					    <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+					  </ul>
+					
+					  <!-- Tab panes -->
+					  <div class="tab-content">
+					    <div role="tabpanel" class="tab-pane active" id="event_tab">
+							<form class="form-horizontal">
+							  <div class="form-group">
+							    <label class="col-sm-2 control-label">Event name</label>
+							    <div class="col-sm-4">
+							      <p id="event_name"class="form-control-static"></p>
+							    </div>
+                                <label class="col-sm-2 control-label">Creation time</label>
+                                <div class="col-sm-4">
+                                  <p id="event_creationTime"class="form-control-static"></p>
+                                </div>
+							  </div>
+							  <div class="form-group">
+                                <label class="col-sm-2 control-label">Application</label>
+                                <div class="col-sm-4">
+                                  <p id="event_application"class="form-control-static"></p>
+                                </div>
+                                <label class="col-sm-2 control-label">Expiry time</label>
+                                <div class="col-sm-4">
+                                  <p id="event_expiryTime"class="form-control-static"></p>
+                                </div>
+                              </div>
+                              <div class="form-group">  
+                                <label class="col-sm-2 control-label">Endpoint</label>
+                                <div class="col-sm-4">
+                                  <p id="event_endpoint"class="form-control-static"></p>
+                                </div>
+                                <label class="col-sm-2 control-label">Source id</label>
+                                <div class="col-sm-4">
+                                  <p id="event_sourceId"class="form-control-static"></p>
+                                </div>
+							  </div>
+                              <div class="form-group">  
+                                <label class="col-sm-2 control-label">Transaction name</label>
+                                <div class="col-sm-4">
+                                  <p id="event_transactionName"class="form-control-static"></p>
+                                </div>
+                                <label class="col-sm-2 control-label">Source correlation id</label>
+                                <div class="col-sm-4">
+                                  <p id="event_sourceCorrelationId"class="form-control-static"></p>
+                                </div>
+                              </div>
+                              <div class="form-group">  
+                                <div class="col-sm-12">
+                                  <p id="event_content"class="form-control-static"></p>
+                                </div>
+                              </div>
+							</form>					    
+					    </div>
+					  </div>
+					
+					</div>				
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+//<![CDATA[        
+$(function () {
+	var getUrlParameter = function(paramName, defaultValue) {
+	    var pageURL = window.location.search.substring(1);
+	    var urlVariables = pageURL.split('&');
+	    for (var i = 0; i < urlVariables.length; i++) {
+	        var parameterName = urlVariables[i].split('=');
+	        if (parameterName[0] == paramName) {
+	            return decodeURIComponent(parameterName[1]);
+	        }
+	    }
+	    return defaultValue;
+	};
+
+	var padNumber = function(str, max) {
+        str = str.toString();
+	    return str.length < max ? padNumber("0" + str, max) : str;
+	};
+	    
+    var formatDate = function(date) {
+        return padNumber(date.getDate(), 2) + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getFullYear() + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
+    };
+
+	$('#tabs a').click(function (e) {
+		  e.preventDefault();
+		  $(this).tab('show');
+		})
+	
+	var eventId = getUrlParameter('id');
+	
+	$('#panel_title').text('Event ' + eventId);
+	$('#back_lnk').attr('href', 'index.html?queryString=' + encodeURIComponent(getUrlParameter('queryString')) + '&start=' + encodeURIComponent(getUrlParameter('start')) + '&max=' + encodeURIComponent(getUrlParameter('max')));
+	$.ajax('../rest/query/event/' + eventId, { dataType: "json", success: function (data) {
+		$('#event_tab #event_name').text(data.name);
+		$('#event_tab #event_application').text(data.application);
+		$('#event_tab #event_endpoint').text(data.endpoint);
+		$('#event_tab #event_creationTime').text(formatDate(new Date(data.creationTime)));
+		if (data.expiryTime) {
+			$('#event_tab #event_expiryTime').text(formatDate(new Date(data.expiryTime)));
+		}
+		$('#event_tab #event_transactionName').text(data.transactionName);
+		$('#event_tab #event_sourceId').text(data.sourceId);
+		$('#event_tab #event_sourceCorrelationId').text(data.sourceCorrelationId);
+		$('#event_tab #event_content').text(data.content);
+	}});
+
+
+});
+//]]>
+</script>
+</body>
+</html>

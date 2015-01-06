@@ -1,24 +1,33 @@
 package com.holster.etm.processor.processor;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 
 import com.holster.etm.processor.TelemetryEvent;
 import com.lmax.disruptor.EventHandler;
 
-public class IndexingEventHandler implements EventHandler<TelemetryEvent> {
+public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Closeable {
 
+	private final int nrOfDocumentsPerRequest = 50;
 	private final SolrServer server;
 	private final long ordinal;
 	private final long numberOfConsumers;
-	private final SolrInputDocument document;
-	private int count;
+	private final List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>(nrOfDocumentsPerRequest);
+	private int docIx = -1;
 	
 	public IndexingEventHandler(final SolrServer server, final long ordinal, final long numberOfConsumers) {
 		this.server = server;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
-		this.document = new SolrInputDocument();
+		for (int i=0; i < this.nrOfDocumentsPerRequest; i++) {
+			this.documents.add(new SolrInputDocument());
+		}
 	}
 
 	@Override
@@ -28,58 +37,69 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent> {
 			return;
 		}
 //		long start = System.nanoTime();
-		this.document.clear();
-		this.document.addField("id", event.id.toString());
+		this.docIx++;
+		SolrInputDocument document = this.documents.get(this.docIx);
+		document.clear();
+		document.addField("id", event.id.toString());
 		if (event.application != null) {
-			this.document.addField("application", event.application);
+			document.addField("application", event.application);
 		}
 		if (event.content != null) {
-			this.document.addField("content", event.content);
+			document.addField("content", event.content);
 		}
 		if (event.correlationId != null) {
-			this.document.addField("correlationId", event.correlationId);
+			document.addField("correlationId", event.correlationId);
 		}
 		if (event.creationTime != null) {
-			this.document.addField("creationTime", event.creationTime);
+			document.addField("creationTime", event.creationTime);
 		}
 		if (event.direction != null) {
-			this.document.addField("direction", event.direction.name());
+			document.addField("direction", event.direction.name());
 		}
 		if (event.endpoint != null) {
-			this.document.addField("endpoint", event.endpoint);
+			document.addField("endpoint", event.endpoint);
 		}
 		if (event.expiryTime != null) {
-			this.document.addField("expirtyTime", event.expiryTime);
+			document.addField("expirtyTime", event.expiryTime);
 		}
 		if (event.name != null) {
-			this.document.addField("name", event.name);
+			document.addField("name", event.name);
 		}
 		if (event.sourceCorrelationId != null) {
-			this.document.addField("sourceCorrelationId", event.sourceCorrelationId);
+			document.addField("sourceCorrelationId", event.sourceCorrelationId);
 		}
 		if (event.sourceId != null) {
-			this.document.addField("sourceId", event.sourceId);
+			document.addField("sourceId", event.sourceId);
 		}
 		if (event.transactionId != null) {
-			this.document.addField("transactionId", event.transactionId);
+			document.addField("transactionId", event.transactionId);
 		}
 		if (event.transactionName != null) {
-			this.document.addField("transactionName", event.transactionName);
+			document.addField("transactionName", event.transactionName);
 		}
 		if (event.type != null) {
-			this.document.addField("type", event.type.name());
+			document.addField("type", event.type.name());
 		}
 		if (event.creationTime.getTime() != 0 && event.correlationCreationTime.getTime() != 0) {
 			long responseTime = event.correlationCreationTime.getTime() - event.creationTime.getTime();
-			this.document.addField("responseTime", responseTime);
+			document.addField("responseTime", responseTime);
 		}
-		if (this.ordinal == 0 && this.count == 1000) {
-			this.server.commit(false, false, true);
-			this.count = 0;
+		if (this.docIx == this.nrOfDocumentsPerRequest - 1) {
+			this.server.add(this.documents, 60000);
+			this.docIx = -1;
 		}
-		this.server.add(this.document);
-		this.count++;
 //		Statistics.indexingTime.addAndGet(System.nanoTime() - start);
 	}
+
+	@Override
+    public void close() throws IOException {
+		if (this.docIx != -1) {
+			try {
+	            this.server.add(this.documents.subList(0, this.docIx), 60000);
+            } catch (SolrServerException e) {
+	            // TODO error handling
+            }
+		}
+    }
 
 }

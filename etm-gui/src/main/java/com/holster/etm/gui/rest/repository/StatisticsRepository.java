@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -37,8 +36,8 @@ public class StatisticsRepository {
 		if (transactionNames.size() == 0) {
 			return Collections.emptyMap();
 		}
-		final Map<String, Long> highest = new ConcurrentHashMap<String, Long>();
-		final Map<String, Map<Long, Average>> data = new ConcurrentHashMap<String, Map<Long, Average>>();
+		final Map<String, Long> highest = new HashMap<String, Long>();
+		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		for (String transactionName : transactionNames) {
 			BuiltStatement builtStatement = QueryBuilder.select("transactionName", "startTime", "finishTime", "expiryTime")
@@ -47,8 +46,8 @@ public class StatisticsRepository {
 					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
 			resultSets.add(this.session.executeAsync(builtStatement));
 		}
-		resultSets.parallelStream().forEach(c -> {
-			ResultSet resultSet = c.getUninterruptibly();
+		for (ResultSetFuture resultSetFuture : resultSets) {
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
 			Iterator<Row> iterator = resultSet.iterator();
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
@@ -83,7 +82,7 @@ public class StatisticsRepository {
 					}
 				}
 			}
-		});
+		}
 		filterAveragesToMaxResults(maxTransactions, highest, data);
 		return data;
     }
@@ -96,8 +95,8 @@ public class StatisticsRepository {
 		if (messageNames.size() == 0) {
 			return Collections.emptyMap();
 		}
-		final Map<String, Long> highest = new ConcurrentHashMap<String, Long>();
-		final Map<String, Map<Long, Average>> data = new ConcurrentHashMap<String, Map<Long, Average>>();
+		final Map<String, Long> highest = new HashMap<String, Long>();
+		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		for (String messageName : messageNames) {
 			BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime")
@@ -106,8 +105,8 @@ public class StatisticsRepository {
 					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
 			resultSets.add(this.session.executeAsync(builtStatement));
 		}
-		resultSets.parallelStream().forEach(c -> {
-			ResultSet resultSet = c.getUninterruptibly();
+		for (ResultSetFuture resultSetFuture : resultSets) {
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
 			Iterator<Row> iterator = resultSet.iterator();
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
@@ -142,7 +141,7 @@ public class StatisticsRepository {
 					}
 				}
 			}		
-		});
+		}
 		filterAveragesToMaxResults(maxMessages, highest, data);
 		return data;
     }
@@ -164,8 +163,8 @@ public class StatisticsRepository {
 					.and(QueryBuilder.gte("expiryTime", new Date(startTime))).and(QueryBuilder.lte("expiryTime", new Date(endTime)));
 			resultSets.add(this.session.executeAsync(builtStatement));
 		}
-		resultSets.parallelStream().forEach(c -> {
-			ResultSet resultSet = c.getUninterruptibly();
+		for (ResultSetFuture resultSetFuture : resultSets) {
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
 			Iterator<Row> iterator = resultSet.iterator();
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
@@ -186,7 +185,7 @@ public class StatisticsRepository {
 					}
 				}
 			}
-		});
+		}
 		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());
     }
 	

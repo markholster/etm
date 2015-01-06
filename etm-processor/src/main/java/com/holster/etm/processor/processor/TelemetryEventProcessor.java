@@ -1,5 +1,6 @@
 package com.holster.etm.processor.processor;
 
+import java.io.IOException;
 import java.nio.channels.IllegalSelectorException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ public class TelemetryEventProcessor {
 	private SolrServer solrServer;
 	
 	private TelemetryEventRepository telemetryEventRepository;
+	private IndexingEventHandler[] indexingEventHandlers;
 
 	public void start(final ExecutorService executorService, final Session session, final SolrServer solrServer, final int ringbufferSize, final int enhancingHandlerCount,
 	        final int indexingHandlerCount, final int persistingHandlerCount) {
@@ -57,9 +59,9 @@ public class TelemetryEventProcessor {
 			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, enhancingHandlerCount);
 		}
 
-		final IndexingEventHandler[] indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
+		this.indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
 		for (int i = 0; i < indexingHandlerCount; i++) {
-			indexingEventHandlers[i] = new IndexingEventHandler(this.solrServer, i, indexingHandlerCount);
+			this.indexingEventHandlers[i] = new IndexingEventHandler(this.solrServer, i, indexingHandlerCount);
 		}
 		
 		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
@@ -70,8 +72,8 @@ public class TelemetryEventProcessor {
 		if (persistingEventHandlers.length > 0) {
 			this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);
 		}
-		if (indexingEventHandlers.length > 0) {
-			this.disruptor.after(enhancingEvntHandler).handleEventsWith(indexingEventHandlers);
+		if (this.indexingEventHandlers.length > 0) {
+			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.indexingEventHandlers);
 		}
 		this.ringBuffer = this.disruptor.start();
 	}
@@ -81,6 +83,12 @@ public class TelemetryEventProcessor {
 			throw new IllegalSelectorException();
 		}
 		this.disruptor.shutdown();
+		for (IndexingEventHandler indexingEventHandler : this.indexingEventHandlers) {
+			try {
+	            indexingEventHandler.close();
+            } catch (IOException e) {
+            }
+		}
 		this.telemetryEventRepository = null;
 	}
 	
@@ -92,6 +100,12 @@ public class TelemetryEventProcessor {
 		this.disruptor.shutdown();
 		this.telemetryEventRepository = null;
 		this.cassandraSession.close();
+		for (IndexingEventHandler indexingEventHandler : this.indexingEventHandlers) {
+			try {
+	            indexingEventHandler.close();
+            } catch (IOException e) {
+            }
+		}
 		this.solrServer.shutdown();
 	}
 

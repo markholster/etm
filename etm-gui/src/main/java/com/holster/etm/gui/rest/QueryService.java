@@ -2,12 +2,14 @@ package com.holster.etm.gui.rest;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -35,6 +37,7 @@ public class QueryService {
 	private QueryRepository queryRepository;
 
 	private final JsonFactory jsonFactory = new JsonFactory();
+
 	
 	@GET
 	@Path("/")
@@ -74,4 +77,26 @@ public class QueryService {
         }
 		return "{}";
 	}
+	
+	@GET
+	@Path("/event/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEventById(@PathParam("id") String id) {
+		UUID eventId = null;
+		try {
+			eventId = UUID.fromString(id);
+	        StringWriter writer = new StringWriter();
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartObject();
+	        this.queryRepository.addEvent(eventId, generator);
+	        generator.writeEndObject();
+	        generator.close();
+	        return writer.toString();
+		} catch (Exception e) {
+			// TODO error handling
+		}
+		return "{}";
+	}
+
 }
