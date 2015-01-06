@@ -15,7 +15,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -51,7 +50,6 @@ public class QueryService {
 		}
 		SolrQuery query = new SolrQuery(queryString);
 		query.setStart(start);
-		query.setSort("creationTime", ORDER.desc);
 		query.setRows(rows);
 		try {
 			long startTime = System.nanoTime();
