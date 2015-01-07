@@ -21,15 +21,11 @@
 				</div>
 				<div class="panel-body">
 					<div id="tabs" role="tabpanel">
-					
 					  <!-- Nav tabs -->
 					  <ul class="nav nav-tabs" role="tablist">
-					    <li role="presentation" class="active"><a href="#event_tab" aria-controls="home" role="tab" data-toggle="tab">Event</a></li>
-					    <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Profile</a></li>
-					    <li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Messages</a></li>
-					    <li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Settings</a></li>
+					    <li id="event_tab_header" role="presentation" class="active"><a href="#event_tab" aria-controls="home" role="tab" data-toggle="tab">Event</a></li>
+					    <li id="event_correlation_tab_header" role="presentation" class="hidden"><a href="#event_correlation_tab" aria-controls="home" role="tab" data-toggle="tab">Event correlation</a></li>
 					  </ul>
-					
 					  <!-- Tab panes -->
 					  <div class="tab-content">
 					    <div role="tabpanel" class="tab-pane active" id="event_tab">
@@ -37,50 +33,100 @@
 							  <div class="form-group">
 							    <label class="col-sm-2 control-label">Event name</label>
 							    <div class="col-sm-4">
-							      <p id="event_name"class="form-control-static"></p>
+							      <p id="event_name" class="form-control-static"></p>
 							    </div>
                                 <label class="col-sm-2 control-label">Creation time</label>
                                 <div class="col-sm-4">
-                                  <p id="event_creationTime"class="form-control-static"></p>
+                                  <p id="event_creationTime" class="form-control-static"></p>
                                 </div>
 							  </div>
 							  <div class="form-group">
                                 <label class="col-sm-2 control-label">Application</label>
                                 <div class="col-sm-4">
-                                  <p id="event_application"class="form-control-static"></p>
+                                  <p id="event_application" class="form-control-static"></p>
                                 </div>
                                 <label class="col-sm-2 control-label">Expiry time</label>
                                 <div class="col-sm-4">
-                                  <p id="event_expiryTime"class="form-control-static"></p>
+                                  <p id="event_expiryTime" class="form-control-static"></p>
                                 </div>
                               </div>
                               <div class="form-group">  
                                 <label class="col-sm-2 control-label">Endpoint</label>
                                 <div class="col-sm-4">
-                                  <p id="event_endpoint"class="form-control-static"></p>
+                                  <p id="event_endpoint" class="form-control-static"></p>
                                 </div>
                                 <label class="col-sm-2 control-label">Source id</label>
                                 <div class="col-sm-4">
-                                  <p id="event_sourceId"class="form-control-static"></p>
+                                  <p id="event_sourceId" class="form-control-static"></p>
                                 </div>
 							  </div>
                               <div class="form-group">  
                                 <label class="col-sm-2 control-label">Transaction name</label>
                                 <div class="col-sm-4">
-                                  <p id="event_transactionName"class="form-control-static"></p>
+                                  <p id="event_transactionName" class="form-control-static"></p>
                                 </div>
                                 <label class="col-sm-2 control-label">Source correlation id</label>
                                 <div class="col-sm-4">
-                                  <p id="event_sourceCorrelationId"class="form-control-static"></p>
+                                  <p id="event_sourceCorrelationId" class="form-control-static"></p>
                                 </div>
                               </div>
                               <div class="form-group">  
                                 <div class="col-sm-12">
-                                  <p id="event_content"class="form-control-static"></p>
+                                  <p id="event_content" class="form-control-static"></p>
                                 </div>
                               </div>
 							</form>					    
 					    </div>
+					    
+                        <div role="tabpanel" class="tab-pane hidden" id="event_correlation_tab">
+                            <form class="form-horizontal">
+                              <div class="form-group">
+                                <label class="col-sm-2 control-label">Event name</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_name" class="form-control-static"></p>
+                                </div>
+                                <label class="col-sm-2 control-label">Creation time</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_creationTime" class="form-control-static"></p>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label class="col-sm-2 control-label">Application</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_application" class="form-control-static"></p>
+                                </div>
+                                <label class="col-sm-2 control-label">Expiry time</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_expiryTime" class="form-control-static"></p>
+                                </div>
+                              </div>
+                              <div class="form-group">  
+                                <label class="col-sm-2 control-label">Endpoint</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_endpoint" class="form-control-static"></p>
+                                </div>
+                                <label class="col-sm-2 control-label">Source id</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_sourceId" class="form-control-static"></p>
+                                </div>
+                              </div>
+                              <div class="form-group">  
+                                <label class="col-sm-2 control-label">Transaction name</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_transactionName" class="form-control-static"></p>
+                                </div>
+                                <label class="col-sm-2 control-label">Source correlation id</label>
+                                <div class="col-sm-4">
+                                  <p id="event_correlation_sourceCorrelationId" class="form-control-static"></p>
+                                </div>
+                              </div>
+                              <div class="form-group">  
+                                <div class="col-sm-12">
+                                  <p id="event_correlation_content" class="form-control-static"></p>
+                                </div>
+                              </div>
+                            </form>                     
+                        </div>					    
 					  </div>
 					
 					</div>				
@@ -112,6 +158,28 @@ $(function () {
         return padNumber(date.getDate(), 2) + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getFullYear() + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
     };
 
+    var setEventTabData = function(prefix, data) {
+        if (data.type == 'MESSAGE_REQUEST') {
+            $('#' + prefix + '_tab_header > a').text('Request');
+        } else if (data.type == 'MESSAGE_RESPONSE') {
+            $('#' + prefix + '_tab_header > a').text('Response');
+        } else if (data.type == 'MESSAGE_DATAGRAM') {
+            $('#' + prefix + '_tab_header > a').text('Datagram');
+        }
+        
+        $('#' + prefix + '_tab #' + prefix + '_name').text(data.name);
+        $('#' + prefix + '_tab #' + prefix + '_application').text(data.application);
+        $('#' + prefix + '_tab #' + prefix + '_endpoint').text(data.endpoint);
+        $('#' + prefix + '_tab #' + prefix + '_creationTime').text(formatDate(new Date(data.creationTime)));
+        if (data.expiryTime) {
+            $('#' + prefix + '_tab #' + prefix + '_expiryTime').text(formatDate(new Date(data.expiryTime)));
+        }
+        $('#' + prefix + '_tab #' + prefix + '_transactionName').text(data.transactionName);
+        $('#' + prefix + '_tab #' + prefix + '_sourceId').text(data.sourceId);
+        $('#' + prefix + '_tab #' + prefix + '_sourceCorrelationId').text(data.sourceCorrelationId);
+        $('#' + prefix + '_tab #' + prefix + '_content').text(data.content);
+    };
+
 	$('#tabs a').click(function (e) {
 		  e.preventDefault();
 		  $(this).tab('show');
@@ -120,19 +188,29 @@ $(function () {
 	var eventId = getUrlParameter('id');
 	
 	$('#panel_title').text('Event ' + eventId);
-	$('#back_lnk').attr('href', 'index.html?queryString=' + encodeURIComponent(getUrlParameter('queryString')) + '&start=' + encodeURIComponent(getUrlParameter('start')) + '&max=' + encodeURIComponent(getUrlParameter('max')));
+	$('#back_lnk').attr('href', 'index.html?queryString=' + encodeURIComponent(getUrlParameter('queryString', '')) + '&start=' + encodeURIComponent(getUrlParameter('start', '')) + '&max=' + encodeURIComponent(getUrlParameter('max', '')));
 	$.ajax('../rest/query/event/' + eventId, { dataType: "json", success: function (data) {
-		$('#event_tab #event_name').text(data.name);
-		$('#event_tab #event_application').text(data.application);
-		$('#event_tab #event_endpoint').text(data.endpoint);
-		$('#event_tab #event_creationTime').text(formatDate(new Date(data.creationTime)));
-		if (data.expiryTime) {
-			$('#event_tab #event_expiryTime').text(formatDate(new Date(data.expiryTime)));
+		setEventTabData('event', data);
+	    if (data.type == 'MESSAGE_RESPONSE' && data.correlationId) {
+	    	$.ajax('../rest/query/event/' + data.correlationId, { dataType: "json", success: function (data) {
+	    		 $('#event_correlation_tab_header').removeClass('hidden');
+	    		 $('#event_correlation_tab').removeClass('hidden');
+	    		 setEventTabData('event_correlation', data);
+	    	}});
+		} else if (data.type == 'MESSAGE_REQUEST' && data.childCorrelationIds) {
+			var requestId = data.id;
+			$.each(data.childCorrelationIds, function(index, correlationId) {
+				$.getJSON('../rest/query/event/' + correlationId, function (data) {
+					if (data.correlationId == requestId) {
+		                $('#event_correlation_tab_header').removeClass('hidden');
+		                $('#event_correlation_tab').removeClass('hidden');
+						setEventTabData('event_correlation', data);
+						// Dunno how to break out of the $.each at this point.
+					}
+				});
+			});
 		}
-		$('#event_tab #event_transactionName').text(data.transactionName);
-		$('#event_tab #event_sourceId').text(data.sourceId);
-		$('#event_tab #event_sourceCorrelationId').text(data.sourceCorrelationId);
-		$('#event_tab #event_content').text(data.content);
+		
 	}});
 
 

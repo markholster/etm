@@ -1,0 +1,2 @@
+./solr start -c -p 8983 -s ../node1/solr
+./solr start -c -p 7574 -z localhost:9983 -s ../node2/solr

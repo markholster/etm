@@ -70,6 +70,7 @@ public class QueryRepository {
 			writeStringValue("sourceId", row.getString(10), generator);
 			writeUUIDValue("transactionId", row.getUUID(11), generator);
 			writeStringValue("transactionName", row.getString(12), generator);
+			writeStringValue("type", row.getString(13), generator);
 		}
     }
 

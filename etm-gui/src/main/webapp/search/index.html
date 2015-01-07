@@ -62,15 +62,13 @@
 							<mark>creationTime:[NOW-30MINUTES TO NOW]</mark>
 							.
 						</p>
-						<form role="search">
-							<div class="input-group">
-								<input id="search_input" type="text" class="form-control"
-									placeholder="Search for..." /> <span class="input-group-btn">
-									<button id="standard_search_btn" type="button"
-										class="btn btn-default">Search</button>
-								</span>
-							</div>
-						</form>
+						<div class="input-group">
+							<input id="search_input" type="text" class="form-control"
+								placeholder="Search for..." /> <span class="input-group-btn">
+								<button id="standard_search_btn" type="button"
+									class="btn btn-default">Search</button>
+							</span>
+						</div>
 					</div>
 				</div>
 				<div id="advanced_search" class="panel panel-default"
@@ -158,16 +156,28 @@ $(function () {
             });
         }});	
     };
-	
+
+    var executeSearch = function() {
+        if( !$('#search_input').val()) {
+            $('#search_input').parent().addClass('has-error');
+            return;
+        } else {
+            $('#search_input').parent().removeClass('has-error');
+            currentStart = 0;
+            executeQuery(currentStart, rowCount, true);
+        }
+    };
+
+    $('#search_input').on('keypress', function (event) {
+         if(event.which == '13'){
+            $(this).attr("disabled", "disabled");
+            executeSearch();
+            $(this).removeAttr("disabled");
+         }
+    });
+    
 	$('#standard_search_btn').click(function() {
-		if( !$('#search_input').val()) {
-			$('#search_input').parent().addClass('has-error');
-			return;
-		} else {
-			$('#search_input').parent().removeClass('has-error');
-			currentStart = 0;
-		    executeQuery(currentStart, rowCount, true);
-		}
+		executeSearch();
 	});
 
 	$('#adv_search_lnk').click(function() {

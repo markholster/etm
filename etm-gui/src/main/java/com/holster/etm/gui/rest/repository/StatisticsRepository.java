@@ -52,6 +52,9 @@ public class StatisticsRepository {
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
 				String transactionName = row.getString(0);
+				if (transactionName == null) {
+					continue;
+				}
 				Date transactionStartTime = row.getDate(1);
 				Date transactionFinishTime = row.getDate(2);
 				Date transactionExpiryTime = row.getDate(3);
@@ -111,6 +114,9 @@ public class StatisticsRepository {
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
 				String messageName = row.getString(0);
+				if (messageName == null) {
+					continue;
+				}
 				Date messageStartTime = row.getDate(1);
 				Date messageFinishTime = row.getDate(2);
 				Date messageExpiryTime = row.getDate(3);
@@ -169,6 +175,9 @@ public class StatisticsRepository {
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
 				String messageName = row.getString(0);
+				if (messageName == null) {
+					continue;
+				}
 				Date messageStartTime = row.getDate(1);
 				Date messageFinishTime = row.getDate(2);
 				Date messageExpiryTime = row.getDate(3);
@@ -209,6 +218,9 @@ public class StatisticsRepository {
 		while (iterator.hasNext()) {
 			Row row = iterator.next();
 			String applicationName = row.getString(0);
+			if (applicationName == null) {
+				continue;
+			}
 			long incomingMessageRequestCount = row.getLong(1);
 			long incomingMessageDatagramCount = row.getLong(2);
 			long outgoingMessageRequestCount = row.getLong(3);
