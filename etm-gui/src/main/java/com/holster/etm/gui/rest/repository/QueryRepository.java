@@ -1,8 +1,11 @@
 package com.holster.etm.gui.rest.repository;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.solr.common.SolrDocument;
@@ -14,18 +17,24 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.TelemetryEventType;
 
 public class QueryRepository {
 
 	private final String keyspace = "etm";
-	private Session session;
-	private PreparedStatement findEventForSearchResultsStatement;
-	private PreparedStatement findEventForDetailsStatement;
+	private final Session session;
+	private final PreparedStatement findEventForSearchResultsStatement;
+	private final PreparedStatement findEventForDetailsStatement;
+	private final PreparedStatement findEventParentId;
+	private final PreparedStatement findOverviewEvent;
 
 	public QueryRepository(Session session) {
 		this.session = session;
-		this.findEventForSearchResultsStatement = this.session.prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from " + keyspace + ".telemetry_event where id = ?");
-		this.findEventForDetailsStatement = this.session.prepare("select application, content, correlationId, correlations, creationTime, direction, endpoint, expiryTime, name, sourceCorrelationId, sourceId, transactionId, transactionName, type from " + keyspace + ".telemetry_event where id = ?");
+		this.findEventForSearchResultsStatement = this.session.prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findEventForDetailsStatement = this.session.prepare("select application, content, correlationId, correlations, creationTime, direction, endpoint, expiryTime, name, sourceCorrelationId, sourceId, transactionId, transactionName, type from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findEventParentId = this.session.prepare("select correlationId from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findOverviewEvent = this.session.prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from " + this.keyspace + ".telemetry_event where id = ?");
     }
 
 	public void addEvents(SolrDocumentList results, JsonGenerator generator) throws JsonGenerationException, IOException {
@@ -73,6 +82,138 @@ public class QueryRepository {
 			writeStringValue("type", row.getString(13), generator);
 		}
     }
+	
+	public void addEventOverview(UUID eventId, JsonGenerator generator) throws JsonGenerationException, IOException {
+		UUID rootEventId = findRootEventId(eventId, new ArrayList<UUID>());
+		List<OverviewEvent> overviewEvents = new ArrayList<OverviewEvent>();
+		findChildren(rootEventId, null, overviewEvents);
+		
+		// Sort events based on time.
+		overviewEvents.sort(new Comparator<OverviewEvent>() {
+			@Override
+            public int compare(OverviewEvent o1, OverviewEvent o2) {
+				return (o1.creationTime < o2.creationTime) ? -1 : ((o1.creationTime == o2.creationTime) ? 0 : 1);
+            }
+		});
+		long applicationCount = overviewEvents.stream().map(e -> e.application == null ? "?" : e.application).distinct().count();
+		List<String> applications = new ArrayList<String>();
+		String lastApplication = null;
+		List<TimeFrame> timeFrames = new ArrayList<TimeFrame>();
+		for (int i=0; i < overviewEvents.size(); i++) {
+			OverviewEvent overviewEvent = overviewEvents.get(i);
+			String currentApplication = overviewEvent.application;
+			if (currentApplication == null) {
+				currentApplication  = "?";
+			}
+			if (currentApplication.equals(lastApplication)) {
+				timeFrames.add(new TimeFrame(applicationCount));
+			} else if (i == 0) {
+				timeFrames.add(new TimeFrame(applicationCount));
+			}
+			if (!applications.contains(currentApplication)) {
+				applications.add(currentApplication);
+			}
+			int applicationIx = applications.indexOf(currentApplication);
+			TimeFrame timeFrame = timeFrames.get(timeFrames.size() -1);
+			timeFrame.overviewEvents[applicationIx] = overviewEvent;
+			lastApplication = currentApplication;
+		}		
+		generator.writeNumberField("eventCount", overviewEvents.size());
+		generator.writeNumberField("applicationCount", applicationCount);
+		generator.writeNumberField("timeFrameCount", timeFrames.size());
+		generator.writeArrayFieldStart("eventTimeFrames");
+		for (TimeFrame timeFrame : timeFrames) {
+			generator.writeStartArray();
+			for (int i=0; i < applicationCount; i++) {
+				generator.writeStartObject();
+				OverviewEvent overviewEvent = timeFrame.overviewEvents[i];
+				if (overviewEvent != null) {
+					generator.writeStringField("application", overviewEvent.application);
+					generator.writeStringField("eventName", overviewEvent.name);
+					generator.writeStringField("endpoint", overviewEvent.endpoint);
+					if (overviewEvent.direction != null) {
+						generator.writeStringField("direction", overviewEvent.direction.name());
+					}
+					if (overviewEvent.type != null) {
+						generator.writeStringField("type", overviewEvent.type.name());
+					}
+					if (TelemetryEventType.MESSAGE_RESPONSE.equals(overviewEvent.type) && overviewEvent.parentId != null) {
+						Optional<OverviewEvent> parent = overviewEvents.stream().filter(p -> p.id.equals(overviewEvent.parentId)).findFirst();
+						if (parent.isPresent()) {
+							generator.writeNumberField("responseTime", overviewEvent.creationTime - parent.get().creationTime);
+						}
+					} else if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+						Optional<OverviewEvent> response = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_RESPONSE.equals(c.type)).findFirst();
+						if (response.isPresent()) {
+							generator.writeNumberField("responseTime", response.get().creationTime - overviewEvent.creationTime);
+						} else if (overviewEvent.expirationTime > -1) {
+							generator.writeNumberField("responseTime", overviewEvent.expirationTime- overviewEvent.creationTime);
+						}
+					}
+				}
+				generator.writeEndObject();
+			}
+			generator.writeEndArray();
+			
+		}
+		generator.writeEndArray();
+    }
+
+	private UUID findRootEventId(UUID eventId, List<UUID> foundElements) {
+		ResultSet resultSet = this.session.execute(this.findEventParentId.bind(eventId));
+		Row row = resultSet.one();
+		if (row == null) {
+			return eventId;
+		}
+		UUID parentId = row.getUUID(0);
+		if (parentId == null) {
+			return eventId;
+		}
+		if (foundElements.contains(parentId)) {
+			// Cyclic dependency
+			return eventId;
+		}
+		foundElements.add(parentId);
+		return findRootEventId(parentId, foundElements);
+    }
+	
+	private void findChildren(UUID eventId, UUID parentEventId, List<OverviewEvent> overviewEvents) {
+	    ResultSet resultSet = this.session.execute(this.findOverviewEvent.bind(eventId));
+		Row row = resultSet.one();
+		if (row == null) {
+			return;
+		}
+		OverviewEvent overviewEvent = createOverviewEvent(row);
+		overviewEvent.parentId = parentEventId;
+		if (!overviewEvents.contains(overviewEvent)) {
+			overviewEvents.add(overviewEvent);
+			List<UUID> children = row.getList(8, UUID.class);
+			for (UUID child : children) {
+				findChildren(child, eventId, overviewEvents);
+			}
+		}
+    }
+
+	private OverviewEvent createOverviewEvent(Row row) {
+		OverviewEvent overviewEvent = new OverviewEvent();
+		overviewEvent.id = row.getUUID(0);
+		overviewEvent.creationTime = row.getDate(1).getTime();
+		overviewEvent.application = row.getString(2);
+		try {
+			overviewEvent.direction = TelemetryEventDirection.valueOf(row.getString(3));
+		} catch (IllegalArgumentException e) {}
+		overviewEvent.endpoint = row.getString(4);
+		Date date = row.getDate(5);
+		if (date != null) {
+			overviewEvent.expirationTime = date.getTime();
+		}
+		overviewEvent.name = row.getString(6);
+		try {
+			overviewEvent.type = TelemetryEventType.valueOf(row.getString(7));
+		} catch (IllegalArgumentException e) {}
+
+		return overviewEvent;
+    }
 
 	private void writeUUIDValue(String fieldName, UUID fieldValue, JsonGenerator generator) throws JsonGenerationException, IOException {
 	    if (fieldValue == null) {
@@ -95,6 +236,50 @@ public class QueryRepository {
 	    generator.writeNumberField(fieldName, fieldValue.getTime());
     }
 
+
+	private class OverviewEvent {
+		
+		private UUID id;
+		
+		private UUID parentId;
+		
+		private long creationTime;
+		
+		private long expirationTime;
+		
+		private String application;
+		
+		private TelemetryEventDirection direction;
+		
+		private TelemetryEventType type;
+		
+		private String name;
+		
+		private String endpoint;
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof OverviewEvent) {
+				OverviewEvent other = (OverviewEvent) obj;
+				return other.id.equals(this.id);
+			}
+		    return super.equals(obj);
+		}
+		
+		@Override
+		public int hashCode() {
+		    return this.id.hashCode();
+		}
+	}
+	
+	private class TimeFrame {
+		
+		public OverviewEvent[] overviewEvents;
+		
+		private TimeFrame(long applicationCount) {
+			this.overviewEvents = new OverviewEvent[(int) applicationCount];
+		}
+	}
 
 
 }

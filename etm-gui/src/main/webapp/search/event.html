@@ -25,6 +25,7 @@
 					  <ul class="nav nav-tabs" role="tablist">
 					    <li id="event_tab_header" role="presentation" class="active"><a href="#event_tab" aria-controls="home" role="tab" data-toggle="tab">Event</a></li>
 					    <li id="event_correlation_tab_header" role="presentation" class="hidden"><a href="#event_correlation_tab" aria-controls="home" role="tab" data-toggle="tab">Event correlation</a></li>
+					    <li id="event_overview_tab_header" role="presentation" class="hidden"><a href="#event_overview_tab" aria-controls="home" role="tab" data-toggle="tab">Overview</a></li>
 					  </ul>
 					  <!-- Tab panes -->
 					  <div class="tab-content">
@@ -126,9 +127,10 @@
                                 </div>
                               </div>
                             </form>                     
+                        </div>
+                        <div role="tabpanel" class="tab-pane hidden" id="event_overview_tab">
                         </div>					    
 					  </div>
-					
 					</div>				
 				</div>
 			</div>
@@ -201,7 +203,7 @@ $(function () {
 			var requestId = data.id;
 			$.each(data.childCorrelationIds, function(index, correlationId) {
 				$.getJSON('../rest/query/event/' + correlationId, function (data) {
-					if (data.correlationId == requestId) {
+					if (data.correlationId == requestId && data.type == 'MESSAGE_RESPONSE') {
 		                $('#event_correlation_tab_header').removeClass('hidden');
 		                $('#event_correlation_tab').removeClass('hidden');
 						setEventTabData('event_correlation', data);

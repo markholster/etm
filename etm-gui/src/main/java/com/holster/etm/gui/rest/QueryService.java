@@ -21,6 +21,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 
 import com.holster.etm.gui.rest.repository.QueryRepository;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
@@ -70,7 +71,9 @@ public class QueryService {
 	        return writer.toString();
         } catch (SolrServerException e) {
 	        // TODO Error handling
+        	e.printStackTrace();
         } catch (IOException e) {
+        	e.printStackTrace();
         	// TODO Error handling
         }
 		return "{}";
@@ -92,9 +95,34 @@ public class QueryService {
 	        generator.close();
 	        return writer.toString();
 		} catch (Exception e) {
+			e.printStackTrace();
 			// TODO error handling
 		}
 		return "{}";
+	}
+
+	
+	@GET
+	@Path("/event/{id}/overview")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEventOverviewById(@PathParam("id") String id) {
+		UUID eventId = null;
+		try {
+			eventId = UUID.fromString(id);
+	        StringWriter writer = new StringWriter();
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartObject();
+	        this.queryRepository.addEventOverview(eventId, generator);
+	        generator.writeEndObject();
+	        generator.close();
+	        return writer.toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+			// TODO error handling
+		}
+		return "{}";
+
 	}
 
 }

@@ -95,7 +95,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
     public void close() throws IOException {
 		if (this.docIx != -1) {
 			try {
-	            this.server.add(this.documents.subList(0, this.docIx), 60000);
+	            this.server.add(this.documents.subList(0, this.docIx + 1), 60000);
             } catch (SolrServerException e) {
 	            // TODO error handling
             }
