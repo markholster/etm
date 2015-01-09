@@ -81,7 +81,7 @@
 					</div>
 					<div class="panel-body"></div>
 				</div>
-				<div class="panel panel-default" id="result_panel">
+				<div class="panel panel-default">
 					<div class="panel-body">
 						<div id="result_overview" class="text-center"></div>
 						<div class="table-responsive">
@@ -132,6 +132,18 @@ $(function () {
         return defaultValue;
     };
 
+    var addRow = function(event, start, max, animate) {
+        var application = $.isEmptyObject(event.application) ? '' : event.application;
+        var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint; 
+        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '">' + event.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + endpoint + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
+        $(rowContent).appendTo($('#result_table > tbody'));
+        if (animate) {
+            $('#result_table > tbody > :last-child > td > div').slideDown(500);
+        } else {
+            $('#result_table > tbody > :last-child > td > div').show();
+        }                        
+    };
+
 	var executeQuery = function(start, max, animate) {
 		$("#ajax_loader").show();
         $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + start + '&rows=' + max, { dataType: "json", success: function (data) {
@@ -140,18 +152,13 @@ $(function () {
                 return false;
             }
             var overView = 'Found ' + data.numFound + ' events in ' + data.queryTime + 'ms.';
+            if (data.start < data.end) {
+                overView = overView + ' Showing events ' + (data.start + 1) + ' to <span id="end_range">'+ (data.end + 1) +'</span>.'; 
+            }
             $('#result_overview').html('<p>' + overView + '</p>');
             $('#result_table > tbody').empty();
             $.each(data.events, function(index, event) {
-                var application = $.isEmptyObject(event.application) ? '' : event.application;
-                var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint; 
-                var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '">' + event.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + endpoint + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
-                $(rowContent).appendTo($('#result_table > tbody'));
-                if (animate) {
-                    $('#result_table > tbody > :last-child > td > div').slideDown(500);
-                } else {
-                	$('#result_table > tbody > tr > td > div').show();
-                }                
+                addRow(event, start, max, animate);
             });
         }});	
     };
@@ -198,9 +205,14 @@ $(function () {
 		rowCount = 25;
 	}
 
+	var loading = false;
 	$(window).scroll(function() {
+		if (loading) {
+			return;
+		}
 	    if($(window).scrollTop() == $(document).height() - $(window).height()) {
-	        $("#ajax_loader").show();
+	    	loading = true;
+	        $('#ajax_loader').show();
 		   	$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + (currentStart + rowCount) + '&rows=' + rowCount, { dataType: "json", success: function (data) {
 		   	   $("#ajax_loader").hide();
 		       if (!data) {
@@ -208,15 +220,13 @@ $(function () {
 			   }
 			   currentStart += rowCount;
 	           $.each(data.events, function(index, event) {
-	               var application = $.isEmptyObject(event.application) ? '' : event.application;
-	               var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint; 
-	               var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(currentStart) + '&max='+ encodeURIComponent(rowCount) + '">' + event.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + endpoint + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
-	               $(rowContent).appendTo($('#result_table > tbody'));
-	               $('#result_table > tbody > :last-child > td > div').slideDown(500);
+	        	   addRow(event, currentStart, rowCount, false);
 	           });
-	           		   
-		 }});
-    }});
+	           $('#end_range').text((currentStart + rowCount));
+	           loading = false;
+	        }});
+		}
+	});
 	
 });
 //]]>
