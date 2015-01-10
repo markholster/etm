@@ -60,6 +60,7 @@ public class QueryService {
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
 	        generator.writeStartObject();
 	        generator.writeNumberField("numFound", results.getNumFound());
+	        generator.writeNumberField("numReturned", results.size());
 	        generator.writeNumberField("start", results.getStart());
 	        generator.writeNumberField("end", results.getStart() + results.size() - 1);
 	        generator.writeArrayFieldStart("events");

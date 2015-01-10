@@ -152,7 +152,7 @@ $(function () {
             if (!data) {
                 return false;
             }
-            var overView = 'Found ' + data.numFound + ' events in ' + data.queryTime + 'ms.';
+            var overView = 'Found <span id="result_count_found">' + data.numFound + '</span> events in ' + data.queryTime + 'ms.';
             if (data.start < data.end) {
                 overView = overView + ' Showing events ' + (data.start + 1) + ' to <span id="end_range">'+ (data.end + 1) +'</span>.'; 
             }
@@ -161,6 +161,7 @@ $(function () {
             $.each(data.events, function(index, event) {
                 addRow(event, start, max, animate);
             });
+            currentStart = start + data.numReturned;
         }});	
     };
 
@@ -214,16 +215,17 @@ $(function () {
 	    if($(window).scrollTop() == $(document).height() - $(window).height()) {
 	    	loading = true;
 	        $('#ajax_loader').show();
-		   	$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + (currentStart + rowCount) + '&rows=' + rowCount, { dataType: "json", success: function (data) {
+		   	$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount, { dataType: "json", success: function (data) {
 		   	   $("#ajax_loader").hide();
 		       if (!data) {
 			       return;
 			   }
-			   currentStart += rowCount;
 	           $.each(data.events, function(index, event) {
 	        	   addRow(event, currentStart, rowCount, false);
 	           });
-	           $('#end_range').text((currentStart + rowCount));
+	           currentStart += data.numReturned;
+	           $('#end_range').text(currentStart);
+	           $('#result_count_found').text(data.numFound);
 	           loading = false;
 	        }});
 		}
