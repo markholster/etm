@@ -26,7 +26,7 @@
 					  <ul class="nav nav-tabs" role="tablist">
 					    <li id="event_tab_header" role="presentation" class="active"><a href="#event_tab" aria-controls="home" role="tab" data-toggle="tab">Event</a></li>
 					    <li id="event_correlation_tab_header" role="presentation" class="hidden"><a href="#event_correlation_tab" aria-controls="home" role="tab" data-toggle="tab">Event correlation</a></li>
-					    <li id="event_overview_tab_header" role="presentation" class="hidden"><a href="#event_overview_tab" aria-controls="home" role="tab" data-toggle="tab">Overview</a></li>
+					    <li id="event_overview_tab_header" role="presentation"><a href="#event_overview_tab" aria-controls="home" role="tab" data-toggle="tab">Overview</a></li>
 					  </ul>
 					  <!-- Tab panes -->
 					  <div class="tab-content">
@@ -129,8 +129,8 @@
                               </div>
                             </form>                     
                         </div>
-                        <div role="tabpanel" class="tab-pane hidden" id="event_overview_tab">
-                            <div id="overview_container">
+                        <div role="tabpanel" class="tab-pane" id="event_overview_tab">
+                            <div id="overview_container" style="overflow:auto;">
                             </div>
                         </div>					    
 					  </div>
@@ -189,6 +189,15 @@ $(function () {
 		  e.preventDefault();
 		  $(this).tab('show');
 	});
+
+	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+		var target = $(e.target).attr("href") // activated tab
+		if (target == '#event_overview_tab') {
+			if (!$('#overview_container > div > svg').length) {
+			    renderOverview();
+			}
+		}
+	});
 	
 	var eventId = getUrlParameter('id');
 	
@@ -222,118 +231,110 @@ $(function () {
 		
 	}});
 
-	$('#overview_container').highcharts({
-        chart: {
-            events: {
-                load: function () {
-                    var ren = this.renderer,
-                        colors = Highcharts.getOptions().colors,
-                        rightArrow = ['M', 0, 0, 'L', 30, 0, 'L', 25, 5, 'M', 30, 0, 'L', 25, -5],
-                        leftArrow = ['M', 30, 0, 'L', 0, 0, 'L', 5, 5, 'M', 0, 0, 'L', 5, -5];
-                    var chart = this;
-                    $.ajax('../rest/query/event/' + eventId + '/overview/', { dataType: "json", success: function (data) {
-                        if (!data) {
-                            return;
-                        }
-                        var applicationCount = data.applicationCount;
-                        var timeframeCount = data.timeframeCount;
-                        var applicationOffset = 300;
-                        var applicationStart = 20;
-                        var timeframeHeight = 50;
 
-                        // Write the application headers.
-                        $.each(data.applications, function(application_ix, application) {
-                            var appHeaderXPos = applicationStart + (application_ix * applicationOffset);
-                            ren.label(application, appHeaderXPos, 40)
-                            .css({
-                                fontWeight: 'bold'
-                            }).add();
-                            if (application_ix < applicationCount -1) {
-                                // Add an application separator.
-                                var xpos = appHeaderXPos + (applicationOffset * 0.9);
-                                ren.path(['M', xpos, 40, 'L', xpos, 40 + (timeframeHeight * timeframeCount) + 20])
-                                .attr({
-                                    'stroke-width': 2,
-                                    stroke: 'silver',
-                                    dashstyle: 'dash'
-                                }).add()
-                            }
-                        });
+	var renderOverview = function() {
+	    $('#overview_container').highcharts({
+	        chart: {
+	            events: {
+	                load: function () {
+	                    var ren = this.renderer,
+	                        colors = Highcharts.getOptions().colors,
+	                        rightArrow = ['M', 0, 0, 'L', 30, 0, 'L', 25, 5, 'M', 30, 0, 'L', 25, -5],
+	                        leftArrow = ['M', 30, 0, 'L', 0, 0, 'L', 5, 5, 'M', 0, 0, 'L', 5, -5];
+	                    var chart = this;
+	                    $.ajax('../rest/query/event/' + eventId + '/overview/', { dataType: "json", success: function (data) {
+	                        if (!data) {
+	                            return;
+	                        }
+	                        var applicationCount = data.applicationCount;
+	                        var timeframeCount = data.timeframeCount;
+	                        var applicationOffset = 300;
+	                        var applicationStart = 20;
+	                        var timeframeHeight = 50;
 
-                        // Write the timeframes
-                        $.each(data.timeframes, function(timeframe_ix, timeframe) {
-                            $.each(timeframe, function(event_ix, event) {
-                            	if($.isEmptyObject(event.eventName)) {
-                                	return true;
-                            	}
-                            	var tooltip = '';
-                            	if(event.responseTime) {
-                            		tooltip += 'responsetime: ' + event.responseTime + ', ';
-                            	}
-                            	if(event.absoluteResponseTime) {
-                            		tooltip += 'absolute responsetime: ' + event.absoluteResponseTime + ', ';
-                            	}
-                            	tooltip += 'endpoint: ' + event.endpoint + ", direction: " + event.direction + ", type: " + event.type;
-                                var xOffset = 0;
-                                var arrow = null;
-                                if ('OUTGOING' == event.direction && 'MESSAGE_REQUEST' == event.type) {
-                                    xOffset = 15;
-                                    arrow = rightArrow;
-                                } else if ('INCOMING' == event.direction && 'MESSAGE_RESPONSE' == event.type) {
-                                	xOffset = 15;
-                                	arrow = leftArrow;
-                                } else if ('OUTGOING' == event.direction && 'MESSAGE_DATAGRAM' == event.type) {
-                                    xOffset = 15;
-                                    arrow = rightArrow;
-                                }
-                                ren.label(event.eventName, applicationStart + (event_ix * applicationOffset) + xOffset, 80 + (timeframe_ix * timeframeHeight))
-                                .attr({
-                                    zIndex: 1,
-                                    title: tooltip
-                                }).add();                                
-                                                                
-                            	ren.rect(applicationStart + (event_ix * applicationOffset) + xOffset, 80 + (timeframe_ix * timeframeHeight), event.eventName.length * 7, 23, 5)
-                                .attr({
-                                    'stroke-width': 1,
-                                    fill: event.color,
-                                    'fill-opacity': 0.6,
-                                    'stroke-opacity' : 0.8,
-                                    stroke: event.color,
-                                    zIndex: -1,
-                                    title: tooltip
-                                }).add();
-                            	if(!$.isEmptyObject(arrow)) {   
-                                    ren.path(arrow)
-                                    .attr({
-                                        'stroke-width': 2,
-                                        stroke: colors[1]
-                                    })
-                                    .translate(applicationStart + (event_ix * applicationOffset) + (applicationOffset * 0.84), 91.5 + (timeframe_ix * timeframeHeight))
-                                    .add();
-                            	}
-                            });                            
-                        });
-                        chart.setSize((applicationCount * applicationOffset) + applicationStart, (timeframeCount * timeframeHeight) + 80);
-                        $('#event_overview_tab_header').removeClass('hidden');
-                        $('#event_overview_tab').removeClass('hidden');
-                    }});                    
-                }
-            }
-        },
-        credits: {
-            enabled: false
-        },
-        title: {
-            text: ''
-        }
+	                        // Write the application headers.
+	                        $.each(data.applications, function(application_ix, application) {
+	                            var appHeaderXPos = applicationStart + (application_ix * applicationOffset);
+	                            ren.label(application, appHeaderXPos, 40)
+	                            .css({
+	                                fontWeight: 'bold'
+	                            }).add();
+	                            if (application_ix < applicationCount -1) {
+	                                // Add an application separator.
+	                                var xpos = appHeaderXPos + (applicationOffset * 0.9);
+	                                ren.path(['M', xpos, 40, 'L', xpos, 40 + (timeframeHeight * timeframeCount) + 20])
+	                                .attr({
+	                                    'stroke-width': 2,
+	                                    stroke: 'silver',
+	                                    dashstyle: 'dash'
+	                                }).add()
+	                            }
+	                        });
 
-    });
+	                        // Write the timeframes
+	                        $.each(data.timeframes, function(timeframe_ix, timeframe) {
+	                            $.each(timeframe, function(event_ix, event) {
+	                                if($.isEmptyObject(event.eventName)) {
+	                                    return true;
+	                                }
+	                                var tooltip = '';
+	                                if(event.responseTime) {
+	                                    tooltip += 'responsetime: ' + event.responseTime + ', ';
+	                                }
+	                                if(event.absoluteResponseTime) {
+	                                    tooltip += 'absolute responsetime: ' + event.absoluteResponseTime + ', ';
+	                                }
+	                                tooltip += 'creationTime: '+ formatDate(new Date(event.creationTime))+ ', endpoint: ' + event.endpoint + ", direction: " + event.direction + ", type: " + event.type;
+	                                var xOffset = 0;
+	                                var arrow = null;
+	                                if ('OUTGOING' == event.direction && 'MESSAGE_REQUEST' == event.type) {
+	                                    xOffset = 15;
+	                                    arrow = rightArrow;
+	                                } else if ('INCOMING' == event.direction && 'MESSAGE_RESPONSE' == event.type) {
+	                                    xOffset = 15;
+	                                    arrow = leftArrow;
+	                                } else if ('OUTGOING' == event.direction && 'MESSAGE_DATAGRAM' == event.type) {
+	                                    xOffset = 15;
+	                                    arrow = rightArrow;
+	                                }
+	                                ren.label(event.eventName, applicationStart + (event_ix * applicationOffset) + xOffset, 80 + (timeframe_ix * timeframeHeight))
+	                                .attr({
+                                        'stroke-width': 1,
+                                        fill: event.color,
+                                        'stroke-opacity' : 1.0,
+                                        stroke: event.color,
+	                                    zIndex: -1,
+	                                    title: tooltip,
+	                                    r: 2
+	                                }).add().shadow(true);                                
+	                                                                
+	                                if(!$.isEmptyObject(arrow)) {   
+	                                    ren.path(arrow)
+	                                    .attr({
+	                                        'stroke-width': 2,
+	                                        stroke: '#000000'
+	                                    })
+	                                    .translate(applicationStart + (event_ix * applicationOffset) + (applicationOffset * 0.84), 91.5 + (timeframe_ix * timeframeHeight))
+	                                    .add();
+	                                }
+	                            });                            
+	                        });
 
+	                        $('#overview_container > div > svg > g > rect').attr('fill-opacity', 0.6);
+	                        chart.setSize((applicationCount * applicationOffset) + applicationStart, (timeframeCount * timeframeHeight) + 80);
+	                    }});                    
+	                }
+	            }
+	        },
+	        credits: {
+	            enabled: false
+	        },
+	        title: {
+	            text: ''
+	        }
 
-
-	
-
-
+	    });
+	};
 });
 //]]>
 </script>

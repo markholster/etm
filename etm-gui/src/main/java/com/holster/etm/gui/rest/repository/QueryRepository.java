@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -87,14 +88,8 @@ public class QueryRepository {
 		UUID rootEventId = findRootEventId(eventId, new ArrayList<UUID>());
 		List<OverviewEvent> overviewEvents = new ArrayList<OverviewEvent>();
 		findChildren(rootEventId, null, overviewEvents);
+		overviewEvents = sortEventsByHierarchy(overviewEvents, rootEventId);
 		
-		// Sort events based on time.
-		overviewEvents.sort(new Comparator<OverviewEvent>() {
-			@Override
-            public int compare(OverviewEvent o1, OverviewEvent o2) {
-				return (o1.creationTime < o2.creationTime) ? -1 : ((o1.creationTime == o2.creationTime) ? 0 : 1);
-            }
-		});
 		// Calculate response times
 		long totalOverviewTime = -1;
 		for (OverviewEvent overviewEvent : overviewEvents) {
@@ -160,6 +155,8 @@ public class QueryRepository {
 				timeFrames.add(new TimeFrame(applicationCount));
 			} else if (i == 0) {
 				timeFrames.add(new TimeFrame(applicationCount));
+			} else if (applications.contains(currentApplication) && timeFrames.get(timeFrames.size() -1).overviewEvents[applications.indexOf(currentApplication)] != null) {
+				timeFrames.add(new TimeFrame(applicationCount));
 			}
 			if (!applications.contains(currentApplication)) {
 				applications.add(currentApplication);
@@ -190,6 +187,7 @@ public class QueryRepository {
 					generator.writeStringField("eventName", overviewEvent.name);
 					generator.writeStringField("endpoint", overviewEvent.endpoint);
 					generator.writeStringField("color", overviewEvent.color);
+					generator.writeNumberField("creationTime", overviewEvent.creationTime);
 					if (overviewEvent.direction != null) {
 						generator.writeStringField("direction", overviewEvent.direction.name());
 					}
@@ -209,6 +207,39 @@ public class QueryRepository {
 			
 		}
 		generator.writeEndArray();
+    }
+
+	private List<OverviewEvent> sortEventsByHierarchy(List<OverviewEvent> overviewEvents, UUID eventId) {
+		List<OverviewEvent> result = new ArrayList<OverviewEvent>(overviewEvents.size());
+		OverviewEvent root = overviewEvents.stream().filter(p -> p.id.equals(eventId)).findFirst().get();
+		result.add(root);
+		List<OverviewEvent> children = overviewEvents.stream().filter(c -> root.id.equals(c.parentId)).collect(Collectors.toList());
+		children.sort(new Comparator<OverviewEvent>() {
+			@Override
+            public int compare(OverviewEvent o1, OverviewEvent o2) {
+				// First check by time.
+				if (o1.creationTime < o2.creationTime) {
+					return -1;
+				} else if (o1.creationTime == o2.creationTime) {
+					return 1;
+				}
+				// if time is the same, and type is the same we stop comparing.
+				if (o1.type == null ^ o2.type == null || o1.type.equals(o2.type)) {
+					return 0;
+				}
+				if (TelemetryEventType.MESSAGE_RESPONSE.equals(o1.type)) {
+					// Response messages last.
+					return 1;
+				} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(o2.type)) {
+					// Response messages last
+					return -1;
+				}
+				return 0;
+            }});
+		for (OverviewEvent overviewEvent : children) {
+			result.addAll(sortEventsByHierarchy(overviewEvents, overviewEvent.id));
+		}
+	    return result;
     }
 
 	private UUID findRootEventId(UUID eventId, List<UUID> foundElements) {
@@ -253,7 +284,7 @@ public class QueryRepository {
 		overviewEvent.application = row.getString(2);
 		try {
 			overviewEvent.direction = TelemetryEventDirection.valueOf(row.getString(3));
-		} catch (IllegalArgumentException e) {}
+		} catch (IllegalArgumentException | NullPointerException e) {}
 		overviewEvent.endpoint = row.getString(4);
 		Date date = row.getDate(5);
 		if (date != null) {
@@ -262,7 +293,7 @@ public class QueryRepository {
 		overviewEvent.name = row.getString(6);
 		try {
 			overviewEvent.type = TelemetryEventType.valueOf(row.getString(7));
-		} catch (IllegalArgumentException e) {}
+		} catch (IllegalArgumentException  | NullPointerException e) {}
 
 		return overviewEvent;
     }
@@ -328,6 +359,11 @@ public class QueryRepository {
 		@Override
 		public int hashCode() {
 		    return this.id.hashCode();
+		}
+		
+		@Override
+		public String toString() {
+		    return this.name + "(" + this.id + ")";
 		}
 	}
 	
