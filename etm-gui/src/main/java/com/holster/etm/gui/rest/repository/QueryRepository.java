@@ -95,6 +95,57 @@ public class QueryRepository {
 				return (o1.creationTime < o2.creationTime) ? -1 : ((o1.creationTime == o2.creationTime) ? 0 : 1);
             }
 		});
+		// Calculate response times
+		long totalOverviewTime = -1;
+		for (OverviewEvent overviewEvent : overviewEvents) {
+			if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+				Optional<OverviewEvent> optionalResponse = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_RESPONSE.equals(c.type)).findFirst();
+				if (optionalResponse.isPresent()) {
+					OverviewEvent response = optionalResponse.get();
+					long responseTime = response.creationTime - overviewEvent.creationTime;
+					if (totalOverviewTime == -1) {
+						// First request in the overview contains the total transaction time. Maybe it's best to calculate the difference between the first and last overviewEvent..
+						totalOverviewTime = responseTime;
+					}
+					overviewEvent.responseTime = responseTime;
+					response.responseTime = responseTime;
+				} else if (overviewEvent.expirationTime > -1) {
+					overviewEvent.responseTime = overviewEvent.expirationTime - overviewEvent.creationTime;
+				}
+			}
+		}
+		
+		// Calculate fill colors
+		for (OverviewEvent overviewEvent : overviewEvents) {
+			if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+				Optional<OverviewEvent> optionalResponse = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_RESPONSE.equals(c.type)).findFirst();
+				if (optionalResponse.isPresent()) {
+					OverviewEvent response = optionalResponse.get();
+					long childResponseTimes = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_REQUEST.equals(c.type)).mapToLong(c -> c.responseTime).sum();
+					overviewEvent.absoluteResponseTime = overviewEvent.responseTime - childResponseTimes;
+					response.absoluteResponseTime = overviewEvent.absoluteResponseTime;
+					float redFactor = ((float)overviewEvent.absoluteResponseTime / (float)totalOverviewTime);
+					if (redFactor > 1) {
+						redFactor = 1;
+					}
+					String red = Integer.toHexString((int) (255 * redFactor));
+					String green = Integer.toHexString((int) (255 * (1 - redFactor)));
+					if (red.length() < 2) {
+						red = "0" + red;
+					}
+					if (green.length() < 2) {
+						green = "0" + green;
+					}
+					overviewEvent.color = "#" + red + green + "00";
+					response.color = overviewEvent.color;
+				} else if (overviewEvent.expirationTime > -1) {
+					overviewEvent.color = "#ff0000";
+				}
+			} else if (TelemetryEventType.MESSAGE_DATAGRAM.equals(overviewEvent.type)) {
+				overviewEvent.color = "#eeeeee";
+			}
+		}
+		
 		long applicationCount = overviewEvents.stream().map(e -> e.application == null ? "?" : e.application).distinct().count();
 		List<String> applications = new ArrayList<String>();
 		String lastApplication = null;
@@ -118,10 +169,17 @@ public class QueryRepository {
 			timeFrame.overviewEvents[applicationIx] = overviewEvent;
 			lastApplication = currentApplication;
 		}		
+		
+		// Create the json
 		generator.writeNumberField("eventCount", overviewEvents.size());
 		generator.writeNumberField("applicationCount", applicationCount);
-		generator.writeNumberField("timeFrameCount", timeFrames.size());
-		generator.writeArrayFieldStart("eventTimeFrames");
+		generator.writeNumberField("timeframeCount", timeFrames.size());
+		generator.writeArrayFieldStart("applications");
+		for (String application : applications) {
+			generator.writeString(application);
+		}
+		generator.writeEndArray();
+		generator.writeArrayFieldStart("timeframes");
 		for (TimeFrame timeFrame : timeFrames) {
 			generator.writeStartArray();
 			for (int i=0; i < applicationCount; i++) {
@@ -131,24 +189,18 @@ public class QueryRepository {
 					generator.writeStringField("application", overviewEvent.application);
 					generator.writeStringField("eventName", overviewEvent.name);
 					generator.writeStringField("endpoint", overviewEvent.endpoint);
+					generator.writeStringField("color", overviewEvent.color);
 					if (overviewEvent.direction != null) {
 						generator.writeStringField("direction", overviewEvent.direction.name());
 					}
 					if (overviewEvent.type != null) {
 						generator.writeStringField("type", overviewEvent.type.name());
 					}
-					if (TelemetryEventType.MESSAGE_RESPONSE.equals(overviewEvent.type) && overviewEvent.parentId != null) {
-						Optional<OverviewEvent> parent = overviewEvents.stream().filter(p -> p.id.equals(overviewEvent.parentId)).findFirst();
-						if (parent.isPresent()) {
-							generator.writeNumberField("responseTime", overviewEvent.creationTime - parent.get().creationTime);
-						}
-					} else if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
-						Optional<OverviewEvent> response = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_RESPONSE.equals(c.type)).findFirst();
-						if (response.isPresent()) {
-							generator.writeNumberField("responseTime", response.get().creationTime - overviewEvent.creationTime);
-						} else if (overviewEvent.expirationTime > -1) {
-							generator.writeNumberField("responseTime", overviewEvent.expirationTime- overviewEvent.creationTime);
-						}
+					if (overviewEvent.responseTime != -1) {
+						generator.writeNumberField("responseTime", overviewEvent.responseTime);
+					}
+					if (overviewEvent.absoluteResponseTime != -1) {
+						generator.writeNumberField("absoluteResponseTime", overviewEvent.absoluteResponseTime);
 					}
 				}
 				generator.writeEndObject();
@@ -239,6 +291,7 @@ public class QueryRepository {
 
 	private class OverviewEvent {
 		
+
 		private UUID id;
 		
 		private UUID parentId;
@@ -256,6 +309,12 @@ public class QueryRepository {
 		private String name;
 		
 		private String endpoint;
+		
+		private String color;
+		
+		private long responseTime = -1;
+		
+		private long absoluteResponseTime = -1;
 		
 		@Override
 		public boolean equals(Object obj) {
