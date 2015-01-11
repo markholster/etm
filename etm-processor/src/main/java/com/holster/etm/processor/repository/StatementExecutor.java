@@ -496,23 +496,27 @@ public class StatementExecutor {
 					   expression.charAt(4) == 'd' &&
 					   expression.charAt(5) == ':') {
 				String range = expression.substring(6);
-				String[] values = range.split("-");
-				if (values.length != 2) {
+				String[] values = range.split("-", 3);
+				if (values.length != 3) {
                 	if (log.isErrorLevelEnabled()) {
                 		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.");
                 	}
                 	new FixedValueExpressionParser(null);					
 				}
 				try {
+					Integer line = null;
 					Integer start = null;
 					Integer end = null;
-					if (values[0].length() != 0) {
-						start = Integer.valueOf(values[0]);
+					if (values[0].trim().length() != 0) {
+						line = Integer.valueOf(values[0].trim());
+					}
+					if (values[1].trim().length() != 0) {
+						start = Integer.valueOf(values[1]);
 					} 
-					if (values[1].length() != 0) {
-						end = Integer.valueOf(values[0]);
+					if (values[2].trim().length() != 0) {
+						end = Integer.valueOf(values[2]);
 					} 
-					return new FixedPositionExpressionParser(start, end);
+					return new FixedPositionExpressionParser(line, start, end);
 				} catch (NumberFormatException e) {
                 	if (log.isErrorLevelEnabled()) {
                 		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.", e);

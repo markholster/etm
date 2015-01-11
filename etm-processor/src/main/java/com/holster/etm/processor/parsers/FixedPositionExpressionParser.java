@@ -4,8 +4,10 @@ public class FixedPositionExpressionParser implements ExpressionParser {
 	
 	private Integer startIx;
 	private Integer endIx;
+	private Integer lineIx;
 	
-	public FixedPositionExpressionParser(Integer startIx, Integer endIx) {
+	public FixedPositionExpressionParser(Integer lineIx, Integer startIx, Integer endIx) {
+		this.lineIx = lineIx;
 	    this.startIx = startIx;
 	    this.endIx = endIx;
     }
@@ -15,21 +17,31 @@ public class FixedPositionExpressionParser implements ExpressionParser {
 		if (content == null) {
 			return null;
 		}
-		if (this.startIx != null && (this.startIx >= content.length() || this.startIx < 0)) {
+		String line = null;
+		if (this.lineIx != null) {
+			String lines[] = content.split("\\r?\\n");
+			if (lines.length >= this.lineIx) {
+				return null;
+			}
+			line = lines[this.lineIx];
+		} else {
+			line = content;
+		}
+		if (this.startIx != null && (this.startIx >= line.length() || this.startIx < 0)) {
 			return null;
 		}
-		if (this.endIx != null && (this.endIx < 1 || this.endIx > content.length())) {
+		if (this.endIx != null && (this.endIx < 1 || this.endIx > line.length())) {
 			return null;
 		}
 		if (this.startIx == null && this.endIx == null) {
 			return null;
 		}
 		if (this.startIx != null && this.endIx == null) {
-			return content.substring(this.startIx);
+			return line.substring(this.startIx);
 		} else if (this.startIx == null && this.endIx != null) {
-			return content.substring(0, this.startIx);
+			return line.substring(0, this.startIx);
 		} else {
-			return content.substring(this.startIx, this.endIx);
+			return line.substring(this.startIx, this.endIx);
 		}
     }
 
