@@ -297,7 +297,7 @@ $(function () {
 	                                    xOffset = 15;
 	                                    arrow = rightArrow;
 	                                }
-	                                ren.label(event.eventName, applicationStart + (event_ix * applicationOffset) + xOffset, 80 + (timeframe_ix * timeframeHeight))
+	                                var label = ren.label(event.eventName, applicationStart + (event_ix * applicationOffset) + xOffset, 80 + (timeframe_ix * timeframeHeight))
 	                                .attr({
                                         'stroke-width': 1,
                                         fill: event.color,
@@ -306,7 +306,13 @@ $(function () {
 	                                    zIndex: -1,
 	                                    title: tooltip,
 	                                    r: 2
-	                                }).add().shadow(true);                                
+	                                });
+	                                if (event.id == eventId) {
+	                                    label = label.css({
+	                                        fontWeight: 'bold'
+	                                    })
+		                            }
+	                                label.add().shadow(true);                                
 	                                                                
 	                                if(!$.isEmptyObject(arrow)) {   
 	                                    ren.path(arrow)

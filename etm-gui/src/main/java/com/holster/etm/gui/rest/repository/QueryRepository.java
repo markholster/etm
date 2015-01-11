@@ -185,6 +185,7 @@ public class QueryRepository {
 				if (overviewEvent != null) {
 					generator.writeStringField("application", overviewEvent.application);
 					generator.writeStringField("eventName", overviewEvent.name);
+					generator.writeStringField("id", overviewEvent.id.toString());
 					generator.writeStringField("endpoint", overviewEvent.endpoint);
 					generator.writeStringField("color", overviewEvent.color);
 					generator.writeNumberField("creationTime", overviewEvent.creationTime);
