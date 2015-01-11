@@ -7,10 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
 import com.datastax.driver.core.PreparedStatement;
@@ -26,6 +29,7 @@ import com.holster.etm.processor.parsers.ExpressionParser;
 import com.holster.etm.processor.parsers.FixedPositionExpressionParser;
 import com.holster.etm.processor.parsers.FixedValueExpressionParser;
 import com.holster.etm.processor.parsers.XPathExpressionParser;
+import com.holster.etm.processor.parsers.XsltExpressionParser;
 
 public class StatementExecutor {
 	
@@ -54,6 +58,7 @@ public class StatementExecutor {
 	private final PreparedStatement findEndpointConfigStatement;
 	
 	private final XPath xPath;
+	private final TransformerFactory transformerFactory;
 	
 	public StatementExecutor(final Session session, final String keySpace) {
 		this.session = session;
@@ -193,6 +198,7 @@ public class StatementExecutor {
 				+ "from " + keySpace + ".endpoint_config where endpoint = ?;");
 		XPathFactory xpf = new XPathFactoryImpl();
 		this.xPath = xpf.newXPath();
+		this.transformerFactory = new TransformerFactoryImpl();
 
 	}
 	
@@ -474,6 +480,22 @@ public class StatementExecutor {
 	}
 	
 	private ExpressionParser createExpressionParser(final String expression) {
+		if (expression.length() > 5) {
+			if (expression.charAt(0) == 'x' &&
+					expression.charAt(1) == 's' &&
+					expression.charAt(2) == 'l' &&
+					expression.charAt(3) == 't' &&
+					expression.charAt(4) == ':') {
+				try {
+	                return new XsltExpressionParser(this.transformerFactory, expression.substring(5));
+                } catch (TransformerConfigurationException e) {
+                	if (log.isErrorLevelEnabled()) {
+                		log.logErrorMessage("Could not create XsltExpressionParser. Using FixedValueExpressionParser instead.", e);
+                	}
+                	new FixedValueExpressionParser(null);
+                }				
+			}
+		}
 		if (expression.length() > 6) {
 			if (expression.charAt(0) == 'x' &&
 				expression.charAt(1) == 'p' &&

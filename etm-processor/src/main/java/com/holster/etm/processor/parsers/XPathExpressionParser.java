@@ -24,6 +24,7 @@ public class XPathExpressionParser implements ExpressionParser {
 	    try {
 	        return this.compiledExpression.evaluate(new InputSource(new StringReader(content)));
         } catch (XPathExpressionException e) {
+        	// TODO logging
 	        return null;
         }
     }
