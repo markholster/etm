@@ -67,6 +67,7 @@ public class StatementExecutor {
 				+ "application, "
 				+ "content, "
 				+ "correlationCreationTime, "
+				+ "correlationData, "
 				+ "correlationId, "
 				+ "correlationName, "
 				+ "creationTime, "
@@ -79,7 +80,7 @@ public class StatementExecutor {
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "type"
-				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation ("
 				+ "sourceId, "
 				+ "creationTime, "
@@ -90,11 +91,11 @@ public class StatementExecutor {
 				+ "name"
 				+ ") values (?,?,?,?,?,?,?);");
 		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data ("
-				+ "id, "
+				+ "name_timeunit, "
+				+ "timeunit, "
 				+ "name, "
 				+ "value, "
-				+ "transactionId, "
-				+ "transactionName"
+				+ "id"
 				+ ") values (?,?,?,?,?);");
 		this.insertCorrelationToParentStatement = session.prepare("update " + keySpace + ".telemetry_event set "
 				+ "correlations = correlations + ? "
@@ -208,6 +209,7 @@ public class StatementExecutor {
 				event.application, 
 				event.content,
 				event.correlationCreationTime,
+				event.correlationData,
 				event.correlationId,
 				event.correlationName,
 				event.creationTime, 
@@ -247,13 +249,13 @@ public class StatementExecutor {
 		}
 	}
 	
-	public void insertCorrelationData(final TelemetryEvent event, final String correlationDataName, final String correlationDataValue, final boolean async) {
+	public void insertCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertCorrelationDataStatement.bind(
-				event.id, 
+				key,
+				event.creationTime,
 				correlationDataName, 
-				correlationDataValue, 
-				event.transactionId, 
-				event.transactionName));
+				correlationDataValue,
+				event.id));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}

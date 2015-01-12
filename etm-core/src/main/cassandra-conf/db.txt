@@ -5,7 +5,8 @@ create table telemetry_event (
     id timeuuid primary key, 
     application text,
     content text,
-    correlationCreationTime timestamp, 
+    correlationCreationTime timestamp,
+    correlationData map<text, text>, 
     correlationId timeuuid,
     correlationName text,
     correlations list<timeuuid>,
@@ -70,12 +71,12 @@ create table sourceid_id_correlation (
 );
 
 create table correlation_data (
-    id timeuuid,
+    name_timeunit text,
+    timeunit timestamp,
     name text,
     value text,
-    transactionId timeuuid, 
-    transactionName text,
-    primary key (id, name, value)
+    id timeuuid, 
+    primary key (name_timeunit, timeunit, name, value, id)
 );
 
 create table endpoint_config (

@@ -34,7 +34,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
     public void persistTelemetryEvent(TelemetryEvent event) {
 		this.secondTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeSecondFactor));
 		this.hourTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeHourFactor));
-		// The following 2 suffixes are defining the diversity of the partion
+		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
 		final String timestampSuffix = "-" + this.format.format(event.creationTime);
@@ -47,7 +47,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (!event.correlationData.isEmpty()) {
-			event.correlationData.forEach((k,v) ->  this.statementExecutor.insertCorrelationData(event, k, v, true));
+			event.correlationData.forEach((k,v) ->  this.statementExecutor.insertCorrelationData(event, k + timestampSuffix, k, v, true));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
