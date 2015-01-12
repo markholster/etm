@@ -298,6 +298,12 @@ $(function () {
 	                                    arrow = rightArrow;
 	                                }
 	                                var label = ren.label(event.eventName, applicationStart + (event_ix * applicationOffset) + xOffset, 80 + (timeframe_ix * timeframeHeight))
+                                    .on('click', function () {
+                                        window.open('event.html?id=' + event.id + '&queryString=' + encodeURIComponent(getUrlParameter('queryString', '')) + '&start=' + encodeURIComponent(getUrlParameter('start', '')) + '&max=' + encodeURIComponent(getUrlParameter('max', '')), '_self');
+                                    })
+                                    .on('mouseover', function () {
+                                        label.css({ cursor: 'pointer'});
+                                    })
 	                                .attr({
                                         'stroke-width': 1,
                                         fill: event.color,
