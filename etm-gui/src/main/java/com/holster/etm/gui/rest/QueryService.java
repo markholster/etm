@@ -21,13 +21,20 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 
+import com.holster.etm.core.logging.LogFactory;
+import com.holster.etm.core.logging.LogWrapper;
 import com.holster.etm.gui.rest.repository.QueryRepository;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @Path("/query")
 public class QueryService {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(QueryService.class);
+
 	
 	@GuiConfiguration
 	@Inject
@@ -71,13 +78,15 @@ public class QueryService {
 	        generator.close();
 	        return writer.toString();
         } catch (SolrServerException e) {
-	        // TODO Error handling
-        	e.printStackTrace();
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Error executing query '" + queryString + "'.", e);
+        	}
         } catch (IOException e) {
-        	e.printStackTrace();
-        	// TODO Error handling
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Error executing query '" + queryString + "'.", e);
+        	}
         }
-		return "{}";
+		return null;
 	}
 	
 	@GET
@@ -96,10 +105,11 @@ public class QueryService {
 	        generator.close();
 	        return writer.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO error handling
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Error retrieving event data with id '" + id + "'.", e);
+        	}
 		}
-		return "{}";
+		return null;
 	}
 
 	
@@ -119,10 +129,11 @@ public class QueryService {
 	        generator.close();
 	        return writer.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO error handling
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Error retrieving event overview data for event with id '" + id + "'.", e);
+        	}
 		}
-		return "{}";
+		return null;
 
 	}
 

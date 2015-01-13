@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,15 +28,19 @@ public class QueryRepository {
 	private final Session session;
 	private final PreparedStatement findEventForSearchResultsStatement;
 	private final PreparedStatement findEventForDetailsStatement;
-	private final PreparedStatement findEventParentId;
-	private final PreparedStatement findOverviewEvent;
+	private final PreparedStatement findEventParentIdStatement;
+	private final PreparedStatement findOverviewEventStatement;
+	private final PreparedStatement findCorrelationDataStatement;
+	private final PreparedStatement findChildEventCreationTimeStatement;
 
 	public QueryRepository(Session session) {
 		this.session = session;
 		this.findEventForSearchResultsStatement = this.session.prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from " + this.keyspace + ".telemetry_event where id = ?");
 		this.findEventForDetailsStatement = this.session.prepare("select application, content, correlationId, correlations, creationTime, direction, endpoint, expiryTime, name, sourceCorrelationId, sourceId, transactionId, transactionName, type from " + this.keyspace + ".telemetry_event where id = ?");
-		this.findEventParentId = this.session.prepare("select correlationId from " + this.keyspace + ".telemetry_event where id = ?");
-		this.findOverviewEvent = this.session.prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findEventParentIdStatement = this.session.prepare("select correlationId from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findOverviewEventStatement = this.session.prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findCorrelationDataStatement = this.session.prepare("select correlationData, correlations, creationTime, type from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, parentId from " + this.keyspace + ".telemetry_event where id = ?");
     }
 
 	public void addEvents(SolrDocumentList results, JsonGenerator generator) throws JsonGenerationException, IOException {
@@ -244,12 +249,15 @@ public class QueryRepository {
     }
 
 	private UUID findRootEventId(UUID eventId, List<UUID> foundElements) {
-		ResultSet resultSet = this.session.execute(this.findEventParentId.bind(eventId));
+		ResultSet resultSet = this.session.execute(this.findEventParentIdStatement.bind(eventId));
 		Row row = resultSet.one();
 		if (row == null) {
 			return eventId;
 		}
 		UUID parentId = row.getUUID(0);
+		if (parentId == null) {
+			parentId = findParentIdByDataCorrelation(eventId);
+		}
 		if (parentId == null) {
 			return eventId;
 		}
@@ -261,8 +269,52 @@ public class QueryRepository {
 		return findRootEventId(parentId, foundElements);
     }
 	
+	private UUID findParentIdByDataCorrelation(UUID eventId) {
+		ResultSet resultSet = this.session.execute(this.findCorrelationDataStatement.bind(eventId));
+		Row row = resultSet.one();
+		if (row == null) {
+			return eventId;
+		}
+		Map<String, String> correlationData = row.getMap(0, String.class, String.class);
+		if (correlationData.size() == 0) {
+			return null;
+		}
+		List<UUID> childCorrelations =  row.getList(1, UUID.class);
+		Date creationTime = row.getDate(2);
+		Date finishTime = creationTime;
+		TelemetryEventType type = null;
+		try {
+			type = TelemetryEventType.valueOf(row.getString(3));
+		} catch (Exception e) {
+			// Without a type we cannot securely correlate by data.
+			return null;
+		}
+		if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
+			// A response should always be correlated by it's sourceCorrelationId, not by data.
+			return null;
+		} else if (TelemetryEventType.MESSAGE_REQUEST.equals(type)) {
+			for (UUID childId : childCorrelations) {
+				resultSet = this.session.execute(this.findChildEventCreationTimeStatement.bind(childId));
+				row = resultSet.one();
+				if (row == null) {
+					continue;
+				} else if (eventId.equals(row.getUUID(1))) {
+					// Save the creation time of the response 
+					finishTime = row.getDate(0);
+					break;
+				}
+				
+			}
+		} // else... it is a datagram message so creationTime and finishTime are the same.
+		
+		
+		//TODO creationTime and finishTime are known. Select corresponding correlation items around the given creationTie and finishTime.
+		return null;
+		
+    }
+
 	private void findChildren(UUID eventId, UUID parentEventId, List<OverviewEvent> overviewEvents) {
-	    ResultSet resultSet = this.session.execute(this.findOverviewEvent.bind(eventId));
+	    ResultSet resultSet = this.session.execute(this.findOverviewEventStatement.bind(eventId));
 		Row row = resultSet.one();
 		if (row == null) {
 			return;
