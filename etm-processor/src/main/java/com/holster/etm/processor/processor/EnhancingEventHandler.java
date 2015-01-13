@@ -61,7 +61,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			}
 		}
 		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
-		if (event.endpoint != null && (event.application == null || event.name == null || event.direction == null || event.transactionName == null)) {
+		if (event.application == null || event.name == null || event.direction == null || event.transactionName == null) {
 			if (event.application == null) {
 				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
 			}
