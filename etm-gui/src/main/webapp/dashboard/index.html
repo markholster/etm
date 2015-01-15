@@ -116,6 +116,9 @@ $(function () {
                             var updateTime = new Date().getTime();
                             updateTime = Math.floor(updateTime/1000)*1000;
                             $.getJSON('../rest/statistics/transactions/performance/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + transactionPerformanceMaxResults, function (data) {
+                                if (!data) {
+                                    return;
+                                }
                                 $.each( data, function(index, serieData) {
                                     var serie = chart.get(serieData.id);
                                     if ($.isEmptyObject(serie)) {
@@ -187,6 +190,9 @@ $(function () {
                             var updateTime = new Date().getTime();
                             updateTime = Math.floor(updateTime/1000)*1000;
                             $.getJSON('../rest/statistics/messages/performance/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + messagePerformanceMaxResults, function (data) {
+                                if (!data) {
+                                    return;
+                                }
                                 $.each( data, function(index, serieData) {
                                     var serie = chart.get(serieData.id);
                                     if ($.isEmptyObject(serie)) {
@@ -246,7 +252,6 @@ $(function () {
 
 
     $.ajax('../rest/statistics/applications/count/' + (startTime - timeRange) + '/' + startTime + '?max=' + applicationCountMaxResults, { dataType: "json", success: function (data) {
-        
         $('#applicationscount').highcharts({
             chart: {
                 type: 'bar',
@@ -259,6 +264,9 @@ $(function () {
                             var updateTime = new Date().getTime();
                             updateTime = Math.floor(updateTime/1000)*1000;
                             $.getJSON('../rest/statistics/applications/count/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + applicationCountMaxResults, function (data) {
+                                if (!data) {
+                                    return;
+                                }
                                 chart.xAxis[0].setCategories(data.categories);
                                 chart.yAxis[0].setTitle({text: 'Message count since ' + Highcharts.dateFormat('%Y-%m-%d %H:%M', (updateTime - timeRange))});
                                 $.each( data.series, function(index, serieData) {
@@ -321,10 +329,10 @@ $(function () {
 
 
     $.ajax('../rest/statistics/messages/epxiration/' + (startTime - timeRange) + '/' + startTime + '?max=' + expirationCountMaxResults, { dataType: "json", success: function (data) {
-    	if (!$.isEmptyObject(data)) {
+    	if (data) {
             $.each(data, function(index, expiration) {
                 var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
-                var rowContent = '<tr><td><div style="display: none;">' + expiration.name + '</div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
+                var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + expiration.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
                 $(rowContent).prependTo($('#expiry_table > tbody'));
                 $("#expiry_table > tbody > :first-child > td > div").slideDown(500);                
             });
@@ -334,9 +342,12 @@ $(function () {
             var updateTime = new Date().getTime();
             updateTime = Math.floor(updateTime/1000)*1000;
             $.getJSON('../rest/statistics/messages/epxiration/' + lastTime + '/' + updateTime + '?max=' + expirationCountMaxResults, function (data) {
+                if (!data) {
+                    return;
+                }
                 $.each(data, function(index, expiration) {
                 	var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
-                    var rowContent = '<tr><td><div style="display: none;">' + expiration.name + '</div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
+                    var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + expiration.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
                     $(rowContent).prependTo($('#expiry_table > tbody'));
                     $('#expiry_table > tbody > :first-child > td > div').slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
                     $('#expiry_table > tbody > :nth-child(5)').nextAll().hide('slow', function(){ $(this).remove(); });                

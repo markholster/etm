@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -164,7 +165,7 @@ public class StatisticsRepository {
 		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
 		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		for (String messageName : messageNames) {
-			BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime", "application")
+			BuiltStatement builtStatement = QueryBuilder.select("id", "name", "startTime", "finishTime", "expiryTime", "application")
 					.from(this.keyspace, "message_expiration")
 					.where(QueryBuilder.eq("name_timeunit", messageName))
 					.and(QueryBuilder.gte("expiryTime", new Date(startTime))).and(QueryBuilder.lte("expiryTime", new Date(endTime)));
@@ -175,22 +176,26 @@ public class StatisticsRepository {
 			Iterator<Row> iterator = resultSet.iterator();
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
-				String messageName = row.getString(0);
-				if (messageName == null) {
+				UUID id = row.getUUID(0);
+				if (id == null) {
 					continue;
 				}
-				Date messageStartTime = row.getDate(1);
-				Date messageFinishTime = row.getDate(2);
-				Date messageExpiryTime = row.getDate(3);
-				String application = row.getString(4);
+				String messageName = row.getString(1);
+				if (messageName == null) {
+					messageName = "undefined";
+				}
+				Date messageStartTime = row.getDate(2);
+				Date messageFinishTime = row.getDate(3);
+				Date messageExpiryTime = row.getDate(4);
+				String application = row.getString(5);
 				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
 					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
 						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(messageName, messageStartTime, messageExpiryTime, application));
+							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
                         }
 					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
 						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(messageName, messageStartTime, messageExpiryTime, application));
+							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
                         }
 					}
 				}

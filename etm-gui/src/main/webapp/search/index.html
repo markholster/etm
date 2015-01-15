@@ -147,7 +147,7 @@ $(function () {
 
 	var executeQuery = function(start, max, animate) {
 		$("#ajax_loader").show();
-        $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + start + '&rows=' + max, { dataType: "json", success: function (data) {
+        $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max), { dataType: "json", success: function (data) {
         	$("#ajax_loader").hide();
             if (!data) {
                 return false;

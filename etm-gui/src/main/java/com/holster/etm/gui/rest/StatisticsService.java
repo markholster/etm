@@ -52,7 +52,7 @@ public class StatisticsService {
 			max = 5;
 		}
 		if (startTime > endTime) {
-			return "[]";
+			return null;
 		}
 		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getTransactionPerformanceStatistics(startTime, endTime, max, determineTimeUnit(startTime, endTime));
 		StringWriter writer = new StringWriter();
@@ -69,7 +69,7 @@ public class StatisticsService {
 			max = 5;
 		}
 		if (startTime > endTime) {
-			return "[]";
+			return null;
 		}
 		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getMessagesPerformanceStatistics(startTime, endTime, max, determineTimeUnit(startTime, endTime));
 		StringWriter writer = new StringWriter();
@@ -86,7 +86,7 @@ public class StatisticsService {
 			max = 5;
 		}
 		if (startTime > endTime) {
-			return "[]";
+			return null;
 		}
 		List<ExpiredMessage> statistics = this.statisticsRepository.getMessagesExpirationStatistics(startTime, endTime, max);
 		StringWriter writer = new StringWriter();
@@ -199,6 +199,7 @@ public class StatisticsService {
 	        generator.writeStartArray();
 	        for (ExpiredMessage expiredMessage: statistics) {
 	        	generator.writeStartObject();
+	        	generator.writeStringField("id", expiredMessage.getId().toString());
 	        	generator.writeStringField("name", expiredMessage.getName());
 	        	generator.writeStringField("application", expiredMessage.getApplication());
 	        	generator.writeNumberField("startTime", expiredMessage.getStartTime().getTime());
