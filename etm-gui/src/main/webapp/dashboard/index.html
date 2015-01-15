@@ -330,7 +330,7 @@ $(function () {
 
     $.ajax('../rest/statistics/messages/epxiration/' + (startTime - timeRange) + '/' + startTime + '?max=' + expirationCountMaxResults, { dataType: "json", success: function (data) {
     	if (data) {
-            $.each(data, function(index, expiration) {
+            $.each(data.reverse(), function(index, expiration) {
                 var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
                 var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + expiration.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
                 $(rowContent).prependTo($('#expiry_table > tbody'));
@@ -345,7 +345,7 @@ $(function () {
                 if (!data) {
                     return;
                 }
-                $.each(data, function(index, expiration) {
+                $.each(data.reverse(), function(index, expiration) {
                 	var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
                     var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + expiration.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
                     $(rowContent).prependTo($('#expiry_table > tbody'));
