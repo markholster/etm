@@ -83,7 +83,19 @@ $(function () {
             useUTC: false
         }
     });
-    var timeRange = 1000 * 60 * 60;
+    
+    var getUrlParameter = function(paramName, defaultValue) {
+        var pageURL = window.location.search.substring(1);
+        var urlVariables = pageURL.split('&');
+        for (var i = 0; i < urlVariables.length; i++) {
+            var parameterName = urlVariables[i].split('=');
+            if (parameterName[0] == paramName) {
+                return decodeURIComponent(parameterName[1]);
+            }
+        }
+        return defaultValue;
+    };
+    var timeRange = 1000 * parseInt(getUrlParameter('minutes', 3600));
     var startTime = new Date().getTime();
     startTime = Math.floor(startTime/1000)*1000;
     var transactionPerformanceMaxResults = 5;
