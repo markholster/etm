@@ -72,11 +72,11 @@ create table sourceid_id_correlation (
 
 create table correlation_data (
     name_timeunit text,
-    timeunit timestamp,
     name text,
     value text,
+    timeunit timestamp,
     id timeuuid, 
-    primary key (name_timeunit, timeunit, name, value, id)
+    primary key (name_timeunit, name, value, timeunit, id)
 );
 
 create table endpoint_config (

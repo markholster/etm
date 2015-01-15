@@ -1,7 +1,6 @@
 package com.holster.etm.processor.repository;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +8,7 @@ import java.util.TimeZone;
 
 import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.core.TelemetryEventType;
+import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.holster.etm.processor.TelemetryEvent;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
@@ -17,10 +17,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
 	
 	private final Date secondTimestamp = new Date();
-	private final Date hourTimestamp = new Date();
-	private final DateFormat format = new SimpleDateFormat("yyyyMMddHH");
-	private final long normalizeSecondFactor = 1000;
-	private final long normalizeHourFactor = 1000 * 60 * 60;
+	private final Date timestampForSuffix = new Date();
+	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
 	
 	
@@ -32,13 +30,12 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	
 	@Override
     public void persistTelemetryEvent(TelemetryEvent event) {
-		this.secondTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeSecondFactor));
-		this.hourTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.normalizeHourFactor));
+		this.timestampForSuffix.setTime(normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
-		final String timestampSuffix = "-" + this.format.format(event.creationTime);
-		final String correlationTimeStampSuffix = "-" + this.format.format(event.correlationCreationTime);
+		final String timestampSuffix = this.format.format(event.creationTime);
+		final String correlationTimeStampSuffix = this.format.format(event.correlationCreationTime);
 		
 		this.statementExecutor.insertTelemetryEvent(event, true);
 		if (event.sourceId != null) {
@@ -86,7 +83,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        this.secondTimestamp,
 			        event.application + timestampSuffix,
 			        true);
-			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "Application", event.application + timestampSuffix, true);
+			this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "Application", event.application + timestampSuffix, true);
 		}
 		if (event.name != null) {
 			this.statementExecutor.updateEventNameCounter(
@@ -100,7 +97,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					true);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
 			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
-				this.statementExecutor.insertEventOccurence(this.hourTimestamp, "MessageName", event.name  + timestampSuffix, true);
+				this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "MessageName", event.name  + timestampSuffix, true);
 			}
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 				this.statementExecutor.insertMessageEventStart(event, event.name + timestampSuffix, true);
@@ -128,7 +125,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					this.secondTimestamp,
 					event.application + timestampSuffix, 
 					true);
-			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "Application", event.application + timestampSuffix, true);
+			this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "Application", event.application + timestampSuffix, true);
 		}
 		if (event.transactionName != null) {
 			this.statementExecutor.updateTransactionNameCounter(
@@ -138,7 +135,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.transactionName, 
 					this.secondTimestamp,
 					event.transactionName + timestampSuffix, true);
-			this.statementExecutor.insertEventOccurence(this.hourTimestamp, "TransactionName", event.transactionName + timestampSuffix, true);
+			this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "TransactionName", event.transactionName + timestampSuffix, true);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 				this.statementExecutor.insertTransactionEventStart(event, event.transactionName + timestampSuffix,  true);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {

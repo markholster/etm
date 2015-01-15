@@ -17,6 +17,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 
 public class StatisticsRepository {
 
@@ -361,9 +362,9 @@ public class StatisticsRepository {
 	    // For unknown reasons cassandra gives an error when the arraylist is created with the Date generic type.
 	    List<Object> result = new ArrayList<Object>();
 	    do {
-	    	result.add(new Date(normalizeTime(startCalendar.getTime().getTime(), TimeUnit.HOURS.toMillis(1))));
-	    	startCalendar.add(Calendar.HOUR, 1);
-	    } while (startCalendar.before(endCalendar) || (!startCalendar.before(endCalendar) && startCalendar.get(Calendar.HOUR_OF_DAY) == endCalendar.get(Calendar.HOUR_OF_DAY)));
+	    	result.add(new Date(normalizeTime(startCalendar.getTime().getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1))));
+	    	startCalendar.add(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT, 1);
+	    } while (startCalendar.before(endCalendar) || (!startCalendar.before(endCalendar) && startCalendar.get(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT) == endCalendar.get(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT)));
 	    return result;
     }
 
