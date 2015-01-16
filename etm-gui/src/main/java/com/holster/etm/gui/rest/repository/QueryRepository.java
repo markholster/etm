@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -54,7 +54,7 @@ public class QueryRepository {
 		this.findCorrelationDataStatement = this.session.prepare("select correlationData, correlations, creationTime, expiryTime, type from " + this.keyspace + ".telemetry_event where id = ?");
 		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from " + this.keyspace + ".telemetry_event where id = ?");
 		this.findCorrelationsByDataStatement = this.session.prepare("select id, timeunit from " + this.keyspace + ".correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit >= ? and timeunit <= ?");
-		this.findPotentialCorrelatingEventDataStatement = this.session.prepare("select creationTime, correlations, type from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findPotentialCorrelatingEventDataStatement = this.session.prepare("select creationTime, correlations, expiryTime, type from " + this.keyspace + ".telemetry_event where id = ?");
     }
 
 	public void addEvents(SolrDocumentList results, JsonGenerator generator) throws JsonGenerationException, IOException {
@@ -105,90 +105,27 @@ public class QueryRepository {
 	
 	public void addEventOverview(UUID eventId, JsonGenerator generator) throws JsonGenerationException, IOException {
 		UUID rootEventId = findRootEventId(eventId, new ArrayList<UUID>());
-		List<OverviewEvent> overviewEvents = new ArrayList<OverviewEvent>();
-		findChildren(rootEventId, null, overviewEvents);
-		overviewEvents = sortEventsByHierarchy(overviewEvents, rootEventId);
+		OverviewEvent tree = new OverviewEvent();
+		findChildren(rootEventId, tree, new ArrayList<OverviewEvent>());
+		OverviewEvent root = tree.children.get(0);
+		sortTelemetryEventTree(root);
+		calculateResponseTimes(root);
 		
-		// Calculate response times
-		long totalOverviewTime = -1;
-		for (OverviewEvent overviewEvent : overviewEvents) {
-			if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
-				Optional<OverviewEvent> optionalResponse = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_RESPONSE.equals(c.type)).findFirst();
-				if (optionalResponse.isPresent()) {
-					OverviewEvent response = optionalResponse.get();
-					long responseTime = response.creationTime - overviewEvent.creationTime;
-					if (totalOverviewTime == -1) {
-						// First request in the overview contains the total transaction time. Maybe it's best to calculate the difference between the first and last overviewEvent..
-						totalOverviewTime = responseTime;
-					}
-					overviewEvent.responseTime = responseTime;
-					response.responseTime = responseTime;
-				} else if (overviewEvent.expirationTime > -1) {
-					overviewEvent.responseTime = overviewEvent.expirationTime - overviewEvent.creationTime;
-				}
-			}
-		}
+		long totalOverviewTime = getTotalOverviewTime(root);
+		calculateFillColors(root, totalOverviewTime);
 		
-		// Calculate fill colors
-		for (OverviewEvent overviewEvent : overviewEvents) {
-			if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
-				Optional<OverviewEvent> optionalResponse = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_RESPONSE.equals(c.type)).findFirst();
-				if (optionalResponse.isPresent()) {
-					OverviewEvent response = optionalResponse.get();
-					long childResponseTimes = overviewEvents.stream().filter(c -> overviewEvent.id.equals(c.parentId) && TelemetryEventType.MESSAGE_REQUEST.equals(c.type)).mapToLong(c -> c.responseTime).sum();
-					overviewEvent.absoluteResponseTime = overviewEvent.responseTime - childResponseTimes;
-					response.absoluteResponseTime = overviewEvent.absoluteResponseTime;
-					float redFactor = ((float)overviewEvent.absoluteResponseTime / (float)totalOverviewTime);
-					if (redFactor > 1) {
-						redFactor = 1;
-					}
-					String red = Integer.toHexString((int) (255 * redFactor));
-					String green = Integer.toHexString((int) (255 * (1 - redFactor)));
-					if (red.length() < 2) {
-						red = "0" + red;
-					}
-					if (green.length() < 2) {
-						green = "0" + green;
-					}
-					overviewEvent.color = "#" + red + green + "00";
-					response.color = overviewEvent.color;
-				} else if (overviewEvent.expirationTime > -1) {
-					overviewEvent.color = "#ff0000";
-				}
-			} else if (TelemetryEventType.MESSAGE_DATAGRAM.equals(overviewEvent.type)) {
-				overviewEvent.color = "#eeeeee";
-			}
-		}
+		AtomicInteger applicationCount = new AtomicInteger(1);
+		AtomicInteger eventCount = new AtomicInteger(0);
+		calculateCounters(root, applicationCount, eventCount);
 		
-		long applicationCount = overviewEvents.stream().map(e -> e.application == null ? "?" : e.application).distinct().count();
-		List<String> applications = new ArrayList<String>();
-		String lastApplication = null;
 		List<TimeFrame> timeFrames = new ArrayList<TimeFrame>();
-		for (int i=0; i < overviewEvents.size(); i++) {
-			OverviewEvent overviewEvent = overviewEvents.get(i);
-			String currentApplication = overviewEvent.application;
-			if (currentApplication == null) {
-				currentApplication  = "?";
-			}
-			if (currentApplication.equals(lastApplication)) {
-				timeFrames.add(new TimeFrame(applicationCount));
-			} else if (i == 0) {
-				timeFrames.add(new TimeFrame(applicationCount));
-			} else if (applications.contains(currentApplication) && timeFrames.get(timeFrames.size() -1).overviewEvents[applications.indexOf(currentApplication)] != null) {
-				timeFrames.add(new TimeFrame(applicationCount));
-			}
-			if (!applications.contains(currentApplication)) {
-				applications.add(currentApplication);
-			}
-			int applicationIx = applications.indexOf(currentApplication);
-			TimeFrame timeFrame = timeFrames.get(timeFrames.size() -1);
-			timeFrame.overviewEvents[applicationIx] = overviewEvent;
-			lastApplication = currentApplication;
-		}		
+		String[] applications = new String[applicationCount.intValue()];
+		AtomicInteger eventDepth = new AtomicInteger(0);
+		calculateTimeFrames(root, timeFrames, applicationCount.get(), eventDepth, applications);
 		
 		// Create the json
-		generator.writeNumberField("eventCount", overviewEvents.size());
-		generator.writeNumberField("applicationCount", applicationCount);
+		generator.writeNumberField("eventCount", eventCount.intValue());
+		generator.writeNumberField("applicationCount", applicationCount.intValue());
 		generator.writeNumberField("timeframeCount", timeFrames.size());
 		generator.writeArrayFieldStart("applications");
 		for (String application : applications) {
@@ -198,7 +135,7 @@ public class QueryRepository {
 		generator.writeArrayFieldStart("timeframes");
 		for (TimeFrame timeFrame : timeFrames) {
 			generator.writeStartArray();
-			for (int i=0; i < applicationCount; i++) {
+			for (int i=0; i < applicationCount.intValue(); i++) {
 				generator.writeStartObject();
 				OverviewEvent overviewEvent = timeFrame.overviewEvents[i];
 				if (overviewEvent != null) {
@@ -229,37 +166,156 @@ public class QueryRepository {
 		generator.writeEndArray();
     }
 
-	private List<OverviewEvent> sortEventsByHierarchy(List<OverviewEvent> overviewEvents, UUID eventId) {
-		List<OverviewEvent> result = new ArrayList<OverviewEvent>(overviewEvents.size());
-		OverviewEvent root = overviewEvents.stream().filter(p -> p.id.equals(eventId)).findFirst().get();
-		result.add(root);
-		List<OverviewEvent> children = overviewEvents.stream().filter(c -> root.id.equals(c.parentId)).collect(Collectors.toList());
-		children.sort(new Comparator<OverviewEvent>() {
-			@Override
-            public int compare(OverviewEvent o1, OverviewEvent o2) {
-				// First check by time.
-				if (o1.creationTime < o2.creationTime) {
-					return -1;
-				} else if (o1.creationTime == o2.creationTime) {
-					return 1;
-				}
-				// if time is the same, and type is the same we stop comparing.
-				if (o1.type == null ^ o2.type == null || o1.type.equals(o2.type)) {
+	private void sortTelemetryEventTree(OverviewEvent overviewEvent) {
+		if (overviewEvent.children.size() > 0) {
+			overviewEvent.children.sort(new Comparator<OverviewEvent>() {
+				@Override
+	            public int compare(OverviewEvent o1, OverviewEvent o2) {
+					// First check by time.
+					if (o1.creationTime < o2.creationTime) {
+						return -1;
+					} else if (o1.creationTime == o2.creationTime) {
+						return 1;
+					}
+					// if time is the same, and type is the same we stop comparing.
+					if (o1.type == null ^ o2.type == null || o1.type.equals(o2.type)) {
+						return 0;
+					}
+					if (TelemetryEventType.MESSAGE_RESPONSE.equals(o1.type)) {
+						// Response messages last.
+						return 1;
+					} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(o2.type)) {
+						// Response messages last
+						return -1;
+					}
 					return 0;
-				}
-				if (TelemetryEventType.MESSAGE_RESPONSE.equals(o1.type)) {
-					// Response messages last.
-					return 1;
-				} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(o2.type)) {
-					// Response messages last
-					return -1;
-				}
-				return 0;
-            }});
-		for (OverviewEvent overviewEvent : children) {
-			result.addAll(sortEventsByHierarchy(overviewEvents, overviewEvent.id));
+	            }});
+			for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+				sortTelemetryEventTree(childOverviewEvent);
+			}
 		}
-	    return result;
+    }
+	
+	private void calculateResponseTimes(OverviewEvent overviewEvent) {
+		if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+			OverviewEvent response = overviewEvent.getMessageResponseOverviewEvent();
+			if (response != null) {
+				long responseTime = response.creationTime - overviewEvent.creationTime;
+				overviewEvent.responseTime = responseTime;
+				response.responseTime = responseTime;
+			} else if (overviewEvent.expirationTime > -1) {
+				overviewEvent.responseTime = overviewEvent.expirationTime - overviewEvent.creationTime;
+			}
+		}
+		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+			calculateResponseTimes(childOverviewEvent);
+		}
+	}
+	
+	private long getTotalOverviewTime(OverviewEvent overviewEvent) {
+		if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+			return overviewEvent.responseTime;
+		}
+		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+			if (TelemetryEventType.MESSAGE_REQUEST.equals(childOverviewEvent.type)) {
+				return childOverviewEvent.responseTime;
+			}
+		}
+		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+			return getTotalOverviewTime(childOverviewEvent);
+		}
+		return -1;
+		
+	}
+	
+	private void calculateFillColors(OverviewEvent overviewEvent, long totalOverviewTime) {
+		if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+			OverviewEvent response = overviewEvent.getMessageResponseOverviewEvent();
+			if (response != null) {
+				long childResponseTimes = overviewEvent.children.stream()
+				        .filter(c -> TelemetryEventType.MESSAGE_REQUEST.equals(c.type))
+				        .mapToLong(c -> c.responseTime).sum();
+				overviewEvent.absoluteResponseTime = overviewEvent.responseTime - childResponseTimes;
+				response.absoluteResponseTime = overviewEvent.absoluteResponseTime;
+				float redFactor = ((float) overviewEvent.absoluteResponseTime / (float) totalOverviewTime);
+				if (redFactor > 1) {
+					redFactor = 1;
+				}
+				String red = Integer.toHexString((int) (255 * redFactor));
+				String green = Integer.toHexString((int) (255 * (1 - redFactor)));
+				if (red.length() < 2) {
+					red = "0" + red;
+				}
+				if (green.length() < 2) {
+					green = "0" + green;
+				}
+				overviewEvent.color = "#" + red + green + "00";
+				response.color = overviewEvent.color;
+			} else if (overviewEvent.expirationTime > -1) {
+				overviewEvent.color = "#ff0000";
+			}
+		} else if (TelemetryEventType.MESSAGE_DATAGRAM.equals(overviewEvent.type)) {
+			overviewEvent.color = "#eeeeee";
+		}
+		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+			calculateFillColors(childOverviewEvent, totalOverviewTime);
+		}
+	}
+	
+	private void calculateCounters(OverviewEvent overviewEvent, AtomicInteger applicationCount, AtomicInteger eventCount) {
+		eventCount.incrementAndGet();
+		List<String> appNames = new ArrayList<String>();
+		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+			if (TelemetryEventType.MESSAGE_RESPONSE.equals(childOverviewEvent.type)) {
+				continue;
+			}
+			if (childOverviewEvent.application != null) {
+				if (!appNames.contains(childOverviewEvent.application) && !childOverviewEvent.application.equals(overviewEvent.application)) {
+					appNames.add(childOverviewEvent.application);
+				}
+			}
+		}
+		applicationCount.addAndGet(appNames.size());
+		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+			calculateCounters(childOverviewEvent, applicationCount, eventCount);
+		}
+    }
+	
+	private void calculateTimeFrames(OverviewEvent overviewEvent, List<TimeFrame> timeFrames, long applicationCount, AtomicInteger eventDepth, String[] applications) {
+		if (timeFrames.size() == 0) {
+			timeFrames.add(new TimeFrame(applicationCount));
+		}
+		TimeFrame currentTimeFrame = timeFrames.get(timeFrames.size() - 1);
+		if (currentTimeFrame.overviewEvents[eventDepth.get()] != null) {
+			currentTimeFrame = new TimeFrame(applicationCount);
+			timeFrames.add(currentTimeFrame);
+		}
+		currentTimeFrame.overviewEvents[eventDepth.get()] = overviewEvent;
+		if (applications[eventDepth.get()] == null && overviewEvent.application != null) {
+			applications[eventDepth.get()] = overviewEvent.application;
+		}
+		
+		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
+			if (childOverviewEvent.application != null && overviewEvent.application != null && !overviewEvent.application.equals(childOverviewEvent.application)) {
+				int addition = 0;
+				for (int i = eventDepth.get() + 1; i < applications.length; i++) {
+					if (applications[i] != null) {
+						if (applications[i].equals(childOverviewEvent.application)) {
+							addition = i - eventDepth.get();
+							break;
+						}
+					} else {
+						addition = i - eventDepth.get();
+						break;
+					}
+				}
+				eventDepth.addAndGet(addition);
+				calculateTimeFrames(childOverviewEvent, timeFrames, applicationCount, eventDepth, applications);
+				eventDepth.addAndGet(-addition);
+			} else {
+				calculateTimeFrames(childOverviewEvent, timeFrames, applicationCount, eventDepth, applications);
+			}
+		}
     }
 
 	private UUID findRootEventId(UUID eventId, List<UUID> foundElements) {
@@ -284,19 +340,16 @@ public class QueryRepository {
     }
 	
 	private UUID findParentIdByDataCorrelation(UUID eventId, Date considerdataFrom) {
-		Map<String, String> correlationData = new HashMap<String, String>();
-		Date creationTime = new Date();
-		Date finishTime = new Date();
-		getCorrelationData(eventId, correlationData, creationTime, finishTime);
-		if (correlationData.size() == 0) {
+		CorrelationDataResult correlationDataResult = getCorrelationData(eventId);
+		if (correlationDataResult == null || correlationDataResult.correlationData.size() == 0) {
 			return null;
 		}
-		Date startQueryDate = new Date(creationTime.getTime() - CORRELATION_SELECTION_OFFSET);
+		Date startQueryDate = new Date(correlationDataResult.creationTime.getTime() - CORRELATION_SELECTION_OFFSET);
 		if (considerdataFrom != null) {
 			startQueryDate.setTime(considerdataFrom.getTime());
 		}
 		
-		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationData, startQueryDate, creationTime);
+		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationDataResult.correlationData, startQueryDate, correlationDataResult.creationTime);
 		if (correlatingResults.size() == 0) {
 			return null;
 		}
@@ -307,14 +360,13 @@ public class QueryRepository {
 	            return o2.timestamp.compareTo(o1.timestamp);
             }});
 		for (CorrelationResult correlationResult : correlatingResults) {
-			ResultSet resultSet = this.session.execute(this.findPotentialCorrelatingEventDataStatement.bind(correlationResult.id));
-			Row row = resultSet.one();
+			Row row = this.session.execute(this.findPotentialCorrelatingEventDataStatement.bind(correlationResult.id)).one();
 			if (row == null) {
 				continue;
 			}
 			TelemetryEventType type = null;
 			try {
-				type = TelemetryEventType.valueOf(row.getString(2));
+				type = TelemetryEventType.valueOf(row.getString(3));
 			} catch (Exception e) {
 				// Without a type we cannot securely correlate by data.
 				continue;
@@ -323,8 +375,18 @@ public class QueryRepository {
 				// Closest correlated event is a datagram message. It's still a guess if this event is the parent event, but it's a pretty good guess after all.
 				return correlationResult.id;
 			} else if (TelemetryEventType.MESSAGE_REQUEST.equals(type)) {
-				// Check if the response of the found event is created after the finishtime of this event. If so, we've got a winner.
+				// Check if the response of the found event is created after the finish time of this event. If so, we've got a winner.
 				List<UUID> childIds = row.getList(1, UUID.class);
+				if (childIds.size() == 0) {
+					// A request without a response, hence the request had a timeout
+					Date expiryDate = row.getDate(2);
+					if (expiryDate != null && !expiryDate.before(correlationDataResult.finishTime)) {
+						return correlationResult.id;
+ 					} else if (expiryDate != null && correlationDataResult.expired) {
+ 						// The parent request expired, and this request expired. It's a guess, but these requests probably have a parent-child relationship. 
+ 						return correlationResult.id;
+ 					}
+				}
 				for (UUID childId : childIds) {
 					ResultSet childResultSet = this.session.execute(this.findChildEventCreationTimeStatement.bind(childId));
 					row = childResultSet.one();
@@ -332,8 +394,11 @@ public class QueryRepository {
 						continue;
 					} else if (correlationResult.id.equals(row.getUUID(1)) && TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
 						Date responseDate = row.getDate(0);
-						if (!responseDate.before(finishTime)) {
-							// The response creation time if not before this events finishtime -> It's a parent!
+						if (!responseDate.before(correlationDataResult.finishTime)) {
+							// The response creation time if not before this events finish time -> It's a parent!
+							return correlationResult.id;
+						} else if (correlationDataResult.expired) {
+							// The parent expired, and this request is finished after the parent expiry time. Sounds logical we've found the parent.
 							return correlationResult.id;
 						}
 					}
@@ -359,15 +424,28 @@ public class QueryRepository {
 	    return result;
     }
 
-	private void findChildren(UUID eventId, UUID parentEventId, List<OverviewEvent> overviewEvents) {
-	    ResultSet resultSet = this.session.execute(this.findOverviewEventStatement.bind(eventId));
-		Row row = resultSet.one();
+	private void findChildren(UUID eventId, OverviewEvent parent, List<OverviewEvent> overviewEvents) {
+		Row row = this.session.execute(this.findOverviewEventStatement.bind(eventId)).one();
 		if (row == null) {
 			return;
 		}
 		OverviewEvent overviewEvent = createOverviewEvent(row);
-		overviewEvent.parentId = parentEventId;
 		if (!overviewEvents.contains(overviewEvent)) {
+			if (parent != null) {
+				if (parent.direction != null && overviewEvent.direction != null) {
+					if (parent.direction.equals(overviewEvent.direction)) {
+						return;
+					}
+					if (parent.application != null && overviewEvent.application != null) {
+						if (TelemetryEventDirection.INCOMING.equals(parent.direction)  && !parent.application.equals(overviewEvent.application)) {
+							return;
+//						} else if (TelemetryEventDirection.OUTGOING.equals(parent.direction) && parent.application.equals(overviewEvent.application)) {
+//							return;
+						}
+					}
+				}
+				parent.children.add(overviewEvent);
+			}
 			overviewEvents.add(overviewEvent);
 			List<UUID> children = new ArrayList<UUID>();
 			children.addAll(row.getList(8, UUID.class));
@@ -378,7 +456,7 @@ public class QueryRepository {
 				}
 			}
  			for (UUID child : children) {
-				findChildren(child, eventId, overviewEvents);
+				findChildren(child, overviewEvent, overviewEvents);
 			}
 		}
     }
@@ -406,17 +484,14 @@ public class QueryRepository {
 
 	private Collection<UUID> findChildIdsByDataCorrelation(UUID eventId) {
 		List<UUID> result = new ArrayList<UUID>();
-		Map<String, String> correlationData = new HashMap<String, String>();
-		Date creationTime = new Date();
-		Date finishTime = new Date();
-		TelemetryEventType type = getCorrelationData(eventId, correlationData, creationTime, finishTime);
-		if (correlationData.size() == 0) {
+		CorrelationDataResult correlationDataResult = getCorrelationData(eventId);
+		if (correlationDataResult == null || correlationDataResult.correlationData.size() == 0) {
 			return result;
 		}
-		if (TelemetryEventType.MESSAGE_DATAGRAM.equals(type)) {
-			finishTime.setTime(finishTime.getTime() + CORRELATION_SELECTION_OFFSET);
+		if (TelemetryEventType.MESSAGE_DATAGRAM.equals(correlationDataResult.type)) {
+			correlationDataResult.finishTime.setTime(correlationDataResult.finishTime.getTime() + CORRELATION_SELECTION_OFFSET);
 		}
-		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationData, creationTime, finishTime);
+		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationDataResult.correlationData, correlationDataResult.creationTime, correlationDataResult.finishTime);
 		if (correlatingResults.size() == 0) {
 			return result;
 		}
@@ -428,8 +503,8 @@ public class QueryRepository {
             }});
 		for (CorrelationResult correlationResult : correlatingResults) {
 			// Make sure we return only direct children.
-			if (eventId.equals(findParentIdByDataCorrelation(correlationResult.id, creationTime))) {
-				result.add(correlationResult.id);
+			if (eventId.equals(findParentIdByDataCorrelation(correlationResult.id, correlationDataResult.creationTime))) {
+					result.add(correlationResult.id);
 			}
 		}
 	    return result;
@@ -459,47 +534,48 @@ public class QueryRepository {
 	    return correlatingResults;
     }
 
-	private TelemetryEventType getCorrelationData(UUID eventId, Map<String, String> correlationData, Date creationTime, Date finishTime) {
+	private CorrelationDataResult getCorrelationData(UUID eventId) {
+		CorrelationDataResult result = new CorrelationDataResult();
 		ResultSet resultSet = this.session.execute(this.findCorrelationDataStatement.bind(eventId));
 		Row row = resultSet.one();
 		if (row == null) {
 			return null;
 		}
-		correlationData.putAll(row.getMap(0, String.class, String.class));
-		if (correlationData.size() == 0) {
+		result.correlationData.putAll(row.getMap(0, String.class, String.class));
+		if (result.correlationData.size() == 0) {
 			return null;
 		}
 		List<UUID> childCorrelations =  row.getList(1, UUID.class);
-		creationTime.setTime(row.getDate(2).getTime());
-		finishTime.setTime(creationTime.getTime());
+		result.creationTime = row.getDate(2);
+		result.finishTime = new Date(result.creationTime.getTime());
 		Date expiryTime = row.getDate(3);
-		TelemetryEventType type = null;
 		try {
-			type = TelemetryEventType.valueOf(row.getString(4));
+			result.type = TelemetryEventType.valueOf(row.getString(4));
 		} catch (Exception e) {
 			// Without a type we cannot securely correlate by data.
 			return null;
 		}
-		if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
+		if (TelemetryEventType.MESSAGE_RESPONSE.equals(result.type)) {
 			// A response should always be correlated by it's sourceCorrelationId, not by data.
-		} else if (TelemetryEventType.MESSAGE_REQUEST.equals(type)) {
-			// First set the scope of a request to it's expiry time.
+		} else if (TelemetryEventType.MESSAGE_REQUEST.equals(result.type)) {
+			// Initially set the scope of a request to it's expiry time.
 			if (expiryTime != null && expiryTime.getTime() != 0) {
-				finishTime.setTime(expiryTime.getTime());
+				result.finishTime.setTime(expiryTime.getTime());
+				result.expired = true;
 			}
 			for (UUID childId : childCorrelations) {
-				resultSet = this.session.execute(this.findChildEventCreationTimeStatement.bind(childId));
-				row = resultSet.one();
+				row = this.session.execute(this.findChildEventCreationTimeStatement.bind(childId)).one();
 				if (row == null) {
 					continue;
 				} else if (eventId.equals(row.getUUID(1)) && TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
 					// We've found the response. Set the finishTime to the time the response was created.
-					finishTime.setTime(row.getDate(0).getTime());
+					result.finishTime.setTime(row.getDate(0).getTime());
+					result.expired = false;
 					break;
 				}
 			}
 		}
-		return type;
+		return result;
 	}
 	
 	private void writeUUIDValue(String fieldName, UUID fieldValue, JsonGenerator generator) throws JsonGenerationException, IOException {
@@ -527,8 +603,6 @@ public class QueryRepository {
 
 		private UUID id;
 		
-		private UUID parentId;
-		
 		private long creationTime;
 		
 		private long expirationTime;
@@ -549,6 +623,22 @@ public class QueryRepository {
 		
 		private long absoluteResponseTime = -1;
 		
+		private List<OverviewEvent> children = new ArrayList<OverviewEvent>();
+		
+		public OverviewEvent getMessageResponseOverviewEvent() {
+			if (!TelemetryEventType.MESSAGE_REQUEST.equals(this.type)) {
+				return null;
+			}
+			if (this.children.size() == 0) {
+				return null;
+			}
+			Optional<OverviewEvent> optionalResponse = this.children.stream().filter(p -> TelemetryEventType.MESSAGE_RESPONSE.equals(p.type)).findFirst();
+			if (!optionalResponse.isPresent()) {
+				return null;
+			}
+			return optionalResponse.get();
+        }
+		
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof OverviewEvent) {
@@ -565,7 +655,7 @@ public class QueryRepository {
 		
 		@Override
 		public String toString() {
-		    return this.name + "(" + this.id + ")";
+		    return this.name + ":" + this.application + " (" + this.id + ")";
 		}
 	}
 	
@@ -602,6 +692,17 @@ public class QueryRepository {
 		public int hashCode() {
 		    return this.id.hashCode();
 		}
+	}
+	
+	private class CorrelationDataResult {
+		
+		private Map<String, String> correlationData = new HashMap<String, String>(); 
+		private Date creationTime;
+		private Date finishTime;
+		private TelemetryEventType type;
+		private boolean expired;
+		
+		
 	}
 
 }
