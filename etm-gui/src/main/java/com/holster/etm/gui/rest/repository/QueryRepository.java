@@ -51,7 +51,7 @@ public class QueryRepository {
 		this.findEventForDetailsStatement = this.session.prepare("select application, content, correlationId, correlations, creationTime, direction, endpoint, expiryTime, name, sourceCorrelationId, sourceId, transactionId, transactionName, type from " + this.keyspace + ".telemetry_event where id = ?");
 		this.findEventParentIdStatement = this.session.prepare("select correlationId from " + this.keyspace + ".telemetry_event where id = ?");
 		this.findOverviewEventStatement = this.session.prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from " + this.keyspace + ".telemetry_event where id = ?");
-		this.findCorrelationDataStatement = this.session.prepare("select correlationData, correlations, creationTime, type from " + this.keyspace + ".telemetry_event where id = ?");
+		this.findCorrelationDataStatement = this.session.prepare("select correlationData, correlations, creationTime, expiryTime, type from " + this.keyspace + ".telemetry_event where id = ?");
 		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from " + this.keyspace + ".telemetry_event where id = ?");
 		this.findCorrelationsByDataStatement = this.session.prepare("select id, timeunit from " + this.keyspace + ".correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit >= ? and timeunit <= ?");
 		this.findPotentialCorrelatingEventDataStatement = this.session.prepare("select creationTime, correlations, type from " + this.keyspace + ".telemetry_event where id = ?");
@@ -413,11 +413,10 @@ public class QueryRepository {
 		if (correlationData.size() == 0) {
 			return result;
 		}
-		Date endQueryTime = new Date(finishTime.getTime());
 		if (TelemetryEventType.MESSAGE_DATAGRAM.equals(type)) {
-			endQueryTime.setTime(finishTime.getTime() + CORRELATION_SELECTION_OFFSET);
+			finishTime.setTime(finishTime.getTime() + CORRELATION_SELECTION_OFFSET);
 		}
-		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationData, creationTime, endQueryTime);
+		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationData, creationTime, finishTime);
 		if (correlatingResults.size() == 0) {
 			return result;
 		}
@@ -473,9 +472,10 @@ public class QueryRepository {
 		List<UUID> childCorrelations =  row.getList(1, UUID.class);
 		creationTime.setTime(row.getDate(2).getTime());
 		finishTime.setTime(creationTime.getTime());
+		Date expiryTime = row.getDate(3);
 		TelemetryEventType type = null;
 		try {
-			type = TelemetryEventType.valueOf(row.getString(3));
+			type = TelemetryEventType.valueOf(row.getString(4));
 		} catch (Exception e) {
 			// Without a type we cannot securely correlate by data.
 			return null;
@@ -483,13 +483,17 @@ public class QueryRepository {
 		if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
 			// A response should always be correlated by it's sourceCorrelationId, not by data.
 		} else if (TelemetryEventType.MESSAGE_REQUEST.equals(type)) {
+			// First set the scope of a request to it's expiry time.
+			if (expiryTime != null && expiryTime.getTime() != 0) {
+				finishTime.setTime(expiryTime.getTime());
+			}
 			for (UUID childId : childCorrelations) {
 				resultSet = this.session.execute(this.findChildEventCreationTimeStatement.bind(childId));
 				row = resultSet.one();
 				if (row == null) {
 					continue;
 				} else if (eventId.equals(row.getUUID(1)) && TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
-					// Save the creation time of the response 
+					// We've found the response. Set the finishTime to the time the response was created.
 					finishTime.setTime(row.getDate(0).getTime());
 					break;
 				}

@@ -12,22 +12,39 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 
 public class StatisticsRepository {
 
 	private final String keyspace = "etm";
 	
-	private final Session session; 
+	private final Session session;
+
+	private final PreparedStatement selectTransactionPerformanceStatement;
+	private final PreparedStatement selectMessagePerformanceStatement;
+	private final PreparedStatement selectMessageExpirationStatement;
+	private final PreparedStatement selectApplicationCountsStatement;
+	private final PreparedStatement selectEventCorrelations;
+	private final PreparedStatement selectEventExpirationDataStatement;
+	private final PreparedStatement updateMessageExpirationStatement; 
 	
 	public StatisticsRepository(Session session) {
 		this.session = session;
+		this.selectTransactionPerformanceStatement = this.session.prepare("select transactionName, startTime, finishTime, expiryTime from " + this.keyspace + ".transaction_performance where transactionName_timeunit = ? and startTime >= ? and startTime <= ?");
+		this.selectMessagePerformanceStatement = this.session.prepare("select name, startTime, finishTime, expiryTime from " + this.keyspace + ".message_performance where name_timeunit = ? and startTime >= ? and startTime <= ?");
+		this.selectMessageExpirationStatement = this.session.prepare("select id, name, startTime, finishTime, expiryTime, application, name_timeunit from " + this.keyspace + ".message_expiration where name_timeunit = ? and expiryTime >= ? and expiryTime <= ?");
+		this.selectApplicationCountsStatement = this.session.prepare("select application, incomingMessageRequestCount, incomingMessageDatagramCount, outgoingMessageRequestCount, outgoingMessageDatagramCount from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
+		this.selectEventCorrelations = this.session.prepare("select correlations from " + this.keyspace + ".telemetry_event where id = ?");
+		this.selectEventExpirationDataStatement = this.session.prepare("select creationTime, type from " + this.keyspace + ".telemetry_event where id = ?");
+		this.updateMessageExpirationStatement = this.session.prepare("update " + this.keyspace + ".message_expiration set finishTime = ? where name_timeunit = ? and expiryTime = ? and id = ?");
 	}
 	
 	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions, TimeUnit timeUnit) {
@@ -42,11 +59,7 @@ public class StatisticsRepository {
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		for (String transactionName : transactionNames) {
-			BuiltStatement builtStatement = QueryBuilder.select("transactionName", "startTime", "finishTime", "expiryTime")
-					.from(this.keyspace, "transaction_performance")
-					.where(QueryBuilder.eq("transactionName_timeunit", transactionName))
-					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
-			resultSets.add(this.session.executeAsync(builtStatement));
+			resultSets.add(this.session.executeAsync(this.selectTransactionPerformanceStatement.bind(transactionName, new Date(startTime), new Date(endTime))));
 		}
 		for (ResultSetFuture resultSetFuture : resultSets) {
 			ResultSet resultSet = resultSetFuture.getUninterruptibly();
@@ -104,11 +117,7 @@ public class StatisticsRepository {
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		for (String messageName : messageNames) {
-			BuiltStatement builtStatement = QueryBuilder.select("name", "startTime", "finishTime", "expiryTime")
-					.from(this.keyspace, "message_performance")
-					.where(QueryBuilder.eq("name_timeunit", messageName))
-					.and(QueryBuilder.gte("startTime", new Date(startTime))).and(QueryBuilder.lte("startTime", new Date(endTime)));
-			resultSets.add(this.session.executeAsync(builtStatement));
+			resultSets.add(this.session.executeAsync(this.selectMessagePerformanceStatement.bind(messageName, new Date(startTime), new Date(endTime))));
 		}
 		for (ResultSetFuture resultSetFuture : resultSets) {
 			ResultSet resultSet = resultSetFuture.getUninterruptibly();
@@ -165,11 +174,7 @@ public class StatisticsRepository {
 		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
 		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		for (String messageName : messageNames) {
-			BuiltStatement builtStatement = QueryBuilder.select("id", "name", "startTime", "finishTime", "expiryTime", "application")
-					.from(this.keyspace, "message_expiration")
-					.where(QueryBuilder.eq("name_timeunit", messageName))
-					.and(QueryBuilder.gte("expiryTime", new Date(startTime))).and(QueryBuilder.lte("expiryTime", new Date(endTime)));
-			resultSets.add(this.session.executeAsync(builtStatement));
+			resultSets.add(this.session.executeAsync(this.selectMessageExpirationStatement.bind(messageName, new Date(startTime), new Date(endTime))));
 		}
 		for (ResultSetFuture resultSetFuture : resultSets) {
 			ResultSet resultSet = resultSetFuture.getUninterruptibly();
@@ -188,6 +193,32 @@ public class StatisticsRepository {
 				Date messageFinishTime = row.getDate(3);
 				Date messageExpiryTime = row.getDate(4);
 				String application = row.getString(5);
+				String rowKey = row.getString(6);
+				if (messageFinishTime == null || messageFinishTime.getTime() == 0) {
+					Row eventRow = this.session.execute(this.selectEventCorrelations.bind(id)).one();
+					if (eventRow != null) {
+						List<UUID> childIds = eventRow.getList(0, UUID.class);
+						if (childIds != null) {
+							for (UUID childId : childIds) {
+								Row childRow = this.session.execute(this.selectEventExpirationDataStatement.bind(childId)).one();
+								if (childRow != null) {
+									TelemetryEventType type = null;
+									try {
+										type = TelemetryEventType.valueOf(childRow.getString(1));
+									} catch (Exception e) {
+										continue;
+									}
+									if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
+										// False positive, update the expiration table
+										messageFinishTime = childRow.getDate(0);
+										this.session.executeAsync(this.updateMessageExpirationStatement.bind(messageFinishTime, rowKey, messageExpiryTime, id));
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
 				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
 					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
 						synchronized (expiredMessages) {
@@ -208,52 +239,54 @@ public class StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<Object> applicationNames = getApplicationNames(startTime, endTime);
+		List<String> applicationNames = getApplicationNames(startTime, endTime);
 		if (applicationNames.size() == 0) {
 			return Collections.emptyMap();
 		}
 		final Map<String, Long> totals = new HashMap<String, Long>();
 		final Map<String, Map<String, Long>> data = new HashMap<String, Map<String, Long>>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		
-		BuiltStatement builtStatement = QueryBuilder.select("application", "incomingMessageRequestCount", "incomingMessageDatagramCount", "outgoingMessageRequestCount", "outgoingMessageDatagramCount")
-				.from(this.keyspace, "application_counter")
-				.where(QueryBuilder.in("application_timeunit", applicationNames))
-				.and(QueryBuilder.gte("timeunit", new Date(startTime))).and(QueryBuilder.lte("timeunit", new Date(endTime)));
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String applicationName = row.getString(0);
-			if (applicationName == null) {
-				continue;
-			}
-			long incomingMessageRequestCount = row.getLong(1);
-			long incomingMessageDatagramCount = row.getLong(2);
-			long outgoingMessageRequestCount = row.getLong(3);
-			long outgoingMessageDatagramCount = row.getLong(4);
-			long total = incomingMessageRequestCount + incomingMessageDatagramCount + outgoingMessageRequestCount + outgoingMessageDatagramCount;
-			if (total == 0) {
-				continue;
-			}
-			if (!totals.containsKey(applicationName)) {
-				totals.put(applicationName, total);
-			} else {
-				Long currentValue = totals.get(applicationName);
-				totals.put(applicationName, currentValue + total);
-			}
-			if (!data.containsKey(applicationName)) {
-				Map<String, Long> appTotals = new HashMap<String, Long>();
-				appTotals.put("incomingMessageRequest", incomingMessageRequestCount);
-				appTotals.put("incomingDatagramRequest", incomingMessageDatagramCount);
-				appTotals.put("outgoingMessageRequest", outgoingMessageRequestCount);
-				appTotals.put("outgoingDatagramRequest", outgoingMessageDatagramCount);
-				data.put(applicationName, appTotals);
-			} else {
-				Map<String, Long> currentValues = data.get(applicationName);
-				currentValues.put("incomingMessageRequest", currentValues.get("incomingMessageRequest") + incomingMessageRequestCount);
-				currentValues.put("incomingDatagramRequest", currentValues.get("incomingDatagramRequest") + incomingMessageDatagramCount);
-				currentValues.put("outgoingMessageRequest", currentValues.get("outgoingMessageRequest") + outgoingMessageRequestCount);
-				currentValues.put("outgoingDatagramRequest", currentValues.get("outgoingDatagramRequest") + outgoingMessageDatagramCount);				
+		for (String applicationName : applicationNames) {
+			resultSets.add(this.session.executeAsync(this.selectApplicationCountsStatement.bind(applicationName, new Date(startTime), new Date(endTime))));
+		}
+		for (ResultSetFuture resultSetFuture : resultSets) {
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				String applicationName = row.getString(0);
+				if (applicationName == null) {
+					continue;
+				}
+				long incomingMessageRequestCount = row.getLong(1);
+				long incomingMessageDatagramCount = row.getLong(2);
+				long outgoingMessageRequestCount = row.getLong(3);
+				long outgoingMessageDatagramCount = row.getLong(4);
+				long total = incomingMessageRequestCount + incomingMessageDatagramCount + outgoingMessageRequestCount + outgoingMessageDatagramCount;
+				if (total == 0) {
+					continue;
+				}
+				if (!totals.containsKey(applicationName)) {
+					totals.put(applicationName, total);
+				} else {
+					Long currentValue = totals.get(applicationName);
+					totals.put(applicationName, currentValue + total);
+				}
+				if (!data.containsKey(applicationName)) {
+					Map<String, Long> appTotals = new HashMap<String, Long>();
+					appTotals.put("incomingMessageRequest", incomingMessageRequestCount);
+					appTotals.put("incomingDatagramRequest", incomingMessageDatagramCount);
+					appTotals.put("outgoingMessageRequest", outgoingMessageRequestCount);
+					appTotals.put("outgoingDatagramRequest", outgoingMessageDatagramCount);
+					data.put(applicationName, appTotals);
+				} else {
+					Map<String, Long> currentValues = data.get(applicationName);
+					currentValues.put("incomingMessageRequest", currentValues.get("incomingMessageRequest") + incomingMessageRequestCount);
+					currentValues.put("incomingDatagramRequest", currentValues.get("incomingDatagramRequest") + incomingMessageDatagramCount);
+					currentValues.put("outgoingMessageRequest", currentValues.get("outgoingMessageRequest") + outgoingMessageRequestCount);
+					currentValues.put("outgoingDatagramRequest", currentValues.get("outgoingDatagramRequest") + outgoingMessageDatagramCount);				
+				}
 			}
 		}
 		filterCountsToMaxResults(maxApplications, totals, data);
@@ -344,9 +377,9 @@ public class StatisticsRepository {
 		return eventNames;
 	}
 	
-	private List<Object> getApplicationNames(long startTime, long endTime) {
+	private List<String> getApplicationNames(long startTime, long endTime) {
 		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
-		List<Object> eventNames = new ArrayList<Object>();
+		List<String> eventNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
 		while (iterator.hasNext()) {

@@ -350,7 +350,7 @@ $(function () {
                     var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + expiration.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
                     $(rowContent).prependTo($('#expiry_table > tbody'));
                     $('#expiry_table > tbody > :first-child > td > div').slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
-                    $('#expiry_table > tbody > :nth-child(5)').nextAll().hide('slow', function(){ $(this).remove(); });                
+                    $('#expiry_table > tbody > :nth-child(' + expirationCountMaxResults + ')').nextAll().hide('slow', function(){ $(this).remove(); });                
                 }); 
             });
             lastTime = updateTime;
