@@ -393,12 +393,10 @@ public class QueryRepository {
 		correlatingResults.sort(new Comparator<CorrelationResult>() {
 			@Override
 			public int compare(CorrelationResult o1, CorrelationResult o2) {
-				int compare = o2.timestamp.compareTo(o1.timestamp);
-				if (compare != 0) {
-					return compare;
+				if (isBefore(o1.id, o1.timestamp, o2.id, o2.timestamp)) {
+					return 1;
 				}
-				// 2 events at exactly the same time. Compare by processing order
-				return o2.id.compareTo(o1.id);
+				return -1;
 			}
 		});
 		for (CorrelationResult correlationResult : correlatingResults) {
@@ -406,9 +404,9 @@ public class QueryRepository {
 			if (row == null) {
 				continue;
 			}
-			if (row.getDate(0).after(correlationData.validFrom)) {
+			if (isAfter(correlationResult.id, row.getDate(0), eventId, correlationData.validFrom)) {
 				// The creationTime of this event is after the creation time of
-				// the event we're try to find the parent from. This can
+				// the event we try to find the parent from. This can
 				// impossibly be a parent.
 				continue;
 			}
@@ -433,10 +431,12 @@ public class QueryRepository {
 					// timeout
 					Date expiryDate = row.getDate(2);
 					if (expiryDate != null && !expiryDate.before(correlationData.validTill)) {
-						// The expiry date from the request after the validity of the correlation data -> We have a match. 
+						// The expiry date from the request after the validity
+						// of the correlation data -> We have a match.
 						return correlationResult.id;
 					} else if (expiryDate != null && correlationData.expired) {
-						// The parent request expired, and this request expired as well.
+						// The parent request expired, and this request expired
+						// as well.
 						// It's a guess, but these requests probably have a
 						// parent-child relationship.
 						return correlationResult.id;
@@ -462,7 +462,8 @@ public class QueryRepository {
 					}
 				}
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
-				// A message response could never be a parent event of any message type.
+				// A message response could never be a parent event of any
+				// message type.
 				continue;
 			}
 		}
@@ -564,7 +565,10 @@ public class QueryRepository {
 		correlatingResults.sort(new Comparator<CorrelationResult>() {
 			@Override
 			public int compare(CorrelationResult o1, CorrelationResult o2) {
-				return o1.timestamp.compareTo(o2.timestamp);
+				if (isBefore(o1.id, o1.timestamp, o2.id, o2.timestamp)) {
+					return -1;
+				}
+				return 1;
 			}
 		});
 		for (CorrelationResult correlationResult : correlatingResults) {
@@ -652,13 +656,57 @@ public class QueryRepository {
 				} else if (eventId.equals(row.getUUID(1)) && TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
 					// We've found the response. Set the finishTime to the time
 					// the response was created.
-					result.validTill.setTime(row.getDate(0).getTime());
-					result.expired = false;
+					Date responseCreationTime = row.getDate(0);
+					if (responseCreationTime.before(result.validTill)) {
+						// Response was before the expiry time.
+						result.validTill.setTime(row.getDate(0).getTime());
+						result.expired = false;
+					}
 					break;
 				}
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Checks of<code>date1</code> is before <code>date2</code>. If both dates
+	 * are the exact same moment, the UUID's are compared. This way the processing order is taken into account.
+	 * 
+	 * @param eventId1 The first event ID.
+	 * @param date1 The first date.
+	 * @param eventId2 The second event ID.
+	 * @param date2 The second date.
+	 * @return <code>true</code> if <code>date1</code> is before <code>date2</code>, <code>false</code> otherwise.
+	 */
+	private boolean isBefore(UUID eventId1, Date date1, UUID eventId2, Date date2) {
+		if (date1.equals(date2)) {
+			if (eventId1.equals(eventId2)) {
+				return false;
+			}
+			return eventId1.compareTo(eventId2) == -1;
+		}
+		return date1.before(date2);
+	}
+
+	/**
+	 * Checks of<code>date1</code> is after <code>date2</code>. If both dates
+	 * are the exact same moment, the UUID's are compared. This way the processing order is taken into account.
+	 * 
+	 * @param eventId1 The first event ID.
+	 * @param date1 The first date.
+	 * @param eventId2 The second event ID.
+	 * @param date2 The second date.
+	 * @return <code>true</code> if <code>date1</code> is after <code>date2</code>, <code>false</code> otherwise.
+	 */
+	private boolean isAfter(UUID eventId1, Date date1, UUID eventId2, Date date2) {
+		if (date1.equals(date2)) {
+			if (eventId1.equals(eventId2)) {
+				return false;
+			}
+			return eventId1.compareTo(eventId2) == 1;
+		}
+		return date1.after(date2);
 	}
 
 	private void writeUUIDValue(String fieldName, UUID fieldValue, JsonGenerator generator) throws JsonGenerationException, IOException {
