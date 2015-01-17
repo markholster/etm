@@ -8,10 +8,12 @@ import com.holster.etm.core.TelemetryEventType;
 
 public class CorrelationData {
 
+	public String application;
 	public Map<String, String> data = new HashMap<String, String>(); 
 	public Date validFrom;
 	public Date validTill;
 	public TelemetryEventType type;
 	public boolean expired;
+	
 
 }

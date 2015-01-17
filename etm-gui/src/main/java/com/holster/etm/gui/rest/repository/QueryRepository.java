@@ -56,7 +56,7 @@ public class QueryRepository {
 		        .prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from "
 		                + this.keyspace + ".telemetry_event where id = ?");
 		this.findCorrelationDataStatement = this.session
-		        .prepare("select correlationData, correlations, creationTime, expiryTime, type from " + this.keyspace
+		        .prepare("select application, correlationData, correlations, creationTime, expiryTime, type from " + this.keyspace
 		                + ".telemetry_event where id = ?");
 		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from " + this.keyspace
 		        + ".telemetry_event where id = ?");
@@ -393,7 +393,12 @@ public class QueryRepository {
 		correlatingResults.sort(new Comparator<CorrelationResult>() {
 			@Override
 			public int compare(CorrelationResult o1, CorrelationResult o2) {
-				return o2.timestamp.compareTo(o1.timestamp);
+				int compare = o2.timestamp.compareTo(o1.timestamp);
+				if (compare != 0) {
+					return compare;
+				}
+				// 2 events at exactly the same time. Compare by processing order
+				return o2.id.compareTo(o1.id);
 			}
 		});
 		for (CorrelationResult correlationResult : correlatingResults) {
@@ -494,13 +499,9 @@ public class QueryRepository {
 					if (parent.application != null && overviewEvent.application != null) {
 						if (TelemetryEventDirection.INCOMING.equals(parent.direction)
 						        && !parent.application.equals(overviewEvent.application)) {
+							// If the parent event was an incoming event, the
+							// child event should have the same application name
 							return;
-							// } else if
-							// (TelemetryEventDirection.OUTGOING.equals(parent.direction)
-							// &&
-							// parent.application.equals(overviewEvent.application))
-							// {
-							// return;
 						}
 					}
 				}
@@ -620,16 +621,17 @@ public class QueryRepository {
 		if (row == null) {
 			return null;
 		}
-		result.data.putAll(row.getMap(0, String.class, String.class));
+		result.application = row.getString(0);
+		result.data.putAll(row.getMap(1, String.class, String.class));
 		if (result.data.size() == 0) {
 			return null;
 		}
-		List<UUID> childCorrelations = row.getList(1, UUID.class);
-		result.validFrom = row.getDate(2);
+		List<UUID> childCorrelations = row.getList(2, UUID.class);
+		result.validFrom = row.getDate(3);
 		result.validTill = new Date(result.validFrom.getTime());
-		Date expiryTime = row.getDate(3);
+		Date expiryTime = row.getDate(4);
 		try {
-			result.type = TelemetryEventType.valueOf(row.getString(4));
+			result.type = TelemetryEventType.valueOf(row.getString(5));
 		} catch (Exception e) {
 			// Without a type we cannot securely correlate by data.
 			return null;
