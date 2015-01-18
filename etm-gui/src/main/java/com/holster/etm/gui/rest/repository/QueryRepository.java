@@ -275,7 +275,7 @@ public class QueryRepository {
 	private void calculateCounters(OverviewEvent overviewEvent, List<String> appNames, AtomicInteger eventCount, AtomicInteger eventDepth) {
 		eventCount.incrementAndGet();
 		if (!TelemetryEventType.MESSAGE_RESPONSE.equals(overviewEvent.type) && overviewEvent.application != null) {
-			int appIx = appNames.indexOf(overviewEvent.application);
+			int appIx = appNames.lastIndexOf(overviewEvent.application);
 			if (appIx == -1) {
 				appNames.add(overviewEvent.application);
 			} else if (appIx < eventDepth.get()) {
