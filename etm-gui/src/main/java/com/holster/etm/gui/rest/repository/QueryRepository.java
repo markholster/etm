@@ -591,23 +591,31 @@ public class QueryRepository {
 				result.add(correlationResult.id);
 				// Get the response correlation data and see if other request match this response data.
 				ResponseCorrelationData responseCorrelationData = getResponseCorrelationData(correlationResult.id);
-				if (responseCorrelationData != null) {
-					List<CorrelationResult> responseMatchedCorrelationResults = getCorrelationResults(responseCorrelationData.id, responseCorrelationData.data, responseCorrelationData.validFrom, correlationData.validTill);
-					for (CorrelationResult responseCorrelationResult : responseMatchedCorrelationResults) {
-						UUID parent = findParentId(responseCorrelationResult.id, correlationData.validFrom);
-						// The parent of an event found by response data is the response, we need to level up to the request
-						if (parent != null) {
-							parent = findParentId(parent, correlationData.validFrom);
-						}
-						// The request is a sibbling of the found event if it's really a direct child, so we n
-						if (eventId.equals(findParentIdByDataCorrelation(parent, correlationData.validFrom))) {
-							result.add(responseCorrelationResult.id);
-						}
+				findChildrenByCorrelationResults(correlationData, responseCorrelationData, result);
+			}
+		}
+		return result;
+	}
+	
+	private void findChildrenByCorrelationResults(CorrelationData correlationData, ResponseCorrelationData responseCorrelationData, List<UUID> responseList) {
+		// Get the response correlation data and see if other request match this response data.
+		if (responseCorrelationData != null) {
+			List<CorrelationResult> responseMatchedCorrelationResults = getCorrelationResults(responseCorrelationData.id, responseCorrelationData.data, responseCorrelationData.validFrom, correlationData.validTill);
+			for (CorrelationResult responseMatchedCorrelationResult : responseMatchedCorrelationResults) {
+				UUID parent = findParentId(responseMatchedCorrelationResult.id, correlationData.validFrom);
+				// The parent of an event matched by response data is the response, we need to level up to the request
+				if (parent != null) {
+					parent = findParentId(parent, correlationData.validFrom);
+				}
+				// And if that parent has a match in the responseList we've found an event matched by response data.
+				if (responseList.contains(parent)) {
+					if (!responseList.contains(responseMatchedCorrelationResult.id)) {
+						responseList.add(responseMatchedCorrelationResult.id);
+						findChildrenByCorrelationResults(correlationData, getResponseCorrelationData(responseMatchedCorrelationResult.id), responseList);
 					}
 				}
 			}
 		}
-		return result;
 	}
 
 	/**
@@ -687,6 +695,7 @@ public class QueryRepository {
 
 	private CorrelationData getCorrelationData(UUID eventId) {
 		CorrelationData result = new CorrelationData();
+		result.eventId = eventId;
 		Row row = this.session.execute(this.findCorrelationDataStatement.bind(eventId)).one();
 		if (row == null) {
 			return null;

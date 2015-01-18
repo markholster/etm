@@ -3,11 +3,13 @@ package com.holster.etm.gui.rest.repository;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import com.holster.etm.core.TelemetryEventType;
 
 public class CorrelationData {
 
+	public UUID eventId;
 	public String application;
 	public Map<String, String> data = new HashMap<String, String>(); 
 	public Date validFrom;

@@ -152,14 +152,14 @@ create table transactionname_counter (
     primary key (transactionName_timeunit, timeunit, transactionName)
 );
 
-insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer', 'PolicyNr':'xpath:/*/overeenkomstnummer'});
+insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer', 'PolicyNr':'xpath:/*/overeenkomstnummer', 'AccountNr':'xpath:/*/rekeningnummer'});
 insert into endpoint_config(endpoint, direction, applicationParsers, transactionNameParsers) values ('KCS.REQ.ESB', 'OUTGOING', ['KCS'], ['xpath:substring(local-name(//*[ends-with(name(), ''Request'')][1]), 0, string-length(local-name(//*[ends-with(name(), ''Request'')][1])) - 6)']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.RPL.KCS', 'INCOMING', ['KCS']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.LG5', 'INCOMING', ['Nieuw Woon']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG5.REQ.ESB', 'OUTGOING', ['Nieuw Woon']);
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG5.DTG.ESB', 'OUTGOING', ['Nieuw Woon']);
+insert into endpoint_config(endpoint, direction, applicationParsers, correlationParsers) values ('LG5.DTG.ESB', 'OUTGOING', ['Nieuw Woon'], {'AccountNr':'xpath:/*/reknr'});
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.RPL.LG5', 'INCOMING', ['Nieuw Woon']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG5.RPL.ESB', 'OUTGOING', ['Nieuw Woon']);
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.DTG.CRM', 'INCOMING', ['Sap CRM']);
+insert into endpoint_config(endpoint, direction, applicationParsers, correlationParsers) values ('ESB.DTG.CRM', 'INCOMING', ['Sap CRM'], {'AccountNr':'xpath:/*/reknr'});
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.PRL', 'INCOMING', ['Parel']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('PRL.RPL.ESB', 'OUTGOING', ['Parel']);
