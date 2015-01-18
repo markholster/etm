@@ -332,18 +332,10 @@ public class QueryRepository {
 	}
 
 	private UUID findRootEventId(UUID eventId, List<UUID> foundElements) {
-		ResultSet resultSet = this.session.execute(this.findEventParentIdStatement.bind(eventId));
-		Row row = resultSet.one();
-		if (row == null) {
-			return eventId;
-		}
 		if (!foundElements.contains(eventId)) {
 			foundElements.add(eventId);
 		}
-		UUID parentId = row.getUUID(0);
-		if (parentId == null) {
-			parentId = findParentIdByDataCorrelation(eventId, null);
-		}
+		UUID parentId = findParentId(eventId, null);
 		if (parentId == null) {
 			return eventId;
 		}
@@ -354,6 +346,19 @@ public class QueryRepository {
 		foundElements.add(parentId);
 		return findRootEventId(parentId, foundElements);
 	}
+	
+	private UUID findParentId(UUID eventId, Date considerdataFrom) {
+		Row row = this.session.execute(this.findEventParentIdStatement.bind(eventId)).one();
+		if (row == null) {
+			return null;
+		}
+		UUID parentId = row.getUUID(0);
+		if (parentId == null) {
+			parentId = findParentIdByDataCorrelation(eventId, considerdataFrom);
+		}
+		return parentId;
+	}
+	
 
 	/**
 	 * Find a parent event by data correlation.
@@ -374,6 +379,9 @@ public class QueryRepository {
 	 *         found.
 	 */
 	private UUID findParentIdByDataCorrelation(UUID eventId, Date considerdataFrom) {
+		if (eventId == null) {
+			return null;
+		}
 		CorrelationData correlationData = getCorrelationData(eventId);
 		if (correlationData == null || correlationData.data.size() == 0) {
 			return null;
@@ -581,6 +589,22 @@ public class QueryRepository {
 			// Make sure we return only direct children.
 			if (eventId.equals(findParentIdByDataCorrelation(correlationResult.id, correlationData.validFrom))) {
 				result.add(correlationResult.id);
+				// Get the response correlation data and see if other request match this response data.
+				ResponseCorrelationData responseCorrelationData = getResponseCorrelationData(correlationResult.id);
+				if (responseCorrelationData != null) {
+					List<CorrelationResult> responseMatchedCorrelationResults = getCorrelationResults(responseCorrelationData.id, responseCorrelationData.data, responseCorrelationData.validFrom, correlationData.validTill);
+					for (CorrelationResult responseCorrelationResult : responseMatchedCorrelationResults) {
+						UUID parent = findParentId(responseCorrelationResult.id, correlationData.validFrom);
+						// The parent of an event found by response data is the response, we need to level up to the request
+						if (parent != null) {
+							parent = findParentId(parent, correlationData.validFrom);
+						}
+						// The request is a sibbling of the found event if it's really a direct child, so we n
+						if (eventId.equals(findParentIdByDataCorrelation(parent, correlationData.validFrom))) {
+							result.add(responseCorrelationResult.id);
+						}
+					}
+				}
 			}
 		}
 		return result;
@@ -592,8 +616,7 @@ public class QueryRepository {
 	 * @param eventId
 	 *            The ID of the event to match correlation data against.
 	 * @param correlationData
-	 *            The correlation data of the event with id <code>eventId</code>
-	 *            .
+	 *            The correlation data of the event with id <code>eventId</code>.
 	 * @param startTime
 	 *            The start time of the data to consider.
 	 * @param finishTime
@@ -611,10 +634,11 @@ public class QueryRepository {
 				Iterator<Row> rowIterator = resultSet.iterator();
 				while (rowIterator.hasNext()) {
 					Row row = rowIterator.next();
-					CorrelationResult correlationResult = new CorrelationResult(row.getUUID(0), row.getDate(1));
-					if (correlationResult.id.equals(eventId)) {
+					UUID correlationId = row.getUUID(0);
+					if (correlationId.equals(eventId)) {
 						continue;
 					}
+					CorrelationResult correlationResult = new CorrelationResult(correlationId, row.getDate(1));
 					if (!correlatingResults.contains(correlationResult)) {
 						correlatingResults.add(correlationResult);
 					}
@@ -623,11 +647,47 @@ public class QueryRepository {
 		}
 		return correlatingResults;
 	}
+	
+	/**
+	 * Check if the given <code>UUID</code> represents a
+	 * {@link TelemetryEventType.MESSAGE_REQUEST} and, if so, returns the
+	 * correlation data of the corresponding response.
+	 * 
+	 * @param eventId
+	 * @return
+	 */
+	private ResponseCorrelationData getResponseCorrelationData(UUID eventId) {
+		Row row = this.session.execute(this.findCorrelationDataStatement.bind(eventId)).one();
+		if (row == null) {
+			return null;
+		}
+		if (!TelemetryEventType.MESSAGE_REQUEST.name().equals(row.getString(5))) {
+			return null;
+		}
+		List<UUID> correlations = row.getList(2,UUID.class);
+		if (correlations == null || correlations.size() == 0) {
+			return null;
+		}
+		for (UUID correlationId : correlations) {
+			row = this.session.execute(this.findCorrelationDataStatement.bind(correlationId)).one();
+			if (row == null) {
+				continue;
+			}
+			if (!TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(5))) {
+				continue;
+			}
+			ResponseCorrelationData result = new ResponseCorrelationData();
+			result.id = correlationId;
+			result.validFrom = row.getDate(3);
+			result.data = row.getMap(1, String.class, String.class);
+			return result;
+		}
+		return null;
+	}
 
 	private CorrelationData getCorrelationData(UUID eventId) {
 		CorrelationData result = new CorrelationData();
-		ResultSet resultSet = this.session.execute(this.findCorrelationDataStatement.bind(eventId));
-		Row row = resultSet.one();
+		Row row = this.session.execute(this.findCorrelationDataStatement.bind(eventId)).one();
 		if (row == null) {
 			return null;
 		}
@@ -665,7 +725,7 @@ public class QueryRepository {
 					Date responseCreationTime = row.getDate(0);
 					if (responseCreationTime.before(result.validTill)) {
 						// Response was before the expiry time.
-						result.validTill.setTime(row.getDate(0).getTime());
+						result.validTill.setTime(responseCreationTime.getTime());
 						result.expired = false;
 					}
 					break;

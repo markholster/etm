@@ -14,6 +14,5 @@ public class CorrelationData {
 	public Date validTill;
 	public TelemetryEventType type;
 	public boolean expired;
-	
 
 }
