@@ -462,9 +462,15 @@ public class QueryRepository {
 					}
 				}
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
-				// A message response could never be a parent event of any
-				// message type.
-				continue;
+				// On first sight it seems impossible that a response message is
+				// a parent of any other event, but it is possible! When the
+				// data of a response is used in a consecutive request the
+				// relation is parent-child on data level. For example, when a
+				// request is fired with a relationnr as correlation data and in
+				// the response of that request a policynumber is returned as
+				// correlation data. If that policynumber is used in a latter
+				// request, that request is a child of the response.
+				return correlationResult.id;
 			}
 		}
 		return null;
