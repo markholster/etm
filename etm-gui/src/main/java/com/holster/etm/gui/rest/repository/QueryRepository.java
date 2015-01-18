@@ -25,6 +25,7 @@ import com.datastax.driver.core.Session;
 import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
+import com.holster.etm.core.util.ObjectUtils;
 
 public class QueryRepository {
 
@@ -124,18 +125,16 @@ public class QueryRepository {
 		long totalOverviewTime = getTotalOverviewTime(root);
 		calculateFillColors(root, totalOverviewTime);
 
-		AtomicInteger applicationCount = new AtomicInteger(1);
+		List<String> applications = new ArrayList<String>();
 		AtomicInteger eventCount = new AtomicInteger(0);
-		calculateCounters(root, applicationCount, eventCount);
+		calculateCounters(root, applications, eventCount, new AtomicInteger(0));
 
 		List<TimeFrame> timeFrames = new ArrayList<TimeFrame>();
-		String[] applications = new String[applicationCount.intValue()];
-		AtomicInteger eventDepth = new AtomicInteger(0);
-		calculateTimeFrames(root, timeFrames, applicationCount.get(), eventDepth, applications);
+		calculateTimeFrames(root, timeFrames, new AtomicInteger(0), applications);
 
 		// Create the json
 		generator.writeNumberField("eventCount", eventCount.intValue());
-		generator.writeNumberField("applicationCount", applicationCount.intValue());
+		generator.writeNumberField("applicationCount", applications.size());
 		generator.writeNumberField("timeframeCount", timeFrames.size());
 		generator.writeArrayFieldStart("applications");
 		for (String application : applications) {
@@ -145,7 +144,7 @@ public class QueryRepository {
 		generator.writeArrayFieldStart("timeframes");
 		for (TimeFrame timeFrame : timeFrames) {
 			generator.writeStartArray();
-			for (int i = 0; i < applicationCount.intValue(); i++) {
+			for (int i = 0; i < applications.size(); i++) {
 				generator.writeStartObject();
 				OverviewEvent overviewEvent = timeFrame.overviewEvents[i];
 				if (overviewEvent != null) {
@@ -273,60 +272,52 @@ public class QueryRepository {
 		}
 	}
 
-	private void calculateCounters(OverviewEvent overviewEvent, AtomicInteger applicationCount, AtomicInteger eventCount) {
+	private void calculateCounters(OverviewEvent overviewEvent, List<String> appNames, AtomicInteger eventCount, AtomicInteger eventDepth) {
 		eventCount.incrementAndGet();
-		List<String> appNames = new ArrayList<String>();
-		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
-			if (TelemetryEventType.MESSAGE_RESPONSE.equals(childOverviewEvent.type)) {
-				continue;
-			}
-			if (childOverviewEvent.application != null) {
-				if (!appNames.contains(childOverviewEvent.application) && !childOverviewEvent.application.equals(overviewEvent.application)) {
-					appNames.add(childOverviewEvent.application);
-				}
+		if (!TelemetryEventType.MESSAGE_RESPONSE.equals(overviewEvent.type) && overviewEvent.application != null) {
+			int appIx = appNames.indexOf(overviewEvent.application);
+			if (appIx == -1) {
+				appNames.add(overviewEvent.application);
+			} else if (appIx < eventDepth.get()) {
+				appNames.add(overviewEvent.application);
 			}
 		}
-		applicationCount.addAndGet(appNames.size());
 		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
-			calculateCounters(childOverviewEvent, applicationCount, eventCount);
+			if (!ObjectUtils.equalsNullProof(overviewEvent.application, childOverviewEvent.application)) {
+				eventDepth.incrementAndGet();
+			}
+			calculateCounters(childOverviewEvent, appNames, eventCount, eventDepth);
+			if (!ObjectUtils.equalsNullProof(overviewEvent.application, childOverviewEvent.application)) {
+				eventDepth.decrementAndGet();
+			}
 		}
 	}
 
-	private void calculateTimeFrames(OverviewEvent overviewEvent, List<TimeFrame> timeFrames, long applicationCount,
-	        AtomicInteger eventDepth, String[] applications) {
+	private void calculateTimeFrames(OverviewEvent overviewEvent, List<TimeFrame> timeFrames, AtomicInteger eventDepth, List<String> applications) {
 		if (timeFrames.size() == 0) {
-			timeFrames.add(new TimeFrame(applicationCount));
+			timeFrames.add(new TimeFrame(applications.size()));
 		}
 		TimeFrame currentTimeFrame = timeFrames.get(timeFrames.size() - 1);
 		if (currentTimeFrame.overviewEvents[eventDepth.get()] != null) {
-			currentTimeFrame = new TimeFrame(applicationCount);
+			currentTimeFrame = new TimeFrame(applications.size());
 			timeFrames.add(currentTimeFrame);
 		}
 		currentTimeFrame.overviewEvents[eventDepth.get()] = overviewEvent;
-		if (applications[eventDepth.get()] == null && overviewEvent.application != null) {
-			applications[eventDepth.get()] = overviewEvent.application;
-		}
-
 		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
 			if (childOverviewEvent.application != null && overviewEvent.application != null
 			        && !overviewEvent.application.equals(childOverviewEvent.application)) {
 				int addition = 0;
-				for (int i = eventDepth.get() + 1; i < applications.length; i++) {
-					if (applications[i] != null) {
-						if (applications[i].equals(childOverviewEvent.application)) {
-							addition = i - eventDepth.get();
-							break;
-						}
-					} else {
+				for (int i = eventDepth.get() + 1; i < applications.size(); i++) {
+					if (applications.get(i).equals(childOverviewEvent.application)) {
 						addition = i - eventDepth.get();
 						break;
 					}
 				}
 				eventDepth.addAndGet(addition);
-				calculateTimeFrames(childOverviewEvent, timeFrames, applicationCount, eventDepth, applications);
+				calculateTimeFrames(childOverviewEvent, timeFrames, eventDepth, applications);
 				eventDepth.addAndGet(-addition);
 			} else {
-				calculateTimeFrames(childOverviewEvent, timeFrames, applicationCount, eventDepth, applications);
+				calculateTimeFrames(childOverviewEvent, timeFrames, eventDepth, applications);
 			}
 		}
 	}
