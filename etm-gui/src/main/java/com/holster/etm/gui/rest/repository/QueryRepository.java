@@ -294,6 +294,9 @@ public class QueryRepository {
 	}
 
 	private void calculateTimeFrames(OverviewEvent overviewEvent, List<TimeFrame> timeFrames, AtomicInteger eventDepth, List<String> applications) {
+		if (applications.size() == 0) {
+			return;
+		}
 		if (timeFrames.size() == 0) {
 			timeFrames.add(new TimeFrame(applications.size()));
 		}
