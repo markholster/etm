@@ -33,6 +33,11 @@ public class CassandraSessionProducer {
 				for (String contactPoint : split) {
 					builder = builder.addContactPoint(contactPoint.trim());
 				}
+				String username = this.configuration.getProperty("cassandra.username");
+				String password = this.configuration.getProperty("cassandra.password");
+				if (username != null) {
+					builder.withCredentials(username, password);
+				}				
 				Cluster cluster = builder.build();
 				this.session = cluster.newSession().init();
 			}
