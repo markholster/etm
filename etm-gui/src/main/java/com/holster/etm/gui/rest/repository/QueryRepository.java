@@ -628,6 +628,7 @@ public class QueryRepository {
 	private List<CorrelationResult> getCorrelationResults(UUID eventId, Map<String, String> correlationData, Date startTime, Date finishTime) {
 		List<String> dateSuffixes = determineDateSuffixes(startTime, finishTime);
 		List<CorrelationResult> correlatingResults = new ArrayList<CorrelationResult>();
+		final int maxCorrelations = 100;
 		for (String correlationKey : correlationData.keySet()) {
 			// Create the keys
 			for (String suffix : dateSuffixes) {
@@ -639,6 +640,10 @@ public class QueryRepository {
 					UUID correlationId = row.getUUID(0);
 					if (correlationId.equals(eventId)) {
 						continue;
+					}
+					if (correlatingResults.size() > maxCorrelations) {
+						// TODO Loggin -> way to much results. There's correlated on a wrong entity.
+						break;
 					}
 					CorrelationResult correlationResult = new CorrelationResult(correlationId, row.getDate(1));
 					if (!correlatingResults.contains(correlationResult)) {
