@@ -113,6 +113,7 @@
                            <li><a href="#" onclick="$('#search_input').val('endpoint:&quot;x&quot;');return false;">endpoint &lt;x&gt;</a></li>
                            <li><a href="#" onclick="$('#search_input').val('creationTime:[NOW-1HOUR TO NOW]');return false;">last hour</a></li>
                            <li><a href="#" onclick="$('#search_input').val('creationTime:[NOW-1HOUR TO NOW] AND application:&quot;x&quot;');return false;">last hour of application &lt;x&gt;</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('creationTime:[' + new Date(new Date().setHours(0,0,0,0) - 86400000).toISOString() + ' TO ' + new Date(new Date().setHours(23,59,59,999) - 86400000).toISOString() + ']');return false;">yesterday</a></li>
                        </ul>
                     </div>
                 </div>
@@ -121,7 +122,32 @@
 		</div>
 	</div>
 	<script>
-//<![CDATA[        
+//<![CDATA[
+if ( !Date.prototype.toISOString ) {
+  ( function() {
+
+    function pad(number) {
+      var r = String(number);
+      if ( r.length === 1 ) {
+        r = '0' + r;
+      }
+      return r;
+    }
+
+    Date.prototype.toISOString = function() {
+      return this.getUTCFullYear()
+        + '-' + pad( this.getUTCMonth() + 1 )
+        + '-' + pad( this.getUTCDate() )
+        + 'T' + pad( this.getUTCHours() )
+        + ':' + pad( this.getUTCMinutes() )
+        + ':' + pad( this.getUTCSeconds() )
+        + '.' + String( (this.getUTCMilliseconds()/1000).toFixed(3) ).slice( 2, 5 )
+        + 'Z';
+    };
+
+  }() );
+}           
+           
 $(function () {
     var currentStart = 0;
     var rowCount = 25;
