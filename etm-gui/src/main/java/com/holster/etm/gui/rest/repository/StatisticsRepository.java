@@ -34,7 +34,9 @@ public class StatisticsRepository {
 	private final PreparedStatement selectApplicationCountsStatement;
 	private final PreparedStatement selectEventCorrelations;
 	private final PreparedStatement selectEventExpirationDataStatement;
-	private final PreparedStatement updateMessageExpirationStatement; 
+	private final PreparedStatement selectApplicationMessagesCountStatement;
+	private final PreparedStatement updateMessageExpirationStatement;
+	 
 	
 	public StatisticsRepository(Session session, String keyspace) {
 		this.session = session;
@@ -45,6 +47,7 @@ public class StatisticsRepository {
 		this.selectApplicationCountsStatement = this.session.prepare("select application, incomingMessageRequestCount, incomingMessageDatagramCount, outgoingMessageRequestCount, outgoingMessageDatagramCount from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
 		this.selectEventCorrelations = this.session.prepare("select correlations from " + this.keyspace + ".telemetry_event where id = ?");
 		this.selectEventExpirationDataStatement = this.session.prepare("select creationTime, type from " + this.keyspace + ".telemetry_event where id = ?");
+		this.selectApplicationMessagesCountStatement = this.session.prepare("select timeunit, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
 		this.updateMessageExpirationStatement = this.session.prepare("update " + this.keyspace + ".message_expiration set finishTime = ? where name_timeunit = ? and expiryTime = ? and id = ?");
 	}
 	
@@ -165,8 +168,23 @@ public class StatisticsRepository {
     }
 	
 	public Map<String, Map<Long, Long>> getApplicationMessagesCountStatistics(String application, Long startTime, Long endTime, TimeUnit timeUnit) {
-		// TODO implementation.
-	    return null;
+		if (startTime > endTime) {
+			return Collections.emptyMap();
+		}
+		List<String> applicationNames = getApplicationNames(startTime, endTime);
+		if (applicationNames.size() == 0) {
+			return Collections.emptyMap();
+		}
+		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+		for (String applicationName : applicationNames) {
+			resultSets.add(this.session.executeAsync(this.selectApplicationMessagesCountStatement.bind(applicationName, new Date(startTime), new Date(endTime))));
+		}
+		for (ResultSetFuture resultSetFuture : resultSets) {
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
+			// TODO, return data.
+		}
+	    return data;
     }
 	
 	public List<ExpiredMessage> getMessagesExpirationStatistics(Long startTime, Long endTime, int maxExpirations) {
