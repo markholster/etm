@@ -101,7 +101,7 @@ $(function () {
     var transactionPerformanceMaxResults = 5;
     var messagePerformanceMaxResults = 5;
     var applicationCountMaxResults = 5;
-    var expirationCountMaxResults = 5;
+    var expirationCountMaxResults = 7;
 
     $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + transactionPerformanceMaxResults, { dataType: "json", success: function (data) {
         $('#transactionsperformance').highcharts({
