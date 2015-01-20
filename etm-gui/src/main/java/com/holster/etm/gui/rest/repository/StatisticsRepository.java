@@ -24,7 +24,7 @@ import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 
 public class StatisticsRepository {
 
-	private final String keyspace = "etm";
+	private final String keyspace;
 	
 	private final Session session;
 
@@ -36,8 +36,9 @@ public class StatisticsRepository {
 	private final PreparedStatement selectEventExpirationDataStatement;
 	private final PreparedStatement updateMessageExpirationStatement; 
 	
-	public StatisticsRepository(Session session) {
+	public StatisticsRepository(Session session, String keyspace) {
 		this.session = session;
+		this.keyspace = keyspace;
 		this.selectTransactionPerformanceStatement = this.session.prepare("select transactionName, startTime, finishTime, expiryTime from " + this.keyspace + ".transaction_performance where transactionName_timeunit = ? and startTime >= ? and startTime <= ?");
 		this.selectMessagePerformanceStatement = this.session.prepare("select name, startTime, finishTime, expiryTime from " + this.keyspace + ".message_performance where name_timeunit = ? and startTime >= ? and startTime <= ?");
 		this.selectMessageExpirationStatement = this.session.prepare("select id, name, startTime, finishTime, expiryTime, application, name_timeunit from " + this.keyspace + ".message_expiration where name_timeunit = ? and expiryTime >= ? and expiryTime <= ?");

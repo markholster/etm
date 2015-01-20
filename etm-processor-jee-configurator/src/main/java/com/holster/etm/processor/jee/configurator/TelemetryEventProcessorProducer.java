@@ -45,8 +45,9 @@ public class TelemetryEventProcessorProducer {
 				int indexingHandlerCount = Integer.valueOf(this.configration.getProperty("etm.indexing_handler_count", "5"));
 				int persistingHandlerCount = Integer.valueOf(this.configration.getProperty("etm.persisting_handler_count", "5"));
 				int ringbufferSize = Integer.valueOf(this.configration.getProperty("etm.ringbuffer_size", "4096"));
+				String keyspace = this.configration.getProperty("cassandra.keyspace", "etm");
 				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.session, this.solrServer,
-				        ringbufferSize, enhancingHandlerCount, indexingHandlerCount, persistingHandlerCount);
+				        ringbufferSize, enhancingHandlerCount, indexingHandlerCount, persistingHandlerCount, keyspace);
 			}
 		}
 		return this.telemetryEventProcessor;

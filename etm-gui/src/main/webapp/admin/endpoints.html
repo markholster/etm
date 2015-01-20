@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Enterprise Telemetry Monitor - Endpoint configuration</title>
+<link rel="stylesheet"
+    href="../resources/styles/bootstrap-3.3.1.min.css" />
+    <script src="../resources/scripts/jquery-2.1.3.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid" style="margin-top: 0.5em;">
+	    <div class="panel panel-default">
+	        <div class="panel-body">
+	            <div class="table-responsive">
+	                <table id="endpoint_table"
+	                    class="table table-condensed table-striped table-hover">
+	                    <thead>
+	                        <tr>
+	                            <th>Endpoint</th>
+	                            <th>Direction</th>
+	                            <th>Application parsers</th>
+	                            <th>Event name parsers</th>
+	                            <th>Transaction name parsers</th>
+	                            <th>Correlation parsers</th>
+	                        </tr>
+	                    </thead>
+	                    <tbody>
+	                    </tbody>
+	                </table>
+	            </div>
+	        </div>
+	    </div>
+    </div>
+    <script>
+//<![CDATA[
+$(function () {
+    $.ajax('../rest/admin/endpoints/', { dataType: "json", success: function (data) {
+        if (data) {
+            data.sort(function(a, b){return a.name.localeCompare(b.name)});
+            $.each(data, function(index, config) {
+            	var direction = '';
+            	if (config.direction) {
+                	direction = config.direction;
+                }
+                var applicationParsers = '';
+                if (config.applicationParsers) {
+                    applicationParsers += '<ul>';
+                	$.each(config.applicationParsers, function(index, applicationParser) {
+                	    applicationParsers += '<li>' + applicationParser + '</li>';	
+                	});
+                	applicationParsers += '</ul>';
+                }
+                var eventNameParsers = '';
+                if (config.eventNameParsers) {
+                	eventNameParsers += '<ul>';
+                    $.each(config.eventNameParsers, function(index, eventNameParser) {
+                    	eventNameParsers += '<li>' + eventNameParser + '</li>'; 
+                    });
+                    eventNameParsers += '</ul>';
+                }     
+                var transactionNameParsers = '';
+                if (config.transactionNameParsers) {
+                	transactionNameParsers += '<ul>';
+                    $.each(config.transactionNameParsers, function(index, transactionNameParser) {
+                    	transactionNameParsers += '<li>' + transactionNameParser + '</li>'; 
+                    });
+                    transactionNameParsers += '</ul>';
+                }     
+                var correlationParsers = '';
+                if (config.correlationParsers) {
+                	correlationParsers += '<ul>';
+                    $.each(config.correlationParsers, function(index, correlationParser) {
+                    	correlationParsers += '<li>' + correlationParser.key + ': ' + correlationParser.value + '</li>'; 
+                    });
+                    correlationParsers += '</ul>';
+                }     
+                var rowContent = '<tr><td>' + config.name + '</td><td>' + direction + '</td><td>' + applicationParsers + '</td><td>' + eventNameParsers + '</td><td>' + transactionNameParsers + '</td><td>' + correlationParsers + '</td></tr>';  
+                $(rowContent).appendTo($('#endpoint_table > tbody'));
+            });
+        }
+    }});	
+});
+//]]>
+</script>
+</body>
+</html>

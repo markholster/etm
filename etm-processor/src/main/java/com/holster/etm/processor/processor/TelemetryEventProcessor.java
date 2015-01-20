@@ -41,7 +41,7 @@ public class TelemetryEventProcessor {
 	private IndexingEventHandler[] indexingEventHandlers;
 
 	public void start(final ExecutorService executorService, final Session session, final SolrServer solrServer, final int ringbufferSize, final int enhancingHandlerCount,
-	        final int indexingHandlerCount, final int persistingHandlerCount) {
+	        final int indexingHandlerCount, final int persistingHandlerCount, final String cassandra_keyspace) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
@@ -52,7 +52,7 @@ public class TelemetryEventProcessor {
 		
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, ringbufferSize, this.executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
-		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession, "etm");
+		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession, cassandra_keyspace);
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		this.telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations);
 		for (int i = 0; i < enhancingHandlerCount; i++) {

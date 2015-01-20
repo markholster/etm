@@ -31,7 +31,7 @@ public class QueryRepository {
 
 	private static final long CORRELATION_SELECTION_OFFSET = 30_000;
 
-	private final String keyspace = "etm";
+	private final String keyspace;
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Session session;
 	private final PreparedStatement findEventForSearchResultsStatement;
@@ -43,8 +43,9 @@ public class QueryRepository {
 	private final PreparedStatement findCorrelationsByDataStatement;
 	private final PreparedStatement findPotentialCorrelatingEventDataStatement;
 
-	public QueryRepository(Session session) {
+	public QueryRepository(Session session, String keyspace) {
 		this.session = session;
+		this.keyspace = keyspace;
 		this.findEventForSearchResultsStatement = this.session
 		        .prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from "
 		                + this.keyspace + ".telemetry_event where id = ?");
