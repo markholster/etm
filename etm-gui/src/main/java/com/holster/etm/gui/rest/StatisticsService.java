@@ -47,7 +47,7 @@ public class StatisticsService {
 	@Path("/transactions/performance/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getTransactionsPerformanceFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+	public String getTransactionsPerformanceForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
 		if (max == 0) {
 			max = 5;
 		}
@@ -64,7 +64,7 @@ public class StatisticsService {
 	@Path("/messages/performance/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getMessagesPerformanceFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+	public String getMessagesPerformanceForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
 		if (max == 0) {
 			max = 5;
 		}
@@ -81,7 +81,7 @@ public class StatisticsService {
 	@Path("/messages/epxiration/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getMessagesExpirationFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+	public String getMessagesExpirationForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
 		if (max == 0) {
 			max = 5;
 		}
@@ -98,7 +98,7 @@ public class StatisticsService {
 	@Path("/applications/count/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getApplicationsCountFromTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+	public String getApplicationsCountForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
 		if (max == 0) {
 			max = 10;
 		}
@@ -128,6 +128,21 @@ public class StatisticsService {
         values.add(incomingDatagrams);
         values.add(outgoingDatagrams);
 		writeApplicationCountStatistics(writer, applictions, serieNames, values);
+		return writer.toString();
+	}
+	
+	@GET
+	@Path("/application/{applicationName}/messages/count/{starttime}/{endtime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getApplicationMessagesCountForTimePeriod(@PathParam("applicationName") String application,
+	        @PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
+		if (startTime > endTime) {
+			return null;
+		}
+		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getApplicationMessagesCountStatistics(application, startTime, endTime, determineTimeUnit(startTime, endTime));
+		StringWriter writer = new StringWriter();
+		writeApplicationMessagesCountStatistics(writer, statistics);
 		return writer.toString();
 	}
 	
@@ -161,6 +176,36 @@ public class StatisticsService {
         		log.logErrorMessage("Unable to generate count statistics.", e);
         	}
         }		
+	}
+	
+	private void writeApplicationMessagesCountStatistics(Writer writer, Map<String, Map<Long, Long>> statistics) {
+		try {
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartArray();
+	        for (String name : statistics.keySet()) {
+	        	generator.writeStartObject();
+	        	generator.writeStringField("name", name);
+	        	generator.writeStringField("id", name);
+	        	generator.writeArrayFieldStart("data");
+	        	Map<Long, Long> values = statistics.get(name);
+	        	SortedSet<Long> keys = new TreeSet<Long>(values.keySet());
+	        	for (long time: keys) {
+	        		generator.writeStartObject();
+	        		generator.writeStringField("id", name + "_" + time);
+	        		generator.writeNumberField("x", time);
+	        		generator.writeNumberField("y", values.get(time));
+	        		generator.writeEndObject();
+	        	}
+	        	generator.writeEndArray();
+	        	generator.writeEndObject();
+	        }
+	        generator.writeEndArray();
+	        generator.close();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to generate performance statistics.", e);
+        	}
+        }
 	}
 	
 	private void writeMessagesAverageStatistics(Writer writer, Map<String, Map<Long, Average>> statistics) {

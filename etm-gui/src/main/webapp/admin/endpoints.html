@@ -35,19 +35,24 @@
     <script>
 //<![CDATA[
 $(function () {
+    var escapeToHtml = function(value) {
+        return $('<div/>').text(value).html();
+    };
+
+	
     $.ajax('../rest/admin/endpoints/', { dataType: "json", success: function (data) {
         if (data) {
             data.sort(function(a, b){return a.name.localeCompare(b.name)});
             $.each(data, function(index, config) {
             	var direction = '';
             	if (config.direction) {
-                	direction = config.direction;
+                	direction = escapeToHtml(config.direction);
                 }
                 var applicationParsers = '';
                 if (config.applicationParsers) {
                     applicationParsers += '<ul>';
                 	$.each(config.applicationParsers, function(index, applicationParser) {
-                	    applicationParsers += '<li>' + applicationParser + '</li>';	
+                	    applicationParsers += '<li>' + escapeToHtml(applicationParser) + '</li>';	
                 	});
                 	applicationParsers += '</ul>';
                 }
@@ -55,7 +60,7 @@ $(function () {
                 if (config.eventNameParsers) {
                 	eventNameParsers += '<ul>';
                     $.each(config.eventNameParsers, function(index, eventNameParser) {
-                    	eventNameParsers += '<li>' + eventNameParser + '</li>'; 
+                    	eventNameParsers += '<li>' + escapeToHtml(eventNameParser) + '</li>'; 
                     });
                     eventNameParsers += '</ul>';
                 }     
@@ -63,7 +68,7 @@ $(function () {
                 if (config.transactionNameParsers) {
                 	transactionNameParsers += '<ul>';
                     $.each(config.transactionNameParsers, function(index, transactionNameParser) {
-                    	transactionNameParsers += '<li>' + transactionNameParser + '</li>'; 
+                    	transactionNameParsers += '<li>' + escapeToHtml(transactionNameParser) + '</li>'; 
                     });
                     transactionNameParsers += '</ul>';
                 }     
@@ -71,11 +76,11 @@ $(function () {
                 if (config.correlationParsers) {
                 	correlationParsers += '<ul>';
                     $.each(config.correlationParsers, function(index, correlationParser) {
-                    	correlationParsers += '<li>' + correlationParser.key + ': ' + correlationParser.value + '</li>'; 
+                    	correlationParsers += '<li>' + escapeToHtml(correlationParser.key) + ': ' + escapeToHtml(correlationParser.value) + '</li>'; 
                     });
                     correlationParsers += '</ul>';
                 }     
-                var rowContent = '<tr><td>' + config.name + '</td><td>' + direction + '</td><td>' + applicationParsers + '</td><td>' + eventNameParsers + '</td><td>' + transactionNameParsers + '</td><td>' + correlationParsers + '</td></tr>';  
+                var rowContent = '<tr><td>' + escapeToHtml(config.name) + '</td><td>' + direction + '</td><td>' + applicationParsers + '</td><td>' + eventNameParsers + '</td><td>' + transactionNameParsers + '</td><td>' + correlationParsers + '</td></tr>';  
                 $(rowContent).appendTo($('#endpoint_table > tbody'));
             });
         }

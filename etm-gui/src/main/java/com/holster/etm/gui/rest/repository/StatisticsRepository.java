@@ -164,6 +164,11 @@ public class StatisticsRepository {
 		return data;
     }
 	
+	public Map<String, Map<Long, Long>> getApplicationMessagesCountStatistics(String application, Long startTime, Long endTime, TimeUnit timeUnit) {
+		// TODO implementation.
+	    return null;
+    }
+	
 	public List<ExpiredMessage> getMessagesExpirationStatistics(Long startTime, Long endTime, int maxExpirations) {
 		if (startTime > endTime) {
 			return Collections.emptyList();

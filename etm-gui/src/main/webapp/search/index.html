@@ -158,7 +158,7 @@ $(function () {
 	};
 	
 	var formatDate = function(date) {
-		return padNumber(date.getDate(), 2) + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getFullYear() + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
+		return padNumber(date.getFullYear() + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getDate(), 2) + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
 	};
 
     var getUrlParameter = function(paramName, defaultValue) {
@@ -173,10 +173,14 @@ $(function () {
         return defaultValue;
     };
 
+    var escapeToHtml = function(value) {
+        return $('<div/>').text(value).html();
+    };
+
     var addRow = function(event, start, max, animate) {
         var application = $.isEmptyObject(event.application) ? '' : event.application;
         var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint; 
-        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '">' + event.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + endpoint + '</div></td><td><div style="display: none;">' + event.sourceId + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
+        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '">' + escapeToHtml(event.name) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(endpoint) + '</div></td><td><div style="display: none;">' + escapeToHtml(event.sourceId) + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
         $(rowContent).appendTo($('#result_table > tbody'));
         if (animate) {
             $('#result_table > tbody > :last-child > td > div').slideDown(500);

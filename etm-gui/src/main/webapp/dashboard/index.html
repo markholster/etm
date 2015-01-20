@@ -95,6 +95,11 @@ $(function () {
         }
         return defaultValue;
     };
+
+    var escapeToHtml = function(value) {
+        return $('<div/>').text(value).html();
+    };
+    
     var timeRange = 1000 * parseInt(getUrlParameter('minutes', 3600));
     var startTime = new Date().getTime();
     startTime = Math.floor(startTime/1000)*1000;
@@ -161,7 +166,7 @@ $(function () {
             },
             tooltip: {
                 formatter: function () {
-                    return '<b>' + this.series.name + '</b><br/>' +
+                    return '<b>' + escapeToHtml(this.series.name) + '</b><br/>' +
                         Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Response time: ' +
                         Highcharts.numberFormat(this.y, 2);
                 }
@@ -235,7 +240,7 @@ $(function () {
             },
             tooltip: {
                 formatter: function () {
-                    return '<b>' + this.series.name + '</b><br/>' +
+                    return '<b>' + escapeToHtml(this.series.name) + '</b><br/>' +
                         Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Response time: ' +
                         Highcharts.numberFormat(this.y, 2);
                 }
@@ -313,7 +318,7 @@ $(function () {
             },
             tooltip: {
                 formatter: function () {
-                    return '<b>' + this.series.name + '</b><br/>' +
+                    return '<b>' + escapeToHtml(this.series.name) + '</b><br/>' +
                         Highcharts.numberFormat(this.y, 0);
                 }
             },
@@ -332,7 +337,7 @@ $(function () {
     	if (data) {
             $.each(data.reverse(), function(index, expiration) {
                 var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
-                var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + expiration.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
+                var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + escapeToHtml(expiration.name) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.startTime)) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime)) + '</div></td></tr>';  
                 $(rowContent).prependTo($('#expiry_table > tbody'));
                 $("#expiry_table > tbody > :first-child > td > div").slideDown(500);                
             });
@@ -347,7 +352,7 @@ $(function () {
                 }
                 $.each(data.reverse(), function(index, expiration) {
                 	var application = $.isEmptyObject(expiration.application) ? '' : expiration.application; 
-                    var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + expiration.name + '</a></div></td><td><div style="display: none;">' + application + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.startTime) + '</div></td><td><div style="display: none;">' + Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime) + '</div></td></tr>';  
+                    var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + escapeToHtml(expiration.name) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.startTime)) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime)) + '</div></td></tr>';  
                     $(rowContent).prependTo($('#expiry_table > tbody'));
                     $('#expiry_table > tbody > :first-child > td > div').slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
                     $('#expiry_table > tbody > :nth-child(' + expirationCountMaxResults + ')').nextAll().hide('slow', function(){ $(this).remove(); });                

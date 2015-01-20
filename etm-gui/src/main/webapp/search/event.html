@@ -161,7 +161,7 @@ $(function () {
 	};
 	    
     var formatDate = function(date) {
-        return padNumber(date.getDate(), 2) + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getFullYear() + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
+        return padNumber(date.getFullYear() + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getDate(), 2) + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
     };
 
     var setEventTabData = function(prefix, data) {
