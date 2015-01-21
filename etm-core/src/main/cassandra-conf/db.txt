@@ -138,7 +138,7 @@ create table application_event_counter (
     messageResponseTime counter,
     incomingMessageResponseTime counter,
     outgoingMessageResponseTime counter,
-    primary key (application_timeunit, eventName, timeunit, application)
+    primary key (application_timeunit, timeunit, eventName, application)
 );
 
 create table transactionname_counter (

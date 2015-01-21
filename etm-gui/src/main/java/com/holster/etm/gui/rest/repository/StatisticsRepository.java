@@ -35,7 +35,9 @@ public class StatisticsRepository {
 	private final PreparedStatement selectEventCorrelations;
 	private final PreparedStatement selectEventExpirationDataStatement;
 	private final PreparedStatement selectApplicationMessagesCountStatement;
+	private final PreparedStatement selectApplicationMessageNamesStatement;
 	private final PreparedStatement updateMessageExpirationStatement;
+	
 	 
 	
 	public StatisticsRepository(Session session, String keyspace) {
@@ -48,6 +50,7 @@ public class StatisticsRepository {
 		this.selectEventCorrelations = this.session.prepare("select correlations from " + this.keyspace + ".telemetry_event where id = ?");
 		this.selectEventExpirationDataStatement = this.session.prepare("select creationTime, type from " + this.keyspace + ".telemetry_event where id = ?");
 		this.selectApplicationMessagesCountStatement = this.session.prepare("select timeunit, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
+		this.selectApplicationMessageNamesStatement = this.session.prepare("select timeunit, eventName, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from " + this.keyspace + ".application_event_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
 		this.updateMessageExpirationStatement = this.session.prepare("update " + this.keyspace + ".message_expiration set finishTime = ? where name_timeunit = ? and expiryTime = ? and id = ?");
 	}
 	
@@ -182,10 +185,72 @@ public class StatisticsRepository {
 		}
 		for (ResultSetFuture resultSetFuture : resultSets) {
 			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			// TODO, return data.
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				long timeUnitValue = normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
+				addToDataMap(data, "Incoming request messages", timeUnitValue, row.getLong(1));
+				addToDataMap(data, "Outgoing request messages", timeUnitValue, row.getLong(2));
+				addToDataMap(data, "Incoming response messages", timeUnitValue, row.getLong(3));
+				addToDataMap(data, "Outgoing response messages", timeUnitValue, row.getLong(4));
+				addToDataMap(data, "Incoming datagram messages", timeUnitValue, row.getLong(5));
+				addToDataMap(data, "Outgoing datagram messages", timeUnitValue, row.getLong(6));
+				
+			}
 		}
 	    return data;
     }
+	
+	public Map<String, Map<Long, Long>> getApplicationMessageNamesStatistics(String application, Long startTime, Long endTime, TimeUnit timeUnit) {
+		if (startTime > endTime) {
+			return Collections.emptyMap();
+		}
+		List<String> applicationNames = getApplicationNames(startTime, endTime);
+		if (applicationNames.size() == 0) {
+			return Collections.emptyMap();
+		}
+		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+		for (String applicationName : applicationNames) {
+			resultSets.add(this.session.executeAsync(this.selectApplicationMessageNamesStatement.bind(applicationName, new Date(startTime), new Date(endTime))));
+		}
+		for (ResultSetFuture resultSetFuture : resultSets) {
+//			ResultSet resultSet = resultSetFuture.getUninterruptibly();
+//			Iterator<Row> iterator = resultSet.iterator();
+//			while (iterator.hasNext()) {
+//				Row row = iterator.next();
+//				long timeUnitValue = normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
+//				addToDataMap(data, "Incoming request messages", timeUnitValue, row.getLong(1));
+//				addToDataMap(data, "Outgoing request messages", timeUnitValue, row.getLong(2));
+//				addToDataMap(data, "Incoming response messages", timeUnitValue, row.getLong(3));
+//				addToDataMap(data, "Outgoing response messages", timeUnitValue, row.getLong(4));
+//				addToDataMap(data, "Incoming datagram messages", timeUnitValue, row.getLong(5));
+//				addToDataMap(data, "Outgoing datagram messages", timeUnitValue, row.getLong(6));
+//				
+//			}
+		}
+	    return data;
+    }
+	
+	private void addToDataMap(Map<String, Map<Long, Long>> data, String key, Long timeUnitValue, Long count) {
+		if (count == 0) {
+			return;
+		}
+		if (!data.containsKey(key)) {
+			Map<Long, Long> values = new HashMap<Long, Long>();
+			values.put(timeUnitValue, new Long(count));
+			data.put(key, values);
+		} else {
+			Map<Long, Long> values = data.get(key);
+			if (!values.containsKey(timeUnitValue)) {
+				values.put(timeUnitValue, new Long(count));
+			} else {
+				Long currentValue = values.get(timeUnitValue);
+				values.put(timeUnitValue, new Long(currentValue + count));
+			}
+		}
+		
+	}
 	
 	public List<ExpiredMessage> getMessagesExpirationStatistics(Long startTime, Long endTime, int maxExpirations) {
 		if (startTime > endTime) {

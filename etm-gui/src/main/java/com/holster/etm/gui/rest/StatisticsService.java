@@ -146,6 +146,21 @@ public class StatisticsService {
 		return writer.toString();
 	}
 	
+	@GET
+	@Path("/application/{applicationName}/messagenames/count/{starttime}/{endtime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getApplicationMessageNamesForTimePeriod(@PathParam("applicationName") String application,
+	        @PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
+		if (startTime > endTime) {
+			return null;
+		}
+		Map<String, Map<Long, Long>> statistics = this.statisticsRepository.getApplicationMessageNamesStatistics(application, startTime, endTime, determineTimeUnit(startTime, endTime));
+		StringWriter writer = new StringWriter();
+		writeApplicationMessagesCountStatistics(writer, statistics);
+		return writer.toString();
+	}
+	
 	private void writeApplicationCountStatistics(Writer writer, List<String> categories, List<String> serieNames, List<List<Long>>values) {
 		try {
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
