@@ -150,7 +150,7 @@ public class QueryRepository {
 				OverviewEvent overviewEvent = timeFrame.overviewEvents[i];
 				if (overviewEvent != null) {
 					generator.writeStringField("application", overviewEvent.application);
-					generator.writeStringField("eventName", overviewEvent.name);
+					generator.writeStringField("eventName", overviewEvent.name == null ? "?" : overviewEvent.name);
 					generator.writeStringField("id", overviewEvent.id.toString());
 					generator.writeStringField("endpoint", overviewEvent.endpoint);
 					generator.writeStringField("color", overviewEvent.color);

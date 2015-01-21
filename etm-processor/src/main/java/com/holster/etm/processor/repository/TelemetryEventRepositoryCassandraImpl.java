@@ -41,6 +41,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		if (event.sourceId != null) {
 			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
 			this.statementExecutor.insertSourceIdCorrelationData(event, false);
+			// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (!event.correlationData.isEmpty()) {
