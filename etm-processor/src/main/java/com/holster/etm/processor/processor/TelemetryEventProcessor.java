@@ -51,7 +51,7 @@ public class TelemetryEventProcessor {
 		this.solrServer = solrServer;
 		
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, ringbufferSize, this.executorService, ProducerType.MULTI, new SleepingWaitStrategy());
-		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
+		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(this.sourceCorrelations));
 		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession, cassandra_keyspace);
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		this.telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations);
