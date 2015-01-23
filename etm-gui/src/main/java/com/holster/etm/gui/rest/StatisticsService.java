@@ -78,7 +78,7 @@ public class StatisticsService {
 	}
 	
 	@GET
-	@Path("/messages/epxiration/{starttime}/{endtime}")
+	@Path("/messages/expiration/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getMessagesExpirationForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
@@ -145,6 +145,40 @@ public class StatisticsService {
 		writeApplicationMessagesCountStatistics(writer, statistics);
 		return writer.toString();
 	}
+	
+	@GET
+	@Path("/application/{applicationName}/messages/performance/{starttime}/{endtime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getApplicationMessagesPerformanceForTimePeriod(@PathParam("applicationName") String application,
+	        @PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime) {
+		if (startTime > endTime) {
+			return null;
+		}
+		Map<String, Map<Long, Average>> statistics = this.statisticsRepository.getApplicationMessagesPerformanceStatistics(application, startTime, endTime, determineTimeUnit(startTime, endTime));
+		StringWriter writer = new StringWriter();
+		writeMessagesAverageStatistics(writer, statistics);
+		return writer.toString();
+	}
+	
+	@GET
+	@Path("/application/{applicationName}/messages/expiration/{starttime}/{endtime}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getApplicationMessagesExpirationForTimePeriod(@PathParam("applicationName") String application,
+	        @PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+		if (max == 0) {
+			max = 5;
+		}
+		if (startTime > endTime) {
+			return null;
+		}
+		List<ExpiredMessage> statistics = this.statisticsRepository.getApplicationMessagesExpirationStatistics(application, startTime, endTime, max);
+		StringWriter writer = new StringWriter();
+		writeMessagesExpirationStatistics(writer, statistics);
+		return writer.toString();
+	}
+
 	
 	@GET
 	@Path("/application/{applicationName}/messagenames/count/{starttime}/{endtime}")

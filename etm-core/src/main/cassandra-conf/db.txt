@@ -29,6 +29,7 @@ create table transaction_performance (
     transactionName text,
     expiryTime timestamp,
     finishTime timestamp,
+    application text,
     primary key (transactionName_timeunit, startTime, transactionId)
 );
 
@@ -39,6 +40,7 @@ create table message_performance (
     name text,
     expiryTime timestamp,
     finishTime timestamp,
+    application text,
     primary key (name_timeunit, startTime, id)
 );
 
@@ -56,8 +58,9 @@ create table message_expiration (
 create table event_occurrences (
     timeunit timestamp,
     type text,
+    name_timeframe text,
     name text,
-    primary key (timeunit, type, name)
+    primary key (timeunit, type, name_timeframe)
 );
 
 create table sourceid_id_correlation (
@@ -138,7 +141,7 @@ create table application_event_counter (
     messageResponseTime counter,
     incomingMessageResponseTime counter,
     outgoingMessageResponseTime counter,
-    primary key (application_timeunit, timeunit, eventName, application)
+    primary key (application_timeunit, timeunit, application, eventName)
 );
 
 create table transactionname_counter (

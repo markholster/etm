@@ -22,6 +22,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 
+//TODO cleanup duplicate code.
 public class StatisticsRepository {
 
 	private final String keyspace;
@@ -44,13 +45,13 @@ public class StatisticsRepository {
 		this.session = session;
 		this.keyspace = keyspace;
 		this.selectTransactionPerformanceStatement = this.session.prepare("select transactionName, startTime, finishTime, expiryTime from " + this.keyspace + ".transaction_performance where transactionName_timeunit = ? and startTime >= ? and startTime <= ?");
-		this.selectMessagePerformanceStatement = this.session.prepare("select name, startTime, finishTime, expiryTime from " + this.keyspace + ".message_performance where name_timeunit = ? and startTime >= ? and startTime <= ?");
+		this.selectMessagePerformanceStatement = this.session.prepare("select name, startTime, finishTime, expiryTime, application from " + this.keyspace + ".message_performance where name_timeunit = ? and startTime >= ? and startTime <= ?");
 		this.selectMessageExpirationStatement = this.session.prepare("select id, name, startTime, finishTime, expiryTime, application, name_timeunit from " + this.keyspace + ".message_expiration where name_timeunit = ? and expiryTime >= ? and expiryTime <= ?");
 		this.selectApplicationCountsStatement = this.session.prepare("select application, incomingMessageRequestCount, incomingMessageDatagramCount, outgoingMessageRequestCount, outgoingMessageDatagramCount from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
 		this.selectEventCorrelations = this.session.prepare("select correlations from " + this.keyspace + ".telemetry_event where id = ?");
 		this.selectEventExpirationDataStatement = this.session.prepare("select creationTime, type from " + this.keyspace + ".telemetry_event where id = ?");
 		this.selectApplicationMessagesCountStatement = this.session.prepare("select timeunit, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
-		this.selectApplicationMessageNamesStatement = this.session.prepare("select timeunit, eventName, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from " + this.keyspace + ".application_event_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
+		this.selectApplicationMessageNamesStatement = this.session.prepare("select timeunit, eventName, count from " + this.keyspace + ".application_event_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
 		this.updateMessageExpirationStatement = this.session.prepare("update " + this.keyspace + ".message_expiration set finishTime = ? where name_timeunit = ? and expiryTime = ? and id = ?");
 	}
 	
@@ -58,7 +59,7 @@ public class StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> transactionNames = getTransactionNames(startTime, endTime);
+		List<String> transactionNames = getTransactionNameTimeframes(startTime, endTime);
 		if (transactionNames.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -93,19 +94,7 @@ public class StatisticsRepository {
 						highest.put(transactionName, responseTime);
 					}
 				}
-				if (!data.containsKey(transactionName)) {
-					Map<Long, Average> values = new HashMap<Long, Average>();
-					values.put(timeUnitValue, new Average(responseTime));
-					data.put(transactionName, values);
-				} else {
-					Map<Long, Average> values = data.get(transactionName);
-					if (!values.containsKey(timeUnitValue)) {
-						values.put(timeUnitValue, new Average(responseTime));
-					} else {
-						Average currentValue = values.get(timeUnitValue);
-						currentValue.add(responseTime);
-					}
-				}
+				addToTimeBasedAverageDataMap(data, transactionName, timeUnitValue, responseTime);
 			}
 		}
 		filterAveragesToMaxResults(maxTransactions, highest, data);
@@ -116,7 +105,7 @@ public class StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> messageNames = getMessageNames(startTime, endTime);
+		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
 		if (messageNames.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -151,19 +140,7 @@ public class StatisticsRepository {
 						highest.put(messageName, responseTime);
 					}
 				}
-				if (!data.containsKey(messageName)) {
-					Map<Long, Average> values = new HashMap<Long, Average>();
-					values.put(timeUnitValue, new Average(responseTime));
-					data.put(messageName, values);
-				} else {
-					Map<Long, Average> values = data.get(messageName);
-					if (!values.containsKey(timeUnitValue)) {
-						values.put(timeUnitValue, new Average(responseTime));
-					} else {
-						Average currentValue = values.get(timeUnitValue);
-						currentValue.add(responseTime);
-					}
-				}
+				addToTimeBasedAverageDataMap(data, messageName, timeUnitValue, responseTime);
 			}		
 		}
 		filterAveragesToMaxResults(maxMessages, highest, data);
@@ -174,7 +151,7 @@ public class StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> applicationNames = getApplicationNames(startTime, endTime);
+		List<String> applicationNames = getApplicationNameTimeframes(application, startTime, endTime);
 		if (applicationNames.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -189,23 +166,74 @@ public class StatisticsRepository {
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
 				long timeUnitValue = normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
-				addToDataMap(data, "Incoming request messages", timeUnitValue, row.getLong(1));
-				addToDataMap(data, "Outgoing request messages", timeUnitValue, row.getLong(2));
-				addToDataMap(data, "Incoming response messages", timeUnitValue, row.getLong(3));
-				addToDataMap(data, "Outgoing response messages", timeUnitValue, row.getLong(4));
-				addToDataMap(data, "Incoming datagram messages", timeUnitValue, row.getLong(5));
-				addToDataMap(data, "Outgoing datagram messages", timeUnitValue, row.getLong(6));
+				addToTimeBasedCounterDataMap(data, "Incoming request messages", timeUnitValue, row.getLong(1));
+				addToTimeBasedCounterDataMap(data, "Outgoing request messages", timeUnitValue, row.getLong(2));
+				addToTimeBasedCounterDataMap(data, "Incoming response messages", timeUnitValue, row.getLong(3));
+				addToTimeBasedCounterDataMap(data, "Outgoing response messages", timeUnitValue, row.getLong(4));
+				addToTimeBasedCounterDataMap(data, "Incoming datagram messages", timeUnitValue, row.getLong(5));
+				addToTimeBasedCounterDataMap(data, "Outgoing datagram messages", timeUnitValue, row.getLong(6));
 				
 			}
 		}
 	    return data;
     }
 	
+	public Map<String, Map<Long, Average>> getApplicationMessagesPerformanceStatistics(String application, Long startTime, Long endTime, TimeUnit timeUnit) {
+		if (startTime > endTime) {
+			return Collections.emptyMap();
+		}
+		if (application == null) {
+			return Collections.emptyMap();
+		}
+		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
+		if (messageNames.size() == 0) {
+			return Collections.emptyMap();
+		}
+		final Map<String, Long> highest = new HashMap<String, Long>();
+		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+		for (String messageName : messageNames) {
+			resultSets.add(this.session.executeAsync(this.selectMessagePerformanceStatement.bind(messageName, new Date(startTime), new Date(endTime))));
+		}
+		for (ResultSetFuture resultSetFuture : resultSets) {
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				if (!application.equals(row.getString(4))) {
+					continue;
+				}
+				String messageName = row.getString(0);
+				if (messageName == null) {
+					continue;
+				}
+				Date messageStartTime = row.getDate(1);
+				Date messageFinishTime = row.getDate(2);
+				Date messageExpiryTime = row.getDate(3);
+				long timeUnitValue = normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
+				long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
+				if (responseTime == -1) {
+						continue;
+				}
+				if (!highest.containsKey(messageName)) {
+					highest.put(messageName, responseTime);
+				} else {
+					Long currentValue = highest.get(messageName);
+					if (responseTime > currentValue) {
+						highest.put(messageName, responseTime);
+					}
+				}
+				addToTimeBasedAverageDataMap(data, messageName, timeUnitValue, responseTime);
+			}		
+		}
+		return data;
+    }
+	
 	public Map<String, Map<Long, Long>> getApplicationMessageNamesStatistics(String application, Long startTime, Long endTime, TimeUnit timeUnit) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> applicationNames = getApplicationNames(startTime, endTime);
+		List<String> applicationNames = getApplicationNameTimeframes(application, startTime, endTime);
 		if (applicationNames.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -215,48 +243,100 @@ public class StatisticsRepository {
 			resultSets.add(this.session.executeAsync(this.selectApplicationMessageNamesStatement.bind(applicationName, new Date(startTime), new Date(endTime))));
 		}
 		for (ResultSetFuture resultSetFuture : resultSets) {
-//			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-//			Iterator<Row> iterator = resultSet.iterator();
-//			while (iterator.hasNext()) {
-//				Row row = iterator.next();
-//				long timeUnitValue = normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
-//				addToDataMap(data, "Incoming request messages", timeUnitValue, row.getLong(1));
-//				addToDataMap(data, "Outgoing request messages", timeUnitValue, row.getLong(2));
-//				addToDataMap(data, "Incoming response messages", timeUnitValue, row.getLong(3));
-//				addToDataMap(data, "Outgoing response messages", timeUnitValue, row.getLong(4));
-//				addToDataMap(data, "Incoming datagram messages", timeUnitValue, row.getLong(5));
-//				addToDataMap(data, "Outgoing datagram messages", timeUnitValue, row.getLong(6));
-//				
-//			}
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				long timeUnitValue = normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
+				String eventName = row.getString(1);
+				addToTimeBasedCounterDataMap(data, eventName, timeUnitValue, row.getLong(2));
+			}
 		}
 	    return data;
     }
 	
-	private void addToDataMap(Map<String, Map<Long, Long>> data, String key, Long timeUnitValue, Long count) {
-		if (count == 0) {
-			return;
+	public List<ExpiredMessage> getApplicationMessagesExpirationStatistics(String application, Long startTime, Long endTime, int maxExpirations) {
+		if (startTime > endTime) {
+			return Collections.emptyList();
 		}
-		if (!data.containsKey(key)) {
-			Map<Long, Long> values = new HashMap<Long, Long>();
-			values.put(timeUnitValue, new Long(count));
-			data.put(key, values);
-		} else {
-			Map<Long, Long> values = data.get(key);
-			if (!values.containsKey(timeUnitValue)) {
-				values.put(timeUnitValue, new Long(count));
-			} else {
-				Long currentValue = values.get(timeUnitValue);
-				values.put(timeUnitValue, new Long(currentValue + count));
+		if (application == null) {
+			return Collections.emptyList();
+		}
+		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
+		if (messageNames.size() == 0) {
+			return Collections.emptyList();
+		}
+		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
+		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+		for (String messageName : messageNames) {
+			resultSets.add(this.session.executeAsync(this.selectMessageExpirationStatement.bind(messageName, new Date(startTime), new Date(endTime))));
+		}
+		for (ResultSetFuture resultSetFuture : resultSets) {
+			ResultSet resultSet = resultSetFuture.getUninterruptibly();
+			Iterator<Row> iterator = resultSet.iterator();
+			while (iterator.hasNext()) {
+				Row row = iterator.next();
+				UUID id = row.getUUID(0);
+				if (id == null) {
+					continue;
+				}
+				if (!application.equals(row.getString(5))) {
+					continue;
+				}
+				String messageName = row.getString(1);
+				if (messageName == null) {
+					messageName = "undefined";
+				}
+				Date messageStartTime = row.getDate(2);
+				Date messageFinishTime = row.getDate(3);
+				Date messageExpiryTime = row.getDate(4);
+				String rowKey = row.getString(6);
+				if (messageFinishTime == null || messageFinishTime.getTime() == 0) {
+					Row eventRow = this.session.execute(this.selectEventCorrelations.bind(id)).one();
+					if (eventRow != null) {
+						List<UUID> childIds = eventRow.getList(0, UUID.class);
+						if (childIds != null) {
+							for (UUID childId : childIds) {
+								Row childRow = this.session.execute(this.selectEventExpirationDataStatement.bind(childId)).one();
+								if (childRow != null) {
+									TelemetryEventType type = null;
+									try {
+										type = TelemetryEventType.valueOf(childRow.getString(1));
+									} catch (Exception e) {
+										continue;
+									}
+									if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
+										// False positive, update the expiration table
+										messageFinishTime = childRow.getDate(0);
+										this.session.executeAsync(this.updateMessageExpirationStatement.bind(messageFinishTime, rowKey, messageExpiryTime, id));
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
+					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
+						synchronized (expiredMessages) {
+							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
+                        }
+					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
+						synchronized (expiredMessages) {
+							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
+                        }
+					}
+				}
 			}
 		}
-		
-	}
+		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());
+    }
 	
 	public List<ExpiredMessage> getMessagesExpirationStatistics(Long startTime, Long endTime, int maxExpirations) {
 		if (startTime > endTime) {
 			return Collections.emptyList();
 		}
-		List<String> messageNames = getMessageNames(startTime, endTime);
+		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
 		if (messageNames.size() == 0) {
 			return Collections.emptyList();
 		}
@@ -328,7 +408,7 @@ public class StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> applicationNames = getApplicationNames(startTime, endTime);
+		List<String> applicationNames = getApplicationNameTimeframes(startTime, endTime);
 		if (applicationNames.size() == 0) {
 			return Collections.emptyMap();
 		}
@@ -420,6 +500,41 @@ public class StatisticsRepository {
 		}
 	}
 	
+	private void addToTimeBasedCounterDataMap(Map<String, Map<Long, Long>> data, String key, Long timeUnitValue, Long count) {
+		if (count == 0) {
+			return;
+		}
+		if (!data.containsKey(key)) {
+			Map<Long, Long> values = new HashMap<Long, Long>();
+			values.put(timeUnitValue, new Long(count));
+			data.put(key, values);
+		} else {
+			Map<Long, Long> values = data.get(key);
+			if (!values.containsKey(timeUnitValue)) {
+				values.put(timeUnitValue, new Long(count));
+			} else {
+				Long currentValue = values.get(timeUnitValue);
+				values.put(timeUnitValue, new Long(currentValue + count));
+			}
+		}		
+	}
+	
+	private void addToTimeBasedAverageDataMap(Map<String, Map<Long, Average>> data, String key, Long timeUnitValue, Long responseTime) {
+		if (!data.containsKey(key)) {
+			Map<Long, Average> values = new HashMap<Long, Average>();
+			values.put(timeUnitValue, new Average(responseTime));
+			data.put(key, values);
+		} else {
+			Map<Long, Average> values = data.get(key);
+			if (!values.containsKey(timeUnitValue)) {
+				values.put(timeUnitValue, new Average(responseTime));
+			} else {
+				Average currentValue = values.get(timeUnitValue);
+				currentValue.add(responseTime);
+			}
+		}
+	}
+	
 	private long determineResponseTime(Date startTime, Date finishTime, Date expiryTime) {
 		if (finishTime != null && finishTime.getTime() != 0) {
 			return finishTime.getTime() - startTime.getTime(); 
@@ -436,8 +551,8 @@ public class StatisticsRepository {
 		return -1;
 	}
 	
-	private List<String> getTransactionNames(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
+	private List<String> getTransactionNameTimeframes(long startTime, long endTime) {
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
 		List<String> transactionNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
@@ -451,8 +566,8 @@ public class StatisticsRepository {
 		return transactionNames;
 	}
 	
-	private List<String> getMessageNames(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
+	private List<String> getMessageNameTimeframes(long startTime, long endTime) {
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
 		List<String> eventNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
@@ -466,8 +581,8 @@ public class StatisticsRepository {
 		return eventNames;
 	}
 	
-	private List<String> getApplicationNames(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineHours(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
+	private List<String> getApplicationNameTimeframes(long startTime, long endTime) {
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
 		List<String> eventNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
@@ -481,7 +596,22 @@ public class StatisticsRepository {
 		return eventNames;
 	}
 	
-	private List<Object> determineHours(long startTime, long endTime) {
+	private List<String> getApplicationNameTimeframes(String applicationName, long startTime, long endTime) {
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe", "name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
+		List<String> eventNames = new ArrayList<String>();
+		ResultSet resultSet = this.session.execute(builtStatement);
+		Iterator<Row> iterator = resultSet.iterator();
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			String name = row.getString(0);
+			if (!eventNames.contains(name) && applicationName.equals(row.getString(1))) {
+				eventNames.add(name);
+			}
+		}
+		return eventNames;
+	}
+	
+	private List<Object> determineTimeFrame(long startTime, long endTime) {
 	    Calendar startCalendar = Calendar.getInstance();
 	    Calendar endCalendar = Calendar.getInstance();
 	    startCalendar.setTimeInMillis(startTime);
@@ -498,4 +628,6 @@ public class StatisticsRepository {
 	private long normalizeTime(long timeInMillis, long factor) {
 		return (timeInMillis / factor) * factor;
     }
+
+
 }

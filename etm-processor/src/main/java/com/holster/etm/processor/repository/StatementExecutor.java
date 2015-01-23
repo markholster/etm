@@ -103,14 +103,16 @@ public class StatementExecutor {
 		this.insertEventOccurrenceStatement = session.prepare("insert into " + keySpace + ".event_occurrences ("
 				+ "timeunit, "
 				+ "type, "
+				+ "name_timeframe,"
 				+ "name"
-				+ ") values (?,?,?);");
+				+ ") values (?,?,?,?);");
 		this.insertTransactionEventStartStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
 				+ "transactionName_timeunit, "
 				+ "transactionId,"
 				+ "transactionName,  "
 				+ "startTime, "
-				+ "expiryTime) values (?, ?, ?, ?, ?);");
+				+ "expiryTime, "
+				+ "application) values (?, ?, ?, ?, ?, ?);");
 		this.insertTransactionEventFinishStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
 				+ "transactionName_timeunit, "
 				+ "transactionId, "
@@ -121,7 +123,8 @@ public class StatementExecutor {
 				+ "id, "
 				+ "name, "
 				+ "startTime, "
-				+ "expiryTime) values (?, ?, ?, ?, ?);");
+				+ "expiryTime, "
+				+ "application) values (?, ?, ?, ?, ?, ?);");
 		this.insertMessageEventPerformanceFinishStatement = session.prepare("insert into " + keySpace + ".message_performance ("
 				+ "name_timeunit, "
 				+ "id, "
@@ -261,11 +264,12 @@ public class StatementExecutor {
 		}
 	}
 	
-	public void insertEventOccurence(final Date timestamp, final String occurrenceName, final String occurrenceValue, boolean async) {
+	public void insertEventOccurence(final Date timestamp, final String occurrenceName, final String occurrenceValue, final String originalName, boolean async) {
 		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertEventOccurrenceStatement.bind(
 				timestamp, 
 				occurrenceName, 
-				occurrenceValue));
+				occurrenceValue,
+				originalName));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
@@ -277,7 +281,8 @@ public class StatementExecutor {
 				event.transactionId,
 				event.transactionName,
 		        event.creationTime, 
-		        event.expiryTime));
+		        event.expiryTime,
+		        event.application));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
@@ -300,7 +305,8 @@ public class StatementExecutor {
 				event.id, 
 				event.name,
 		        event.creationTime, 
-		        event.expiryTime));
+		        event.expiryTime,
+		        event.application));
 		if (!async) {
 			resultSetFuture.getUninterruptibly();
 		}
