@@ -10,12 +10,22 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import com.holster.etm.core.logging.LogFactory;
+import com.holster.etm.core.logging.LogWrapper;
+
 public class XsltExpressionParser implements ExpressionParser {
 	
-	private final Transformer transformer;
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(XsltExpressionParser.class);
 	
-	public XsltExpressionParser(TransformerFactory transformerFactory, String xslt) throws TransformerConfigurationException {
-		this.transformer = transformerFactory.newTransformer(new StreamSource(new StringReader(xslt)));
+	private final Transformer transformer;
+	private final String template;
+	
+	public XsltExpressionParser(TransformerFactory transformerFactory, String template) throws TransformerConfigurationException {
+		this.transformer = transformerFactory.newTransformer(new StreamSource(new StringReader(template)));
+		this.template = template;
     }
 
 	@Override
@@ -28,7 +38,9 @@ public class XsltExpressionParser implements ExpressionParser {
 	        this.transformer.transform(new StreamSource(new StringReader(content)), new StreamResult(writer));
 	        return writer.toString();
         } catch (TransformerException e) {
-        	// TODO logging
+        	if (log.isDebugLevelEnabled()) {
+        		log.logDebugMessage("XSLT template '" + this.template+ "' could not be applied on content '" + content + "'.", e);
+        	}
         	return null;
         }
     }

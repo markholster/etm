@@ -24,7 +24,6 @@ public class AdminService {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(AdminService.class);
-
 	
 	@Inject
 	private AdminRepository adminRepository;
