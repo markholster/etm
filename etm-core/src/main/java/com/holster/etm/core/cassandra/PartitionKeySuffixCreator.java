@@ -13,6 +13,7 @@ public class PartitionKeySuffixCreator extends SimpleDateFormat {
 	 */
     private static final long serialVersionUID = 8202775484176243127L;
     
+    // TODO this properties should be stored in EtmConfiguration
     public static final int SMALLEST_CALENDAR_UNIT = Calendar.HOUR_OF_DAY;
     public static final TimeUnit SMALLEST_TIMUNIT_UNIT = TimeUnit.HOURS;
 
@@ -25,4 +26,5 @@ public class PartitionKeySuffixCreator extends SimpleDateFormat {
 		toAppendTo.append("-");
 	    return super.format(date, toAppendTo, pos);
 	}
+	
 }

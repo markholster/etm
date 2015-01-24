@@ -25,13 +25,19 @@ import com.datastax.driver.core.Session;
 import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
+import com.holster.etm.core.configuration.EtmConfiguration;
+import com.holster.etm.core.logging.LogFactory;
+import com.holster.etm.core.logging.LogWrapper;
 import com.holster.etm.core.util.ObjectUtils;
 
 public class QueryRepository {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(QueryRepository.class);
 
-	private static final long CORRELATION_SELECTION_OFFSET = 30_000;
-
-	private final String keyspace;
+	private final EtmConfiguration etmConfiguration;
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Session session;
 	private final PreparedStatement findEventForSearchResultsStatement;
@@ -43,29 +49,30 @@ public class QueryRepository {
 	private final PreparedStatement findCorrelationsByDataStatement;
 	private final PreparedStatement findPotentialCorrelatingEventDataStatement;
 
-	public QueryRepository(Session session, String keyspace) {
+	public QueryRepository(Session session, EtmConfiguration etmConfiguration) {
 		this.session = session;
-		this.keyspace = keyspace;
+		this.etmConfiguration = etmConfiguration;
+		final String keyspace = etmConfiguration.getCassandraKeyspace();
 		this.findEventForSearchResultsStatement = this.session
 		        .prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from "
-		                + this.keyspace + ".telemetry_event where id = ?");
+		                + keyspace + ".telemetry_event where id = ?");
 		this.findEventForDetailsStatement = this.session
 		        .prepare("select application, content, correlationId, correlations, creationTime, direction, endpoint, expiryTime, name, sourceCorrelationId, sourceId, transactionId, transactionName, type from "
-		                + this.keyspace + ".telemetry_event where id = ?");
-		this.findEventParentIdStatement = this.session.prepare("select correlationId from " + this.keyspace
+		                + keyspace + ".telemetry_event where id = ?");
+		this.findEventParentIdStatement = this.session.prepare("select correlationId from " + keyspace
 		        + ".telemetry_event where id = ?");
 		this.findOverviewEventStatement = this.session
 		        .prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from "
-		                + this.keyspace + ".telemetry_event where id = ?");
+		                + keyspace + ".telemetry_event where id = ?");
 		this.findCorrelationDataStatement = this.session
-		        .prepare("select application, correlationData, correlations, creationTime, expiryTime, type from " + this.keyspace
+		        .prepare("select application, correlationData, correlations, creationTime, expiryTime, type from " + keyspace
 		                + ".telemetry_event where id = ?");
-		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from " + this.keyspace
+		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from " + keyspace
 		        + ".telemetry_event where id = ?");
-		this.findCorrelationsByDataStatement = this.session.prepare("select id, timeunit from " + this.keyspace
+		this.findCorrelationsByDataStatement = this.session.prepare("select id, timeunit from " + keyspace
 		        + ".correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit >= ? and timeunit <= ?");
 		this.findPotentialCorrelatingEventDataStatement = this.session.prepare("select creationTime, correlations, expiryTime, type from "
-		        + this.keyspace + ".telemetry_event where id = ?");
+		        + keyspace + ".telemetry_event where id = ?");
 	}
 
 	public void addEvents(SolrDocumentList results, JsonGenerator generator) throws JsonGenerationException, IOException {
@@ -381,7 +388,7 @@ public class QueryRepository {
 		if (correlationData == null || correlationData.data.size() == 0) {
 			return null;
 		}
-		Date startQueryDate = new Date(correlationData.validFrom.getTime() - CORRELATION_SELECTION_OFFSET);
+		Date startQueryDate = new Date(correlationData.validFrom.getTime() - this.etmConfiguration.getDataCorrelationTimeOffset());
 		if (considerdataFrom != null) {
 			startQueryDate.setTime(considerdataFrom.getTime());
 		}
@@ -562,7 +569,7 @@ public class QueryRepository {
 			return result;
 		}
 		if (TelemetryEventType.MESSAGE_DATAGRAM.equals(correlationData.type)) {
-			correlationData.validTill.setTime(correlationData.validTill.getTime() + CORRELATION_SELECTION_OFFSET);
+			correlationData.validTill.setTime(correlationData.validTill.getTime() + this.etmConfiguration.getDataCorrelationTimeOffset());
 		}
 		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationData.data, correlationData.validFrom,
 		        correlationData.validTill);
@@ -629,7 +636,6 @@ public class QueryRepository {
 	private List<CorrelationResult> getCorrelationResults(UUID eventId, Map<String, String> correlationData, Date startTime, Date finishTime) {
 		List<String> dateSuffixes = determineDateSuffixes(startTime, finishTime);
 		List<CorrelationResult> correlatingResults = new ArrayList<CorrelationResult>();
-		final int maxCorrelations = 100;
 		for (String correlationKey : correlationData.keySet()) {
 			// Create the keys
 			for (String suffix : dateSuffixes) {
@@ -642,8 +648,10 @@ public class QueryRepository {
 					if (correlationId.equals(eventId)) {
 						continue;
 					}
-					if (correlatingResults.size() > maxCorrelations) {
-						// TODO Loggin -> way to much results. There's correlated on a wrong entity.
+					if (correlatingResults.size() > this.etmConfiguration.getDataCorrelationMax()) {
+						if (log.isWarningLevelEnabled()) {
+							log.logWarningMessage("Found more than " + this.etmConfiguration.getDataCorrelationMax() + " data correlations. Stop looking for more results. Overview may be incorrect.");
+						}
 						break;
 					}
 					CorrelationResult correlationResult = new CorrelationResult(correlationId, row.getDate(1));

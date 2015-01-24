@@ -1,13 +1,12 @@
 package com.holster.etm.gui.rest.repository;
 
-import java.util.Properties;
-
 import javax.annotation.ManagedBean;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
@@ -20,27 +19,17 @@ public class RepositoryProducer {
 	
 	@GuiConfiguration
 	@Inject
-	private Properties configuration;
+	private EtmConfiguration configuration;
 	
-	private String keyspace;
 	private StatisticsRepository statisticsRepository;
 	private QueryRepository queryRepository;
 	private AdminRepository adminRepository;
-	
-	
-	private String getKeyspace() {
-		if (this.keyspace == null) {
-			this.keyspace = this.configuration.getProperty("cassandra.keyspace", "etm");
-		}
-		return this.keyspace;
-	}
-	
 
 	@Produces
 	public StatisticsRepository getStatisticsRepository() {
 		synchronized (this) {
 	        if (this.statisticsRepository == null) {
-	        	this.statisticsRepository = new StatisticsRepository(this.session, getKeyspace());
+	        	this.statisticsRepository = new StatisticsRepository(this.session, this.configuration.getCassandraKeyspace());
 	        }
         }
 		return this.statisticsRepository;
@@ -50,7 +39,7 @@ public class RepositoryProducer {
 	public QueryRepository getQueryRepository() {
 		synchronized (this) {
 	        if (this.queryRepository == null) {
-	        	this.queryRepository = new QueryRepository(this.session, getKeyspace());
+	        	this.queryRepository = new QueryRepository(this.session, this.configuration);
 	        }
         }
 		return this.queryRepository;
@@ -60,7 +49,7 @@ public class RepositoryProducer {
 	public AdminRepository getAdminRepository() {
 		synchronized (this) {
 	        if (this.adminRepository == null) {
-	        	this.adminRepository = new AdminRepository(this.session, getKeyspace());
+	        	this.adminRepository = new AdminRepository(this.session, this.configuration.getCassandraKeyspace());
 	        }
         }
 		return this.adminRepository;

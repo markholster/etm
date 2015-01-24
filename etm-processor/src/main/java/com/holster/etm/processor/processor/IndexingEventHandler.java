@@ -9,11 +9,18 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 
+import com.holster.etm.core.logging.LogFactory;
+import com.holster.etm.core.logging.LogWrapper;
 import com.holster.etm.processor.TelemetryEvent;
 import com.lmax.disruptor.EventHandler;
 
 public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Closeable {
 
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(IndexingEventHandler.class);
+	
 	private final int nrOfDocumentsPerRequest = 50;
 	private final SolrServer server;
 	private final long ordinal;
@@ -97,7 +104,9 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 			try {
 	            this.server.add(this.documents.subList(0, this.docIx + 1), 60000);
             } catch (SolrServerException e) {
-	            // TODO error handling
+	            if (log.isErrorLevelEnabled()) {
+	            	log.logErrorMessage("Unable to add documents to indexer.", e);
+	            }
             }
 		}
     }

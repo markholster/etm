@@ -54,4 +54,12 @@ public class EtmConfiguration extends Properties {
 	public TimeUnit getStatisticsTimeUnit() {
 		return TimeUnit.valueOf(super.getProperty("etm.statistics_timeunit", "MINUTES"));
 	}
+	
+	public int getDataCorrelationMax() {
+		return Integer.valueOf(super.getProperty("etm.data_correlation_max", "100"));
+	}
+	
+	public long getDataCorrelationTimeOffset() {
+		return Long.valueOf(super.getProperty("etm.data_correlation_time_offset", "30000"));
+	}
 }

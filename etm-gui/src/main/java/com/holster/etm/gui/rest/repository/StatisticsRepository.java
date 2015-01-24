@@ -22,7 +22,6 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 
-//TODO cleanup duplicate code.
 public class StatisticsRepository {
 
 	private final String keyspace;
@@ -86,14 +85,7 @@ public class StatisticsRepository {
 				if (responseTime == -1) {
 						continue;
 				}
-				if (!highest.containsKey(transactionName)) {
-					highest.put(transactionName, responseTime);
-				} else {
-					Long currentValue = highest.get(transactionName);
-					if (responseTime > currentValue) {
-						highest.put(transactionName, responseTime);
-					}
-				}
+				storeWhenHighest(highest, transactionName, responseTime);
 				addToTimeBasedAverageDataMap(data, transactionName, timeUnitValue, responseTime);
 			}
 		}
@@ -132,14 +124,7 @@ public class StatisticsRepository {
 				if (responseTime == -1) {
 						continue;
 				}
-				if (!highest.containsKey(messageName)) {
-					highest.put(messageName, responseTime);
-				} else {
-					Long currentValue = highest.get(messageName);
-					if (responseTime > currentValue) {
-						highest.put(messageName, responseTime);
-					}
-				}
+				storeWhenHighest(highest, messageName, responseTime);
 				addToTimeBasedAverageDataMap(data, messageName, timeUnitValue, responseTime);
 			}		
 		}
@@ -189,7 +174,6 @@ public class StatisticsRepository {
 		if (messageNames.size() == 0) {
 			return Collections.emptyMap();
 		}
-		final Map<String, Long> highest = new HashMap<String, Long>();
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		for (String messageName : messageNames) {
@@ -214,14 +198,6 @@ public class StatisticsRepository {
 				long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
 				if (responseTime == -1) {
 						continue;
-				}
-				if (!highest.containsKey(messageName)) {
-					highest.put(messageName, responseTime);
-				} else {
-					Long currentValue = highest.get(messageName);
-					if (responseTime > currentValue) {
-						highest.put(messageName, responseTime);
-					}
 				}
 				addToTimeBasedAverageDataMap(data, messageName, timeUnitValue, responseTime);
 			}		
@@ -256,83 +232,17 @@ public class StatisticsRepository {
     }
 	
 	public List<ExpiredMessage> getApplicationMessagesExpirationStatistics(String application, Long startTime, Long endTime, int maxExpirations) {
-		if (startTime > endTime) {
-			return Collections.emptyList();
-		}
 		if (application == null) {
 			return Collections.emptyList();
 		}
-		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
-		if (messageNames.size() == 0) {
-			return Collections.emptyList();
-		}
-		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
-		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-		for (String messageName : messageNames) {
-			resultSets.add(this.session.executeAsync(this.selectMessageExpirationStatement.bind(messageName, new Date(startTime), new Date(endTime))));
-		}
-		for (ResultSetFuture resultSetFuture : resultSets) {
-			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			Iterator<Row> iterator = resultSet.iterator();
-			while (iterator.hasNext()) {
-				Row row = iterator.next();
-				UUID id = row.getUUID(0);
-				if (id == null) {
-					continue;
-				}
-				if (!application.equals(row.getString(5))) {
-					continue;
-				}
-				String messageName = row.getString(1);
-				if (messageName == null) {
-					messageName = "undefined";
-				}
-				Date messageStartTime = row.getDate(2);
-				Date messageFinishTime = row.getDate(3);
-				Date messageExpiryTime = row.getDate(4);
-				String rowKey = row.getString(6);
-				if (messageFinishTime == null || messageFinishTime.getTime() == 0) {
-					Row eventRow = this.session.execute(this.selectEventCorrelations.bind(id)).one();
-					if (eventRow != null) {
-						List<UUID> childIds = eventRow.getList(0, UUID.class);
-						if (childIds != null) {
-							for (UUID childId : childIds) {
-								Row childRow = this.session.execute(this.selectEventExpirationDataStatement.bind(childId)).one();
-								if (childRow != null) {
-									TelemetryEventType type = null;
-									try {
-										type = TelemetryEventType.valueOf(childRow.getString(1));
-									} catch (Exception e) {
-										continue;
-									}
-									if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
-										// False positive, update the expiration table
-										messageFinishTime = childRow.getDate(0);
-										this.session.executeAsync(this.updateMessageExpirationStatement.bind(messageFinishTime, rowKey, messageExpiryTime, id));
-										break;
-									}
-								}
-							}
-						}
-					}
-				}
-				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
-					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
-						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
-                        }
-					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
-						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
-                        }
-					}
-				}
-			}
-		}
-		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());
+		return getExpiredMessages(application, startTime, endTime, maxExpirations);
     }
 	
 	public List<ExpiredMessage> getMessagesExpirationStatistics(Long startTime, Long endTime, int maxExpirations) {
+		return getExpiredMessages(null, startTime, endTime, maxExpirations);
+    }
+	
+	private List<ExpiredMessage> getExpiredMessages(String application, Long startTime, Long endTime, int maxExpirations) {
 		if (startTime > endTime) {
 			return Collections.emptyList();
 		}
@@ -354,6 +264,10 @@ public class StatisticsRepository {
 				if (id == null) {
 					continue;
 				}
+				String eventApplication = row.getString(5);
+				if (application != null && !application.equals(eventApplication)) {
+					continue;
+				}
 				String messageName = row.getString(1);
 				if (messageName == null) {
 					messageName = "undefined";
@@ -361,7 +275,6 @@ public class StatisticsRepository {
 				Date messageStartTime = row.getDate(2);
 				Date messageFinishTime = row.getDate(3);
 				Date messageExpiryTime = row.getDate(4);
-				String application = row.getString(5);
 				String rowKey = row.getString(6);
 				if (messageFinishTime == null || messageFinishTime.getTime() == 0) {
 					Row eventRow = this.session.execute(this.selectEventCorrelations.bind(id)).one();
@@ -391,18 +304,18 @@ public class StatisticsRepository {
 				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
 					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
 						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
+							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
                         }
 					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
 						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, application));
+							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
                         }
 					}
 				}
 			}
 		}
-		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());
-    }
+		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());		
+	}
 	
 	public Map<String, Map<String, Long>> getApplicationCountStatistics(Long startTime, Long endTime, int maxApplications) {
 		if (startTime > endTime) {
@@ -535,12 +448,23 @@ public class StatisticsRepository {
 		}
 	}
 	
+	private void storeWhenHighest(Map<String, Long> highest, String key, long value) {
+		if (!highest.containsKey(key)) {
+			highest.put(key, value);
+		} else {
+			Long currentValue = highest.get(key);
+			if (value > currentValue) {
+				highest.put(key, value);
+			}
+		}
+    }
+	
 	private long determineResponseTime(Date startTime, Date finishTime, Date expiryTime) {
 		if (finishTime != null && finishTime.getTime() != 0) {
 			return finishTime.getTime() - startTime.getTime(); 
 		} else if (expiryTime != null && expiryTime.getTime() != 0) {
 			if (expiryTime.getTime() < System.currentTimeMillis()) {
-				// transaction expired, set reponse time to expiry time.
+				// transaction expired, set response time to expiry time.
 				return expiryTime.getTime() - startTime.getTime();
 			} else {
 				// transaction not yet finished, and transaction not expired. Ignore this one.

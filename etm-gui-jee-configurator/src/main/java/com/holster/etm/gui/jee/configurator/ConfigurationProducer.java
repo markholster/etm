@@ -11,11 +11,18 @@ import javax.inject.Singleton;
 
 import com.holster.etm.core.EtmException;
 import com.holster.etm.core.configuration.EtmConfiguration;
+import com.holster.etm.core.logging.LogFactory;
+import com.holster.etm.core.logging.LogWrapper;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
 @Singleton
 public class ConfigurationProducer {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(ConfigurationProducer.class);
 
 	private EtmConfiguration etmConfiguration;
 
@@ -43,7 +50,9 @@ public class ConfigurationProducer {
 						try {
 	                        settingsStream.close();
                         } catch (IOException e) {
-	                        // TODO logging
+	                        if (log.isWarningLevelEnabled()) {
+	                        	log.logDebugMessage("Unable to close configuration file.", e);
+	                        }
                         }
 					}
 				}

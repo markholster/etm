@@ -8,7 +8,9 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
@@ -89,33 +91,30 @@ public class RestTelemetryEventProcessor {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Not processing rest message.", e);
 			}
-			// TODO find out how error handling works in the rest-api
-			return "{ \"status\": \"failure\", \"error\": \"" + e.getMessage() + "\" }";
+			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
 	private TelemetryEventDirection determineDirection(String direction) {
 		try {
-			TelemetryEventDirection telemetryEventDirection = TelemetryEventDirection.valueOf(direction);
-			return telemetryEventDirection;
+			return TelemetryEventDirection.valueOf(direction);
 		} catch (IllegalArgumentException e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Unable to determine TelemetryEventDirection for '" +direction + "'.", e);
 			}
+			throw new WebApplicationException(Response.Status.BAD_REQUEST);
 		}
-		return null;
 	}
 
 	private TelemetryEventType determineEventType(String eventType) {
 		try {
-			TelemetryEventType telemetryEventType = TelemetryEventType.valueOf(eventType);
-			return telemetryEventType;
+			return TelemetryEventType.valueOf(eventType);
 		} catch (IllegalArgumentException e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Unable to determine TelemetryEventType for '" + eventType + "'.", e);
 			}
+			throw new WebApplicationException(Response.Status.BAD_REQUEST);
 		}
-		return null;
 	}
 
 }
