@@ -1,6 +1,5 @@
 package com.holster.etm.processor.jee.configurator;
 
-import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,6 +13,7 @@ import javax.inject.Singleton;
 import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 import com.holster.etm.processor.processor.TelemetryEventProcessor;
 
@@ -23,7 +23,7 @@ public class TelemetryEventProcessorProducer {
 
 	@ProcessorConfiguration
 	@Inject
-	private Properties configration;
+	private EtmConfiguration configration;
 
 	@ProcessorConfiguration
 	@Inject
@@ -41,13 +41,8 @@ public class TelemetryEventProcessorProducer {
 		synchronized (this) {
 			if (this.telemetryEventProcessor == null) {
 				this.telemetryEventProcessor = new TelemetryEventProcessor();
-				int enhancingHandlerCount = Integer.valueOf(this.configration.getProperty("etm.enhancing_handler_count", "5"));
-				int indexingHandlerCount = Integer.valueOf(this.configration.getProperty("etm.indexing_handler_count", "5"));
-				int persistingHandlerCount = Integer.valueOf(this.configration.getProperty("etm.persisting_handler_count", "5"));
-				int ringbufferSize = Integer.valueOf(this.configration.getProperty("etm.ringbuffer_size", "4096"));
-				String keyspace = this.configration.getProperty("cassandra.keyspace", "etm");
 				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.session, this.solrServer,
-				        ringbufferSize, enhancingHandlerCount, indexingHandlerCount, persistingHandlerCount, keyspace);
+				        this.configration);
 			}
 		}
 		return this.telemetryEventProcessor;

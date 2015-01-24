@@ -15,15 +15,17 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	
 	private final long ordinal;
 	private final long numberOfConsumers;
+	private final long endpointCacheExpiryTime;
 	
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final CorrelationBySourceIdResult correlationBySourceIdResult;
 	private final EndpointConfigResult endpointConfigResult;
 	
-	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers) {
+	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final long endpointCacheExpiryTime) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
+		this.endpointCacheExpiryTime = endpointCacheExpiryTime;
 		this.correlationBySourceIdResult = new CorrelationBySourceIdResult();
 		this.endpointConfigResult = new EndpointConfigResult();
 	}
@@ -60,7 +62,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			
 			}
 		}
-		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
+		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.endpointCacheExpiryTime);
 		if (event.application == null || event.name == null || event.direction == null || event.transactionName == null) {
 			if (event.application == null) {
 				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);

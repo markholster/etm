@@ -12,6 +12,7 @@ import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.Session;
 import com.holster.etm.core.TelemetryEventType;
+import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.parsers.ExpressionParser;
 import com.holster.etm.processor.repository.CorrelationBySourceIdResult;
@@ -36,12 +37,13 @@ public class TelemetryEventProcessor {
 	private ExecutorService executorService;
 	private Session cassandraSession;
 	private SolrServer solrServer;
+	private EtmConfiguration etmConfiguration;
 	
 	private TelemetryEventRepository telemetryEventRepository;
 	private IndexingEventHandler[] indexingEventHandlers;
+	
 
-	public void start(final ExecutorService executorService, final Session session, final SolrServer solrServer, final int ringbufferSize, final int enhancingHandlerCount,
-	        final int indexingHandlerCount, final int persistingHandlerCount, final String cassandra_keyspace) {
+	public void start(final ExecutorService executorService, final Session session, final SolrServer solrServer, final EtmConfiguration etmConfiguration) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
@@ -49,24 +51,27 @@ public class TelemetryEventProcessor {
 		this.executorService = executorService;
 		this.cassandraSession = session;
 		this.solrServer = solrServer;
+		this.etmConfiguration = etmConfiguration;
 		
-		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, ringbufferSize, this.executorService, ProducerType.MULTI, new SleepingWaitStrategy());
+		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getRingbufferSize(), this.executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(this.sourceCorrelations));
-		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession, cassandra_keyspace);
+		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession, etmConfiguration.getCassandraKeyspace());
+		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		this.telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations);
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, enhancingHandlerCount);
+			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, enhancingHandlerCount, etmConfiguration.getEndpointCacheExpiryTime());
 		}
-
+		int indexingHandlerCount = etmConfiguration.getIndexingHandlerCount();
 		this.indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
 		for (int i = 0; i < indexingHandlerCount; i++) {
 			this.indexingEventHandlers[i] = new IndexingEventHandler(this.solrServer, i, indexingHandlerCount);
 		}
 		
+		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
 		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, persistingHandlerCount);
+			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, persistingHandlerCount, etmConfiguration.getStatisticsTimeUnit());
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
 		if (persistingEventHandlers.length > 0) {
@@ -139,7 +144,7 @@ public class TelemetryEventProcessor {
 			// request is offered to ETM before the response, which is quite
 			// logical.
 			EndpointConfigResult result = new EndpointConfigResult();
-			this.telemetryEventRepository.findEndpointConfig(event.endpoint, result);
+			this.telemetryEventRepository.findEndpointConfig(event.endpoint, result, this.etmConfiguration.getEndpointCacheExpiryTime());
 			if (result.eventNameParsers != null && result.eventNameParsers.size() > 0) {
 				event.name = parseValue(result.eventNameParsers, event.content);
 			}

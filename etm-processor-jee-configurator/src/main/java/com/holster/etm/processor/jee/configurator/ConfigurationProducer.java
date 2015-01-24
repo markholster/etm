@@ -4,24 +4,24 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
 
 import javax.annotation.ManagedBean;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
 import com.holster.etm.core.EtmException;
+import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 
 @ManagedBean
 @Singleton
 public class ConfigurationProducer {
 
-	private Properties properties;
+	private EtmConfiguration properties;
 
 	@Produces
 	@ProcessorConfiguration
-	public Properties getEtmConfiguration() {
+	public EtmConfiguration getEtmConfiguration() {
 		synchronized (this) {
 			if (this.properties == null) {
 				InputStream settingsStream = null;
@@ -32,7 +32,7 @@ public class ConfigurationProducer {
 					} else {
 						settingsStream = getClass().getResourceAsStream("/etm.properties");
 					}
-					this.properties = new Properties();
+					this.properties = new EtmConfiguration();
 					if (settingsStream != null) {
 						this.properties.load(settingsStream);
 					}

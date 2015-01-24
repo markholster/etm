@@ -4,26 +4,26 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
 
 import javax.annotation.ManagedBean;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
 import com.holster.etm.core.EtmException;
+import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
 @Singleton
 public class ConfigurationProducer {
 
-	private Properties properties;
+	private EtmConfiguration etmConfiguration;
 
 	@Produces
 	@GuiConfiguration
-	public Properties getEtmConfiguration() {
+	public EtmConfiguration getEtmConfiguration() {
 		synchronized (this) {
-			if (this.properties == null) {
+			if (this.etmConfiguration == null) {
 				InputStream settingsStream = null;
 				try {
 					File file = new File("etm.properties");
@@ -32,9 +32,9 @@ public class ConfigurationProducer {
 					} else {
 						settingsStream = getClass().getResourceAsStream("/etm.properties");
 					}
-					this.properties = new Properties();
+					this.etmConfiguration = new EtmConfiguration();
 					if (settingsStream != null) {
-						this.properties.load(settingsStream);
+						this.etmConfiguration.load(settingsStream);
 					}
 				} catch (IOException e) {
 					throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION, e);
@@ -49,6 +49,6 @@ public class ConfigurationProducer {
 				}
 			}
 		}
-		return this.properties;
+		return this.etmConfiguration;
 	}
 }

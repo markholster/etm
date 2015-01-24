@@ -1,6 +1,6 @@
 package com.holster.etm.processor.jee.configurator;
 
-import java.util.Properties;
+import java.util.List;
 
 import javax.annotation.ManagedBean;
 import javax.enterprise.inject.Produces;
@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Session;
+import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 
 @ManagedBean
@@ -18,7 +19,7 @@ public class CassandraSessionProducer {
 
 	@ProcessorConfiguration
 	@Inject
-	private Properties configuration;
+	private EtmConfiguration configuration;
 	
 	private Session session;
 
@@ -28,13 +29,12 @@ public class CassandraSessionProducer {
 		synchronized (this) {
 			if (this.session == null) {
 				Builder builder = Cluster.builder();
-				String contactPoints = this.configuration.getProperty("cassandra.contact_points", "127.0.0.1");
-				String[] split = contactPoints.split(",");
-				for (String contactPoint : split) {
+				List<String> contactPoints = this.configuration.getCassandraContactPoints();
+				for (String contactPoint : contactPoints) {
 					builder = builder.addContactPoint(contactPoint.trim());
 				}
-				String username = this.configuration.getProperty("cassandra.username");
-				String password = this.configuration.getProperty("cassandra.password");
+				String username = this.configuration.getCassandraUsername();
+				String password = this.configuration.getCassandraPassword();
 				if (username != null) {
 					builder.withCredentials(username, password);
 				}				

@@ -14,7 +14,6 @@ import com.holster.etm.processor.TelemetryEvent;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
-	private final TimeUnit SMALLEST_STATISTICS_TIME_UNIT =  TimeUnit.MINUTES;
 	
 	private final StatementExecutor statementExecutor;
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
@@ -32,9 +31,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
     }
 	
 	@Override
-    public void persistTelemetryEvent(TelemetryEvent event) {
-		this.statisticsTimestamp.setTime(normalizeTime(event.creationTime.getTime(), this.SMALLEST_STATISTICS_TIME_UNIT.toMillis(1)));
-		this.timestampForSuffix.setTime(normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+    public void persistTelemetryEvent(final TelemetryEvent event, final TimeUnit smallestStatisticsTimeUnit) {
+		this.statisticsTimestamp.setTime(normalizeTime(event.creationTime.getTime(), smallestStatisticsTimeUnit.toMillis(1)));
+		this.timestampForSuffix.setTime(normalizeTime(event.creationTime.getTime(), smallestStatisticsTimeUnit.toMillis(1)));
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
@@ -172,9 +171,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
     }
 
 	@Override
-    public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
+    public void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime) {
 		EndpointConfigResult cachedResult = this.endpointConfigs.get(endpoint);
-		if (cachedResult == null || System.currentTimeMillis() - cachedResult.retrieved > 60000) {
+		if (cachedResult == null || System.currentTimeMillis() - cachedResult.retrieved > cacheExpiryTime) {
 			if (cachedResult == null) {
 				cachedResult = new EndpointConfigResult();
 			}
