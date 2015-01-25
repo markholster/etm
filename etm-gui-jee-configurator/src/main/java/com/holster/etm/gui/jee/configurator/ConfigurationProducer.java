@@ -32,6 +32,7 @@ public class ConfigurationProducer {
 				try {
 	                this.configuration.load();
                 } catch (InterruptedException e) {
+                	this.configuration = null;
                 	if (log.isErrorLevelEnabled()) {
                 		log.logErrorMessage("Thread interrupted while loading etm configuration.", e);
                 	}
