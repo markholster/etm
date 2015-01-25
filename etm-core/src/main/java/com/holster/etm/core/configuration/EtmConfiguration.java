@@ -11,8 +11,11 @@ import java.util.stream.Collectors;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
+import com.holster.etm.core.EtmException;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
 
@@ -27,38 +30,55 @@ public class EtmConfiguration implements Closeable {
 	private Properties cassandraProperties;
 	private Properties solrProperties;
 	
-	private CuratorFramework curatorClient;
+	private CuratorFramework client;
 
 	private String solrZkConnectionString;
 
-	public void load() throws InterruptedException {
-		if (this.curatorClient != null) {
+	private NodeCache globalPropertiesNodeCache;
+	private NodeCache nodePropertiesNodeCache;
+
+	public synchronized void load() throws Exception {
+		if (this.client != null) {
 			return;
 		}
 		String nodename = System.getProperty("etm.nodename");
 		String connections = System.getProperty("etm.zookeeper.clients", "127.0.0.1:2181/etm");
 		String namespace = System.getProperty("etm.zookeeper.namespace", "dev");
-		String zkConnectionString = Arrays.stream(connections.split(",")).map(c -> c + "/" + namespace).collect(Collectors.joining(","));
 		this.solrZkConnectionString = Arrays.stream(connections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
-		this.curatorClient = CuratorFrameworkFactory.builder().connectString(zkConnectionString).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
-		this.curatorClient.blockUntilConnected();
-		loadEtmProperties(nodename);
+		this.client = CuratorFrameworkFactory.builder().connectString(connections).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
+		this.client.start();
+		boolean connected = this.client.blockUntilConnected(30, TimeUnit.SECONDS);
+		if (!connected) {
+			throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION);
+		}
+		
+		ReloadEtmPropertiesListener reloadListener = new ReloadEtmPropertiesListener();
+		this.globalPropertiesNodeCache = new NodeCache(this.client, "/config/etm.propeties");
+		this.globalPropertiesNodeCache.getListenable().addListener(reloadListener);
+		this.globalPropertiesNodeCache.start();
+		if (nodename != null) {
+			this.nodePropertiesNodeCache = new NodeCache(this.client, "/config/" + nodename + "/etm.propeties");
+			this.nodePropertiesNodeCache.getListenable().addListener(reloadListener);
+			this.nodePropertiesNodeCache.start();
+		}
+		loadEtmProperties();
 		loadCassandraProperties();
 		loadSolrProperties();
 	}
 
-	private void loadEtmProperties(String nodename) {
+	private synchronized void loadEtmProperties() {
 		this.etmProperties = new Properties();
-		this.etmProperties.putAll(loadProperties("/config/etm.propeties"));
-		if (nodename != null) {
-			this.etmProperties.putAll(loadProperties("/config" + nodename + "/etm.propeties"));
+		if (this.globalPropertiesNodeCache.getCurrentData() != null) {
+			this.etmProperties.putAll(loadPropertiesFromData(this.globalPropertiesNodeCache.getCurrentData().getData()));
+		}
+		if (this.nodePropertiesNodeCache != null && this.nodePropertiesNodeCache.getCurrentData() != null) {
+			this.etmProperties.putAll(loadPropertiesFromData(this.nodePropertiesNodeCache.getCurrentData().getData()));
 		}
     }
 
 	private void loadCassandraProperties() {
 	    this.cassandraProperties = loadProperties("/config/cassandra.propeties");
     }
-
 	
 	private void loadSolrProperties() {
 	    this.solrProperties = loadProperties("/config/solr.propeties");
@@ -66,15 +86,28 @@ public class EtmConfiguration implements Closeable {
 
 	private Properties loadProperties(String path) {
 		Properties properties = new Properties();
-		ByteArrayInputStream bis = null;
 		try {
-	        if (null != this.curatorClient.checkExists().forPath(path)) {
-	        	bis = new ByteArrayInputStream(this.curatorClient.getData().forPath(path));
-	        	properties.load(bis);
-	        }
+			if (null == this.client.checkExists().forPath(path)) {
+				return properties;
+			}
+			properties = loadPropertiesFromData(this.client.getData().forPath(path));
         } catch (Exception e) {
         	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Could not load configuration '" + path + "' from zookeeper.", e);
+        		log.logErrorMessage("Could not load configuration from path '" + path +"'", e);
+        	}
+        }
+		return properties;
+    }
+	
+	private Properties loadPropertiesFromData(byte[] data) {
+		Properties properties = new Properties();
+		ByteArrayInputStream bis = null;
+		try {
+        	bis = new ByteArrayInputStream(data);
+        	properties.load(bis);
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Could not load configuration", e);
         	}
         } finally {
         	if (bis != null) {
@@ -82,13 +115,13 @@ public class EtmConfiguration implements Closeable {
 	                bis.close();
                 } catch (IOException e) {
                 	if (log.isDebugLevelEnabled()) {
-                		log.logDebugMessage("Could not load inputstream to configuration '" + path + "'.", e);
+                		log.logDebugMessage("Could not close inputstream to configuration", e);
                 	}
                 }
         	}
         }
-	    return properties;
-    }
+		return properties;
+	}
 
 
 	public List<String> getCassandraContactPoints() {
@@ -148,10 +181,39 @@ public class EtmConfiguration implements Closeable {
 	}
 	
 	@Override
-	public void close() throws IOException {
-	    if (this.curatorClient != null) {
-	    	this.curatorClient.close();
+	public void close() {
+		if (this.globalPropertiesNodeCache != null) {
+			try {
+	            this.globalPropertiesNodeCache.close();
+            } catch (IOException e) {
+            	if (log.isWarningLevelEnabled()) {
+            		log.logWarningMessage("Could not close node cache.", e);
+            	}
+            }
+		}
+		if (this.nodePropertiesNodeCache != null) {
+			try {
+	            this.nodePropertiesNodeCache.close();
+            } catch (IOException e) {
+            	if (log.isWarningLevelEnabled()) {
+            		log.logWarningMessage("Could not close node cache.", e);
+            	}
+            }
+		}
+	    if (this.client != null) {
+	    	this.client.close();
 	    }
-	    this.curatorClient = null;
+	    this.globalPropertiesNodeCache = null;
+	    this.nodePropertiesNodeCache = null;
+	    this.client = null;
 	}
-}
+	
+	private class ReloadEtmPropertiesListener implements NodeCacheListener {
+
+		@Override
+        public void nodeChanged() {
+			EtmConfiguration.this.loadEtmProperties();
+        }
+		
+	}
+ }

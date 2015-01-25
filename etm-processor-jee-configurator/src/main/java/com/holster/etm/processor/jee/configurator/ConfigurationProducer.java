@@ -1,7 +1,5 @@
 package com.holster.etm.processor.jee.configurator;
 
-import java.io.IOException;
-
 import javax.annotation.ManagedBean;
 import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
@@ -31,10 +29,10 @@ public class ConfigurationProducer {
 				this.configuration = new EtmConfiguration();
 				try {
 	                this.configuration.load();
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                 	this.configuration = null;
                 	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Thread interrupted while loading etm configuration.", e);
+                		log.logErrorMessage("Error loading etm configuration.", e);
                 	}
                 }
 			}
@@ -45,13 +43,7 @@ public class ConfigurationProducer {
 	@PreDestroy
 	public void preDestroy() {
 		if (this.configuration != null) {
-			try {
-	            this.configuration.close();
-            } catch (IOException e) {
-            	if (log.isWarningLevelEnabled()) {
-            		log.logWarningMessage("Unable to close etm configuration.", e);
-            	}
-            }
+			this.configuration.close();
 		}
 	}
 }
