@@ -37,15 +37,12 @@ public class EtmConfiguration implements Closeable {
 	private NodeCache globalPropertiesNodeCache;
 	private NodeCache nodePropertiesNodeCache;
 
-	public synchronized void load() throws Exception {
+	public synchronized void load(String nodeName, String zkConnections, String namespace) throws Exception {
 		if (this.client != null) {
 			return;
 		}
-		String nodename = System.getProperty("etm.nodename");
-		String connections = System.getProperty("etm.zookeeper.clients", "127.0.0.1:2181/etm");
-		String namespace = System.getProperty("etm.zookeeper.namespace", "dev");
-		this.solrZkConnectionString = Arrays.stream(connections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
-		this.client = CuratorFrameworkFactory.builder().connectString(connections).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
+		this.solrZkConnectionString = Arrays.stream(zkConnections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
+		this.client = CuratorFrameworkFactory.builder().connectString(zkConnections).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
 		this.client.start();
 		boolean connected = this.client.blockUntilConnected(30, TimeUnit.SECONDS);
 		if (!connected) {
@@ -56,8 +53,8 @@ public class EtmConfiguration implements Closeable {
 		this.globalPropertiesNodeCache = new NodeCache(this.client, "/config/etm.propeties");
 		this.globalPropertiesNodeCache.getListenable().addListener(reloadListener);
 		this.globalPropertiesNodeCache.start();
-		if (nodename != null) {
-			this.nodePropertiesNodeCache = new NodeCache(this.client, "/config/" + nodename + "/etm.propeties");
+		if (nodeName != null) {
+			this.nodePropertiesNodeCache = new NodeCache(this.client, "/config/" + nodeName + "/etm.propeties");
 			this.nodePropertiesNodeCache.getListenable().addListener(reloadListener);
 			this.nodePropertiesNodeCache.start();
 		}
@@ -173,7 +170,7 @@ public class EtmConfiguration implements Closeable {
 	}
 	
 	public int getDataCorrelationMax() {
-		return Integer.valueOf(this.etmProperties.getProperty("etm.data_correlation_max", "100"));
+		return Integer.valueOf(this.etmProperties.getProperty("etm.data_correlation_max_matches", "100"));
 	}
 	
 	public long getDataCorrelationTimeOffset() {
