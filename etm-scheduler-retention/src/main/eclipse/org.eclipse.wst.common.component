@@ -26,6 +26,9 @@
         <dependent-module archiveName="httpclient-4.3.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/httpcomponents/httpclient/4.3.1/httpclient-4.3.1.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="httpmime-4.3.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/httpcomponents/httpmime/4.3.1/httpmime-4.3.1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>        
         <dependent-module archiveName="etm-core.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-core/etm-core">
             <dependency-type>uses</dependency-type>
         </dependent-module>
@@ -33,6 +36,15 @@
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="etm-scheduler-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-scheduler-jee-configurator/etm-scheduler-jee-configurator">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="curator-framework-2.7.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/curator/curator-framework/2.7.1/curator-framework-2.7.1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="curator-client-2.7.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/curator/curator-client/2.7.1/curator-client-2.7.1.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="curator-recipes-2.7.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/curator/curator-recipes/2.7.1/curator-recipes-2.7.1.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <property name="context-root" value="/etm/scheduler/retention"/>

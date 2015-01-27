@@ -11,7 +11,8 @@
 	<groupId>com.holster.etm</groupId>
 	<artifactId>etm-scheduler-retention</artifactId>
 	<packaging>war</packaging>
-	<description>A scheduler that removes event from Solr and Cassandra after a retention period.</description>
+	<description>A scheduler that removes event from Solr and Cassandra
+		after a retention period.</description>
 	<name>Enterprise Telemetry Monitor - scheduler retention</name>
 	<dependencies>
 		<dependency>
@@ -26,53 +27,69 @@
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-client</artifactId>
+			<version>2.7.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-recipes</artifactId>
+			<version>2.7.1</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-<!--                 
-                    <packagingExcludes>WEB-INF/lib/*.jar</packagingExcludes>
- -->                    
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                        </manifest>
-                        <manifestEntries>
-                            <Specification-Title>${project.name}</Specification-Title>
-                            <Specification-Version>${project.version}</Specification-Version>
-                            <Implementation-Version>${buildNumber}</Implementation-Version>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>		
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<configuration>
+					<!-- <packagingExcludes>WEB-INF/lib/*.jar</packagingExcludes> -->
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+						</manifest>
+						<manifestEntries>
+							<Specification-Title>${project.name}</Specification-Title>
+							<Specification-Version>${project.version}</Specification-Version>
+							<Implementation-Version>${buildNumber}</Implementation-Version>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-eclipse-plugin</artifactId>
 				<configuration>
 					<jeeversion>7.0</jeeversion>
 					<buildcommands>
-						<buildcommand>org.eclipse.wst.common.project.facet.core.builder</buildcommand>
+						<buildcommand>org.eclipse.wst.common.project.facet.core.builder
+						</buildcommand>
 						<buildcommand>org.eclipse.jdt.core.javabuilder</buildcommand>
-						<buildcommand>org.eclipse.wst.validation.validationbuilder</buildcommand>
+						<buildcommand>org.eclipse.wst.validation.validationbuilder
+						</buildcommand>
 					</buildcommands>
 					<projectnatures>
-						<projectnature>org.eclipse.jem.workbench.JavaEMFNature</projectnature>
-						<projectnature>org.eclipse.wst.common.modulecore.ModuleCoreNature</projectnature>
-						<projectnature>org.eclipse.wst.common.project.facet.core.nature</projectnature>
+						<projectnature>org.eclipse.jem.workbench.JavaEMFNature
+						</projectnature>
+						<projectnature>org.eclipse.wst.common.modulecore.ModuleCoreNature
+						</projectnature>
+						<projectnature>org.eclipse.wst.common.project.facet.core.nature
+						</projectnature>
 						<projectnature>org.eclipse.jdt.core.javanature</projectnature>
 					</projectnatures>
 					<additionalConfig>
 						<file>
 							<name>.settings/org.eclipse.wst.common.component</name>
-							<location>src/main/eclipse/org.eclipse.wst.common.component</location>
+							<location>src/main/eclipse/org.eclipse.wst.common.component
+							</location>
 						</file>
 						<file>
-							<name>.settings/org.eclipse.wst.common.project.facet.core.xml</name>
-							<location>src/main/eclipse/org.eclipse.wst.common.project.facet.core.xml</location>
+							<name>.settings/org.eclipse.wst.common.project.facet.core.xml
+							</name>
+							<location>src/main/eclipse/org.eclipse.wst.common.project.facet.core.xml
+							</location>
 						</file>
 					</additionalConfig>
 				</configuration>
