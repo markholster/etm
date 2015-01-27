@@ -22,6 +22,7 @@
 		<module>../etm-processor-ws</module>
 		<module>../etm-gui-jee-configurator</module>
 		<module>../etm-gui</module>
+		<module>../etm-scheduler-jee-configurator</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -54,6 +55,11 @@
 				<artifactId>etm-processor-jee-configurator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+			    <groupId>com.holster.etm</groupId>
+			    <artifactId>etm-scheduler-jee-configurator</artifactId>
+			    <version>${project.version}</version>
+			</dependency>			
 			<dependency>
 				<groupId>com.holster.etm</groupId>
 				<artifactId>etm-processor</artifactId>
