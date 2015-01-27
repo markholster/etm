@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
-    <wb-module deploy-name="etm-processor-ws">
+    <wb-module deploy-name="etm-scheduler-retention">
         <wb-resource deploy-path="/" source-path="/src/main/webapp" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/main/java"/>
-        <dependent-module archiveName="etm-processor.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-processor/etm-processor">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
         <dependent-module archiveName="cassandra-driver-core-2.1.4.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/datastax/cassandra/cassandra-driver-core/2.1.4/cassandra-driver-core-2.1.4.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="guava-14.0.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/google/guava/guava/14.0.1/guava-14.0.1.jar">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="disruptor-3.3.0.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/com/lmax/disruptor/3.3.0/disruptor-3.3.0.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="solr-solrj-4.10.3.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/solr/solr-solrj/4.10.3/solr-solrj-4.10.3.jar">
@@ -21,9 +15,6 @@
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="noggit-0.5.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/noggit/noggit/0.5/noggit-0.5.jar">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="Saxon-HE-9.6.0-3.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/net/sf/saxon/Saxon-HE/9.6.0-3/Saxon-HE-9.6.0-3.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="zookeeper-3.4.6.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/zookeeper/zookeeper/3.4.6/zookeeper-3.4.6.jar">
@@ -41,10 +32,10 @@
         <dependent-module archiveName="etm-jee-configurator-core.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-jee-configurator-core/etm-jee-configurator-core">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="etm-processor-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-processor-jee-configurator/etm-processor-jee-configurator">
+        <dependent-module archiveName="etm-scheduler-jee-configurator.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/etm-scheduler-jee-configurator/etm-scheduler-jee-configurator">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <property name="context-root" value="/etm/processor/ws"/>
-        <property name="java-output-path" value="/etm-processor-ws/bin"/>
+        <property name="context-root" value="/etm/scheduler/retention"/>
+        <property name="java-output-path" value="/etm-scheduler-retention/bin"/>
     </wb-module>
 </project-modules>

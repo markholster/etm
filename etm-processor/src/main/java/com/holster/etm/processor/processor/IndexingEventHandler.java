@@ -102,6 +102,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
     public void close() throws IOException {
 		if (this.docIx != -1) {
 			try {
+				// TODO commitWithin time should be in configuration
 	            this.server.add(this.documents.subList(0, this.docIx + 1), 60000);
             } catch (SolrServerException e) {
 	            if (log.isErrorLevelEnabled()) {

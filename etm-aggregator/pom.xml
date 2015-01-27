@@ -23,6 +23,7 @@
 		<module>../etm-gui-jee-configurator</module>
 		<module>../etm-gui</module>
 		<module>../etm-scheduler-jee-configurator</module>
+		<module>../etm-scheduler-retention</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

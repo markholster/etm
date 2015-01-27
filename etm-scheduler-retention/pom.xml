@@ -9,29 +9,23 @@
 		<relativePath>../etm-aggregator/pom.xml</relativePath>
 	</parent>
 	<groupId>com.holster.etm</groupId>
-	<artifactId>etm-processor-ws</artifactId>
+	<artifactId>etm-scheduler-retention</artifactId>
 	<packaging>war</packaging>
-	<description>A Web Service that takes events in JSON format and passes
-		them to the processor.</description>
-	<name>Enterprise Telemetry Monitor - processor ws</name>
+	<description>A scheduler that removes event from Solr and Cassandra after a retention period.</description>
+	<name>Enterprise Telemetry Monitor - scheduler retention</name>
 	<dependencies>
 		<dependency>
 			<groupId>com.holster.etm</groupId>
-			<artifactId>etm-processor</artifactId>
+			<artifactId>etm-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.holster.etm</groupId>
-			<artifactId>etm-processor-jee-configurator</artifactId>
+			<artifactId>etm-scheduler-jee-configurator</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-lgpl</artifactId>
-		</dependency>
-
 	</dependencies>
 	<build>
 		<plugins>

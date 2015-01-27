@@ -13,6 +13,8 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.curator.framework.recipes.cache.NodeCacheListener;
+import org.apache.curator.framework.recipes.leader.LeaderSelector;
+import org.apache.curator.framework.recipes.leader.LeaderSelectorListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import com.holster.etm.core.EtmException;
@@ -63,14 +65,15 @@ public class EtmConfiguration implements Closeable {
 		loadSolrProperties();
 	}
 
-	private synchronized void loadEtmProperties() {
-		this.etmProperties = new Properties();
+	private void loadEtmProperties() {
+		Properties newProperties = new Properties();
 		if (this.globalPropertiesNodeCache.getCurrentData() != null) {
-			this.etmProperties.putAll(loadPropertiesFromData(this.globalPropertiesNodeCache.getCurrentData().getData()));
+			newProperties.putAll(loadPropertiesFromData(this.globalPropertiesNodeCache.getCurrentData().getData()));
 		}
 		if (this.nodePropertiesNodeCache != null && this.nodePropertiesNodeCache.getCurrentData() != null) {
-			this.etmProperties.putAll(loadPropertiesFromData(this.nodePropertiesNodeCache.getCurrentData().getData()));
+			newProperties.putAll(loadPropertiesFromData(this.nodePropertiesNodeCache.getCurrentData().getData()));
 		}
+		this.etmProperties = newProperties; 
     }
 
 	private void loadCassandraProperties() {
@@ -120,7 +123,8 @@ public class EtmConfiguration implements Closeable {
 		return properties;
 	}
 
-
+	// Cassandra configuration.
+	
 	public List<String> getCassandraContactPoints() {
 		return Arrays.stream(this.cassandraProperties.getProperty("cassandra.contact_points", "127.0.0.1").split(",")).collect(Collectors.toList());
 	}
@@ -137,6 +141,8 @@ public class EtmConfiguration implements Closeable {
 		return this.cassandraProperties.getProperty("cassandra.keyspace", "etm");
 	}
 	
+	// Solr configuration
+	
 	public String getSolrZkConnectionString() {
 		return this.solrZkConnectionString;
 	}
@@ -144,6 +150,8 @@ public class EtmConfiguration implements Closeable {
 	public String getSolrCollectionName() {
 		return this.solrProperties.getProperty("solr.collection", "etm");
 	}
+	
+	// Etm processor configuration
 	
 	public int getEnhancingHandlerCount() {
 		return Integer.valueOf(this.etmProperties.getProperty("etm.enhancing_handler_count", "5"));
@@ -161,13 +169,19 @@ public class EtmConfiguration implements Closeable {
 		return Integer.valueOf(this.etmProperties.getProperty("etm.ringbuffer_size", "4096"));
 	}
 	
+	// Etm endpoint configuration cache.
+	
 	public long getEndpointCacheExpiryTime() {
 		return Long.valueOf(this.etmProperties.getProperty("etm.endpoint_cache_expiry_time", "60000"));
 	}
 	
+	// Etm statistic configuration
+	
 	public TimeUnit getStatisticsTimeUnit() {
 		return TimeUnit.valueOf(this.etmProperties.getProperty("etm.statistics_timeunit", "MINUTES"));
 	}
+	
+	// Etm data correlation configuration.
 	
 	public int getDataCorrelationMax() {
 		return Integer.valueOf(this.etmProperties.getProperty("etm.data_correlation_max_matches", "100"));
@@ -176,6 +190,20 @@ public class EtmConfiguration implements Closeable {
 	public long getDataCorrelationTimeOffset() {
 		return Long.valueOf(this.etmProperties.getProperty("etm.data_correlation_time_offset", "30000"));
 	}
+	
+	// Etm data retention configuration
+	
+	public long getDataRetentionTime() {
+		return Long.valueOf(this.etmProperties.getProperty("etm.data_retention_time", "604800000"));
+	}
+	
+	public long getDataRetentionCheckInterval() {
+		return Long.valueOf(this.etmProperties.getProperty("etm.data_retention_check_interval", "60000"));
+	}
+	
+	public LeaderSelector createLeaderSelector(String leaderPath, LeaderSelectorListener leaderSelectionListener) {
+		return new LeaderSelector(this.client, leaderPath, leaderSelectionListener);
+    }
 	
 	@Override
 	public void close() {
