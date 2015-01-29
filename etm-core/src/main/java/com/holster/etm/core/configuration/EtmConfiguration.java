@@ -201,6 +201,14 @@ public class EtmConfiguration implements Closeable {
 		return Long.valueOf(this.etmProperties.getProperty("etm.data_retention_check_interval", "60000"));
 	}
 	
+	public boolean isDataRetentionPreserveEventCounts() {
+		return Boolean.valueOf(this.etmProperties.getProperty("etm.data_retention_preserve_event_counts", "false"));
+	}
+	
+	public boolean isDataRetentionPreserveEventPerformances() {
+		return Boolean.valueOf(this.etmProperties.getProperty("etm.data_retention_preserve_event_performances", "false"));
+	}
+	
 	public LeaderSelector createLeaderSelector(String leaderPath, LeaderSelectorListener leaderSelectionListener) {
 		return new LeaderSelector(this.client, leaderPath, leaderSelectionListener);
     }

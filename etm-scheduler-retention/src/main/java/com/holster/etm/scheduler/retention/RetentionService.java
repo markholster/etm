@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import javax.annotation.ManagedBean;
 import javax.annotation.PostConstruct;
@@ -50,12 +51,13 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 	private RemovingCallbackHandler callbackHandler;
 
 	
-	private DateFormat solrDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+	private DateFormat solrDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	private LeaderSelector leaderSelector;
 
 	@PostConstruct
 	public void registerRetentionService() {
-		this.callbackHandler = new RemovingCallbackHandler(this.session, this.etmConfiguration.getCassandraKeyspace());
+		this.solrDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		this.callbackHandler = new RemovingCallbackHandler(this.solrServer, this.session, this.etmConfiguration);
 		this.leaderSelector = this.etmConfiguration.createLeaderSelector("/leader-election-retention", this);
 		this.leaderSelector.autoRequeue();
 		this.leaderSelector.start();
@@ -65,14 +67,18 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
     public void takeLeadership(CuratorFramework client) {
 		boolean stopProcessing = false;
 	    while(!stopProcessing && this.leaderSelector.hasLeadership()) {
-	    	long dataRetentionTime = this.etmConfiguration.getDataRetentionTime();
-	    	if (log.isInfoLevelEnabled()) {
-	    		log.logInfoMessage("Removing events older than " + dataRetentionTime + " ms.");
-	    	}
 	    	try {
+	    		
+		    	long dataRetentionTime = this.etmConfiguration.getDataRetentionTime();
+		    	if (log.isInfoLevelEnabled()) {
+		    		log.logInfoMessage("Removing events older than " + dataRetentionTime + " ms.");
+		    	}
 		    	Date dateTill = new Date(System.currentTimeMillis() - dataRetentionTime + 1);
 		    	try {
 		    		SolrQuery query = new SolrQuery("creationTime:[* TO " + solrDateFormat.format(dateTill) + "]");
+		    		query.setStart(0);
+		    		// Max 50000 rows per iteration, otherwise the http response will be too big.
+		    		query.setRows(50000);
 		            this.solrServer.queryAndStreamResponse(query, this.callbackHandler);
 	            } catch (SolrServerException | IOException e) {
 	            	if (log.isErrorLevelEnabled()) {
@@ -85,6 +91,11 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
             		log.logWarningMessage("Retention service interrupted. Giving back leadership.", e);
             	}
             	Thread.currentThread().interrupt();
+            	stopProcessing = true;
+            } catch (Exception e) {
+            	if (log.isErrorLevelEnabled()) {
+            		log.logErrorMessage("Retention service threw an exception. Giving back leadership.", e);
+            	}
             	stopProcessing = true;
             }
 	    }
