@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.BatchStatement.Type;
 import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
@@ -15,13 +17,14 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 
 	
 	private final StatementExecutor statementExecutor;
+	private final BatchStatement batchStatement = new BatchStatement(Type.UNLOGGED);
+	private final BatchStatement counterBatchStatement = new BatchStatement(Type.COUNTER);
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
 	
 	private final Date statisticsTimestamp = new Date();
 	private final Date eventOccurrenceTimestamp = new Date();
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
-	
 	
 	public TelemetryEventRepositoryCassandraImpl(final StatementExecutor statementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
 		this.statementExecutor = statementExecutor;
@@ -39,15 +42,13 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		final String timestampSuffix = this.format.format(event.creationTime);
 		final String correlationTimeStampSuffix = this.format.format(event.correlationCreationTime);
 		
-		this.statementExecutor.insertTelemetryEvent(event, true);
+		this.statementExecutor.addTelemetryEvent(event, this.batchStatement);
 		if (event.sourceId != null) {
 			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
-			this.statementExecutor.insertSourceIdCorrelationData(event, false);
-			// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
-			this.sourceCorrelations.remove(event.sourceId);
+			this.statementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
 		}
 		if (!event.correlationData.isEmpty()) {
-			event.correlationData.forEach((k,v) ->  this.statementExecutor.insertCorrelationData(event, k + timestampSuffix, k, v, true));
+			event.correlationData.forEach((k,v) ->  this.statementExecutor.addCorrelationData(event, k + timestampSuffix, k, v, this.batchStatement));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
@@ -69,7 +70,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.direction) ? responseTime : 0;
 		}
 		if (event.application != null) {
-			this.statementExecutor.updateApplicationCounter(
+			this.statementExecutor.addApplicationCounter(
 					requestCount, 
 					incomingRequestCount, 
 					outgoingRequestCount,
@@ -85,11 +86,11 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        event.application,
 			        this.statisticsTimestamp,
 			        event.application + timestampSuffix,
-			        true);
-			this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, true);
+			        this.counterBatchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, this.batchStatement);
 		}
 		if (event.name != null) {
-			this.statementExecutor.updateEventNameCounter(
+			this.statementExecutor.addEventNameCounter(
 					requestCount, 
 					responseCount, 
 					datagramCount, 
@@ -97,20 +98,20 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.name,
 					this.statisticsTimestamp,
 					event.name + timestampSuffix, 
-					true);
+					this.counterBatchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
 			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
-				this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + timestampSuffix, event.name, true);
+				this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + timestampSuffix, event.name, this.batchStatement);
 			}
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.insertMessageEventStart(event, event.name + timestampSuffix, true);
+				this.statementExecutor.addMessageEventStart(event, event.name + timestampSuffix, this.batchStatement);
 			}
 		}
 		if (event.correlationId != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-			this.statementExecutor.insertMessageEventFinish(event, event.correlationName + correlationTimeStampSuffix, true);
+			this.statementExecutor.addMessageEventFinish(event, event.correlationName + correlationTimeStampSuffix, this.batchStatement);
 		}
 		if (event.application != null && event.name != null) {
-			this.statementExecutor.updateApplicationEventNameCounter(
+			this.statementExecutor.addApplicationEventNameCounter(
 					requestCount, 
 					incomingRequestCount, 
 					outgoingRequestCount,
@@ -127,23 +128,33 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.name, 
 					this.statisticsTimestamp,
 					event.application + timestampSuffix, 
-					true);
-			this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, true);
+					this.counterBatchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, this.batchStatement);
 		}
 		if (event.transactionName != null) {
-			this.statementExecutor.updateTransactionNameCounter(
+			this.statementExecutor.addTransactionNameCounter(
 					requestCount, 
 					responseCount, 
 					responseTime, 
 					event.transactionName, 
 					this.statisticsTimestamp,
-					event.transactionName + timestampSuffix, true);
-			this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + timestampSuffix, event.transactionName, true);
+					event.transactionName + timestampSuffix, this.counterBatchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + timestampSuffix, event.transactionName, this.batchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.insertTransactionEventStart(event, event.transactionName + timestampSuffix,  true);
+				this.statementExecutor.addTransactionEventStart(event, event.transactionName + timestampSuffix,  this.batchStatement);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-				this.statementExecutor.insertTransactionEventFinish(event, event.transactionName + correlationTimeStampSuffix ,true);
+				this.statementExecutor.addTransactionEventFinish(event, event.transactionName + correlationTimeStampSuffix, this.batchStatement);
 			}
+		}
+		if (this.batchStatement.size() != 0) {
+			this.statementExecutor.execute(this.batchStatement);
+			this.batchStatement.clear();
+			// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
+			this.sourceCorrelations.remove(event.sourceId);
+		}
+		if (this.counterBatchStatement.size() != 0) {
+			this.statementExecutor.execute(this.counterBatchStatement);
+			this.counterBatchStatement.clear();
 		}
     }
 

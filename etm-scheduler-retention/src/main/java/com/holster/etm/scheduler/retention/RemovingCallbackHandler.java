@@ -43,8 +43,8 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final UpdateRequest request = new UpdateRequest();
 	private final List<String> idsToDelete = new ArrayList<String>();
-	private final BatchStatement batchStatement = new BatchStatement(Type.LOGGED);
-	private final BatchStatement batchCounterStatement = new BatchStatement(Type.COUNTER);
+	private final BatchStatement batchStatement = new BatchStatement(Type.UNLOGGED);
+	private final BatchStatement counterBatchStatement = new BatchStatement(Type.COUNTER);
 	private final Date statisticsTimestamp = new Date();
 	
 	private final PreparedStatement selectEventStatement;
@@ -170,7 +170,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				Date expiryTime = row.getDate(5);
 				String eventName = row.getString(6);
 				String sourceId = row.getString(7);
-				String transactionId = row.getString(8);
+				UUID transactionId = row.getUUID(8);
 				String transactionName = row.getString(9);
 				String type = row.getString(9);
 				final String timestampSuffix = this.format.format(creationTime);
@@ -190,9 +190,9 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				// row could be executed in the "non-counter-statement". If the
 				// order is reverted the update would lead to an insert of the
 				// row with a negative value.
-				if (this.batchCounterStatement.size() != 0) {
-					this.session.execute(this.batchCounterStatement);
-					this.batchCounterStatement.clear();
+				if (this.counterBatchStatement.size() != 0) {
+					this.session.execute(this.counterBatchStatement);
+					this.counterBatchStatement.clear();
 				}
 				if (this.batchStatement.size() != 0) {
 					this.session.execute(this.batchStatement);
@@ -204,10 +204,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error removing events from system.", e);
         	}
-        } finally {
-        	this.batchStatement.clear();
-        	this.batchCounterStatement.clear();
-        }
+        } 
     }
 
 	private void removeEvent(UUID id, Date creationTime, Map<String, String> correlationData, String sourceId, String timestampSuffix) {
@@ -220,7 +217,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    this.batchStatement.add(this.deleteTelemetryEventStatement.bind(id));
     }
 
-	private void removePerformances(UUID id, Date creationTime, Date expiryTime, String eventName, String transactionId, String transactionName, String timestampSuffix) {
+	private void removePerformances(UUID id, Date creationTime, Date expiryTime, String eventName, UUID transactionId, String transactionName, String timestampSuffix) {
 	    if (eventName != null) {
 	    	this.batchStatement.add(this.deleteMessagePerformanceStatement.bind(eventName + timestampSuffix, creationTime, id));
 	    	if (expiryTime != null) {
@@ -228,7 +225,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    	}
 	    }
 	    if (transactionId != null && transactionName != null) {
-	    	this.batchStatement.add(this.deleteTransactionPerformanceStatement.bind(transactionName + timestampSuffix, creationTime, UUID.fromString(transactionId)));
+	    	this.batchStatement.add(this.deleteTransactionPerformanceStatement.bind(transactionName + timestampSuffix, creationTime, transactionId));
 	    }
     }
 	
@@ -258,10 +255,10 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.batchStatement.add(this.deleteApplicationCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application));
+					this.counterBatchStatement.add(this.deleteApplicationCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
-					this.batchCounterStatement.add(this.updateApplicationCounterStatement.bind(requestCount, incomingRequestCount,
+					this.counterBatchStatement.add(this.updateApplicationCounterStatement.bind(requestCount, incomingRequestCount,
 					        outgoingRequestCount, responseCount, incomingResponseCount, outgoingResponseCount, datagramCount,
 					        incomingDatagramCount, outgoingDatagramCount, responseTime, incomingResponseTime, outgoingResponseTime,
 					        application + timestampSuffix, statisticsTimestamp, application));
@@ -274,10 +271,10 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.batchStatement.add(this.deleteEventNameCounterStatement.bind(eventName + timestampSuffix, statisticsTimestamp, eventName));
+					this.counterBatchStatement.add(this.deleteEventNameCounterStatement.bind(eventName + timestampSuffix, statisticsTimestamp, eventName));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
-					this.batchCounterStatement.add(this.updateEventNameCounterStatement.bind(requestCount, responseCount, datagramCount,
+					this.counterBatchStatement.add(this.updateEventNameCounterStatement.bind(requestCount, responseCount, datagramCount,
 					        responseTime, eventName + timestampSuffix, statisticsTimestamp, eventName));
 				}
 			}
@@ -288,10 +285,10 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.batchStatement.add(this.deleteApplicationEventNameCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application, eventName));
+					this.counterBatchStatement.add(this.deleteApplicationEventNameCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application, eventName));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
-					this.batchCounterStatement.add(this.updateApplicationEventNameCounterStatement.bind(requestCount, incomingRequestCount,
+					this.counterBatchStatement.add(this.updateApplicationEventNameCounterStatement.bind(requestCount, incomingRequestCount,
 					        outgoingRequestCount, responseCount, incomingResponseCount, outgoingResponseCount, datagramCount,
 					        incomingDatagramCount, outgoingDatagramCount, responseTime, incomingResponseTime, outgoingResponseTime,
 					        application + timestampSuffix, statisticsTimestamp, application, eventName));
@@ -304,10 +301,10 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.batchStatement.add(this.deleteTransactionNameCounterStatement.bind(transactionName + timestampSuffix, statisticsTimestamp, transactionName));
+					this.counterBatchStatement.add(this.deleteTransactionNameCounterStatement.bind(transactionName + timestampSuffix, statisticsTimestamp, transactionName));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
-					this.batchCounterStatement.add(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount,
+					this.counterBatchStatement.add(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount,
 					        responseTime, transactionName + timestampSuffix, statisticsTimestamp, transactionName));
 				}
 			}

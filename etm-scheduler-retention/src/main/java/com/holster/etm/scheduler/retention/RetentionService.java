@@ -89,7 +89,7 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 	            Thread.sleep(this.etmConfiguration.getDataRetentionCheckInterval());
             } catch (InterruptedException e) {
             	if (log.isWarningLevelEnabled()) {
-            		log.logWarningMessage("Retention service interrupted. Giving back leadership.", e);
+            		log.logWarningMessage("Retention service interrupted. Giving back leadership.");
             	}
             	Thread.currentThread().interrupt();
             	stopProcessing = true;

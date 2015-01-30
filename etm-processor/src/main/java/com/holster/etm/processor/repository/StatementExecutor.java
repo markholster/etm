@@ -16,9 +16,9 @@ import javax.xml.xpath.XPathFactory;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
+import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.holster.etm.core.TelemetryEventDirection;
@@ -206,8 +206,8 @@ public class StatementExecutor {
 
 	}
 	
-	public void insertTelemetryEvent(final TelemetryEvent event, final boolean async) {
-		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTelemetryEventStatement.bind(
+	public void addTelemetryEvent(final TelemetryEvent event, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertTelemetryEventStatement.bind(
 				event.id, 
 				event.application, 
 				event.content,
@@ -225,21 +225,15 @@ public class StatementExecutor {
 		        event.transactionId, 
 		        event.transactionName,
 		        event.type != null ? event.type.name() : null));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 		if (event.correlationId != null) {
 			final List<UUID> correlation = new ArrayList<UUID>(1);
 			correlation.add(event.id);
-			resultSetFuture = this.session.executeAsync(this.insertCorrelationToParentStatement.bind(correlation, event.correlationId));
-		}
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
+			batchStatement.add(this.insertCorrelationToParentStatement.bind(correlation, event.correlationId));
 		}
 	}
 	
-	public void insertSourceIdCorrelationData(final TelemetryEvent event, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertSourceIdIdStatement.bind(
+	public void addSourceIdCorrelationData(final TelemetryEvent event, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertSourceIdIdStatement.bind(
 				event.sourceId,
 				event.creationTime,
 				event.expiryTime,
@@ -247,106 +241,79 @@ public class StatementExecutor {
 				event.transactionId, 
 				event.transactionName,
 				event.name));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void insertCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertCorrelationDataStatement.bind(
+	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertCorrelationDataStatement.bind(
 				key,
 				event.creationTime,
 				correlationDataName, 
 				correlationDataValue,
 				event.id));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void insertEventOccurence(final Date timestamp, final String occurrenceName, final String occurrenceValue, final String originalName, boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertEventOccurrenceStatement.bind(
+	public void addEventOccurence(final Date timestamp, final String occurrenceName, final String occurrenceValue, final String originalName, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertEventOccurrenceStatement.bind(
 				timestamp, 
 				occurrenceName, 
 				occurrenceValue,
 				originalName));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void insertTransactionEventStart(final TelemetryEvent event, final String key, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTransactionEventStartStatement.bind(
+	public void addTransactionEventStart(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertTransactionEventStartStatement.bind(
 				key,
 				event.transactionId,
 				event.transactionName,
 		        event.creationTime, 
 		        event.expiryTime,
 		        event.application));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void insertTransactionEventFinish(final TelemetryEvent event, final String key, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertTransactionEventFinishStatement.bind(
+	public void addTransactionEventFinish(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertTransactionEventFinishStatement.bind(
 				key,
 				event.transactionId,
 				event.correlationCreationTime,
 		        event.creationTime));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 
-	public void insertMessageEventStart(final TelemetryEvent event, final String key, final boolean async) {
-		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceStartStatement.bind(
+	public void addMessageEventStart(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertMessageEventPerformanceStartStatement.bind(
 				key,
 				event.id, 
 				event.name,
 		        event.creationTime, 
 		        event.expiryTime,
 		        event.application));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
-		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationStartStatement.bind(
+		batchStatement.add(this.insertMessageEventExpirationStartStatement.bind(
 				key,
 				event.id,
 				event.name,
 		        event.expiryTime,
 		        event.creationTime,
 		        event.application));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void insertMessageEventFinish(final TelemetryEvent event, final String key, final boolean async) {
-		ResultSetFuture resultSetFuture = this.session.executeAsync(this.insertMessageEventPerformanceFinishStatement.bind(
+	public void addMessageEventFinish(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertMessageEventPerformanceFinishStatement.bind(
 				key,
 				event.correlationId,
 				event.correlationCreationTime,
 		        event.creationTime));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
-		resultSetFuture = this.session.executeAsync(this.insertMessageEventExpirationFinishStatement.bind(
+		batchStatement.add(this.insertMessageEventExpirationFinishStatement.bind(
 				key,
 				event.correlationId,
 				event.correlationExpiryTime,
 		        event.creationTime));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 
 	
-	public void updateApplicationCounter(final long requestCount, final long incomingRequestCount, final long outgoingRequestCount,
+	public void addApplicationCounter(final long requestCount, final long incomingRequestCount, final long outgoingRequestCount,
 	        final long responseCount, final long incomingResponseCount, final long outgoingResponseCount, final long datagramCount,
 	        final long incomingDatagramCount, final long outgoingDatagramCount, final long responseTime, final long incomingResponseTime,
-	        final long outgoingResponseTime, final String application, final Date timestamp, final String key, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateApplicationCounterStatement.bind(
+	        final long outgoingResponseTime, final String application, final Date timestamp, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.updateApplicationCounterStatement.bind(
 				requestCount, 
 				incomingRequestCount, 
 				outgoingRequestCount,
@@ -362,14 +329,11 @@ public class StatementExecutor {
 		        key,
 		        timestamp,
 		        application));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void updateEventNameCounter(final long requestCount, final long responseCount, final long datagramCount,
-	        final long responseTime, final String eventName, final Date timestamp, final String key, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateEventNameCounterStatement.bind(
+	public void addEventNameCounter(final long requestCount, final long responseCount, final long datagramCount,
+	        final long responseTime, final String eventName, final Date timestamp, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.updateEventNameCounterStatement.bind(
 				requestCount, 
 				responseCount, 
 				datagramCount, 
@@ -377,17 +341,14 @@ public class StatementExecutor {
 				key, 
 				timestamp,
 				eventName));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void updateApplicationEventNameCounter(final long requestCount, final long incomingRequestCount,
+	public void addApplicationEventNameCounter(final long requestCount, final long incomingRequestCount,
 	        final long outgoingRequestCount, final long responseCount, final long incomingResponseCount, final long outgoingResponseCount,
 	        final long datagramCount, final long incomingDatagramCount, final long outgoingDatagramCount, final long responseTime,
 	        final long incomingResponseTime, final long outgoingResponseTime, final String application, final String eventName,
-	        final Date timestamp, final String key, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateApplicationEventNameCounterStatement.bind(
+	        final Date timestamp, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.updateApplicationEventNameCounterStatement.bind(
 				requestCount, 
 				incomingRequestCount, 
 				outgoingRequestCount,
@@ -404,23 +365,17 @@ public class StatementExecutor {
 				eventName, 
 				timestamp,
 				application));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
-	public void updateTransactionNameCounter(final long requestCount, final long responseCount, final long responseTime,
-	        final String transactionName, final Date timestamp, final String key, final boolean async) {
-		final ResultSetFuture resultSetFuture = this.session.executeAsync(this.updateTransactionNameCounterStatement.bind(
+	public void addTransactionNameCounter(final long requestCount, final long responseCount, final long responseTime,
+	        final String transactionName, final Date timestamp, final String key, final BatchStatement batchStatement) {
+		batchStatement.add(this.updateTransactionNameCounterStatement.bind(
 				requestCount, 
 				responseCount, 
 				responseTime, 
 				key, 
 				timestamp,
 				transactionName));
-		if (!async) {
-			resultSetFuture.getUninterruptibly();
-		}
 	}
 	
 	public void findParent(final String sourceId, final CorrelationBySourceIdResult result) {
@@ -557,4 +512,8 @@ public class StatementExecutor {
 		}
 		return new FixedValueExpressionParser(expression);
 	}
+
+	public ResultSet execute(BatchStatement batchCounterStatement) {
+	    return this.session.execute(batchCounterStatement);
+    }
 }
