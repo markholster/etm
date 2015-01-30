@@ -213,7 +213,7 @@ public class EtmConfiguration implements Closeable {
 	}
 	
 	public LeaderSelector createLeaderSelector(String leaderPath, LeaderSelectorListener leaderSelectionListener) {
-		return new LeaderSelector(this.client, leaderPath, leaderSelectionListener);
+		return new LeaderSelector(this.client, "/leader-election" + leaderPath, leaderSelectionListener);
     }
 	
 	@Override
