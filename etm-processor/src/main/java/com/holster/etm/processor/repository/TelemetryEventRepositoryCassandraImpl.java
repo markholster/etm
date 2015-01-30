@@ -39,8 +39,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
-		final String timestampSuffix = this.format.format(event.creationTime);
-		final String correlationTimeStampSuffix = this.format.format(event.correlationCreationTime);
+		final String partitionKeySuffix = this.format.format(event.creationTime);
+		final String correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
 		
 		this.statementExecutor.addTelemetryEvent(event, this.batchStatement);
 		if (event.sourceId != null) {
@@ -48,7 +48,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			this.statementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
 		}
 		if (!event.correlationData.isEmpty()) {
-			event.correlationData.forEach((k,v) ->  this.statementExecutor.addCorrelationData(event, k + timestampSuffix, k, v, this.batchStatement));
+			event.correlationData.forEach((k,v) ->  this.statementExecutor.addCorrelationData(event, k + partitionKeySuffix, k, v, this.batchStatement));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
@@ -85,9 +85,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        outgoingResponseTime, 
 			        event.application,
 			        this.statisticsTimestamp,
-			        event.application + timestampSuffix,
+			        event.application + partitionKeySuffix,
 			        this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, this.batchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.batchStatement);
 		}
 		if (event.name != null) {
 			this.statementExecutor.addEventNameCounter(
@@ -97,18 +97,18 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					responseTime, 
 					event.name,
 					this.statisticsTimestamp,
-					event.name + timestampSuffix, 
+					event.name + partitionKeySuffix, 
 					this.counterBatchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
 			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
-				this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + timestampSuffix, event.name, this.batchStatement);
+				this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + partitionKeySuffix, event.name, this.batchStatement);
 			}
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.addMessageEventStart(event, event.name + timestampSuffix, this.batchStatement);
+				this.statementExecutor.addMessageEventStart(event, event.name + partitionKeySuffix, this.batchStatement);
 			}
 		}
 		if (event.correlationId != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-			this.statementExecutor.addMessageEventFinish(event, event.correlationName + correlationTimeStampSuffix, this.batchStatement);
+			this.statementExecutor.addMessageEventFinish(event, event.correlationName + correlationPartitionKeySuffix, this.batchStatement);
 		}
 		if (event.application != null && event.name != null) {
 			this.statementExecutor.addApplicationEventNameCounter(
@@ -127,9 +127,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.application,
 					event.name, 
 					this.statisticsTimestamp,
-					event.application + timestampSuffix, 
+					event.application + partitionKeySuffix, 
 					this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, this.batchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.batchStatement);
 		}
 		if (event.transactionName != null) {
 			this.statementExecutor.addTransactionNameCounter(
@@ -138,12 +138,12 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					responseTime, 
 					event.transactionName, 
 					this.statisticsTimestamp,
-					event.transactionName + timestampSuffix, this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + timestampSuffix, event.transactionName, this.batchStatement);
+					event.transactionName + partitionKeySuffix, this.counterBatchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + partitionKeySuffix, event.transactionName, this.batchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.addTransactionEventStart(event, event.transactionName + timestampSuffix,  this.batchStatement);
+				this.statementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix,  this.batchStatement);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-				this.statementExecutor.addTransactionEventFinish(event, event.transactionName + correlationTimeStampSuffix, this.batchStatement);
+				this.statementExecutor.addTransactionEventFinish(event, event.transactionName + correlationPartitionKeySuffix, this.batchStatement);
 			}
 		}
 		if (this.batchStatement.size() != 0) {

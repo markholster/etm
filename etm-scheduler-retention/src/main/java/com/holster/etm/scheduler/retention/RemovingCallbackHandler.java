@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,9 +44,13 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final UpdateRequest request = new UpdateRequest();
 	private final List<String> idsToDelete = new ArrayList<String>();
+	private final Map<String, Date> applicationPartitionKeys = new HashMap<String, Date>();
+	private final Map<String, Date> eventNamePartitionKeys = new HashMap<String, Date>();
+	private final Map<String, Date> transactionNamePartitionKeys = new HashMap<String, Date>();	
 	private final BatchStatement batchStatement = new BatchStatement(Type.UNLOGGED);
 	private final BatchStatement counterBatchStatement = new BatchStatement(Type.COUNTER);
 	private final Date statisticsTimestamp = new Date();
+	private final Date eventOccurrenceTimestamp = new Date();
 	
 	private final PreparedStatement selectEventStatement;
 	private final PreparedStatement selectApplicationCounterStatement;
@@ -62,12 +67,16 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	private final PreparedStatement deleteCorrelationDataStatement;
 	private final PreparedStatement deleteSourceIdCorrelationStatement;
 	private final PreparedStatement deleteTelemetryEventStatement;
+	private final PreparedStatement deleteEventOccurrenceStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
 	private final PreparedStatement updateTransactionNameCounterStatement;
+	private final PreparedStatement countApplicationCountersStatement;
+	private final PreparedStatement countApplicationEventCountersStatement;
+	private final PreparedStatement countEventNameCountersStatement;
+	private final PreparedStatement countTransactionNameCountersStatement;
 
-	
 	public RemovingCallbackHandler(SolrServer solrServer, Session session, EtmConfiguration etmConfiguration) {
 		this.solrServer = solrServer;
 		this.session = session;
@@ -88,6 +97,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 		this.deleteCorrelationDataStatement = this.session.prepare("delete from " + keyspace + ".correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit = ? and id = ?;");
 		this.deleteSourceIdCorrelationStatement = this.session.prepare("delete from " + keyspace + ".sourceid_id_correlation where sourceId = ?;");
 		this.deleteTelemetryEventStatement = this.session.prepare("delete from " + keyspace + ".telemetry_event where id = ?;");
+		this.deleteEventOccurrenceStatement = this.session.prepare("delete from " + keyspace + ".event_occurrences where timeunit = ? and type = ? and name_timeframe = ?;");
 		this.updateApplicationCounterStatement = this.session.prepare("update " + keyspace + ".application_counter set "
 				+ "count = count - 1, "
 				+ "messageRequestCount = messageRequestCount - ?, "
@@ -130,7 +140,11 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				+ "transactionStart = transactionStart - ?, "
 				+ "transactionFinish = transactionFinish - ?, "
 				+ "transactionResponseTime = transactionResponseTime - ? "
-				+ "where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");		
+				+ "where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
+		this.countApplicationCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".application_counter where application_timeunit = ?");
+		this.countApplicationEventCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".application_event_counter where application_timeunit = ?");
+		this.countEventNameCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".eventname_counter where eventName_timeunit = ?");
+		this.countTransactionNameCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".transactionname_counter where transactionName_timeunit = ?");
 	}
 
 	@Override
@@ -146,14 +160,12 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 			return;
 		}
 		final long statisticsFactor = this.etmConfiguration.getStatisticsTimeUnit().toMillis(1);
-		
 		try {
 			// First remove events from search index.
 			this.request.deleteById(this.idsToDelete);
 			this.request.setCommitWithin(60000);
 	        this.solrServer.request(this.request);
 			this.request.clear();
-
 			
 			// Remove events from cassandra cluster.
 			for (String idToDelete : this.idsToDelete) {
@@ -173,19 +185,25 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				UUID transactionId = row.getUUID(8);
 				String transactionName = row.getString(9);
 				String type = row.getString(9);
-				final String timestampSuffix = this.format.format(creationTime);
+				final String partitionKeySuffix = this.format.format(creationTime);
 				this.statisticsTimestamp.setTime(normalizeTime(creationTime.getTime(), statisticsFactor));
+				this.eventOccurrenceTimestamp.setTime(normalizeTime(creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 				if (TelemetryEventType.MESSAGE_REQUEST.equals(type) && !this.etmConfiguration.isDataRetentionPreserveEventPerformances()) {
-					removePerformances(id, creationTime, expiryTime, eventName, transactionId, transactionName, timestampSuffix);
+					removePerformances(id, creationTime, expiryTime, eventName, transactionId, transactionName, partitionKeySuffix);
 				}
 				if (!this.etmConfiguration.isDataRetentionPreserveEventCounts()) {
-					removeCounters(direction, type, application, eventName, transactionName, correlationCreationTime, creationTime, this.statisticsTimestamp, timestampSuffix);
+					removeCounters(direction, type, application, eventName, transactionName, correlationCreationTime, creationTime, this.statisticsTimestamp, partitionKeySuffix);
 				}
-				if (!this.etmConfiguration.isDataRetentionPreserveEventCounts() && this.etmConfiguration.isDataRetentionPreserveEventPerformances()) {
-					// TODO remove form event_occurrenecs table. Don't know yet how to fix this in a performant way.
+				removeEvent(id, creationTime, correlationData, sourceId, partitionKeySuffix);
+				if (eventName != null && !this.eventNamePartitionKeys.containsKey(eventName + partitionKeySuffix)) {
+					this.eventNamePartitionKeys.put(eventName + partitionKeySuffix, this.eventOccurrenceTimestamp);
 				}
-				removeEvent(id, creationTime, correlationData, sourceId, timestampSuffix);
-
+				if (application != null && !this.applicationPartitionKeys.containsKey(application + partitionKeySuffix)) {
+					this.applicationPartitionKeys.put(application + partitionKeySuffix, this.eventOccurrenceTimestamp);
+				}
+				if (transactionName != null && !this.transactionNamePartitionKeys.containsKey(transactionName + partitionKeySuffix)) {
+					this.transactionNamePartitionKeys.put(transactionName + partitionKeySuffix, this.eventOccurrenceTimestamp);
+				}
 				// First update the counters, as a delete statement of the same
 				// row could be executed in the "non-counter-statement". If the
 				// order is reverted the update would lead to an insert of the
@@ -199,6 +217,16 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 					this.batchStatement.clear();
 				}
 			}
+			removeApplicationPartitionKeys(this.applicationPartitionKeys);
+			removeEventNamePartitionKeys(this.eventNamePartitionKeys);
+			removeTransactionNamePartitionKeys(this.transactionNamePartitionKeys);
+			if (this.batchStatement.size() != 0) {
+				this.session.execute(this.batchStatement);
+				this.batchStatement.clear();
+			}
+			this.applicationPartitionKeys.clear();
+			this.eventNamePartitionKeys.clear();
+			this.transactionNamePartitionKeys.clear();
 			this.idsToDelete.clear();
         } catch (SolrServerException | IOException e) {
         	if (log.isErrorLevelEnabled()) {
@@ -207,9 +235,9 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
         } 
     }
 
-	private void removeEvent(UUID id, Date creationTime, Map<String, String> correlationData, String sourceId, String timestampSuffix) {
+	private void removeEvent(UUID id, Date creationTime, Map<String, String> correlationData, String sourceId, String partitionKeySuffix) {
 		if (correlationData != null && !correlationData.isEmpty()) {
-			correlationData.forEach((k,v) ->  this.batchStatement.add(this.deleteCorrelationDataStatement.bind(k + timestampSuffix, k, v, creationTime, id)));
+			correlationData.forEach((k,v) ->  this.batchStatement.add(this.deleteCorrelationDataStatement.bind(k + partitionKeySuffix, k, v, creationTime, id)));
 		}
 	    if (sourceId != null) {
 	    	this.batchStatement.add(this.deleteSourceIdCorrelationStatement.bind(sourceId));
@@ -217,19 +245,19 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    this.batchStatement.add(this.deleteTelemetryEventStatement.bind(id));
     }
 
-	private void removePerformances(UUID id, Date creationTime, Date expiryTime, String eventName, UUID transactionId, String transactionName, String timestampSuffix) {
+	private void removePerformances(UUID id, Date creationTime, Date expiryTime, String eventName, UUID transactionId, String transactionName, String partitionKeySuffix) {
 	    if (eventName != null) {
-	    	this.batchStatement.add(this.deleteMessagePerformanceStatement.bind(eventName + timestampSuffix, creationTime, id));
+	    	this.batchStatement.add(this.deleteMessagePerformanceStatement.bind(eventName + partitionKeySuffix, creationTime, id));
 	    	if (expiryTime != null) {
-	    		this.batchStatement.add(this.deleteMessageExpirationStatement.bind(eventName + timestampSuffix, expiryTime, id));
+	    		this.batchStatement.add(this.deleteMessageExpirationStatement.bind(eventName + partitionKeySuffix, expiryTime, id));
 	    	}
 	    }
 	    if (transactionId != null && transactionName != null) {
-	    	this.batchStatement.add(this.deleteTransactionPerformanceStatement.bind(transactionName + timestampSuffix, creationTime, transactionId));
+	    	this.batchStatement.add(this.deleteTransactionPerformanceStatement.bind(transactionName + partitionKeySuffix, creationTime, transactionId));
 	    }
     }
 	
-	private void removeCounters(String direction, String type, String application, String eventName, String transactionName, Date correlationCreationTime, Date creationTime, Date statisticsTimestamp, String timestampSuffix) {
+	private void removeCounters(String direction, String type, String application, String eventName, String transactionName, Date correlationCreationTime, Date creationTime, Date statisticsTimestamp, String partitionKeySuffix) {
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(type) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(type) && TelemetryEventDirection.INCOMING.equals(direction) ? 1 : 0;
 		long outgoingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(type) && TelemetryEventDirection.OUTGOING.equals(direction) ? 1 : 0;
@@ -250,66 +278,122 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(direction) ? responseTime : 0;
 		}
 		if (application != null) {
-			Row row = this.session.execute(this.selectApplicationCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application)).one();
+			Row row = this.session.execute(this.selectApplicationCounterStatement.bind(application + partitionKeySuffix, statisticsTimestamp, application)).one();
 			if (row != null) {
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.counterBatchStatement.add(this.deleteApplicationCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application));
+					this.counterBatchStatement.add(this.deleteApplicationCounterStatement.bind(application + partitionKeySuffix, statisticsTimestamp, application));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
 					this.counterBatchStatement.add(this.updateApplicationCounterStatement.bind(requestCount, incomingRequestCount,
 					        outgoingRequestCount, responseCount, incomingResponseCount, outgoingResponseCount, datagramCount,
 					        incomingDatagramCount, outgoingDatagramCount, responseTime, incomingResponseTime, outgoingResponseTime,
-					        application + timestampSuffix, statisticsTimestamp, application));
+					        application + partitionKeySuffix, statisticsTimestamp, application));
 				}
 			}
 		}
 		if (eventName != null) {
-			Row row = this.session.execute(this.selectEventNameCounterStatement.bind(eventName + timestampSuffix, statisticsTimestamp, eventName)).one();
+			Row row = this.session.execute(this.selectEventNameCounterStatement.bind(eventName + partitionKeySuffix, statisticsTimestamp, eventName)).one();
 			if (row != null) {
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.counterBatchStatement.add(this.deleteEventNameCounterStatement.bind(eventName + timestampSuffix, statisticsTimestamp, eventName));
+					this.counterBatchStatement.add(this.deleteEventNameCounterStatement.bind(eventName + partitionKeySuffix, statisticsTimestamp, eventName));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
 					this.counterBatchStatement.add(this.updateEventNameCounterStatement.bind(requestCount, responseCount, datagramCount,
-					        responseTime, eventName + timestampSuffix, statisticsTimestamp, eventName));
+					        responseTime, eventName + partitionKeySuffix, statisticsTimestamp, eventName));
 				}
 			}
 		}
 		if (application != null && eventName != null) {
-			Row row = this.session.execute(this.selectApplicationEventNameCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application, eventName)).one();
+			Row row = this.session.execute(this.selectApplicationEventNameCounterStatement.bind(application + partitionKeySuffix, statisticsTimestamp, application, eventName)).one();
 			if (row != null) {
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.counterBatchStatement.add(this.deleteApplicationEventNameCounterStatement.bind(application + timestampSuffix, statisticsTimestamp, application, eventName));
+					this.counterBatchStatement.add(this.deleteApplicationEventNameCounterStatement.bind(application + partitionKeySuffix, statisticsTimestamp, application, eventName));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
 					this.counterBatchStatement.add(this.updateApplicationEventNameCounterStatement.bind(requestCount, incomingRequestCount,
 					        outgoingRequestCount, responseCount, incomingResponseCount, outgoingResponseCount, datagramCount,
 					        incomingDatagramCount, outgoingDatagramCount, responseTime, incomingResponseTime, outgoingResponseTime,
-					        application + timestampSuffix, statisticsTimestamp, application, eventName));
+					        application + partitionKeySuffix, statisticsTimestamp, application, eventName));
 				}
 			}			
 		}
 		if (transactionName != null) {
-			Row row = this.session.execute(this.selectTransactionNameCounterStatement.bind(transactionName + timestampSuffix, statisticsTimestamp, transactionName)).one();
+			Row row = this.session.execute(this.selectTransactionNameCounterStatement.bind(transactionName + partitionKeySuffix, statisticsTimestamp, transactionName)).one();
 			if (row != null) {
 				long counter = row.getLong(0);
 				if (counter <= 1) {
 					// This is the only event at this statisticTimestamp -> the row can be deleted.
-					this.counterBatchStatement.add(this.deleteTransactionNameCounterStatement.bind(transactionName + timestampSuffix, statisticsTimestamp, transactionName));
+					this.counterBatchStatement.add(this.deleteTransactionNameCounterStatement.bind(transactionName + partitionKeySuffix, statisticsTimestamp, transactionName));
 				} else {
 					// More events at the same statisticTimestamp, decrease the counters.
 					this.counterBatchStatement.add(this.updateTransactionNameCounterStatement.bind(requestCount, responseCount,
-					        responseTime, transactionName + timestampSuffix, statisticsTimestamp, transactionName));
+					        responseTime, transactionName + partitionKeySuffix, statisticsTimestamp, transactionName));
 				}
 			}
 		}
     }
+	
+	private void removeApplicationPartitionKeys(Map<String, Date> applicationPartitionKeys) {
+	    if (applicationPartitionKeys.size() <= 0) {
+	    	return;
+	    }
+	    for (String applicationPartitionKey : applicationPartitionKeys.keySet()) {
+	    	Row row = this.session.execute(this.countApplicationCountersStatement.bind(applicationPartitionKey)).one();
+	    	if (row != null) {
+	    		long count = row.getLong(0);
+	    		if (count >= 1) {
+	    			continue;
+	    		}
+	    	}
+	    	row = this.session.execute(this.countApplicationEventCountersStatement.bind(applicationPartitionKey)).one();
+	    	if (row != null) {
+	    		long count = row.getLong(0);
+	    		if (count >= 1) {
+	    			continue;
+	    		}
+	    	}
+	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(applicationPartitionKeys.get(applicationPartitionKey), "Application", applicationPartitionKey));
+	    }
+    }
+
+	private void removeEventNamePartitionKeys(Map<String, Date> eventNamePartitionKeys) {
+	    if (eventNamePartitionKeys.size() <= 0) {
+	    	return;
+	    }
+	    for (String eventNamePartitionKey : eventNamePartitionKeys.keySet()) {
+	    	Row row = this.session.execute(this.countEventNameCountersStatement.bind(eventNamePartitionKey)).one();
+	    	if (row != null) {
+	    		long count = row.getLong(0);
+	    		if (count >= 1) {
+	    			continue;
+	    		}
+	    	}	    	
+	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(eventNamePartitionKeys.get(eventNamePartitionKey), "MessageName", eventNamePartitionKey));
+	    }
+    }
+	
+	private void removeTransactionNamePartitionKeys(Map<String, Date> transactionNamePartitionKeys) {
+	    if (transactionNamePartitionKeys.size() <= 0) {
+	    	return;
+	    }
+	    for (String transactionNamePartitionKey : transactionNamePartitionKeys.keySet()) {
+	    	Row row = this.session.execute(this.countTransactionNameCountersStatement.bind(transactionNamePartitionKey)).one();
+	    	if (row != null) {
+	    		long count = row.getLong(0);
+	    		if (count >= 1) {
+	    			continue;
+	    		}
+	    	}	    	
+	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(transactionNamePartitionKeys.get(transactionNamePartitionKey), "TransactionName", transactionNamePartitionKey));
+	    }    
+	}
+
 
 	private long normalizeTime(long timeInMillis, long factor) {
 		return (timeInMillis / factor) * factor;
