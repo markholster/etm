@@ -68,23 +68,24 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 		boolean stopProcessing = false;
 	    while(!stopProcessing && this.leaderSelector.hasLeadership()) {
 	    	try {
-	    		
 		    	long dataRetentionTime = this.etmConfiguration.getDataRetentionTime();
 		    	if (log.isInfoLevelEnabled()) {
 		    		log.logInfoMessage("Removing events older than " + dataRetentionTime + " ms.");
 		    	}
-		    	Date dateTill = new Date(System.currentTimeMillis() - dataRetentionTime + 1);
-		    	try {
-		    		SolrQuery query = new SolrQuery("creationTime:[* TO " + solrDateFormat.format(dateTill) + "]");
-		    		query.setStart(0);
-		    		// Max 50000 rows per iteration, otherwise the http response will be too big.
-		    		query.setRows(50000);
-		            this.solrServer.queryAndStreamResponse(query, this.callbackHandler);
-	            } catch (SolrServerException | IOException e) {
-	            	if (log.isErrorLevelEnabled()) {
-	            		log.logErrorMessage("Error removing events added before " + solrDateFormat.format(dateTill), e);
-	            	}
-	            }
+		    	if (dataRetentionTime > 0) {
+			    	Date dateTill = new Date(System.currentTimeMillis() - dataRetentionTime + 1);
+			    	try {
+			    		SolrQuery query = new SolrQuery("creationTime:[* TO " + solrDateFormat.format(dateTill) + "]");
+			    		query.setStart(0);
+			    		// Max 50000 rows per iteration, otherwise the http response will be too big.
+			    		query.setRows(50000);
+			            this.solrServer.queryAndStreamResponse(query, this.callbackHandler);
+		            } catch (SolrServerException | IOException e) {
+		            	if (log.isErrorLevelEnabled()) {
+		            		log.logErrorMessage("Error removing events added before " + solrDateFormat.format(dateTill), e);
+		            	}
+		            }
+		    	}
 	            Thread.sleep(this.etmConfiguration.getDataRetentionCheckInterval());
             } catch (InterruptedException e) {
             	if (log.isWarningLevelEnabled()) {
@@ -106,7 +107,11 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 		if (this.leaderSelector != null) {
 			this.leaderSelector.close();
 		}
+		if (this.callbackHandler != null) {
+			this.callbackHandler.close();
+		}
 		this.leaderSelector = null;
+		this.callbackHandler = null;
 	}
 
 }

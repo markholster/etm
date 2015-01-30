@@ -21,6 +21,9 @@ import com.holster.etm.core.EtmException;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
 
+//TODO document this class and the different properties. 
+//TODO fallback to default enum values for proprties with illegal values. 
+//TODO all properties should be dynamically adjustable. change listeners should be placed on all properties, and processors etc should be restarter accordingly.
 public class EtmConfiguration implements Closeable {
 	
 	/**
@@ -200,7 +203,7 @@ public class EtmConfiguration implements Closeable {
 	public long getDataRetentionCheckInterval() {
 		return Long.valueOf(this.etmProperties.getProperty("etm.data_retention_check_interval", "60000"));
 	}
-	
+
 	public boolean isDataRetentionPreserveEventCounts() {
 		return Boolean.valueOf(this.etmProperties.getProperty("etm.data_retention_preserve_event_counts", "false"));
 	}

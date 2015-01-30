@@ -4,7 +4,6 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.holster.etm.core.TelemetryEventDirection;
@@ -19,7 +18,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
 	
 	private final Date statisticsTimestamp = new Date();
-	private final Date timestampForSuffix = new Date();
+	private final Date eventOccurrenceTimestamp = new Date();
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
 	
@@ -27,13 +26,13 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	public TelemetryEventRepositoryCassandraImpl(final StatementExecutor statementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
 		this.statementExecutor = statementExecutor;
 		this.sourceCorrelations = sourceCorrelations;
-		this.format.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 	
+	// TODO add all statements to a batchStatement and execute synchronous.
 	@Override
     public void persistTelemetryEvent(final TelemetryEvent event, final TimeUnit smallestStatisticsTimeUnit) {
 		this.statisticsTimestamp.setTime(normalizeTime(event.creationTime.getTime(), smallestStatisticsTimeUnit.toMillis(1)));
-		this.timestampForSuffix.setTime(normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+		this.eventOccurrenceTimestamp.setTime(normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
@@ -87,7 +86,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        this.statisticsTimestamp,
 			        event.application + timestampSuffix,
 			        true);
-			this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "Application", event.application + timestampSuffix, event.application, true);
+			this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, true);
 		}
 		if (event.name != null) {
 			this.statementExecutor.updateEventNameCounter(
@@ -101,7 +100,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					true);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
 			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
-				this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "MessageName", event.name  + timestampSuffix, event.name, true);
+				this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + timestampSuffix, event.name, true);
 			}
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 				this.statementExecutor.insertMessageEventStart(event, event.name + timestampSuffix, true);
@@ -129,7 +128,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					this.statisticsTimestamp,
 					event.application + timestampSuffix, 
 					true);
-			this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "Application", event.application + timestampSuffix, event.application, true);
+			this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + timestampSuffix, event.application, true);
 		}
 		if (event.transactionName != null) {
 			this.statementExecutor.updateTransactionNameCounter(
@@ -139,7 +138,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.transactionName, 
 					this.statisticsTimestamp,
 					event.transactionName + timestampSuffix, true);
-			this.statementExecutor.insertEventOccurence(this.timestampForSuffix, "TransactionName", event.transactionName + timestampSuffix, event.transactionName, true);
+			this.statementExecutor.insertEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + timestampSuffix, event.transactionName, true);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 				this.statementExecutor.insertTransactionEventStart(event, event.transactionName + timestampSuffix,  true);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {

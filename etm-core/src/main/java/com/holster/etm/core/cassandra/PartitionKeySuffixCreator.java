@@ -4,6 +4,7 @@ import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class PartitionKeySuffixCreator extends SimpleDateFormat {
@@ -19,6 +20,7 @@ public class PartitionKeySuffixCreator extends SimpleDateFormat {
 
 	public PartitionKeySuffixCreator() {
 		super("yyyyMMddHH");
+		setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
 
 	@Override
