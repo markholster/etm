@@ -76,6 +76,9 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	private final PreparedStatement countApplicationEventCountersStatement;
 	private final PreparedStatement countEventNameCountersStatement;
 	private final PreparedStatement countTransactionNameCountersStatement;
+	private final PreparedStatement countMessagePerformancesStatement;
+	private final PreparedStatement countMessageExpirationsStatement;
+	private final PreparedStatement countTransactionPerformancesStatement;
 
 	public RemovingCallbackHandler(SolrServer solrServer, Session session, EtmConfiguration etmConfiguration) {
 		this.solrServer = solrServer;
@@ -144,7 +147,10 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 		this.countApplicationCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".application_counter where application_timeunit = ?");
 		this.countApplicationEventCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".application_event_counter where application_timeunit = ?");
 		this.countEventNameCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".eventname_counter where eventName_timeunit = ?");
+		this.countMessagePerformancesStatement = this.session.prepare("select count(*) from " + keyspace + ".message_performance where name_timeunit = ?");
+		this.countMessageExpirationsStatement = this.session.prepare("select count(*) from " + keyspace + ".message_expiration where name_timeunit = ?");
 		this.countTransactionNameCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".transactionname_counter where transactionName_timeunit = ?");
+		this.countTransactionPerformancesStatement = this.session.prepare("select count(*) from " + keyspace + ".transaction_performance where transactionName_timeunit = ?");
 	}
 
 	@Override
@@ -373,7 +379,21 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    		if (count >= 1) {
 	    			continue;
 	    		}
-	    	}	    	
+	    	}
+	    	row = this.session.execute(this.countMessagePerformancesStatement.bind(eventNamePartitionKey)).one();
+	    	if (row != null) {
+	    		long count = row.getLong(0);
+	    		if (count >= 1) {
+	    			continue;
+	    		}
+	    	}
+	    	row = this.session.execute(this.countMessageExpirationsStatement.bind(eventNamePartitionKey)).one();
+	    	if (row != null) {
+	    		long count = row.getLong(0);
+	    		if (count >= 1) {
+	    			continue;
+	    		}
+	    	}
 	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(eventNamePartitionKeys.get(eventNamePartitionKey), "MessageName", eventNamePartitionKey));
 	    }
     }
@@ -389,7 +409,14 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    		if (count >= 1) {
 	    			continue;
 	    		}
-	    	}	    	
+	    	}
+	    	row = this.session.execute(this.countTransactionPerformancesStatement.bind(transactionNamePartitionKey)).one();
+	    	if (row != null) {
+	    		long count = row.getLong(0);
+	    		if (count >= 1) {
+	    			continue;
+	    		}
+	    	}
 	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(transactionNamePartitionKeys.get(transactionNamePartitionKey), "TransactionName", transactionNamePartitionKey));
 	    }    
 	}
