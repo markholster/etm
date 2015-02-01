@@ -2,6 +2,8 @@ package com.holster.etm.core.configuration;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -17,6 +19,8 @@ abstract class AbstractConfiguration {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(AbstractConfiguration.class);
 
+	private List<ConfigurationChangeListener> configurationChangeListeners = new ArrayList<ConfigurationChangeListener>();
+	
 	Properties loadProperties(NodeCache nodeCache) {
 		Properties properties = new Properties();
 		ChildData currentData = nodeCache.getCurrentData();
@@ -55,5 +59,19 @@ abstract class AbstractConfiguration {
 			properties.setProperty(key, value);
 		}
 	}
+	
+	void addConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+		if (!this.configurationChangeListeners.contains(configurationChangeListener)) {
+			this.configurationChangeListeners.add(configurationChangeListener);
+		}
+    }
+
+	void removeConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+	    this.configurationChangeListeners.remove(configurationChangeListener);
+    }
+	
+	List<ConfigurationChangeListener> getConfigurationChangeListeners() {
+	    return this.configurationChangeListeners;
+    }
 
 }

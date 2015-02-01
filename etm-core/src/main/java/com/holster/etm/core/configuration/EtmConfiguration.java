@@ -53,7 +53,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 
 	private NodeCache globalEtmPropertiesNode;
 	private NodeCache nodeEtmPropertiesNode;
-
+	
 	public synchronized void load(String nodeName, String zkConnections, String namespace, String component) throws Exception {
 		if (this.client != null) {
 			return;
@@ -195,6 +195,30 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		return new LeaderSelector(this.client, "/leader-election" + leaderPath, leaderSelectionListener);
     }
 	
+	public void addEtmConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+		addConfigurationChangeListener(configurationChangeListener);
+	}
+	
+	public void removeEtmConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+		removeConfigurationChangeListener(configurationChangeListener);
+	}
+	
+	public void addSolrConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+		this.solrConfiguration.addConfigurationChangeListener(configurationChangeListener);
+	}
+	
+	public void removeSolrConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+		this.solrConfiguration.removeConfigurationChangeListener(configurationChangeListener);
+	}
+	
+	public void addCassandraConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+		this.cassandraConfiguration.addConfigurationChangeListener(configurationChangeListener);
+	}
+	
+	public void removeCassandraConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
+		this.cassandraConfiguration.removeConfigurationChangeListener(configurationChangeListener);
+	}
+	
 	@Override
 	public void close() {
 		if (this.globalEtmPropertiesNode != null) {
@@ -221,7 +245,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		if (this.solrConfiguration != null) {
 			this.solrConfiguration.close();
 		}
-		// Delete the node + component as active node in zookeeper.
+		// TODO Delete the node + component as active node in zookeeper.
 	    if (this.client != null) {
 	    	this.client.close();
 	    }
@@ -234,8 +258,10 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 
 		@Override
         public void nodeChanged() {
-			EtmConfiguration.this.etmProperties = EtmConfiguration.this.loadEtmProperties();
-        }
-		
+			Properties newProperties = EtmConfiguration.this.loadEtmProperties();
+			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(EtmConfiguration.this.etmProperties, newProperties);
+			EtmConfiguration.this.etmProperties =  newProperties;
+			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
+        }		
 	}
  }

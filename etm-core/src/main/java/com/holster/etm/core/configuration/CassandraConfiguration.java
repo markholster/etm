@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
@@ -29,7 +30,9 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 	private NodeCache globalCassandraPropertiesNode;
 	
 	CassandraConfiguration(CuratorFramework client) throws Exception {
+		ReloadCassandraPropertiesListener reloadListener = new ReloadCassandraPropertiesListener();
 		this.globalCassandraPropertiesNode = new NodeCache(client, "/config/cassandra.propeties");
+		this.globalCassandraPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalCassandraPropertiesNode.start();
 		this.cassandraProperties = loadCassandraProperties();
     }
@@ -71,4 +74,14 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 		this.globalCassandraPropertiesNode = null;
     }
 	
+	private class ReloadCassandraPropertiesListener implements NodeCacheListener {
+
+		@Override
+        public void nodeChanged() {
+			Properties newProperties = CassandraConfiguration.this.loadCassandraProperties();
+			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(CassandraConfiguration.this.cassandraProperties, newProperties);
+			CassandraConfiguration.this.cassandraProperties =  newProperties;
+			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
+        }		
+	}
 }

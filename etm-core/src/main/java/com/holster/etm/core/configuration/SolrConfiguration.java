@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
@@ -26,7 +27,9 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 	
 	SolrConfiguration(CuratorFramework client, String solrZkConnectionString) throws Exception {
 		this.solrZkConnectionString = solrZkConnectionString;
+		ReloadSolrPropertiesListener reloadListener = new ReloadSolrPropertiesListener();
 		this.globalSolrPropertiesNode = new NodeCache(client, "/config/solr.propeties");
+		this.globalSolrPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalSolrPropertiesNode.start();
 		this.solrProperties =loadSolrProperties(); 
     }
@@ -60,4 +63,14 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 		this.globalSolrPropertiesNode = null;
     }
 	
+	private class ReloadSolrPropertiesListener implements NodeCacheListener {
+
+		@Override
+        public void nodeChanged() {
+			Properties newProperties = SolrConfiguration.this.loadSolrProperties();
+			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(SolrConfiguration.this.solrProperties, newProperties);
+			SolrConfiguration.this.solrProperties =  newProperties;
+			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
+        }		
+	}
 }

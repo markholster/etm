@@ -2,11 +2,27 @@ package com.holster.etm.core.configuration;
 
 import java.util.Properties;
 
+import com.holster.etm.core.util.ObjectUtils;
+
 public class ConfigurationChangedEvent {
 
-	private Properties oldProperties;
-	private Properties currentProperties;
-	private Properties addedProperties;
-	private Properties removedProperties;
-	private Properties changedProperties;
+	private Properties oldProperties = new Properties();
+	private Properties currentProperties = new Properties();
+	private Properties changedProperties = new Properties();
+	
+	public ConfigurationChangedEvent(Properties oldProperties, Properties currentProperties) {
+		this.oldProperties.putAll(oldProperties);
+		this.currentProperties.putAll(currentProperties);
+		for (String key : currentProperties.stringPropertyNames()) {
+			String currentValue = currentProperties.getProperty(key);
+			String oldValue = oldProperties.getProperty(key);
+			if (!ObjectUtils.equalsNullProof(currentValue, oldValue)) {
+				this.changedProperties.setProperty(key, currentValue);
+			}
+		}
+	}
+	
+	public boolean isChanged(String configurationKey) {
+		return this.changedProperties.containsKey(configurationKey);
+	}
 }
