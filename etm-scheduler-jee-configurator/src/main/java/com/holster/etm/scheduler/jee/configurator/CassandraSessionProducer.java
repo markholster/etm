@@ -3,6 +3,7 @@ package com.holster.etm.scheduler.jee.configurator;
 import java.util.List;
 
 import javax.annotation.ManagedBean;
+import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,6 +24,8 @@ public class CassandraSessionProducer {
 	
 	private Session session;
 
+	private Cluster cluster;
+
 	@Produces
 	@SchedulerConfiguration
 	public Session getSession() {
@@ -38,10 +41,22 @@ public class CassandraSessionProducer {
 				if (username != null) {
 					builder.withCredentials(username, password);
 				}				
-				Cluster cluster = builder.build();
-				this.session = cluster.newSession().init();
+				this.cluster = builder.build();
+				this.session = this.cluster.newSession().init();
 			}
 		}
 		return this.session;
+	}
+	
+	@PreDestroy
+	public void preDestroy() {
+		if (this.session != null) {
+			this.session.close();
+		}
+		this.session = null;
+		if (this.cluster != null) {
+			this.cluster.close();
+		}
+		this.cluster = null;
 	}
 }

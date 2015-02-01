@@ -1,6 +1,7 @@
 package com.holster.etm.processor.jee.configurator;
 
 import javax.annotation.ManagedBean;
+import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,5 +34,12 @@ public class SolrServerProducer {
 			}
 		}
 		return this.solrServer;
+	}
+	
+	@PreDestroy
+	public void preDestroy() {
+		if (this.solrServer != null) {
+			this.solrServer.shutdown();
+		}
 	}
 }
