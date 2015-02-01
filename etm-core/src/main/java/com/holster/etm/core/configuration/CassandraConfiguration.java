@@ -79,6 +79,9 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 		@Override
         public void nodeChanged() {
 			Properties newProperties = CassandraConfiguration.this.loadCassandraProperties();
+			if (newProperties.equals(CassandraConfiguration.this.cassandraProperties)) {
+				return;
+			}						
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(CassandraConfiguration.this.cassandraProperties, newProperties);
 			CassandraConfiguration.this.cassandraProperties =  newProperties;
 			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));

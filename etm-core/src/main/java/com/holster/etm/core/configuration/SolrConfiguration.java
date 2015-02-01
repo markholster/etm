@@ -18,31 +18,33 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(SolrConfiguration.class);
 
+	public static final String SOLR_ZOOKEEPER_CONNECTION = "solr.zookeeper_connection";
 	public static final String SOLR_COLLECTION = "solr.collection";
 	
 	private Properties solrProperties;
 	private NodeCache globalSolrPropertiesNode;
 
-	private String solrZkConnectionString;
+	private String defaultSolrZkConnectionString;
 	
-	SolrConfiguration(CuratorFramework client, String solrZkConnectionString) throws Exception {
-		this.solrZkConnectionString = solrZkConnectionString;
+	SolrConfiguration(CuratorFramework client, String defaultSolrZkConnectionString) throws Exception {
+		this.defaultSolrZkConnectionString = defaultSolrZkConnectionString;
 		ReloadSolrPropertiesListener reloadListener = new ReloadSolrPropertiesListener();
 		this.globalSolrPropertiesNode = new NodeCache(client, "/config/solr.propeties");
 		this.globalSolrPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalSolrPropertiesNode.start();
-		this.solrProperties =loadSolrProperties(); 
+		this.solrProperties = loadSolrProperties(); 
     }
 	
 	private Properties loadSolrProperties() {
 		Properties properties = loadProperties(this.globalSolrPropertiesNode);
 		checkDefaultValue(properties, SOLR_COLLECTION, "etm");
+		checkDefaultValue(properties, SOLR_ZOOKEEPER_CONNECTION, this.defaultSolrZkConnectionString);
 		return properties;
 	}
 	
 
 	String getSolrZkConnectionString() {
-		return this.solrZkConnectionString;
+		return this.solrProperties.getProperty(SOLR_ZOOKEEPER_CONNECTION);
 	}
 	
 	String getSolrCollectionName() {
@@ -68,6 +70,9 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 		@Override
         public void nodeChanged() {
 			Properties newProperties = SolrConfiguration.this.loadSolrProperties();
+			if (newProperties.equals(SolrConfiguration.this.solrProperties)) {
+				return;
+			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(SolrConfiguration.this.solrProperties, newProperties);
 			SolrConfiguration.this.solrProperties =  newProperties;
 			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));

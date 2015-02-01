@@ -259,6 +259,9 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		@Override
         public void nodeChanged() {
 			Properties newProperties = EtmConfiguration.this.loadEtmProperties();
+			if (newProperties.equals(EtmConfiguration.this.etmProperties)) {
+				return;
+			}			
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(EtmConfiguration.this.etmProperties, newProperties);
 			EtmConfiguration.this.etmProperties =  newProperties;
 			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
