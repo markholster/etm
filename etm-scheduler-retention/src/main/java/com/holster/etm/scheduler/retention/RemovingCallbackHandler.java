@@ -144,13 +144,13 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				+ "transactionFinish = transactionFinish - ?, "
 				+ "transactionResponseTime = transactionResponseTime - ? "
 				+ "where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
-		this.countApplicationCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".application_counter where application_timeunit = ?");
-		this.countApplicationEventCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".application_event_counter where application_timeunit = ?");
-		this.countEventNameCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".eventname_counter where eventName_timeunit = ?");
-		this.countMessagePerformancesStatement = this.session.prepare("select count(*) from " + keyspace + ".message_performance where name_timeunit = ?");
-		this.countMessageExpirationsStatement = this.session.prepare("select count(*) from " + keyspace + ".message_expiration where name_timeunit = ?");
-		this.countTransactionNameCountersStatement = this.session.prepare("select count(*) from " + keyspace + ".transactionname_counter where transactionName_timeunit = ?");
-		this.countTransactionPerformancesStatement = this.session.prepare("select count(*) from " + keyspace + ".transaction_performance where transactionName_timeunit = ?");
+		this.countApplicationCountersStatement = this.session.prepare("select application_timeunit from " + keyspace + ".application_counter where application_timeunit = ? limit 1");
+		this.countApplicationEventCountersStatement = this.session.prepare("select application_timeunit from " + keyspace + ".application_event_counter where application_timeunit = ? limit 1");
+		this.countEventNameCountersStatement = this.session.prepare("select eventName_timeunit from " + keyspace + ".eventname_counter where eventName_timeunit = ? limit 1");
+		this.countMessagePerformancesStatement = this.session.prepare("select name_timeunit from " + keyspace + ".message_performance where name_timeunit = ? limit 1");
+		this.countMessageExpirationsStatement = this.session.prepare("select name_timeunit from " + keyspace + ".message_expiration where name_timeunit = ? limit 1");
+		this.countTransactionNameCountersStatement = this.session.prepare("select transactionName_timeunit from " + keyspace + ".transactionname_counter where transactionName_timeunit = ? limit 1");
+		this.countTransactionPerformancesStatement = this.session.prepare("select transactionName_timeunit from " + keyspace + ".transaction_performance where transactionName_timeunit = ? limit 1");
 	}
 
 	@Override
@@ -352,17 +352,11 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    for (String applicationPartitionKey : applicationPartitionKeys.keySet()) {
 	    	Row row = this.session.execute(this.countApplicationCountersStatement.bind(applicationPartitionKey)).one();
 	    	if (row != null) {
-	    		long count = row.getLong(0);
-	    		if (count >= 1) {
-	    			continue;
-	    		}
+	    		continue;
 	    	}
 	    	row = this.session.execute(this.countApplicationEventCountersStatement.bind(applicationPartitionKey)).one();
 	    	if (row != null) {
-	    		long count = row.getLong(0);
-	    		if (count >= 1) {
-	    			continue;
-	    		}
+	    		continue;
 	    	}
 	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(applicationPartitionKeys.get(applicationPartitionKey), "Application", applicationPartitionKey));
 	    }
@@ -375,24 +369,15 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    for (String eventNamePartitionKey : eventNamePartitionKeys.keySet()) {
 	    	Row row = this.session.execute(this.countEventNameCountersStatement.bind(eventNamePartitionKey)).one();
 	    	if (row != null) {
-	    		long count = row.getLong(0);
-	    		if (count >= 1) {
-	    			continue;
-	    		}
+	    		continue;
 	    	}
 	    	row = this.session.execute(this.countMessagePerformancesStatement.bind(eventNamePartitionKey)).one();
 	    	if (row != null) {
-	    		long count = row.getLong(0);
-	    		if (count >= 1) {
-	    			continue;
-	    		}
+	    		continue;
 	    	}
 	    	row = this.session.execute(this.countMessageExpirationsStatement.bind(eventNamePartitionKey)).one();
 	    	if (row != null) {
-	    		long count = row.getLong(0);
-	    		if (count >= 1) {
-	    			continue;
-	    		}
+	    		continue;
 	    	}
 	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(eventNamePartitionKeys.get(eventNamePartitionKey), "MessageName", eventNamePartitionKey));
 	    }
@@ -405,17 +390,11 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    for (String transactionNamePartitionKey : transactionNamePartitionKeys.keySet()) {
 	    	Row row = this.session.execute(this.countTransactionNameCountersStatement.bind(transactionNamePartitionKey)).one();
 	    	if (row != null) {
-	    		long count = row.getLong(0);
-	    		if (count >= 1) {
-	    			continue;
-	    		}
+	    		continue;
 	    	}
 	    	row = this.session.execute(this.countTransactionPerformancesStatement.bind(transactionNamePartitionKey)).one();
 	    	if (row != null) {
-	    		long count = row.getLong(0);
-	    		if (count >= 1) {
-	    			continue;
-	    		}
+	    		continue;
 	    	}
 	    	this.batchStatement.add(this.deleteEventOccurrenceStatement.bind(transactionNamePartitionKeys.get(transactionNamePartitionKey), "TransactionName", transactionNamePartitionKey));
 	    }    
