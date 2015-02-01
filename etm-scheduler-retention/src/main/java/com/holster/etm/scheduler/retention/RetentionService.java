@@ -57,8 +57,9 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 	@PostConstruct
 	public void registerRetentionService() {
 		this.solrDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		String retentionGroup = "/group-" + this.etmConfiguration.getDataRetentionLeaderGroup();
 		this.callbackHandler = new RemovingCallbackHandler(this.solrServer, this.session, this.etmConfiguration);
-		this.leaderSelector = this.etmConfiguration.createLeaderSelector("/retention", this);
+		this.leaderSelector = this.etmConfiguration.createLeaderSelector("/retention" + retentionGroup, this);
 		this.leaderSelector.autoRequeue();
 		this.leaderSelector.start();
 	}

@@ -4,9 +4,9 @@ import java.util.Properties;
 
 public class ConfigurationChangedEvent {
 
-	Properties oldProperties;
-	Properties currentProperties;
-	Properties addedProperties;
-	Properties removedProperties;
-	Properties changedProperties;
+	private Properties oldProperties;
+	private Properties currentProperties;
+	private Properties addedProperties;
+	private Properties removedProperties;
+	private Properties changedProperties;
 }

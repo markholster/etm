@@ -40,6 +40,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	public static final String ETM_DATA_CORRELATION_TIME_OFFSET = "etm.data_correlation_time_offset";
 	public static final String ETM_DATA_RETENTION_TIME = "etm.data_retention_time";
 	public static final String ETM_DATA_RETENTION_CHECK_INTERVAL = "etm.data_retention_check_interval";
+	public static final String ETM_DATA_RETENTION_LEADER_GROUP = "etm.data_retention_leader_group";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS = "etm.data_retention_preserve_event_counts";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES = "etm.data_retention_preserve_event_performances";
 	
@@ -53,10 +54,11 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	private NodeCache globalEtmPropertiesNode;
 	private NodeCache nodeEtmPropertiesNode;
 
-	public synchronized void load(String nodeName, String zkConnections, String namespace) throws Exception {
+	public synchronized void load(String nodeName, String zkConnections, String namespace, String component) throws Exception {
 		if (this.client != null) {
 			return;
 		}
+		// TODO register the nodename + component as active node in zookeeper.
 		String solrZkConnectionString = Arrays.stream(zkConnections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
 		this.client = CuratorFrameworkFactory.builder().connectString(zkConnections).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
 		this.client.start();
@@ -93,6 +95,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		checkDefaultValue(properties, ETM_DATA_CORRELATION_TIME_OFFSET, "30000");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_TIME, "604800000");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_CHECK_INTERVAL, "60000");
+		checkDefaultValue(properties, ETM_DATA_RETENTION_LEADER_GROUP, "1");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS, "false");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES, "false");
 		return properties; 
@@ -175,6 +178,10 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	public long getDataRetentionCheckInterval() {
 		return Long.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_CHECK_INTERVAL));
 	}
+	
+	public int getDataRetentionLeaderGroup() {
+		return Integer.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_LEADER_GROUP));
+	}
 
 	public boolean isDataRetentionPreserveEventCounts() {
 		return Boolean.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS));
@@ -214,6 +221,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		if (this.solrConfiguration != null) {
 			this.solrConfiguration.close();
 		}
+		// Delete the node + component as active node in zookeeper.
 	    if (this.client != null) {
 	    	this.client.close();
 	    }
