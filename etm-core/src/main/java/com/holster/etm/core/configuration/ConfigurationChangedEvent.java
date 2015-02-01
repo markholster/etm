@@ -25,4 +25,13 @@ public class ConfigurationChangedEvent {
 	public boolean isChanged(String configurationKey) {
 		return this.changedProperties.containsKey(configurationKey);
 	}
+	
+	public boolean isAnyChanged(String ... configurationKeys) {
+		for (String key : configurationKeys) {
+			if (isChanged(key)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

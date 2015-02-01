@@ -28,17 +28,25 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 
 	private Properties cassandraProperties;
 	private NodeCache globalCassandraPropertiesNode;
+	private NodeCache nodeCassandraPropertiesNode;
 	
-	CassandraConfiguration(CuratorFramework client) throws Exception {
+	CassandraConfiguration(CuratorFramework client, String nodeName) throws Exception {
 		ReloadCassandraPropertiesListener reloadListener = new ReloadCassandraPropertiesListener();
 		this.globalCassandraPropertiesNode = new NodeCache(client, "/config/cassandra.propeties");
 		this.globalCassandraPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalCassandraPropertiesNode.start();
+		if (nodeName != null) {
+			this.nodeCassandraPropertiesNode = new NodeCache(client, "/config/" + nodeName + "/cassandra.propeties");
+			this.nodeCassandraPropertiesNode.getListenable().addListener(reloadListener);
+			this.nodeCassandraPropertiesNode.start();
+		}		
 		this.cassandraProperties = loadCassandraProperties();
     }
 	
 	private Properties loadCassandraProperties() {
-		Properties properties = loadProperties(this.globalCassandraPropertiesNode);
+		Properties properties = new Properties();
+		properties.putAll(loadProperties(this.globalCassandraPropertiesNode));
+		properties.putAll(loadProperties(this.nodeCassandraPropertiesNode));
 		checkDefaultValue(properties, CASSANDRA_CONTACT_POINTS, "127.0.0.1");
 		checkDefaultValue(properties, CASSANDRA_KEYSPACE, "etm");
 		return properties;

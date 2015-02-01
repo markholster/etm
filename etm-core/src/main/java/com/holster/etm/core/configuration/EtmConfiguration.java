@@ -77,7 +77,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			this.nodeEtmPropertiesNode.start();
 		}
 		this.etmProperties = loadEtmProperties();
-		this.cassandraConfiguration = new CassandraConfiguration(this.client);
+		this.cassandraConfiguration = new CassandraConfiguration(this.client, nodeName);
 		this.solrConfiguration = new SolrConfiguration(client, solrZkConnectionString);
 	}
 
