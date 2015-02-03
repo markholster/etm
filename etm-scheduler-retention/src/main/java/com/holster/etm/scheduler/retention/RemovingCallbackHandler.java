@@ -36,7 +36,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(RemovingCallbackHandler.class);
 
-	private final int nrOfDocumentsPerRequest = 50;
+	private final int nrOfDocumentsPerRequest = 250;
 	
 	private final Session session;
 	private final SolrServer solrServer;
@@ -172,8 +172,8 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 		try {
 			// First remove events from search index.
 			this.request.deleteById(this.idsToDelete);
-			this.request.setCommitWithin(60000);
 	        this.solrServer.request(this.request);
+	        this.solrServer.commit(false, false, true);
 			this.request.clear();
 			// Remove events from cassandra cluster.
 			for (String idToDelete : this.idsToDelete) {
@@ -420,6 +420,9 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	
 	@Override
 	public void streamDocListInfo(long numFound, long start, Float maxScore) {
+		if (log.isDebugLevelEnabled()) {
+			log.logDebugMessage("Found " + numFound + " events marked for removal.");
+		}
 	}
 
 	@Override
