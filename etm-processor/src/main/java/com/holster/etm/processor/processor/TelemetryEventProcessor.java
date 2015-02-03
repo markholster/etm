@@ -151,13 +151,16 @@ public class TelemetryEventProcessor {
 			if (result.transactionNameParsers != null && result.transactionNameParsers.size() > 0) {
 				event.transactionName = parseValue(result.transactionNameParsers, event.content);
 			}
+			if (event.transactionName != null) {
+				event.slaRule = result.slaRules.get(event.transactionName);
+			}
 		}
 		if (event.transactionName != null) {
 			event.transactionId = event.id;
 		}
 		if (event.sourceId != null) {
 			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
-			        event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime()));
+			        event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime(), event.slaRule));
 		}
 //		Statistics.preprocessingTime.addAndGet(System.nanoTime() - start);
 	}

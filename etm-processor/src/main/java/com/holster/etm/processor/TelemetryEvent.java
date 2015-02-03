@@ -8,6 +8,7 @@ import java.util.UUID;
 import com.datastax.driver.core.utils.UUIDs;
 import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.core.TelemetryEventType;
+import com.holster.etm.core.sla.SlaRule;
 
 
 public class TelemetryEvent {
@@ -98,12 +99,19 @@ public class TelemetryEvent {
 	public String correlationName;
 	
 	/**
+	 * The SLA Rule for this event.
+	 */
+	public SlaRule slaRule;
+	
+	/**
 	 * Data to be used for correlating event's that aren't correlated by the correlation id.
 	 */
 	public Map<String, String> correlationData = new HashMap<String, String>();
 	
 	// Processing state.
 	public boolean ignore;
+
+	
 	
 	
 	public TelemetryEvent initialize() {
@@ -120,6 +128,7 @@ public class TelemetryEvent {
 		this.endpoint = null;
 		this.expiryTime.setTime(0);
 		this.name = null;
+		this.slaRule = null;
 		this.sourceCorrelationId = null;
 		this.sourceId = null;
 		this.transactionId = null;
@@ -135,8 +144,8 @@ public class TelemetryEvent {
 		this.application = copy.application;
 		this.content = copy.content;
 		this.correlationCreationTime.setTime(copy.correlationCreationTime.getTime());
-		this.correlationExpiryTime.setTime(copy.correlationExpiryTime.getTime());
 		this.correlationData.putAll(copy.correlationData);
+		this.correlationExpiryTime.setTime(copy.correlationExpiryTime.getTime());
 		this.correlationId = copy.correlationId;
 		this.correlationName = copy.correlationName;
 		this.creationTime.setTime(copy.creationTime.getTime());
@@ -144,6 +153,7 @@ public class TelemetryEvent {
 		this.endpoint = copy.endpoint;
 		this.expiryTime.setTime(copy.expiryTime.getTime());
 		this.name = copy.name;
+		this.slaRule = copy.slaRule;
 		this.sourceCorrelationId = copy.sourceCorrelationId;
 		this.sourceId = copy.sourceId;
 		this.transactionId = copy.transactionId;

@@ -1,24 +1,27 @@
 package com.holster.etm.processor.repository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.sla.SlaRule;
 import com.holster.etm.processor.parsers.ExpressionParser;
 
 public class EndpointConfigResult {
 
-	public List<ExpressionParser> applicationParsers;
-	public List<ExpressionParser> eventNameParsers;
-	public List<ExpressionParser> transactionNameParsers;
+	public List<ExpressionParser> applicationParsers = new ArrayList<ExpressionParser>();
+	public List<ExpressionParser> eventNameParsers = new ArrayList<ExpressionParser>();
+	public List<ExpressionParser> transactionNameParsers = new ArrayList<ExpressionParser>();
 	public Map<String, ExpressionParser> correlationDataParsers = new HashMap<String, ExpressionParser>();
+	public Map<String, SlaRule> slaRules = new HashMap<String, SlaRule>();
 	public TelemetryEventDirection eventDirection;
 	
 	// process state
 	public long retrieved;
 
-	public void initialize() {
+	public EndpointConfigResult initialize() {
 	    if (this.applicationParsers != null) {
 	    	this.applicationParsers.clear();
 	    }
@@ -31,7 +34,11 @@ public class EndpointConfigResult {
 	    if (this.correlationDataParsers != null) {
 	    	this.correlationDataParsers.clear();
 	    }
+	    if (this.slaRules != null) {
+	    	this.slaRules.clear();
+	    }
 	    this.eventDirection = null;
+	    return this;
     }
 	
 	

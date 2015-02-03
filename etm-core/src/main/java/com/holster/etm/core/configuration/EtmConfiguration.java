@@ -43,6 +43,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	public static final String ETM_DATA_RETENTION_LEADER_GROUP = "etm.data_retention_leader_group";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS = "etm.data_retention_preserve_event_counts";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES = "etm.data_retention_preserve_event_performances";
+	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS = "etm.data_retention_preserve_transaction_slas";
 	
 	private CassandraConfiguration cassandraConfiguration;
 	private SolrConfiguration solrConfiguration;
@@ -98,6 +99,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		checkDefaultValue(properties, ETM_DATA_RETENTION_LEADER_GROUP, "1");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS, "false");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES, "false");
+		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS, "false");
 		return properties; 
     }
 	
@@ -188,9 +190,13 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	}
 	
 	public boolean isDataRetentionPreserveEventPerformances() {
-		return Boolean.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES, "false"));
+		return Boolean.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES));
 	}
-	
+
+	public boolean isDataRetentionPreserveEventSlas() {
+		return Boolean.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS));
+	}
+
 	public LeaderSelector createLeaderSelector(String leaderPath, LeaderSelectorListener leaderSelectionListener) {
 		return new LeaderSelector(this.client, "/leader-election" + leaderPath, leaderSelectionListener);
     }

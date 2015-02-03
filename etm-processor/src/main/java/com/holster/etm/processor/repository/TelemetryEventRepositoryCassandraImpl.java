@@ -107,7 +107,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 				this.statementExecutor.addMessageEventStart(event, event.name + partitionKeySuffix, this.batchStatement);
 			}
 		}
-		if (event.correlationId != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
+		if (event.correlationId != null && event.correlationName != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
 			this.statementExecutor.addMessageEventFinish(event, event.correlationName + correlationPartitionKeySuffix, this.batchStatement);
 		}
 		if (event.application != null && event.name != null) {
@@ -141,7 +141,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.transactionName + partitionKeySuffix, this.counterBatchStatement);
 			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + partitionKeySuffix, event.transactionName, this.batchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix,  this.batchStatement);
+				this.statementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix, this.batchStatement);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
 				this.statementExecutor.addTransactionEventFinish(event, event.transactionName + correlationPartitionKeySuffix, this.batchStatement);
 			}
@@ -175,6 +175,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.creationTime = parent.creationTime;
 			result.expiryTime = parent.expiryTime;
 			result.name = parent.name;
+			result.slaRule = parent.slaRule;
 			return;
 		}
 		this.statementExecutor.findParent(sourceId, result);
@@ -194,11 +195,12 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			cachedResult.retrieved = System.currentTimeMillis();
 			this.endpointConfigs.put(endpoint, cachedResult);
 		} 
-		result.applicationParsers = cachedResult.applicationParsers;
-		result.eventNameParsers = cachedResult.eventNameParsers;
-		result.correlationDataParsers = cachedResult.correlationDataParsers;
+		result.applicationParsers.addAll(cachedResult.applicationParsers);
+		result.eventNameParsers.addAll(cachedResult.eventNameParsers);
+		result.correlationDataParsers.putAll(cachedResult.correlationDataParsers);
 		result.eventDirection = cachedResult.eventDirection;
-		result.transactionNameParsers = cachedResult.transactionNameParsers;
+		result.transactionNameParsers.addAll(cachedResult.transactionNameParsers);
+		result.slaRules.putAll(cachedResult.slaRules);
     }
 	
 

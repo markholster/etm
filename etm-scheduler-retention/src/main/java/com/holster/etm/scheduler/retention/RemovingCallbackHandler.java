@@ -27,6 +27,7 @@ import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.core.sla.SlaRule;
 
 public class RemovingCallbackHandler extends StreamingResponseCallback implements Closeable {
 	
@@ -68,6 +69,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	private final PreparedStatement deleteSourceIdCorrelationStatement;
 	private final PreparedStatement deleteTelemetryEventStatement;
 	private final PreparedStatement deleteEventOccurrenceStatement;
+	private final PreparedStatement deleteTransactionSlaStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
@@ -85,7 +87,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 		this.session = session;
 		this.etmConfiguration = etmConfiguration;
 		String keyspace = this.etmConfiguration.getCassandraKeyspace();
-		this.selectEventStatement = this.session.prepare("select application, correlationCreationTime, correlationData, creationTime, direction, expiryTime, name, sourceId, transactionId, transactionName, type from " + keyspace + ".telemetry_event where id = ?;");
+		this.selectEventStatement = this.session.prepare("select application, correlationCreationTime, correlationData, creationTime, direction, expiryTime, name, sourceId, transactionId, transactionName, type, slaRule from " + keyspace + ".telemetry_event where id = ?;");
 		this.selectApplicationCounterStatement = this.session.prepare("select count from " + keyspace + ".application_counter where application_timeunit = ? and  timeunit = ? and application = ?;");
 		this.selectEventNameCounterStatement = this.session.prepare("select count from " + keyspace + ".eventname_counter where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
 		this.selectApplicationEventNameCounterStatement = this.session.prepare("select count from " + keyspace + ".application_event_counter where application_timeunit = ? and  timeunit = ? and application = ? and eventName = ?;");
@@ -101,6 +103,7 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 		this.deleteSourceIdCorrelationStatement = this.session.prepare("delete from " + keyspace + ".sourceid_id_correlation where sourceId = ?;");
 		this.deleteTelemetryEventStatement = this.session.prepare("delete from " + keyspace + ".telemetry_event where id = ?;");
 		this.deleteEventOccurrenceStatement = this.session.prepare("delete from " + keyspace + ".event_occurrences where timeunit = ? and type = ? and name_timeframe = ?;");
+		this.deleteTransactionSlaStatement = this.session.prepare("delete from " + keyspace + ".transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
 		this.updateApplicationCounterStatement = this.session.prepare("update " + keyspace + ".application_counter set "
 				+ "count = count - 1, "
 				+ "messageRequestCount = messageRequestCount - ?, "
@@ -172,7 +175,6 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 			this.request.setCommitWithin(60000);
 	        this.solrServer.request(this.request);
 			this.request.clear();
-			
 			// Remove events from cassandra cluster.
 			for (String idToDelete : this.idsToDelete) {
 				UUID id = UUID.fromString(idToDelete);
@@ -191,11 +193,15 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				UUID transactionId = row.getUUID(8);
 				String transactionName = row.getString(9);
 				String type = row.getString(9);
+				SlaRule slaRule = SlaRule.fromConfiguration(row.getString(10));
 				final String partitionKeySuffix = this.format.format(creationTime);
 				this.statisticsTimestamp.setTime(normalizeTime(creationTime.getTime(), statisticsFactor));
 				this.eventOccurrenceTimestamp.setTime(normalizeTime(creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 				if (TelemetryEventType.MESSAGE_REQUEST.equals(type) && !this.etmConfiguration.isDataRetentionPreserveEventPerformances()) {
 					removePerformances(id, creationTime, expiryTime, eventName, transactionId, transactionName, partitionKeySuffix);
+				}
+				if (TelemetryEventType.MESSAGE_REQUEST.equals(type) && !this.etmConfiguration.isDataRetentionPreserveEventSlas()) {
+					removeTransactionSlas(creationTime, transactionId, transactionName, partitionKeySuffix, slaRule);
 				}
 				if (!this.etmConfiguration.isDataRetentionPreserveEventCounts()) {
 					removeCounters(direction, type, application, eventName, transactionName, correlationCreationTime, creationTime, this.statisticsTimestamp, partitionKeySuffix);
@@ -262,6 +268,13 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	    	this.batchStatement.add(this.deleteTransactionPerformanceStatement.bind(transactionName + partitionKeySuffix, creationTime, transactionId));
 	    }
     }
+	
+	private void removeTransactionSlas(Date creationTime, UUID transactionId, String transactionName, String partitionKeySuffix, SlaRule slaRule) {
+	    if (transactionId != null && transactionName != null && slaRule != null) {
+	    	this.batchStatement.add(this.deleteTransactionSlaStatement.bind(transactionName + partitionKeySuffix, new Date(creationTime.getTime() + slaRule.getSlaExpiryTime()), transactionId));
+	    }
+    }
+
 	
 	private void removeCounters(String direction, String type, String application, String eventName, String transactionName, Date correlationCreationTime, Date creationTime, Date statisticsTimestamp, String partitionKeySuffix) {
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(type) ? 1 : 0;

@@ -24,6 +24,7 @@ import com.datastax.driver.core.Session;
 import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.core.sla.SlaRule;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.parsers.ExpressionParser;
 import com.holster.etm.processor.parsers.FixedPositionExpressionParser;
@@ -50,19 +51,23 @@ public class StatementExecutor {
 	private final PreparedStatement insertMessageEventPerformanceFinishStatement;
 	private final PreparedStatement insertMessageEventExpirationStartStatement;
 	private final PreparedStatement insertMessageEventExpirationFinishStatement;
+	private final PreparedStatement insertSlaStartStatement;
+	private final PreparedStatement insertSlaFinishStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
 	private final PreparedStatement updateTransactionNameCounterStatement;
 	private final PreparedStatement findParentStatement;
 	private final PreparedStatement findEndpointConfigStatement;
+	private final PreparedStatement findSlaStartStatement;
+	private final PreparedStatement deleteSlaStatement;
 	
 	private final XPath xPath;
 	private final TransformerFactory transformerFactory;
 	
-	public StatementExecutor(final Session session, final String keySpace) {
+	public StatementExecutor(final Session session, final String keyspace) {
 		this.session = session;
-		this.insertTelemetryEventStatement = session.prepare("insert into " + keySpace + ".telemetry_event ("
+		this.insertTelemetryEventStatement = session.prepare("insert into " + keyspace + ".telemetry_event ("
 				+ "id, "
 				+ "application, "
 				+ "content, "
@@ -79,70 +84,84 @@ public class StatementExecutor {
 				+ "sourceId, "
 				+ "transactionId, "
 				+ "transactionName, "
-				+ "type"
-				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
-		this.insertSourceIdIdStatement = session.prepare("insert into " + keySpace + ".sourceid_id_correlation ("
+				+ "type, "
+				+ "slaRule) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+		this.insertSourceIdIdStatement = session.prepare("insert into " + keyspace + ".sourceid_id_correlation ("
 				+ "sourceId, "
 				+ "creationTime, "
 				+ "expiryTime, "
 				+ "id, "
 				+ "transactionId, "
 				+ "transactionName, "
-				+ "name"
-				+ ") values (?,?,?,?,?,?,?);");
-		this.insertCorrelationDataStatement = session.prepare("insert into " + keySpace + ".correlation_data ("
+				+ "name, "
+				+ "slaRule"
+				+ ") values (?,?,?,?,?,?,?,?);");
+		this.insertCorrelationDataStatement = session.prepare("insert into " + keyspace + ".correlation_data ("
 				+ "name_timeunit, "
 				+ "timeunit, "
 				+ "name, "
 				+ "value, "
 				+ "id"
 				+ ") values (?,?,?,?,?);");
-		this.insertCorrelationToParentStatement = session.prepare("update " + keySpace + ".telemetry_event set "
+		this.insertCorrelationToParentStatement = session.prepare("update " + keyspace + ".telemetry_event set "
 				+ "correlations = correlations + ? "
 				+ "where id = ?;");
-		this.insertEventOccurrenceStatement = session.prepare("insert into " + keySpace + ".event_occurrences ("
+		this.insertEventOccurrenceStatement = session.prepare("insert into " + keyspace + ".event_occurrences ("
 				+ "timeunit, "
 				+ "type, "
 				+ "name_timeframe,"
 				+ "name"
 				+ ") values (?,?,?,?);");
-		this.insertTransactionEventStartStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
+		this.insertTransactionEventStartStatement = session.prepare("insert into " + keyspace + ".transaction_performance ("
 				+ "transactionName_timeunit, "
 				+ "transactionId,"
 				+ "transactionName,  "
 				+ "startTime, "
 				+ "expiryTime, "
 				+ "application) values (?, ?, ?, ?, ?, ?);");
-		this.insertTransactionEventFinishStatement = session.prepare("insert into " + keySpace + ".transaction_performance ("
+		this.insertTransactionEventFinishStatement = session.prepare("insert into " + keyspace + ".transaction_performance ("
 				+ "transactionName_timeunit, "
 				+ "transactionId, "
 				+ "startTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
-		this.insertMessageEventPerformanceStartStatement = session.prepare("insert into " + keySpace + ".message_performance ("
+		this.insertMessageEventPerformanceStartStatement = session.prepare("insert into " + keyspace + ".message_performance ("
 				+ "name_timeunit, "
 				+ "id, "
 				+ "name, "
 				+ "startTime, "
 				+ "expiryTime, "
 				+ "application) values (?, ?, ?, ?, ?, ?);");
-		this.insertMessageEventPerformanceFinishStatement = session.prepare("insert into " + keySpace + ".message_performance ("
+		this.insertMessageEventPerformanceFinishStatement = session.prepare("insert into " + keyspace + ".message_performance ("
 				+ "name_timeunit, "
 				+ "id, "
 				+ "startTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
-		this.insertMessageEventExpirationStartStatement = session.prepare("insert into " + keySpace + ".message_expiration ("
+		this.insertMessageEventExpirationStartStatement = session.prepare("insert into " + keyspace + ".message_expiration ("
 				+ "name_timeunit, "
 				+ "id, "
 				+ "name, "
 				+ "expiryTime, "
 				+ "startTime, "
 				+ "application) values (?, ?, ?, ?, ?, ?);");
-		this.insertMessageEventExpirationFinishStatement = session.prepare("insert into " + keySpace + ".message_expiration ("
+		this.insertMessageEventExpirationFinishStatement = session.prepare("insert into " + keyspace + ".message_expiration ("
 				+ "name_timeunit, "
 				+ "id, "
 				+ "expiryTime, "
 				+ "finishTime) values (?, ?, ?, ?);");
-		this.updateApplicationCounterStatement = session.prepare("update " + keySpace + ".application_counter set "
+		this.insertSlaStartStatement = session.prepare("insert into " + keyspace + ".transaction_sla ("
+				+ "transactionName_timeunit, "
+				+ "slaExpiryTime, "
+				+ "transactionId, "
+				+ "transactionName, "
+				+ "startTime, "
+				+ "application, "
+				+ "slaRule) values (?, ?, ?, ?, ?, ?, ?);");
+		this.insertSlaFinishStatement = session.prepare("insert into " + keyspace + ".transaction_sla ("
+				+ "transactionName_timeunit, "
+				+ "slaExpiryTime, "
+				+ "transactionId, "
+				+ "finishTime) values (?, ?, ?, ?);");
+		this.updateApplicationCounterStatement = session.prepare("update " + keyspace + ".application_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
 				+ "incomingMessageRequestCount = incomingMessageRequestCount + ?, "
@@ -157,14 +176,14 @@ public class StatementExecutor {
 				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
 				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
 				+ "where application_timeunit = ? and timeunit = ? and application = ?;");
-		this.updateEventNameCounterStatement = session.prepare("update " + keySpace + ".eventname_counter set "
+		this.updateEventNameCounterStatement = session.prepare("update " + keyspace + ".eventname_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
 				+ "messageResponseCount = messageResponseCount + ?, "
 				+ "messageDatagramCount = messageDatagramCount + ?, "
 				+ "messageResponseTime = messageResponseTime + ? "
 				+ "where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
-		this.updateApplicationEventNameCounterStatement = session.prepare("update " + keySpace + ".application_event_counter set "
+		this.updateApplicationEventNameCounterStatement = session.prepare("update " + keyspace + ".application_event_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
 				+ "incomingMessageRequestCount = incomingMessageRequestCount + ?, "
@@ -179,7 +198,7 @@ public class StatementExecutor {
 				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
 				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
 				+ "where application_timeunit = ? and eventName = ? and timeunit = ? and application = ?;");
-		this.updateTransactionNameCounterStatement = session.prepare("update " + keySpace + ".transactionname_counter set "
+		this.updateTransactionNameCounterStatement = session.prepare("update " + keyspace + ".transactionname_counter set "
 				+ "count = count + 1, "
 				+ "transactionStart = transactionStart + ?, "
 				+ "transactionFinish = transactionFinish + ?, "
@@ -191,15 +210,21 @@ public class StatementExecutor {
 				+ "transactionName, "
 				+ "creationTime, "
 				+ "expiryTime, "
-				+ "name "
-				+ "from " + keySpace + ".sourceid_id_correlation where sourceId = ?;");
+				+ "name, "
+				+ "slaRule "
+				+ "from " + keyspace + ".sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
 				+ "direction, "
 				+ "applicationParsers, "
 				+ "eventNameParsers, "
 				+ "correlationParsers, "
-				+ "transactionNameParsers "
-				+ "from " + keySpace + ".endpoint_config where endpoint = ?;");
+				+ "transactionNameParsers, "
+				+ "slaRules "
+				+ "from " + keyspace + ".endpoint_config where endpoint = ?;");
+		this.findSlaStartStatement = session.prepare("select "
+				+ "startTime "
+				+ "from " + keyspace + ".transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
+		this.deleteSlaStatement = session.prepare("delete from " + keyspace + ".transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
 		XPathFactory xpf = new XPathFactoryImpl();
 		this.xPath = xpf.newXPath();
 		this.transformerFactory = new TransformerFactoryImpl();
@@ -224,7 +249,8 @@ public class StatementExecutor {
 		        event.sourceId, 
 		        event.transactionId, 
 		        event.transactionName,
-		        event.type != null ? event.type.name() : null));
+		        event.type != null ? event.type.name() : null,
+				event.slaRule != null ? event.slaRule.toConfiguration() : null));
 		if (event.correlationId != null) {
 			final List<UUID> correlation = new ArrayList<UUID>(1);
 			correlation.add(event.id);
@@ -240,7 +266,8 @@ public class StatementExecutor {
 				event.id, 
 				event.transactionId, 
 				event.transactionName,
-				event.name));
+				event.name,
+				event.slaRule != null ? event.slaRule.toConfiguration() : null));
 	}
 	
 	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
@@ -268,6 +295,16 @@ public class StatementExecutor {
 		        event.creationTime, 
 		        event.expiryTime,
 		        event.application));
+		if (event.slaRule != null) {
+			batchStatement.add(this.insertSlaStartStatement.bind(
+					key, 
+					new Date(event.creationTime.getTime() + event.slaRule.getSlaExpiryTime()), 
+					event.transactionId, 
+					event.transactionName, 
+					event.creationTime, 
+					event.application, 
+					event.slaRule.toConfiguration()));
+		}
 	}
 	
 	public void addTransactionEventFinish(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
@@ -276,6 +313,34 @@ public class StatementExecutor {
 				event.transactionId,
 				event.correlationCreationTime,
 		        event.creationTime));
+		if (event.slaRule != null) {
+			if (event.slaRule.compliesToSla(event.creationTime.getTime() - event.correlationCreationTime.getTime())) {
+				Row row = this.session.execute(this.findSlaStartStatement.bind(
+						key, 
+						new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()), 
+						event.transactionId)).one();
+				if (row != null) {
+					batchStatement.add(this.deleteSlaStatement.bind(
+							key,
+							new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
+							event.transactionId));
+				} else {
+					// Transaction start not yet stored, we have to store the finish.
+					batchStatement.add(this.insertSlaFinishStatement.bind(
+							key, 
+							new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
+							event.transactionId,
+							event.creationTime));
+					
+				}
+			} else {
+				batchStatement.add(this.insertSlaFinishStatement.bind(
+						key, 
+						new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
+						event.transactionId,
+						event.creationTime));
+			}
+		}		
 	}
 
 	public void addMessageEventStart(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
@@ -388,6 +453,7 @@ public class StatementExecutor {
 			result.creationTime = row.getDate(3);
 			result.expiryTime = row.getDate(4);
 			result.name = row.getString(5);
+			result.slaRule = SlaRule.fromConfiguration(row.getString(6));
 		}
 	}
 	
@@ -428,9 +494,17 @@ public class StatementExecutor {
 		} else {
 			result.transactionNameParsers.addAll(0, createExpressionParsers(row.getList(4, String.class)));
 		}
+		map = row.getMap(5, String.class, String.class);
+		iterator = map.keySet().iterator();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			SlaRule slaRule = createSlaRule(map.get(key));
+			if (slaRule != null) {
+				result.slaRules.put(key, slaRule);
+			}
+		}
     }
 
-	
 	private List<ExpressionParser> createExpressionParsers(final List<String> expressions) {
 		if (expressions == null) {
 			return null;
@@ -512,6 +586,11 @@ public class StatementExecutor {
 		}
 		return new FixedValueExpressionParser(expression);
 	}
+	
+	private SlaRule createSlaRule(String slaConfiguration) {
+	    return SlaRule.fromConfiguration(slaConfiguration);
+    }
+
 
 	public ResultSet execute(BatchStatement batchCounterStatement) {
 	    return this.session.execute(batchCounterStatement);

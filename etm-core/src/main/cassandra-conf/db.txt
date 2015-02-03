@@ -19,7 +19,8 @@ create table telemetry_event (
     sourceId text, 
     transactionId timeuuid, 
     transactionName text,
-    type text
+    type text,
+    slaRule text
 );
 
 create table transaction_performance (
@@ -55,6 +56,18 @@ create table message_expiration (
     primary key (name_timeunit, expiryTime, id)
 );
 
+create table transaction_sla (
+    transactionName_timeunit text,
+    slaExpiryTime timestamp,
+    transactionId timeuuid,
+    transactionName text,
+    startTime timestamp,
+    finishTime timestamp,
+    application text,
+    slaRule text,
+    primary key (transactionName_timeunit, slaExpiryTime, transactionId)
+);
+
 create table event_occurrences (
     timeunit timestamp,
     type text,
@@ -70,7 +83,8 @@ create table sourceid_id_correlation (
     id timeuuid,
     transactionId timeuuid,
     transactionName text,
-    name text
+    name text,
+    slaRule text
 );
 
 create table correlation_data (
@@ -153,6 +167,7 @@ create table endpoint_config (
     eventNameParsers list<text>,
     correlationParsers map<text, text>,
     transactionNameParsers list<text>,
+    slaRules map<text, text>
 );
 
 insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer', 'PolicyNr':'xpath:/*/overeenkomstnummer', 'AccountNr':'xpath:/*/rekeningnummer'});
@@ -166,3 +181,4 @@ insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG
 insert into endpoint_config(endpoint, direction, applicationParsers, correlationParsers) values ('ESB.DTG.CRM', 'INCOMING', ['Sap CRM'], {'AccountNr':'xpath:/*/reknr'});
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.PRL', 'INCOMING', ['Parel']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('PRL.RPL.ESB', 'OUTGOING', ['Parel']);
+insert into endpoint_config(endpoint, slaRules) values ('KCS.REQ.ESB', {'DeleteOvereenkomst':'30000,3,900000,3600000,email:m.holster@home.nl'});

@@ -3,6 +3,8 @@ package com.holster.etm.processor.repository;
 import java.util.Date;
 import java.util.UUID;
 
+import com.holster.etm.core.sla.SlaRule;
+
 public class CorrelationBySourceIdResult {
 	
 	public UUID id;
@@ -11,8 +13,9 @@ public class CorrelationBySourceIdResult {
 	public String name;
 	public Date creationTime = new Date(0);
 	public Date expiryTime = new Date(0);
+	public SlaRule slaRule;
 	
-	public CorrelationBySourceIdResult(UUID id, String name, UUID transactionId, String transactionName, long creationTime, long expiryTime) {
+	public CorrelationBySourceIdResult(UUID id, String name, UUID transactionId, String transactionName, long creationTime, long expiryTime, SlaRule slaRule) {
 		this();
 	    this.id = id;
 	    this.name = name;
@@ -20,6 +23,7 @@ public class CorrelationBySourceIdResult {
 	    this.transactionName = transactionName;
 	    this.creationTime.setTime(creationTime);
 	    this.expiryTime.setTime(expiryTime);
+	    this.slaRule = slaRule;
     }
 	
 	public CorrelationBySourceIdResult() {
@@ -32,6 +36,7 @@ public class CorrelationBySourceIdResult {
 		this.transactionName = null;
 		this.creationTime.setTime(0);
 		this.expiryTime.setTime(0);
+		this.slaRule = null;
 		return this;
 	}
 
