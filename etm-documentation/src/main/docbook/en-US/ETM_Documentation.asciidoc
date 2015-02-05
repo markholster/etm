@@ -1,0 +1,121 @@
+= ETM Documentation
+:doctype: book
+:docinfo: docinfo
+:imagesDir: images
+:java_version: 1.8
+:etm_version: 1.0.0-SNAPSHOT
+:cassandra_version: 2.1.2
+:solr_version: 4.10.3
+:zookeeper_version: 3.4.6
+:wildfly_version: 8.2.0.Final
+
+
+[[chap-ETM_Documentation-Introduction]]
+
+== Introduction
+
+TODO
+
+[[chap-ETM_Documentation-System_Requirements]]
+== System requirements
+* Java {java_version}
+* Wildfly {wildfly_version}
+* Cassandra {cassandra_version}
+* Solr {solr_version}
+* Zookeeper {zookeeper_version}
+
+ETM is developed and tested with OpenJDK {java_version} under Fedora Linux. ETM is likely to run under different operating
+systems as well as it is a pure Java application.  
+
+[[chap-ETM_Documentation-Single-Machine-Installation]]
+== Single machine installation
+IMPORTANT: For testing purposes it might be convenient to set up all the ETM components on a single machine, but this is not
+a supported production setup. If you want to run ETM in a production environment and benefit from the full scalability and failover 
+options ETM has to offer, the <<chap-ETM_Documentation-Clustered-Installation, clustered installation>> is the right choice. 
+
+The single machine installation has the following specifications:
+
+* A standalone Solr {solr_version} installation with an embedded Zookeeper instance, without replication and failover. 
+* A single node Cassandra {cassandra_version} installation, without replication and failover.
+* A single Wildfly {wildfly_version} installation, without replication and failover.
+
+=== Solr single node
+Download Solr {solr_version} from the Solr http://lucene.apache.org/solr/[website], and extract the files for the downloaded archive
+into a location of your choice. This location will be called <SOLR_INSTALL_DIR> from now on.
+
+To start solr, execute
+[source,shell] 
+----
+<SOLR_INSTALL_DIR>/bin/solr start -c
+----
+from a command shell.
+
+To verify Solr is up and running, browse to http://localhost:8983/solr/
+
+After Solr is started the ETM configuration needs to be uploaded to the embedded Zookeeper instance. Open a command shell in the 
+directory <SOLR_INSTALL_DIR>/example/scripts/cloud-scripts and execute the following commands:
+[source,shell] 
+----
+./zkcli.sh -zkhost localhost:9983 -cmd upconfig -confdir <INSTALL_DIR>/resources/solr/single-node-conf -confname myconf
+./zkcli.sh -zkhost localhost:9983 -cmd makepath /demo/config
+./zkcli.sh -zkhost localhost:9983 -cmd putfile /demo/config/solr.propeties <INSTALL_DIR>/resources/solr/single-node-solr.properties
+----
+
+After the configuration changes are uploaded to Zookeeper, the Solr instance needs to be restarted. This can be done by executing 
+[source,shell]
+----
+<SOLR_INSTALL_DIR>/bin/solr restart -c
+----
+
+=== Cassandra single node
+Download Cassandra {cassandra_version} from the Cassandra http://cassandra.apache.org/download/[website], and extract the files for the downloaded archive
+into a location of your choice. This location will be called <CASSANDRA_INSTALL_DIR> from now on.
+
+To start Cassandra, execute
+[source,shell] 
+----
+<CASSANDRA_INSTALL_DIR>/bin/cassandra
+----
+from a command shell.
+
+After Cassandra is started, execute 
+[source,shell]
+---- 
+<CASSANDRA_INSTALL_DIR>/bin/cassandra-cli -f <INSTALL_DIR>/resources/cassandra/cassandra-setup-single-node.db
+----
+from a command shell to setup the keyspace and create the required tables.
+
+=== Wildfly single node
+Download Wildfly {wildfly_version} from the Wildfly http://wildfly.org/downloads/[website], and extract the files for the downloaded archive
+into a location of your choice. This location will be called <WILDFLY_INSTALL_DIR> from now on.
+
+To setup an administrative user, execute
+[source,shell]
+----
+<WILDFLY_INSTALL_DIR>/bin/add-user.sh
+----
+from a command shell. Make sure the user is a 'Management User' added to the 'ManagementRealm'.
+
+When the administrative user is added start Wildfly by executing
+[source,shell]
+---- 
+<WILDFLY_INSTALL_DIR>/bin/standalone.sh
+----
+from a command shell.
+
+After the start browse to http://localhost:9990/console/ and login with the username and password you have created in the previous step. 
+Select the 'Configuration' menu and click on System Properties on the submenu on the left. Now add the following properties
+[options="header"]
+|=======================
+|Key|Value
+|etm.nodename|<a unique node name>
+|etm.zookeeper.clients|127.0.0.1:9983
+|etm.zookeeper.namespace|demo
+|=======================
+
+Next step is to deploy the ETM desired artifacts.
+
+[[chap-ETM_Documentation-Clustered-Installation]]
+== Clustered installation
+
+

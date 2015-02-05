@@ -24,11 +24,19 @@
 		<module>../etm-gui</module>
 		<module>../etm-scheduler-jee-configurator</module>
 		<module>../etm-scheduler-retention</module>
+		<module>../etm-documentation</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.jdk.level>1.8</project.jdk.level>
 	</properties>
+    <repositories>
+      <repository>
+        <id>JBoss Repo</id>
+        <url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
+        <name>JBoss Repo</name>
+      </repository>
+    </repositories>	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

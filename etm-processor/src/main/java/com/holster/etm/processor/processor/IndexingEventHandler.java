@@ -21,7 +21,8 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(IndexingEventHandler.class);
 	
-	private final int nrOfDocumentsPerRequest = 50;
+	//TODO this should be configurable
+	private final int nrOfDocumentsPerRequest = 250;
 	private final SolrServer server;
 	private final long ordinal;
 	private final long numberOfConsumers;
@@ -92,7 +93,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 			document.addField("responseTime", responseTime);
 		}
 		if (this.docIx == this.nrOfDocumentsPerRequest - 1) {
-			this.server.add(this.documents, 60000);
+			this.server.add(this.documents, 15000);
 			this.docIx = -1;
 		}
 //		Statistics.indexingTime.addAndGet(System.nanoTime() - start);

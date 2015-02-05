@@ -11,13 +11,20 @@ public class ConfigurationChangedEvent {
 	private Properties changedProperties = new Properties();
 	
 	public ConfigurationChangedEvent(Properties oldProperties, Properties currentProperties) {
-		this.oldProperties.putAll(oldProperties);
-		this.currentProperties.putAll(currentProperties);
-		for (String key : currentProperties.stringPropertyNames()) {
-			String currentValue = currentProperties.getProperty(key);
-			String oldValue = oldProperties.getProperty(key);
-			if (!ObjectUtils.equalsNullProof(currentValue, oldValue)) {
-				this.changedProperties.setProperty(key, currentValue);
+		if (oldProperties != null) {
+			this.oldProperties.putAll(oldProperties);
+		}
+		if (currentProperties != null) {
+			this.currentProperties.putAll(currentProperties);
+			for (String key : currentProperties.stringPropertyNames()) {
+				String currentValue = currentProperties.getProperty(key);
+				String oldValue = null;
+				if (oldProperties != null) {
+					oldValue = oldProperties.getProperty(key);
+				}
+				if (!ObjectUtils.equalsNullProof(currentValue, oldValue)) {
+					this.changedProperties.setProperty(key, currentValue);
+				}
 			}
 		}
 	}

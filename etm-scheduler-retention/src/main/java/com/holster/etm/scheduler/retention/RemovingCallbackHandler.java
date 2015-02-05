@@ -36,7 +36,8 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(RemovingCallbackHandler.class);
 
-	private final int nrOfDocumentsPerRequest = 250;
+	// TODO this should be configurable
+	private final int nrOfDocumentsPerRequest = 10000;
 	
 	private final Session session;
 	private final SolrServer solrServer;

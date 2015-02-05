@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.holster.etm</groupId>
+		<artifactId>etm-aggregator</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../etm-aggregator/pom.xml</relativePath>
+	</parent>
+	<groupId>com.holster.etm</groupId>
+	<artifactId>etm-documentation</artifactId>
+	<packaging>jdocbook</packaging>
+	<description>The etm documentation project.</description>
+	<name>Enterprise Telemetry Monitor - Documentation</name>
+	<properties>
+		<docname>ETM_Documentation</docname>
+		<bookname>ETM Documentation</bookname>
+	</properties>
+	<build>
+		<plugins>
+			<!-- Generate the docbook xml from the asciidoc -->
+			<plugin>
+				<groupId>org.asciidoctor</groupId>
+				<artifactId>asciidoctor-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>output-xml</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>process-asciidoc</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<sourceDirectory>src/main/docbook/en-US</sourceDirectory>
+					<sourceDocumentName>${docname}.asciidoc</sourceDocumentName>
+					<outputDirectory>target/docbook/en-US</outputDirectory>
+<!-- 					
+					<templateDir>../asciidoc/src/main/backend/slim/docbook45</templateDir>
+					<templateEngine>slim</templateEngine>
+ -->					
+					<headerFooter>true</headerFooter>
+					<compact>false</compact>
+					<attributes>
+						<numbered>true</numbered>
+						<docinfo>true</docinfo>
+						<experimental>true</experimental>
+					</attributes>
+					<toc>true</toc>
+					<backend>docbook45</backend>
+					<doctype>book</doctype>
+					<goalPrefix>asciidoctor</goalPrefix>
+				</configuration>
+			</plugin>
+			<!-- copy the asciidoc source tree for docbook xml processing -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/target/docbook/en-US</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/src/main/docbook/en-US</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Process the docbook xml -->
+			<plugin>
+				<groupId>org.jboss.maven.plugins</groupId>
+				<artifactId>maven-jdocbook-plugin</artifactId>
+				<extensions>true</extensions>
+				<dependencies>
+					<dependency>
+						<groupId>org.jboss.pressgang</groupId>
+						<artifactId>pressgang-xslt</artifactId>
+						<version>2.0.0</version>
+					</dependency>
+					<dependency>
+						<groupId>org.jboss.pressgang</groupId>
+						<artifactId>pressgang-jdocbook-style</artifactId>
+						<type>jdocbook-style</type>
+						<version>2.0.0</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<sourceDirectory>${project.basedir}/target/docbook</sourceDirectory>
+					<sourceDocumentName>${docname}.xml</sourceDocumentName>
+					<masterTranslation>en-US</masterTranslation>
+					<imageResource>
+						<directory>${project.basedir}/target/docbook/en-US</directory>
+						<includes>
+							<include>images/*.png</include>
+						</includes>
+					</imageResource>
+					<formats>
+						<format>
+							<formatName>pdf</formatName>
+<!-- 							
+							<stylesheetResource>classpath:/xslt/org/jboss/pdf.xsl</stylesheetResource>
+ -->							
+							<finalName>${pdf.name}</finalName>
+						</format>
+						<format>
+							<formatName>html</formatName>
+<!--							
+							<stylesheetResource>classpath:/xslt/org/jboss/xhtml.xsl</stylesheetResource>
+-->							
+							<finalName>index.html</finalName>
+						</format>
+						<format>
+							<formatName>html_single</formatName>
+<!--							
+							<stylesheetResource>classpath:/xslt/org/jboss/xhtml-single.xsl</stylesheetResource>
+-->							
+							<finalName>index.html</finalName>
+						</format>
+					</formats>
+					<options>
+						<xincludeSupported>true</xincludeSupported>
+						<xmlTransformerType>saxon</xmlTransformerType>
+						<docbookVersion>1.72.0</docbookVersion>
+						<localeSeparator>-</localeSeparator>
+						<injectionDateFormat>dd/MM/yyy</injectionDateFormat>
+						<transformerParameters>
+							<property>
+								<name>javax.xml.parsers.DocumentBuilderFactory</name>
+								<value>org.apache.xerces.jaxp.DocumentBuilderFactoryImpl</value>
+							</property>
+							<property>
+								<name>javax.xml.parsers.SAXParserFactory</name>
+								<value>org.apache.xerces.jaxp.SAXParserFactoryImpl</value>
+							</property>
+						</transformerParameters>
+					</options>
+				</configuration>
+			</plugin>
+		</plugins>
+</build>
+
+</project>
