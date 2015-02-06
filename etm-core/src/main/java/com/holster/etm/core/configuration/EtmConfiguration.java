@@ -15,6 +15,8 @@ import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.data.Stat;
 
 import com.holster.etm.core.EtmException;
 import com.holster.etm.core.logging.LogFactory;
@@ -55,19 +57,36 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	private NodeCache globalEtmPropertiesNode;
 	private NodeCache nodeEtmPropertiesNode;
 	
-	public synchronized void load(String nodeName, String zkConnections, String namespace, String component) throws Exception {
+	public synchronized boolean load(String nodeName, String zkConnections, String namespace, String component) throws Exception {
 		if (this.client != null) {
-			return;
+			return false;
 		}
-		// TODO register the nodename + component as active node in zookeeper.
 		String solrZkConnectionString = Arrays.stream(zkConnections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
 		this.client = CuratorFrameworkFactory.builder().connectString(zkConnections).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
 		this.client.start();
-		boolean connected = this.client.blockUntilConnected(30, TimeUnit.SECONDS);
-		if (!connected) {
-			throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION);
+		try {
+			boolean connected = this.client.blockUntilConnected(30, TimeUnit.SECONDS);
+			if (!connected) {
+				throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION);
+			}
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return false;
 		}
-		
+		if (nodeName != null) {
+			Stat stat = client.checkExists().forPath("/config/" + nodeName);
+			if (stat == null) {
+				this.client.create().creatingParentsIfNeeded().forPath("/config/" + nodeName);
+			}
+			stat = client.checkExists().forPath("/live_nodes");
+			if (stat == null) {
+				this.client.create().creatingParentsIfNeeded().forPath("/live_nodes");
+			}
+			stat = client.checkExists().forPath("/live_nodes/" + nodeName);
+			if (stat == null) {
+				this.client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/live_nodes/" + nodeName);
+			}
+		}
 		ReloadEtmPropertiesListener reloadListener = new ReloadEtmPropertiesListener();
 		this.globalEtmPropertiesNode = new NodeCache(this.client, "/config/etm.propeties");
 		this.globalEtmPropertiesNode.getListenable().addListener(reloadListener);
@@ -80,6 +99,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		this.etmProperties = loadEtmProperties();
 		this.cassandraConfiguration = new CassandraConfiguration(this.client, nodeName);
 		this.solrConfiguration = new SolrConfiguration(client, solrZkConnectionString);
+		return true;
 	}
 
 	private Properties loadEtmProperties() {
@@ -251,7 +271,6 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		if (this.solrConfiguration != null) {
 			this.solrConfiguration.close();
 		}
-		// TODO Delete the node + component as active node in zookeeper.
 	    if (this.client != null) {
 	    	this.client.close();
 	    }
