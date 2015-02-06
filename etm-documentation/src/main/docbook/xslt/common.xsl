@@ -26,7 +26,7 @@
     <xsl:if test="$img.src.path != ''">
       <xsl:value-of select="$img.src.path"/>
     </xsl:if>
-    <xsl:text>images/community/docbook/callouts/</xsl:text>
+    <xsl:text>images/docbook/callouts/</xsl:text>
   </xsl:param>
 
   <!-- Admonitions -->
@@ -35,7 +35,7 @@
     <xsl:if test="$img.src.path != ''">
       <xsl:value-of select="$img.src.path"/>
     </xsl:if>
-    <xsl:text>images/community/docbook/</xsl:text>
+    <xsl:text>images/docbook/</xsl:text>
   </xsl:param>
 
   <!-- And disable these extensions -->

@@ -32,6 +32,7 @@
 						</goals>
 					</execution>
 				</executions>
+				<version>1.5.2</version>
 				<configuration>
 					<sourceDirectory>src/main/docbook/en-US</sourceDirectory>
 					<sourceDocumentName>${docname}.asciidoc</sourceDocumentName>
@@ -47,6 +48,14 @@
 					<backend>docbook45</backend>
 					<doctype>book</doctype>
 					<goalPrefix>asciidoctor</goalPrefix>
+					<attributes>
+					   <etm_version>${project.version}</etm_version>
+					   <java_version>${project.jdk.level}</java_version>
+					   <cassandra_version>2.1.2</cassandra_version>
+					   <solr_version>4.10.3</solr_version>
+					   <zookeeper_version>3.4.6</zookeeper_version>
+					   <wildfly_version>8.2.0.Final</wildfly_version>
+					</attributes>
 				</configuration>
 			</plugin>
 			<!-- copy the asciidoc source tree for docbook xml processing -->
@@ -75,6 +84,7 @@
 			<plugin>
 				<groupId>org.jboss.maven.plugins</groupId>
 				<artifactId>maven-jdocbook-plugin</artifactId>
+				<version>2.3.8</version>
 				<extensions>true</extensions>
 				<dependencies>
                     <dependency>

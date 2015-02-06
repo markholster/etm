@@ -1,14 +1,6 @@
 = ETM Documentation
 :doctype: book
 :docinfo: docinfo
-:imagesDir: images
-:java_version: 1.8
-:etm_version: 1.0.0-SNAPSHOT
-:cassandra_version: 2.1.2
-:solr_version: 4.10.3
-:zookeeper_version: 3.4.6
-:wildfly_version: 8.2.0.Final
-
 
 [[chap-ETM_Documentation-Introduction]]
 
@@ -56,9 +48,9 @@ After Solr is started the ETM configuration needs to be uploaded to the embedded
 directory <SOLR_INSTALL_DIR>/example/scripts/cloud-scripts and execute the following commands:
 [source,shell] 
 ----
-./zkcli.sh -zkhost localhost:9983 -cmd upconfig -confdir <INSTALL_DIR>/resources/solr/single-node-conf -confname myconf
+./zkcli.sh -zkhost localhost:9983 -cmd upconfig -confdir <PACKAGE_UNZIP_DIR>/resources/solr/single-node-conf -confname myconf
 ./zkcli.sh -zkhost localhost:9983 -cmd makepath /demo/config
-./zkcli.sh -zkhost localhost:9983 -cmd putfile /demo/config/solr.propeties <INSTALL_DIR>/resources/solr/single-node-solr.properties
+./zkcli.sh -zkhost localhost:9983 -cmd putfile /demo/config/solr.propeties <PACKAGE_UNZIP_DIR>/resources/solr/single-node-solr.properties
 ----
 
 After the configuration changes are uploaded to Zookeeper, the Solr instance needs to be restarted. This can be done by executing 
@@ -81,7 +73,7 @@ from a command shell.
 After Cassandra is started, execute 
 [source,shell]
 ---- 
-<CASSANDRA_INSTALL_DIR>/bin/cassandra-cli -f <INSTALL_DIR>/resources/cassandra/cassandra-setup-single-node.db
+<CASSANDRA_INSTALL_DIR>/bin/cassandra-cli -f <PACKAGE_UNZIP_DIR>/resources/cassandra/cassandra-setup-single-node.db
 ----
 from a command shell to setup the keyspace and create the required tables.
 
@@ -114,7 +106,7 @@ Select the 'Configuration' menu and click on System Properties on the submenu on
 |=======================
 
 Next step is to deploy the ETM desired artifacts. Depending on your needs you can deploy one or more of the following artifacts from the
-<INSTALL_DIR>/resources/artifacts directory
+<PACKAGE_UNZIP_DIR>/resources/artifacts directory
 
 * etm-gui-{etm_version}.war, a web based dashboard for monitoring and searching events.
 * etm-processor-ws-{etm_version}.war, a processor that acts as an web service and receives events through web service calls.
@@ -122,7 +114,9 @@ Next step is to deploy the ETM desired artifacts. Depending on your needs you ca
 * etm-processor-mdb-{etm_version}.war, a processor that takes events of a message queue.
 * etm-scheduler-retention-{etm_version}.war, a scheduler that removes events after a configurable retention time.
 
+Copy the desired artifact(s) to <WILDFLY_INSTALL_DIR>/standalone/deployments where it will be picked up by Wilfly. The deployment process will 
+take several seconds. If you have chosen to deploy etm-gui-{etm_version}.war, the dashboard will be available at http://localhost:8080/etm/dashboard/   
+
 [[chap-ETM_Documentation-Clustered-Installation]]
 == Clustered installation
-
 
