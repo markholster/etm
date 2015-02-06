@@ -36,10 +36,6 @@
 					<sourceDirectory>src/main/docbook/en-US</sourceDirectory>
 					<sourceDocumentName>${docname}.asciidoc</sourceDocumentName>
 					<outputDirectory>target/docbook/en-US</outputDirectory>
-<!-- 					
-					<templateDir>../asciidoc/src/main/backend/slim/docbook45</templateDir>
-					<templateEngine>slim</templateEngine>
- -->					
 					<headerFooter>true</headerFooter>
 					<compact>false</compact>
 					<attributes>
@@ -81,48 +77,42 @@
 				<artifactId>maven-jdocbook-plugin</artifactId>
 				<extensions>true</extensions>
 				<dependencies>
-					<dependency>
-						<groupId>org.jboss.pressgang</groupId>
-						<artifactId>pressgang-xslt</artifactId>
-						<version>2.0.0</version>
-					</dependency>
-					<dependency>
-						<groupId>org.jboss.pressgang</groupId>
-						<artifactId>pressgang-jdocbook-style</artifactId>
-						<type>jdocbook-style</type>
-						<version>2.0.0</version>
-					</dependency>
+                    <dependency>
+                        <groupId>org.jboss.pressgang</groupId>
+                        <artifactId>pressgang-highlight</artifactId>
+                        <version>2.0.2</version>
+                    </dependency>
 				</dependencies>
 				<configuration>
 					<sourceDirectory>${project.basedir}/target/docbook</sourceDirectory>
 					<sourceDocumentName>${docname}.xml</sourceDocumentName>
 					<masterTranslation>en-US</masterTranslation>
 					<imageResource>
-						<directory>${project.basedir}/target/docbook/en-US</directory>
+						<directory>${project.basedir}/src/main/images</directory>
 						<includes>
-							<include>images/*.png</include>
+							<include>**/*</include>
 						</includes>
 					</imageResource>
+					<cssResource>
+                        <directory>${project.basedir}/src/main/css</directory>
+                        <includes>
+                            <include>**/*</include>
+                        </includes>
+					</cssResource>
 					<formats>
 						<format>
 							<formatName>pdf</formatName>
-<!-- 							
-							<stylesheetResource>classpath:/xslt/org/jboss/pdf.xsl</stylesheetResource>
- -->							
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl</stylesheetResource>
 							<finalName>${pdf.name}</finalName>
 						</format>
-						<format>
+                        <format>
 							<formatName>html</formatName>
-<!--							
-							<stylesheetResource>classpath:/xslt/org/jboss/xhtml.xsl</stylesheetResource>
--->							
-							<finalName>index.html</finalName>
+ 							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl</stylesheetResource>
+	       					<finalName>index.html</finalName>
 						</format>
 						<format>
 							<formatName>html_single</formatName>
-<!--							
-							<stylesheetResource>classpath:/xslt/org/jboss/xhtml-single.xsl</stylesheetResource>
--->							
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml-single.xsl</stylesheetResource>
 							<finalName>index.html</finalName>
 						</format>
 					</formats>

@@ -113,7 +113,14 @@ Select the 'Configuration' menu and click on System Properties on the submenu on
 |etm.zookeeper.namespace|demo
 |=======================
 
-Next step is to deploy the ETM desired artifacts.
+Next step is to deploy the ETM desired artifacts. Depending on your needs you can deploy one or more of the following artifacts from the
+<INSTALL_DIR>/resources/artifacts directory
+
+* etm-gui-{etm_version}.war, a web based dashboard for monitoring and searching events.
+* etm-processor-ws-{etm_version}.war, a processor that acts as an web service and receives events through web service calls.
+* etm-processor-rest-{etm_version}.war, a processor that acts as a rest service and takes event through json calls.
+* etm-processor-mdb-{etm_version}.war, a processor that takes events of a message queue.
+* etm-scheduler-retention-{etm_version}.war, a scheduler that removes events after a configurable retention time.
 
 [[chap-ETM_Documentation-Clustered-Installation]]
 == Clustered installation
