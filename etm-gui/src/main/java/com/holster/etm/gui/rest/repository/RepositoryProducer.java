@@ -23,7 +23,6 @@ public class RepositoryProducer {
 	
 	private StatisticsRepository statisticsRepository;
 	private QueryRepository queryRepository;
-	private AdminRepository adminRepository;
 
 	@Produces
 	public StatisticsRepository getStatisticsRepository() {
@@ -45,13 +44,4 @@ public class RepositoryProducer {
 		return this.queryRepository;
 	}
 	
-	@Produces
-	public AdminRepository getAdminRepository() {
-		synchronized (this) {
-	        if (this.adminRepository == null) {
-	        	this.adminRepository = new AdminRepository(this.session, this.configuration.getCassandraKeyspace());
-	        }
-        }
-		return this.adminRepository;
-	}
 }

@@ -3,6 +3,7 @@ package com.holster.etm.core.configuration;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,9 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(EtmConfiguration.class);
+	private static final String NODE_CONFIGURATION_PATH = "/config";
+	private static final String LIVE_NODES_PATH = "/live_nodes";
+	
 	
 	public static final String ETM_ENHANCING_HANDLER_COUNT = "etm.enhancing_handler_count";
 	public static final String ETM_INDEXING_HANDLER_COUNT = "etm.indexing_handler_count";
@@ -74,17 +78,18 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			return false;
 		}
 		if (nodeName != null) {
-			Stat stat = client.checkExists().forPath("/config/" + nodeName);
+			//TODO wrap this in transactions.
+			Stat stat = this.client.checkExists().forPath(NODE_CONFIGURATION_PATH + "/" + nodeName);
 			if (stat == null) {
-				this.client.create().creatingParentsIfNeeded().forPath("/config/" + nodeName);
+				this.client.create().creatingParentsIfNeeded().forPath(NODE_CONFIGURATION_PATH + "/" + nodeName);
 			}
-			stat = client.checkExists().forPath("/live_nodes");
+			stat = this.client.checkExists().forPath(LIVE_NODES_PATH);
 			if (stat == null) {
-				this.client.create().creatingParentsIfNeeded().forPath("/live_nodes");
+				this.client.create().creatingParentsIfNeeded().forPath(LIVE_NODES_PATH);
 			}
-			stat = client.checkExists().forPath("/live_nodes/" + nodeName);
+			stat = this.client.checkExists().forPath(LIVE_NODES_PATH + "/" + nodeName);
 			if (stat == null) {
-				this.client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/live_nodes/" + nodeName);
+				this.client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(LIVE_NODES_PATH +"/" + nodeName);
 			}
 		}
 		ReloadEtmPropertiesListener reloadListener = new ReloadEtmPropertiesListener();
@@ -244,6 +249,19 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	public void removeCassandraConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
 		this.cassandraConfiguration.removeConfigurationChangeListener(configurationChangeListener);
 	}
+	
+	public List<Node> getNodes() {
+		try {
+	        List<String> nodeNames = this.client.getChildren().forPath(NODE_CONFIGURATION_PATH);
+	        List<String> liveNodes = this.client.getChildren().forPath(LIVE_NODES_PATH);
+	        if (nodeNames != null) {
+	        	return nodeNames.stream().map(c -> new Node(c, liveNodes.contains(c))).collect(Collectors.toList());
+	        }
+        } catch (Exception e) {
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+		return Collections.emptyList();
+    }
 	
 	@Override
 	public void close() {

@@ -17,7 +17,7 @@
                     <div class="panel-title pull-left" id="node_title">ETM Administration - Global cluster</div>
                     <div class="pull-right">
                         <select id="node_select" class="form-control">
-                            <option value="global cluster">global cluster</option>
+                            <option value="Global cluster">Global cluster</option>
                             <option disabled="disabled">-----</option>
                         </select>
                     </div>
@@ -85,5 +85,40 @@
 			</div>
 		</div>
 	</div>
+        <script>
+//<![CDATA[        
+$(function () {
+	// Add all nodes to the node select.
+	$.getJSON('../rest/admin/nodes/', function (data) {
+        if (!data) {
+            return;
+        }
+        $.each(data, function(index, nodeData) {
+        	$('#node_select').append($('<option></option>').attr("value", nodeData.name).text(nodeData.name)); 
+        });		
+	});
+	// Add the change listener to the node select.
+	$('#node_select').change(function() {
+		var nodeName = $('#node_select').val();
+	    $('#node_title').text('ETM Administration - ' + nodeName);
+	    if ('Global cluster' == nodeName) {
+            $('#endpoint_tab_header').removeClass('hidden');
+            $('#endpoint_tab').removeClass('hidden');
+            $('#solr_tab_header').removeClass('hidden');
+            $('#solr_tab').removeClass('hidden');
+		} else {
+			var activeTab = $("#tabs > ul > li.active > a").attr('href');
+            if ('#endpoint_tab' == activeTab || '#solr_tab' == activeTab) {
+                $('#tabs a[href="#etm_tab"]').tab('show')
+            }
+			$('#endpoint_tab_header').addClass('hidden');
+            $('#endpoint_tab').addClass('hidden');
+            $('#solr_tab_header').addClass('hidden');
+            $('#solr_tab').addClass('hidden');
+	    }
+	});
+});
+//]]>
+</script>	
 </body>
 </html>
