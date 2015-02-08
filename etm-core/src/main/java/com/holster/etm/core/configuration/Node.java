@@ -1,5 +1,6 @@
 package com.holster.etm.core.configuration;
 
+
 public class Node {
 
 	private String name;

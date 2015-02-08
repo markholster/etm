@@ -32,7 +32,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(EtmConfiguration.class);
-	private static final String NODE_CONFIGURATION_PATH = "/config";
+	
 	private static final String LIVE_NODES_PATH = "/live_nodes";
 	
 	
@@ -61,10 +61,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	private NodeCache globalEtmPropertiesNode;
 	private NodeCache nodeEtmPropertiesNode;
 	
-	public synchronized boolean load(String nodeName, String zkConnections, String namespace, String component) throws Exception {
-		if (this.client != null) {
-			return false;
-		}
+	public EtmConfiguration(String nodeName, String zkConnections, String namespace, String component) throws Exception {
 		String solrZkConnectionString = Arrays.stream(zkConnections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
 		this.client = CuratorFrameworkFactory.builder().connectString(zkConnections).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
 		this.client.start();
@@ -75,7 +72,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			}
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			return false;
+			throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION, e);
 		}
 		if (nodeName != null) {
 			//TODO wrap this in transactions.
@@ -93,24 +90,28 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			}
 		}
 		ReloadEtmPropertiesListener reloadListener = new ReloadEtmPropertiesListener();
-		this.globalEtmPropertiesNode = new NodeCache(this.client, "/config/etm.propeties");
+		this.globalEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/etm.propeties");
 		this.globalEtmPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalEtmPropertiesNode.start();
 		if (nodeName != null) {
-			this.nodeEtmPropertiesNode = new NodeCache(this.client, "/config/" + nodeName + "/etm.propeties");
+			this.nodeEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/" + nodeName + "/etm.propeties");
 			this.nodeEtmPropertiesNode.getListenable().addListener(reloadListener);
 			this.nodeEtmPropertiesNode.start();
 		}
-		this.etmProperties = loadEtmProperties();
+		this.etmProperties = loadEtmProperties(this.globalEtmPropertiesNode, this.nodeEtmPropertiesNode);
 		this.cassandraConfiguration = new CassandraConfiguration(this.client, nodeName);
-		this.solrConfiguration = new SolrConfiguration(client, solrZkConnectionString);
-		return true;
+		this.solrConfiguration = new SolrConfiguration(this.client, solrZkConnectionString);
 	}
 
-	private Properties loadEtmProperties() {
+	private Properties loadEtmProperties(NodeCache globalNodeCache, NodeCache nodeNodeCache) {
 		Properties properties = new Properties();
-		properties.putAll(loadProperties(this.globalEtmPropertiesNode));
-		properties.putAll(loadProperties(this.nodeEtmPropertiesNode));
+		properties.putAll(loadProperties(globalNodeCache));
+		properties.putAll(loadProperties(nodeNodeCache));
+		fillDefaults(properties);
+		return properties; 
+    }
+	
+	private void fillDefaults(Properties properties) {
 		checkDefaultValue(properties, ETM_ENHANCING_HANDLER_COUNT, "5");
 		checkDefaultValue(properties, ETM_INDEXING_HANDLER_COUNT, "5");
 		checkDefaultValue(properties, ETM_PERSISTING_HANDLER_COUNT, "5");
@@ -124,9 +125,8 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		checkDefaultValue(properties, ETM_DATA_RETENTION_LEADER_GROUP, "1");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS, "false");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES, "false");
-		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS, "false");
-		return properties; 
-    }
+		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS, "false");		
+	}
 	
 	// Cassandra configuration.
 
@@ -250,18 +250,53 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		this.cassandraConfiguration.removeConfigurationChangeListener(configurationChangeListener);
 	}
 	
+	/**
+	 * Returns a list with nodes that have connected to the ETM cluster at least
+	 * one time.
+	 * 
+	 * @return A list with nodes.
+	 */
 	public List<Node> getNodes() {
 		try {
-	        List<String> nodeNames = this.client.getChildren().forPath(NODE_CONFIGURATION_PATH);
-	        List<String> liveNodes = this.client.getChildren().forPath(LIVE_NODES_PATH);
-	        if (nodeNames != null) {
-	        	return nodeNames.stream().map(c -> new Node(c, liveNodes.contains(c))).collect(Collectors.toList());
-	        }
-        } catch (Exception e) {
-        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-        }
+			List<String> nodeNames = this.client.getChildren().forPath(NODE_CONFIGURATION_PATH);
+			List<String> liveNodes = getLiveNodes();
+			if (nodeNames != null) {
+				return nodeNames.stream().map(c -> new Node(c, liveNodes.contains(c))).collect(Collectors.toList());
+			}
+		} catch (Exception e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}
 		return Collections.emptyList();
-    }
+	}
+	
+	/**
+	 * Gives a list with nodes that are connected to the ETM cluster at this
+	 * moment.
+	 * 
+	 * @return A list with live nodes.
+	 */
+	public List<String> getLiveNodes() {
+		try {
+			return this.client.getChildren().forPath(LIVE_NODES_PATH);
+		} catch (Exception e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}
+	}	
+	
+	/**
+	 * Gives the configuration parameters of a given node.
+	 * 
+	 * @param nodeName
+	 *            The name of the node.
+	 * @return The configuration parameters of the node.
+	 */
+	public Properties getNodeConfiguration(String nodeName) {
+		Properties properties = getNodeConfiguration(this.client, nodeName, "etm.properties");
+		fillDefaults(properties);
+		properties.putAll(this.cassandraConfiguration.getNodeConfiguration(nodeName));
+		properties.putAll(this.solrConfiguration.getNodeConfiguration(nodeName));
+		return properties;
+	}
 	
 	@Override
 	public void close() {
@@ -301,7 +336,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 
 		@Override
         public void nodeChanged() {
-			Properties newProperties = EtmConfiguration.this.loadEtmProperties();
+			Properties newProperties = EtmConfiguration.this.loadEtmProperties(EtmConfiguration.this.globalEtmPropertiesNode, EtmConfiguration.this.nodeEtmPropertiesNode);
 			if (newProperties.equals(EtmConfiguration.this.etmProperties)) {
 				return;
 			}			

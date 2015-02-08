@@ -20,16 +20,18 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 
 	public static final String SOLR_ZOOKEEPER_CONNECTION = "solr.zookeeper_connection";
 	public static final String SOLR_COLLECTION = "solr.collection";
-	
+
+	private final CuratorFramework client;
 	private Properties solrProperties;
 	private NodeCache globalSolrPropertiesNode;
 
 	private String defaultSolrZkConnectionString;
-	
+
 	SolrConfiguration(CuratorFramework client, String defaultSolrZkConnectionString) throws Exception {
+		this.client = client;
 		this.defaultSolrZkConnectionString = defaultSolrZkConnectionString;
 		ReloadSolrPropertiesListener reloadListener = new ReloadSolrPropertiesListener();
-		this.globalSolrPropertiesNode = new NodeCache(client, "/config/solr.propeties");
+		this.globalSolrPropertiesNode = new NodeCache(client, NODE_CONFIGURATION_PATH + "/solr.propeties");
 		this.globalSolrPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalSolrPropertiesNode.start();
 		this.solrProperties = loadSolrProperties(); 
@@ -37,11 +39,13 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 	
 	private Properties loadSolrProperties() {
 		Properties properties = loadProperties(this.globalSolrPropertiesNode);
-		checkDefaultValue(properties, SOLR_COLLECTION, "etm");
-		checkDefaultValue(properties, SOLR_ZOOKEEPER_CONNECTION, this.defaultSolrZkConnectionString);
+		fillDefaults(properties);
 		return properties;
 	}
-	
+	private void fillDefaults(Properties properties) {
+		checkDefaultValue(properties, SOLR_COLLECTION, "etm");
+		checkDefaultValue(properties, SOLR_ZOOKEEPER_CONNECTION, this.defaultSolrZkConnectionString);		
+	}
 
 	String getSolrZkConnectionString() {
 		return this.solrProperties.getProperty(SOLR_ZOOKEEPER_CONNECTION);
@@ -49,6 +53,12 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 	
 	String getSolrCollectionName() {
 		return this.solrProperties.getProperty(SOLR_COLLECTION);
+	}
+	
+	Properties getNodeConfiguration(String nodeName) {
+		Properties properties = getNodeConfiguration(this.client, nodeName, "solr.properties");
+		fillDefaults(properties);
+		return properties;
 	}
 	
 	@Override
@@ -74,7 +84,7 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 				return;
 			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(SolrConfiguration.this.solrProperties, newProperties);
-			SolrConfiguration.this.solrProperties =  newProperties;
+			SolrConfiguration.this.solrProperties = newProperties;
 			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
         }		
 	}

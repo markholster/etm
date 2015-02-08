@@ -6,9 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.zookeeper.data.Stat;
 
+import com.holster.etm.core.EtmException;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
 
@@ -18,6 +21,8 @@ abstract class AbstractConfiguration {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(AbstractConfiguration.class);
+	
+	public static final String NODE_CONFIGURATION_PATH = "/config";
 
 	private List<ConfigurationChangeListener> configurationChangeListeners = new ArrayList<ConfigurationChangeListener>();
 	
@@ -51,6 +56,32 @@ abstract class AbstractConfiguration {
 				}
 			}
 		}
+		return properties;
+	}
+	
+	/**
+	 * Gives the configuration parameters of a given node.
+	 * 
+	 * @param nodeName
+	 *            The name of the node.
+	 * @return The configuration parameters of the node.
+	 */
+	Properties getNodeConfiguration(CuratorFramework client, String nodeName, String propertiesName) {
+		Properties properties = new Properties();
+		try {
+			Stat stat = client.checkExists().forPath(NODE_CONFIGURATION_PATH + "/" + propertiesName);
+			if (stat != null) {
+				properties.putAll(loadPropertiesFromData(client.getData().forPath(NODE_CONFIGURATION_PATH + "/" + propertiesName)));
+			}
+			if (nodeName != null) {
+				stat = client.checkExists().forPath(NODE_CONFIGURATION_PATH + "/" + nodeName + "/" + propertiesName);
+				if (stat != null) {
+					properties.putAll(loadPropertiesFromData(client.getData().forPath(NODE_CONFIGURATION_PATH + "/" + nodeName + "/" + propertiesName)));
+				}
+			}
+        } catch (Exception e) {
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
 		return properties;
 	}
 	

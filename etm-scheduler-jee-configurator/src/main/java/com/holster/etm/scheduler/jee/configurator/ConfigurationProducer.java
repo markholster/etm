@@ -26,12 +26,11 @@ public class ConfigurationProducer {
 	public EtmConfiguration getEtmConfiguration() {
 		synchronized (this) {
 			if (this.configuration == null) {
-				this.configuration = new EtmConfiguration();
 				try {
 					String nodename = System.getProperty("etm.nodename");
 					String connections = System.getProperty("etm.zookeeper.clients", "127.0.0.1:2181/etm");
 					String namespace = System.getProperty("etm.zookeeper.namespace", "dev");
-	                this.configuration.load(nodename, connections, namespace, "scheduler");
+	                this.configuration = new EtmConfiguration(nodename, connections, namespace, "scheduler");
                 } catch (Exception e) {
                 	this.configuration = null;
                 	if (log.isErrorLevelEnabled()) {

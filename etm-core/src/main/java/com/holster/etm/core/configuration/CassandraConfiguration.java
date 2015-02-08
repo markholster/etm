@@ -26,17 +26,20 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 	public static final String CASSANDRA_PASSWORD = "cassandra.password";
 	public static final String CASSANDRA_KEYSPACE = "cassandra.keyspace";
 
+	private final CuratorFramework client;
 	private Properties cassandraProperties;
 	private NodeCache globalCassandraPropertiesNode;
 	private NodeCache nodeCassandraPropertiesNode;
+
 	
 	CassandraConfiguration(CuratorFramework client, String nodeName) throws Exception {
+		this.client = client;
 		ReloadCassandraPropertiesListener reloadListener = new ReloadCassandraPropertiesListener();
-		this.globalCassandraPropertiesNode = new NodeCache(client, "/config/cassandra.propeties");
+		this.globalCassandraPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/cassandra.propeties");
 		this.globalCassandraPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalCassandraPropertiesNode.start();
 		if (nodeName != null) {
-			this.nodeCassandraPropertiesNode = new NodeCache(client, "/config/" + nodeName + "/cassandra.propeties");
+			this.nodeCassandraPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/" + nodeName + "/cassandra.propeties");
 			this.nodeCassandraPropertiesNode.getListenable().addListener(reloadListener);
 			this.nodeCassandraPropertiesNode.start();
 		}		
@@ -47,9 +50,13 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 		Properties properties = new Properties();
 		properties.putAll(loadProperties(this.globalCassandraPropertiesNode));
 		properties.putAll(loadProperties(this.nodeCassandraPropertiesNode));
-		checkDefaultValue(properties, CASSANDRA_CONTACT_POINTS, "127.0.0.1");
-		checkDefaultValue(properties, CASSANDRA_KEYSPACE, "etm");
+		fillDefaults(properties);
 		return properties;
+	}
+	
+	private void fillDefaults(Properties properties) {
+		checkDefaultValue(properties, CASSANDRA_CONTACT_POINTS, "127.0.0.1");
+		checkDefaultValue(properties, CASSANDRA_KEYSPACE, "etm");		
 	}
 	
 	List<String> getCassandraContactPoints() {
@@ -66,6 +73,12 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 	
 	String getCassandraKeyspace() {
 		return this.cassandraProperties.getProperty(CASSANDRA_KEYSPACE);
+	}
+	
+	Properties getNodeConfiguration(String nodeName) {
+		Properties properties = getNodeConfiguration(this.client, nodeName, "cassandra.properties");
+		fillDefaults(properties);
+		return properties;
 	}
 	
 	@Override
