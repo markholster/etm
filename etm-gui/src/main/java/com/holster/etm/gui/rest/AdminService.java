@@ -19,6 +19,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 
+import com.holster.etm.core.EtmException;
 import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.core.configuration.Node;
 import com.holster.etm.core.logging.LogFactory;
@@ -108,16 +109,26 @@ public class AdminService {
 	@POST
 	@Path("/node/{nodeName}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	public void updateNodeConfiguration(@PathParam("nodeName") String nodeName, String json) {
 		try {
+			Properties properties = new Properties();
 	        JsonParser jsonParser = this.jsonFactory.createJsonParser(json);
 	        JsonToken token = jsonParser.nextToken();
 	        while (token != null) {
 	        	token = jsonParser.nextToken();
+	        	if (JsonToken.FIELD_NAME.equals(token)) {
+	        		String key = jsonParser.getCurrentName();
+	        		jsonParser.nextToken();
+	        		properties.setProperty(key, jsonParser.getText());
+	        	}
 	        }
+	        // TODO store in ETM configuration.
         } catch (IOException e) {
-	        // TODO Auto-generated catch block
-	        e.printStackTrace();
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Error saving node configuration for node '" + nodeName + "'.", e);
+        	}
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
         }
 	}
 }

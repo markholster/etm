@@ -62,6 +62,7 @@
 							<mark>creationTime:[NOW-30MINUTES TO NOW]</mark>
 							.
 						</p>
+						<div id="errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
 						<div class="input-group">
 							<input id="search_input" type="text" class="form-control"
 								placeholder="Search for..." /> <span class="input-group-btn">
@@ -191,6 +192,7 @@ $(function () {
     };
 
 	var executeQuery = function(start, max, animate) {
+		$("#errorBox").hide('fast');
 		$("#ajax_loader").show();
         $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max), { dataType: "json", success: function (data) {
         	$("#ajax_loader").hide();
@@ -207,6 +209,11 @@ $(function () {
                 addRow(event, start, max, animate);
             });
             currentStart = start + data.numReturned;
+        },
+        error : function(jqXHR, textStatus, errorThrown) {
+        	$("#ajax_loader").hide();
+        	$("#errorBox").text('Error executing query: ' +  errorThrown);
+        	$("#errorBox").show('fast');
         }});	
     };
 
