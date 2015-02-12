@@ -204,13 +204,13 @@ $(function () {
 	
 	$('#panel_title').text('Event ' + eventId);
 	$('#back_lnk').attr('href', 'index.html?queryString=' + encodeURIComponent(getUrlParameter('queryString', '')) + '&start=' + encodeURIComponent(getUrlParameter('start', '')) + '&max=' + encodeURIComponent(getUrlParameter('max', '')));
-	$.ajax('../rest/query/event/' + eventId, { dataType: "json", success: function (data) {
+	$.ajax('../rest/query/event/' + eventId, { dataType: "json", cache: false, success: function (data) {
 		if (!data) {
 			return;
 		}
 		setEventTabData('event', data);
 	    if (data.type == 'MESSAGE_RESPONSE' && data.correlationId) {
-	    	$.ajax('../rest/query/event/' + data.correlationId, { dataType: "json", success: function (data) {
+	    	$.ajax('../rest/query/event/' + data.correlationId, { dataType: "json", cache: false, success: function (data) {
 	    		 setEventTabData('event_correlation', data);
 	    		 $('#event_correlation_tab_header').removeClass('hidden');
 	    		 $('#event_correlation_tab').removeClass('hidden');
@@ -243,7 +243,7 @@ $(function () {
 	                        rightArrow = ['M', 0, 0, 'L', 30, 0, 'L', 25, 5, 'M', 30, 0, 'L', 25, -5],
 	                        leftArrow = ['M', 30, 0, 'L', 0, 0, 'L', 5, 5, 'M', 0, 0, 'L', 5, -5];
 	                    var chart = this;
-	                    $.ajax('../rest/query/event/' + eventId + '/overview/', { dataType: "json", success: function (data) {
+	                    $.ajax('../rest/query/event/' + eventId + '/overview/', { dataType: "json", cache: false, success: function (data) {
 	                        if (!data) {
 	                            return;
 	                        }

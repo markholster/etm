@@ -108,7 +108,7 @@ $(function () {
     var applicationCountMaxResults = 5;
     var expirationCountMaxResults = 7;
 
-    $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + transactionPerformanceMaxResults, { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + transactionPerformanceMaxResults, { dataType: "json", cache: false, success: function (data) {
         $('#transactionsperformance').highcharts({
             chart: {
                 type: 'spline',
@@ -181,7 +181,7 @@ $(function () {
         });
     }});
 
-    $.ajax('../rest/statistics/messages/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + messagePerformanceMaxResults, { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/messages/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + messagePerformanceMaxResults, { dataType: "json", cache: false, success: function (data) {
         $('#messagesperformance').highcharts({
             chart: {
                 type: 'spline',
@@ -254,7 +254,7 @@ $(function () {
         });
     }});
 
-    $.ajax('../rest/statistics/applications/count/' + (startTime - timeRange) + '/' + startTime + '?max=' + applicationCountMaxResults, { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/applications/count/' + (startTime - timeRange) + '/' + startTime + '?max=' + applicationCountMaxResults, { dataType: "json", cache: false, success: function (data) {
         $('#applicationscount').highcharts({
             chart: {
                 type: 'bar',
@@ -341,7 +341,7 @@ $(function () {
         $(rowContent).prependTo($('#expiry_table > tbody'));
     };
 
-    $.ajax('../rest/statistics/messages/expiration/' + (startTime - timeRange) + '/' + startTime + '?max=' + expirationCountMaxResults, { dataType: "json", success: function (data) {
+    $.ajax('../rest/statistics/messages/expiration/' + (startTime - timeRange) + '/' + startTime + '?max=' + expirationCountMaxResults, { dataType: "json", cache: false, success: function (data) {
     	if (data) {
             $.each(data.reverse(), function(index, expiration) {
                 addRow(expiration);

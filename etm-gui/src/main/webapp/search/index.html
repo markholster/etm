@@ -194,7 +194,7 @@ $(function () {
 	var executeQuery = function(start, max, animate) {
 		$("#errorBox").hide('fast');
 		$("#ajax_loader").show();
-        $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max), { dataType: "json", success: function (data) {
+        $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max), { dataType: "json", cache: false, success: function (data) {
         	$("#ajax_loader").hide();
             if (!data) {
                 return false;
@@ -267,7 +267,7 @@ $(function () {
 	    if($(window).scrollTop() == $(document).height() - $(window).height()) {
 	    	loading = true;
 	        $('#ajax_loader').show();
-		   	$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount, { dataType: "json", success: function (data) {
+		   	$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount, { dataType: "json", cache: false, success: function (data) {
 		   	   $("#ajax_loader").hide();
 		       if (!data) {
 			       return;

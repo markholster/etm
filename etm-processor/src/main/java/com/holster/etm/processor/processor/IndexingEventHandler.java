@@ -26,7 +26,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 	private final SolrServer server;
 	private final long ordinal;
 	private final long numberOfConsumers;
-	private final List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>(nrOfDocumentsPerRequest);
+	private final List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>(this.nrOfDocumentsPerRequest);
 	private int docIx = -1;
 	
 	public IndexingEventHandler(final SolrServer server, final long ordinal, final long numberOfConsumers) {

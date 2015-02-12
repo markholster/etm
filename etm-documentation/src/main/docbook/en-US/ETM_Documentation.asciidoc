@@ -50,7 +50,7 @@ directory <SOLR_INSTALL_DIR>/example/scripts/cloud-scripts and execute the follo
 ----
 ./zkcli.sh -zkhost localhost:9983 -cmd upconfig -confdir <PACKAGE_UNZIP_DIR>/resources/solr/single-node-conf -confname myconf
 ./zkcli.sh -zkhost localhost:9983 -cmd makepath /demo/config
-./zkcli.sh -zkhost localhost:9983 -cmd putfile /demo/config/solr.propeties <PACKAGE_UNZIP_DIR>/resources/solr/single-node-solr.properties
+./zkcli.sh -zkhost localhost:9983 -cmd putfile /demo/config/solr.properties <PACKAGE_UNZIP_DIR>/resources/solr/single-node-solr.properties
 ----
 
 After the configuration changes are uploaded to Zookeeper, the Solr instance needs to be restarted. This can be done by executing 
@@ -114,7 +114,7 @@ Next step is to deploy the ETM desired artifacts. Depending on your needs you ca
 * etm-processor-mdb-{etm_version}.war, a processor that takes events of a message queue.
 * etm-scheduler-retention-{etm_version}.war, a scheduler that removes events after a configurable retention time.
 
-Copy the desired artifact(s) to <WILDFLY_INSTALL_DIR>/standalone/deployments where it will be picked up by Wilfly. The deployment process will 
+Copy the desired artifact(s) to <WILDFLY_INSTALL_DIR>/standalone/deployments where it will be picked up by Wildfly. The deployment process will 
 take several seconds. If you have chosen to deploy etm-gui-{etm_version}.war, the dashboard will be available at http://localhost:8080/etm/dashboard/   
 
 [[chap-ETM_Documentation-Clustered-Installation]]
