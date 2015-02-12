@@ -123,7 +123,9 @@ public class AdminService {
 	        		properties.setProperty(key, jsonParser.getText());
 	        	}
 	        }
-	        // TODO store in ETM configuration.
+	        if (properties.size() > 0) {
+	        	this.configuration.update("cluster".equals(nodeName) ? null : nodeName, properties);
+	        }
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error saving node configuration for node '" + nodeName + "'.", e);

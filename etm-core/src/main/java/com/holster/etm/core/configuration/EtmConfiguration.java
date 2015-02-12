@@ -35,7 +35,6 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	
 	private static final String LIVE_NODES_PATH = "/live_nodes";
 	
-	
 	public static final String ETM_ENHANCING_HANDLER_COUNT = "etm.enhancing_handler_count";
 	public static final String ETM_INDEXING_HANDLER_COUNT = "etm.indexing_handler_count";
 	public static final String ETM_PERSISTING_HANDLER_COUNT = "etm.persisting_handler_count";
@@ -50,6 +49,11 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS = "etm.data_retention_preserve_event_counts";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES = "etm.data_retention_preserve_event_performances";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS = "etm.data_retention_preserve_transaction_slas";
+	
+	private static final String[] CONFIGURATION_KEYS = new String[] { ETM_ENHANCING_HANDLER_COUNT, ETM_INDEXING_HANDLER_COUNT,
+	        ETM_PERSISTING_HANDLER_COUNT, ETM_RINGBUFFER_SIZE, ETM_ENDPOINT_CACHE_EXPIRY_TIME, ETM_STATISTICS_TIMEUNIT,
+	        ETM_DATA_CORRELATION_MAX_MATCHES, ETM_DATA_CORRELATION_TIME_OFFSET, ETM_DATA_RETENTION_TIME, ETM_DATA_RETENTION_CHECK_INTERVAL, ETM_DATA_RETENTION_LEADER_GROUP,
+	        ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS, ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES, ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS};
 	
 	private CassandraConfiguration cassandraConfiguration;
 	private SolrConfiguration solrConfiguration;
@@ -90,11 +94,11 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			}
 		}
 		ReloadEtmPropertiesListener reloadListener = new ReloadEtmPropertiesListener();
-		this.globalEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/etm.propeties");
+		this.globalEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/etm.properties");
 		this.globalEtmPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalEtmPropertiesNode.start();
 		if (nodeName != null) {
-			this.nodeEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/" + nodeName + "/etm.propeties");
+			this.nodeEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/" + nodeName + "/etm.properties");
 			this.nodeEtmPropertiesNode.getListenable().addListener(reloadListener);
 			this.nodeEtmPropertiesNode.start();
 		}
@@ -261,7 +265,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			List<String> nodeNames = this.client.getChildren().forPath(NODE_CONFIGURATION_PATH);
 			List<String> liveNodes = getLiveNodes();
 			if (nodeNames != null) {
-				return nodeNames.stream().map(c -> new Node(c, liveNodes.contains(c))).collect(Collectors.toList());
+				return nodeNames.stream().filter(c -> !c.endsWith(".properties")).map(c -> new Node(c, liveNodes.contains(c))).collect(Collectors.toList());
 			}
 		} catch (Exception e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
@@ -298,6 +302,14 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		return properties;
 	}
 	
+	public void update(String nodeName, Properties properties) {
+		Properties defaultValues = new Properties();
+		fillDefaults(defaultValues);
+		updateNodeConfiguration(this.client, nodeName, "etm.properties", CONFIGURATION_KEYS, defaultValues, properties);
+		this.cassandraConfiguration.update(nodeName, properties);
+		this.solrConfiguration.update(nodeName, properties);
+    }
+
 	@Override
 	public void close() {
 		if (this.globalEtmPropertiesNode != null) {
@@ -339,7 +351,11 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			Properties newProperties = EtmConfiguration.this.loadEtmProperties(EtmConfiguration.this.globalEtmPropertiesNode, EtmConfiguration.this.nodeEtmPropertiesNode);
 			if (newProperties.equals(EtmConfiguration.this.etmProperties)) {
 				return;
-			}			
+			}
+			// TODO Afhandeling wanneer beide properties tegelijk worden aangepast.
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Change in etm.properties detected. Broadcasting configuration change event.");
+			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(EtmConfiguration.this.etmProperties, newProperties);
 			EtmConfiguration.this.etmProperties =  newProperties;
 			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));

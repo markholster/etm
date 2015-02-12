@@ -21,6 +21,8 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 	public static final String SOLR_ZOOKEEPER_CONNECTION = "solr.zookeeper_connection";
 	public static final String SOLR_COLLECTION = "solr.collection";
 
+	private static final String[] CONFIGURATION_KEYS = new String[] { SOLR_ZOOKEEPER_CONNECTION, SOLR_COLLECTION };
+	
 	private final CuratorFramework client;
 	private Properties solrProperties;
 	private NodeCache globalSolrPropertiesNode;
@@ -31,7 +33,7 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 		this.client = client;
 		this.defaultSolrZkConnectionString = defaultSolrZkConnectionString;
 		ReloadSolrPropertiesListener reloadListener = new ReloadSolrPropertiesListener();
-		this.globalSolrPropertiesNode = new NodeCache(client, NODE_CONFIGURATION_PATH + "/solr.propeties");
+		this.globalSolrPropertiesNode = new NodeCache(client, NODE_CONFIGURATION_PATH + "/solr.properties");
 		this.globalSolrPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalSolrPropertiesNode.start();
 		this.solrProperties = loadSolrProperties(); 
@@ -61,6 +63,12 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 		return properties;
 	}
 	
+	public void update(String nodeName, Properties properties) {
+		Properties defaultValues = new Properties();
+		fillDefaults(defaultValues);
+		updateNodeConfiguration(this.client, nodeName, "solr.properties", CONFIGURATION_KEYS, defaultValues, properties);
+    }
+	
 	@Override
     public void close() {
 		if (this.globalSolrPropertiesNode != null) {
@@ -82,6 +90,9 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 			Properties newProperties = SolrConfiguration.this.loadSolrProperties();
 			if (newProperties.equals(SolrConfiguration.this.solrProperties)) {
 				return;
+			}
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Change in solr.properties detected. Broadcasting configuration change event.");
 			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(SolrConfiguration.this.solrProperties, newProperties);
 			SolrConfiguration.this.solrProperties = newProperties;

@@ -26,6 +26,8 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 	public static final String CASSANDRA_PASSWORD = "cassandra.password";
 	public static final String CASSANDRA_KEYSPACE = "cassandra.keyspace";
 
+	private static final String[] CONFIGURATION_KEYS = new String[] { CASSANDRA_CONTACT_POINTS, CASSANDRA_USERNAME, CASSANDRA_PASSWORD, CASSANDRA_KEYSPACE };
+	
 	private final CuratorFramework client;
 	private Properties cassandraProperties;
 	private NodeCache globalCassandraPropertiesNode;
@@ -35,11 +37,11 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 	CassandraConfiguration(CuratorFramework client, String nodeName) throws Exception {
 		this.client = client;
 		ReloadCassandraPropertiesListener reloadListener = new ReloadCassandraPropertiesListener();
-		this.globalCassandraPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/cassandra.propeties");
+		this.globalCassandraPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/cassandra.properties");
 		this.globalCassandraPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalCassandraPropertiesNode.start();
 		if (nodeName != null) {
-			this.nodeCassandraPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/" + nodeName + "/cassandra.propeties");
+			this.nodeCassandraPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/" + nodeName + "/cassandra.properties");
 			this.nodeCassandraPropertiesNode.getListenable().addListener(reloadListener);
 			this.nodeCassandraPropertiesNode.start();
 		}		
@@ -81,6 +83,12 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 		return properties;
 	}
 	
+	public void update(String nodeName, Properties properties) {
+		Properties defaultValues = new Properties();
+		fillDefaults(defaultValues);
+		updateNodeConfiguration(this.client, nodeName, "cassandra.properties", CONFIGURATION_KEYS, defaultValues, properties);
+    }
+	
 	@Override
     public void close() {
 		if (this.globalCassandraPropertiesNode != null) {
@@ -103,6 +111,9 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 			if (newProperties.equals(CassandraConfiguration.this.cassandraProperties)) {
 				return;
 			}						
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Change in cassandra.properties detected. Broadcasting configuration change event.");
+			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(CassandraConfiguration.this.cassandraProperties, newProperties);
 			CassandraConfiguration.this.cassandraProperties =  newProperties;
 			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
