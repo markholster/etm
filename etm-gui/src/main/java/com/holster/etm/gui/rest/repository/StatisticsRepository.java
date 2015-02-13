@@ -24,8 +24,6 @@ import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 
 public class StatisticsRepository {
 
-	private final String keyspace;
-	
 	private final Session session;
 
 	private final PreparedStatement selectTransactionPerformanceStatement;
@@ -40,18 +38,17 @@ public class StatisticsRepository {
 	
 	 
 	
-	public StatisticsRepository(Session session, String keyspace) {
+	public StatisticsRepository(Session session) {
 		this.session = session;
-		this.keyspace = keyspace;
-		this.selectTransactionPerformanceStatement = this.session.prepare("select transactionName, startTime, finishTime, expiryTime from " + this.keyspace + ".transaction_performance where transactionName_timeunit = ? and startTime >= ? and startTime <= ?");
-		this.selectMessagePerformanceStatement = this.session.prepare("select name, startTime, finishTime, expiryTime, application from " + this.keyspace + ".message_performance where name_timeunit = ? and startTime >= ? and startTime <= ?");
-		this.selectMessageExpirationStatement = this.session.prepare("select id, name, startTime, finishTime, expiryTime, application, name_timeunit from " + this.keyspace + ".message_expiration where name_timeunit = ? and expiryTime >= ? and expiryTime <= ?");
-		this.selectApplicationCountsStatement = this.session.prepare("select application, incomingMessageRequestCount, incomingMessageDatagramCount, outgoingMessageRequestCount, outgoingMessageDatagramCount from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
-		this.selectEventCorrelations = this.session.prepare("select correlations from " + this.keyspace + ".telemetry_event where id = ?");
-		this.selectEventExpirationDataStatement = this.session.prepare("select creationTime, type from " + this.keyspace + ".telemetry_event where id = ?");
-		this.selectApplicationMessagesCountStatement = this.session.prepare("select timeunit, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from " + this.keyspace + ".application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
-		this.selectApplicationMessageNamesStatement = this.session.prepare("select timeunit, eventName, count from " + this.keyspace + ".application_event_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
-		this.updateMessageExpirationStatement = this.session.prepare("update " + this.keyspace + ".message_expiration set finishTime = ? where name_timeunit = ? and expiryTime = ? and id = ?");
+		this.selectTransactionPerformanceStatement = this.session.prepare("select transactionName, startTime, finishTime, expiryTime from transaction_performance where transactionName_timeunit = ? and startTime >= ? and startTime <= ?");
+		this.selectMessagePerformanceStatement = this.session.prepare("select name, startTime, finishTime, expiryTime, application from message_performance where name_timeunit = ? and startTime >= ? and startTime <= ?");
+		this.selectMessageExpirationStatement = this.session.prepare("select id, name, startTime, finishTime, expiryTime, application, name_timeunit from message_expiration where name_timeunit = ? and expiryTime >= ? and expiryTime <= ?");
+		this.selectApplicationCountsStatement = this.session.prepare("select application, incomingMessageRequestCount, incomingMessageDatagramCount, outgoingMessageRequestCount, outgoingMessageDatagramCount from application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
+		this.selectEventCorrelations = this.session.prepare("select correlations from telemetry_event where id = ?");
+		this.selectEventExpirationDataStatement = this.session.prepare("select creationTime, type from telemetry_event where id = ?");
+		this.selectApplicationMessagesCountStatement = this.session.prepare("select timeunit, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
+		this.selectApplicationMessageNamesStatement = this.session.prepare("select timeunit, eventName, count from application_event_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
+		this.updateMessageExpirationStatement = this.session.prepare("update message_expiration set finishTime = ? where name_timeunit = ? and expiryTime = ? and id = ?");
 	}
 	
 	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions, TimeUnit timeUnit) {
@@ -476,7 +473,7 @@ public class StatisticsRepository {
 	}
 	
 	private List<String> getTransactionNameTimeframes(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
 		List<String> transactionNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
@@ -491,7 +488,7 @@ public class StatisticsRepository {
 	}
 	
 	private List<String> getMessageNameTimeframes(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
 		List<String> eventNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
@@ -506,7 +503,7 @@ public class StatisticsRepository {
 	}
 	
 	private List<String> getApplicationNameTimeframes(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
 		List<String> eventNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();
@@ -521,7 +518,7 @@ public class StatisticsRepository {
 	}
 	
 	private List<String> getApplicationNameTimeframes(String applicationName, long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe", "name").from(this.keyspace , "event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
+		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe", "name").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
 		List<String> eventNames = new ArrayList<String>();
 		ResultSet resultSet = this.session.execute(builtStatement);
 		Iterator<Row> iterator = resultSet.iterator();

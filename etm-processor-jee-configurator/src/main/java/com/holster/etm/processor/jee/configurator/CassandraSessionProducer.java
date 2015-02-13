@@ -22,28 +22,28 @@ import com.holster.etm.jee.configurator.core.ProcessorConfiguration;
 @ManagedBean
 @Singleton
 public class CassandraSessionProducer implements ConfigurationChangeListener {
-
+	
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(CassandraSessionProducer.class);
-	
+
 	@ProcessorConfiguration
 	@Inject
 	private EtmConfiguration configuration;
-	
+
 	private ReconfigurableSession session;
 
 	private Cluster cluster;
 
-	@Produces
 	@ProcessorConfiguration
+	@Produces
 	public Session getSession() {
 		synchronized (this) {
 			if (this.session == null) {
 				this.cluster = createCluster();
 				this.configuration.addCassandraConfigurationChangeListener(this);
-				this.session = new ReconfigurableSession(this.cluster.newSession().init());
+				this.session = new ReconfigurableSession(this.cluster.connect(this.configuration.getCassandraKeyspace()));
 			}
 		}
 		return this.session;
@@ -81,13 +81,13 @@ public class CassandraSessionProducer implements ConfigurationChangeListener {
 	@Override
     public void configurationChanged(ConfigurationChangedEvent event) {
 		if (event.isAnyChanged(CassandraConfiguration.CASSANDRA_CONTACT_POINTS, CassandraConfiguration.CASSANDRA_PASSWORD,
-		        CassandraConfiguration.CASSANDRA_USERNAME)) {
+		        CassandraConfiguration.CASSANDRA_USERNAME, CassandraConfiguration.CASSANDRA_KEYSPACE)) {
 			if (this.session != null) {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Detected a change in the configuration that needs to reconnect to Cassandra cluster.");
 				}
 				Cluster newCluster = createCluster();
-				this.session.switchToSession(newCluster.newSession().init());
+				this.session.switchToSession(newCluster.connect(this.configuration.getCassandraKeyspace()));
 				this.cluster.closeAsync();
 				this.cluster = newCluster;
 				if (log.isInfoLevelEnabled()) {

@@ -52,27 +52,18 @@ public class QueryRepository {
 	public QueryRepository(Session session, EtmConfiguration etmConfiguration) {
 		this.session = session;
 		this.etmConfiguration = etmConfiguration;
-		final String keyspace = etmConfiguration.getCassandraKeyspace();
 		this.findEventForSearchResultsStatement = this.session
-		        .prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from "
-		                + keyspace + ".telemetry_event where id = ?");
+		        .prepare("select application, correlationId, creationTime, endpoint, id, name, sourceCorrelationId, sourceId from telemetry_event where id = ?");
 		this.findEventForDetailsStatement = this.session
-		        .prepare("select application, content, correlationId, correlations, creationTime, direction, endpoint, expiryTime, name, sourceCorrelationId, sourceId, transactionId, transactionName, type from "
-		                + keyspace + ".telemetry_event where id = ?");
-		this.findEventParentIdStatement = this.session.prepare("select correlationId from " + keyspace
-		        + ".telemetry_event where id = ?");
+		        .prepare("select application, content, correlationId, correlations, creationTime, direction, endpoint, expiryTime, name, sourceCorrelationId, sourceId, transactionId, transactionName, type from telemetry_event where id = ?");
+		this.findEventParentIdStatement = this.session.prepare("select correlationId from telemetry_event where id = ?");
 		this.findOverviewEventStatement = this.session
-		        .prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from "
-		                + keyspace + ".telemetry_event where id = ?");
+		        .prepare("select id, creationTime, application, direction, endpoint, expiryTime, name, type, correlations from telemetry_event where id = ?");
 		this.findCorrelationDataStatement = this.session
-		        .prepare("select application, correlationData, correlations, creationTime, expiryTime, type from " + keyspace
-		                + ".telemetry_event where id = ?");
-		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from " + keyspace
-		        + ".telemetry_event where id = ?");
-		this.findCorrelationsByDataStatement = this.session.prepare("select id, timeunit from " + keyspace
-		        + ".correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit >= ? and timeunit <= ?");
-		this.findPotentialCorrelatingEventDataStatement = this.session.prepare("select creationTime, correlations, expiryTime, type from "
-		        + keyspace + ".telemetry_event where id = ?");
+		        .prepare("select application, correlationData, correlations, creationTime, expiryTime, type from telemetry_event where id = ?");
+		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from telemetry_event where id = ?");
+		this.findCorrelationsByDataStatement = this.session.prepare("select id, timeunit from correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit >= ? and timeunit <= ?");
+		this.findPotentialCorrelatingEventDataStatement = this.session.prepare("select creationTime, correlations, expiryTime, type from telemetry_event where id = ?");
 	}
 
 	public void addEvents(SolrDocumentList results, JsonGenerator generator) throws JsonGenerationException, IOException {

@@ -55,12 +55,12 @@ public class TelemetryEventProcessor {
 		
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getRingbufferSize(), this.executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(this.sourceCorrelations));
-		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession, etmConfiguration.getCassandraKeyspace());
+		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession);
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		this.telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations);
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, enhancingHandlerCount, etmConfiguration.getEndpointCacheExpiryTime());
+			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, enhancingHandlerCount, etmConfiguration);
 		}
 		int indexingHandlerCount = etmConfiguration.getIndexingHandlerCount();
 		this.indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
@@ -71,7 +71,7 @@ public class TelemetryEventProcessor {
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
 		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, persistingHandlerCount, etmConfiguration.getStatisticsTimeUnit());
+			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, persistingHandlerCount, etmConfiguration);
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
 		if (persistingEventHandlers.length > 0) {
@@ -82,6 +82,8 @@ public class TelemetryEventProcessor {
 		}
 		this.ringBuffer = this.disruptor.start();
 	}
+	
+	// Reload when keyspace changes, 
 	
 	public void stop() {
 		if (!this.started) {

@@ -3,6 +3,7 @@ package com.holster.etm.processor.processor;
 import java.util.List;
 
 import com.holster.etm.core.TelemetryEventType;
+import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.processor.TelemetryEvent;
 import com.holster.etm.processor.parsers.ExpressionParser;
 import com.holster.etm.processor.repository.CorrelationBySourceIdResult;
@@ -15,19 +16,21 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	
 	private final long ordinal;
 	private final long numberOfConsumers;
-	private final long endpointCacheExpiryTime;
+	private final EtmConfiguration etmConfiguration;
 	
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final CorrelationBySourceIdResult correlationBySourceIdResult;
 	private final EndpointConfigResult endpointConfigResult;
 	
-	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final long endpointCacheExpiryTime) {
+	
+	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
-		this.endpointCacheExpiryTime = endpointCacheExpiryTime;
+		this.etmConfiguration = etmConfiguration;
 		this.correlationBySourceIdResult = new CorrelationBySourceIdResult();
 		this.endpointConfigResult = new EndpointConfigResult();
+		
 	}
 
 	@Override
@@ -65,7 +68,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			}
 		}
 		this.endpointConfigResult.initialize();
-		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.endpointCacheExpiryTime);
+		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
 		if (event.application == null || event.name == null || event.direction == null || event.transactionName == null || event.slaRule == null) {
 			if (event.application == null) {
 				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);

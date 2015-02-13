@@ -28,7 +28,7 @@ public class RepositoryProducer {
 	public StatisticsRepository getStatisticsRepository() {
 		synchronized (this) {
 	        if (this.statisticsRepository == null) {
-	        	this.statisticsRepository = new StatisticsRepository(this.session, this.configuration.getCassandraKeyspace());
+	        	this.statisticsRepository = new StatisticsRepository(this.session);
 	        }
         }
 		return this.statisticsRepository;

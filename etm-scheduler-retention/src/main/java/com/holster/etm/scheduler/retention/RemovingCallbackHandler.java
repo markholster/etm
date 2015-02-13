@@ -87,25 +87,24 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 		this.solrServer = solrServer;
 		this.session = session;
 		this.etmConfiguration = etmConfiguration;
-		String keyspace = this.etmConfiguration.getCassandraKeyspace();
-		this.selectEventStatement = this.session.prepare("select application, correlationCreationTime, correlationData, creationTime, direction, expiryTime, name, sourceId, transactionId, transactionName, type, slaRule from " + keyspace + ".telemetry_event where id = ?;");
-		this.selectApplicationCounterStatement = this.session.prepare("select count from " + keyspace + ".application_counter where application_timeunit = ? and  timeunit = ? and application = ?;");
-		this.selectEventNameCounterStatement = this.session.prepare("select count from " + keyspace + ".eventname_counter where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
-		this.selectApplicationEventNameCounterStatement = this.session.prepare("select count from " + keyspace + ".application_event_counter where application_timeunit = ? and  timeunit = ? and application = ? and eventName = ?;");
-		this.selectTransactionNameCounterStatement = this.session.prepare("select count from " + keyspace + ".transactionname_counter where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
-		this.deleteMessagePerformanceStatement = this.session.prepare("delete from " + keyspace + ".message_performance where name_timeunit = ? and startTime = ? and id = ?;");
-		this.deleteMessageExpirationStatement = this.session.prepare("delete from " + keyspace + ".message_expiration where name_timeunit = ? and expiryTime = ? and id = ?;");
-		this.deleteTransactionPerformanceStatement = this.session.prepare("delete from " + keyspace + ".transaction_performance where transactionName_timeunit = ? and startTime = ? and transactionId = ?;");
-		this.deleteApplicationCounterStatement = this.session.prepare("delete from " + keyspace + ".application_counter where application_timeunit = ? and  timeunit = ? and application = ?;");
-		this.deleteEventNameCounterStatement = this.session.prepare("delete from " + keyspace + ".eventname_counter where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
-		this.deleteApplicationEventNameCounterStatement = this.session.prepare("delete from " + keyspace + ".application_event_counter where application_timeunit = ? and  timeunit = ? and application = ? and eventName = ?;");
-		this.deleteTransactionNameCounterStatement = this.session.prepare("delete from " + keyspace + ".transactionname_counter where transactionName_timeunit = ? and  timeunit = ? and transactionName = ?;");
-		this.deleteCorrelationDataStatement = this.session.prepare("delete from " + keyspace + ".correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit = ? and id = ?;");
-		this.deleteSourceIdCorrelationStatement = this.session.prepare("delete from " + keyspace + ".sourceid_id_correlation where sourceId = ?;");
-		this.deleteTelemetryEventStatement = this.session.prepare("delete from " + keyspace + ".telemetry_event where id = ?;");
-		this.deleteEventOccurrenceStatement = this.session.prepare("delete from " + keyspace + ".event_occurrences where timeunit = ? and type = ? and name_timeframe = ?;");
-		this.deleteTransactionSlaStatement = this.session.prepare("delete from " + keyspace + ".transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
-		this.updateApplicationCounterStatement = this.session.prepare("update " + keyspace + ".application_counter set "
+		this.selectEventStatement = this.session.prepare("select application, correlationCreationTime, correlationData, creationTime, direction, expiryTime, name, sourceId, transactionId, transactionName, type, slaRule from telemetry_event where id = ?;");
+		this.selectApplicationCounterStatement = this.session.prepare("select count from application_counter where application_timeunit = ? and  timeunit = ? and application = ?;");
+		this.selectEventNameCounterStatement = this.session.prepare("select count from eventname_counter where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
+		this.selectApplicationEventNameCounterStatement = this.session.prepare("select count from application_event_counter where application_timeunit = ? and  timeunit = ? and application = ? and eventName = ?;");
+		this.selectTransactionNameCounterStatement = this.session.prepare("select count from transactionname_counter where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
+		this.deleteMessagePerformanceStatement = this.session.prepare("delete from message_performance where name_timeunit = ? and startTime = ? and id = ?;");
+		this.deleteMessageExpirationStatement = this.session.prepare("delete from message_expiration where name_timeunit = ? and expiryTime = ? and id = ?;");
+		this.deleteTransactionPerformanceStatement = this.session.prepare("delete from transaction_performance where transactionName_timeunit = ? and startTime = ? and transactionId = ?;");
+		this.deleteApplicationCounterStatement = this.session.prepare("delete from application_counter where application_timeunit = ? and  timeunit = ? and application = ?;");
+		this.deleteEventNameCounterStatement = this.session.prepare("delete from eventname_counter where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
+		this.deleteApplicationEventNameCounterStatement = this.session.prepare("delete from application_event_counter where application_timeunit = ? and  timeunit = ? and application = ? and eventName = ?;");
+		this.deleteTransactionNameCounterStatement = this.session.prepare("delete from transactionname_counter where transactionName_timeunit = ? and  timeunit = ? and transactionName = ?;");
+		this.deleteCorrelationDataStatement = this.session.prepare("delete from correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit = ? and id = ?;");
+		this.deleteSourceIdCorrelationStatement = this.session.prepare("delete from sourceid_id_correlation where sourceId = ?;");
+		this.deleteTelemetryEventStatement = this.session.prepare("delete from telemetry_event where id = ?;");
+		this.deleteEventOccurrenceStatement = this.session.prepare("delete from event_occurrences where timeunit = ? and type = ? and name_timeframe = ?;");
+		this.deleteTransactionSlaStatement = this.session.prepare("delete from transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
+		this.updateApplicationCounterStatement = this.session.prepare("update application_counter set "
 				+ "count = count - 1, "
 				+ "messageRequestCount = messageRequestCount - ?, "
 				+ "incomingMessageRequestCount = incomingMessageRequestCount - ?, "
@@ -120,14 +119,14 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				+ "incomingMessageResponseTime = incomingMessageResponseTime - ?, "
 				+ "outgoingMessageResponseTime = outgoingMessageResponseTime - ? "
 				+ "where application_timeunit = ? and timeunit = ? and application = ?;");
-		this.updateEventNameCounterStatement = session.prepare("update " + keyspace + ".eventname_counter set "
+		this.updateEventNameCounterStatement = session.prepare("update eventname_counter set "
 				+ "count = count - 1, "
 				+ "messageRequestCount = messageRequestCount - ?, "
 				+ "messageResponseCount = messageResponseCount - ?, "
 				+ "messageDatagramCount = messageDatagramCount - ?, "
 				+ "messageResponseTime = messageResponseTime - ? "
 				+ "where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
-		this.updateApplicationEventNameCounterStatement = this.session.prepare("update " + keyspace + ".application_event_counter set "
+		this.updateApplicationEventNameCounterStatement = this.session.prepare("update application_event_counter set "
 				+ "count = count - 1, "
 				+ "messageRequestCount = messageRequestCount - ?, "
 				+ "incomingMessageRequestCount = incomingMessageRequestCount - ?, "
@@ -142,19 +141,19 @@ public class RemovingCallbackHandler extends StreamingResponseCallback implement
 				+ "incomingMessageResponseTime = incomingMessageResponseTime - ?, "
 				+ "outgoingMessageResponseTime = outgoingMessageResponseTime - ? "
 				+ "where application_timeunit = ? and timeunit = ? and application = ? and eventName = ?;");
-		this.updateTransactionNameCounterStatement = session.prepare("update " + keyspace + ".transactionname_counter set "
+		this.updateTransactionNameCounterStatement = session.prepare("update transactionname_counter set "
 				+ "count = count - 1, "
 				+ "transactionStart = transactionStart - ?, "
 				+ "transactionFinish = transactionFinish - ?, "
 				+ "transactionResponseTime = transactionResponseTime - ? "
 				+ "where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
-		this.countApplicationCountersStatement = this.session.prepare("select application_timeunit from " + keyspace + ".application_counter where application_timeunit = ? limit 1");
-		this.countApplicationEventCountersStatement = this.session.prepare("select application_timeunit from " + keyspace + ".application_event_counter where application_timeunit = ? limit 1");
-		this.countEventNameCountersStatement = this.session.prepare("select eventName_timeunit from " + keyspace + ".eventname_counter where eventName_timeunit = ? limit 1");
-		this.countMessagePerformancesStatement = this.session.prepare("select name_timeunit from " + keyspace + ".message_performance where name_timeunit = ? limit 1");
-		this.countMessageExpirationsStatement = this.session.prepare("select name_timeunit from " + keyspace + ".message_expiration where name_timeunit = ? limit 1");
-		this.countTransactionNameCountersStatement = this.session.prepare("select transactionName_timeunit from " + keyspace + ".transactionname_counter where transactionName_timeunit = ? limit 1");
-		this.countTransactionPerformancesStatement = this.session.prepare("select transactionName_timeunit from " + keyspace + ".transaction_performance where transactionName_timeunit = ? limit 1");
+		this.countApplicationCountersStatement = this.session.prepare("select application_timeunit from application_counter where application_timeunit = ? limit 1");
+		this.countApplicationEventCountersStatement = this.session.prepare("select application_timeunit from application_event_counter where application_timeunit = ? limit 1");
+		this.countEventNameCountersStatement = this.session.prepare("select eventName_timeunit from eventname_counter where eventName_timeunit = ? limit 1");
+		this.countMessagePerformancesStatement = this.session.prepare("select name_timeunit from message_performance where name_timeunit = ? limit 1");
+		this.countMessageExpirationsStatement = this.session.prepare("select name_timeunit from message_expiration where name_timeunit = ? limit 1");
+		this.countTransactionNameCountersStatement = this.session.prepare("select transactionName_timeunit from transactionname_counter where transactionName_timeunit = ? limit 1");
+		this.countTransactionPerformancesStatement = this.session.prepare("select transactionName_timeunit from transaction_performance where transactionName_timeunit = ? limit 1");
 	}
 
 	@Override
