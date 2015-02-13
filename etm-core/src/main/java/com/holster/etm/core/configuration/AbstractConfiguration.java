@@ -30,7 +30,7 @@ abstract class AbstractConfiguration {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(AbstractConfiguration.class);
 	
-	public static final String NODE_CONFIGURATION_PATH = "/config";
+	static final String NODE_CONFIGURATION_PATH = "/config";
 
 	private List<ConfigurationChangeListener> configurationChangeListeners = new ArrayList<ConfigurationChangeListener>();
 	
