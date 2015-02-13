@@ -23,6 +23,7 @@ public class RepositoryProducer {
 	
 	private StatisticsRepository statisticsRepository;
 	private QueryRepository queryRepository;
+	private EndpointRepository endpointRepository;
 
 	@Produces
 	public StatisticsRepository getStatisticsRepository() {
@@ -42,6 +43,16 @@ public class RepositoryProducer {
 	        }
         }
 		return this.queryRepository;
+	}
+	
+	@Produces
+	public EndpointRepository getEndpointRepository() {
+		synchronized (this) {
+	        if (this.endpointRepository == null) {
+	        	this.endpointRepository = new EndpointRepository(this.session);
+	        }
+        }
+		return this.endpointRepository;
 	}
 	
 }

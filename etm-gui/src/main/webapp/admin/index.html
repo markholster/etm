@@ -186,7 +186,18 @@
 								</form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="endpoint_tab">
-								Endpoint settings</div>
+                                <form id="endpoint_selection_form" class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="endpoint_select" class="col-sm-3 control-label">Endpoint</label>
+                                        <div class="col-sm-9">
+					                        <select id="endpoint_select" class="form-control">
+					                            <option value="global">*</option>
+					                            <option disabled="disabled">-----</option>
+					                        </select>                                        
+                                        </div>
+                                    </div>
+                                </form>
+							</div>
 							<div role="tabpanel" class="tab-pane" id="solr_tab">
 								<form id="solr_form" class="form-horizontal">
 									<div class="form-group">
@@ -332,6 +343,16 @@ $(function () {
         	$('#node_select').append($('<option></option>').attr("value", nodeData.name).text(nodeData.name));
         });		
 	});
+    // Add all endpoints to the endpoint select.
+    $.getJSON('../rest/admin/endpoints/', function (data) {
+        if (!data) {
+            return;
+        }
+        $.each(data, function(index, endpointName) {
+            $('#endpoint_select').append($('<option></option>').attr("value", endpointName).text(endpointName));
+        });     
+    });
+    	
 	// Add the change listener to the node select.
 	$('#node_select').change(function() {
 		var nodeName = $('#node_select').val();

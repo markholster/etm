@@ -24,6 +24,7 @@ import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.core.configuration.Node;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.gui.rest.repository.EndpointRepository;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
 @Path("/admin")
@@ -37,14 +38,41 @@ public class AdminService {
 	@GuiConfiguration
 	@Inject
 	private EtmConfiguration configuration;
+	
+	@Inject
+	private EndpointRepository endpointRepository;
 
 	private final JsonFactory jsonFactory = new JsonFactory();
 
 	@GET
+	@Path("/endpoints")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEndpointNames() {
+		try {
+	        StringWriter writer = new StringWriter();
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartArray();
+	        List<String> endpointNames = this.endpointRepository.getEndpointNames();
+	        for (String endpointName: endpointNames) {
+	        	generator.writeString(endpointName);
+	        }
+	        generator.writeEndArray();
+	        generator.close();
+	        return writer.toString();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to get endpoint names.", e);
+        	}       
+        }
+		return null;	
+	}	
+	
+	@GET
 	@Path("/nodes")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEndpointConfigs() {
+	public String getNodes() {
 		try {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
@@ -61,7 +89,7 @@ public class AdminService {
 	        return writer.toString();
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Unable to get endpoint configs.", e);
+        		log.logErrorMessage("Unable to get nodes.", e);
         	}       
         }
 		return null;	
@@ -100,7 +128,7 @@ public class AdminService {
 	        return writer.toString();
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Unable to get endpoint configs.", e);
+        		log.logErrorMessage("Unable to get node configurations.", e);
         	}       
         }
 		return null;	
