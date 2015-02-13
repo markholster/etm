@@ -358,7 +358,14 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(EtmConfiguration.this.etmProperties, newProperties);
 			EtmConfiguration.this.etmProperties =  newProperties;
-			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
+			getConfigurationChangeListeners().forEach(c -> {
+				try {
+					c.configurationChanged(changedEvent);
+				} catch (Exception e) {
+					if (log.isErrorLevelEnabled()) {
+						log.logErrorMessage("Error processing change event", e);
+					}
+				}});
         }		
 	}
  }

@@ -96,7 +96,14 @@ public class SolrConfiguration extends AbstractConfiguration implements Closeabl
 			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(SolrConfiguration.this.solrProperties, newProperties);
 			SolrConfiguration.this.solrProperties = newProperties;
-			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
+			getConfigurationChangeListeners().forEach(c -> {
+				try {
+					c.configurationChanged(changedEvent);
+				} catch (Exception e) {
+					if (log.isErrorLevelEnabled()) {
+						log.logErrorMessage("Error processing change event", e);
+					}
+				}});
         }		
 	}
 }

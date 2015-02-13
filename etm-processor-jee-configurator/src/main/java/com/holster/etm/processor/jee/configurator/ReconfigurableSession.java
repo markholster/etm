@@ -1,5 +1,8 @@
 package com.holster.etm.processor.jee.configurator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.datastax.driver.core.CloseFuture;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
@@ -13,6 +16,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class ReconfigurableSession implements Session {
 
 	private Session session;
+	private List<ReconfigurablePreparedStatement> preparedStatements = new ArrayList<ReconfigurablePreparedStatement>();
 
 	public ReconfigurableSession(Session session) {
 		this.session = session;
@@ -60,22 +64,34 @@ public class ReconfigurableSession implements Session {
 
 	@Override
     public PreparedStatement prepare(String query) {
-	    return this.session.prepare(query);
+		ReconfigurablePreparedStatement statement = new ReconfigurablePreparedStatement(this.session.prepare(query));
+		int ix = this.preparedStatements.indexOf(statement);
+		if (ix == -1) {
+			this.preparedStatements.add(statement);
+			return statement;
+		} 
+		return this.preparedStatements.get(ix);	    
     }
 
 	@Override
     public PreparedStatement prepare(RegularStatement statement) {
-	    return this.session.prepare(statement);
+		ReconfigurablePreparedStatement preparedStatement = new ReconfigurablePreparedStatement(this.session.prepare(statement));
+		int ix = this.preparedStatements.indexOf(preparedStatement);
+		if (ix == -1) {
+			this.preparedStatements.add(preparedStatement);
+			return preparedStatement;
+		} 
+		return this.preparedStatements.get(ix);	    
     }
 
 	@Override
     public ListenableFuture<PreparedStatement> prepareAsync(String query) {
-	    return this.session.prepareAsync(query);
+	    throw new UnsupportedOperationException();
     }
 
 	@Override
     public ListenableFuture<PreparedStatement> prepareAsync(RegularStatement statement) {
-	    return this.session.prepareAsync(statement);
+		throw new UnsupportedOperationException();
     }
 
 	@Override
@@ -106,6 +122,7 @@ public class ReconfigurableSession implements Session {
 	public void switchToSession(Session newSession) {
 		Session oldSession = this.session;
 		this.session = newSession;
+		this.preparedStatements.forEach(c -> c.rePrepare(newSession));
 		oldSession.close();
     }
 }

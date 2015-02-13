@@ -1,6 +1,5 @@
 package com.holster.etm.processor.processor;
 
-import java.io.IOException;
 import java.nio.channels.IllegalSelectorException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,16 +17,10 @@ import com.holster.etm.processor.parsers.ExpressionParser;
 import com.holster.etm.processor.repository.CorrelationBySourceIdResult;
 import com.holster.etm.processor.repository.EndpointConfigResult;
 import com.holster.etm.processor.repository.StatementExecutor;
-import com.holster.etm.processor.repository.TelemetryEventRepository;
-import com.holster.etm.processor.repository.TelemetryEventRepositoryCassandraImpl;
 import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.SleepingWaitStrategy;
-import com.lmax.disruptor.dsl.Disruptor;
-import com.lmax.disruptor.dsl.ProducerType;
 
 public class TelemetryEventProcessor {
 	
-	private Disruptor<TelemetryEvent> disruptor;
 	private RingBuffer<TelemetryEvent> ringBuffer;
 	private boolean started = false;
 	
@@ -39,8 +32,8 @@ public class TelemetryEventProcessor {
 	private SolrServer solrServer;
 	private EtmConfiguration etmConfiguration;
 	
-	private TelemetryEventRepository telemetryEventRepository;
-	private IndexingEventHandler[] indexingEventHandlers;
+	private DisruptorEnvironment disruptorEnvironment;
+	private StatementExecutor statementExecutor;
 	
 
 	public void start(final ExecutorService executorService, final Session session, final SolrServer solrServer, final EtmConfiguration etmConfiguration) {
@@ -50,53 +43,31 @@ public class TelemetryEventProcessor {
 		this.started = true;
 		this.executorService = executorService;
 		this.cassandraSession = session;
+		this.statementExecutor = new StatementExecutor(this.cassandraSession);
 		this.solrServer = solrServer;
 		this.etmConfiguration = etmConfiguration;
-		
-		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getRingbufferSize(), this.executorService, ProducerType.MULTI, new SleepingWaitStrategy());
-		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(this.sourceCorrelations));
-		final StatementExecutor statementExecutor = new StatementExecutor(this.cassandraSession);
-		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
-		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
-		this.telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations);
-		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, enhancingHandlerCount, etmConfiguration);
-		}
-		int indexingHandlerCount = etmConfiguration.getIndexingHandlerCount();
-		this.indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
-		for (int i = 0; i < indexingHandlerCount; i++) {
-			this.indexingEventHandlers[i] = new IndexingEventHandler(this.solrServer, i, indexingHandlerCount);
-		}
-		
-		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
-		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
-		for (int i = 0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, this.sourceCorrelations), i, persistingHandlerCount, etmConfiguration);
-		}
-		this.disruptor.handleEventsWith(enhancingEvntHandler);
-		if (persistingEventHandlers.length > 0) {
-			this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);
-		}
-		if (this.indexingEventHandlers.length > 0) {
-			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.indexingEventHandlers);
-		}
-		this.ringBuffer = this.disruptor.start();
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, session, solrServer, this.statementExecutor, this.sourceCorrelations);
+		this.ringBuffer = this.disruptorEnvironment.start();
 	}
 	
-	// Reload when keyspace changes, 
+	public void hotRestart() {
+		if (!this.started) {
+			throw new IllegalStateException();
+		}
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.cassandraSession, this.solrServer, this.statementExecutor, this.sourceCorrelations);
+		RingBuffer<TelemetryEvent> newRingBuffer = newDisruptorEnvironment.start();
+		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
+		
+		this.ringBuffer = newRingBuffer;
+		this.disruptorEnvironment = newDisruptorEnvironment;
+		oldDisruptorEnvironment.shutdown();
+	}
 	
 	public void stop() {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
-		this.disruptor.shutdown();
-		for (IndexingEventHandler indexingEventHandler : this.indexingEventHandlers) {
-			try {
-	            indexingEventHandler.close();
-            } catch (IOException e) {
-            }
-		}
-		this.telemetryEventRepository = null;
+		this.disruptorEnvironment.shutdown();
 	}
 	
 	public void stopAll() {
@@ -104,15 +75,8 @@ public class TelemetryEventProcessor {
 			throw new IllegalSelectorException();
 		}		
 		this.executorService.shutdown();
-		this.disruptor.shutdown();
-		this.telemetryEventRepository = null;
+		this.disruptorEnvironment.shutdown();
 		this.cassandraSession.close();
-		for (IndexingEventHandler indexingEventHandler : this.indexingEventHandlers) {
-			try {
-	            indexingEventHandler.close();
-            } catch (IOException e) {
-            }
-		}
 		this.solrServer.shutdown();
 	}
 
@@ -146,7 +110,7 @@ public class TelemetryEventProcessor {
 			// request is offered to ETM before the response, which is quite
 			// logical.
 			EndpointConfigResult result = new EndpointConfigResult();
-			this.telemetryEventRepository.findEndpointConfig(event.endpoint, result, this.etmConfiguration.getEndpointCacheExpiryTime());
+			this.disruptorEnvironment.findEndpointConfig(event.endpoint, result, this.etmConfiguration.getEndpointCacheExpiryTime());
 			if (result.eventNameParsers != null && result.eventNameParsers.size() > 0) {
 				event.name = parseValue(result.eventNameParsers, event.content);
 			}

@@ -116,7 +116,14 @@ public class CassandraConfiguration extends AbstractConfiguration implements Clo
 			}
 			ConfigurationChangedEvent changedEvent = new ConfigurationChangedEvent(CassandraConfiguration.this.cassandraProperties, newProperties);
 			CassandraConfiguration.this.cassandraProperties =  newProperties;
-			getConfigurationChangeListeners().forEach(c -> c.configurationChanged(changedEvent));
+			getConfigurationChangeListeners().forEach(c -> {
+				try {
+					c.configurationChanged(changedEvent);
+				} catch (Exception e) {
+					if (log.isErrorLevelEnabled()) {
+						log.logErrorMessage("Error processing change event", e);
+					}
+				}});
         }		
 	}
 }
