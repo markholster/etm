@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.parsers.ExpressionParser;
+import com.holster.etm.core.parsers.ExpressionParserFactory;
 
 public class EndpointRepository {
 
@@ -49,9 +52,31 @@ public class EndpointRepository {
 	    	if (direction != null) {
 	    		endpointConfiguration.direction = TelemetryEventDirection.valueOf(direction);
 	    	}
+	    	addExpressionParsers(endpointConfiguration.applicationParsers, row.getList(1, String.class));
+	    	addExpressionParsers(endpointConfiguration.eventNameParsers, row.getList(2, String.class));
+	    	addExpressionParsers(endpointConfiguration.correlationParsers, row.getMap(3, String.class, String.class));
+	    	addExpressionParsers(endpointConfiguration.transactionNameParsers, row.getList(4, String.class));
+	    	// TODO add sla's
 	    }
 	    return endpointConfiguration;
-	    
     }
+	
+	private void addExpressionParsers(List<ExpressionParser> expressionParsers, List<String> dbValues) {
+		if (dbValues == null || dbValues.size() == 0) {
+			return;
+		}
+		for (String value : dbValues) {
+			expressionParsers.add(ExpressionParserFactory.createExpressionParserFromConfiguration(value));
+		}
+	}
+	
+	private void addExpressionParsers(Map<String, ExpressionParser> expressionParsers, Map<String, String> dbValues) {
+		if (dbValues == null || dbValues.size() == 0) {
+			return;
+		}
+		for (String value : dbValues.keySet()) {
+			expressionParsers.put(value, ExpressionParserFactory.createExpressionParserFromConfiguration(dbValues.get(value)));
+		}
+	}
 
 }

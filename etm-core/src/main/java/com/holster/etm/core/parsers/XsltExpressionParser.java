@@ -45,4 +45,8 @@ public class XsltExpressionParser implements ExpressionParser {
         }
     }
 
+	public String getTemplate() {
+	    return this.template;
+    }
+
 }

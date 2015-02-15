@@ -15,8 +15,7 @@
 		<div class="row">
 			<div class="panel panel-default">
 				<div class="panel-heading clearfix">
-					<div class="panel-title pull-left" id="node_title">ETM
-						Administration - cluster</div>
+					<div class="panel-title pull-left" id="node_title">ETM Administration - cluster</div>
 					<div class="pull-right">
 						<select id="node_select" class="form-control">
 							<option value="cluster">cluster</option>
@@ -28,28 +27,17 @@
 					<div id="tabs" role="tabpanel">
 						<!-- Nav tabs -->
 						<ul class="nav nav-tabs" role="tablist">
-							<li id="etm_tab_header" role="presentation" class="active"><a
-								href="#etm_tab" aria-controls="home" role="tab"
-								data-toggle="tab">ETM</a></li>
-							<li id="endpoint_tab_header" role="presentation"><a
-								href="#endpoint_tab" aria-controls="home" role="tab"
-								data-toggle="tab">Endpoint</a></li>
-							<li id="solr_tab_header" role="presentation"><a
-								href="#solr_tab" aria-controls="home" role="tab"
-								data-toggle="tab">Solr</a></li>
-							<li id="cassandra_tab_header" role="presentation"><a
-								href="#cassandra_tab" aria-controls="home" role="tab"
-								data-toggle="tab">Cassandra</a></li>
-							<li id="status_tab_header" role="presentation"><a
-								href="#status_tab" aria-controls="home" role="tab"
-								data-toggle="tab">Status</a></li>
+							<li id="etm_tab_header" role="presentation" class="active"><a href="#etm_tab" aria-controls="home" role="tab" data-toggle="tab">ETM</a></li>
+							<li id="endpoint_tab_header" role="presentation"><a href="#endpoint_tab" aria-controls="home" role="tab" data-toggle="tab">Endpoint</a></li>
+							<li id="solr_tab_header" role="presentation"><a href="#solr_tab" aria-controls="home" role="tab" data-toggle="tab">Solr</a></li>
+							<li id="cassandra_tab_header" role="presentation"><a href="#cassandra_tab" aria-controls="home" role="tab" data-toggle="tab">Cassandra</a></li>
+							<li id="status_tab_header" role="presentation"><a href="#status_tab" aria-controls="home" role="tab" data-toggle="tab">Status</a></li>
 						</ul>
 						<br />
 						<!-- Tab panes -->
 						<div class="tab-content">
 							<div role="tabpanel" class="tab-pane active" id="etm_tab">
-								<form id="etm_form" class="form-horizontal"
-									enctype="application/json" method="POST">
+								<form id="etm_form" class="form-horizontal" enctype="application/json" method="POST">
 									<div class="form-group">
 										<label for="etm_enhancing_handler_count"
 											class="col-sm-3 control-label">Enhancing handler
@@ -72,7 +60,7 @@
 									<div class="form-group">
 										<label for="etm_indexing_handler_count"
 											class="col-sm-3 control-label">Indexing handler count</label>
-										<div class="col-sm-3">
+										<div class="col-sm-3"> 
 											<input id="etm_indexing_handler_count"
 												name="etm.indexing_handler_count" type="number"
 												class="form-control" required="required" min="0" />
@@ -88,16 +76,14 @@
 
 									<div class="form-group">
 										<label for="etm_persisting_handler_count"
-											class="col-sm-3 control-label">Persisting handler
-											count</label>
+											class="col-sm-3 control-label">Persisting handler count</label>
 										<div class="col-sm-3">
 											<input id="etm_persisting_handler_count"
 												name="etm.persisting_handler_count" type="number"
 												class="form-control" required="required" min="0" />
 										</div>
 										<label for="etm_data_retention_check_interval"
-											class="col-sm-3 control-label">Data retention check
-											interval</label>
+											class="col-sm-3 control-label">Data retention check interval</label>
 										<div class="col-sm-3">
 											<input id="etm_data_retention_check_interval"
 												name="etm.data_retention_check_interval" type="number"
@@ -114,8 +100,7 @@
 												min="255" />
 										</div>
 										<label for="etm_data_retention_leader_group"
-											class="col-sm-3 control-label">Data retention leader
-											group</label>
+											class="col-sm-3 control-label">Data retention leader group</label>
 										<div class="col-sm-3">
 											<input id="etm_data_retention_leader_group"
 												name="etm.data_retention_leader_group" type="number"
@@ -125,16 +110,14 @@
 
 									<div class="form-group">
 										<label for="etm_endpoint_cache_expiry_time"
-											class="col-sm-3 control-label">Endpoint cache expiry
-											time</label>
+											class="col-sm-3 control-label">Endpoint cache expiry time</label>
 										<div class="col-sm-3">
 											<input id="etm_endpoint_cache_expiry_time"
 												name="etm.endpoint_cache_expiry_time" type="number"
 												class="form-control" required="required" min="1" />
 										</div>
 										<label for="etm_data_retention_preserve_event_counts"
-											class="col-sm-3 control-label">Data retention
-											preserve event counts</label>
+											class="col-sm-3 control-label">Data retention preserve event counts</label>
 										<div class="col-sm-3">
 											<input id="etm_data_retention_preserve_event_counts"
 												name="etm.data_retention_preserve_event_counts"
@@ -146,8 +129,7 @@
 										<label for="etm_statistics_time_unit"
 											class="col-sm-3 control-label">Statistics time unit</label>
 										<div class="col-sm-3">
-											<select id="etm_statistics_time_unit"
-												name="etm.statistics_timeunit" class="form-control">
+											<select id="etm_statistics_time_unit" name="etm.statistics_timeunit" class="form-control">
 												<option value="SECONDS">Seconds</option>
 												<option value="MINUTES">Minutes</option>
 												<option value="HOURS">Hours</option>
@@ -158,7 +140,7 @@
 											class="col-sm-3 control-label">Data retention
 											preserve event performances</label>
 										<div class="col-sm-3">
-											<input id="etm_data_retention_preserve_event_performances"
+											<input id="etm_data_retention_preserve_event_performances" 
 												name="etm.data_retention_preserve_event_performances"
 												type="checkbox" class="form-control" />
 										</div>
@@ -191,13 +173,14 @@
                                         <label for="endpoint_select" class="col-sm-3 control-label">Endpoint</label>
                                         <div class="col-sm-9">
 					                        <select id="endpoint_select" class="form-control">
-					                            <option value="global">*</option>
+					                            <option value="*">*</option>
 					                            <option disabled="disabled">-----</option>
 					                        </select>                                        
                                         </div>
                                     </div>
                                 </form>
                                 <form id="endpoint_form" class="form-horizontal">
+                                    <div class="form-group">
                                         <label for="endpoint_name" class="col-sm-3 control-label">Name</label>
                                         <div class="col-sm-3">
                                             <input id="endpoint_name" name="endpoint.name" type="text" class="form-control" required="required" />
@@ -209,7 +192,23 @@
                                                 <option value="INCOMING">Incoming</option>
                                                 <option value="OUTGOING">Outgoing</option>
                                             </select>                                        
-                                        </div>                                
+                                        </div>
+                                    </div>
+									<div id="eventname_parsers" class="panel panel-default">
+									   <div class="panel-heading">Eventname parsers</div>
+									   <div class="panel-body">
+									   </div>
+									</div>                 
+                                    <div id="application_parsers" class="panel panel-default">
+                                       <div class="panel-heading">Application parsers</div>
+                                       <div class="panel-body">
+                                       </div>
+                                    </div>                 
+                                    <div id="transactionname_parsers" class="panel panel-default">
+                                       <div class="panel-heading">Transactionname parsers</div>
+                                       <div class="panel-body">
+                                       </div>
+                                    </div>                 
                                 </form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="solr_tab">
@@ -318,6 +317,114 @@ $(function () {
 		});
 	};
 
+	var addExpressionParsers = function(divId, elementName, expressionParsers) {
+        $('#' + divId + ' > .panel-body').empty();
+        if (expressionParsers) {
+            $.each(expressionParsers, function(index, expressionParser) {
+                $('#' + divId + ' > .panel-body').html('<div class="form-group"></div>');
+                var selectDiv = $('<div></div>').attr('class', 'col-sm-3')
+                  .append($('<select></select>').attr('id', elementName + '_select_' + index).attr('name', elementName + '_type_' + index).attr('class', 'form-control')
+                          .append($('<option></option>').attr("value", 'fixed_position').text('Fixed position'))
+                          .append($('<option></option>').attr("value", 'fixed_value').text('Fixed value'))
+                          .append($('<option></option>').attr("value", 'xpath').text('XPath'))
+                          .append($('<option></option>').attr("value", 'xslt').text('XSLT'))
+                );
+                $('#' + divId + ' > .panel-body > .form-group').append(selectDiv);
+                var inputDiv = $('<div></div>').attr('class', 'col-sm-8')
+                    .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
+                            .attr('id', elementName + '_fixed_pos_line_' + index)
+                            .attr('name', elementName + '_fixed_pos_line_' + index)
+                            .attr('type', 'number').attr('class', 'form-control')
+                            .attr('placeholder', 'Line number')
+                            .attr('min', '1')
+                            .attr('style', 'display: none;')))
+                    .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
+                            .attr('id', elementName + '_fixed_pos_start_' + index)
+                            .attr('name', elementName + '_fixed_pos_start_' + index)
+                            .attr('type', 'number').attr('class', 'form-control')
+                            .attr('placeholder', 'Start index')
+                            .attr('min', '0')
+                            .attr('style', 'display: none;')))                                            
+                    .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
+                            .attr('id', elementName + '_fixed_pos_end_' + index)
+                            .attr('name', elementName + '_fixed_pos_end_' + index)
+                            .attr('type', 'number').attr('class', 'form-control')
+                            .attr('placeholder', 'End index')
+                            .attr('min', '0')
+                            .attr('style', 'display: none;')))                           
+                    .append($('<input />')
+                    	    .attr('id', elementName + '_fixed_value_' + index)
+                            .attr('name', elementName + '_fixed_value_' + index)
+                            .attr('type', 'text').attr('class', 'form-control')
+                            .attr('required', 'required')
+                            .attr('placeholder', 'Fixed name')
+                            .attr('style', 'display: none;'))
+                    .append($('<input />')
+                                    .attr('id', elementName + '_xpath_' + index)
+                                    .attr('name', elementName + '_xpath_' + index)
+                                    .attr('type', 'text').attr('class', 'form-control')
+                                    .attr('required', 'required')
+                                    .attr('placeholder', 'Xpath expression')
+                                    .attr('style', 'display: none;'))
+                    .append($('<input />')
+                            .attr('id', elementName + '_xslt_' + index)
+                            .attr('name', elementName + '_xslt_' + index)
+                            .attr('type', 'text').attr('class', 'form-control')
+                            .attr('required', 'required')
+                            .attr('placeholder', 'Xslt template')
+                            .attr('style', 'display: none;')
+                );
+                $('#' + divId + ' > .panel-body > .form-group').append(inputDiv);
+
+                $('#' + elementName + '_select_' + index).change(function() {
+                    var expressionType = $(this).val();
+                    if ('fixed_position' == expressionType) {
+                    	$('#' + elementName + '_fixed_pos_line_' + index).show();
+                    	$('#' + elementName + '_fixed_pos_start_' + index).show();
+                    	$('#' + elementName + '_fixed_pos_end_' + index).show();
+                        $('#' + elementName + '_fixed_value_' + index).hide();
+                        $('#' + elementName + '_xpath_' + index).hide();
+                        $('#' + elementName + '_xslt_' + index).hide();                    	
+                    } else if ('fixed_value' == expressionType) {
+                    	$('#' + elementName + '_fixed_pos_line_' + index).hide();
+                        $('#' + elementName + '_fixed_pos_start_' + index).hide();
+                        $('#' + elementName + '_fixed_pos_end_' + index).hide();
+                        $('#' + elementName + '_fixed_value_' + index).show();
+                        $('#' + elementName + '_xpath_' + index).hide();
+                        $('#' + elementName + '_xslt_' + index).hide();
+                    } else if ('xpath' == expressionType) {
+                    	$('#' + elementName + '_fixed_pos_line_' + index).hide();
+                        $('#' + elementName + '_fixed_pos_start_' + index).hide();
+                        $('#' + elementName + '_fixed_pos_end_' + index).hide();
+                    	$('#' + elementName + '_fixed_value_' + index).hide();
+                    	$('#' + elementName + '_xpath_' + index).show();
+                    	$('#' + elementName + '_xslt_' + index).hide();
+                    } else if ('xslt' == expressionType) {
+                    	$('#' + elementName + '_fixed_pos_line_' + index).hide();
+                        $('#' + elementName + '_fixed_pos_start_' + index).hide();
+                        $('#' + elementName + '_fixed_pos_end_' + index).hide();
+                    	$('#' + elementName + '_fixed_value_' + index).hide();
+                    	$('#' + elementName + '_xpath_' + index).hide();
+                    	$('#' + elementName + '_xslt_' + index).show();
+                    }
+                });
+                // Set the values.                
+                
+                if ('fixed_position' == expressionParser.type) {
+                    
+                } else if ('fixed_value' == expressionParser.type) {
+                    $('#' + elementName + '_fixed_value_' + index).val(expressionParser.value);
+                } else if ('xpath' == expressionParser.type) {
+                	$('#' + elementName + '_xpath_' + index).val(expressionParser.expression);
+                } else if ('xslt' == expressionParser.type) {
+                	$('#' + elementName + '_xslt_' + index).val(expressionParser.template);
+                }
+                $('#' + elementName + '_select_' + index).val(expressionParser.type);
+                $('#' + elementName + '_select_' + index).change();
+            });
+        }
+	};
+
 	var loadEndpointData = function(endpointName) {
 	      $.getJSON('../rest/admin/endpoint/' + encodeURIComponent(endpointName), function (data) {
 	            if (!data) {
@@ -325,6 +432,9 @@ $(function () {
 	            }
 	            $('#endpoint_name').val(data.name);
 	            $('#endpoint_direction').val(data.direction);
+	            addExpressionParsers('eventname_parsers', 'eventname_parser', data.eventname_parsers);
+	            addExpressionParsers('application_parsers', 'application_parser', data.application_parsers);
+	            addExpressionParsers('transactionname_parsers', 'transactionname_parser', data.transactionname_parsers);
 	      });
 	};
 
@@ -379,7 +489,7 @@ $(function () {
     	
 	// Add the change listener to the node select.
 	$('#node_select').change(function() {
-		var nodeName = $('#node_select').val();
+		var nodeName = $(this).val();
 	    $('#node_title').text('ETM Administration - ' + nodeName);
 	    if ('cluster' == nodeName) {
             $('#endpoint_tab_header').removeClass('hidden');

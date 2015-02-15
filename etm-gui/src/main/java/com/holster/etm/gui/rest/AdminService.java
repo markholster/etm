@@ -15,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
@@ -24,6 +25,11 @@ import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.core.configuration.Node;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.core.parsers.ExpressionParser;
+import com.holster.etm.core.parsers.FixedPositionExpressionParser;
+import com.holster.etm.core.parsers.FixedValueExpressionParser;
+import com.holster.etm.core.parsers.XPathExpressionParser;
+import com.holster.etm.core.parsers.XsltExpressionParser;
 import com.holster.etm.gui.rest.repository.EndpointConfiguration;
 import com.holster.etm.gui.rest.repository.EndpointRepository;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
@@ -83,6 +89,35 @@ public class AdminService {
 	        if (endpointConfiguration.direction != null) {
 	        	generator.writeStringField("direction", endpointConfiguration.direction.name());
 	        }
+        	if (endpointConfiguration.applicationParsers != null && endpointConfiguration.applicationParsers.size() > 0) {
+        		generator.writeArrayFieldStart("application_parsers");
+        		for (ExpressionParser expressionParser : endpointConfiguration.applicationParsers) {
+        			writeExpressionParser(generator, null, expressionParser);
+        		}
+        		generator.writeEndArray();
+        	}
+        	if (endpointConfiguration.eventNameParsers != null && endpointConfiguration.eventNameParsers.size() > 0) {
+        		generator.writeArrayFieldStart("eventname_parsers");
+        		for (ExpressionParser expressionParser : endpointConfiguration.eventNameParsers) {
+        			writeExpressionParser(generator, null, expressionParser);
+        		}
+        		generator.writeEndArray();
+        	}
+        	if (endpointConfiguration.transactionNameParsers != null && endpointConfiguration.transactionNameParsers.size() > 0) {
+        		generator.writeArrayFieldStart("transactionname_parsers");
+        		for (ExpressionParser expressionParser : endpointConfiguration.transactionNameParsers) {
+        			writeExpressionParser(generator, null, expressionParser);
+        		}
+        		generator.writeEndArray();
+        	}
+        	if (endpointConfiguration.correlationParsers != null && endpointConfiguration.correlationParsers.size() > 0) {
+        		generator.writeArrayFieldStart("correlation_parsers");
+        		for (String key : endpointConfiguration.correlationParsers.keySet()) {
+        			writeExpressionParser(generator, key, endpointConfiguration.correlationParsers.get(key));
+        		}
+        		generator.writeEndArray();
+        	}
+        	// TODO SLA's
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();
@@ -92,6 +127,42 @@ public class AdminService {
         	}       
         }
 		return null;	
+	}
+	
+	private void writeExpressionParser(JsonGenerator generator, String key, ExpressionParser expressionParser) throws JsonGenerationException, IOException {
+		generator.writeStartObject();
+		if (key != null) {
+			generator.writeStringField("name", key);
+		}
+		if (expressionParser instanceof FixedPositionExpressionParser) {
+			generator.writeStringField("type", "fixed_position");
+			FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
+			if (parser.getLineIx() != null) {
+				generator.writeNumberField("line", parser.getLineIx() + 1);
+			}
+			if (parser.getStartIx() != null) {
+				generator.writeNumberField("start_pos", parser.getStartIx());
+			}
+			if (parser.getEndIx() != null) {
+				generator.writeNumberField("end_pos", parser.getEndIx());
+			}
+		} else if (expressionParser instanceof FixedValueExpressionParser) {
+			generator.writeStringField("type", "fixed_value");
+			FixedValueExpressionParser parser = (FixedValueExpressionParser) expressionParser;
+			generator.writeStringField("value", parser.getValue());
+		} else if (expressionParser instanceof XPathExpressionParser) {
+			generator.writeStringField("type", "xpath");
+			XPathExpressionParser parser = (XPathExpressionParser) expressionParser;
+			generator.writeStringField("expression", parser.getExpression());
+		} else if (expressionParser instanceof XsltExpressionParser) {
+			generator.writeStringField("type", "xslt");
+			XsltExpressionParser parser = (XsltExpressionParser) expressionParser;
+			generator.writeStringField("template", parser.getTemplate());
+		} else {
+			generator.writeStringField("type", "unknown");
+		}
+		generator.writeEndObject();
+		
 	}
 	
 	@GET

@@ -13,4 +13,8 @@ public class FixedValueExpressionParser implements ExpressionParser {
 	    return this.value;
     }
 
+	public String getValue() {
+	    return this.value;
+    }
+
 }

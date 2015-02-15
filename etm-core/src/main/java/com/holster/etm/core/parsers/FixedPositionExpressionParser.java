@@ -44,5 +44,17 @@ public class FixedPositionExpressionParser implements ExpressionParser {
 			return line.substring(this.startIx, this.endIx);
 		}
     }
+	
+	public Integer getStartIx() {
+	    return this.startIx;
+    }
+	
+	public Integer getEndIx() {
+	    return this.endIx;
+    }
+	
+	public Integer getLineIx() {
+	    return this.lineIx;
+    }
 
 }

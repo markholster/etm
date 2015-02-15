@@ -29,6 +29,9 @@
         <dependent-module archiveName="httpmime-4.3.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/httpcomponents/httpmime/4.3.1/httpmime-4.3.1.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="Saxon-HE-9.6.0-3.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/net/sf/saxon/Saxon-HE/9.6.0-3/Saxon-HE-9.6.0-3.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>        
         <dependent-module archiveName="curator-framework-2.7.1.jar" deploy-path="/WEB-INF/lib" handle="module:/classpath/var/M2_REPO/org/apache/curator/curator-framework/2.7.1/curator-framework-2.7.1.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>

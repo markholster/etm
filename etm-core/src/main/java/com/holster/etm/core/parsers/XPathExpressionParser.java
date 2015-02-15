@@ -41,4 +41,8 @@ public class XPathExpressionParser implements ExpressionParser {
         }
     }
 
+	public String getExpression() {
+	    return this.expression;
+    }
+
 }
