@@ -197,6 +197,20 @@
                                         </div>
                                     </div>
                                 </form>
+                                <form id="endpoint_form" class="form-horizontal">
+                                        <label for="endpoint_name" class="col-sm-3 control-label">Name</label>
+                                        <div class="col-sm-3">
+                                            <input id="endpoint_name" name="endpoint.name" type="text" class="form-control" required="required" />
+                                        </div>
+                                        <label for="endpoint_direction" class="col-sm-3 control-label">Direction</label>
+                                        <div class="col-sm-3">
+                                            <select id="endpoint_direction" name="endpoint.direction" class="form-control">
+                                                <option value=""></option>
+                                                <option value="INCOMING">Incoming</option>
+                                                <option value="OUTGOING">Outgoing</option>
+                                            </select>                                        
+                                        </div>                                
+                                </form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="solr_tab">
 								<form id="solr_form" class="form-horizontal">
@@ -304,6 +318,16 @@ $(function () {
 		});
 	};
 
+	var loadEndpointData = function(endpointName) {
+	      $.getJSON('../rest/admin/endpoint/' + encodeURIComponent(endpointName), function (data) {
+	            if (!data) {
+	                return;
+	            }
+	            $('#endpoint_name').val(data.name);
+	            $('#endpoint_direction').val(data.direction);
+	      });
+	};
+
 	var handleSubmit = function(formId) {
 		  $('#' + formId).submit(function( event ) {
 		        event.preventDefault();
@@ -375,7 +399,14 @@ $(function () {
 	    loadData(nodeName);    
 	});
 
+	// Ad the change listener to the endpoint select.
+	$('#endpoint_select').change(function() {
+		var endpointName = $('#endpoint_select').val();
+		loadEndpointData(endpointName);
+	});
+
 	loadData('cluster');
+	loadEndpointData('*');
 	handleSubmit('etm_form');
 	handleSubmit('solr_form');
 	handleSubmit('cassandra_form');

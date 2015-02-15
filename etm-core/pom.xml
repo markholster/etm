@@ -15,6 +15,10 @@
 	<name>Enterprise Telemetry Monitor - core</name>
     <dependencies>
         <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+        </dependency>    
+        <dependency>
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-client</artifactId>
         </dependency>        

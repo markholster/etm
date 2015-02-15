@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.holster.etm.core.TelemetryEventDirection;
+import com.holster.etm.core.parsers.ExpressionParser;
 import com.holster.etm.core.sla.SlaRule;
-import com.holster.etm.processor.parsers.ExpressionParser;
 
 public class EndpointConfigResult {
 

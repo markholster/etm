@@ -7,38 +7,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import net.sf.saxon.TransformerFactoryImpl;
-import net.sf.saxon.xpath.XPathFactoryImpl;
-
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.holster.etm.core.TelemetryEventDirection;
-import com.holster.etm.core.logging.LogFactory;
-import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.core.parsers.ExpressionParser;
+import com.holster.etm.core.parsers.ExpressionParserFactory;
 import com.holster.etm.core.sla.SlaRule;
 import com.holster.etm.processor.TelemetryEvent;
-import com.holster.etm.processor.parsers.ExpressionParser;
-import com.holster.etm.processor.parsers.FixedPositionExpressionParser;
-import com.holster.etm.processor.parsers.FixedValueExpressionParser;
-import com.holster.etm.processor.parsers.XPathExpressionParser;
-import com.holster.etm.processor.parsers.XsltExpressionParser;
 
 public class StatementExecutor {
 	
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(StatementExecutor.class);
-
 	private final Session session;
 	private final PreparedStatement insertTelemetryEventStatement;
 	private final PreparedStatement insertSourceIdIdStatement;
@@ -61,9 +42,6 @@ public class StatementExecutor {
 	private final PreparedStatement findEndpointConfigStatement;
 	private final PreparedStatement findSlaStartStatement;
 	private final PreparedStatement deleteSlaStatement;
-	
-	private final XPath xPath;
-	private final TransformerFactory transformerFactory;
 	
 	public StatementExecutor(final Session session) {
 		this.session = session;
@@ -225,10 +203,6 @@ public class StatementExecutor {
 				+ "startTime "
 				+ "from transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
 		this.deleteSlaStatement = session.prepare("delete from transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
-		XPathFactory xpf = new XPathFactoryImpl();
-		this.xPath = xpf.newXPath();
-		this.transformerFactory = new TransformerFactoryImpl();
-
 	}
 	
 	public void addTelemetryEvent(final TelemetryEvent event, final BatchStatement batchStatement) {
@@ -487,7 +461,7 @@ public class StatementExecutor {
 		Iterator<String> iterator = map.keySet().iterator();
 		while (iterator.hasNext()) {
 			String key = iterator.next();
-			result.correlationDataParsers.put(key, createExpressionParser(map.get(key)));
+			result.correlationDataParsers.put(key, ExpressionParserFactory.createExpressionParserFromConfiguration(map.get(key)));
 		}
 		if (result.transactionNameParsers == null) {
 			result.transactionNameParsers = createExpressionParsers(row.getList(4, String.class));
@@ -511,81 +485,12 @@ public class StatementExecutor {
 		}
 		List<ExpressionParser> expressionParsers = new ArrayList<ExpressionParser>(expressions.size());
 		for (String expression : expressions) {
-			expressionParsers.add(createExpressionParser(expression));
+			expressionParsers.add(ExpressionParserFactory.createExpressionParserFromConfiguration(expression));
 		}
 		return expressionParsers;
 	}
 	
-	private ExpressionParser createExpressionParser(final String expression) {
-		if (expression.length() > 5) {
-			if (expression.charAt(0) == 'x' &&
-					expression.charAt(1) == 's' &&
-					expression.charAt(2) == 'l' &&
-					expression.charAt(3) == 't' &&
-					expression.charAt(4) == ':') {
-				try {
-	                return new XsltExpressionParser(this.transformerFactory, expression.substring(5));
-                } catch (TransformerConfigurationException e) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create XsltExpressionParser. Using FixedValueExpressionParser instead.", e);
-                	}
-                	new FixedValueExpressionParser(null);
-                }				
-			}
-		}
-		if (expression.length() > 6) {
-			if (expression.charAt(0) == 'x' &&
-				expression.charAt(1) == 'p' &&
-				expression.charAt(2) == 'a' &&
-				expression.charAt(3) == 't' &&
-				expression.charAt(4) == 'h' &&
-				expression.charAt(5) == ':') {
-				try {
-	                return new XPathExpressionParser(this.xPath, expression.substring(6));
-                } catch (XPathExpressionException e) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create XPathExpressionParser. Using FixedValueExpressionParser instead.", e);
-                	}
-                	new FixedValueExpressionParser(null);
-                }
-			} else if (expression.charAt(0) == 'f' &&
-					   expression.charAt(1) == 'i' &&
-					   expression.charAt(2) == 'x' &&
-					   expression.charAt(3) == 'e' &&
-					   expression.charAt(4) == 'd' &&
-					   expression.charAt(5) == ':') {
-				String range = expression.substring(6);
-				String[] values = range.split("-", 3);
-				if (values.length != 3) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.");
-                	}
-                	new FixedValueExpressionParser(null);					
-				}
-				try {
-					Integer line = null;
-					Integer start = null;
-					Integer end = null;
-					if (values[0].trim().length() != 0) {
-						line = Integer.valueOf(values[0].trim());
-					}
-					if (values[1].trim().length() != 0) {
-						start = Integer.valueOf(values[1]);
-					} 
-					if (values[2].trim().length() != 0) {
-						end = Integer.valueOf(values[2]);
-					} 
-					return new FixedPositionExpressionParser(line, start, end);
-				} catch (NumberFormatException e) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create FixedPositionExpressionParser. Range '" + range + "' is invalid. Using FixedValueExpressionParser instead.", e);
-                	}
-                	new FixedValueExpressionParser(null);										
-				}
-			}
-		}
-		return new FixedValueExpressionParser(expression);
-	}
+
 	
 	private SlaRule createSlaRule(String slaConfiguration) {
 	    return SlaRule.fromConfiguration(slaConfiguration);

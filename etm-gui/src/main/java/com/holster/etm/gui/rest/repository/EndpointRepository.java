@@ -9,16 +9,19 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.holster.etm.core.TelemetryEventDirection;
 
 public class EndpointRepository {
 
 	private final Session session;
 	
 	private final PreparedStatement selectEndpointNamesStatement;
+	private final PreparedStatement selectEndpointStatement;
 
 	public EndpointRepository(Session session) {
 	    this.session = session;
 	    this.selectEndpointNamesStatement = this.session.prepare("select endpoint from endpoint_config allow filtering;");
+	    this.selectEndpointStatement = this.session.prepare("select direction, applicationParsers, eventNameParsers, correlationParsers, transactionNameParsers, slaRules from endpoint_config where endpoint = ?;");
     }
 	
 	public List<String> getEndpointNames() {
@@ -36,5 +39,19 @@ public class EndpointRepository {
 		Collections.sort(endpointNames);
 		return endpointNames;
 	}
+
+	public EndpointConfiguration getEndpointConfiguration(String endpointName) {
+		EndpointConfiguration endpointConfiguration = new EndpointConfiguration();
+		endpointConfiguration.name = endpointName;
+	    Row row = this.session.execute(this.selectEndpointStatement.bind(endpointName)).one();
+	    if (row != null) {
+	    	String direction = row.getString(0);
+	    	if (direction != null) {
+	    		endpointConfiguration.direction = TelemetryEventDirection.valueOf(direction);
+	    	}
+	    }
+	    return endpointConfiguration;
+	    
+    }
 
 }

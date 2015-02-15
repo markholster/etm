@@ -24,6 +24,7 @@ import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.core.configuration.Node;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.gui.rest.repository.EndpointConfiguration;
 import com.holster.etm.gui.rest.repository.EndpointRepository;
 import com.holster.etm.jee.configurator.core.GuiConfiguration;
 
@@ -66,7 +67,32 @@ public class AdminService {
         	}       
         }
 		return null;	
-	}	
+	}
+	
+	@GET
+	@Path("/endpoint/{endpointName}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEndpointName(@PathParam("endpointName") String endpointName) {
+		try {
+	        StringWriter writer = new StringWriter();
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartObject();
+	        EndpointConfiguration endpointConfiguration = this.endpointRepository.getEndpointConfiguration(endpointName);
+	        generator.writeStringField("name", endpointConfiguration.name);
+	        if (endpointConfiguration.direction != null) {
+	        	generator.writeStringField("direction", endpointConfiguration.direction.name());
+	        }
+	        generator.writeEndObject();
+	        generator.close();
+	        return writer.toString();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to get endpoint configuration.", e);
+        	}       
+        }
+		return null;	
+	}
 	
 	@GET
 	@Path("/nodes")

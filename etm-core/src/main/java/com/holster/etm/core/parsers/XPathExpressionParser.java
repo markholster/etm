@@ -1,4 +1,4 @@
-package com.holster.etm.processor.parsers;
+package com.holster.etm.core.parsers;
 
 import java.io.StringReader;
 
