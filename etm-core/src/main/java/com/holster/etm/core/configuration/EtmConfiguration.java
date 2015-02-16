@@ -45,6 +45,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	public static final String ETM_DATA_CORRELATION_TIME_OFFSET = "etm.data_correlation_time_offset";
 	public static final String ETM_DATA_RETENTION_TIME = "etm.data_retention_time";
 	public static final String ETM_DATA_RETENTION_CHECK_INTERVAL = "etm.data_retention_check_interval";
+	// TODO onderstaande configuratie items moeten opgeruimd worden (ook uit admin scherm).
 	public static final String ETM_DATA_RETENTION_LEADER_GROUP = "etm.data_retention_leader_group";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS = "etm.data_retention_preserve_event_counts";
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES = "etm.data_retention_preserve_event_performances";

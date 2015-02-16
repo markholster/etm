@@ -65,6 +65,10 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 	}
 
 	@Override
+	// TODO: Dit moet anders, er moet gebruik gemaakt worden van een delete
+	// query. Alle records moeten uit cassandra verdwijnen d.m.v. een TTL (in secondes). De
+	// TTL moet worden ETM_DATA_RETENTION_TIME + (3 *
+	// ETM_DATA_RETENTION_CHECK_INTERVAL).
     public void takeLeadership(CuratorFramework client) {
 		boolean stopProcessing = false;
 	    while(!stopProcessing && this.leaderSelector.hasLeadership()) {
