@@ -6,7 +6,7 @@ import com.holster.etm.processor.TelemetryEvent;
 
 public interface TelemetryEventRepository {
 
-	void persistTelemetryEvent(TelemetryEvent telemetryEvent, TimeUnit statisticsTimeUnit);
+	void persistTelemetryEvent(TelemetryEvent telemetryEvent, TimeUnit statisticsTimeUnit, long retentionOffset);
 
 	void findParent(String sourceId, CorrelationBySourceIdResult result);
 	

@@ -23,6 +23,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	
 	private final Date statisticsTimestamp = new Date();
 	private final Date eventOccurrenceTimestamp = new Date();
+	private final Date retentionTimestamp = new Date();
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
 	
@@ -33,22 +34,23 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	
 	// TODO add all statements to a batchStatement and execute synchronous.
 	@Override
-    public void persistTelemetryEvent(final TelemetryEvent event, final TimeUnit smallestStatisticsTimeUnit) {
+    public void persistTelemetryEvent(final TelemetryEvent event, final TimeUnit smallestStatisticsTimeUnit, final long retentionOffset) {
 		this.statisticsTimestamp.setTime(normalizeTime(event.creationTime.getTime(), smallestStatisticsTimeUnit.toMillis(1)));
 		this.eventOccurrenceTimestamp.setTime(normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+		this.retentionTimestamp.setTime(normalizeTime(event.retention.getTime() + PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
 		final String partitionKeySuffix = this.format.format(event.creationTime);
 		final String correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
 		
-		this.statementExecutor.addTelemetryEvent(event, this.batchStatement);
+		this.statementExecutor.addTelemetryEvent(event, this.retentionTimestamp, this.batchStatement);
 		if (event.sourceId != null) {
 			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
-			this.statementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
+			this.statementExecutor.addSourceIdCorrelationData(event, this.retentionTimestamp, this.batchStatement);
 		}
 		if (!event.correlationData.isEmpty()) {
-			event.correlationData.forEach((k,v) ->  this.statementExecutor.addCorrelationData(event, k + partitionKeySuffix, k, v, this.batchStatement));
+			event.correlationData.forEach((k,v) ->  this.statementExecutor.addCorrelationData(event, k + partitionKeySuffix, k, v, this.retentionTimestamp, this.batchStatement));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
@@ -87,7 +89,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        this.statisticsTimestamp,
 			        event.application + partitionKeySuffix,
 			        this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.batchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.retentionTimestamp, this.batchStatement);
 		}
 		if (event.name != null) {
 			this.statementExecutor.addEventNameCounter(
@@ -101,10 +103,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					this.counterBatchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
 			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
-				this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + partitionKeySuffix, event.name, this.batchStatement);
+				this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + partitionKeySuffix, event.name, this.retentionTimestamp, this.batchStatement);
 			}
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.addMessageEventStart(event, event.name + partitionKeySuffix, this.batchStatement);
+				this.statementExecutor.addMessageEventStart(event, event.name + partitionKeySuffix, this.retentionTimestamp, this.batchStatement);
 			}
 		}
 		if (event.correlationId != null && event.correlationName != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
@@ -129,7 +131,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					this.statisticsTimestamp,
 					event.application + partitionKeySuffix, 
 					this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.batchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.retentionTimestamp, this.batchStatement);
 		}
 		if (event.transactionName != null) {
 			this.statementExecutor.addTransactionNameCounter(
@@ -139,9 +141,9 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					event.transactionName, 
 					this.statisticsTimestamp,
 					event.transactionName + partitionKeySuffix, this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + partitionKeySuffix, event.transactionName, this.batchStatement);
+			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + partitionKeySuffix, event.transactionName, this.retentionTimestamp, this.batchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix, this.batchStatement);
+				this.statementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix, this.retentionTimestamp, this.batchStatement);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
 				this.statementExecutor.addTransactionEventFinish(event, event.transactionName + correlationPartitionKeySuffix, this.batchStatement);
 			}
