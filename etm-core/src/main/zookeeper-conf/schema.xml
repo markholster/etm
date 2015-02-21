@@ -129,14 +129,13 @@
    <field name="creationTime" type="tdate" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="direction" type="string" indexed="true" stored="false" required="false" multiValued="false" />         
    <field name="endpoint" type="string" indexed="true" stored="false" required="false" multiValued="false" />
-   <field name="expirtyTime" type="tdate" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="name" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="sourceCorrelationId" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="sourceId" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="transactionId" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="transactionName" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="type" type="string" indexed="true" stored="false" required="false" multiValued="false" />
-   <field name="responseTime" type="long" indexed="true" stored="false" required="false" multiValued="false" />
+   <field name="retention" type="tdate" indexed="true" stored="false" required="false" multiValued="false" />
 
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->

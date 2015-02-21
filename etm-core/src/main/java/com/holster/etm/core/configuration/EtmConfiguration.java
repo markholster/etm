@@ -45,16 +45,10 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	public static final String ETM_DATA_CORRELATION_TIME_OFFSET = "etm.data_correlation_time_offset";
 	public static final String ETM_DATA_RETENTION_TIME = "etm.data_retention_time";
 	public static final String ETM_DATA_RETENTION_CHECK_INTERVAL = "etm.data_retention_check_interval";
-	// TODO onderstaande configuratie items moeten opgeruimd worden (ook uit admin scherm).
-	public static final String ETM_DATA_RETENTION_LEADER_GROUP = "etm.data_retention_leader_group";
-	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS = "etm.data_retention_preserve_event_counts";
-	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES = "etm.data_retention_preserve_event_performances";
-	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS = "etm.data_retention_preserve_transaction_slas";
 	
 	private static final String[] CONFIGURATION_KEYS = new String[] { ETM_ENHANCING_HANDLER_COUNT, ETM_INDEXING_HANDLER_COUNT,
 	        ETM_PERSISTING_HANDLER_COUNT, ETM_RINGBUFFER_SIZE, ETM_ENDPOINT_CACHE_EXPIRY_TIME, ETM_STATISTICS_TIMEUNIT,
-	        ETM_DATA_CORRELATION_MAX_MATCHES, ETM_DATA_CORRELATION_TIME_OFFSET, ETM_DATA_RETENTION_TIME, ETM_DATA_RETENTION_CHECK_INTERVAL, ETM_DATA_RETENTION_LEADER_GROUP,
-	        ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS, ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES, ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS};
+	        ETM_DATA_CORRELATION_MAX_MATCHES, ETM_DATA_CORRELATION_TIME_OFFSET, ETM_DATA_RETENTION_TIME, ETM_DATA_RETENTION_CHECK_INTERVAL};
 	
 	private CassandraConfiguration cassandraConfiguration;
 	private SolrConfiguration solrConfiguration;
@@ -127,10 +121,6 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		checkDefaultValue(properties, ETM_DATA_CORRELATION_TIME_OFFSET, "30000");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_TIME, "604800000");
 		checkDefaultValue(properties, ETM_DATA_RETENTION_CHECK_INTERVAL, "60000");
-		checkDefaultValue(properties, ETM_DATA_RETENTION_LEADER_GROUP, "1");
-		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS, "false");
-		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES, "false");
-		checkDefaultValue(properties, ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS, "false");		
 	}
 	
 	// Cassandra configuration.
@@ -211,22 +201,6 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		return Long.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_CHECK_INTERVAL));
 	}
 	
-	public int getDataRetentionLeaderGroup() {
-		return Integer.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_LEADER_GROUP));
-	}
-
-	public boolean isDataRetentionPreserveEventCounts() {
-		return Boolean.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS));
-	}
-	
-	public boolean isDataRetentionPreserveEventPerformances() {
-		return Boolean.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES));
-	}
-
-	public boolean isDataRetentionPreserveEventSlas() {
-		return Boolean.valueOf(this.etmProperties.getProperty(ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS));
-	}
-
 	public LeaderSelector createLeaderSelector(String leaderPath, LeaderSelectorListener leaderSelectionListener) {
 		return new LeaderSelector(this.client, "/leader-election" + leaderPath, leaderSelectionListener);
     }

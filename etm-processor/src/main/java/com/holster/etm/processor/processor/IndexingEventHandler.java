@@ -61,14 +61,8 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 		if (event.creationTime != null) {
 			document.addField("creationTime", event.creationTime);
 		}
-		if (event.direction != null) {
-			document.addField("direction", event.direction.name());
-		}
 		if (event.endpoint != null) {
 			document.addField("endpoint", event.endpoint);
-		}
-		if (event.expiryTime != null) {
-			document.addField("expirtyTime", event.expiryTime);
 		}
 		if (event.name != null) {
 			document.addField("name", event.name);
@@ -88,9 +82,8 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 		if (event.type != null) {
 			document.addField("type", event.type.name());
 		}
-		if (event.creationTime.getTime() != 0 && event.correlationCreationTime.getTime() != 0) {
-			long responseTime = event.correlationCreationTime.getTime() - event.creationTime.getTime();
-			document.addField("responseTime", responseTime);
+		if (event.retention != null) {
+			document.addField("retention", event.retention);
 		}
 		if (this.docIx == this.nrOfDocumentsPerRequest - 1) {
 			this.server.add(this.documents, 15000);

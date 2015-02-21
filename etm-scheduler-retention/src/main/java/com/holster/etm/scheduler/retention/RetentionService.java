@@ -16,7 +16,6 @@ import javax.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
-import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 
@@ -48,49 +47,35 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 	@SchedulerConfiguration
 	private Session session;
 	
-	private RemovingCallbackHandler callbackHandler;
-
-	
 	private DateFormat solrDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	private LeaderSelector leaderSelector;
 
 	@PostConstruct
 	public void registerRetentionService() {
 		this.solrDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		String retentionGroup = "/group-" + this.etmConfiguration.getDataRetentionLeaderGroup();
-		this.callbackHandler = new RemovingCallbackHandler(this.solrServer, this.session, this.etmConfiguration);
-		this.leaderSelector = this.etmConfiguration.createLeaderSelector("/retention" + retentionGroup, this);
+		this.leaderSelector = this.etmConfiguration.createLeaderSelector("/data-retention", this);
 		this.leaderSelector.autoRequeue();
 		this.leaderSelector.start();
 	}
 
 	@Override
-	// TODO: Dit moet anders, er moet gebruik gemaakt worden van een delete
-	// query. Alle records moeten uit cassandra verdwijnen d.m.v. een TTL (in secondes). De
-	// TTL moet worden ETM_DATA_RETENTION_TIME + (3 *
-	// ETM_DATA_RETENTION_CHECK_INTERVAL).
     public void takeLeadership(CuratorFramework client) {
 		boolean stopProcessing = false;
 	    while(!stopProcessing && this.leaderSelector.hasLeadership()) {
 	    	try {
-		    	long dataRetentionTime = this.etmConfiguration.getDataRetentionTime();
 		    	if (log.isInfoLevelEnabled()) {
-		    		log.logInfoMessage("Removing events older than " + dataRetentionTime + " ms.");
+		    		log.logInfoMessage("Removing events with expired retention.");
 		    	}
-		    	if (dataRetentionTime > 0) {
-			    	Date dateTill = new Date(System.currentTimeMillis() - dataRetentionTime + 1);
 			    	try {
-			    		SolrQuery query = new SolrQuery("creationTime:[* TO " + solrDateFormat.format(dateTill) + "]");
-			    		query.setStart(0);
-			    		// Max 50000 rows per iteration, otherwise the http response will be too big.
-			    		query.setRows(50000);
-			            this.solrServer.queryAndStreamResponse(query, this.callbackHandler);
+			    		Date dateTill = new Date();
+			    		this.solrServer.deleteByQuery("retention:[* TO " + this.solrDateFormat.format(dateTill) + "]");
+			    		this.solrServer.commit(false, false, true);
+			    		// TODO verwijderen uit Cassandra met dateTill
 		            } catch (SolrServerException | IOException e) {
 		            	if (log.isErrorLevelEnabled()) {
-		            		log.logErrorMessage("Error removing events added before " + solrDateFormat.format(dateTill), e);
+		            		log.logErrorMessage("Error removing events expired retention", e);
 		            	}
 		            }
-		    	}
 	            Thread.sleep(this.etmConfiguration.getDataRetentionCheckInterval());
             } catch (InterruptedException e) {
             	if (log.isWarningLevelEnabled()) {
@@ -112,11 +97,7 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 		if (this.leaderSelector != null) {
 			this.leaderSelector.close();
 		}
-		if (this.callbackHandler != null) {
-			this.callbackHandler.close();
-		}
 		this.leaderSelector = null;
-		this.callbackHandler = null;
 	}
 
 }

@@ -110,9 +110,7 @@ public class TelemetryEvent {
 	
 	// Processing state.
 	public boolean ignore;
-
-	
-	
+	public Date retention = new Date(0);
 	
 	public TelemetryEvent initialize() {
 		this.id = UUIDs.timeBased();
@@ -135,6 +133,7 @@ public class TelemetryEvent {
 		this.transactionName = null;
 		this.type = null;
 		this.ignore = false;
+		this.retention.setTime(0);
 		return this;
 	}
 
@@ -159,6 +158,7 @@ public class TelemetryEvent {
 		this.transactionId = copy.transactionId;
 		this.transactionName = copy.transactionName;
 		this.type = copy.type;
+		this.retention.setTime(copy.retention.getTime());
 	    return this;
     }
 }

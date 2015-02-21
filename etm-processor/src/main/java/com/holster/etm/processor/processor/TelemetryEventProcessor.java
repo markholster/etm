@@ -100,6 +100,9 @@ public class TelemetryEventProcessor {
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
+		if (event.retention.getTime() == 0) {
+			event.retention.setTime(event.creationTime.getTime() + this.etmConfiguration.getDataRetentionTime());
+		}
 		if ((event.transactionName == null || event.name == null)&& TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 			// A little bit of enhancement before the event is processed by the
 			// disruptor. We need to make sure the eventName & transactionName
