@@ -11,6 +11,7 @@ import com.datastax.driver.core.BatchStatement.Type;
 import com.holster.etm.core.TelemetryEventDirection;
 import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
+import com.holster.etm.core.util.DateUtils;
 import com.holster.etm.processor.TelemetryEvent;
 
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
@@ -35,11 +36,10 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	@Override
     public void persistTelemetryEvent(final TelemetryEvent event, final TimeUnit smallestStatisticsTimeUnit) {
 		this.dataRetention.clear();
-		this.statisticsTimestamp.setTime(normalizeTime(event.creationTime.getTime(), smallestStatisticsTimeUnit.toMillis(1)));
-		this.eventOccurrenceTimestamp.setTime(normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
-		this.dataRetention.statisticsTimestamp.setTime(this.statisticsTimestamp.getTime());
+		this.statisticsTimestamp.setTime(DateUtils.normalizeTime(event.creationTime.getTime(), smallestStatisticsTimeUnit.toMillis(1)));
+		this.eventOccurrenceTimestamp.setTime(DateUtils.normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 		this.dataRetention.eventOccurrenceTimestamp.setTime(this.eventOccurrenceTimestamp.getTime());
-		this.dataRetention.retentionTimestamp .setTime(normalizeTime(event.retention.getTime() + PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+		this.dataRetention.retentionTimestamp .setTime(DateUtils.normalizeTime(event.retention.getTime() + (2 * PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
@@ -169,10 +169,6 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			this.statementExecutor.execute(this.counterBatchStatement);
 			this.counterBatchStatement.clear();
 		}
-    }
-
-	private long normalizeTime(long timeInMillis, long factor) {
-		return (timeInMillis / factor) * factor;
     }
 
 	@Override

@@ -21,6 +21,7 @@ import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.holster.etm.core.TelemetryEventType;
 import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
+import com.holster.etm.core.util.DateUtils;
 
 public class StatisticsRepository {
 
@@ -77,7 +78,7 @@ public class StatisticsRepository {
 				Date transactionStartTime = row.getDate(1);
 				Date transactionFinishTime = row.getDate(2);
 				Date transactionExpiryTime = row.getDate(3);
-				long timeUnitValue = normalizeTime(transactionStartTime.getTime(), timeUnit.toMillis(1));
+				long timeUnitValue = DateUtils.normalizeTime(transactionStartTime.getTime(), timeUnit.toMillis(1));
 				long responseTime = determineResponseTime(transactionStartTime, transactionFinishTime, transactionExpiryTime);
 				if (responseTime == -1) {
 						continue;
@@ -116,7 +117,7 @@ public class StatisticsRepository {
 				Date messageStartTime = row.getDate(1);
 				Date messageFinishTime = row.getDate(2);
 				Date messageExpiryTime = row.getDate(3);
-				long timeUnitValue = normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
+				long timeUnitValue = DateUtils.normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
 				long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
 				if (responseTime == -1) {
 						continue;
@@ -147,7 +148,7 @@ public class StatisticsRepository {
 			Iterator<Row> iterator = resultSet.iterator();
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
-				long timeUnitValue = normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
+				long timeUnitValue = DateUtils.normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
 				addToTimeBasedCounterDataMap(data, "Incoming request messages", timeUnitValue, row.getLong(1));
 				addToTimeBasedCounterDataMap(data, "Outgoing request messages", timeUnitValue, row.getLong(2));
 				addToTimeBasedCounterDataMap(data, "Incoming response messages", timeUnitValue, row.getLong(3));
@@ -191,7 +192,7 @@ public class StatisticsRepository {
 				Date messageStartTime = row.getDate(1);
 				Date messageFinishTime = row.getDate(2);
 				Date messageExpiryTime = row.getDate(3);
-				long timeUnitValue = normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
+				long timeUnitValue = DateUtils.normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
 				long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
 				if (responseTime == -1) {
 						continue;
@@ -220,7 +221,7 @@ public class StatisticsRepository {
 			Iterator<Row> iterator = resultSet.iterator();
 			while (iterator.hasNext()) {
 				Row row = iterator.next();
-				long timeUnitValue = normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
+				long timeUnitValue = DateUtils.normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
 				String eventName = row.getString(1);
 				addToTimeBasedCounterDataMap(data, eventName, timeUnitValue, row.getLong(2));
 			}
@@ -540,15 +541,9 @@ public class StatisticsRepository {
 	    // For unknown reasons cassandra gives an error when the arraylist is created with the Date generic type.
 	    List<Object> result = new ArrayList<Object>();
 	    do {
-	    	result.add(new Date(normalizeTime(startCalendar.getTime().getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1))));
+	    	result.add(new Date(DateUtils.normalizeTime(startCalendar.getTime().getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1))));
 	    	startCalendar.add(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT, 1);
 	    } while (startCalendar.before(endCalendar) || (!startCalendar.before(endCalendar) && startCalendar.get(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT) == endCalendar.get(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT)));
 	    return result;
     }
-
-	private long normalizeTime(long timeInMillis, long factor) {
-		return (timeInMillis / factor) * factor;
-    }
-
-
 }

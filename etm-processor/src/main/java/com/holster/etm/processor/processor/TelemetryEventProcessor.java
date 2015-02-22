@@ -101,6 +101,13 @@ public class TelemetryEventProcessor {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
 		if (event.retention.getTime() == 0) {
+			// Retention time should actually be the current time added with the
+			// configured retention time, but that would cause performance
+			// problems while cleaning up: Now, the partition key is removed, so
+			// everything with the creation time in the same hour (the partition
+			// key) is removed with one statement. If the actual addition time
+			// is taken into account each and every row should be deleted one by
+			// one. This would cause a huge performance degradation.
 			event.retention.setTime(event.creationTime.getTime() + this.etmConfiguration.getDataRetentionTime());
 		}
 		if ((event.transactionName == null || event.name == null)&& TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {

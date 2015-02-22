@@ -9,7 +9,6 @@ public class DataRetention {
 
 	public Date retentionTimestamp = new Date();
 	public Date eventOccurrenceTimestamp = new Date();
-	public Date statisticsTimestamp = new Date();
 	public UUID id;
 	public String sourceId;
 	public String partionKeySuffix;
@@ -22,7 +21,6 @@ public class DataRetention {
 	public void clear() {
 		this.retentionTimestamp.setTime(0);
 		this.eventOccurrenceTimestamp.setTime(0);
-		this.statisticsTimestamp.setTime(0);
 		this.id = null;
 		this.sourceId = null;
 		this.partionKeySuffix = null;

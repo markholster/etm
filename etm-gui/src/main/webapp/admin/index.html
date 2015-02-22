@@ -99,13 +99,13 @@
 												type="number" class="form-control" required="required"
 												min="255" />
 										</div>
-										<label for="etm_data_retention_leader_group"
-											class="col-sm-3 control-label">Data retention leader group</label>
-										<div class="col-sm-3">
-											<input id="etm_data_retention_leader_group"
-												name="etm.data_retention_leader_group" type="number"
-												class="form-control" required="required" min="1" />
-										</div>
+                                        <label for="etm_data_retention_preserve_event_counts"
+                                            class="col-sm-3 control-label">Data retention preserve event counts</label>
+                                        <div class="col-sm-3">
+                                            <input id="etm_data_retention_preserve_event_counts"
+                                                name="etm.data_retention_preserve_event_counts"
+                                                type="checkbox" class="form-control" />
+                                        </div>
 									</div>
 
 									<div class="form-group">
@@ -116,13 +116,14 @@
 												name="etm.endpoint_cache_expiry_time" type="number"
 												class="form-control" required="required" min="1" />
 										</div>
-										<label for="etm_data_retention_preserve_event_counts"
-											class="col-sm-3 control-label">Data retention preserve event counts</label>
-										<div class="col-sm-3">
-											<input id="etm_data_retention_preserve_event_counts"
-												name="etm.data_retention_preserve_event_counts"
-												type="checkbox" class="form-control" />
-										</div>
+                                        <label for="etm_data_retention_preserve_event_performances"
+                                            class="col-sm-3 control-label">Data retention
+                                            preserve event performances</label>
+                                        <div class="col-sm-3">
+                                            <input id="etm_data_retention_preserve_event_performances" 
+                                                name="etm.data_retention_preserve_event_performances"
+                                                type="checkbox" class="form-control" />
+                                        </div>
 									</div>
 
 									<div class="form-group">
@@ -136,14 +137,14 @@
 												<option value="DAYS">Days</option>
 											</select>
 										</div>
-										<label for="etm_data_retention_preserve_event_performances"
-											class="col-sm-3 control-label">Data retention
-											preserve event performances</label>
-										<div class="col-sm-3">
-											<input id="etm_data_retention_preserve_event_performances" 
-												name="etm.data_retention_preserve_event_performances"
-												type="checkbox" class="form-control" />
-										</div>
+                                        <label for="etm_data_retention_preserve_transaction_slas"
+                                            class="col-sm-3 control-label">Data retention
+                                            preserve event SLA's</label>
+                                        <div class="col-sm-3">
+                                            <input id="etm_data_retention_preserve_transaction_slas"
+                                                name="etm.data_retention_preserve_transaction_slas"
+                                                type="checkbox" class="form-control" />
+                                        </div>
 									</div>
 
 									<div class="form-group">
@@ -154,14 +155,6 @@
 											<input id="etm_data_correlation_max_matches"
 												name="etm.data_correlation_max_matches" type="number"
 												class="form-control" required="required" min="1" />
-										</div>
-										<label for="etm_data_retention_preserve_transaction_slas"
-											class="col-sm-3 control-label">Data retention
-											preserve event SLA's</label>
-										<div class="col-sm-3">
-											<input id="etm_data_retention_preserve_transaction_slas"
-												name="etm.data_retention_preserve_transaction_slas"
-												type="checkbox" class="form-control" />
 										</div>
 									</div>
 									<input type="submit" class="btn btn-default" value="Save" />

@@ -20,9 +20,11 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import com.datastax.driver.core.Session;
+import com.holster.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.holster.etm.core.configuration.EtmConfiguration;
 import com.holster.etm.core.logging.LogFactory;
 import com.holster.etm.core.logging.LogWrapper;
+import com.holster.etm.core.util.DateUtils;
 import com.holster.etm.jee.configurator.core.SchedulerConfiguration;
 
 @ManagedBean
@@ -49,10 +51,13 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 	
 	private DateFormat solrDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	private LeaderSelector leaderSelector;
+	private EtmDataCleaner etmDataCleaner;
+	private Date lastCleanupTime = new Date();
 
 	@PostConstruct
 	public void registerRetentionService() {
 		this.solrDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		this.etmDataCleaner = new EtmDataCleaner(this.session);
 		this.leaderSelector = this.etmConfiguration.createLeaderSelector("/data-retention", this);
 		this.leaderSelector.autoRequeue();
 		this.leaderSelector.start();
@@ -70,7 +75,13 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 			    		Date dateTill = new Date();
 			    		this.solrServer.deleteByQuery("retention:[* TO " + this.solrDateFormat.format(dateTill) + "]");
 			    		this.solrServer.commit(false, false, true);
-			    		// TODO verwijderen uit Cassandra met dateTill
+				    	Date cleanupTime = new Date(DateUtils.normalizeTime(dateTill.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+				    	if (!this.lastCleanupTime.equals(cleanupTime)) {
+				    		this.lastCleanupTime = cleanupTime;
+							this.etmDataCleaner.cleanup(cleanupTime, this.etmConfiguration.isDataRetentionPreserveEventCounts(),
+							        this.etmConfiguration.isDataRetentionPreserveEventPerformances(),
+							        this.etmConfiguration.isDataRetentionPreserveEventSlas());
+				    	}
 		            } catch (SolrServerException | IOException e) {
 		            	if (log.isErrorLevelEnabled()) {
 		            		log.logErrorMessage("Error removing events expired retention", e);

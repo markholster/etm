@@ -164,7 +164,6 @@ create table data_retention (
     timeunit timestamp,
     id timeuuid,
     eventOccurrenceTimeunit timestamp,
-    statisticsTimeunit timestamp,
     sourceId text,
     partionKeySuffix text,
     applicationName text,

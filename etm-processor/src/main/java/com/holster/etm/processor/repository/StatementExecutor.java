@@ -141,13 +141,12 @@ public class StatementExecutor {
 				+ "timeunit, "
 				+ "id, "
 				+ "eventOccurrenceTimeunit, "
-				+ "statisticsTimeunit, "
 				+ "sourceId, "
 				+ "partionKeySuffix, "
 				+ "applicationName, "
 				+ "eventName, "
 				+ "transactionName, "
-				+ "correlationData) values (?,?,?,?,?,?,?,?,?,?);");
+				+ "correlationData) values (?,?,?,?,?,?,?,?,?);");
 		this.updateApplicationCounterStatement = session.prepare("update application_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
@@ -361,7 +360,6 @@ public class StatementExecutor {
 				dataRetention.retentionTimestamp,
 				dataRetention.id,
 				dataRetention.eventOccurrenceTimestamp,
-				dataRetention.statisticsTimestamp,
 				dataRetention.sourceId,
 				dataRetention.partionKeySuffix,
 				dataRetention.applicationName,

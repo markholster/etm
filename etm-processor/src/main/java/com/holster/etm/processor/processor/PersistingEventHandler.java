@@ -13,8 +13,6 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 	
 	private TelemetryEventRepository telemetryEventRepository;
 	
-	
-	
 	public PersistingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration) {
 		this.telemetryEventRepository = telemetryEventRepository;
 	    this.ordinal = ordinal;
