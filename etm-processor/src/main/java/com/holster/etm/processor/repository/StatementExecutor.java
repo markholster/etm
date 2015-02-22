@@ -34,6 +34,7 @@ public class StatementExecutor {
 	private final PreparedStatement insertMessageEventExpirationFinishStatement;
 	private final PreparedStatement insertSlaStartStatement;
 	private final PreparedStatement insertSlaFinishStatement;
+	private final PreparedStatement insertDataRetentionStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
@@ -63,9 +64,7 @@ public class StatementExecutor {
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "type, "
-				+ "slaRule, "
-				+ "retention"
-				+ ") values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				+ "slaRule) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 		this.insertSourceIdIdStatement = session.prepare("insert into sourceid_id_correlation ("
 				+ "sourceId, "
 				+ "creationTime, "
@@ -74,17 +73,13 @@ public class StatementExecutor {
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "name, "
-				+ "slaRule, "
-				+ "retention, "
-				+ ") values (?,?,?,?,?,?,?,?,?);");
+				+ "slaRule) values (?,?,?,?,?,?,?,?);");
 		this.insertCorrelationDataStatement = session.prepare("insert into correlation_data ("
 				+ "name_timeunit, "
 				+ "timeunit, "
 				+ "name, "
 				+ "value, "
-				+ "id, "
-				+ "retention"
-				+ ") values (?,?,?,?,?,?);");
+				+ "id) values (?,?,?,?,?);");
 		this.insertCorrelationToParentStatement = session.prepare("update telemetry_event set "
 				+ "correlations = correlations + ? "
 				+ "where id = ?;");
@@ -92,18 +87,14 @@ public class StatementExecutor {
 				+ "timeunit, "
 				+ "type, "
 				+ "name_timeframe,"
-				+ "name, "
-				+ "retention"
-				+ ") values (?,?,?,?,?);");
+				+ "name) values (?,?,?,?);");
 		this.insertTransactionEventStartStatement = session.prepare("insert into transaction_performance ("
 				+ "transactionName_timeunit, "
-				+ "transactionId,"
+				+ "transactionId, "
 				+ "transactionName,  "
 				+ "startTime, "
 				+ "expiryTime, "
-				+ "application, "
-				+ "retention"
-				+ ") values (?,?,?,?,?,?,?);");
+				+ "application) values (?,?,?,?,?,?);");
 		this.insertTransactionEventFinishStatement = session.prepare("insert into transaction_performance ("
 				+ "transactionName_timeunit, "
 				+ "transactionId, "
@@ -115,30 +106,24 @@ public class StatementExecutor {
 				+ "name, "
 				+ "startTime, "
 				+ "expiryTime, "
-				+ "application, "
-				+ "retention"
-				+ ") values (?,?,?,?,?,?,?);");
+				+ "application) values (?,?,?,?,?,?);");
 		this.insertMessageEventPerformanceFinishStatement = session.prepare("insert into message_performance ("
 				+ "name_timeunit, "
 				+ "id, "
 				+ "startTime, "
-				+ "finishTime"
-				+ ") values (?,?,?,?);");
+				+ "finishTime) values (?,?,?,?);");
 		this.insertMessageEventExpirationStartStatement = session.prepare("insert into message_expiration ("
 				+ "name_timeunit, "
 				+ "id, "
 				+ "name, "
 				+ "expiryTime, "
 				+ "startTime, "
-				+ "application, "
-				+ "retention"
-				+ ") values (?,?,?,?,?,?,?);");
+				+ "application) values (?,?,?,?,?,?);");
 		this.insertMessageEventExpirationFinishStatement = session.prepare("insert into message_expiration ("
 				+ "name_timeunit, "
 				+ "id, "
 				+ "expiryTime, "
-				+ "finishTime"
-				+ ") values (?,?,?,?);");
+				+ "finishTime) values (?,?,?,?);");
 		this.insertSlaStartStatement = session.prepare("insert into transaction_sla ("
 				+ "transactionName_timeunit, "
 				+ "slaExpiryTime, "
@@ -146,14 +131,23 @@ public class StatementExecutor {
 				+ "transactionName, "
 				+ "startTime, "
 				+ "application, "
-				+ "slaRule, "
-				+ "retention"
-				+ ") values (?,?,?,?,?,?,?,?);");
+				+ "slaRule) values (?,?,?,?,?,?,?);");
 		this.insertSlaFinishStatement = session.prepare("insert into transaction_sla ("
 				+ "transactionName_timeunit, "
 				+ "slaExpiryTime, "
 				+ "transactionId, "
-				+ "finishTime) values (?, ?, ?, ?);");
+				+ "finishTime) values (?,?,?,?);");
+		this.insertDataRetentionStatement = session.prepare("insert into data_retention ("
+				+ "timeunit, "
+				+ "id, "
+				+ "eventOccurrenceTimeunit, "
+				+ "statisticsTimeunit, "
+				+ "sourceId, "
+				+ "partionKeySuffix, "
+				+ "applicationName, "
+				+ "eventName, "
+				+ "transactionName, "
+				+ "correlationData) values (?,?,?,?,?,?,?,?,?,?);");
 		this.updateApplicationCounterStatement = session.prepare("update application_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
@@ -220,7 +214,7 @@ public class StatementExecutor {
 		this.deleteSlaStatement = session.prepare("delete from transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
 	}
 	
-	public void addTelemetryEvent(final TelemetryEvent event, final Date retentionTime, final BatchStatement batchStatement) {
+	public void addTelemetryEvent(final TelemetryEvent event, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertTelemetryEventStatement.bind(
 				event.id, 
 				event.application, 
@@ -239,8 +233,7 @@ public class StatementExecutor {
 		        event.transactionId, 
 		        event.transactionName,
 		        event.type != null ? event.type.name() : null,
-				event.slaRule != null ? event.slaRule.toConfiguration() : null,
-				retentionTime));
+				event.slaRule != null ? event.slaRule.toConfiguration() : null));
 		if (event.correlationId != null) {
 			final List<UUID> correlation = new ArrayList<UUID>(1);
 			correlation.add(event.id);
@@ -248,7 +241,7 @@ public class StatementExecutor {
 		}
 	}
 	
-	public void addSourceIdCorrelationData(final TelemetryEvent event, final Date retentionTime, final BatchStatement batchStatement) {
+	public void addSourceIdCorrelationData(final TelemetryEvent event, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertSourceIdIdStatement.bind(
 				event.sourceId,
 				event.creationTime,
@@ -257,38 +250,34 @@ public class StatementExecutor {
 				event.transactionId, 
 				event.transactionName,
 				event.name,
-				event.slaRule != null ? event.slaRule.toConfiguration() : null,
-				retentionTime));
+				event.slaRule != null ? event.slaRule.toConfiguration() : null));
 	}
 	
-	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final Date retentionTime, final BatchStatement batchStatement) {
+	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertCorrelationDataStatement.bind(
 				key,
 				event.creationTime,
 				correlationDataName, 
 				correlationDataValue,
-				event.id,
-				retentionTime));
+				event.id));
 	}
 	
-	public void addEventOccurence(final Date timestamp, final String occurrenceName, final String occurrenceValue, final String originalName, final Date retentionTime, final BatchStatement batchStatement) {
+	public void addEventOccurence(final Date timestamp, final String occurrenceName, final String occurrenceValue, final String originalName, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertEventOccurrenceStatement.bind(
 				timestamp, 
 				occurrenceName, 
 				occurrenceValue,
-				originalName,
-				retentionTime));
+				originalName));
 	}
 	
-	public void addTransactionEventStart(final TelemetryEvent event, final String key, final Date retentionTime,final BatchStatement batchStatement) {
+	public void addTransactionEventStart(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertTransactionEventStartStatement.bind(
 				key,
 				event.transactionId,
 				event.transactionName,
 		        event.creationTime, 
 		        event.expiryTime,
-		        event.application,
-		        retentionTime));
+		        event.application));
 		if (event.slaRule != null) {
 			batchStatement.add(this.insertSlaStartStatement.bind(
 					key, 
@@ -297,8 +286,7 @@ public class StatementExecutor {
 					event.transactionName, 
 					event.creationTime, 
 					event.application, 
-					event.slaRule.toConfiguration(),
-					retentionTime));
+					event.slaRule.toConfiguration()));
 		}
 	}
 	
@@ -338,23 +326,21 @@ public class StatementExecutor {
 		}		
 	}
 
-	public void addMessageEventStart(final TelemetryEvent event, final String key, final Date retentionTime, final BatchStatement batchStatement) {
+	public void addMessageEventStart(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertMessageEventPerformanceStartStatement.bind(
 				key,
 				event.id, 
 				event.name,
 		        event.creationTime, 
 		        event.expiryTime,
-		        event.application,
-		        retentionTime));
+		        event.application));
 		batchStatement.add(this.insertMessageEventExpirationStartStatement.bind(
 				key,
 				event.id,
 				event.name,
 		        event.expiryTime,
 		        event.creationTime,
-		        event.application,
-		        retentionTime));
+		        event.application));
 	}
 	
 	public void addMessageEventFinish(final TelemetryEvent event, final String key, final BatchStatement batchStatement) {
@@ -370,6 +356,19 @@ public class StatementExecutor {
 		        event.creationTime));
 	}
 
+	public void addDataRetention(final DataRetention dataRetention, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertDataRetentionStatement.bind(
+				dataRetention.retentionTimestamp,
+				dataRetention.id,
+				dataRetention.eventOccurrenceTimestamp,
+				dataRetention.statisticsTimestamp,
+				dataRetention.sourceId,
+				dataRetention.partionKeySuffix,
+				dataRetention.applicationName,
+				dataRetention.eventName,
+				dataRetention.transactionName,
+				dataRetention.correlationData));
+	}
 	
 	public void addApplicationCounter(final long requestCount, final long incomingRequestCount, final long outgoingRequestCount,
 	        final long responseCount, final long incomingResponseCount, final long outgoingResponseCount, final long datagramCount,
@@ -439,6 +438,7 @@ public class StatementExecutor {
 				timestamp,
 				transactionName));
 	}
+	
 	
 	public void findParent(final String sourceId, final CorrelationBySourceIdResult result) {
 		final ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId));
@@ -523,4 +523,5 @@ public class StatementExecutor {
 	public ResultSet execute(BatchStatement batchCounterStatement) {
 	    return this.session.execute(batchCounterStatement);
     }
+
 }

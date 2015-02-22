@@ -28,7 +28,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 			return;
 		}
 //		long start = System.nanoTime();
-		this.telemetryEventRepository.persistTelemetryEvent(event, this.etmConfiguration.getStatisticsTimeUnit(), this.etmConfiguration.getDataRetentionCheckInterval());
+		this.telemetryEventRepository.persistTelemetryEvent(event, this.etmConfiguration.getStatisticsTimeUnit());
 //		Statistics.persistingTime.addAndGet(System.nanoTime() - start);
 	}
 

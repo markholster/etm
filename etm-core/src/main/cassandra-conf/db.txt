@@ -20,10 +20,8 @@ create table telemetry_event (
     transactionId timeuuid, 
     transactionName text,
     type text,
-    slaRule text,
-    retention timestamp
+    slaRule text
 );
-create index telemetry_event_ix on telemetry_event(retention);
 
 create table transaction_performance (
     transactionName_timeunit text,
@@ -33,10 +31,8 @@ create table transaction_performance (
     expiryTime timestamp,
     finishTime timestamp,
     application text,
-    retention timestamp,
     primary key (transactionName_timeunit, startTime, transactionId)
 );
-create index transaction_performance_ix on transaction_performance(retention);
 
 create table message_performance (
     name_timeunit text,
@@ -46,10 +42,8 @@ create table message_performance (
     expiryTime timestamp,
     finishTime timestamp,
     application text,
-    retention timestamp,
     primary key (name_timeunit, startTime, id)
 );
-create index message_performance_ix on message_performance(retention);
 
 create table message_expiration (
     name_timeunit text,
@@ -59,10 +53,8 @@ create table message_expiration (
     startTime timestamp,
     finishTime timestamp,
     application text,
-    retention timestamp, 
     primary key (name_timeunit, expiryTime, id)
 );
-create index message_expiration_ix on message_expiration(retention);
 
 create table transaction_sla (
     transactionName_timeunit text,
@@ -73,20 +65,16 @@ create table transaction_sla (
     finishTime timestamp,
     application text,
     slaRule text,
-    retention timestamp,
     primary key (transactionName_timeunit, slaExpiryTime, transactionId)
 );
-create index transaction_sla_ix on transaction_sla(retention);
 
 create table event_occurrences (
     timeunit timestamp,
     type text,
     name_timeframe text,
     name text,
-    retention timestamp,
     primary key (timeunit, type, name_timeframe)
 );
-create index event_occurrences_ix on event_occurrences(retention);
 
 create table sourceid_id_correlation (
     sourceId text primary key,
@@ -96,10 +84,8 @@ create table sourceid_id_correlation (
     transactionId timeuuid,
     transactionName text,
     name text,
-    slaRule text,
-    retention timestamp
+    slaRule text
 );
-create index sourceid_id_correlation_ix on sourceid_id_correlation(retention);
 
 create table correlation_data (
     name_timeunit text,
@@ -107,10 +93,8 @@ create table correlation_data (
     value text,
     timeunit timestamp,
     id timeuuid, 
-    retention timestamp,
     primary key (name_timeunit, name, value, timeunit, id)
 );
-create index correlation_data_ix on correlation_data(retention);
 
 create table application_counter (
     application_timeunit text,
@@ -129,10 +113,8 @@ create table application_counter (
     messageResponseTime counter,
     incomingMessageResponseTime counter,
     outgoingMessageResponseTime counter,
-    retention timestamp,
     primary key (application_timeunit, timeunit, application)
 );
-create index application_counter_ix on application_counter(retention);
 
 create table eventname_counter (
     eventName_timeunit text,
@@ -143,10 +125,8 @@ create table eventname_counter (
     messageResponseCount counter,
     messageDatagramCount counter,
     messageResponseTime counter,
-    retention timestamp,
     primary key (eventName_timeunit, timeunit, eventName)
 );
-create index eventname_counter_ix on eventname_counter(retention);
 
 create table application_event_counter (
     application_timeunit text,
@@ -166,10 +146,8 @@ create table application_event_counter (
     messageResponseTime counter,
     incomingMessageResponseTime counter,
     outgoingMessageResponseTime counter,
-    retention timestamp,
     primary key (application_timeunit, timeunit, application, eventName)
 );
-create index application_event_counter_ix on application_event_counter(retention);
 
 create table transactionname_counter (
     transactionName_timeunit text,
@@ -180,6 +158,20 @@ create table transactionname_counter (
     transactionFinish counter,
     transactionResponseTime counter,
     primary key (transactionName_timeunit, timeunit, transactionName)
+);
+
+create table data_retention (
+    timeunit timestamp,
+    id timeuuid,
+    eventOccurrenceTimeunit timestamp,
+    statisticsTimeunit timestamp,
+    sourceId text,
+    partionKeySuffix text,
+    applicationName text,
+    eventName text,
+    transactionName text,
+    correlationData map<text, text>,
+    primary key (timeunit, id)
 );
 
 create table endpoint_config (
