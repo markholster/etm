@@ -46,6 +46,10 @@ To verify Solr is up and running, browse to http://localhost:8983/solr/
 
 After Solr is started the ETM configuration needs to be uploaded to the embedded Zookeeper instance. Open a command shell in the 
 directory <SOLR_INSTALL_DIR>/example/scripts/cloud-scripts and execute the following commands:
+
+
+TODO: Aanpassen -> de schema.xml uit de examples dit moet overschreven worden. That's it. 
+
 [source,shell] 
 ----
 ./zkcli.sh -zkhost localhost:9983 -cmd upconfig -confdir <PACKAGE_UNZIP_DIR>/resources/solr/single-node-conf -confname myconf
@@ -73,7 +77,7 @@ from a command shell.
 After Cassandra is started, execute 
 [source,shell]
 ---- 
-<CASSANDRA_INSTALL_DIR>/bin/cassandra-cli -f <PACKAGE_UNZIP_DIR>/resources/cassandra/cassandra-setup-single-node.db
+<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <PACKAGE_UNZIP_DIR>/resources/cassandra/cassandra-setup-single-node.db
 ----
 from a command shell to setup the keyspace and create the required tables.
 
