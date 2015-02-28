@@ -49,8 +49,12 @@
         </auth-constraint>
     </security-constraint>
 	<login-config>
-		<auth-method>BASIC</auth-method>
-		<realm-name>EtmRealm</realm-name>
+        <auth-method>FORM</auth-method>
+        <realm-name>EtmRealm</realm-name>
+        <form-login-config> 
+            <form-login-page>/login/login.html</form-login-page> 
+            <form-error-page>/login/login-error.html</form-error-page> 
+        </form-login-config>
 	</login-config>
 	<security-role>
 	   <role-name>etm-administrator</role-name>
