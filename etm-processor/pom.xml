@@ -3,12 +3,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.holster.etm</groupId>
+		<groupId>com.jecstar.etm</groupId>
 		<artifactId>etm-aggregator</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../etm-aggregator/pom.xml</relativePath>
 	</parent>	
-	<groupId>com.holster.etm</groupId>
+	<groupId>com.jecstar.etm</groupId>
 	<artifactId>etm-processor</artifactId>
 	<packaging>jar</packaging>
 	<description>The etm-processor handles events that need to be stored.</description>
@@ -19,7 +19,7 @@
             <artifactId>cassandra-driver-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.holster.etm</groupId>
+            <groupId>com.jecstar.etm</groupId>
             <artifactId>etm-core</artifactId>
         </dependency>
         <dependency>

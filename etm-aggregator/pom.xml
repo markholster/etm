@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.holster.etm</groupId>
+	<groupId>com.jecstar.etm</groupId>
 	<artifactId>etm-aggregator</artifactId>
 	<packaging>pom</packaging>
 	<version>1.0.0-SNAPSHOT</version>
@@ -45,43 +45,43 @@
 				<version>2.1.4</version>
 			</dependency>
 			<dependency>
-			    <groupId>com.holster.etm</groupId>
+			    <groupId>com.jecstar.etm</groupId>
 			    <artifactId>etm-core</artifactId>
 			    <version>${project.version}</version>
 			</dependency>			
             <dependency>
-                <groupId>com.holster.etm</groupId>
+                <groupId>com.jecstar.etm</groupId>
                 <artifactId>etm-jee-configurator-core</artifactId>
                 <version>${project.version}</version>
             </dependency>           
 			<dependency>
-			    <groupId>com.holster.etm</groupId>
+			    <groupId>com.jecstar.etm</groupId>
 			    <artifactId>etm-gui-jee-configurator</artifactId>
 			    <version>${project.version}</version>
 			</dependency>			
 			<dependency>
-				<groupId>com.holster.etm</groupId>
+				<groupId>com.jecstar.etm</groupId>
 				<artifactId>etm-processor-jee-configurator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-			    <groupId>com.holster.etm</groupId>
+			    <groupId>com.jecstar.etm</groupId>
 			    <artifactId>etm-scheduler-jee-configurator</artifactId>
 			    <version>${project.version}</version>
 			</dependency>			
 			<dependency>
-				<groupId>com.holster.etm</groupId>
+				<groupId>com.jecstar.etm</groupId>
 				<artifactId>etm-processor</artifactId>
 				<version>${project.version}</version>
 			</dependency>
             <dependency>
-                <groupId>com.holster.etm</groupId>
+                <groupId>com.jecstar.etm</groupId>
                 <artifactId>etm-processor-mdb</artifactId>
                 <version>${project.version}</version>
                 <type>ejb</type>
             </dependency>           
             <dependency>
-                <groupId>com.holster.etm</groupId>
+                <groupId>com.jecstar.etm</groupId>
                 <artifactId>etm-processor-rest</artifactId>
                 <version>${project.version}</version>
                 <type>war</type>

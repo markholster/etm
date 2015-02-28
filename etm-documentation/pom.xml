@@ -3,12 +3,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.holster.etm</groupId>
+		<groupId>com.jecstar.etm</groupId>
 		<artifactId>etm-aggregator</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 		<relativePath>../etm-aggregator/pom.xml</relativePath>
 	</parent>
-	<groupId>com.holster.etm</groupId>
+	<groupId>com.jecstar.etm</groupId>
 	<artifactId>etm-documentation</artifactId>
 	<packaging>jdocbook</packaging>
 	<description>The etm documentation project.</description>
@@ -51,7 +51,7 @@
 					<attributes>
 					   <etm_version>${project.version}</etm_version>
 					   <java_version>${project.jdk.level}</java_version>
-					   <cassandra_version>2.1.2</cassandra_version>
+					   <cassandra_version>2.0.12</cassandra_version>
 					   <solr_version>4.10.3</solr_version>
 					   <zookeeper_version>3.4.6</zookeeper_version>
 					   <wildfly_version>8.2.0.Final</wildfly_version>
