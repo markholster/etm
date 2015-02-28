@@ -82,6 +82,7 @@ public class StatisticsService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getMessagesExpirationForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+		// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
 		if (max == 0) {
 			max = 5;
 		}
@@ -173,6 +174,7 @@ public class StatisticsService {
 		if (startTime > endTime) {
 			return null;
 		}
+		// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
 		List<ExpiredMessage> statistics = this.statisticsRepository.getApplicationMessagesExpirationStatistics(application, startTime, endTime, max);
 		StringWriter writer = new StringWriter();
 		writeMessagesExpirationStatistics(writer, statistics);

@@ -12,7 +12,7 @@
 	<artifactId>etm-documentation</artifactId>
 	<packaging>jdocbook</packaging>
 	<description>The etm documentation project.</description>
-	<name>Enterprise Telemetry Monitor - Documentation</name>
+	<name>Enterprise Telemetry Monitor - documentation</name>
 	<properties>
 		<docname>ETM_Documentation</docname>
 		<bookname>ETM Documentation</bookname>
