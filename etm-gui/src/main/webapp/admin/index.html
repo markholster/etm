@@ -32,6 +32,7 @@
 							<li id="solr_tab_header" role="presentation"><a href="#solr_tab" aria-controls="home" role="tab" data-toggle="tab">Solr</a></li>
 							<li id="cassandra_tab_header" role="presentation"><a href="#cassandra_tab" aria-controls="home" role="tab" data-toggle="tab">Cassandra</a></li>
 							<li id="status_tab_header" role="presentation"><a href="#status_tab" aria-controls="home" role="tab" data-toggle="tab">Status</a></li>
+							<li id="license_tab_header" role="presentation"><a href="#license_tab" aria-controls="home" role="tab" data-toggle="tab">License</a></li>
 						</ul>
 						<br />
 						<!-- Tab panes -->
@@ -257,6 +258,29 @@
 								</form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="status_tab"></div>
+							<div role="tabpanel" class="tab-pane" id="license_tab">
+                                <form id="license_form" class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="license_company"
+                                            class="col-sm-3 control-label">Licensed to</label>
+                                        <div class="col-sm-3">
+                                            <input id="license_company" type="text" class="form-control" readonly="readonly" />
+                                        </div>
+                                        <label for="license_expiry" class="col-sm-3 control-label">License expiry</label>
+                                        <div class="col-sm-3">
+                                            <input id="license_expiry" type="text" class="form-control" readonly="readonly"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="license_company"
+                                            class="col-sm-3 control-label">New license key</label>
+                                        <div class="col-sm-9">
+                                            <input id="license_key" type="text" class="form-control" required="required"/>
+                                        </div>
+                                    </div>
+                                    <input type="submit" class="btn btn-default" value="Save" />
+                                </form>							
+							</div>
 						</div>
 					</div>
 				</div>
@@ -270,6 +294,7 @@ $(function () {
 		$('#etm_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
 		$('#solr_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
 		$('#cassandra_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
+		$('#license_form').attr('action', '../rest/system/license');
 		$.getJSON('../rest/admin/node/' + encodeURIComponent(nodeName), function (data) {
 			if (!data) {
 			    return;
@@ -430,6 +455,35 @@ $(function () {
 	      });
 	};
 
+   var loadLicenseData = function(endpointName) {
+          $.getJSON('../rest/system/info', function (data) {
+                if (!data) {
+                    return;
+                }
+                $('#license_company').val(data.companyName);
+                $('#license_expiry').val(new Date(data.licenseExpiry).toUTCString());
+                $('#license_key').val('');
+          });
+    };
+
+    $('#license_form').submit(function( event ) {
+    	event.preventDefault();
+    	var json = "{";
+    	json += '"license.key":"' + $('#license_key').val() + '"';
+    	json += "}";
+        $.ajax({
+            type: 'POST',
+            url: $('#license_form').attr('action'),
+            data: json,
+            contentType: 'application/json',
+            dataType: 'json',
+            complete: function () {
+            	loadLicenseData();
+            }
+         });
+    });
+    
+
 	var handleSubmit = function(formId) {
 		  $('#' + formId).submit(function( event ) {
 		        event.preventDefault();
@@ -509,6 +563,7 @@ $(function () {
 
 	loadData('cluster');
 	loadEndpointData('*');
+	loadLicenseData();
 	handleSubmit('etm_form');
 	handleSubmit('solr_form');
 	handleSubmit('cassandra_form');

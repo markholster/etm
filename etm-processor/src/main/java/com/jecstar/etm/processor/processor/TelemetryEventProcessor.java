@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.solr.client.solrj.SolrServer;
 
 import com.datastax.driver.core.Session;
+import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -84,6 +85,9 @@ public class TelemetryEventProcessor {
 	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {
 		if (!this.started) {
 			throw new IllegalSelectorException();
+		}
+		if (this.etmConfiguration.getLicenseExpriy().getTime() < System.currentTimeMillis()) {
+			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
 		}
 		long sequence = this.ringBuffer.next();
 		try {

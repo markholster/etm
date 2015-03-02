@@ -25,6 +25,7 @@
 		<module>../etm-scheduler-jee-configurator</module>
 		<module>../etm-scheduler-retention</module>
 		<module>../etm-documentation</module>
+		<module>../etm-license-generator</module>
 	</modules>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

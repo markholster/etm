@@ -13,6 +13,10 @@
 			<url-pattern>/rest/admin/*</url-pattern>
 		</web-resource-collection>
         <web-resource-collection>
+            <web-resource-name>SystemRest</web-resource-name>
+            <url-pattern>/rest/system/*</url-pattern>
+        </web-resource-collection>
+        <web-resource-collection>
             <web-resource-name>AdminHtml</web-resource-name>
             <url-pattern>/admin/*</url-pattern>
         </web-resource-collection>
