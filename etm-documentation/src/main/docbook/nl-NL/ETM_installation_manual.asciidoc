@@ -155,21 +155,89 @@ Voor uitgebreide handleidingen dient u de handleidingen van Wildfly, Solr en Cas
 * http://lucene.apache.org/solr/resources.html#documentation[Solr documentatie]
 * http://www.datastax.com/docs[Cassandra documentatie @Datastax]
 
-== Zookeeper cluster
+=== Zookeeper cluster
 
 Browse naar http://zookeeper.apache.org/doc/r3.4.6/zookeeperAdmin.html#sc_zkMulitServerSetup en voer de installatie uit. Belangrijk is dat er gekozen wordt voor een oneven
-aantal instanties in het Zookeeper enseble. Aangeraden wordt een ensemble van maximaal 3 of 5 Zookeeper instanties samen te stellen. Bij 3 instanties kan er 1 instantie 
+aantal instanties in het Zookeeper ensemble. Aangeraden wordt een ensemble van maximaal 3 of 5 Zookeeper instanties samen te stellen. Bij 3 instanties kan er 1 instantie 
 uitvallen zonder dat dit invloed heeft op de werking van de Zookeeper cluster. Bij 5 instanties mogen er 2 instanties uitvallen. Hierdoor is het mogelijk onderhoud te plegen 
 op 1 instantie, en mag er tijdens dat onderhoud nog een instantie uitvallen zonder dat dit invloed heeft op de werking van de Zookeeper cluster.
 Meer dan 5 instanties in een ensemble wordt afgeraden, doordat dit een negatieve impact op de performance gaat hebben.
 
-== Solr cluster
+Nadat u Zookeeper heeft geinstalleerd moet er enkele paden in Zookeeper aangemaakt worden. Open hiervoor een Zookeeper shell door 
+[source,shell]
+---- 
+<ZOOKEEPER_INSTALL_DIR>/bin/zkCli.sh
+----
+uit te voeren vanaf een command prompt.
 
+In de Zookeeper shell voert u vervolgens de volgende commando's uit:
+[source,shell]
+---- 
+create /etm etm               
+create /etm/dev etm-development
+create /etm/dev/solr solr-development
+quit
+----
 
+Bovenstaande commando's maken een 'development' omgeving aan. U kunt bijvoorbeeld een productie omgeving aanmaken door de volgende commando's uit te voeren:
+[source,shell]
+---- 
+create /etm etm               
+create /etm/prod etm-production
+create /etm/prod/solr solr-production
+quit
+----
 
-== Cassandra cluster
+Beide omgevingen kunnen naast elkaar bestaan in dezelfde Zookeeper ensemble, maar wilt u een strikt gescheiden OTAP omgeving dan behoort iedere omgeving zijn eigen
+Zookeeper ensemble te hebben. Belangrijk is te onthouden wat het pad naar de huidige omgeving is (bijvoorbeeld '/etm/prod'). Deze heeft u later nodig in meerdere 
+configuratie stappen.
 
-== Wildfly cluster
+=== Solr cluster
+Browse naar https://cwiki.apache.org/confluence/display/solr/Apache+Solr+Reference+Guide en maak u vertrouwd met het 'SolrCloud' hoofdstuk. Eventueel kunt u
+enkele voorbeelden uit proberen door bijvoorbeeld 
+[source,shell]
+---- 
+<SOLR_INSTALL_DIR>/bin/solr.sh -e cloud               
+----
+uit te voeren. Dit script helpt u bij het opzetten van een cluster, waarbij de Solr index is gedistribueerd over meerdere Solr instanties. Voordat u begint aan de
+daadwerkelijke installatie is het verstandig met een verse Solr installatie te beginnen. Extract eventueel het gedownloade Solr archief opnieuw naar een schone locatie.
+ 
+ETM levert een voorgedefinieerde configuratie set die tijdens het opzetten van het cluster gebruikt kan worden. Kopieer hiervoor de directory
+<ETM_UNZIP_DIR>/resources/solr/etm_configs naar <SOLR_INSTALL_DIR>/server/solr/configsets/
+
+Indien u uw Zookeeper ensemble nog niet gestart heeft, doe dit dan en voer hierna
+[source,shell]
+---- 
+<SOLR_INSTALL_DIR>/bin/solr -z localhost:2181/etm/dev/solr -e cloud               
+---- 
+uit vanaf een command prompt. 
+
+TIP: Uiteraard kan het voorkomen dat uw Zookeeper ensamble op (een) andere machine(s) staat, en dat u een ander path voor Solr in Zookeeper hebt aangemaakt. Pas in
+dat geval de connectiestring achter de '-z' optie aan in het commando.
+
+Een connectie naar een geclusterd Zookeeper productie ensamble zou er als volgt uit kunnen zien:
+[source,shell]
+---- 
+<SOLR_INSTALL_DIR>/bin/solr -z 10.0.0.1:2181,10.0.0.2:2181,10.0.0.3:2181/etm/prod/solr -e cloud               
+---- 
+
+Het script helpt u stapsgewijs bij het opzetten van een Solr cluster. Wees er zeker van dat u voor de collectienaam 'etm' gebruikt. Zodra er gevraagd wordt om een 
+naam van de configuratie directory beantwoord dan met 'etm_configs'. Deze waarde staat niet bij de opties, maar dit is de configuratie die door ETM geleverd is, en 
+welke u zojuist gekopieerd hebt.   
+
+Zodra het script klaar is, is uw Solr cluster aangemaakt en gestart. De data directory van uw instanties is te vinden onder <SOLR_INSTALL_DIR>/example/cloud/node<x>.
+U doet er verstandig aan deze directory te verplaatsen naar voor u logische plaats. Dit dit pas nadat u de instantie gestopt hebt.
+
+Starten van een instantie kan door 
+[source,shell]
+---- 
+<SOLR_INSTALL_DIR>/bin/solr start -c -p <poortnummer> -z <zookeeper-ensamble-connectie-string> -s <node-data-dir>/solr               
+---- 
+uit te voeren vanaf een command prompt.
+
+=== Cassandra cluster
+
+=== Wildfly cluster
 
 
 [[chap-ETM_Installation-ETM_Components]]
