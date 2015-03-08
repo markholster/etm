@@ -55,7 +55,10 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-eclipse-plugin</artifactId>
 				<configuration>
+<!-- versie nog niet ondersteund in de eclipse plugin 				
 					<jeeversion>7.0</jeeversion>
+ -->					
+					<wtpversion>2.0</wtpversion>
 					<buildcommands>
 						<buildcommand>org.eclipse.wst.common.project.facet.core.builder</buildcommand>
 						<buildcommand>org.eclipse.jdt.core.javabuilder</buildcommand>
@@ -67,6 +70,7 @@
 						<projectnature>org.eclipse.wst.common.project.facet.core.nature</projectnature>
 						<projectnature>org.eclipse.jdt.core.javanature</projectnature>
 					</projectnatures>
+<!-- 					
 					<additionalConfig>
 						<file>
 							<name>.settings/org.eclipse.wst.common.component</name>
@@ -77,6 +81,7 @@
 							<location>src/main/eclipse/org.eclipse.wst.common.project.facet.core.xml</location>
 						</file>
 					</additionalConfig>
+ -->					
 				</configuration>
 			</plugin>
 		</plugins>

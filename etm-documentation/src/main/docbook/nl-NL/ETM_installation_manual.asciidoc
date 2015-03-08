@@ -138,18 +138,39 @@ Selecteer het 'Configuration' menu en klik op System Properties op het submenu a
 De volgende stap is om de gewenste ETM componenten te deployen. Afhankelijk van uw behoefte kunt u 1 of meerdere componenten deployen vanaf de
 <ETM_UNZIP_DIR>/resources/artifacts directory.
 
-* etm-gui-{etm_version}.war, een web-based dashboard voor het monitoren en zoeken van events, en het beheren van ETM.
-* etm-processor-ws-{etm_version}.war, een processor die via een web service benaderd kan worden om events toe te voegen aan ETM.
-* etm-processor-rest-{etm_version}.war, een processor die via een rest call benaderd kan worden om events toe te voegen aan ETM.
-* etm-processor-mdb-{etm_version}.war, een processor die een MDB bevat die gebruikt kan worden om events toe te voegen aan ETM.
-* etm-scheduler-retention-{etm_version}.war, een scheduler die events verwijderd na een instelbare tijd.
-
 Kopieer de gewenste componenten naar <WILDFLY_INSTALL_DIR>/standalone/deployments waar ze opgepakt worden door Wildfly. Het deployment proces
 duur hierna enkele seconden. Bekijk voor een gedetaillerd overzicht van de componenten en hun instellingen het hoofdstuk <<chap-ETM_Installation-ETM_Components, ETM componenten>.
 
 [[chap-ETM_Installation-Clustered_Installation]]
 == Geclusterde installatie
+IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Solr en Cassandra om
+volledig te functioneren. Hoe u uw Wildfly, Zookeeper, Solr en Cassandra cluster in gaat richten hangt af van uw wensen en kan niet in 1 enkele installatie 
+handleiding samengevat worden. Dit hoofdstuk kan als voorbeeld genomen worden voor het opzetten van uw Wildfly, Zookeeper, Solr en Cassandra clusters, 
+maar voor optimale situatie zullen deze clusters zo geconfigureerd moeten worden die ideaal zijn voor uw situatie. 
+
+Voor uitgebreide handleidingen dient u de handleidingen van Wildfly, Solr en Cassandra te raadplegen:
+
+* https://docs.jboss.org/author/display/WFLY8/Documentation[Wildfly documentatie]
+* http://zookeeper.apache.org/doc/r3.4.6/[Zookeeper documentatie]
+* http://lucene.apache.org/solr/resources.html#documentation[Solr documentatie]
+* http://www.datastax.com/docs[Cassandra documentatie @Datastax]
+
+== Zookeeper cluster
+
+== Solr cluster
+
+== Cassandra cluster
+
+== Wildfly cluster
+
 
 [[chap-ETM_Installation-ETM_Components]]
 == ETM componenten
 
+TODO: Licentie invoer beschrijven
+
+* etm-gui-{etm_version}.war, een web-based dashboard voor het monitoren en zoeken van events, en het beheren van ETM.
+* etm-processor-ws-{etm_version}.war, een processor die via een web service benaderd kan worden om events toe te voegen aan ETM.
+* etm-processor-rest-{etm_version}.war, een processor die via een rest call benaderd kan worden om events toe te voegen aan ETM.
+* etm-processor-mdb-{etm_version}.war, een processor die een MDB bevat die gebruikt kan worden om events toe te voegen aan ETM.
+* etm-scheduler-retention-{etm_version}.war, een scheduler die events verwijdert na een instelbare tijd.
