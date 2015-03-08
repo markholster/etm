@@ -19,7 +19,7 @@ public class LicenseReader {
 	private static final String PUBLIC_KEY = "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtBCraSZNjqfqnDK/ESEqwZWZiDY6YRe72N8id//B5LHv7eO41cgRrKzAIn+WH10C3jOjGpJjF1RITKTJg1FM4CK+L66hYP3HQVX8ghtQT99TkHuTkTGxbbBMZd4VF77TR5mTa0LjMTGz7+r9q0PAQEGPol/WqaOTxGHiizh7/qmA0hvAA4Ff39T0CsFyWFpI4hmfS5JG/sLsG8WKd125A1VJFk76ZH7kWP1ysrzGzbR1vSQznQpzz7GPpbzFgjDWJpvQzLREv7qSn1z7MGD4YKlLpgaYxoPUsF2kg4N3YzvZw+RfMTFS2v689VmLccZbySXSoqXyssSq6oMlXIwDSus5qFaB1TeYFJWHZh/t6QHHYeyI0RW6pzIAAG/yGF9uX13uiIb9J9+Qu02XAPstl0ZsVfAVdbzV1AKFMPVOCzMHk6T8YcLsFKedigeH4K2vzdQyHC4L0oZ+2xYiDp904Y7A20HfTyBhVJmz7OIKLjJbnuCh8wP1g9VAR9NC468/nhEdCBxT2nHvvJMLzw2xUBYNIoSw5rWd5+nO9kiCWD7OoNpL5nTRRlX3jBpuqEJmszQo3wF0jZEqAi/pYn3c60iEljtx8m8K8EgjylS/C49qBDUfCQnwfNQxGjxzEzeFc9+mJRox87kxYMUsCyT5u46f8P1wfHOWxzubRgcr0hECAwEAAQ==";
 
 	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-		final String licenseKey = "bD6NT9EsZmrg5uyDuVHL1R80sYh9b94ewJ6LdFHPh5RME6HDESUVaHrzYXMsldxgLAplW3Ku+uTNC38duGc9pc9aBgn4WZJk5m2tfB3uXsT8drS2vpdCpriyd/aUv5ZFI7bGPNLeVkCCkieDly4e41M0jzSUfzfiWXRAR+GnPjzoay4FxdFv1VbB/aLFIygAf4ynNNqAih+rrM90DNOT4PXs4yjihmdNX9WJTwQ+LN5MNv+vWB/aJZqkgHMlSReSQGPYoK6953isg1bXsos0NIv119yrf5koD7NrkeAVreswYTvb2+oUWPBngmcYfq2TSbQVqSl1kY4tv4mmLXjCqSGp9798NPa5eM1nuUr8ODhruhKaHRz65sJn3JHJaorVHZpk+xP3xWslhZksYbEPSyRAkTQpgiUSwOl7Ks8ZMJtcjApk3QFWyggZcRznX1rZN54iV2RCcLNmPm09diLEzGTvBQoa/pNcnKSzztgby/Ddu0UwfR8XlgDvF/8tmcZPRrJE/QQTy/Y6Fcyf1EAj8soEXUN2unhKHCzcRMlstpdbB3Ywjb/2jwMlx30MfPBaKZXCpuppPHzzh3i4sHZvyDFuTBCWY2FEGR6K5eCuHsAjZmFltPNMCm48DXFWmGaCsKHHTkpHLf3RCo2O7sc4PKUMEzzWqujhZxgZGCqK0k8=";
+		final String licenseKey = "ktvdc73PSvx7Wx/7QveysrsR3s3INESrAuhbsFq3n9tdQ7LRzIzjCievkEjQKMzPbET8s8r3laDQ8Fw+d4rqTVA+c3zCX3THEobxyUc+tPjgys3Ln7E+tg0VIhOzmGQklfR0E9SKW8WexG3NEUeO3fRe94rMAZdFkwnuWkn76daYzt6NFOqE9R9breX3KmYub2U+DeJuhhZP0olQ1Xb/G0HA0j47ZBuTawev0pGixRgxU6jggjh0TsRpsXmosu1fdELoSfiMGMCh5Qrh3LYXh8Uj7osoNCJulcUDNIDv4jigOHTivyK6AK1do3y8tsMoRHfqFekNX6UHI7bgplAfQ3HfeP9uAoiDTW3qlgGAxoqfoXEM+NwShEDyMti1QZkirE3dcR7xDNWY7HaGHOnembSIaD8XThssZFwoPVqB0yIqQqV8jb/b3lV/4d0m7pXu2i3i1X0PMlc9S5CGHwU3dVtfXvdcukRnAFJGW9ri1FuUlB8AtV/jHR4wKpqPgWVp+ipx6U80R54XeKmcg97DnHLusZkXBka2Rf3WB5NQEcu/EqO8HwSVamuO2nk9D838lOxIGOcyxNjVUC+W2pm5gU36dqvhIiqMTOgzLs8Y8GlufmuvJpVlsx0hrNKEqHl3CgRKSr2nbvolHYaGkovE8/WD0MVmssIg7ZbNWX0PFao=";
 		
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
@@ -32,7 +32,7 @@ public class LicenseReader {
 	    byte[] decryptedBytes = decrpyptCipher.doFinal(Base64.getDecoder().decode(licenseKey));
 	    String license = new String(decryptedBytes);
 	    String[] split = license.split(":");
-	    System.out.println("Licensed to " + split[0] + ", valid till " + new Date(Long.valueOf(split[1])));
+	    System.out.println("Licensed to " + split[0] + ", valid till " + new Date(Long.valueOf(split[1])) + ", type " + split[2]);
 
 	    
     }

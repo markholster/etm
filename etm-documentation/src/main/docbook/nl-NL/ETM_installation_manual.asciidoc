@@ -1,0 +1,155 @@
+= ETM Installatie Handleiding
+:doctype: book
+:docinfo: docinfo
+
+[[chap-ETM_Installation-Introduction]]
+
+== Introductie
+
+Deze handleiding leidt u door het installatie proces van Enterprise Telemetry Monitor, kortweg ETM. Indien u ETM wilt evalueren kies dan
+voor de <<chap-ETM_Installation-Single_Machine_Installation, installatie op 1 machine>>. Wilt u ETM in een productie omgeving wilt 
+installeren kies dan voor de <<chap-ETM_Installation-Clustered_Installation, geclusterde installatie>>.  
+
+[[chap-ETM_Installation-System_Requirements]]
+== Systeemeisen
+* Java {java_version}
+* Wildfly {wildfly_version}
+* Cassandra {cassandra_version}
+* Solr {solr_version}
+* Zookeeper {zookeeper_version}
+
+ETM is ontwikkeld en getest met OpenJDK {java_version} op Fedora Linux. Aangezien ETM een pure Java applicatie is, is het aannemelijk
+dat ETM ook zonder problemen op andere besturingssystemen werkt.
+
+[[chap-ETM_Installation-Single_Machine_Installation]]
+== Installatie op 1 machine
+IMPORTANT: Voor evalutatie doeleinden kan het handig zijn ETM op 1 enkele machine te installeren. Dit is echter geen ondersteunde productie
+configuratie. Om de volledige voordelen op het gebied van schaalbaarheid en hoge beschikbaarheid die ETM ondersteund te benutten is een
+<<chap-ETM_Installation-Clustered_Installation, geclusterde installatie>> noodzakelijk.  
+
+Voor deze installatie gelden de volgende specificaties:
+* Een standalone Solr {solr_version} installatie, waarbinnen een Zookeper instantie draait.
+* Een standalone Cassandra {cassandra_version} installatie.
+* Een standalone Wildfly {wildfly_version} draaiend op het 'standalone' profiel.
+
+Voor deze installatie geldt dat er geen replicatie, hoge beschikbaarheid en schaalbaarheid mogelijk is.
+
+=== Standalone Solr
+Download Solr {solr_version} van de Solr http://lucene.apache.org/solr/[website], en extract de bestanden van het gedownloadde archief. Het archief
+kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <SOLR_INSTALL_DIR> genoemd.
+
+Om Solr te starten voer
+[source,shell] 
+----
+<SOLR_INSTALL_DIR>/bin/solr start -c
+----
+uit vanaf een command prompt.
+
+Browse naar http://localhost:8983/solr/ om te controleren dat Solr correct gestart is.
+
+Nadat Solr is gestart kan de ETM configuratie voor Solr worden doorgevoerd. Kopieer hiervoor het bestand <ETM_UNZIP_DIR>/resources/solr/single-node-conf/schema.xml
+naar <SOLR_INSTALL_DIR>/example/solr/collection1/conf/schema.xml. Het bestaande bestand mag overschreven worden.
+
+Om de configuratie wijzigingen door te voeren moet Solr herstart worden. Voer hiervoor het volgende commando uit in een command prompt. 
+[source,shell]
+----
+<SOLR_INSTALL_DIR>/bin/solr restart -c
+----
+
+=== Standalone Cassandra
+Download Cassandra {cassandra_version} van de Cassandra http://cassandra.apache.org/download/[website], en extract de bestanden van het gedownloadde archief.
+Het archief kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <CASSANDRA_INSTALL_DIR> genoemd.
+
+Om Cassandra te starten voer
+[source,shell] 
+----
+<CASSANDRA_INSTALL_DIR>/bin/cassandra
+----
+uit vanaf een command prompt.
+
+Nadat Cassandra is gestart voer
+[source,shell]
+---- 
+<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-single-node.db
+----
+uit vanaf een command promt. Het uitgevoerde script zorgt ervoor dat de ETM keyspace + bijbehorende tabellen worden aangemaakt.
+
+=== Standalone Wildfly
+Download Wildfly {wildfly_version} van de Wildfly http://wildfly.org/downloads/[website], en extract de bestanden van het gedownloadde archief.
+Het archief kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <WILDFLY_INSTALL_DIR> genoemd.
+
+Om een administratieve gebruiker toe te voegen voer 
+[source,shell]
+----
+<WILDFLY_INSTALL_DIR>/bin/add-user.sh
+----
+uit vanaf een command prompt. Wees er zeker van dat de gebruiker een 'Management User' is die is toegevoegd aan het 'ManagementRealm'.
+
+Deze gebuiker is nodig om in het administration console van Wildfly in te loggen. ETM heeft ook een gebruiker nodig waarmee ingelogd kan worden in ETM zelf.
+Voer hiervoor nogmaals het add-user.sh script uit, maar zorg er deze keer voor dat de gebruiker een 'Application User' is die is toegevoegd aan het 'EtmRealm'. 
+Ook moet de gebruiker de volgende rollen krijgen:
+* etm-administrator
+* etm-searcher
+* etm-controller 
+
+Open nu het bestand <WILDFLY_INSTALL_DIR>/standalone/configuration/standalone.xml en voeg de volgende xml snippet toe aan de 'security-realms':
+[source,xml]
+----
+<security-realm name="EtmRealm">
+    <authentication>
+        <local default-user="$local" allowed-users="*" skip-group-loading="true"/>
+        <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+    </authentication>
+    <authorization>
+        <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+    </authorization>
+</security-realm>
+----
+
+Voeg in ditzelfde bestand de volgende xml snippet toe aan de 'security-domains':
+[source,xml]
+----
+<security-domain name="etm" cache-type="default">
+    <authentication>
+        <login-module code="RealmDirect" flag="required">
+            <module-option name="password-stacking" value="useFirstPass"/>
+        </login-module>
+    </authentication>
+</security-domain>
+----
+
+Wildfly is nu klaar om gestart te worden. Voer hiervoor 
+[source,shell]
+---- 
+<WILDFLY_INSTALL_DIR>/bin/standalone.sh
+----
+uit vanaf een command prompt.
+
+Nadat Wildfly gestart is open http://localhost:9990/console/ in een browser en login met de administratieve gebruiker die u hiervoor aangemaakt heeft. 
+Selecteer het 'Configuration' menu en klik op System Properties op het submenu aan de linker kant. Voeg hier de volgende properties toe:
+[options="header"]
+|=======================
+|Key|Value
+|etm.nodename|<een unieke node name>
+|etm.zookeeper.clients|127.0.0.1:9983
+|etm.zookeeper.namespace|demo
+|=======================
+
+De volgende stap is om de gewenste ETM componenten te deployen. Afhankelijk van uw behoefte kunt u 1 of meerdere componenten deployen vanaf de
+<ETM_UNZIP_DIR>/resources/artifacts directory.
+
+* etm-gui-{etm_version}.war, een web-based dashboard voor het monitoren en zoeken van events, en het beheren van ETM.
+* etm-processor-ws-{etm_version}.war, een processor die via een web service benaderd kan worden om events toe te voegen aan ETM.
+* etm-processor-rest-{etm_version}.war, een processor die via een rest call benaderd kan worden om events toe te voegen aan ETM.
+* etm-processor-mdb-{etm_version}.war, een processor die een MDB bevat die gebruikt kan worden om events toe te voegen aan ETM.
+* etm-scheduler-retention-{etm_version}.war, een scheduler die events verwijderd na een instelbare tijd.
+
+Kopieer de gewenste componenten naar <WILDFLY_INSTALL_DIR>/standalone/deployments waar ze opgepakt worden door Wildfly. Het deployment proces
+duur hierna enkele seconden. Bekijk voor een gedetaillerd overzicht van de componenten en hun instellingen het hoofdstuk <<chap-ETM_Installation-ETM_Components, ETM componenten>.
+
+[[chap-ETM_Installation-Clustered_Installation]]
+== Geclusterde installatie
+
+[[chap-ETM_Installation-ETM_Components]]
+== ETM componenten
+

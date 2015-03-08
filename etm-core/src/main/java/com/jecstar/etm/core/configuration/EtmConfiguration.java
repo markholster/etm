@@ -78,6 +78,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 
 	private String companyName;
 	private Date licenseExpiry;
+	private LicenseType licenseType;
 	
 	public EtmConfiguration(String nodeName, String zkConnections, String namespace, String component) throws Exception {
 		String solrZkConnectionString = Arrays.stream(zkConnections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
@@ -142,6 +143,13 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	    	this.licenseExpiry = new Date();
 	    	return;
 	    }
+	    String[] licenseData = decodeLicenseData(currentData.getData());
+	    this.companyName = licenseData[0];
+	    this.licenseExpiry = new Date(Long.valueOf(licenseData[1]));
+	    this.licenseType = LicenseType.valueOf(licenseData[2]);
+    }
+	
+	private String[] decodeLicenseData(byte[] data) {
 	    try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 			X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
@@ -151,22 +159,17 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		    Cipher decrpyptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		    decrpyptCipher.init(Cipher.DECRYPT_MODE, publicKey);
 		    
-		    byte[] decryptedBytes = decrpyptCipher.doFinal(Base64.getDecoder().decode(currentData.getData()));
+		    byte[] decryptedBytes = decrpyptCipher.doFinal(Base64.getDecoder().decode(data));
 		    String license = new String(decryptedBytes);
 		    String[] split = license.split(":");
-		    if (split.length != 2) {
+		    if (split.length != 3) {
 		    	throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
 		    }
-		    this.companyName = split[0];
-		    this.licenseExpiry = new Date(Long.valueOf(split[1]));
-		    if (new Date().after(this.licenseExpiry)) {
-		    	throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
-		    }
+		    return split;
 	    } catch (Exception e) {
 	    	throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION, e);
-	    }
-	    
-    }
+	    }		
+	}
 	
 	private void fillDefaults(Properties properties) {
 		checkDefaultValue(properties, ETM_ENHANCING_HANDLER_COUNT, "5");
@@ -369,6 +372,9 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
     }
 	
 	public void setLicenseKey(String licenseKey) {
+		// Check if the key is valid, by decoding the String.
+		decodeLicenseData(licenseKey.getBytes());
+		// TODO Controleren of de huidige versie een trial is en de nieuwe ook. Als dat zo is, dan de key afwijzen?
 		try {
 			Stat stat = this.client.checkExists().forPath(LICENSE_KEY_PATH);
 			if (stat != null) {
@@ -447,5 +453,9 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			EtmConfiguration.this.loadLicenseData(EtmConfiguration.this.licenseNode);
         }
 		
+	}
+	
+	private enum LicenseType {
+		TRIAL, SUBSCRIPTION
 	}
  }

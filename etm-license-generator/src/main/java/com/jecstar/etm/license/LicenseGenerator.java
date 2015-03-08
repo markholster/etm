@@ -28,8 +28,11 @@ public class LicenseGenerator {
 		calendar.set(Calendar.SECOND, 59);
 		calendar.set(Calendar.MILLISECOND, 999);
 	    final String company = "Jecstar";
+	    final LicenseType licenseType = LicenseType.TRIAL;
+	    final long expiry = calendar.getTimeInMillis();
 	    
-		final String licenseKey = company + ":" + calendar.getTimeInMillis();
+		final String licenseKey = company + ":" + expiry + ":" + licenseType.name();
+		
 		
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 		PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(
