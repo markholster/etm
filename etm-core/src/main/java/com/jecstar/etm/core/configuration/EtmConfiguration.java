@@ -2,8 +2,11 @@ package com.jecstar.etm.core.configuration;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
@@ -14,7 +17,10 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -112,7 +118,13 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		this.licenseNode = new NodeCache(this.client, LICENSE_KEY_PATH);
 		this.licenseNode.getListenable().addListener(new ReloadLicenseListener());
 		this.licenseNode.start();
-		loadLicenseData(this.licenseNode);
+		try {
+			loadLicenseData(this.licenseNode);
+		} catch (Exception e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Error loading license data", e);
+			}
+		}
 		
 		ReloadEtmPropertiesListener reloadListener = new ReloadEtmPropertiesListener();
 		this.globalEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/etm.properties");
@@ -166,9 +178,10 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		    	throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
 		    }
 		    return split;
-	    } catch (Exception e) {
-	    	throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION, e);
-	    }		
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException
+		        | IllegalBlockSizeException | BadPaddingException e) {
+			throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION, e);
+		}
 	}
 	
 	private void fillDefaults(Properties properties) {

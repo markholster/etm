@@ -259,6 +259,7 @@
 							</div>
 							<div role="tabpanel" class="tab-pane" id="status_tab"></div>
 							<div role="tabpanel" class="tab-pane" id="license_tab">
+							    <div id="licenseErrorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
                                 <form id="license_form" class="form-horizontal">
                                     <div class="form-group">
                                         <label for="license_company"
@@ -468,6 +469,7 @@ $(function () {
 
     $('#license_form').submit(function( event ) {
     	event.preventDefault();
+    	$("#licenseErrorBox").hide('fast');
     	var json = "{";
     	json += '"license.key":"' + $('#license_key').val() + '"';
     	json += "}";
@@ -479,6 +481,10 @@ $(function () {
             dataType: 'json',
             complete: function () {
             	loadLicenseData();
+            },
+            error: function(jqXHR) {
+                $("#licenseErrorBox").text('Error updating license: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+                $("#licenseErrorBox").show('fast');
             }
          });
     });

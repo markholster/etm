@@ -4,12 +4,15 @@ public class EtmException extends RuntimeException {
 
 	private static final long serialVersionUID = 3169443490910515556L;
 	
+	
 	public static final int WRAPPED_EXCEPTION 				= 100_000;
 	public static final int INVALID_LICENSE_KEY_EXCEPTION 	= 100_001;
 	public static final int LICENSE_EXPIRED_EXCEPTION 		= 100_002;
 	public static final int CONFIGURATION_LOAD_EXCEPTION 	= 100_003;
 	public static final int UNMARSHALLER_CREATE_EXCEPTION 	= 100_004;
-	
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper!!!!!
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	private int errorCode;
 

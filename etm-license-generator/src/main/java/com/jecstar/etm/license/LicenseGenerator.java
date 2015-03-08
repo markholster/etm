@@ -28,7 +28,7 @@ public class LicenseGenerator {
 		calendar.set(Calendar.SECOND, 59);
 		calendar.set(Calendar.MILLISECOND, 999);
 	    final String company = "Jecstar";
-	    final LicenseType licenseType = LicenseType.TRIAL;
+	    final LicenseType licenseType = LicenseType.SUBSCRIPTION;
 	    final long expiry = calendar.getTimeInMillis();
 	    
 		final String licenseKey = company + ":" + expiry + ":" + licenseType.name();

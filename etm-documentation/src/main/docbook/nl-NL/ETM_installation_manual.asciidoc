@@ -125,7 +125,7 @@ Wildfly is nu klaar om gestart te worden. Voer hiervoor
 ----
 uit vanaf een command prompt.
 
-Nadat Wildfly gestart is open http://localhost:9990/console/ in een browser en login met de administratieve gebruiker die u hiervoor aangemaakt heeft. 
+Open http://localhost:9990/console/ in een browser nadat Wildfly gestart is en login met de administratieve gebruiker die u hiervoor aangemaakt heeft. 
 Selecteer het 'Configuration' menu en klik op System Properties op het submenu aan de linker kant. Voeg hier de volgende properties toe:
 [options="header"]
 |=======================
@@ -151,7 +151,7 @@ maar voor optimale situatie zullen deze clusters zo geconfigureerd moeten worden
 Voor uitgebreide handleidingen dient u de handleidingen van Wildfly, Solr en Cassandra te raadplegen:
 
 * https://docs.jboss.org/author/display/WFLY8/Documentation[Wildfly documentatie]
-* http://zookeeper.apache.org/doc/r3.4.6/[Zookeeper documentatie]
+* http://zookeeper.apache.org/doc/r{zookeeper_version}/[Zookeeper documentatie]
 * http://lucene.apache.org/solr/resources.html#documentation[Solr documentatie]
 * http://www.datastax.com/docs[Cassandra documentatie @Datastax]
 

@@ -209,9 +209,9 @@ $(function () {
             });
             currentStart = start + data.numReturned;
         },
-        error : function(jqXHR, textStatus, errorThrown) {
+        error : function(jqXHR) {
         	$("#ajax_loader").hide();
-        	$("#errorBox").text('Error executing query: ' +  errorThrown);
+        	$("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
         	$("#errorBox").show('fast');
         }});	
     };
