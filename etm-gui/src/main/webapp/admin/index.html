@@ -548,15 +548,19 @@ $(function () {
             $('#endpoint_tab').removeClass('hidden');
             $('#solr_tab_header').removeClass('hidden');
             $('#solr_tab').removeClass('hidden');
+            $('#license_tab_header').removeClass('hidden');
+            $('#license_tab').removeClass('hidden');
 		} else {
 			var activeTab = $("#tabs > ul > li.active > a").attr('href');
-            if ('#endpoint_tab' == activeTab || '#solr_tab' == activeTab) {
+            if ('#endpoint_tab' == activeTab || '#solr_tab' == activeTab || '#license_tab' == activeTab) {
                 $('#tabs a[href="#etm_tab"]').tab('show')
             }
 			$('#endpoint_tab_header').addClass('hidden');
             $('#endpoint_tab').addClass('hidden');
             $('#solr_tab_header').addClass('hidden');
             $('#solr_tab').addClass('hidden');
+            $('#license_tab_header').addClass('hidden');
+            $('#license_tab').addClass('hidden');
 	    }
 	    loadData(nodeName);    
 	});
