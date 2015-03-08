@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 
 import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -24,7 +24,7 @@ public class DisruptorEnvironment {
 	private final TelemetryEventRepositoryCassandraImpl telemetryEventRepository;
 	private final IndexingEventHandler[] indexingEventHandlers;
 
-	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final Session session, final SolrServer solrServer, final StatementExecutor statementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final Session session, final SolrClient solrClient, final StatementExecutor statementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(sourceCorrelations));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
@@ -36,7 +36,7 @@ public class DisruptorEnvironment {
 		int indexingHandlerCount = etmConfiguration.getIndexingHandlerCount();
 		this.indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
 		for (int i = 0; i < indexingHandlerCount; i++) {
-			this.indexingEventHandlers[i] = new IndexingEventHandler(solrServer, i, indexingHandlerCount);
+			this.indexingEventHandlers[i] = new IndexingEventHandler(solrClient, i, indexingHandlerCount);
 		}
 		
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();

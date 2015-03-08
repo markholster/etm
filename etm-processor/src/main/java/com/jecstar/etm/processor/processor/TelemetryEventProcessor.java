@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 
 import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.EtmException;
@@ -30,14 +30,14 @@ public class TelemetryEventProcessor {
 	
 	private ExecutorService executorService;
 	private Session cassandraSession;
-	private SolrServer solrServer;
+	private SolrClient solrClient;
 	private EtmConfiguration etmConfiguration;
 	
 	private DisruptorEnvironment disruptorEnvironment;
 	private StatementExecutor statementExecutor;
 	
 
-	public void start(final ExecutorService executorService, final Session session, final SolrServer solrServer, final EtmConfiguration etmConfiguration) {
+	public void start(final ExecutorService executorService, final Session session, final SolrClient solrClient, final EtmConfiguration etmConfiguration) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
@@ -45,9 +45,9 @@ public class TelemetryEventProcessor {
 		this.executorService = executorService;
 		this.cassandraSession = session;
 		this.statementExecutor = new StatementExecutor(this.cassandraSession);
-		this.solrServer = solrServer;
+		this.solrClient = solrClient;
 		this.etmConfiguration = etmConfiguration;
-		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, session, solrServer, this.statementExecutor, this.sourceCorrelations);
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, session, solrClient, this.statementExecutor, this.sourceCorrelations);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
 	
@@ -55,7 +55,7 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.cassandraSession, this.solrServer, this.statementExecutor, this.sourceCorrelations);
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.cassandraSession, this.solrClient, this.statementExecutor, this.sourceCorrelations);
 		RingBuffer<TelemetryEvent> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
@@ -78,7 +78,7 @@ public class TelemetryEventProcessor {
 		this.executorService.shutdown();
 		this.disruptorEnvironment.shutdown();
 		this.cassandraSession.close();
-		this.solrServer.shutdown();
+		this.solrClient.shutdown();
 	}
 
 

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 
@@ -23,14 +23,14 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 	
 	//TODO this should be configurable
 	private final int nrOfDocumentsPerRequest = 250;
-	private final SolrServer server;
+	private final SolrClient client;
 	private final long ordinal;
 	private final long numberOfConsumers;
 	private final List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>(this.nrOfDocumentsPerRequest);
 	private int docIx = -1;
 	
-	public IndexingEventHandler(final SolrServer server, final long ordinal, final long numberOfConsumers) {
-		this.server = server;
+	public IndexingEventHandler(final SolrClient client, final long ordinal, final long numberOfConsumers) {
+		this.client = client;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		for (int i=0; i < this.nrOfDocumentsPerRequest; i++) {
@@ -86,7 +86,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 			document.addField("retention", event.retention);
 		}
 		if (this.docIx == this.nrOfDocumentsPerRequest - 1) {
-			this.server.add(this.documents, 15000);
+			this.client.add(this.documents, 15000);
 			this.docIx = -1;
 		}
 //		Statistics.indexingTime.addAndGet(System.nanoTime() - start);
@@ -97,7 +97,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 		if (this.docIx != -1) {
 			try {
 				// TODO commitWithin time should be in configuration
-	            this.server.add(this.documents.subList(0, this.docIx + 1), 60000);
+	            this.client.add(this.documents.subList(0, this.docIx + 1), 60000);
             } catch (SolrServerException e) {
 	            if (log.isErrorLevelEnabled()) {
 	            	log.logErrorMessage("Unable to add documents to indexer.", e);

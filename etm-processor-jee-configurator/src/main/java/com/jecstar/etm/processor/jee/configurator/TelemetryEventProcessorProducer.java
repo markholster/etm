@@ -10,7 +10,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 
 import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
@@ -40,7 +40,7 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 
 	@ProcessorConfiguration
 	@Inject
-	private SolrServer solrServer;
+	private SolrClient solrClient;
 
 	private TelemetryEventProcessor telemetryEventProcessor;
 
@@ -51,7 +51,7 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 			if (this.telemetryEventProcessor == null) {
 				this.telemetryEventProcessor = new TelemetryEventProcessor();
 				this.configration.addEtmConfigurationChangeListener(this);
-				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.session, this.solrServer,
+				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.session, this.solrClient,
 				        this.configration);
 			}
 		}

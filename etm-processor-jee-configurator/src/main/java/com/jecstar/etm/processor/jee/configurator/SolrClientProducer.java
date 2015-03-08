@@ -1,4 +1,4 @@
-package com.jecstar.etm.scheduler.jee.configurator;
+package com.jecstar.etm.processor.jee.configurator;
 
 import javax.annotation.ManagedBean;
 import javax.annotation.PreDestroy;
@@ -6,8 +6,8 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.impl.CloudSolrClient;
 
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
@@ -15,63 +15,63 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.SolrConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.jee.configurator.core.SchedulerConfiguration;
+import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
 @Singleton
-public class SolrServerProducer implements ConfigurationChangeListener {
+public class SolrClientProducer implements ConfigurationChangeListener {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
-	private static final LogWrapper log = LogFactory.getLogger(SolrServerProducer.class);
+	private static final LogWrapper log = LogFactory.getLogger(SolrClientProducer.class);
 
 	
-	@SchedulerConfiguration
+	@GuiConfiguration
 	@Inject
 	private EtmConfiguration configuration;
 
-	private ReconfigurableSolrServer solrServer;
+	private ReconfigurableSolrClient solrClient;
 
 	@Produces
-	@SchedulerConfiguration
-	public SolrServer getSolrServer() {
+	@GuiConfiguration
+	public SolrClient getSolrClient() {
 		synchronized (this) {
-			if (this.solrServer == null) {
+			if (this.solrClient == null) {
 				String solrCollection = this.configuration.getSolrCollectionName();
 				this.configuration.addSolrConfigurationChangeListener(this);
-				CloudSolrServer cloudSolrServer = new CloudSolrServer(this.configuration.getSolrZkConnectionString());
-				cloudSolrServer.setDefaultCollection(solrCollection);
-				this.solrServer = new ReconfigurableSolrServer(cloudSolrServer);
+				CloudSolrClient cloudSolrClient = new CloudSolrClient(this.configuration.getSolrZkConnectionString());
+				cloudSolrClient.setDefaultCollection(solrCollection);
+				this.solrClient = new ReconfigurableSolrClient(cloudSolrClient);
 
 			}
 		}
-		return this.solrServer;
+		return this.solrClient;
 	}
 
 	@PreDestroy
 	public void preDestroy() {
-		if (this.solrServer != null) {
-			this.solrServer.shutdown();
+		if (this.solrClient != null) {
+			this.solrClient.shutdown();
 		}
 	}
 
 	@Override
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (event.isAnyChanged(SolrConfiguration.SOLR_ZOOKEEPER_CONNECTION)) {
-			if (this.solrServer != null) {
+			if (this.solrClient != null) {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Detected a change in the configuration that needs to reconnect to Solr cluster.");
 				}
-				CloudSolrServer newCloudSolrServer = new CloudSolrServer(this.configuration.getSolrZkConnectionString());
-				newCloudSolrServer.setDefaultCollection(this.configuration.getSolrCollectionName());
-				this.solrServer.switchToCloudSolrServer(newCloudSolrServer);
+				CloudSolrClient newCloudSolrClient = new CloudSolrClient(this.configuration.getSolrZkConnectionString());
+				newCloudSolrClient.setDefaultCollection(this.configuration.getSolrCollectionName());
+				this.solrClient.switchToCloudSolrClient(newCloudSolrClient);
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Reconnected to Solr cluster.");
 				}
 			}
 		} else if (event.isChanged(SolrConfiguration.SOLR_COLLECTION)) {
-			this.solrServer.setDefaultCollection(this.configuration.getSolrCollectionName());
+			this.solrClient.setDefaultCollection(this.configuration.getSolrCollectionName());
 		}
 	}
 }

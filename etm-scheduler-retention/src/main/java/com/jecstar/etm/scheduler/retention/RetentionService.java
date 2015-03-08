@@ -16,7 +16,7 @@ import javax.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import com.datastax.driver.core.Session;
@@ -43,7 +43,7 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 
 	@Inject
 	@SchedulerConfiguration
-	private SolrServer solrServer;
+	private SolrClient solrClient;
 	
 	@Inject
 	@SchedulerConfiguration
@@ -73,8 +73,8 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 		    	}
 			    	try {
 			    		Date dateTill = new Date();
-			    		this.solrServer.deleteByQuery("retention:[* TO " + this.solrDateFormat.format(dateTill) + "]");
-			    		this.solrServer.commit(false, false, true);
+			    		this.solrClient.deleteByQuery("retention:[* TO " + this.solrDateFormat.format(dateTill) + "]");
+			    		this.solrClient.commit(false, false, true);
 				    	Date cleanupTime = new Date(DateUtils.normalizeTime(dateTill.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 				    	if (!this.lastCleanupTime.equals(cleanupTime)) {
 				    		this.lastCleanupTime = cleanupTime;

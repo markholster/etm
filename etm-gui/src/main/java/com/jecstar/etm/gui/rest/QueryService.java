@@ -14,8 +14,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
@@ -38,7 +38,7 @@ public class QueryService {
 	
 	@GuiConfiguration
 	@Inject
-	private SolrServer solrServer;
+	private SolrClient solrClient;
 	
 	@Inject
 	private QueryRepository queryRepository;
@@ -61,7 +61,7 @@ public class QueryService {
 		query.setRows(rows);
 		try {
 			long startTime = System.nanoTime();
-	        QueryResponse queryResponse = this.solrServer.query(query);
+	        QueryResponse queryResponse = this.solrClient.query(query);
 	        SolrDocumentList results = queryResponse.getResults();
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
