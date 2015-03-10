@@ -22,6 +22,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 
+import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.gui.rest.repository.QueryRepository;
@@ -81,12 +82,13 @@ public class QueryService {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error executing query '" + queryString + "'.", e);
         	}
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error executing query '" + queryString + "'.", e);
         	}
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
         }
-		return null;
 	}
 	
 	@GET
