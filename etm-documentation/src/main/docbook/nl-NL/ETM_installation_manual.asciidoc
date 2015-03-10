@@ -3,7 +3,6 @@
 :docinfo: docinfo
 
 [[chap-ETM_Installation-Introduction]]
-
 == Introductie
 
 Deze handleiding leidt u door het installatie proces van Enterprise Telemetry Monitor, kortweg ETM. Indien u ETM wilt evalueren kies dan
@@ -74,6 +73,7 @@ Nadat Cassandra is gestart voer
 ----
 uit vanaf een command promt. Het uitgevoerde script zorgt ervoor dat de ETM keyspace + bijbehorende tabellen worden aangemaakt.
 
+[[standalone-wildfly]]
 === Standalone Wildfly
 Download Wildfly {wildfly_version} van de Wildfly http://wildfly.org/downloads/[website], en extract de bestanden van het gedownloadde archief.
 Het archief kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <WILDFLY_INSTALL_DIR> genoemd.
@@ -143,10 +143,10 @@ duur hierna enkele seconden. Bekijk voor een gedetaillerd overzicht van de compo
 
 [[chap-ETM_Installation-Clustered_Installation]]
 == Geclusterde installatie
-IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Solr en Cassandra om
-volledig te functioneren. Hoe u uw Wildfly, Zookeeper, Solr en Cassandra cluster in gaat richten hangt af van uw wensen en kan niet in 1 enkele installatie 
+IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Zookeeper, Solr en Cassandra om
+volledig te functioneren. Hoe u uw Wildfly, Zookeeper, Solr en Cassandra clusters in gaat richten hangt af van uw wensen en kan niet in 1 enkele installatie 
 handleiding samengevat worden. Dit hoofdstuk kan als voorbeeld genomen worden voor het opzetten van uw Wildfly, Zookeeper, Solr en Cassandra clusters, 
-maar voor optimale situatie zullen deze clusters zo geconfigureerd moeten worden die ideaal zijn voor uw situatie. 
+maar voor optimale situatie zullen deze clusters zo geconfigureerd moeten worden dat deze ideaal zijn voor uw situatie. 
 
 Voor uitgebreide handleidingen dient u de handleidingen van Wildfly, Solr en Cassandra te raadplegen:
 
@@ -163,7 +163,7 @@ uitvallen zonder dat dit invloed heeft op de werking van de Zookeeper cluster. B
 op 1 instantie, en mag er tijdens dat onderhoud nog een instantie uitvallen zonder dat dit invloed heeft op de werking van de Zookeeper cluster.
 Meer dan 5 instanties in een ensemble wordt afgeraden, doordat dit een negatieve impact op de performance gaat hebben.
 
-Nadat u Zookeeper heeft geinstalleerd moet er enkele paden in Zookeeper aangemaakt worden. Open hiervoor een Zookeeper shell door 
+Nadat u Zookeeper heeft geinstalleerd en gestart moeten er enkele paden in Zookeeper aangemaakt worden. Open hiervoor een Zookeeper shell door 
 [source,shell]
 ---- 
 <ZOOKEEPER_INSTALL_DIR>/bin/zkCli.sh
@@ -193,6 +193,7 @@ Zookeeper ensemble te hebben. Belangrijk is te onthouden wat het pad naar de hui
 configuratie stappen.
 
 === Solr cluster
+
 Browse naar https://cwiki.apache.org/confluence/display/solr/Apache+Solr+Reference+Guide en maak u vertrouwd met het 'SolrCloud' hoofdstuk. Eventueel kunt u
 enkele voorbeelden uit proberen door bijvoorbeeld 
 [source,shell]
@@ -237,8 +238,38 @@ uit te voeren vanaf een command prompt.
 
 === Cassandra cluster
 
+Browse naar http://www.datastax.com/documentation/cassandra/2.0/cassandra/gettingStartedCassandraIntro.html en volg de handleidingen voor het installeren en initializeren
+van een Cassandra cluster.
+Maak hierna een keyspace aan met de gewenste replication factor, en start Cassandra. Nadat Cassandra gestart is kunt u het volgende command
+[source,shell]
+---- 
+<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-cluster.db
+----
+uitvoeren vanaf een command prompt. Het script zal er voor zorgen dat de juiste tabellen worden aangemaakt.
+
 === Wildfly cluster
 
+Het opzetten van een Wildfly cluster is het minst lonend. Het enige ETM component wat een een sessie gebruikt en daarmee geschikt zou zijn voor session-replication is
+etm-gui-{etm_version}.war. Binnen de sessie wordt enkel bewaard of een gebruiker is ingelogd, en zo ja, met welke rollen. Als u het acceptabel vind dat een gebruiker opnieuw
+moet inloggen indien een server uitvalt, dan volstaat het dubbel uitvoeren van Wildfly servers zonder replication. Door middel van een load-balancer voor Wildfly zou de 
+eindgebruiker naar actieve Wildfly instanties gerouteerd kunnen worden. Let wel, bij een dergelijke opstelling moeten de ETM componenten handmatig op de afzonderlijke machines
+gedeployed worden.
+
+Wilt u toch gebruik maken van een geclusterde Wildfly opstelling, waar de eindgebruiker niets mag merken van eventuele uitval van Wildfly instanties volg dan de handleiding op
+https://docs.jboss.org/author/display/WFLY8/High+Availability+Guide
+
+Zodra uw gewenste Wildfly cluster indeling is geinstalleerd moet er een security-domain met de naam "etm" worden aangemaakt. Een voorbeeld hiervan is te vinden in de 
+<<standalone-wildfly, Standalone Wildfly>> paragraaf. Dit voorbeeld maakt via een RealmRedirect gebruik van property bestanden voor het beheer van uw gebruikers, maar dit is
+uiteraard niet verplicht. Zo is het ook mogelijk om een connectie te leggen met een LDAP server voor het autoriseren en authenticeren van gebruikers.
+
+Als laatste moet er per Wildfly instantie een 3-tal System Properties worden toegevoegd. 
+[options="header"]
+|=======================
+|Key|Value
+|etm.nodename|<een unieke node name>
+|etm.zookeeper.clients|<zookeeper connectie string>
+|etm.zookeeper.namespace|<dev>
+|=======================
 
 [[chap-ETM_Installation-ETM_Components]]
 == ETM componenten
