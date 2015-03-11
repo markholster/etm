@@ -83,6 +83,7 @@ public class TelemetryEventProcessor {
 
 
 	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {
+		// TODO check what happens with invalid xml.
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
@@ -100,6 +101,7 @@ public class TelemetryEventProcessor {
 	}
 	
 	private void preProcess(TelemetryEvent event) {
+		// TODO store some metrics on the application itselve.
 //		long start = System.nanoTime();
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());

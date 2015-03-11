@@ -61,7 +61,7 @@ public class SolrClientProducer implements ConfigurationChangeListener {
 		if (event.isAnyChanged(SolrConfiguration.SOLR_ZOOKEEPER_CONNECTION)) {
 			if (this.solrClient != null) {
 				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Detected a change in the configuration that needs to reconnect to Solr cluster.");
+					log.logInfoMessage("Detected a change in the configuration that needs ETM to reconnect to Solr cluster.");
 				}
 				CloudSolrClient newCloudSolrClient = new CloudSolrClient(this.configuration.getSolrZkConnectionString());
 				newCloudSolrClient.setDefaultCollection(this.configuration.getSolrCollectionName());

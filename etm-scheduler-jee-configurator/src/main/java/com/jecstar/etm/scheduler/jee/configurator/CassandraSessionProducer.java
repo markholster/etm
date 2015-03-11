@@ -84,7 +84,7 @@ public class CassandraSessionProducer implements ConfigurationChangeListener {
 		        CassandraConfiguration.CASSANDRA_USERNAME, CassandraConfiguration.CASSANDRA_KEYSPACE)) {
 			if (this.session != null) {
 				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Detected a change in the configuration that needs to reconnect to Cassandra cluster.");
+					log.logInfoMessage("Detected a change in the configuration that needs ETM to reconnect to Cassandra cluster.");
 				}
 				Cluster newCluster = createCluster();
 				this.session.switchToSession(newCluster.connect(this.configuration.getCassandraKeyspace()));
