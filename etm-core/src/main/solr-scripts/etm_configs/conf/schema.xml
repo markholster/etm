@@ -104,7 +104,6 @@
    <field name="content" type="text_general" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="correlationId" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="creationTime" type="tdate" indexed="true" stored="false" required="false" multiValued="false" />
-   <field name="direction" type="string" indexed="true" stored="false" required="false" multiValued="false" />         
    <field name="endpoint" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="name" type="string" indexed="true" stored="false" required="false" multiValued="false" />
    <field name="sourceCorrelationId" type="string" indexed="true" stored="false" required="false" multiValued="false" />
