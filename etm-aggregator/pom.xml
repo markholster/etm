@@ -12,32 +12,46 @@
 		<system>Bamboo</system>
 		<url>https://zwolle.cleme.nl/bamboo/browse/ETM</url>
 	</ciManagement>
-	<modules>
-		<module>../etm-core</module>
-		<module>../etm-jee-configurator-core</module>
-		<module>../etm-processor-jee-configurator</module>
-		<module>../etm-processor</module>
-		<module>../etm-processor-mdb</module>
-		<module>../etm-processor-rest</module>
-		<module>../etm-processor-ws</module>
-		<module>../etm-gui-jee-configurator</module>
-		<module>../etm-gui</module>
-		<module>../etm-scheduler-jee-configurator</module>
-		<module>../etm-scheduler-retention</module>
-		<module>../etm-documentation</module>
-		<module>../etm-license-generator</module>
-	</modules>
+	<profiles>
+		<profile>
+			<id>documentation</id>
+			<modules>
+				<module>../etm-documentation</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>../etm-core</module>
+				<module>../etm-jee-configurator-core</module>
+				<module>../etm-processor-jee-configurator</module>
+				<module>../etm-processor</module>
+				<module>../etm-processor-mdb</module>
+				<module>../etm-processor-rest</module>
+				<module>../etm-processor-ws</module>
+				<module>../etm-gui-jee-configurator</module>
+				<module>../etm-gui</module>
+				<module>../etm-scheduler-jee-configurator</module>
+				<module>../etm-scheduler-retention</module>
+				<module>../etm-license-generator</module>
+			</modules>
+		</profile>
+	</profiles>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.jdk.level>1.8</project.jdk.level>
 	</properties>
-    <repositories>
-      <repository>
-        <id>JBoss Repo</id>
-        <url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
-        <name>JBoss Repo</name>
-      </repository>
-    </repositories>	
+	<repositories>
+		<repository>
+			<id>JBoss Repo</id>
+			<url>https://repository.jboss.org/nexus/content/groups/public-jboss
+			</url>
+			<name>JBoss Repo</name>
+		</repository>
+	</repositories>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -46,47 +60,47 @@
 				<version>2.1.4</version>
 			</dependency>
 			<dependency>
-			    <groupId>com.jecstar.etm</groupId>
-			    <artifactId>etm-core</artifactId>
-			    <version>${project.version}</version>
-			</dependency>			
-            <dependency>
-                <groupId>com.jecstar.etm</groupId>
-                <artifactId>etm-jee-configurator-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>           
+				<groupId>com.jecstar.etm</groupId>
+				<artifactId>etm-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 			<dependency>
-			    <groupId>com.jecstar.etm</groupId>
-			    <artifactId>etm-gui-jee-configurator</artifactId>
-			    <version>${project.version}</version>
-			</dependency>			
+				<groupId>com.jecstar.etm</groupId>
+				<artifactId>etm-jee-configurator-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.jecstar.etm</groupId>
+				<artifactId>etm-gui-jee-configurator</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>com.jecstar.etm</groupId>
 				<artifactId>etm-processor-jee-configurator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-			    <groupId>com.jecstar.etm</groupId>
-			    <artifactId>etm-scheduler-jee-configurator</artifactId>
-			    <version>${project.version}</version>
-			</dependency>			
+				<groupId>com.jecstar.etm</groupId>
+				<artifactId>etm-scheduler-jee-configurator</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>com.jecstar.etm</groupId>
 				<artifactId>etm-processor</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-            <dependency>
-                <groupId>com.jecstar.etm</groupId>
-                <artifactId>etm-processor-mdb</artifactId>
-                <version>${project.version}</version>
-                <type>ejb</type>
-            </dependency>           
-            <dependency>
-                <groupId>com.jecstar.etm</groupId>
-                <artifactId>etm-processor-rest</artifactId>
-                <version>${project.version}</version>
-                <type>war</type>
-            </dependency>           
+			<dependency>
+				<groupId>com.jecstar.etm</groupId>
+				<artifactId>etm-processor-mdb</artifactId>
+				<version>${project.version}</version>
+				<type>ejb</type>
+			</dependency>
+			<dependency>
+				<groupId>com.jecstar.etm</groupId>
+				<artifactId>etm-processor-rest</artifactId>
+				<version>${project.version}</version>
+				<type>war</type>
+			</dependency>
 			<dependency>
 				<groupId>com.lmax</groupId>
 				<artifactId>disruptor</artifactId>
@@ -103,16 +117,16 @@
 				<artifactId>Saxon-HE</artifactId>
 				<version>9.6.0-3</version>
 			</dependency>
-	        <dependency>
-	            <groupId>org.apache.curator</groupId>
-	            <artifactId>curator-client</artifactId>
-	            <version>2.7.1</version>
-	        </dependency>        
-	        <dependency>
-	            <groupId>org.apache.curator</groupId>
-	            <artifactId>curator-recipes</artifactId>
-	            <version>2.7.1</version>
-	        </dependency>			
+			<dependency>
+				<groupId>org.apache.curator</groupId>
+				<artifactId>curator-client</artifactId>
+				<version>2.7.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.curator</groupId>
+				<artifactId>curator-recipes</artifactId>
+				<version>2.7.1</version>
+			</dependency>
 			<dependency>
 				<groupId>org.codehaus.jackson</groupId>
 				<artifactId>jackson-lgpl</artifactId>
@@ -133,6 +147,11 @@
 	<build>
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>org.asciidoctor</groupId>
+					<artifactId>asciidoctor-maven-plugin</artifactId>
+					<version>1.5.2</version>
+				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-resources-plugin</artifactId>
@@ -177,7 +196,8 @@
 							</manifest>
 							<manifestEntries>
 								<Specification-Title>${project.name}</Specification-Title>
-								<Specification-Version>${project.version}</Specification-Version>
+								<Specification-Version>${project.version}
+								</Specification-Version>
 								<Implementation-Version>${buildNumber}</Implementation-Version>
 							</manifestEntries>
 						</archive>
@@ -196,7 +216,8 @@
 							</manifest>
 							<manifestEntries>
 								<Specification-Title>${project.name}</Specification-Title>
-								<Specification-Version>${project.version}</Specification-Version>
+								<Specification-Version>${project.version}
+								</Specification-Version>
 								<Implementation-Version>${buildNumber}</Implementation-Version>
 							</manifestEntries>
 						</archive>
@@ -227,6 +248,11 @@
 						<downloadJavadocs>true</downloadJavadocs>
 						<testSourcesLast>true</testSourcesLast>
 					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.jboss.maven.plugins</groupId>
+					<artifactId>maven-jdocbook-plugin</artifactId>
+					<version>2.3.8</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>

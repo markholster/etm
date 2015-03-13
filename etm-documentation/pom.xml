@@ -31,7 +31,6 @@
 						</goals>
 					</execution>
 				</executions>
-				<version>1.5.2</version>
 				<configuration>
 					<sourceDirectory>src/main/docbook/nl-NL</sourceDirectory>
 					<sourceDocumentName>${docname}.asciidoc</sourceDocumentName>
@@ -48,12 +47,12 @@
 					<doctype>book</doctype>
 					<goalPrefix>asciidoctor</goalPrefix>
 					<attributes>
-					   <etm_version>${project.version}</etm_version>
-					   <java_version>${project.jdk.level}</java_version>
-					   <cassandra_version>2.0.12</cassandra_version>
-					   <solr_version>5.0.0</solr_version>
-					   <zookeeper_version>3.4.6</zookeeper_version>
-					   <wildfly_version>8.2.0.Final</wildfly_version>
+						<etm_version>${project.version}</etm_version>
+						<java_version>${project.jdk.level}</java_version>
+						<cassandra_version>2.0.12</cassandra_version>
+						<solr_version>5.0.0</solr_version>
+						<zookeeper_version>3.4.6</zookeeper_version>
+						<wildfly_version>8.2.0.Final</wildfly_version>
 					</attributes>
 				</configuration>
 			</plugin>
@@ -69,7 +68,8 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${basedir}/target/docbook/nl-NL</outputDirectory>
+							<outputDirectory>${basedir}/target/docbook/nl-NL
+							</outputDirectory>
 							<resources>
 								<resource>
 									<directory>${basedir}/src/main/docbook/nl-NL</directory>
@@ -83,17 +83,17 @@
 			<plugin>
 				<groupId>org.jboss.maven.plugins</groupId>
 				<artifactId>maven-jdocbook-plugin</artifactId>
-				<version>2.3.8</version>
 				<extensions>true</extensions>
 				<dependencies>
-                    <dependency>
-                        <groupId>org.jboss.pressgang</groupId>
-                        <artifactId>pressgang-highlight</artifactId>
-                        <version>2.0.2</version>
-                    </dependency>
+					<dependency>
+						<groupId>org.jboss.pressgang</groupId>
+						<artifactId>pressgang-highlight</artifactId>
+						<version>2.0.2</version>
+					</dependency>
 				</dependencies>
 				<configuration>
-					<sourceDirectory>${project.basedir}/target/docbook</sourceDirectory>
+					<sourceDirectory>${project.basedir}/target/docbook
+					</sourceDirectory>
 					<sourceDocumentName>${docname}.xml</sourceDocumentName>
 					<masterTranslation>nl-NL</masterTranslation>
 					<imageResource>
@@ -103,25 +103,28 @@
 						</includes>
 					</imageResource>
 					<cssResource>
-                        <directory>${project.basedir}/src/main/css</directory>
-                        <includes>
-                            <include>**/*</include>
-                        </includes>
+						<directory>${project.basedir}/src/main/css</directory>
+						<includes>
+							<include>**/*</include>
+						</includes>
 					</cssResource>
 					<formats>
 						<format>
 							<formatName>pdf</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl</stylesheetResource>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl
+							</stylesheetResource>
 							<finalName>${pdf.name}</finalName>
 						</format>
-                        <format>
+						<format>
 							<formatName>html</formatName>
- 							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl</stylesheetResource>
-	       					<finalName>${html.name}</finalName>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl
+							</stylesheetResource>
+							<finalName>${html.name}</finalName>
 						</format>
 						<format>
 							<formatName>html_single</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml-single.xsl</stylesheetResource>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml-single.xsl
+							</stylesheetResource>
 							<finalName>${html.name}</finalName>
 						</format>
 					</formats>
@@ -134,7 +137,8 @@
 						<transformerParameters>
 							<property>
 								<name>javax.xml.parsers.DocumentBuilderFactory</name>
-								<value>org.apache.xerces.jaxp.DocumentBuilderFactoryImpl</value>
+								<value>org.apache.xerces.jaxp.DocumentBuilderFactoryImpl
+								</value>
 							</property>
 							<property>
 								<name>javax.xml.parsers.SAXParserFactory</name>
@@ -145,6 +149,5 @@
 				</configuration>
 			</plugin>
 		</plugins>
-</build>
-
+	</build>
 </project>
