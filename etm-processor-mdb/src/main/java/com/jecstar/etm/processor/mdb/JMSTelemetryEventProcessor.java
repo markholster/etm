@@ -29,6 +29,7 @@ import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 	    @ActivationConfigProperty(propertyName = "destinationType",
 	            propertyValue = "javax.jms.Queue")
 	})
+// TODO activation specification moet naar web.xml i.v.m. aanpasbaarheid voor IBM MQ.
 public class JMSTelemetryEventProcessor implements MessageListener {
 	
 	public static final String JMS_PROPERTY_KEY_EVENT_APPLICATION = "JMS_ETM_Application";

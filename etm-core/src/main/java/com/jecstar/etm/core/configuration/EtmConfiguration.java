@@ -39,7 +39,6 @@ import com.jecstar.etm.core.logging.LogWrapper;
 
 //TODO document this class and the different properties. 
 //TODO fallback to default enum values for proprties with illegal values. 
-//TODO all properties should be dynamically adjustable. change listeners should be placed on all properties, and processors etc should be restarted accordingly.
 public class EtmConfiguration extends AbstractConfiguration implements Closeable {
 	
 	/**

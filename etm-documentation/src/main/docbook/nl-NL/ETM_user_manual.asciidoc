@@ -1,0 +1,26 @@
+= ETM Gebruikershandleiding
+:doctype: book
+:docinfo: docinfo
+
+[[chap-ETM_Usage-Introduction]]
+== Introductie
+
+[[chap-ETM_Usage-Provide_License]]
+== Licentie invoeren
+
+
+[[chap-ETM_Usage-Add_Events]]
+== Events toevoegen
+
+- Beschrijven event.
+- Beschrijven json object
+- Beschrijven MDB object/properties
+
+Vertellen dat een event niet direct zoekbaar is.  
+
+[[chap-ETM_Usage-Remove_Events]]
+== Events verwijderen
+
+
+[[chap-ETM_Usage-Error_Codes]]
+== Error codes

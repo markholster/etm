@@ -2,7 +2,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/schema/jbossas/jbossws-web-services_1_0.xsd">	
 	<context-root>/nast/ws</context-root>
-	<config-name>NastEndpointConfig</config-name>
+	<config-name>EtmEndpointConfig</config-name>
 	<config-file>META-INF/jaxws-endpoint-config.xml</config-file>
 	<port-component>	
 		<ejb-name>ProcessorService</ejb-name>

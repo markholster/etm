@@ -1,4 +1,4 @@
-= ETM Installatie Handleiding
+= ETM Installatiehandleiding
 :doctype: book
 :docinfo: docinfo
 
@@ -276,10 +276,44 @@ Als laatste moet er per Wildfly instantie een 3-tal System Properties worden toe
 [[chap-ETM_Installation-ETM_Components]]
 == ETM componenten
 
-TODO: Licentie invoer beschrijven
+ETM bestaat uit een verschillend aantal componenten, die gedeployed kunnen worden in Wildfly. Kopieer de gewenste componenten naar <WILDFLY_INSTALL_DIR>/standalone/deployments 
+waar ze opgepakt worden door Wildfly. Het deployment proces duur hierna enkele seconden.
+ 
+=== ETM gui
+De ETM gui is het ETM component waarmee u uw events kunt monitoren, doorzoeken en het ETM cluster kunt beheren en administreren. Om de ETM gui te gebruiken dient u het component 
+etm-gui-{etm_version}.war te deployen in Wildfly. 
+Na de deployment zijn er 3 urls beschikbaar gekomen:
 
-* etm-gui-{etm_version}.war, een web-based dashboard voor het monitoren en zoeken van events, en het beheren van ETM.
-* etm-processor-ws-{etm_version}.war, een processor die via een web service benaderd kan worden om events toe te voegen aan ETM.
-* etm-processor-rest-{etm_version}.war, een processor die via een rest call benaderd kan worden om events toe te voegen aan ETM.
-* etm-processor-mdb-{etm_version}.war, een processor die een MDB bevat die gebruikt kan worden om events toe te voegen aan ETM.
+* http://localhost:8080/etm/search/ voor het zoeken van telemetry events.
+* http://localhost:8080/etm/dashboard/ voor het monitoren van events.
+* http://localhost:8080/etm/admin/ voor het beheren en administreren van het ETM cluster.  
+
+Een uitgebreide uitleg is beschikbaar in de gebruikershandleiding.
+
+=== ETM web service processor
+Om events aan ETM toe te voegen via een web service dient u het component etm-processor-ws-{etm_version}.war te deployen in Wildfly. Na het deployen is de wsdl van de 
+web service  beschikbaar op http://localhost:8080/etm/processor/ws/processorservice?wsdl
+
+Als Wildfly achter een proxy draait, en het soap address in de wsdl dynamisch opgezet moet worden moet dit aangegeven worden in de Wildfly configuratie. Zorg er in dat geval voor
+dat het webservices subsystem in de standalone.xml of domain.xml de volgende waardes bevat:
+[source,xml]
+----
+<modify-wsdl-address>true</modify-wsdl-address>
+<wsdl-host>jbossws.undefined.host</wsdl-host>
+----
+
+=== ETM rest processor
+Om events aan ETM toe te voegen via een rest service dient u het component etm-processor-rest-{etm_version}.war te deployen in Wildfly. Na het deployen kunt u events toevoegen
+door json data naar url http://localhost:8080/etm/processor/rest/event/add te posten.
+
+Een beschrijving over de layout van de json data is te vinden in de gebruikershandleiding.
+
+=== ETM mdb processor
+Om events aan ETM toe te voegen via een JMS topic of JMS queue dient u het component etm-processor-mdb-{etm_version}.war te deployen in Wildfly.
+
+TODO beschrijving hoe de queue te benaderen etc.
+
+Een beschrijving over de inhoud waaraan de JMS Message moet voldoen is te vinden in de gebruikershandleiding.
+
+== ETM data retention  
 * etm-scheduler-retention-{etm_version}.war, een scheduler die events verwijdert na een instelbare tijd.

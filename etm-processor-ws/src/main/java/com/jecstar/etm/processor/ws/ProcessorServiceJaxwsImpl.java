@@ -13,7 +13,7 @@ import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 @Stateless(name="ProcessorService")
-@WebService(serviceName="ProcessorService", targetNamespace="http://ws.etm.holster.com/processorservice", portName="ProcessorServicePort", endpointInterface="com.jecstar.etm.processor.ws.ProcessorService")
+@WebService(serviceName="ProcessorService", targetNamespace="http://ws.etm.jecstar.com/processorservice", portName="ProcessorServicePort", endpointInterface="com.jecstar.etm.processor.ws.ProcessorService")
 @BindingType(javax.xml.ws.soap.SOAPBinding.SOAP12HTTP_BINDING)
 @PermitAll
 public class ProcessorServiceJaxwsImpl implements ProcessorService {

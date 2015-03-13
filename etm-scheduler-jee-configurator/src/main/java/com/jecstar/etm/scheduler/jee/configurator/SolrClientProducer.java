@@ -15,7 +15,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.SolrConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
+import com.jecstar.etm.jee.configurator.core.SchedulerConfiguration;
 
 @ManagedBean
 @Singleton
@@ -27,14 +27,14 @@ public class SolrClientProducer implements ConfigurationChangeListener {
 	private static final LogWrapper log = LogFactory.getLogger(SolrClientProducer.class);
 
 	
-	@GuiConfiguration
+	@SchedulerConfiguration
 	@Inject
 	private EtmConfiguration configuration;
 
 	private ReconfigurableSolrClient solrClient;
 
 	@Produces
-	@GuiConfiguration
+	@SchedulerConfiguration
 	public SolrClient getSolrClient() {
 		synchronized (this) {
 			if (this.solrClient == null) {

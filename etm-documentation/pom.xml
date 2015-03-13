@@ -13,9 +13,6 @@
 	<packaging>jdocbook</packaging>
 	<description>The etm documentation project.</description>
 	<name>Enterprise Telemetry Monitor - documentation</name>
-	<properties>
-		<docname>ETM_installation_manual</docname>
-	</properties>
 	<build>
 		<plugins>
 			<!-- Generate the docbook xml from the asciidoc -->
@@ -33,7 +30,6 @@
 				</executions>
 				<configuration>
 					<sourceDirectory>src/main/docbook/nl-NL</sourceDirectory>
-					<sourceDocumentName>${docname}.asciidoc</sourceDocumentName>
 					<outputDirectory>target/docbook/nl-NL</outputDirectory>
 					<headerFooter>true</headerFooter>
 					<compact>false</compact>
@@ -68,8 +64,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${basedir}/target/docbook/nl-NL
-							</outputDirectory>
+							<outputDirectory>${basedir}/target/docbook/nl-NL</outputDirectory>
 							<resources>
 								<resource>
 									<directory>${basedir}/src/main/docbook/nl-NL</directory>
@@ -92,9 +87,9 @@
 					</dependency>
 				</dependencies>
 				<configuration>
-					<sourceDirectory>${project.basedir}/target/docbook
-					</sourceDirectory>
-					<sourceDocumentName>${docname}.xml</sourceDocumentName>
+					<sourceDirectory>${project.basedir}/target/docbook</sourceDirectory>
+					<!-- TODO process ETM_user_manual.xml as well -->
+					<sourceDocumentName>ETM_installation_manual.xml</sourceDocumentName>
 					<masterTranslation>nl-NL</masterTranslation>
 					<imageResource>
 						<directory>${project.basedir}/src/main/images</directory>
@@ -111,20 +106,17 @@
 					<formats>
 						<format>
 							<formatName>pdf</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl
-							</stylesheetResource>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl</stylesheetResource>
 							<finalName>${pdf.name}</finalName>
 						</format>
 						<format>
 							<formatName>html</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl
-							</stylesheetResource>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl</stylesheetResource>
 							<finalName>${html.name}</finalName>
 						</format>
 						<format>
 							<formatName>html_single</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml-single.xsl
-							</stylesheetResource>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml-single.xsl</stylesheetResource>
 							<finalName>${html.name}</finalName>
 						</format>
 					</formats>
