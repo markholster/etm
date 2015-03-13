@@ -14,9 +14,24 @@
 	</ciManagement>
 	<profiles>
 		<profile>
-			<id>documentation</id>
+			<id>distribution</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
 			<modules>
+				<module>../etm-core</module>
+				<module>../etm-jee-configurator-core</module>
+				<module>../etm-processor-jee-configurator</module>
+				<module>../etm-processor</module>
+				<module>../etm-processor-mdb</module>
+				<module>../etm-processor-rest</module>
+				<module>../etm-processor-ws</module>
+				<module>../etm-gui-jee-configurator</module>
+				<module>../etm-gui</module>
+				<module>../etm-scheduler-jee-configurator</module>
+				<module>../etm-scheduler-retention</module>
 				<module>../etm-documentation</module>
+				<module>../etm-distribution</module>
 			</modules>
 		</profile>
 		<profile>
@@ -248,6 +263,11 @@
 						<downloadJavadocs>true</downloadJavadocs>
 						<testSourcesLast>true</testSourcesLast>
 					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>2.5.3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.jboss.maven.plugins</groupId>

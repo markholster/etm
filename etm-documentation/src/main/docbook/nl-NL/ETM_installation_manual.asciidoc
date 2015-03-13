@@ -69,7 +69,7 @@ uit vanaf een command prompt.
 Nadat Cassandra is gestart voer
 [source,shell]
 ---- 
-<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-single-node.db
+<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-single-node.cql
 ----
 uit vanaf een command promt. Het uitgevoerde script zorgt ervoor dat de ETM keyspace + bijbehorende tabellen worden aangemaakt.
 
@@ -136,7 +136,7 @@ Selecteer het 'Configuration' menu en klik op System Properties op het submenu a
 |=======================
 
 De volgende stap is om de gewenste ETM componenten te deployen. Afhankelijk van uw behoefte kunt u 1 of meerdere componenten deployen vanaf de
-<ETM_UNZIP_DIR>/resources/artifacts directory.
+<ETM_UNZIP_DIR>/components directory.
 
 Kopieer de gewenste componenten naar <WILDFLY_INSTALL_DIR>/standalone/deployments waar ze opgepakt worden door Wildfly. Het deployment proces
 duur hierna enkele seconden. Bekijk voor een gedetaillerd overzicht van de componenten en hun instellingen het hoofdstuk <<chap-ETM_Installation-ETM_Components, ETM componenten>.
@@ -204,7 +204,7 @@ uit te voeren. Dit script helpt u bij het opzetten van een cluster, waarbij de S
 daadwerkelijke installatie is het verstandig met een verse Solr installatie te beginnen. Extract eventueel het gedownloade Solr archief opnieuw naar een schone locatie.
  
 ETM levert een voorgedefinieerde configuratie set die tijdens het opzetten van het cluster gebruikt kan worden. Kopieer hiervoor de directory
-<ETM_UNZIP_DIR>/resources/solr/etm_configs naar <SOLR_INSTALL_DIR>/server/solr/configsets/
+<ETM_UNZIP_DIR>/resources/solr/cluster-conf/etm_configs naar <SOLR_INSTALL_DIR>/server/solr/configsets/
 
 Indien u uw Zookeeper ensemble nog niet gestart heeft, doe dit dan en voer hierna
 [source,shell]
@@ -243,7 +243,7 @@ van een Cassandra cluster.
 Maak hierna een keyspace aan met de gewenste replication factor, en start Cassandra. Nadat Cassandra gestart is kunt u het volgende command
 [source,shell]
 ---- 
-<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-cluster.db
+<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-cluster.cql
 ----
 uitvoeren vanaf een command prompt. Het script zal er voor zorgen dat de juiste tabellen worden aangemaakt.
 
