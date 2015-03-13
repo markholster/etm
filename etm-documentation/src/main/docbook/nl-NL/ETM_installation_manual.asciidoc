@@ -27,6 +27,7 @@ configuratie. Om de volledige voordelen op het gebied van schaalbaarheid en hoge
 <<chap-ETM_Installation-Clustered_Installation, geclusterde installatie>> noodzakelijk.  
 
 Voor deze installatie gelden de volgende specificaties:
+
 * Een standalone Solr {solr_version} installatie, waarbinnen een Zookeper instantie draait.
 * Een standalone Cassandra {cassandra_version} installatie.
 * Een standalone Wildfly {wildfly_version} draaiend op het 'standalone' profiel.
@@ -88,6 +89,7 @@ uit vanaf een command prompt. Wees er zeker van dat de gebruiker een 'Management
 Deze gebuiker is nodig om in het administration console van Wildfly in te loggen. ETM heeft ook een gebruiker nodig waarmee ingelogd kan worden in ETM zelf.
 Voer hiervoor nogmaals het add-user.sh script uit, maar zorg er deze keer voor dat de gebruiker een 'Application User' is die is toegevoegd aan het 'EtmRealm'. 
 Ook moet de gebruiker de volgende rollen krijgen:
+
 * etm-administrator
 * etm-searcher
 * etm-controller 
