@@ -3,8 +3,6 @@ package com.jecstar.etm.processor.mdb;
 import java.io.StringReader;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
 import javax.inject.Inject;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -23,13 +21,6 @@ import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
-@MessageDriven(activationConfig = {
-	    @ActivationConfigProperty(propertyName = "destinationLookup",
-	            propertyValue = "jms/queue/EtmNotification"),
-	    @ActivationConfigProperty(propertyName = "destinationType",
-	            propertyValue = "javax.jms.Queue")
-	})
-// TODO activation specification moet naar web.xml i.v.m. aanpasbaarheid voor IBM MQ.
 public class JMSTelemetryEventProcessor implements MessageListener {
 	
 	public static final String JMS_PROPERTY_KEY_EVENT_APPLICATION = "JMS_ETM_Application";

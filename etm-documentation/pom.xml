@@ -104,11 +104,13 @@
 						</includes>
 					</cssResource>
 					<formats>
+<!-- 					
 						<format>
 							<formatName>pdf</formatName>
 							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl</stylesheetResource>
 							<finalName>${pdf.name}</finalName>
 						</format>
+ -->						
 						<format>
 							<formatName>html</formatName>
 							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl</stylesheetResource>

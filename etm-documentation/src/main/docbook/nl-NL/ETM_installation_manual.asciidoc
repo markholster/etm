@@ -148,7 +148,7 @@ duur hierna enkele seconden. Bekijk voor een gedetaillerd overzicht van de compo
 IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Zookeeper, Solr en Cassandra om
 volledig te functioneren. Hoe u uw Wildfly, Zookeeper, Solr en Cassandra clusters in gaat richten hangt af van uw wensen en kan niet in 1 enkele installatie 
 handleiding samengevat worden. Dit hoofdstuk kan als voorbeeld genomen worden voor het opzetten van uw Wildfly, Zookeeper, Solr en Cassandra clusters, 
-maar voor optimale situatie zullen deze clusters zo geconfigureerd moeten worden dat deze ideaal zijn voor uw situatie. 
+maar voor optimale situatie zullen deze clusters zo geconfigureerd moeten worden dat deze ideaal zijn voor uw wensen. 
 
 Voor uitgebreide handleidingen dient u de handleidingen van Wildfly, Solr en Cassandra te raadplegen:
 
@@ -280,7 +280,7 @@ ETM bestaat uit een verschillend aantal componenten, die gedeployed kunnen worde
 waar ze opgepakt worden door Wildfly. Het deployment proces duur hierna enkele seconden.
  
 === ETM gui
-De ETM gui is het ETM component waarmee u uw events kunt monitoren, doorzoeken en het ETM cluster kunt beheren en administreren. Om de ETM gui te gebruiken dient u het component 
+De ETM gui is het ETM component waarmee u uw events kunt monitoren, doorzoeken en het ETM cluster kunt beheren en administreren. Om de ETM gui te gebruiken dient u de component 
 etm-gui-{etm_version}.war te deployen in Wildfly. 
 Na de deployment zijn er 3 urls beschikbaar gekomen:
 
@@ -291,7 +291,7 @@ Na de deployment zijn er 3 urls beschikbaar gekomen:
 Een uitgebreide uitleg is beschikbaar in de gebruikershandleiding.
 
 === ETM web service processor
-Om events aan ETM toe te voegen via een web service dient u het component etm-processor-ws-{etm_version}.war te deployen in Wildfly. Na het deployen is de wsdl van de 
+Om events aan ETM toe te voegen via een web service dient u de component etm-processor-ws-{etm_version}.war te deployen in Wildfly. Na het deployen is de wsdl van de 
 web service  beschikbaar op http://localhost:8080/etm/processor/ws/processorservice?wsdl
 
 Als Wildfly achter een proxy draait, en het soap address in de wsdl dynamisch opgezet moet worden moet dit aangegeven worden in de Wildfly configuratie. Zorg er in dat geval voor
@@ -303,17 +303,75 @@ dat het webservices subsystem in de standalone.xml of domain.xml de volgende waa
 ----
 
 === ETM rest processor
-Om events aan ETM toe te voegen via een rest service dient u het component etm-processor-rest-{etm_version}.war te deployen in Wildfly. Na het deployen kunt u events toevoegen
+Om events aan ETM toe te voegen via een rest service dient u de component etm-processor-rest-{etm_version}.war te deployen in Wildfly. Na het deployen kunt u events toevoegen
 door json data naar url http://localhost:8080/etm/processor/rest/event/add te posten.
 
 Een beschrijving over de layout van de json data is te vinden in de gebruikershandleiding.
 
 === ETM mdb processor
-Om events aan ETM toe te voegen via een JMS topic of JMS queue dient u het component etm-processor-mdb-{etm_version}.war te deployen in Wildfly.
+Om events aan ETM toe te voegen via een JMS topic of JMS queue dient u de component etm-processor-mdb-{etm_version}.war te deployen in Wildfly. De MDB maakt default verbinding
+met een queue onder de jndi naam "jms/queue/EtmNotification". 
 
-TODO beschrijving hoe de queue te benaderen etc.
+Als dit niet gewenst is moet er een aanpassing in etm-processor-mdb-{etm_version}.war zelf doorgevoerd worden. Unzip
+hiervoor etm-processor-mdb-{etm_version}.war naar een gewenste lokatie en pas daarna het bestand WEB-INF/ejb-jar.xml aan. Als u bijvoorbeeld verbinding wilt maken met een 
+IBM MQ Queue en gebruik maakt van de "wmq.jmsra.rar" resource adapter moet het activation-config element als volgt gevuld worden.
+[source,xml]
+----
+<activation-config-property> 
+    <activation-config-property-name>destinationType</activation-config-property-name>  
+    <activation-config-property-value>javax.jms.Queue</activation-config-property-value>
+</activation-config-property>
+<activation-config-property>  
+    <activation-config-property-name>destination</activation-config-property-name>  
+    <activation-config-property-value>${jms.queue.etm}</activation-config-property-value>  
+</activation-config-property>  
+<activation-config-property>  
+    <activation-config-property-name>useJNDI</activation-config-property-name>  
+    <activation-config-property-value>false</activation-config-property-value>  
+</activation-config-property>                  
+<activation-config-property>  
+    <activation-config-property-name>channel</activation-config-property-name>  
+    <activation-config-property-value>${jms.queue.manager.channel}</activation-config-property-value>  
+</activation-config-property>                  
+<activation-config-property>  
+    <activation-config-property-name>hostName</activation-config-property-name>  
+    <activation-config-property-value>${jms.queue.manager.host}</activation-config-property-value>  
+</activation-config-property>                  
+<activation-config-property>  
+    <activation-config-property-name>queueManager</activation-config-property-name>  
+    <activation-config-property-value>${jms.queue.manager.name}</activation-config-property-value>  
+</activation-config-property>                  
+<activation-config-property>  
+    <activation-config-property-name>port</activation-config-property-name>  
+    <activation-config-property-value>${jms.queue.manager.port}</activation-config-property-value>  
+</activation-config-property>                  
+<activation-config-property>  
+    <activation-config-property-name>transportType</activation-config-property-name>  
+    <activation-config-property-value>CLIENT</activation-config-property-value>  
+</activation-config-property>
+----
 
-Een beschrijving over de inhoud waaraan de JMS Message moet voldoen is te vinden in de gebruikershandleiding.
+Zip de directory structuur opnieuw naar etm-processor-mdb-{etm_version}.war en deploy dit bestand hierna. De MDB maakt nu gebruik van system properties om de omgeving 
+specifieke eigenschappen zoals d queue naam uit te lezen. Dit zijn de waardes die beschreven als "${<waarde>}" in de ejb-jar.xml voorkomen. Uiteraard hoeft u hier geen 
+gebruik te maken van system properties, maar kunt u hier ook gewoon harde waardes gebruiken.
 
-== ETM data retention  
-* etm-scheduler-retention-{etm_version}.war, een scheduler die events verwijdert na een instelbare tijd.
+Indien u gebruik van system properties gaat maken, vergeet deze dan niet op te voeren in de Wildfly administration console. Ook moet u nog een aanpassing in de 
+standalone.xml/domain.xml doorvoeren die ervoor zorgt dat de variabelen uit ejb-jar.xml worden vervangen door de system properties zelf. Zorg ervoor dat het ee subsystem
+de volgende waardes bevat:
+[source,xml]
+----
+    <spec-descriptor-property-replacement>true</spec-descriptor-property-replacement>
+    <jboss-descriptor-property-replacement>true</jboss-descriptor-property-replacement>
+----
+De tweede regel is niet strikt noodzakelijk, maar kan u helpen bij de volgende stap.
+
+Indien de MDB geen gebruik maakt van de default resource adapter die u in Wildfly geconfigureerd heeft moet u wederom een aanpassing doen in etm-processor-mdb-{etm_version}.war.
+Wijzign hiervoor de naam van het bestand WEB-INF/jboss-ejb3-ra-adapter-example.xml naar WEB-INF/jboss-ejb3.xml, en pas de inhoud zo aan dat hier de gewenste resource adapter
+wordt genoemd. Ook hier kunt u weer gebruik maken van system properties door de waarde in de vorm "${<waarde>}" te gebruiken. Als u hiervoor kiest is de tweede regel uit de xml
+code hierboven genoemd wel noodzakelijk.
+
+Uw MDB is nu klaar voor gebruik. Een beschrijving over de inhoud waaraan de JMS Message moet voldoen die de MDB uitleest is te vinden in de gebruikershandleiding.
+
+=== ETM data behoud
+Om event na verloop van tijd uit ETM te verwijderen dient u de component etm-scheduler-retention-{etm_version}.warte deployen in Wildfly. Voor dit component is geen overige 
+configuratie nodig. Een beschrijving voor het instellen van de bewaartijd van events is te vinden in de gebruikershandleiding.
