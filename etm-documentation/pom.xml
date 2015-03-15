@@ -64,7 +64,8 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${basedir}/target/docbook/nl-NL</outputDirectory>
+							<outputDirectory>${basedir}/target/docbook/nl-NL
+							</outputDirectory>
 							<resources>
 								<resource>
 									<directory>${basedir}/src/main/docbook/nl-NL</directory>
@@ -88,7 +89,6 @@
 				</dependencies>
 				<configuration>
 					<sourceDirectory>${project.basedir}/target/docbook</sourceDirectory>
-					<!-- TODO process ETM_user_manual.xml as well -->
 					<sourceDocumentName>ETM_installation_manual.xml</sourceDocumentName>
 					<masterTranslation>nl-NL</masterTranslation>
 					<imageResource>
@@ -104,21 +104,18 @@
 						</includes>
 					</cssResource>
 					<formats>
-<!-- 					
-						<format>
-							<formatName>pdf</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl</stylesheetResource>
-							<finalName>${pdf.name}</finalName>
-						</format>
- -->						
+						<!-- <format> <formatName>pdf</formatName> <stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/pdf.xsl</stylesheetResource> 
+							<finalName>${pdf.name}</finalName> </format> -->
 						<format>
 							<formatName>html</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl</stylesheetResource>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml.xsl
+							</stylesheetResource>
 							<finalName>${html.name}</finalName>
 						</format>
 						<format>
 							<formatName>html_single</formatName>
-							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml-single.xsl</stylesheetResource>
+							<stylesheetResource>file:${project.basedir}/src/main/docbook/xslt/xhtml-single.xsl
+							</stylesheetResource>
 							<finalName>${html.name}</finalName>
 						</format>
 					</formats>
@@ -141,6 +138,18 @@
 						</transformerParameters>
 					</options>
 				</configuration>
+				<executions>
+					<execution>
+						<id>user_manual</id>
+						<phase>compile</phase>
+						<configuration>
+							<sourceDocumentName>ETM_user_manual.xml</sourceDocumentName>
+						</configuration>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

@@ -360,8 +360,8 @@ standalone.xml/domain.xml doorvoeren die ervoor zorgt dat de variabelen uit ejb-
 de volgende waardes bevat:
 [source,xml]
 ----
-    <spec-descriptor-property-replacement>true</spec-descriptor-property-replacement>
-    <jboss-descriptor-property-replacement>true</jboss-descriptor-property-replacement>
+<spec-descriptor-property-replacement>true</spec-descriptor-property-replacement>
+<jboss-descriptor-property-replacement>true</jboss-descriptor-property-replacement>
 ----
 De tweede regel is niet strikt noodzakelijk, maar kan u helpen bij de volgende stap.
 
@@ -373,5 +373,5 @@ code hierboven genoemd wel noodzakelijk.
 Uw MDB is nu klaar voor gebruik. Een beschrijving over de inhoud waaraan de JMS Message moet voldoen die de MDB uitleest is te vinden in de gebruikershandleiding.
 
 === ETM data behoud
-Om event na verloop van tijd uit ETM te verwijderen dient u de component etm-scheduler-retention-{etm_version}.warte deployen in Wildfly. Voor dit component is geen overige 
+Om events na verloop van tijd uit ETM te verwijderen dient u de component etm-scheduler-retention-{etm_version}.war te deployen in Wildfly. Voor dit component is geen overige 
 configuratie nodig. Een beschrijving voor het instellen van de bewaartijd van events is te vinden in de gebruikershandleiding.

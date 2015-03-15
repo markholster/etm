@@ -5,9 +5,24 @@
 [[chap-ETM_Usage-Introduction]]
 == Introductie
 
+Deze handleiding maakt u wegwijs in het gebruik van Enterprise Telemetry Monitor, kortweg ETM. ETM kan gebruikt worden voor het monitoren van events die de applicaties in uw 
+enterpise omgeving genereren. Naast het monitoren maakt ETM het mogelijk deze events te doorzoeken en correleren zodat u een volledig overzicht krijgt van de datastromen tussen
+uw verschillende applicaties. In deze handleiding wordt stap voor stap toegelicht hoe u dit inzicht in uw applicatielandschap kan verkrijgen. Deze handleiding gaat er vanuit dat
+u ETM inmiddels geinstalleerd heeft. Is dit niet het geval, doorloop dan eerst de installatie handleiding.
+
 [[chap-ETM_Usage-Provide_License]]
 == Licentie invoeren
 
+Voordat u events kunt toevoegen aan ETM moet u uw licentie invoeren. Deze licentiecode heeft u van Jecstar ontvangen na de aanschaf van Enterprise Telemetry Monitor. Indien uw 
+licentie is verlopen is het altijd mogelijk om uw data te raadplegen, maar niet mogelijk nieuwe events toe te voegen aan ETM.
+
+Om uw licentie in te voeren opent u het administratie panel in uw browser. Indien u ETM op uw lokale machine heeft draaien is de url http://localhost:8080/etm/admin/index.html
+Klik hierna naar de 'License' tab en vul uw licentiecode in. Klik hierna op de 'Save' knop en uw licentie is opgevoerd. Als u licentiecode is geaccepteerd zal het als volgt uitzien:
+ 
+image:usage/insert-license.png["Licentie invoer", link="usage/insert-license.png"]
+
+In het scherm zullen uw bedrijfsnaam en de licentie vervaldatum komen te staan. Zodra deze gegevens zichtbaar zijn kunt u events toevoegen aan ETM. Er is geen noodzaak
+voor het opnieuw starten van 1 van de ETM componenten, u kunt meteen aan de slag. 
 
 [[chap-ETM_Usage-Add_Events]]
 == Events toevoegen
