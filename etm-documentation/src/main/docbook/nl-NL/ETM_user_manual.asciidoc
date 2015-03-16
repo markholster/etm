@@ -24,10 +24,33 @@ image:usage/insert-license.png["Licentie invoer", link="usage/insert-license.png
 In het scherm zullen uw bedrijfsnaam en de licentie vervaldatum komen te staan. Zodra deze gegevens zichtbaar zijn kunt u events toevoegen aan ETM. Er is geen noodzaak
 voor het opnieuw starten van 1 van de ETM componenten, u kunt meteen aan de slag. 
 
+
 [[chap-ETM_Usage-Add_Events]]
 == Events toevoegen
 
-- Beschrijven event.
+ETM is in staat relaties te leggen tussen verschillende events zonder dat u expliciet moet aangeven hoe deze relaties liggen. Voor het leggen van deze relaties is het belangrijk
+zoveel mogelijk metagegevens over de event inhoud door te geven aan ETM. Hoe meer informatie bij ETM geregistreers is, hoe gedetailleerder uw applicatielandschap in kaart gebracht
+kan worden en hoe sneller problemen in dit landschap gelokaliseerd kunnen worden. Een event dat in ETM opgeslagen kan worden heeft de volgende eigenschappen:
+
+[options="header"]
+|=======================
+|Naam|Doel|Default waarde|Type|Mutabel
+|id|unieke identificatie van het event binnen ETM|uuid|version 1 uuid|nee
+|correlationId|id van het parent/gerelateerde event|uuid|version 1 uuid|nee
+|application|naam van de applicatie die het event verstuurde of ontving||tekst|ja
+|content|inhoud van het event||tekst|ja
+|creationTime|tijd waarop het event is aangemaakt|huidige datum-tijd|datum-tijd|ja
+|direction|richting van het event (uitgaand of binnnenkomend)||keuzeveld: INCOMING/OUTGOING|ja
+|endpoint|endpoint waarop het event ontvangen of verstuurd is||tekst|ja
+|expiryTime|datum-tijd waarop het event verlopen is||datum-tijd|ja
+|name|naam van het event||tekst|ja
+|sourceCorrelationId|sourceId van het parent/gerelateerde event||tekst|ja
+|sourceId|id van het event in uw applicatie||tekst|ja
+|transactionName|naam van de transactie die is gestart met het afvuren van dit event||tekst|ja
+|type|type event||keuzeveld: MESSAGE_REQUEST/MESSAGE_RESPONSE/MESSAGE_DATAGRRAM|ja
+|=======================
+
+
 - Beschrijven json object
 - Beschrijven MDB object/properties
 
