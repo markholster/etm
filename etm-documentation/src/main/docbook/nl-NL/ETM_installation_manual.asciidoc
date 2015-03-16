@@ -7,7 +7,8 @@
 
 Deze handleiding leidt u door het installatie proces van Enterprise Telemetry Monitor, kortweg ETM. Indien u ETM wilt evalueren kies dan
 voor de <<chap-ETM_Installation-Single_Machine_Installation, installatie op 1 machine>>. Wilt u ETM in een productie omgeving wilt 
-installeren kies dan voor de <<chap-ETM_Installation-Clustered_Installation, geclusterde installatie>>.  
+installeren kies dan voor de <<chap-ETM_Installation-Clustered_Installation, geclusterde installatie>>. In dit document zal veelvuldig
+gerefereerd worden naar '<ETM_UNZIP_DIR>'. Hiermee wordt de directory bedoeld waar u uw ETM download heeft uitgepakt.
 
 [[chap-ETM_Installation-System_Requirements]]
 == Systeemeisen

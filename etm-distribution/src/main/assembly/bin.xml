@@ -55,5 +55,9 @@
             <outputDirectory>resources/schemas</outputDirectory>
             <destName>telemetry-event.xsd</destName>
         </file>
+        <file>
+            <source>../etm-processor-rest/src/main/schema/telemetry-event.json</source>
+            <outputDirectory>resources/schemas</outputDirectory>
+        </file>        
 	</files>
 </assembly>

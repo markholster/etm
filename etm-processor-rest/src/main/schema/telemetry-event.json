@@ -1,0 +1,54 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Telemetry Event",
+    "description": "A telemetry event for Enterprise Telemetry Monitor",
+    "type": "object",
+    "properties": {
+        "application": {
+            "description": "The name of the application which send or receives the event",
+            "type": "string"
+        },
+        "content": {
+            "description": "The content of the event",
+            "type": "string"
+        },
+        "creationTime": {
+            "description": "The creation time of the event",
+            "type": "integer"
+        },
+        "direction": {
+            "description": "The of the event in the context of the application",
+            "type": "string",
+            "enum": [ "INCOMING", "OUTGOING"]
+        },
+        "endpoint": {
+            "description": "The endpoint this event was received/send from",
+            "type": "string"
+        },
+        "expiryTime": {
+            "description": "The time after which the event is expired",
+            "type": "integer"
+        },
+        "name": {
+            "description": "The name of the event",
+            "type": "string"
+        },
+        "sourceCorrelationId": {
+            "description": "The id of the related/parent event",
+            "type": "string"
+        },
+        "sourceId": {
+            "description": "The id of the event",
+            "type": "string"
+        },
+        "transactionName": {
+            "description": "The name of the transaction this event starts",
+            "type": "string"
+        },
+        "type": {
+            "description": "The event type",
+            "type": "string",
+            "enum": [ "MESSAGE_REQUEST", "MESSAGE_RESPONSE", "MESSAGE_DATAGRAM"]
+        }
+    }
+}

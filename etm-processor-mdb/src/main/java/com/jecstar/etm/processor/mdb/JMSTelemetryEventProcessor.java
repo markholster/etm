@@ -63,6 +63,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	public void onMessage(Message message) {
 		try {
 			this.telemetryEvent.initialize();
+			// TODO dit moet anders -> dynamisch
 			boolean nativeFormat = message.getBooleanProperty(JMS_PROPERTY_KEY_EVENT_NATIVE_FORMAT);
 			if (nativeFormat) {
 				handleNative(message);

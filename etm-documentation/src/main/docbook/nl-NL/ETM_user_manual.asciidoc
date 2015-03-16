@@ -61,11 +61,19 @@ Van de volgende velden kan de waarde dynamisch uit het content veld gehaald word
 Geen van de velden is een verplicht veld, maar aangeraden wordt om minstens het veld endpoint te vullen. Aan de hand van de endpoint waarde is het mogelijk een configuratie op te 
 geven die dynamisch de bovengenoemde velden gaat vaststellen.
 
+TODO Vertellen dat een event niet direct zoekbaar is.  
 
-- Beschrijven json object
+
+
+=== Events toevoegen via REST
+- Beschrijven json object (json schema)
+
+=== Events toevoegen via een JMS queue
 - Beschrijven MDB object/properties
 
-Vertellen dat een event niet direct zoekbaar is.  
+=== Events toevoegen via een web service
+- Beschrijven MDB object/properties
+
 
 [[chap-ETM_Usage-Remove_Events]]
 == Events verwijderen
