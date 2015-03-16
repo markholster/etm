@@ -21,6 +21,7 @@ public class LicenseGenerator {
 	
 	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
 		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+		calendar.set(Calendar.YEAR, 2015);
 		calendar.set(Calendar.MONTH, Calendar.DECEMBER);
 		calendar.set(Calendar.DAY_OF_MONTH, 31);
 		calendar.set(Calendar.HOUR_OF_DAY, 23);
