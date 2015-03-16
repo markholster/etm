@@ -50,6 +50,17 @@ kan worden en hoe sneller problemen in dit landschap gelokaliseerd kunnen worden
 |type|type event||keuzeveld: MESSAGE_REQUEST/MESSAGE_RESPONSE/MESSAGE_DATAGRRAM|ja
 |=======================
 
+Van de volgende velden kan de waarde dynamisch uit het content veld gehaald worden en/of geconfigureerd worden.
+
+* application
+* direction
+* name
+* transactionName
+* sourceCorrelationId
+
+Geen van de velden is een verplicht veld, maar aangeraden wordt om minstens het veld endpoint te vullen. Aan de hand van de endpoint waarde is het mogelijk een configuratie op te 
+geven die dynamisch de bovengenoemde velden gaat vaststellen.
+
 
 - Beschrijven json object
 - Beschrijven MDB object/properties

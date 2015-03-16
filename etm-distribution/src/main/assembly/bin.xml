@@ -50,5 +50,10 @@
 			<source>../etm-core/src/main/solr-scripts/etm_configs/conf/schema.xml</source>
 			<outputDirectory>resources/solr/single-node-conf</outputDirectory>
 		</file>
+        <file>
+            <source>../etm-processor-mdb/target/generated-resources/schemagen/schema1.xsd</source>
+            <outputDirectory>resources/schemas</outputDirectory>
+            <destName>telemetry-event.xsd</destName>
+        </file>
 	</files>
 </assembly>
