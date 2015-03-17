@@ -71,23 +71,38 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 		    	if (log.isInfoLevelEnabled()) {
 		    		log.logInfoMessage("Removing events with expired retention.");
 		    	}
-			    	try {
-			    		Date dateTill = new Date();
-			    		this.solrClient.deleteByQuery("retention:[* TO " + this.solrDateFormat.format(dateTill) + "]");
-			    		this.solrClient.commit(false, false, true);
-				    	Date cleanupTime = new Date(DateUtils.normalizeTime(dateTill.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
-				    	if (!this.lastCleanupTime.equals(cleanupTime)) {
-				    		this.lastCleanupTime = cleanupTime;
-							this.etmDataCleaner.cleanup(cleanupTime, this.etmConfiguration.isDataRetentionPreserveEventCounts(),
-							        this.etmConfiguration.isDataRetentionPreserveEventPerformances(),
-							        this.etmConfiguration.isDataRetentionPreserveEventSlas());
-				    	}
-		            } catch (SolrServerException | IOException e) {
-		            	if (log.isErrorLevelEnabled()) {
-		            		log.logErrorMessage("Error removing events expired retention", e);
-		            	}
-		            }
-	            Thread.sleep(this.etmConfiguration.getDataRetentionCheckInterval());
+		    	try {
+		    		Date dateTill = new Date();
+		    		this.solrClient.deleteByQuery("retention:[* TO " + this.solrDateFormat.format(dateTill) + "]");
+		    		this.solrClient.commit(false, false, true);
+			    	Date cleanupTime = new Date(DateUtils.normalizeTime(dateTill.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+			    	if (!this.lastCleanupTime.equals(cleanupTime)) {
+			    		this.lastCleanupTime = cleanupTime;
+						this.etmDataCleaner.cleanup(cleanupTime, this.etmConfiguration.isDataRetentionPreserveEventCounts(),
+						        this.etmConfiguration.isDataRetentionPreserveEventPerformances(),
+						        this.etmConfiguration.isDataRetentionPreserveEventSlas());
+			    	}
+	            } catch (SolrServerException | IOException e) {
+	            	if (log.isErrorLevelEnabled()) {
+	            		log.logErrorMessage("Error removing expired events", e);
+	            	}
+	            }
+		    	long timeOut = this.etmConfiguration.getDataRetentionCheckInterval();
+		    	if (timeOut < 30000) {
+		    		Thread.sleep(this.etmConfiguration.getDataRetentionCheckInterval());
+		    	} else {
+		    		long endSleep = System.currentTimeMillis() + timeOut;
+		    		while (System.currentTimeMillis() < endSleep) {
+		    			long sleepTime = endSleep - System.currentTimeMillis();
+		    			if (sleepTime > 0) {
+		    				if (sleepTime > 30000) {
+		    					Thread.sleep(30000);
+		    				} else {
+		    					Thread.sleep(sleepTime);
+		    				}
+		    			}
+		    		}
+		    	}
             } catch (InterruptedException e) {
             	if (log.isWarningLevelEnabled()) {
             		log.logWarningMessage("Retention service interrupted. Giving back leadership.");

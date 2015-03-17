@@ -63,11 +63,10 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	public void onMessage(Message message) {
 		try {
 			this.telemetryEvent.initialize();
-			// TODO dit moet anders -> dynamisch
-			boolean nativeFormat = message.getBooleanProperty(JMS_PROPERTY_KEY_EVENT_NATIVE_FORMAT);
-			if (nativeFormat) {
-				handleNative(message);
-			} else {
+			if (!handleNative(message)) {
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Message with msgid '" + message.getJMSMessageID() + "' could not be parsed nativly, trying to make the best of it.");
+				}
 				handleNoneNative(message);
 			}
 			this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
@@ -78,21 +77,24 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		}
 	}
 
-	private void handleNative(Message message) throws JMSException {
+	private boolean handleNative(Message message) throws JMSException {
 		if (message instanceof javax.jms.TextMessage) {
 			TextMessage textMessage = (TextMessage) message;
 			try (StringReader reader = new StringReader(textMessage.getText());) {
-	            this.unmarshaller.unmarshal(reader);
+	            XmlTelemetryEvent xmlTelemetryEvent = (XmlTelemetryEvent) this.unmarshaller.unmarshal(reader);
+	            xmlTelemetryEvent.copyToTelemetryEvent(this.telemetryEvent);
+	            return true;
             } catch (JAXBException e) {
-            	if (log.isErrorLevelEnabled()) {
-            		log.logErrorMessage("Unable to unmarshall event.", e);
+            	if (log.isInfoLevelEnabled()) {
+            		log.logDebugMessage("Unable to unmarshall event.", e);
             	}
             }
 		} else {
-			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Message with msgid '" + message.getJMSMessageID() + "' is not a TextMessage, but a '" + message.getClass().getName() + "'.");
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Message with msgid '" + message.getJMSMessageID() + "' is not a TextMessage, but a '" + message.getClass().getName() + "'.");
 			}
 		}
+		return false;
     }
 
 
@@ -100,6 +102,11 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		if (message instanceof javax.jms.TextMessage) {
 			TextMessage textMessage = (TextMessage) message;
 			this.telemetryEvent.content = textMessage.getText();
+		} else {
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Message with msgid '" + message.getJMSMessageID() + "' is not a TextMessage, but a '"
+				        + message.getClass().getName() + "'. Unable to retrieve content");
+			}
 		}
 		this.telemetryEvent.sourceId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_ID);
 		if (this.telemetryEvent.sourceId == null) {

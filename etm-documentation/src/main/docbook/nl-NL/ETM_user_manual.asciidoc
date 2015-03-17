@@ -9,6 +9,9 @@ Deze handleiding maakt u wegwijs in het gebruik van Enterprise Telemetry Monitor
 enterpise omgeving genereren. Naast het monitoren maakt ETM het mogelijk deze events te doorzoeken en correleren zodat u een volledig overzicht krijgt van de datastromen tussen
 uw verschillende applicaties. In deze handleiding wordt stap voor stap toegelicht hoe u dit inzicht in uw applicatielandschap kan verkrijgen. Deze handleiding gaat er vanuit dat
 u ETM inmiddels geinstalleerd heeft. Is dit niet het geval, doorloop dan eerst de installatie handleiding.
+In dit document zal veelvuldig
+gerefereerd worden naar '<ETM_UNZIP_DIR>'. Hiermee wordt de directory bedoeld waar u uw ETM download heeft uitgepakt.
+
 
 [[chap-ETM_Usage-Provide_License]]
 == Licentie invoeren
@@ -61,23 +64,104 @@ Van de volgende velden kan de waarde dynamisch uit het content veld gehaald word
 Geen van de velden is een verplicht veld, maar aangeraden wordt om minstens het veld endpoint te vullen. Aan de hand van de endpoint waarde is het mogelijk een configuratie op te 
 geven die dynamisch de bovengenoemde velden gaat vaststellen.
 
-TODO Vertellen dat een event niet direct zoekbaar is.  
-
-
+Een event dat is toegevoegd is niet direct doorzoekbaar. Om een zo hoog mogelijk volume van events per seconde te kunnen verwerken wordt er batchgewijs geindexeerd. Per batch worden 
+250 events verwerkt. Als uw volume dus ligt rond de 250 events per seconde, zal er dus maximaal een seconde liggen tussen het tijdstip van opvoeren en het tijdstip waarop het
+event terug te vinden is in de zoekresultaten.
 
 === Events toevoegen via REST
-- Beschrijven json object (json schema)
-
+Voor het toevoegen van events via de rest api moet de component etm-processor-rest-{etm_version}.war gedeployed worden. Indien u Wildfly lokaal heeft draaien kunt u daarna
+via http://localhost:8080/etm/processor/rest/event/add events toevoegen. Het JSON schema van de api is te vinden in <ETM_UNZIP_DIR>/resources/schemas/telemetry-event.json.
+ 
 === Events toevoegen via een JMS queue
-- Beschrijven MDB object/properties
+Voor het toevoegen van events via een JMS queue moet de component etm-processor-mdb-{etm_version}.war gedeployed worden. Van de berichten die van de geconfigureerde queue gelezen worden
+wordt eerst geprobeerd deze te unmarshallen volgens het schema te vinden in <ETM_UNZIP_DIR>/resources/schemas/telemetry-event.xsd. Als het bericht niet voldoet aan dit
+schema wordt enkel de payload van het bericht ingelezen in ETM. Dit betekend dat er geen automatische correlatie, naam bepaling etc mogelijk is. Het is dus aan te raden altijd 
+berichten op de queue te plaatsen die voldoen aan eerdergenoemd schema.
 
 === Events toevoegen via een web service
-- Beschrijven MDB object/properties
+Voor het toevoegen van events via een web service moet de component etm-processor-ws-{etm_version}.war gedeployed worden. Indien u Wildfly lokaal heeft draaien kunt u daarna
+via http://localhost:8080/etm/processor/ws/processorservice?wsdl de wsdl downloaden. 
 
+=== Performance optimalisatie
+Om een grotere doorvoersnelheid van het verwerken van events te realiseren kan het nodig zijn de ETM configuratie te optimaliseren. Opent u hiervoor het administratie panel 
+in uw browser. Indien u ETM op uw lokale machine heeft draaien is de url http://localhost:8080/etm/admin/index.html  
+Onder de tab 'ETM' vind u in de linker kolom een viertal configuratie opties die van belang zijn bij het verwerken van events:
+image:usage/etm-process-config.png["Performance optimalisatie", link="usage/etm-process-config.png"]
+
+Om te bepalen hoe de instellingen het best aangepast kunnen worden is het nodig enige kennis te hebben van de verwerking van events binnen ETM. Op het moment dat een event
+binnenkomst wordt deze allereerst "enhanced". Het enhancing proces zorgt er bijvoorbeeld voor dat de naam van een event wordt bepaald indien deze niet is meegegeven. Kortweg 
+kom het er op neer dat zoveel mogelijk van de event eigenschappen aangevuld worden indien deze niet meegegeven zijn. Nadat het event door het enhancement proces heen is wordt 
+het gelijktijdig opgeslagen en geindexeerd. Hoewel dit twee verschillende processen zijn, worden ze parralel uitgevoerd. De opties 'Enhancing handler count', 'Indexing handler count' 
+en 'Persisting handler count' bevatten het aantal handlers dat tegelijk berichten kan verwerken. Default zijn er per proces 5 handlers beschikbaar. Mocht u veel grote berichten 
+aan ETM toevoegen dan kan het bijvoorbeeld lonend zijn het aantal Indexing handlers te verhogen.
+
+Als laatste heeft u de mogelijkheid de 'Ringbuffer size' aan te passen. De ringbuffer is een interne buffer waarop events worden geplaatst voordat ze door een handler zijn verwerkt. 
+U kunt deze waarde ophogen als u tijdelijk pieken in uw load aan events verwacht. Let wel, de events worden op dat moment in het geheugen van de JVM geplaatst. Een te grote waarde 
+in dit veld kan er dus voor zorgen dat uw JVM uit zijn geheugen gaat lopen.
+
+Standaard toont het administratie panel de configuratie die voor alle instanties in het cluster geldt. Indien u voor een enkele node een configuratie wijziging wilt doorvoeren 
+kan dit door rechtsboven in de dropdown box de gewenste node te selecteren en daarna de configuratie instelling aan te passen.
+
+Zoals bij alle wijzigingen die via het administratie panel worden doorgevoerd hoeft er geen herstart van ETM plaats te vinden op het moment dat u de configuratie 
+wijziginen opslaat.
 
 [[chap-ETM_Usage-Remove_Events]]
 == Events verwijderen
+Het kan zijn dat uw events naar verloop van tijd niet meer relevant zijn. Om events ouder dan een bepaalde creationTime te verwijderen moet de component etm-scheduler-retention-{etm_version}.war
+gedeployed worden. Indien u dit component in een cluster deployed zal er altijd maar 1 instantie daadwerkelijk events gaan verwijderen. Welke instantie dit is wordt door Zookeeper 
+bepaald. Indien het gekozen component uitvalt of fouten geeft zal een instantie op een andere service dit werk automatisch overnemen. 
 
+Om te configureren hoe lang de event bewaard moeten blijven dient u in te loggen op het administratie panel in uw browser. Indien u ETM op uw lokale machine heeft draaien is 
+de url http://localhost:8080/etm/admin/index.html 
+Onder de tab 'ETM' vind u in de rechter kolom de velden 'Data retention time' en 'Data retention check interval':
+
+image:usage/retention-config.png["Retentie invoer", link="usage/retention-config.png"]
+
+In het veld 'Data retention time' geeft op hoe lang de events in milliseconden bewaard moeten blijven. In het veld 'Data retention check interval' geeft u op hoeveel tijd in 
+milliseconde er tussen 2 verwijder acties moet zitten. 
+
+
+[[chap-ETM_Usage-Search_Events]]
+== Events zoeken
+Om event in ETM op te zoeken opent u het zoekscherm in een browser. Indien u ETM op uw lokale machine heeft draaien is de url http://localhost:8080/etm/search/index.html 
+In het zoekscherm kunt u elke willekeurige zoekterm intypen en op de knop 'Search' drukken. ETM zoekt automatisch de meest relevante events voor u op.
+
+Naast een standaard invoer kunt u zoeken op specifieke velden van een event. Welke verlden dit precies zijn vind u in het panel met de titel 'Available fieldnames'. Neem bijvoorbeeld
+de volgende zoekopdracht:
+
+image:usage/search.png["Zoek voorbeeld", link="usage/search.png"]
+
+Door de zoekquery 'application:"Parel" AND endpoint:ESB.REQ.PRL and name:*Request' te gebruien gaat ETM op zoek naar event uit de applicatie "Parel". Door gebruik van
+quotes om de applicatienaam geeft u aan dat de applicatienaam een exacte match moet zijn. Tevens moet het endpoint van het event de waarde "ESB.REQ.PRL" hebben en de naam
+van het event eindigen op "Request".
+
+Veelgebruikte zoekopdrachten vindt u aan de rechten kant van het scherm in het panel met de titel 'Search templates'. Door op 1 van de zoek sjablonen te klikken wordt een 
+standaard zoekopdracht voor u ingevuld in het invoerscherm. 
+
+=== Zoekresultaten
+Nadat u uw event hebt teruggevonden kunt u de inhoud bekijken door op de eventnaam te klikken. Allereerst vind u hier enkele eigenschappen van het event terug, plus de inhoud
+van het event. Indien het event van het type "MESSAGE_REQUEST" of "MESSAGE_RESPONSE" is wordt automatisch het gecorreleerde bericht getoond in de tab naast het geselecteerde
+bericht. Als laatste wordt er een overview getoond van het bericht en alle gerelateerde berichten in uw applicatie landschap. Een voorbeeld hiervan is:
+
+image:usage/event-overview.png["Event overview", link="usage/event-overview.png"]
+
+In het overview is de naam het geselecteerde bericht vetgedrukt. U kunt dus in 1 oogopslag zien waar in uw applicatie keten zicht het bericht bevind. Ook kunt u terugvinden welke
+berichten in de keten de meeste verwerkingstijd in beslag namen. Dit zijn de berichten die het minst groen zijn gekleurd. In bovenstaand voorbeeld is de applicatie "Nieuw Woon" 
+dus de oorzaak van de langzame verwerkingssnelheid van het bericht uit de applicatie "KCS". Enkele berichten zijn witgekleurd. Dit zijn berichten van het type "MESSAGE_DATAGRAM" 
+en hebben geen verwerkingstijd, aangezien dit bericht types zijn waarop geen antwoord komt. 
 
 [[chap-ETM_Usage-Error_Codes]]
 == Error codes
+Waar mogelijk geeft ETM error codes terug indien het berichten niet kan verwerken of opdrachten niet juist kan afhandelen. Hieronder een overzicht van foutmeldingen en mogelijke
+oplossingen:
+
+[options="header"]
+|=======================
+|Code|Oorzaak|Oplossing
+|[[error-100000]]100000|Onbekende fout|Controleer de logfiles op gedetailleerde foutmeldingen
+|[[error-100001]]100001|Ongeldige licentie sleutel|De ingevulde licentie sleutel is niet geldig. Neem contact op met Jecstar support.
+|[[error-100002]]100002|De licentie sleutel is verlopen|De huidige licentie sleutel is niet meer gelidg. Neem contact op met Jecstar support.
+|[[error-100003]]100003|Fout bij laden configuratie|De configuratie kon niet ingeladen worden. Controleer of uw Zookeeper ensemble actief is. Indien dit het geval is, controleer dan de logfiles 
+op gedetailleerde informatie.
+|[[error-100004]]100004|Fout bij aanmaken unmarshaller|De MDB is niet in staat een unmarshaller voor de berichten aan te maken. Controleer de logfiles op gedetailleerde foutmeldingen 
+|=======================
