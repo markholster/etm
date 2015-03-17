@@ -150,6 +150,21 @@ berichten in de keten de meeste verwerkingstijd in beslag namen. Dit zijn de ber
 dus de oorzaak van de langzame verwerkingssnelheid van het bericht uit de applicatie "KCS". Enkele berichten zijn witgekleurd. Dit zijn berichten van het type "MESSAGE_DATAGRAM" 
 en hebben geen verwerkingstijd, aangezien dit bericht types zijn waarop geen antwoord komt. 
 
+
+[[chap-ETM_Usage-Monitor_Events]]
+== Events monitoren
+Om events te monitoren kunt u gebruik maken van het ETM Dashboard in uw browser. Indien u ETM op uw lokale machine heeft draaien is de url http://localhost:8080/etm/dashboard/index.html
+Op het dashboard ziet u uw slechts presterende transacties en events:
+
+image:usage/dashboard.png["Dashboard", link="usage/dashboard.png"]
+
+Linksboven in het panel met de titel 'Message counts' ziet u maximaal 5 applicaties die de meeste events genereren of ontvangen in het afgelopen uur. Per applicatie wordt het 
+type event met het bijbehorende aantal weergegeven. Rechtsboven in het panel met de titel 'Transaction performance' ziet u maximaal 5 transacties met de slechtste gemiddelde 
+response tijd in het afgelopen uur. Rechtsonder in het panel met de titel 'Message performance' ziet u maximaal 5 individuele events met de slechtste gemiddelde response tijd in 
+het afgelopen uur. Als laatst ziet u linksonder in het panel met de titel 'Expired messages' de laatste (maximaal) 7 berichten van het type MESSAGE_REQUEST waarop geen antwoord 
+kwam, of waarvan het antwoord later dan de expiry tijd binnen is gekomen. Vanuit deze tabel kunt u doorklikken op de berichten om daarna te bepalen waar het probleem in uw 
+applicatie landschap zit precies bevindt.
+
 [[chap-ETM_Usage-Error_Codes]]
 == Error codes
 Waar mogelijk geeft ETM error codes terug indien het berichten niet kan verwerken of opdrachten niet juist kan afhandelen. Hieronder een overzicht van foutmeldingen en mogelijke
