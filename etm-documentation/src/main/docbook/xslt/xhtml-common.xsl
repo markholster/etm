@@ -34,7 +34,7 @@
               standalone="no"/>
 
   <xsl:param name="siteHref" select="'http://www.jecstar.com/'"/>
-  <xsl:param name="docHref" select="'http://www.jecstar.com/documentation/etm/'"/>
+  <xsl:param name="docHref" select="'http://www.jecstar.com/documentation.html#etm-documentation'"/>
   <xsl:param name="siteLinkText" select="'Jecstar'"/>
   <xsl:param name="docLinkText" select="'ETM Documentation'"/>
 
