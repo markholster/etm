@@ -87,6 +87,7 @@ via http://localhost:8080/etm/processor/ws/processorservice?wsdl de wsdl downloa
 Om een grotere doorvoersnelheid van het verwerken van events te realiseren kan het nodig zijn de ETM configuratie te optimaliseren. Opent u hiervoor het administratie panel 
 in uw browser. Indien u ETM op uw lokale machine heeft draaien is de url http://localhost:8080/etm/admin/index.html  
 Onder de tab 'ETM' vind u in de linker kolom vier configuratie opties die van belang zijn bij het verwerken van events:
+
 image:usage/etm-process-config.png["Performance optimalisatie", link="usage/etm-process-config.png"]
 
 Om te bepalen hoe de instellingen het best aangepast kunnen worden is het nodig enige kennis te hebben van de verwerking van events binnen ETM. Op het moment dat een event

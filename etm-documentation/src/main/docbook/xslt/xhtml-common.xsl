@@ -437,7 +437,7 @@ them using CSS so that they all appear in a column on the right. -->
     <xsl:param name="node" select="."/>
     <xsl:if test="$confidential = '1'">
       <h1 xmlns="http://www.w3.org/1999/xhtml" class="confidential">
-        <xsl:text>Red Hat Confidential!</xsl:text>
+        <xsl:text>Jecstar Confidential!</xsl:text>
       </h1>
     </xsl:if>
   </xsl:template>
