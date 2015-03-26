@@ -339,8 +339,8 @@ $(function () {
         $('#' + divId + ' > .panel-body').empty();
         if (expressionParsers) {
             $.each(expressionParsers, function(index, expressionParser) {
-                $('#' + divId + ' > .panel-body').html('<div class="form-group"></div>');
-                var selectDiv = $('<div></div>').attr('class', 'col-sm-3')
+                $('#' + divId + ' > .panel-body').html('<div id="' + elementName + '_exp_prs_ix_' + index + '" class="form-group"></div>');
+                var selectDiv = $('<div></div>').attr('class', 'col-sm-2')
                   .append($('<select></select>').attr('id', elementName + '_select_' + index).attr('name', elementName + '_type_' + index).attr('class', 'form-control')
                           .append($('<option></option>').attr("value", 'fixed_position').text('Fixed position'))
                           .append($('<option></option>').attr("value", 'fixed_value').text('Fixed value'))
@@ -393,7 +393,27 @@ $(function () {
                             .attr('style', 'display: none;')
                 );
                 $('#' + divId + ' > .panel-body > .form-group').append(inputDiv);
-
+                var actionDiv = $('<div></div>').attr('class', 'col-sm-2')
+                    .append($('<div class="btn-toolbar" role="group"></div>')
+                    .append($('<button id="' + elementName + '_exp_prs_up_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>'))
+                    .append($('<button id="' + elementName + '_exp_prs_down_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>'))
+                    .append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'))
+                    );
+                $('#' + divId + ' > .panel-body > .form-group').append(actionDiv);
+                
+                if (expressionParsers.length <= 1) {
+                    $('#' + elementName + '_exp_prs_up_' + index).hide();
+                    $('#' + elementName + '_exp_prs_down_' + index).hide();
+                }
+                if (index == 0) {
+                	$('#' + elementName + '_exp_prs_up_' + index).hide();
+                }
+                if (index == (expressionParsers.length - 1)) {
+                	$('#' + elementName + '_exp_prs_down_' + index).hide();
+                }
+                $('#' + elementName + '_exp_prs_remove_' + index).click(function() {
+                    $('#' + elementName + '_exp_prs_ix_' + index).remove();
+                });
                 $('#' + elementName + '_select_' + index).change(function() {
                     var expressionType = $(this).val();
                     if ('fixed_position' == expressionType) {
