@@ -58,13 +58,14 @@ public class StatementExecutor {
 				+ "direction, "
 				+ "endpoint, "
 				+ "expiryTime, "
+				+ "metadata, "
 				+ "name, "
 				+ "sourceCorrelationId, "
 				+ "sourceId, "
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "type, "
-				+ "slaRule) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+				+ "slaRule) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 		this.insertSourceIdIdStatement = session.prepare("insert into sourceid_id_correlation ("
 				+ "sourceId, "
 				+ "creationTime, "
@@ -226,6 +227,7 @@ public class StatementExecutor {
 		        event.direction != null ? event.direction.name() : null, 
 		        event.endpoint,
 		        event.expiryTime,
+		        event.metadata,
 		        event.name, 
 		        event.sourceCorrelationId, 
 		        event.sourceId, 

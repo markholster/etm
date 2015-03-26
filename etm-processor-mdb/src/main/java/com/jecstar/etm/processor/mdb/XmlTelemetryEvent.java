@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.mdb;
 
 import java.util.Date;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlEnum;
@@ -51,6 +52,9 @@ public class XmlTelemetryEvent {
 	public Date expiryTime;
 
 	@XmlElement
+	public Map<String,String> metadata;
+	
+	@XmlElement
 	public String name;
 
 	@XmlElement
@@ -77,6 +81,9 @@ public class XmlTelemetryEvent {
 	    telemetryEvent.endpoint = this.endpoint;
 	    if (this.expiryTime != null) {
 	    	telemetryEvent.expiryTime.setTime(this.expiryTime.getTime());
+	    }
+	    if (this.metadata != null) {
+	    	telemetryEvent.metadata.putAll(this.metadata);
 	    }
 	    telemetryEvent.name = this.name;
 	    telemetryEvent.sourceCorrelationId = this.sourceCorrelationId;

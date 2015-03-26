@@ -104,6 +104,11 @@ public class TelemetryEvent {
 	public SlaRule slaRule;
 	
 	/**
+	 * Metadata of the event. Not used by the application, but can be filled by the end user. 
+	 */
+	public Map<String, String> metadata = new HashMap<String, String>();
+	
+	/**
 	 * Data to be used for correlating event's that aren't correlated by the correlation id.
 	 */
 	public Map<String, String> correlationData = new HashMap<String, String>();
@@ -125,6 +130,7 @@ public class TelemetryEvent {
 		this.direction = null;
 		this.endpoint = null;
 		this.expiryTime.setTime(0);
+		this.metadata.clear();
 		this.name = null;
 		this.slaRule = null;
 		this.sourceCorrelationId = null;
@@ -151,6 +157,7 @@ public class TelemetryEvent {
 		this.direction = copy.direction;
 		this.endpoint = copy.endpoint;
 		this.expiryTime.setTime(copy.expiryTime.getTime());
+		this.metadata.putAll(copy.metadata);
 		this.name = copy.name;
 		this.slaRule = copy.slaRule;
 		this.sourceCorrelationId = copy.sourceCorrelationId;

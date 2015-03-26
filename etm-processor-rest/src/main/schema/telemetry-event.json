@@ -29,6 +29,18 @@
             "description": "The time after which the event is expired",
             "type": "integer"
         },
+        "metadata" : {
+            "description": "The metadata of the event. Metadata can be used to add custom properties to an event",
+            "type": "array",
+            "minItems": 0,
+            "items": { "type": "object",
+                       "properties": {
+                           "key": {"type": "string"},
+                           "value": {"type": "string"}
+                       }
+            },
+            "uniqueItems": true            
+        },
         "name": {
             "description": "The name of the event",
             "type": "string"

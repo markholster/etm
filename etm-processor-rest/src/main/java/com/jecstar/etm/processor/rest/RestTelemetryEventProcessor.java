@@ -48,7 +48,8 @@ public class RestTelemetryEventProcessor {
 		try {
 			this.telemetryEvent.initialize();
 			JsonParser parser = this.jsonFactory.createJsonParser(data);
-			while (parser.nextToken() != JsonToken.END_OBJECT) {
+			JsonToken token = parser.nextToken();
+			while (token != JsonToken.END_OBJECT && token != null) {
 				String name = parser.getCurrentName();
 				if ("application".equals(name)) {
 					parser.nextToken();
@@ -68,6 +69,35 @@ public class RestTelemetryEventProcessor {
 				} else if ("expiryTime".equals(name)) {
 					parser.nextToken();
 					this.telemetryEvent.expiryTime.setTime(parser.getLongValue());
+				} else if ("metadata".equals(name)) {
+					if (parser.nextToken() != JsonToken.START_ARRAY) {
+						if (log.isErrorLevelEnabled()) {
+							log.logErrorMessage("Unable to determine metadata");
+						}
+						throw new WebApplicationException(Response.Status.BAD_REQUEST);	
+					}
+					String currentKey = null;
+					String currentValue = null;
+					token = parser.nextToken();
+					while (token != JsonToken.END_ARRAY && token != null) {
+						name = parser.getCurrentName();
+						if ("key".equals(name)) {
+							parser.nextToken();
+							currentKey = parser.getText();
+						} else if ("value".equals(name)) {
+							parser.nextToken();
+							currentValue = parser.getText();
+						}
+						token = parser.nextToken();
+						if (token == JsonToken.END_OBJECT) {
+							if (currentKey != null && currentValue != null) {
+								this.telemetryEvent.metadata.put(currentKey, currentValue);
+							}
+							currentKey = null;
+							currentValue = null;
+						}
+					}
+					
 				} else if ("name".equals(name)) {
 					parser.nextToken();
 					this.telemetryEvent.name = parser.getText();
@@ -84,6 +114,7 @@ public class RestTelemetryEventProcessor {
 					parser.nextToken();
 					this.telemetryEvent.type = determineEventType(parser.getText());
 				}
+				token = parser.nextToken();
 			}
 			this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
 			return "{ \"status\": \"success\" }";
