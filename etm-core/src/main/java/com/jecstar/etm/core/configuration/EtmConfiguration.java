@@ -39,6 +39,7 @@ import com.jecstar.etm.core.logging.LogWrapper;
 
 //TODO document this class and the different properties. 
 //TODO fallback to default enum values for proprties with illegal values. 
+//TODO Zookeeper authentication
 public class EtmConfiguration extends AbstractConfiguration implements Closeable {
 	
 	/**
