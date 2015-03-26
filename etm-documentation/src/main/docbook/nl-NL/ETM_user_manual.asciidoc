@@ -47,6 +47,7 @@ kan worden en hoe sneller problemen in dit landschap gelokaliseerd kunnen worden
 |direction|richting van het event (uitgaand of binnnenkomend)||keuzeveld: INCOMING/OUTGOING|ja
 |endpoint|endpoint waarop het event ontvangen of verstuurd is||tekst|ja
 |expiryTime|datum-tijd waarop het event verlopen is||datum-tijd|ja
+|metadata|metadata van het event||key value tekst paren|ja
 |name|naam van het event||tekst|ja
 |sourceCorrelationId|sourceId van het parent/gerelateerde event||tekst|ja
 |sourceId|id van het event in uw applicatie||tekst|ja
