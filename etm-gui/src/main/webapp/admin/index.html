@@ -336,10 +336,10 @@ $(function () {
 	};
 
 	var addExpressionParsers = function(divId, elementName, expressionParsers) {
-        $('#' + divId + ' > .panel-body').empty();
+		$('#' + divId + ' > .panel-body').empty();
         if (expressionParsers) {
             $.each(expressionParsers, function(index, expressionParser) {
-                $('#' + divId + ' > .panel-body').html('<div id="' + elementName + '_exp_prs_ix_' + index + '" class="form-group"></div>');
+                $('#' + divId + ' > .panel-body').append($('<div id="' + elementName + '_exp_prs_ix_' + index + '" class="form-group"></div>'));
                 var selectDiv = $('<div></div>').attr('class', 'col-sm-2')
                   .append($('<select></select>').attr('id', elementName + '_select_' + index).attr('name', elementName + '_type_' + index).attr('class', 'form-control')
                           .append($('<option></option>').attr("value", 'fixed_position').text('Fixed position'))
@@ -347,7 +347,7 @@ $(function () {
                           .append($('<option></option>').attr("value", 'xpath').text('XPath'))
                           .append($('<option></option>').attr("value", 'xslt').text('XSLT'))
                 );
-                $('#' + divId + ' > .panel-body > .form-group').append(selectDiv);
+                $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(selectDiv);
                 var inputDiv = $('<div></div>').attr('class', 'col-sm-8')
                     .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
                             .attr('id', elementName + '_fixed_pos_line_' + index)
@@ -392,14 +392,14 @@ $(function () {
                             .attr('placeholder', 'Xslt template')
                             .attr('style', 'display: none;')
                 );
-                $('#' + divId + ' > .panel-body > .form-group').append(inputDiv);
+                $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(inputDiv);
                 var actionDiv = $('<div></div>').attr('class', 'col-sm-2')
                     .append($('<div class="btn-toolbar" role="group"></div>')
                     .append($('<button id="' + elementName + '_exp_prs_up_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>'))
                     .append($('<button id="' + elementName + '_exp_prs_down_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>'))
                     .append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'))
                     );
-                $('#' + divId + ' > .panel-body > .form-group').append(actionDiv);
+                $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(actionDiv);
                 
                 if (expressionParsers.length <= 1) {
                     $('#' + elementName + '_exp_prs_up_' + index).hide();
