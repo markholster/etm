@@ -397,22 +397,20 @@ $(function () {
                     .append($('<div class="btn-toolbar" role="group"></div>')
                     .append($('<button id="' + elementName + '_exp_prs_up_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>'))
                     .append($('<button id="' + elementName + '_exp_prs_down_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>'))
-                    .append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'))
+                    .append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default btn-danger"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'))
                     );
                 $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(actionDiv);
-                
-                if (expressionParsers.length <= 1) {
-                    $('#' + elementName + '_exp_prs_up_' + index).hide();
-                    $('#' + elementName + '_exp_prs_down_' + index).hide();
-                }
-                if (index == 0) {
-                	$('#' + elementName + '_exp_prs_up_' + index).hide();
-                }
-                if (index == (expressionParsers.length - 1)) {
-                	$('#' + elementName + '_exp_prs_down_' + index).hide();
-                }
                 $('#' + elementName + '_exp_prs_remove_' + index).click(function() {
                     $('#' + elementName + '_exp_prs_ix_' + index).remove();
+                    styleExpressionParserButtons(divId);
+                });
+                $('#' + elementName + '_exp_prs_up_' + index).click(function() {
+                	$('#' + elementName + '_exp_prs_ix_' + index).insertBefore($('#' + elementName + '_exp_prs_ix_' + index).prev());
+                	styleExpressionParserButtons(divId);
+                });
+                $('#' + elementName + '_exp_prs_down_' + index).click(function() {
+                    $('#' + elementName + '_exp_prs_ix_' + index).insertAfter($('#' + elementName + '_exp_prs_ix_' + index).next());
+                    styleExpressionParserButtons(divId);
                 });
                 $('#' + elementName + '_select_' + index).change(function() {
                     var expressionType = $(this).val();
@@ -460,9 +458,26 @@ $(function () {
                 $('#' + elementName + '_select_' + index).val(expressionParser.type);
                 $('#' + elementName + '_select_' + index).change();
             });
+            styleExpressionParserButtons(divId);
         }
 	};
 
+	var styleExpressionParserButtons = function(divId) {
+		var rows = $('#' + divId + ' > .panel-body > .form-group');
+		$.each(rows, function(index, row) {
+			var upId = row.id.replace('_ix_', '_up_');
+			var downId = row.id.replace('_ix_', '_down_');
+			$('#' + upId).prop('disabled', false);
+			$('#' + downId).prop('disabled', false);
+		    if (index == 0) {
+		    	$('#' + upId).prop('disabled', true);
+			}
+			if (index == (rows.length - 1)) {
+				$('#' + downId).prop('disabled', true);
+			}
+		});
+	};
+	
 	var loadEndpointData = function(endpointName) {
 	      $.getJSON('../rest/admin/endpoint/' + encodeURIComponent(endpointName), function (data) {
 	            if (!data) {
