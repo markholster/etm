@@ -189,17 +189,38 @@
                                         </div>
                                     </div>
 									<div id="eventname_parsers" class="panel panel-default">
-									   <div class="panel-heading">Eventname parsers</div>
+									   <div class="panel-heading clearfix">
+									       <div class="panel-title pull-left">Eventname parsers</div>
+									       <div class="pull-right">
+									           <button id="btn_add_eventname_parser" type="button" class="btn btn-default btn-sm">
+									               <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+									           </button>
+									       </div>    
+									   </div>
 									   <div class="panel-body">
 									   </div>
 									</div>                 
                                     <div id="application_parsers" class="panel panel-default">
-                                       <div class="panel-heading">Application parsers</div>
+                                       <div class="panel-heading clearfix">
+                                           <div class="panel-title pull-left">Application parsers</div>
+                                           <div class="pull-right">
+                                               <button id="btn_add_application_parser" type="button" class="btn btn-default btn-sm">
+                                                   <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                               </button>
+                                           </div>    
+                                       </div>
                                        <div class="panel-body">
                                        </div>
                                     </div>                 
                                     <div id="transactionname_parsers" class="panel panel-default">
-                                       <div class="panel-heading">Transactionname parsers</div>
+                                       <div class="panel-heading clearfix">
+                                           <div class="panel-title pull-left">Transactionname parsers</div>
+                                           <div class="pull-right">
+                                               <button id="btn_add_transactionname_parser" type="button" class="btn btn-default btn-sm">
+                                                   <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                               </button>
+                                           </div>    
+                                       </div>
                                        <div class="panel-body">
                                        </div>
                                     </div>                 
@@ -339,113 +360,8 @@ $(function () {
 		$('#' + divId + ' > .panel-body').empty();
         if (expressionParsers) {
             $.each(expressionParsers, function(index, expressionParser) {
-                $('#' + divId + ' > .panel-body').append($('<div id="' + elementName + '_exp_prs_ix_' + index + '" class="form-group"></div>'));
-                var selectDiv = $('<div></div>').attr('class', 'col-sm-2')
-                  .append($('<select></select>').attr('id', elementName + '_select_' + index).attr('name', elementName + '_type_' + index).attr('class', 'form-control')
-                          .append($('<option></option>').attr("value", 'fixed_position').text('Fixed position'))
-                          .append($('<option></option>').attr("value", 'fixed_value').text('Fixed value'))
-                          .append($('<option></option>').attr("value", 'xpath').text('XPath'))
-                          .append($('<option></option>').attr("value", 'xslt').text('XSLT'))
-                );
-                $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(selectDiv);
-                var inputDiv = $('<div></div>').attr('class', 'col-sm-8')
-                    .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
-                            .attr('id', elementName + '_fixed_pos_line_' + index)
-                            .attr('name', elementName + '_fixed_pos_line_' + index)
-                            .attr('type', 'number').attr('class', 'form-control')
-                            .attr('placeholder', 'Line number')
-                            .attr('min', '1')
-                            .attr('style', 'display: none;')))
-                    .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
-                            .attr('id', elementName + '_fixed_pos_start_' + index)
-                            .attr('name', elementName + '_fixed_pos_start_' + index)
-                            .attr('type', 'number').attr('class', 'form-control')
-                            .attr('placeholder', 'Start index')
-                            .attr('min', '0')
-                            .attr('style', 'display: none;')))                                            
-                    .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
-                            .attr('id', elementName + '_fixed_pos_end_' + index)
-                            .attr('name', elementName + '_fixed_pos_end_' + index)
-                            .attr('type', 'number').attr('class', 'form-control')
-                            .attr('placeholder', 'End index')
-                            .attr('min', '0')
-                            .attr('style', 'display: none;')))                           
-                    .append($('<input />')
-                    	    .attr('id', elementName + '_fixed_value_' + index)
-                            .attr('name', elementName + '_fixed_value_' + index)
-                            .attr('type', 'text').attr('class', 'form-control')
-                            .attr('required', 'required')
-                            .attr('placeholder', 'Fixed name')
-                            .attr('style', 'display: none;'))
-                    .append($('<input />')
-                                    .attr('id', elementName + '_xpath_' + index)
-                                    .attr('name', elementName + '_xpath_' + index)
-                                    .attr('type', 'text').attr('class', 'form-control')
-                                    .attr('required', 'required')
-                                    .attr('placeholder', 'Xpath expression')
-                                    .attr('style', 'display: none;'))
-                    .append($('<input />')
-                            .attr('id', elementName + '_xslt_' + index)
-                            .attr('name', elementName + '_xslt_' + index)
-                            .attr('type', 'text').attr('class', 'form-control')
-                            .attr('required', 'required')
-                            .attr('placeholder', 'Xslt template')
-                            .attr('style', 'display: none;')
-                );
-                $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(inputDiv);
-                var actionDiv = $('<div></div>').attr('class', 'col-sm-2')
-                    .append($('<div class="btn-toolbar" role="group"></div>')
-                    .append($('<button id="' + elementName + '_exp_prs_up_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>'))
-                    .append($('<button id="' + elementName + '_exp_prs_down_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>'))
-                    .append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default btn-danger"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'))
-                    );
-                $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(actionDiv);
-                $('#' + elementName + '_exp_prs_remove_' + index).click(function() {
-                    $('#' + elementName + '_exp_prs_ix_' + index).remove();
-                    styleExpressionParserButtons(divId);
-                });
-                $('#' + elementName + '_exp_prs_up_' + index).click(function() {
-                	$('#' + elementName + '_exp_prs_ix_' + index).insertBefore($('#' + elementName + '_exp_prs_ix_' + index).prev());
-                	styleExpressionParserButtons(divId);
-                });
-                $('#' + elementName + '_exp_prs_down_' + index).click(function() {
-                    $('#' + elementName + '_exp_prs_ix_' + index).insertAfter($('#' + elementName + '_exp_prs_ix_' + index).next());
-                    styleExpressionParserButtons(divId);
-                });
-                $('#' + elementName + '_select_' + index).change(function() {
-                    var expressionType = $(this).val();
-                    if ('fixed_position' == expressionType) {
-                    	$('#' + elementName + '_fixed_pos_line_' + index).show();
-                    	$('#' + elementName + '_fixed_pos_start_' + index).show();
-                    	$('#' + elementName + '_fixed_pos_end_' + index).show();
-                        $('#' + elementName + '_fixed_value_' + index).hide();
-                        $('#' + elementName + '_xpath_' + index).hide();
-                        $('#' + elementName + '_xslt_' + index).hide();                    	
-                    } else if ('fixed_value' == expressionType) {
-                    	$('#' + elementName + '_fixed_pos_line_' + index).hide();
-                        $('#' + elementName + '_fixed_pos_start_' + index).hide();
-                        $('#' + elementName + '_fixed_pos_end_' + index).hide();
-                        $('#' + elementName + '_fixed_value_' + index).show();
-                        $('#' + elementName + '_xpath_' + index).hide();
-                        $('#' + elementName + '_xslt_' + index).hide();
-                    } else if ('xpath' == expressionType) {
-                    	$('#' + elementName + '_fixed_pos_line_' + index).hide();
-                        $('#' + elementName + '_fixed_pos_start_' + index).hide();
-                        $('#' + elementName + '_fixed_pos_end_' + index).hide();
-                    	$('#' + elementName + '_fixed_value_' + index).hide();
-                    	$('#' + elementName + '_xpath_' + index).show();
-                    	$('#' + elementName + '_xslt_' + index).hide();
-                    } else if ('xslt' == expressionType) {
-                    	$('#' + elementName + '_fixed_pos_line_' + index).hide();
-                        $('#' + elementName + '_fixed_pos_start_' + index).hide();
-                        $('#' + elementName + '_fixed_pos_end_' + index).hide();
-                    	$('#' + elementName + '_fixed_value_' + index).hide();
-                    	$('#' + elementName + '_xpath_' + index).hide();
-                    	$('#' + elementName + '_xslt_' + index).show();
-                    }
-                });
+            	appendExpressionParser(divId, elementName, index);
                 // Set the values.                
-                
                 if ('fixed_position' == expressionParser.type) {
                     
                 } else if ('fixed_value' == expressionParser.type) {
@@ -460,6 +376,124 @@ $(function () {
             });
             styleExpressionParserButtons(divId);
         }
+	};
+
+	var appendExpressionParser = function(divId, elementName, index) {
+		if (index == undefined) {
+			index = 0;
+			// Determine first unused index.
+			var rows = $('#' + divId + ' > .panel-body > .form-group');
+			var rowIds = [];
+			$.each(rows, function(ix, row) {
+			    rowId = row.id.substring(row.id.indexOf('_ix_') + 4);
+			    rowIds.push(parseInt(rowId));
+			});
+			while (-1 != $.inArray(index, rowIds)) {
+				index++;
+			}
+		}
+        $('#' + divId + ' > .panel-body').append($('<div id="' + elementName + '_exp_prs_ix_' + index + '" class="form-group"></div>'));
+        var selectDiv = $('<div></div>').attr('class', 'col-sm-2')
+          .append($('<select></select>').attr('id', elementName + '_select_' + index).attr('name', elementName + '_type_' + index).attr('class', 'form-control')
+                  .append($('<option></option>').attr("value", 'fixed_position').text('Fixed position'))
+                  .append($('<option></option>').attr("value", 'fixed_value').text('Fixed value'))
+                  .append($('<option></option>').attr("value", 'xpath').text('XPath'))
+                  .append($('<option></option>').attr("value", 'xslt').text('XSLT'))
+        );
+        $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(selectDiv);
+        var inputDiv = $('<div></div>').attr('class', 'col-sm-8')
+            .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
+                    .attr('id', elementName + '_fixed_pos_line_' + index)
+                    .attr('name', elementName + '_fixed_pos_line_' + index)
+                    .attr('type', 'number').attr('class', 'form-control')
+                    .attr('placeholder', 'Line number')
+                    .attr('min', '1')))
+            .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
+                    .attr('id', elementName + '_fixed_pos_start_' + index)
+                    .attr('name', elementName + '_fixed_pos_start_' + index)
+                    .attr('type', 'number').attr('class', 'form-control')
+                    .attr('placeholder', 'Start index')
+                    .attr('min', '0')))
+            .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
+                    .attr('id', elementName + '_fixed_pos_end_' + index)
+                    .attr('name', elementName + '_fixed_pos_end_' + index)
+                    .attr('type', 'number').attr('class', 'form-control')
+                    .attr('placeholder', 'End index')
+                    .attr('min', '0')))
+            .append($('<input />')
+                    .attr('id', elementName + '_fixed_value_' + index)
+                    .attr('name', elementName + '_fixed_value_' + index)
+                    .attr('type', 'text').attr('class', 'form-control')
+                    .attr('required', 'required')
+                    .attr('placeholder', 'Fixed name')
+                    .attr('style', 'display: none;'))
+            .append($('<input />')
+                            .attr('id', elementName + '_xpath_' + index)
+                            .attr('name', elementName + '_xpath_' + index)
+                            .attr('type', 'text').attr('class', 'form-control')
+                            .attr('required', 'required')
+                            .attr('placeholder', 'Xpath expression')
+                            .attr('style', 'display: none;'))
+            .append($('<input />')
+                    .attr('id', elementName + '_xslt_' + index)
+                    .attr('name', elementName + '_xslt_' + index)
+                    .attr('type', 'text').attr('class', 'form-control')
+                    .attr('required', 'required')
+                    .attr('placeholder', 'Xslt template')
+                    .attr('style', 'display: none;')
+        );
+        $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(inputDiv);
+        var actionDiv = $('<div></div>').attr('class', 'col-sm-2')
+            .append($('<div class="btn-toolbar" role="group"></div>')
+            .append($('<button id="' + elementName + '_exp_prs_up_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>'))
+            .append($('<button id="' + elementName + '_exp_prs_down_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>'))
+            .append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default btn-danger"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'))
+            );
+        $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(actionDiv);
+        $('#' + elementName + '_exp_prs_remove_' + index).click(function() {
+            $('#' + elementName + '_exp_prs_ix_' + index).remove();
+            styleExpressionParserButtons(divId);
+        });
+        $('#' + elementName + '_exp_prs_up_' + index).click(function() {
+            $('#' + elementName + '_exp_prs_ix_' + index).insertBefore($('#' + elementName + '_exp_prs_ix_' + index).prev());
+            styleExpressionParserButtons(divId);
+        });
+        $('#' + elementName + '_exp_prs_down_' + index).click(function() {
+            $('#' + elementName + '_exp_prs_ix_' + index).insertAfter($('#' + elementName + '_exp_prs_ix_' + index).next());
+            styleExpressionParserButtons(divId);
+        });
+        $('#' + elementName + '_select_' + index).change(function() {
+            var expressionType = $(this).val();
+            if ('fixed_position' == expressionType) {
+                $('#' + elementName + '_fixed_pos_line_' + index).show();
+                $('#' + elementName + '_fixed_pos_start_' + index).show();
+                $('#' + elementName + '_fixed_pos_end_' + index).show();
+                $('#' + elementName + '_fixed_value_' + index).hide();
+                $('#' + elementName + '_xpath_' + index).hide();
+                $('#' + elementName + '_xslt_' + index).hide();                     
+            } else if ('fixed_value' == expressionType) {
+                $('#' + elementName + '_fixed_pos_line_' + index).hide();
+                $('#' + elementName + '_fixed_pos_start_' + index).hide();
+                $('#' + elementName + '_fixed_pos_end_' + index).hide();
+                $('#' + elementName + '_fixed_value_' + index).show();
+                $('#' + elementName + '_xpath_' + index).hide();
+                $('#' + elementName + '_xslt_' + index).hide();
+            } else if ('xpath' == expressionType) {
+                $('#' + elementName + '_fixed_pos_line_' + index).hide();
+                $('#' + elementName + '_fixed_pos_start_' + index).hide();
+                $('#' + elementName + '_fixed_pos_end_' + index).hide();
+                $('#' + elementName + '_fixed_value_' + index).hide();
+                $('#' + elementName + '_xpath_' + index).show();
+                $('#' + elementName + '_xslt_' + index).hide();
+            } else if ('xslt' == expressionType) {
+                $('#' + elementName + '_fixed_pos_line_' + index).hide();
+                $('#' + elementName + '_fixed_pos_start_' + index).hide();
+                $('#' + elementName + '_fixed_pos_end_' + index).hide();
+                $('#' + elementName + '_fixed_value_' + index).hide();
+                $('#' + elementName + '_xpath_' + index).hide();
+                $('#' + elementName + '_xslt_' + index).show();
+            }
+        });
 	};
 
 	var styleExpressionParserButtons = function(divId) {
@@ -606,6 +640,19 @@ $(function () {
 		loadEndpointData(endpointName);
 	});
 
+	$('#btn_add_eventname_parser').click(function() {
+		appendExpressionParser('eventname_parsers', 'eventname_parser');
+		styleExpressionParserButtons('eventname_parsers');
+	});
+   $('#btn_add_application_parser').click(function() {
+        appendExpressionParser('application_parsers', 'application_parser');
+        styleExpressionParserButtons('application_parsers');
+    });
+    $('#btn_add_transactionname_parser').click(function() {
+        appendExpressionParser('transactionname_parsers', 'transactionname_parser');
+        styleExpressionParserButtons('transactionname_parsers');
+    });	      
+	
 	loadData('cluster');
 	loadEndpointData('*');
 	loadLicenseData();
