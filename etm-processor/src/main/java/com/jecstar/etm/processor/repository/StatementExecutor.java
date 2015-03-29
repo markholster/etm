@@ -292,6 +292,7 @@ public class StatementExecutor {
 				event.correlationCreationTime,
 		        event.creationTime));
 		if (event.slaRule != null) {
+			// TODO -> ophalen starttijd van parent event en bepalen of de SLA is behaald of niet. Zo niet, dan alleen hier record wegschrijven, en niet ook in de addTransactionEventStart
 			batchStatement.add(this.insertSlaFinishStatement.bind(
 					key, 
 					new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
