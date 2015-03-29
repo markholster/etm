@@ -638,7 +638,6 @@ $(function () {
             $("#endpoint_errorBox").hide('fast');
             if ('btn_endpoint_delete' === btnId) {
                 var endpointName = $('#endpoint_select').val();
-                alert(endpointName);
 				$.ajax({
 				       type: 'DELETE',
 				       url: '../rest/admin/endpoint/' + encodeURIComponent(endpointName),
