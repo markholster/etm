@@ -38,7 +38,8 @@
 						<!-- Tab panes -->
 						<div class="tab-content">
 							<div role="tabpanel" class="tab-pane active" id="etm_tab">
-								<form id="etm_form" class="form-horizontal" enctype="application/json" method="POST">
+							    <div id="etm_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+								<form id="etm_form" class="form-horizontal">
 									<div class="form-group">
 										<label for="etm_enhancing_handler_count"
 											class="col-sm-3 control-label">Enhancing handler
@@ -162,6 +163,7 @@
 								</form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="endpoint_tab">
+							    <div id="endpoint_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
                                 <form id="endpoint_selection_form" class="form-horizontal">
                                     <div class="form-group">
                                         <label for="endpoint_select" class="col-sm-3 control-label">Endpoint</label>
@@ -236,11 +238,12 @@
                                        <div class="panel-body">
                                        </div>
                                     </div>       
-                                    <input type="submit" class="btn btn-default" value="Save" />
-                                    <input type="submit" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" />          
+                                    <input type="submit" id="btn_endpoint_save" class="btn btn-default" value="Save" />
+                                    <input type="submit" id="btn_endpoint_delete" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" />          
                                 </form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="solr_tab">
+							    <div id="solr_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
 								<form id="solr_form" class="form-horizontal">
 									<div class="form-group">
 										<label for="solr_zookeeper_connection"
@@ -262,6 +265,7 @@
 								</form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="cassandra_tab">
+							    <div id="cassandra_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
 								<form id="cassandra_form" class="form-horizontal">
 									<div class="form-group">
 										<label for="cassandra_contact_points"
@@ -294,7 +298,7 @@
 							</div>
 							<div role="tabpanel" class="tab-pane" id="status_tab"></div>
 							<div role="tabpanel" class="tab-pane" id="license_tab">
-							    <div id="licenseErrorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+							    <div id="license_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
                                 <form id="license_form" class="form-horizontal">
                                     <div class="form-group">
                                         <label for="license_company"
@@ -564,17 +568,22 @@ $(function () {
 	};
 	
 	var loadEndpointData = function(endpointName) {
-	      $.getJSON('../rest/admin/endpoint/' + encodeURIComponent(endpointName), function (data) {
-	            if (!data) {
-	                return;
-	            }
-	            $('#endpoint_name').val(data.name);
-	            $('#endpoint_direction').val(data.direction);
-	            addExpressionParsers('eventname_parsers', 'eventname_parser', data.eventname_parsers, false);
-	            addExpressionParsers('application_parsers', 'application_parser', data.application_parsers, false);
-	            addExpressionParsers('transactionname_parsers', 'transactionname_parser', data.transactionname_parsers, false);
-	            addExpressionParsers('correlation_parsers', 'correlation_parser', data.correlation_parsers, true);
-	      });
+		if ('*' === endpointName) {
+		    $('#btn_endpoint_delete').attr('disabled', 'disabled');
+		} else {
+		    $('#btn_endpoint_delete').removeAttr('disabled');
+		}		
+		$.getJSON('../rest/admin/endpoint/' + encodeURIComponent(endpointName), function (data) {
+		      if (!data) {
+		          return;
+		      }
+		      $('#endpoint_name').val(data.name);
+		      $('#endpoint_direction').val(data.direction);
+		      addExpressionParsers('eventname_parsers', 'eventname_parser', data.eventname_parsers, false);
+		      addExpressionParsers('application_parsers', 'application_parser', data.application_parsers, false);
+		      addExpressionParsers('transactionname_parsers', 'transactionname_parser', data.transactionname_parsers, false);
+		      addExpressionParsers('correlation_parsers', 'correlation_parser', data.correlation_parsers, true);
+		});
 	};
 
    var loadLicenseData = function(endpointName) {
@@ -588,33 +597,11 @@ $(function () {
           });
     };
 
-    $('#license_form').submit(function( event ) {
-    	event.preventDefault();
-    	$("#licenseErrorBox").hide('fast');
-    	var json = "{";
-    	json += '"license.key":"' + $('#license_key').val() + '"';
-    	json += "}";
-        $.ajax({
-            type: 'POST',
-            url: $('#license_form').attr('action'),
-            data: json,
-            contentType: 'application/json',
-            dataType: 'json',
-            complete: function () {
-            	loadLicenseData();
-            },
-            error: function(jqXHR) {
-                $("#licenseErrorBox").text('Error updating license: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
-                $("#licenseErrorBox").show('fast');
-            }
-         });
-    });
-    
-
 	var handleSubmit = function(formId) {
 		  $('#' + formId).submit(function( event ) {
 		        event.preventDefault();
-		        var json = "{";
+		        $('#' + formId + '_errorBox').hide('fast');
+		        var json = '{';
 		        $('#' + formId + ' :input').each(function(index){
 		           if ($(this).attr('name')) {
 		               if (index != 0) {
@@ -628,19 +615,95 @@ $(function () {
 		                   json += '"' + $(this).attr('name') +'":' + $(this).is(':checked');
 		               }
 		           }
-		           
 		        });
-		        json += "}";
+		        json += '}';
 		        $.ajax({
 		            type: 'POST',
 		            url: $('#' + formId).attr('action'),
 		            data: json,
 		            contentType: 'application/json',
 		            dataType: 'json',
+                    error: function(jqXHR) {
+                        $('#' + formId + '_errorBox').text('Error saving: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+                        $('#' + formId + '_errorBox').show('fast');
+                   }
 		         });
 		    });
 	};
-	
+
+	var handleEndpointSubmit = function() {
+        $('#endpoint_form').submit(function( event ) {
+            event.preventDefault();
+            var btnId = $('#endpoint_form :input[type=submit][clicked=true]').attr('id');
+            $("#endpoint_errorBox").hide('fast');
+            if ('btn_endpoint_delete' === btnId) {
+                var endpointName = $('#endpoint_select').val();
+                alert(endpointName);
+				$.ajax({
+				       type: 'DELETE',
+				       url: '../rest/admin/endpoint/' + encodeURIComponent(endpointName),
+				       contentType: 'application/json',
+				       dataType: 'json',
+				       success: function(data) {
+					       loadEndpoints();
+				    	   loadEndpointData('*');
+					   },
+				       error: function(jqXHR) {
+				            $("#endpoint_errorBox").text('Error removing endpoint: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+				            $("#endpoint_errorBox").show('fast');
+				       }
+				    });
+            } else if ('btn_endpoint_save' === btnId) {
+            	var endpointName = $('#endpoint_name').val();
+                var json = '{';
+                json += '"name":"' + endpointName + '"';
+                var direction = $('#endpoint_direction').val();
+                if ("" !== direction) {
+                	json += ',"direction":"' + direction + '"';
+                }
+                json += '}';
+                $.ajax({
+                    type: 'POST',
+                    url: '../rest/admin/endpoint/' + encodeURIComponent(endpointName),
+                    data: json,
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        loadEndpoints(endpointName);
+                    },
+                    error: function(jqXHR) {
+                         $("#endpoint_errorBox").text('Error saving endpoint: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+                         $("#endpoint_errorBox").show('fast');
+                    }
+                 });                
+            }
+        });
+	};
+
+	var handleLicenseSubmit = function() {
+		$('#license_form').submit(function( event ) {
+		    event.preventDefault();
+		    $("#license_errorBox").hide('fast');
+		    var json = "{";
+		    json += '"license.key":"' + $('#license_key').val() + '"';
+		    json += "}";
+		    $.ajax({
+		        type: 'POST',
+		        url: $('#license_form').attr('action'),
+		        data: json,
+		        contentType: 'application/json',
+		        dataType: 'json',
+		        complete: function () {
+		            loadLicenseData();
+		        },
+		        error: function(jqXHR) {
+		            $("#license_errorBox").text('Error updating license: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+		            $("#license_errorBox").show('fast');
+		        }
+		     });
+		});
+	};
+		
 	// Add all nodes to the node select.
 	$.getJSON('../rest/admin/nodes/', function (data) {
         if (!data) {
@@ -651,14 +714,22 @@ $(function () {
         });		
 	});
     // Add all endpoints to the endpoint select.
-    $.getJSON('../rest/admin/endpoints/', function (data) {
-        if (!data) {
-            return;
-        }
-        $.each(data, function(index, endpointName) {
-            $('#endpoint_select').append($('<option></option>').attr("value", endpointName).text(endpointName));
-        });     
-    });
+    var loadEndpoints = function(currentSelection) {
+	    $.getJSON('../rest/admin/endpoints/', function (data) {
+	        if (!data) {
+	            return;
+	        }
+	        $('#endpoint_select').children().slice(2).detach();
+	        $.each(data, function(index, endpointName) {
+	        	var option = $('<option></option>').attr('value', endpointName).text(endpointName);
+	        	if (currentSelection === endpointName) {
+	        		$(option).attr('selected', 'selected');
+		        }
+	            $('#endpoint_select').append($(option));
+	        });     
+	        
+	    });
+    };
     	
 	// Add the change listener to the node select.
 	$('#node_select').change(function() {
@@ -686,7 +757,7 @@ $(function () {
 	    loadData(nodeName);    
 	});
 
-	// Ad the change listener to the endpoint select.
+	// Add the change listener to the endpoint select.
 	$('#endpoint_select').change(function() {
 		var endpointName = $('#endpoint_select').val();
 		loadEndpointData(endpointName);
@@ -707,14 +778,21 @@ $(function () {
     $('#btn_add_correlation_parser').click(function() {
         appendExpressionParser('correlation_parsers', 'correlation_parser', true);
         styleExpressionParserButtons('correlation_parsers');
-    });       
-	
+    });
+    $('#endpoint_form :input[type=submit]').click(function() {
+    	$("#endpoint_form :input[type=submit]").removeAttr('clicked');
+    	$(this).attr("clicked", "true");        
+    });
+
 	loadData('cluster');
+    loadEndpoints();
 	loadEndpointData('*');
 	loadLicenseData();
 	handleSubmit('etm_form');
 	handleSubmit('solr_form');
 	handleSubmit('cassandra_form');
+	handleEndpointSubmit();
+	handleLicenseSubmit();
 
 });
 //]]>

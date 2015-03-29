@@ -20,11 +20,13 @@ public class EndpointRepository {
 	
 	private final PreparedStatement selectEndpointNamesStatement;
 	private final PreparedStatement selectEndpointStatement;
+	private final PreparedStatement deleteEndpointStatement;
 
 	public EndpointRepository(Session session) {
 	    this.session = session;
 	    this.selectEndpointNamesStatement = this.session.prepare("select endpoint from endpoint_config allow filtering;");
 	    this.selectEndpointStatement = this.session.prepare("select direction, applicationParsers, eventNameParsers, correlationParsers, transactionNameParsers, slaRules from endpoint_config where endpoint = ?;");
+	    this.deleteEndpointStatement = this.session.prepare("delete from endpoint_config where endpoint = ?;");
     }
 	
 	public List<String> getEndpointNames() {
@@ -61,6 +63,10 @@ public class EndpointRepository {
 	    return endpointConfiguration;
     }
 	
+	public void deleteEndpointConfiguration(String endpointName) {
+	    this.session.execute(this.deleteEndpointStatement.bind(endpointName));
+    }
+	
 	private void addExpressionParsers(List<ExpressionParser> expressionParsers, List<String> dbValues) {
 		if (dbValues == null || dbValues.size() == 0) {
 			return;
@@ -78,5 +84,4 @@ public class EndpointRepository {
 			expressionParsers.put(value, ExpressionParserFactory.createExpressionParserFromConfiguration(dbValues.get(value)));
 		}
 	}
-
 }

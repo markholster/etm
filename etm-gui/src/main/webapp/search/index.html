@@ -190,8 +190,8 @@ $(function () {
     };
 
 	var executeQuery = function(start, max, animate) {
-		$("#errorBox").hide('fast');
-		$("#ajax_loader").show();
+		$('#errorBox').hide('fast');
+		$('#ajax_loader').show();
         $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max), { dataType: "json", cache: false, success: function (data) {
         	$("#ajax_loader").hide();
             if (!data) {

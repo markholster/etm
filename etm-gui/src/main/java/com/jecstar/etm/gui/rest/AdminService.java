@@ -7,6 +7,7 @@ import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -79,7 +80,7 @@ public class AdminService {
 	@Path("/endpoint/{endpointName}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEndpointName(@PathParam("endpointName") String endpointName) {
+	public String getEndpoint(@PathParam("endpointName") String endpointName) {
 		try {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
@@ -123,7 +124,48 @@ public class AdminService {
 	        return writer.toString();
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Unable to get endpoint configuration.", e);
+        		log.logErrorMessage("Unable to get endpoint configuration '" + endpointName + "'.", e);
+        	}       
+        }
+		return null;	
+	}
+	
+	@DELETE
+	@Path("/endpoint/{endpointName}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String deleteEndpoint(@PathParam("endpointName") String endpointName) {
+		try {
+			this.endpointRepository.deleteEndpointConfiguration(endpointName);
+	        StringWriter writer = new StringWriter();
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartObject();
+	        generator.writeEndObject();
+	        generator.close();
+	        return writer.toString();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to delete endpoint configuration '" + endpointName + "'.", e);
+        	}       
+        }
+		return null;	
+	}
+	
+	@POST
+	@Path("/endpoint/{endpointName}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String saveEndpoint(@PathParam("endpointName") String endpointName) {
+		try {
+	        StringWriter writer = new StringWriter();
+	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        generator.writeStartObject();
+	        generator.writeEndObject();
+	        generator.close();
+	        return writer.toString();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to update endpoint configuration '" + endpointName + "'.", e);
         	}       
         }
 		return null;	
@@ -196,7 +238,7 @@ public class AdminService {
 	@Path("/node/{nodeName}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getNodeConfiguration(@PathParam("nodeName") String nodeName) {
+	public String getNode(@PathParam("nodeName") String nodeName) {
 		try {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
@@ -235,7 +277,7 @@ public class AdminService {
 	@Path("/node/{nodeName}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public void updateNodeConfiguration(@PathParam("nodeName") String nodeName, String json) {
+	public void updateNode(@PathParam("nodeName") String nodeName, String json) {
 		try {
 			Properties properties = new Properties();
 	        JsonParser jsonParser = this.jsonFactory.createJsonParser(json);
