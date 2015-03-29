@@ -41,8 +41,6 @@ public class StatementExecutor {
 	private final PreparedStatement updateTransactionNameCounterStatement;
 	private final PreparedStatement findParentStatement;
 	private final PreparedStatement findEndpointConfigStatement;
-	private final PreparedStatement findSlaStartStatement;
-	private final PreparedStatement deleteSlaStatement;
 	
 	public StatementExecutor(final Session session) {
 		this.session = session;
@@ -208,10 +206,6 @@ public class StatementExecutor {
 				+ "transactionNameParsers, "
 				+ "slaRules "
 				+ "from endpoint_config where endpoint = ?;");
-		this.findSlaStartStatement = session.prepare("select "
-				+ "startTime "
-				+ "from transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
-		this.deleteSlaStatement = session.prepare("delete from transaction_sla where transactionName_timeunit = ? and slaExpiryTime = ? and transactionId = ?;");
 	}
 	
 	public void addTelemetryEvent(final TelemetryEvent event, final BatchStatement batchStatement) {
@@ -298,32 +292,11 @@ public class StatementExecutor {
 				event.correlationCreationTime,
 		        event.creationTime));
 		if (event.slaRule != null) {
-			if (event.slaRule.compliesToSla(event.creationTime.getTime() - event.correlationCreationTime.getTime())) {
-				Row row = this.session.execute(this.findSlaStartStatement.bind(
-						key, 
-						new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()), 
-						event.transactionId)).one();
-				if (row != null) {
-					batchStatement.add(this.deleteSlaStatement.bind(
-							key,
-							new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
-							event.transactionId));
-				} else {
-					// Transaction start not yet stored, we have to store the finish.
-					batchStatement.add(this.insertSlaFinishStatement.bind(
-							key, 
-							new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
-							event.transactionId,
-							event.creationTime));
-					
-				}
-			} else {
-				batchStatement.add(this.insertSlaFinishStatement.bind(
-						key, 
-						new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
-						event.transactionId,
-						event.creationTime));
-			}
+			batchStatement.add(this.insertSlaFinishStatement.bind(
+					key, 
+					new Date(event.correlationCreationTime.getTime() + event.slaRule.getSlaExpiryTime()),
+					event.transactionId,
+					event.creationTime));
 		}		
 	}
 
