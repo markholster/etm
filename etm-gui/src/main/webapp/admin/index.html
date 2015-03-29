@@ -224,6 +224,18 @@
                                        <div class="panel-body">
                                        </div>
                                     </div>       
+                                    <div id="correlation_parsers" class="panel panel-default">
+                                       <div class="panel-heading clearfix">
+                                           <div class="panel-title pull-left">Correlation parsers</div>
+                                           <div class="pull-right">
+                                               <button id="btn_add_correlation_parser" type="button" class="btn btn-default btn-sm">
+                                                   <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                               </button>
+                                           </div>    
+                                       </div>
+                                       <div class="panel-body">
+                                       </div>
+                                    </div>       
                                     <input type="submit" class="btn btn-default" value="Save" />
                                     <input type="submit" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" />          
                                 </form>
@@ -358,11 +370,11 @@ $(function () {
 		});
 	};
 
-	var addExpressionParsers = function(divId, elementName, expressionParsers) {
+	var addExpressionParsers = function(divId, elementName, expressionParsers, includeName) {
 		$('#' + divId + ' > .panel-body').empty();
         if (expressionParsers) {
             $.each(expressionParsers, function(index, expressionParser) {
-            	appendExpressionParser(divId, elementName, index);
+            	appendExpressionParser(divId, elementName, includeName, index);
                 // Set the values.                
                 if ('fixed_position' == expressionParser.type) {
                     
@@ -373,6 +385,9 @@ $(function () {
                 } else if ('xslt' == expressionParser.type) {
                 	$('#' + elementName + '_xslt_' + index).val(expressionParser.template);
                 }
+                if (includeName) {
+                	$('#' + elementName + '_name_' + index).val(expressionParser.name);
+                }
                 $('#' + elementName + '_select_' + index).val(expressionParser.type);
                 $('#' + elementName + '_select_' + index).change();
             });
@@ -380,7 +395,7 @@ $(function () {
         }
 	};
 
-	var appendExpressionParser = function(divId, elementName, index) {
+	var appendExpressionParser = function(divId, elementName, includeName, index) {
 		if (index == undefined) {
 			index = 0;
 			// Determine first unused index.
@@ -395,6 +410,17 @@ $(function () {
 			}
 		}
         $('#' + divId + ' > .panel-body').append($('<div id="' + elementName + '_exp_prs_ix_' + index + '" class="form-group"></div>'));
+        if (includeName) {
+        	var nameDiv = $('<div></div>').attr('class', 'col-sm-2')
+        	   .append($('<input />')
+                    .attr('id', elementName + '_name_' + index)
+                    .attr('name', elementName + '_name_' + index)
+                    .attr('type', 'text').attr('class', 'form-control')
+                    .attr('required', 'required')
+                    .attr('placeholder', 'Name')
+            );
+        	$('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(nameDiv);
+        }
         var selectDiv = $('<div></div>').attr('class', 'col-sm-2')
           .append($('<select></select>').attr('id', elementName + '_select_' + index).attr('name', elementName + '_type_' + index).attr('class', 'form-control')
                   .append($('<option></option>').attr("value", 'fixed_position').text('Fixed position'))
@@ -403,7 +429,7 @@ $(function () {
                   .append($('<option></option>').attr("value", 'xslt').text('XSLT'))
         );
         $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(selectDiv);
-        var inputDiv = $('<div></div>').attr('class', 'col-sm-8')
+        var inputDiv = $('<div></div>').attr('class', 'col-sm-7')
             .append($('<div></div>').attr('class', 'col-sm-4').append($('<input />')
                     .attr('id', elementName + '_fixed_pos_line_' + index)
                     .attr('name', elementName + '_fixed_pos_line_' + index)
@@ -443,13 +469,17 @@ $(function () {
                     .attr('placeholder', 'Xslt template')
                     .attr('style', 'display: none;')
         );
+        if (!includeName) {
+            $(inputDiv).attr('class', 'col-sm-8');
+        }
         $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(inputDiv);
-        var actionDiv = $('<div></div>').attr('class', 'col-sm-2')
-            .append($('<div class="btn-toolbar" role="group"></div>')
-            .append($('<button id="' + elementName + '_exp_prs_up_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>'))
-            .append($('<button id="' + elementName + '_exp_prs_down_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>'))
-            .append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default btn-danger"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'))
-            );
+        var actionDiv = $('<div></div>').attr('class', 'col-sm-1').append($('<div class="btn-toolbar" role="group"></div>'));
+            if (!includeName) {
+            	$(actionDiv).attr('class', 'col-sm-2');
+            	$(actionDiv).append($('<button id="' + elementName + '_exp_prs_up_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></button>'));
+                $(actionDiv).append($('<button id="' + elementName + '_exp_prs_down_' + index + '" type="button" role="group" class="btn btn-default"><span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></button>'));
+            }        
+            $(actionDiv).append($('<button id="' + elementName + '_exp_prs_remove_' + index + '" type="button" role="group" class="btn btn-default btn-danger"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>'));
         $('#' + divId + ' > .panel-body > #' + elementName + '_exp_prs_ix_' + index).append(actionDiv);
         $('#' + elementName + '_exp_prs_remove_' + index).click(function() {
             $('#' + elementName + '_exp_prs_ix_' + index).remove();
@@ -540,9 +570,10 @@ $(function () {
 	            }
 	            $('#endpoint_name').val(data.name);
 	            $('#endpoint_direction').val(data.direction);
-	            addExpressionParsers('eventname_parsers', 'eventname_parser', data.eventname_parsers);
-	            addExpressionParsers('application_parsers', 'application_parser', data.application_parsers);
-	            addExpressionParsers('transactionname_parsers', 'transactionname_parser', data.transactionname_parsers);
+	            addExpressionParsers('eventname_parsers', 'eventname_parser', data.eventname_parsers, false);
+	            addExpressionParsers('application_parsers', 'application_parser', data.application_parsers, false);
+	            addExpressionParsers('transactionname_parsers', 'transactionname_parser', data.transactionname_parsers, false);
+	            addExpressionParsers('correlation_parsers', 'correlation_parser', data.correlation_parsers, true);
 	      });
 	};
 
@@ -662,17 +693,21 @@ $(function () {
 	});
 
 	$('#btn_add_eventname_parser').click(function() {
-		appendExpressionParser('eventname_parsers', 'eventname_parser');
+		appendExpressionParser('eventname_parsers', 'eventname_parser', false);
 		styleExpressionParserButtons('eventname_parsers');
 	});
-   $('#btn_add_application_parser').click(function() {
-        appendExpressionParser('application_parsers', 'application_parser');
+    $('#btn_add_application_parser').click(function() {
+        appendExpressionParser('application_parsers', 'application_parser', false);
         styleExpressionParserButtons('application_parsers');
     });
     $('#btn_add_transactionname_parser').click(function() {
-        appendExpressionParser('transactionname_parsers', 'transactionname_parser');
+        appendExpressionParser('transactionname_parsers', 'transactionname_parser', false);
         styleExpressionParserButtons('transactionname_parsers');
     });	      
+    $('#btn_add_correlation_parser').click(function() {
+        appendExpressionParser('correlation_parsers', 'correlation_parser', true);
+        styleExpressionParserButtons('correlation_parsers');
+    });       
 	
 	loadData('cluster');
 	loadEndpointData('*');
