@@ -1,8 +1,10 @@
 package com.jecstar.etm.gui.rest;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -13,15 +15,24 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.xpath.XPath;
+
+import net.sf.saxon.TransformerFactoryImpl;
+import net.sf.saxon.xpath.XPathFactoryImpl;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 
 import com.jecstar.etm.core.EtmException;
+import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.Node;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -43,6 +54,9 @@ public class AdminService {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(AdminService.class);
 
+	private static final XPath xPath = new XPathFactoryImpl().newXPath();
+	private static final TransformerFactory transformerFactory = new TransformerFactoryImpl();
+	
 	@GuiConfiguration
 	@Inject
 	private EtmConfiguration configuration;
@@ -135,34 +149,64 @@ public class AdminService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String deleteEndpoint(@PathParam("endpointName") String endpointName) {
-		try {
-			this.endpointRepository.deleteEndpointConfiguration(endpointName);
-	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
-	        generator.writeStartObject();
-	        generator.writeEndObject();
-	        generator.close();
-	        return writer.toString();
-        } catch (IOException e) {
-        	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Unable to delete endpoint configuration '" + endpointName + "'.", e);
-        	}       
-        }
-		return null;	
+		this.endpointRepository.deleteEndpointConfiguration(endpointName);
+        return "{ \"status\": \"success\" }";
 	}
 	
 	@POST
 	@Path("/endpoint/{endpointName}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String saveEndpoint(@PathParam("endpointName") String endpointName) {
+	public String saveEndpoint(@PathParam("endpointName") String endpointName, InputStream data) {
 		try {
-	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
-	        generator.writeStartObject();
-	        generator.writeEndObject();
-	        generator.close();
-	        return writer.toString();
+			JsonParser parser = this.jsonFactory.createJsonParser(data);
+			EndpointConfiguration endpointConfiguration = new EndpointConfiguration();
+			JsonToken token = parser.nextToken();
+			while (token != JsonToken.END_OBJECT && token != null) {
+				String name = parser.getCurrentName();
+				if ("name".equals(name)) {
+					parser.nextToken();
+					endpointConfiguration.name = parser.getText();
+				} else if ("direction".equals(name)) {
+					parser.nextToken();
+					endpointConfiguration.direction = TelemetryEventDirection.valueOf(parser.getText()); 
+				} else if ("application_parsers".equals(name)) {
+					if (parser.nextToken() != JsonToken.START_ARRAY) {
+						if (log.isErrorLevelEnabled()) {
+							log.logErrorMessage("Unable to determine application parsers");
+						}
+						throw new WebApplicationException(Response.Status.BAD_REQUEST);	
+					}
+					parseExpressionParsers(parser, endpointConfiguration.applicationParsers, null);
+				} else if ("eventname_parsers".equals(name)) {
+					if (parser.nextToken() != JsonToken.START_ARRAY) {
+						if (log.isErrorLevelEnabled()) {
+							log.logErrorMessage("Unable to determine eventname parsers");
+						}
+						throw new WebApplicationException(Response.Status.BAD_REQUEST);	
+					}
+					parseExpressionParsers(parser, endpointConfiguration.eventNameParsers, null);
+				} else if ("transactionname_parsers".equals(name)) {
+					if (parser.nextToken() != JsonToken.START_ARRAY) {
+						if (log.isErrorLevelEnabled()) {
+							log.logErrorMessage("Unable to determine transactionname parsers");
+						}
+						throw new WebApplicationException(Response.Status.BAD_REQUEST);	
+					}
+					parseExpressionParsers(parser, endpointConfiguration.transactionNameParsers, null);
+				} else if ("correlation_parsers".equals(name)) {
+					if (parser.nextToken() != JsonToken.START_ARRAY) {
+						if (log.isErrorLevelEnabled()) {
+							log.logErrorMessage("Unable to determine correlation parsers");
+						}
+						throw new WebApplicationException(Response.Status.BAD_REQUEST);	
+					}
+					parseExpressionParsers(parser, null, endpointConfiguration.correlationParsers);
+				}
+				token = parser.nextToken();
+			}
+			this.endpointRepository.updateEnpointConfiguration(endpointConfiguration);
+	        return "{ \"status\": \"success\" }";
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Unable to update endpoint configuration '" + endpointName + "'.", e);
@@ -170,6 +214,74 @@ public class AdminService {
         }
 		return null;	
 	}
+	
+	private void parseExpressionParsers(JsonParser parser, List<ExpressionParser> expressionParsersList, Map<String, ExpressionParser> expressionParserMap) throws JsonParseException, IOException {
+		String exprName = null;
+		String type = null;
+		Integer line = null;
+		Integer startPos = null;
+		Integer endPos = null;
+		String expression = null;
+		
+		JsonToken token = parser.nextToken();
+		while (token != JsonToken.END_ARRAY && token != null) {
+			String name = parser.getCurrentName();
+			if ("name".equals(name)) {
+				parser.nextToken();
+				exprName = parser.getText();
+			} else if ("type".equals(name)) {
+				parser.nextToken();
+				type = parser.getText();
+			} else if ("line".equals(name)) {
+				parser.nextToken();
+				line = parser.getIntValue();
+			} else if ("start_pos".equals(name)) {
+				parser.nextToken();
+				startPos = parser.getIntValue();
+			} else if ("end_pos".equals(name)) {
+				parser.nextToken();
+				endPos = parser.getIntValue();
+			} else if ("value".equals(name) || "expression".equals(name) || "template".equals(name)) {
+				parser.nextToken();
+				expression = parser.getText();
+			} 
+			token = parser.nextToken();
+			if (token == JsonToken.END_OBJECT) {
+				ExpressionParser expressionParser = null;
+				if ("fixed_position".equals(type)) {
+					if (line != null) {
+						line = line - 1;
+					}
+					if (startPos != null) {
+						startPos = startPos - 1;
+					}
+					if (endPos != null) {
+						endPos = endPos - 1;
+					}
+					expressionParser = new FixedPositionExpressionParser(line, startPos, endPos);
+				} else if ("fixed_value".equals(type)) {
+					expressionParser = new FixedValueExpressionParser(expression);
+				} else if ("xpath".equals(type)) {
+					expressionParser = new XPathExpressionParser(xPath, expression);
+				} else if ("xslt".equals(type)) {
+					expressionParser = new XsltExpressionParser(transformerFactory, expression);
+				} else {
+					if (log.isErrorLevelEnabled()) {
+						log.logErrorMessage("Unable to determine expression parser type '" + type + "'.");
+					}
+					throw new WebApplicationException(Response.Status.BAD_REQUEST);	
+				}
+				if (expressionParsersList != null) {
+					expressionParsersList.add(expressionParser);
+				}
+				if (expressionParserMap != null) {
+					expressionParserMap.put(exprName, expressionParser);
+				}
+			}
+		}					
+		
+	}
+	
 	
 	private void writeExpressionParser(JsonGenerator generator, String key, ExpressionParser expressionParser) throws JsonGenerationException, IOException {
 		generator.writeStartObject();
@@ -183,10 +295,10 @@ public class AdminService {
 				generator.writeNumberField("line", parser.getLineIx() + 1);
 			}
 			if (parser.getStartIx() != null) {
-				generator.writeNumberField("start_pos", parser.getStartIx());
+				generator.writeNumberField("start_pos", parser.getStartIx() + 1);
 			}
 			if (parser.getEndIx() != null) {
-				generator.writeNumberField("end_pos", parser.getEndIx());
+				generator.writeNumberField("end_pos", parser.getEndIx() + 1);
 			}
 		} else if (expressionParser instanceof FixedValueExpressionParser) {
 			generator.writeStringField("type", "fixed_value");

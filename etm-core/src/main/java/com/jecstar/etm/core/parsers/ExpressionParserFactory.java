@@ -1,13 +1,12 @@
 package com.jecstar.etm.core.parsers;
 
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathExpressionException;
 
 import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
+import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 
@@ -31,13 +30,10 @@ public final class ExpressionParserFactory {
 					expression.charAt(3) == 't' &&
 					expression.charAt(4) == ':') {
 				try {
-	                return new XsltExpressionParser(transformerFactory, expression.substring(5));
-                } catch (TransformerConfigurationException e) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create XsltExpressionParser. Using FixedValueExpressionParser instead.", e);
-                	}
-                	new FixedValueExpressionParser(null);
-                }				
+					return new XsltExpressionParser(transformerFactory, expression.substring(5));
+				} catch (EtmException e) {
+					new FixedValueExpressionParser(null);
+				}
 			}
 		}
 		if (expression.length() > 6) {
@@ -48,13 +44,10 @@ public final class ExpressionParserFactory {
 				expression.charAt(4) == 'h' &&
 				expression.charAt(5) == ':') {
 				try {
-	                return new XPathExpressionParser(xPath, expression.substring(6));
-                } catch (XPathExpressionException e) {
-                	if (log.isErrorLevelEnabled()) {
-                		log.logErrorMessage("Could not create XPathExpressionParser. Using FixedValueExpressionParser instead.", e);
-                	}
-                	new FixedValueExpressionParser(null);
-                }
+					return new XPathExpressionParser(xPath, expression.substring(6));
+				} catch (EtmException e) {
+					new FixedValueExpressionParser(null);
+				}
 			} else if (expression.charAt(0) == 'f' &&
 					   expression.charAt(1) == 'i' &&
 					   expression.charAt(2) == 'x' &&
@@ -92,5 +85,36 @@ public final class ExpressionParserFactory {
 			}
 		}
 		return new FixedValueExpressionParser(expression);
+	}
+	
+	public static String toConfiguration(ExpressionParser expressionParser) {
+		if (expressionParser instanceof XsltExpressionParser) {
+			return "xslt:" + ((XsltExpressionParser)expressionParser).getTemplate();
+		} else if (expressionParser instanceof XPathExpressionParser) {
+			return "xpath:" + ((XPathExpressionParser)expressionParser).getExpression();
+		} else if (expressionParser instanceof FixedPositionExpressionParser) {
+			FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
+			String config = "fixed:";
+			if (parser.getLineIx() != null) {
+				config += parser.getLineIx(); 
+			}
+			config += "-";
+			if (parser.getStartIx() != null) {
+				config += parser.getStartIx();
+			}
+			config += "-";
+			if (parser.getEndIx() != null) {
+				config += parser.getEndIx();
+			}
+			return  config;
+		} else if (expressionParser instanceof FixedValueExpressionParser) {
+			return ((FixedValueExpressionParser)expressionParser).getValue();
+		} else {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Unknown expression parser type: '" + expressionParser.getClass().getName() + "'.");
+			}
+			throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
+		}
+		
 	}
 }

@@ -18,7 +18,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.SecurityContext;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -81,13 +83,15 @@ public class StatisticsService {
 	@Path("/messages/expiration/{starttime}/{endtime}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getMessagesExpirationForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
-		// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
+	public String getMessagesExpirationForTimePeriod(@PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max, @Context SecurityContext context) {
 		if (max == 0) {
 			max = 5;
 		}
 		if (startTime > endTime) {
 			return null;
+		}
+		if (context.isUserInRole("etm-searcher")) {
+			// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
 		}
 		List<ExpiredMessage> statistics = this.statisticsRepository.getMessagesExpirationStatistics(startTime, endTime, max);
 		StringWriter writer = new StringWriter();
@@ -167,14 +171,16 @@ public class StatisticsService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getApplicationMessagesExpirationForTimePeriod(@PathParam("applicationName") String application,
-	        @PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max) {
+	        @PathParam("starttime") Long startTime, @PathParam("endtime") Long endTime, @QueryParam("max") int max, @Context SecurityContext context) {
 		if (max == 0) {
 			max = 5;
 		}
 		if (startTime > endTime) {
 			return null;
 		}
-		// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
+		if (context.isUserInRole("etm-searcher")) {
+			// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
+		}
 		List<ExpiredMessage> statistics = this.statisticsRepository.getApplicationMessagesExpirationStatistics(application, startTime, endTime, max);
 		StringWriter writer = new StringWriter();
 		writeMessagesExpirationStatistics(writer, statistics);

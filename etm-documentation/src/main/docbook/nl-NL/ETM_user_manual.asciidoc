@@ -180,5 +180,8 @@ oplossingen:
 |[[error-100002]]100002|De licentie sleutel is verlopen|De huidige licentie sleutel is niet meer gelidg. Neem contact op met Jecstar support.
 |[[error-100003]]100003|Fout bij laden configuratie|De configuratie kon niet ingeladen worden. Controleer of uw Zookeeper ensemble actief is. Indien dit het geval is, controleer dan de logfiles 
 op gedetailleerde informatie.
-|[[error-100004]]100004|Fout bij aanmaken unmarshaller|De MDB is niet in staat een unmarshaller voor de berichten aan te maken. Controleer de logfiles op gedetailleerde foutmeldingen 
+|[[error-100004]]100004|Fout bij aanmaken unmarshaller|De MDB is niet in staat een unmarshaller voor de berichten aan te maken. Controleer de logfiles op gedetailleerde foutmeldingen
+|[[error-100005]]100005|Ongeldige XPath expressie|De opgegeven waarde is een ongeldige xpath expressie.
+|[[error-100006]]100006|Ongeldige XSLT template|De opgegeven waarde is een ongeldige xslt template.
+|[[error-100007]]100007|Ongeldige expressie parser|De expressie parser wordt niet herkend. Neem contact op met Jecstar support. 
 |=======================

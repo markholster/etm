@@ -8,6 +8,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.xml.sax.InputSource;
 
+import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 
@@ -21,8 +22,15 @@ public class XPathExpressionParser implements ExpressionParser {
 	private final XPathExpression compiledExpression;
 	private final String expression;
 	
-	public XPathExpressionParser(XPath xPath, String expression) throws XPathExpressionException {
-		this.compiledExpression = xPath.compile(expression);
+	public XPathExpressionParser(XPath xPath, String expression) {
+		try {
+	        this.compiledExpression = xPath.compile(expression);
+        } catch (XPathExpressionException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Error creating xpath expression from '" + expression + ".", e);
+        	}
+	        throw new EtmException(EtmException.INVALID_XPATH_EXPRESSION, e);
+        }
 		this.expression = expression;
     }
 

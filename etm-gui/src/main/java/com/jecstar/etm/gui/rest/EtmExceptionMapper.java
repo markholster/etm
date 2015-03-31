@@ -31,6 +31,15 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.UNMARSHALLER_CREATE_EXCEPTION:
 					errorMessage.setMessage("Error creating unmarshaller");
 					break;
+				case EtmException.INVALID_XPATH_EXPRESSION:
+					errorMessage.setMessage("Invalid xpath expression");
+					break;
+				case EtmException.INVALID_XSLT_TEMPLATE:
+					errorMessage.setMessage("Invalid xslt template");
+					break;
+				case EtmException.INVALID_EXPRESSION_PARSER_TYPE:
+					errorMessage.setMessage("Invalid expression parser type");
+					break;
 				default:
 					break;
 			}

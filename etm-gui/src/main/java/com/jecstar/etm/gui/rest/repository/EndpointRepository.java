@@ -2,9 +2,11 @@ package com.jecstar.etm.gui.rest.repository;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
@@ -21,12 +23,14 @@ public class EndpointRepository {
 	private final PreparedStatement selectEndpointNamesStatement;
 	private final PreparedStatement selectEndpointStatement;
 	private final PreparedStatement deleteEndpointStatement;
+	private final PreparedStatement insertEndpointStatement;
 
 	public EndpointRepository(Session session) {
 	    this.session = session;
 	    this.selectEndpointNamesStatement = this.session.prepare("select endpoint from endpoint_config allow filtering;");
 	    this.selectEndpointStatement = this.session.prepare("select direction, applicationParsers, eventNameParsers, correlationParsers, transactionNameParsers, slaRules from endpoint_config where endpoint = ?;");
 	    this.deleteEndpointStatement = this.session.prepare("delete from endpoint_config where endpoint = ?;");
+	    this.insertEndpointStatement = this.session.prepare("insert into endpoint_config (endpoint, direction, applicationParsers, eventNameParsers, correlationParsers, transactionNameParsers, slaRules) values (?,?,?,?,?,?,?);");
     }
 	
 	public List<String> getEndpointNames() {
@@ -83,5 +87,29 @@ public class EndpointRepository {
 		for (String value : dbValues.keySet()) {
 			expressionParsers.put(value, ExpressionParserFactory.createExpressionParserFromConfiguration(dbValues.get(value)));
 		}
+	}
+
+	public void updateEnpointConfiguration(EndpointConfiguration endpointConfiguration) {
+	    this.session.execute(this.insertEndpointStatement.bind(
+	    		endpointConfiguration.name, 
+	    		endpointConfiguration.direction == null ? null : endpointConfiguration.direction.name(),
+	    		toExpressionConfigurationList(endpointConfiguration.applicationParsers),
+	    		toExpressionConfigurationList(endpointConfiguration.eventNameParsers),
+	    		toExpressionCongigurationMap(endpointConfiguration.correlationParsers),
+	    		toExpressionConfigurationList(endpointConfiguration.transactionNameParsers),
+	    		// TODO SLA-rules
+	    		null));
+    }
+	
+	private List<String> toExpressionConfigurationList(List<ExpressionParser> expressionParsers) {
+		return expressionParsers.stream().map(e -> ExpressionParserFactory.toConfiguration(e)).collect(Collectors.toList());
+	}
+	
+	private Map<String, String> toExpressionCongigurationMap(Map<String, ExpressionParser> expressionParsers) {
+		Map<String, String> result = new HashMap<String, String>();
+		for (String key : expressionParsers.keySet()) {
+			result.put(key, ExpressionParserFactory.toConfiguration(expressionParsers.get(key)));
+		}
+		return result;
 	}
 }
