@@ -706,25 +706,25 @@ $(function () {
 				json += ',';
 			}
 			json += '{';
-			var name = $(formGroup).find('[id$="_parser_name_' + index + '"]').val();
+			var name = $(formGroup).find('[id*="_parser_name_"]').val();
 			if (name != undefined) {
 				json += '"name":"' + name + '",';
 			}
-			var expressionType = $(formGroup).find('[id$="_parser_select_' + index + '"]').val();
+			var expressionType = $(formGroup).find('[id*="_parser_select_"]').val();
 			json += '"type":"' + expressionType + '"';
             if ('fixed_position' == expressionType) {
-            	var line = $(formGroup).find('[id$="_fixed_pos_line_' + index + '"]').val();
+            	var line = $(formGroup).find('[id*="_fixed_pos_line_"]').val();
             	if (line != undefined) {
             	    json += ',"line":' + parseInt(line);
             	}
-            	json += ',"start_pos":' + parseInt($(formGroup).find('[id$="_fixed_pos_start_' + index + '"]').val());
-            	json += ',"end_pos":' + parseInt($(formGroup).find('[id$="_fixed_pos_end_' + index + '"]').val());
+            	json += ',"start_pos":' + parseInt($(formGroup).find('[id*="_fixed_pos_start_"]').val());
+            	json += ',"end_pos":' + parseInt($(formGroup).find('[id*="_fixed_pos_end_"]').val());
             } else if ('fixed_value' == expressionType) {
-            	json += ',"value":"' + $(formGroup).find('[id$="_fixed_value_' + index + '"]').val() + '"';
+            	json += ',"value":"' + $(formGroup).find('[id*="_fixed_value_"]').val() + '"';
             } else if ('xpath' == expressionType) {
-            	json += ',"expression":"' + $(formGroup).find('[id$="_xpath_' + index + '"]').val() + '"';
+            	json += ',"expression":"' + $(formGroup).find('[id*="_xpath_"]').val() + '"';
             } else if ('xslt' == expressionType) {
-            	json += ',"template":"' + $(formGroup).find('[id$="_xslt_' + index + '"]').val() + '"';
+            	json += ',"template":"' + $(formGroup).find('[id*="_xslt_"]').val() + '"';
             }
 			json += '}';
 		});
