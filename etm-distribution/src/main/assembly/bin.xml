@@ -26,10 +26,6 @@
 		</moduleSet>
 	</moduleSets>
 	<fileSets>
-		<fileSet>
-			<outputDirectory>resources/solr/cluster-conf</outputDirectory>
-			<directory>../etm-core/src/main/solr-scripts/etm_configs</directory>
-		</fileSet>
         <fileSet>
             <outputDirectory>documentation</outputDirectory>
             <directory>../etm-documentation/target/docbook/publish</directory>
@@ -47,8 +43,8 @@
             <destName>cassandra-setup-cluster.cql</destName>
         </file>
 		<file>
-			<source>../etm-core/src/main/solr-scripts/etm_configs/conf/schema.xml</source>
-			<outputDirectory>resources/solr/single-node-conf</outputDirectory>
+			<source>../etm-core/src/main/solr-scripts/schema.xml</source>
+			<outputDirectory>resources/solr</outputDirectory>
 		</file>
         <file>
             <source>../etm-processor-mdb/target/generated-resources/schemagen/schema1.xsd</source>

@@ -1,4 +1,4 @@
-insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer', 'PolicyNr':'xpath:/*/overeenkomstnummer', 'AccountNr':'xpath:/*/rekeningnummer'});
+insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['local-name(/*:Envelope/*:Body/*)','xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer', 'PolicyNr':'xpath:/*/overeenkomstnummer', 'AccountNr':'xpath:/*/rekeningnummer'});
 insert into endpoint_config(endpoint, direction, applicationParsers, transactionNameParsers) values ('KCS.REQ.ESB', 'OUTGOING', ['KCS'], ['xpath:substring(local-name(//*[ends-with(name(), ''Request'')][1]), 0, string-length(local-name(//*[ends-with(name(), ''Request'')][1])) - 6)']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.RPL.KCS', 'INCOMING', ['KCS']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.LG5', 'INCOMING', ['Nieuw Woon']);

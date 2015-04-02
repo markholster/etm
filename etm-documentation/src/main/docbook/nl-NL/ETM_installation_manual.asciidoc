@@ -39,23 +39,34 @@ Voor deze installatie geldt dat er geen replicatie, hoge beschikbaarheid en scha
 Download Solr {solr_version} van de Solr http://lucene.apache.org/solr/[website], en extract de bestanden van het gedownloade archief. Het archief
 kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <SOLR_INSTALL_DIR> genoemd.
 
-Om Solr te starten voer
+Kopieer nadat Solr is uitgepakt het bestand <ETM_UNZIP_DIR>/resources/solr/schema.xml
+naar <SOLR_INSTALL_DIR>/server/solr/configsets/basic_configs/schema.xml. Het bestaande bestand mag overschreven worden.
+
+Hierna kan de installatie wizard uitgevoerd worden. Voer hiervoor 
 [source,shell] 
 ----
-<SOLR_INSTALL_DIR>/bin/solr start -c
+<SOLR_INSTALL_DIR>/bin/solr -e cloud
+----
+uit vanaf een command prompt. Gebruik de onderstaande tabel als input voor de wizard.
+[options="header"]
+|=======================
+|Vraag|Waarde
+|aantal nodes|1
+|port |8983
+|collection naam|etm
+|aantal shards|1
+|replicas|1
+|configuration|basic_configs
+|=======================
+
+Als u later nogmaals Solr wilt starten voert u 
+[source,shell] 
+----
+<SOLR_INSTALL_DIR>/bin/solr start -cloud -s example/cloud/node1/solr -p 8983
 ----
 uit vanaf een command prompt.
 
 Browse naar http://localhost:8983/solr/ om te controleren dat Solr correct gestart is.
-
-Nadat Solr is gestart kan de ETM configuratie voor Solr worden doorgevoerd. Kopieer hiervoor het bestand <ETM_UNZIP_DIR>/resources/solr/single-node-conf/schema.xml
-naar <SOLR_INSTALL_DIR>/example/solr/collection1/conf/schema.xml. Het bestaande bestand mag overschreven worden.
-
-Om de configuratie wijzigingen door te voeren moet Solr herstart worden. Voer hiervoor het volgende commando uit in een command prompt. 
-[source,shell]
-----
-<SOLR_INSTALL_DIR>/bin/solr restart -c
-----
 
 === Standalone Cassandra
 Download Cassandra {cassandra_version} van de Cassandra http://cassandra.apache.org/download/[website], en extract de bestanden van het gedownloade archief.
@@ -206,8 +217,8 @@ enkele voorbeelden uitproberen door
 uit te voeren. Dit script helpt u bij het opzetten van een cluster, waarbij de Solr index is gedistribueerd over meerdere Solr instanties. Voordat u begint aan de
 daadwerkelijke installatie is het verstandig met een verse Solr installatie te beginnen. Extract eventueel het gedownloade Solr archief opnieuw naar een schone locatie.
  
-ETM levert een voorgedefinieerde configuratie set die tijdens het opzetten van het cluster gebruikt kan worden. Kopieer hiervoor de directory
-<ETM_UNZIP_DIR>/resources/solr/cluster-conf/etm_configs naar <SOLR_INSTALL_DIR>/server/solr/configsets/
+Zodra u klaar bent voor de installatie kopieert u het bestand <ETM_UNZIP_DIR>/resources/solr/schema.xml
+naar <SOLR_INSTALL_DIR>/server/solr/configsets/basic_configs/schema.xml. Het bestaande bestand mag overschreven worden. 
 
 Indien u uw Zookeeper ensemble nog niet gestart heeft, doe dit dan alsnog en voer hierna
 [source,shell]
@@ -225,9 +236,8 @@ Een connectie naar een geclusterde Zookeeper productie ensemble zou er als volgt
 <SOLR_INSTALL_DIR>/bin/solr -z 10.0.0.1:2181,10.0.0.2:2181,10.0.0.3:2181/etm/prod/solr -e cloud               
 ---- 
 
-Het script helpt u stapsgewijs bij het opzetten van een Solr cluster. Wees er zeker van dat u voor de collectienaam 'etm' gebruikt. Zodra er gevraagd wordt om een 
-naam van de configuratie directory beantwoord dan met 'etm_configs'. Deze waarde staat niet bij de opties, maar dit is de configuratie die door ETM geleverd is, en 
-welke u zojuist gekopieerd hebt.   
+Het script helpt u stapsgewijs bij het opzetten van een Solr cluster. Wees er zeker van dat u voor de collectienaam 'etm' gebruikt. Wanneer er gevraagd wordt om een 
+naam van de configuratie directory beantwoord dan met 'basic_configs'. 
 
 Zodra het script klaar is, is uw Solr cluster aangemaakt en gestart. De data directory van uw instanties is te vinden onder <SOLR_INSTALL_DIR>/example/cloud/node<x>.
 U doet er verstandig aan deze directory te verplaatsen naar een voor u logische plaats. Doe dit pas nadat u de instantie gestopt hebt.
