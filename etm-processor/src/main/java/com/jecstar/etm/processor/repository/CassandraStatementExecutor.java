@@ -18,7 +18,7 @@ import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.core.sla.SlaRule;
 import com.jecstar.etm.processor.TelemetryEvent;
 
-public class StatementExecutor {
+public class CassandraStatementExecutor {
 	
 	private final Session session;
 	private final PreparedStatement insertTelemetryEventStatement;
@@ -42,7 +42,7 @@ public class StatementExecutor {
 	private final PreparedStatement findParentStatement;
 	private final PreparedStatement findEndpointConfigStatement;
 	
-	public StatementExecutor(final Session session) {
+	public CassandraStatementExecutor(final Session session) {
 		this.session = session;
 		this.insertTelemetryEventStatement = session.prepare("insert into telemetry_event ("
 				+ "id, "

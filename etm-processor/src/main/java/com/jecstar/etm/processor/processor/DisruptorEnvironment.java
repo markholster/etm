@@ -11,7 +11,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
-import com.jecstar.etm.processor.repository.StatementExecutor;
+import com.jecstar.etm.processor.repository.CassandraStatementExecutor;
 import com.jecstar.etm.processor.repository.TelemetryEventRepositoryCassandraImpl;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
@@ -24,14 +24,14 @@ public class DisruptorEnvironment {
 	private final TelemetryEventRepositoryCassandraImpl telemetryEventRepository;
 	private final IndexingEventHandler[] indexingEventHandlers;
 
-	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final Session session, final SolrClient solrClient, final StatementExecutor statementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final Session session, final SolrClient solrClient, final CassandraStatementExecutor cassandraStatementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(sourceCorrelations));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
-		this.telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(statementExecutor, sourceCorrelations);
+		this.telemetryEventRepository = new TelemetryEventRepositoryCassandraImpl(cassandraStatementExecutor, sourceCorrelations);
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, sourceCorrelations), i, enhancingHandlerCount, etmConfiguration);
+			enhancingEvntHandler[i] = new EnhancingEventHandler(new TelemetryEventRepositoryCassandraImpl(cassandraStatementExecutor, sourceCorrelations), i, enhancingHandlerCount, etmConfiguration);
 		}
 		int indexingHandlerCount = etmConfiguration.getIndexingHandlerCount();
 		this.indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
@@ -42,7 +42,7 @@ public class DisruptorEnvironment {
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
 		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(statementExecutor, sourceCorrelations), i, persistingHandlerCount, etmConfiguration);
+			persistingEventHandlers[i] = new PersistingEventHandler(new TelemetryEventRepositoryCassandraImpl(cassandraStatementExecutor, sourceCorrelations), i, persistingHandlerCount, etmConfiguration);
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
 		if (persistingEventHandlers.length > 0) {

@@ -17,7 +17,7 @@ import com.jecstar.etm.processor.TelemetryEvent;
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
 	
-	private final StatementExecutor statementExecutor;
+	private final CassandraStatementExecutor cassandraStatementExecutor;
 	private final BatchStatement batchStatement = new BatchStatement(Type.UNLOGGED);
 	private final BatchStatement counterBatchStatement = new BatchStatement(Type.COUNTER);
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
@@ -28,8 +28,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
 	
-	public TelemetryEventRepositoryCassandraImpl(final StatementExecutor statementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
-		this.statementExecutor = statementExecutor;
+	public TelemetryEventRepositoryCassandraImpl(final CassandraStatementExecutor cassandraStatementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+		this.cassandraStatementExecutor = cassandraStatementExecutor;
 		this.sourceCorrelations = sourceCorrelations;
     }
 	
@@ -48,15 +48,15 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		this.dataRetention.partionKeySuffix = partitionKeySuffix;
 		this.dataRetention.id = event.id;
 		
-		this.statementExecutor.addTelemetryEvent(event, this.batchStatement);
+		this.cassandraStatementExecutor.addTelemetryEvent(event, this.batchStatement);
 		if (event.sourceId != null) {
 			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
-			this.statementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
+			this.cassandraStatementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
 			this.dataRetention.sourceId = event.sourceId;
 		}
 		if (!event.correlationData.isEmpty()) {
 			this.dataRetention.correlationData.putAll(event.correlationData);
-			event.correlationData.forEach((k,v) ->  this.statementExecutor.addCorrelationData(event, k + partitionKeySuffix, k, v, this.batchStatement));
+			event.correlationData.forEach((k,v) ->  this.cassandraStatementExecutor.addCorrelationData(event, k + partitionKeySuffix, k, v, this.batchStatement));
 		}
 		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
 		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
@@ -80,7 +80,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 
 		if (event.application != null) {
 			this.dataRetention.applicationName = event.application;
-			this.statementExecutor.addApplicationCounter(
+			this.cassandraStatementExecutor.addApplicationCounter(
 					requestCount, 
 					incomingRequestCount, 
 					outgoingRequestCount,
@@ -97,11 +97,11 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			        this.statisticsTimestamp,
 			        event.application + partitionKeySuffix,
 			        this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.batchStatement);
+			this.cassandraStatementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.batchStatement);
 		}
 		if (event.name != null) {
 			this.dataRetention.eventName = event.name;
-			this.statementExecutor.addEventNameCounter(
+			this.cassandraStatementExecutor.addEventNameCounter(
 					requestCount, 
 					responseCount, 
 					datagramCount, 
@@ -112,17 +112,17 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 					this.counterBatchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
 			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
-				this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + partitionKeySuffix, event.name, this.batchStatement);
+				this.cassandraStatementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + partitionKeySuffix, event.name, this.batchStatement);
 			}
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.addMessageEventStart(event, event.name + partitionKeySuffix, this.batchStatement);
+				this.cassandraStatementExecutor.addMessageEventStart(event, event.name + partitionKeySuffix, this.batchStatement);
 			}
 		}
 		if (event.correlationId != null && event.correlationName != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-			this.statementExecutor.addMessageEventFinish(event, event.correlationName + correlationPartitionKeySuffix, this.batchStatement);
+			this.cassandraStatementExecutor.addMessageEventFinish(event, event.correlationName + correlationPartitionKeySuffix, this.batchStatement);
 		}
 		if (event.application != null && event.name != null) {
-			this.statementExecutor.addApplicationEventNameCounter(
+			this.cassandraStatementExecutor.addApplicationEventNameCounter(
 					requestCount, 
 					incomingRequestCount, 
 					outgoingRequestCount,
@@ -143,30 +143,30 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 		}
 		if (event.transactionName != null) {
 			this.dataRetention.transactionName = event.transactionName;
-			this.statementExecutor.addTransactionNameCounter(
+			this.cassandraStatementExecutor.addTransactionNameCounter(
 					requestCount, 
 					responseCount, 
 					responseTime, 
 					event.transactionName, 
 					this.statisticsTimestamp,
 					event.transactionName + partitionKeySuffix, this.counterBatchStatement);
-			this.statementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + partitionKeySuffix, event.transactionName, this.batchStatement);
+			this.cassandraStatementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + partitionKeySuffix, event.transactionName, this.batchStatement);
 			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.statementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix, this.batchStatement);
+				this.cassandraStatementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix, this.batchStatement);
 			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-				this.statementExecutor.addTransactionEventFinish(event, event.transactionName + correlationPartitionKeySuffix, this.batchStatement);
+				this.cassandraStatementExecutor.addTransactionEventFinish(event, event.transactionName + correlationPartitionKeySuffix, this.batchStatement);
 			}
 		}
-		this.statementExecutor.addDataRetention(this.dataRetention, this.batchStatement);
+		this.cassandraStatementExecutor.addDataRetention(this.dataRetention, this.batchStatement);
 		
 		if (this.batchStatement.size() != 0) {
-			this.statementExecutor.execute(this.batchStatement);
+			this.cassandraStatementExecutor.execute(this.batchStatement);
 			this.batchStatement.clear();
 			// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
 			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (this.counterBatchStatement.size() != 0) {
-			this.statementExecutor.execute(this.counterBatchStatement);
+			this.cassandraStatementExecutor.execute(this.counterBatchStatement);
 			this.counterBatchStatement.clear();
 		}
     }
@@ -187,7 +187,7 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			result.slaRule = parent.slaRule;
 			return;
 		}
-		this.statementExecutor.findParent(sourceId, result);
+		this.cassandraStatementExecutor.findParent(sourceId, result);
     }
 
 	@Override
@@ -199,8 +199,8 @@ public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepo
 			}
 			cachedResult.initialize();
 			// First check the global configuration
-			this.statementExecutor.findAndMergeEndpointConfig("*", cachedResult);
-			this.statementExecutor.findAndMergeEndpointConfig(endpoint, cachedResult);
+			this.cassandraStatementExecutor.findAndMergeEndpointConfig("*", cachedResult);
+			this.cassandraStatementExecutor.findAndMergeEndpointConfig(endpoint, cachedResult);
 			cachedResult.retrieved = System.currentTimeMillis();
 			this.endpointConfigs.put(endpoint, cachedResult);
 		} 

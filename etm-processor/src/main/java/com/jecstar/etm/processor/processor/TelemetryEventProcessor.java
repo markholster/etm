@@ -17,7 +17,7 @@ import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
-import com.jecstar.etm.processor.repository.StatementExecutor;
+import com.jecstar.etm.processor.repository.CassandraStatementExecutor;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryEventProcessor {
@@ -34,7 +34,7 @@ public class TelemetryEventProcessor {
 	private EtmConfiguration etmConfiguration;
 	
 	private DisruptorEnvironment disruptorEnvironment;
-	private StatementExecutor statementExecutor;
+	private CassandraStatementExecutor cassandraStatementExecutor;
 	
 
 	public void start(final ExecutorService executorService, final Session session, final SolrClient solrClient, final EtmConfiguration etmConfiguration) {
@@ -44,10 +44,10 @@ public class TelemetryEventProcessor {
 		this.started = true;
 		this.executorService = executorService;
 		this.cassandraSession = session;
-		this.statementExecutor = new StatementExecutor(this.cassandraSession);
+		this.cassandraStatementExecutor = new CassandraStatementExecutor(this.cassandraSession);
 		this.solrClient = solrClient;
 		this.etmConfiguration = etmConfiguration;
-		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, session, solrClient, this.statementExecutor, this.sourceCorrelations);
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, session, solrClient, this.cassandraStatementExecutor, this.sourceCorrelations);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
 	
@@ -55,7 +55,7 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.cassandraSession, this.solrClient, this.statementExecutor, this.sourceCorrelations);
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.cassandraSession, this.solrClient, this.cassandraStatementExecutor, this.sourceCorrelations);
 		RingBuffer<TelemetryEvent> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
