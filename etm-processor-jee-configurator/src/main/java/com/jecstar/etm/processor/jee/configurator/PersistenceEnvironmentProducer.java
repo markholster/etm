@@ -10,7 +10,6 @@ import javax.inject.Singleton;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
-import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.configuration.CassandraConfiguration;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
@@ -18,37 +17,43 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
+import com.jecstar.etm.processor.jee.configurator.cassandra.PersistenceEnvironmentCassandraImpl;
+import com.jecstar.etm.processor.jee.configurator.cassandra.ReconfigurableSession;
+import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 
 @ManagedBean
 @Singleton
-public class CassandraSessionProducer implements ConfigurationChangeListener {
-	
+public class PersistenceEnvironmentProducer implements ConfigurationChangeListener {
+
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
-	private static final LogWrapper log = LogFactory.getLogger(CassandraSessionProducer.class);
+	private static final LogWrapper log = LogFactory.getLogger(PersistenceEnvironmentProducer.class);
 
 	@ProcessorConfiguration
 	@Inject
 	private EtmConfiguration configuration;
 
+	private PersistenceEnvironment persistenceEnvironment;
+	
 	private ReconfigurableSession session;
 
 	private Cluster cluster;
-
+	
 	@ProcessorConfiguration
 	@Produces
-	public Session getSession() {
+	public PersistenceEnvironment getPersistenceEnvironment() {
 		synchronized (this) {
-			if (this.session == null) {
+			if (this.persistenceEnvironment == null) {
 				this.cluster = createCluster();
 				this.configuration.addCassandraConfigurationChangeListener(this);
 				this.session = new ReconfigurableSession(this.cluster.connect(this.configuration.getCassandraKeyspace()));
+				this.persistenceEnvironment = new PersistenceEnvironmentCassandraImpl(this.session);
 			}
 		}
-		return this.session;
+		return this.persistenceEnvironment;
 	}
-	
+
 	private Cluster createCluster() {
 		Builder builder = Cluster.builder();
 		List<String> contactPoints = this.configuration.getCassandraContactPoints();
@@ -68,6 +73,7 @@ public class CassandraSessionProducer implements ConfigurationChangeListener {
 		if (this.configuration != null) {
 			this.configuration.removeCassandraConfigurationChangeListener(this);
 		}
+		this.persistenceEnvironment.close();
 		if (this.session != null) {
 			this.session.close();
 		}
@@ -96,4 +102,5 @@ public class CassandraSessionProducer implements ConfigurationChangeListener {
 			}
 		}
     }
+
 }

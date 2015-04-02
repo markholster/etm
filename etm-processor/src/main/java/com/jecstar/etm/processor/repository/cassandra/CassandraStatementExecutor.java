@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.repository;
+package com.jecstar.etm.processor.repository.cassandra;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,6 +17,9 @@ import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.core.sla.SlaRule;
 import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
+import com.jecstar.etm.processor.repository.DataRetention;
+import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
 public class CassandraStatementExecutor {
 	

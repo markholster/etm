@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.solr.client.solrj.SolrClient;
 
-import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -17,7 +16,6 @@ import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
-import com.jecstar.etm.processor.repository.CassandraStatementExecutor;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryEventProcessor {
@@ -29,25 +27,22 @@ public class TelemetryEventProcessor {
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, CorrelationBySourceIdResult>());
 	
 	private ExecutorService executorService;
-	private Session cassandraSession;
 	private SolrClient solrClient;
 	private EtmConfiguration etmConfiguration;
-	
 	private DisruptorEnvironment disruptorEnvironment;
-	private CassandraStatementExecutor cassandraStatementExecutor;
+	private PersistenceEnvironment persistenceEnvironment;
 	
 
-	public void start(final ExecutorService executorService, final Session session, final SolrClient solrClient, final EtmConfiguration etmConfiguration) {
+	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final SolrClient solrClient, final EtmConfiguration etmConfiguration) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
 		this.started = true;
 		this.executorService = executorService;
-		this.cassandraSession = session;
-		this.cassandraStatementExecutor = new CassandraStatementExecutor(this.cassandraSession);
+		this.persistenceEnvironment = persistenceEnvironment;
 		this.solrClient = solrClient;
 		this.etmConfiguration = etmConfiguration;
-		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, session, solrClient, this.cassandraStatementExecutor, this.sourceCorrelations);
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, solrClient, this.persistenceEnvironment, this.sourceCorrelations);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
 	
@@ -55,7 +50,7 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.cassandraSession, this.solrClient, this.cassandraStatementExecutor, this.sourceCorrelations);
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.solrClient, this.persistenceEnvironment, this.sourceCorrelations);
 		RingBuffer<TelemetryEvent> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
@@ -77,7 +72,7 @@ public class TelemetryEventProcessor {
 		}		
 		this.executorService.shutdown();
 		this.disruptorEnvironment.shutdown();
-		this.cassandraSession.close();
+		this.persistenceEnvironment.close();
 		this.solrClient.shutdown();
 	}
 

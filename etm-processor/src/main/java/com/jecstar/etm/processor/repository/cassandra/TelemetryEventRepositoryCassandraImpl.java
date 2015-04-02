@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.repository;
+package com.jecstar.etm.processor.repository.cassandra;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -13,7 +13,18 @@ import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.core.util.DateUtils;
 import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
+import com.jecstar.etm.processor.repository.DataRetention;
+import com.jecstar.etm.processor.repository.EndpointConfigResult;
+import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
+/**
+ * Implementation of the <code>TelemetryEventRepository</code> that is backed by
+ * a Cassandra cluster. This class is NOT thread safe; each
+ * <code>TelementryEventProcessor</code> handler should have it's own instance.
+ * 
+ * @author Mark Holster
+ */
 public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
 
 	

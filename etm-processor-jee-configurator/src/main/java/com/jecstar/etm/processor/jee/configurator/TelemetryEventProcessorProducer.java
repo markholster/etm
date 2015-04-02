@@ -12,13 +12,13 @@ import javax.inject.Singleton;
 
 import org.apache.solr.client.solrj.SolrClient;
 
-import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
+import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 @ManagedBean
@@ -36,7 +36,7 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 
 	@ProcessorConfiguration
 	@Inject
-	private Session session;
+	private PersistenceEnvironment persistenceEnvironment;
 
 	@ProcessorConfiguration
 	@Inject
@@ -51,7 +51,7 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 			if (this.telemetryEventProcessor == null) {
 				this.telemetryEventProcessor = new TelemetryEventProcessor();
 				this.configration.addEtmConfigurationChangeListener(this);
-				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.session, this.solrClient,
+				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.solrClient,
 				        this.configration);
 			}
 		}

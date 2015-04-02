@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.jee.configurator;
+package com.jecstar.etm.processor.jee.configurator.cassandra;
 
 import java.nio.ByteBuffer;
 
