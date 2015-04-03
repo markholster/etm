@@ -1,10 +1,7 @@
 package com.jecstar.etm.processor.processor;
 
 import java.nio.channels.IllegalSelectorException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -23,9 +20,6 @@ public class TelemetryEventProcessor {
 	private RingBuffer<TelemetryEvent> ringBuffer;
 	private boolean started = false;
 	
-	//TODO proberen dit niet in een synchronised map te plaatsen, maar bijvoorbeeld in een ConcurrentMap
-	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, CorrelationBySourceIdResult>());
-	
 	private ExecutorService executorService;
 	private SolrClient solrClient;
 	private EtmConfiguration etmConfiguration;
@@ -42,7 +36,7 @@ public class TelemetryEventProcessor {
 		this.persistenceEnvironment = persistenceEnvironment;
 		this.solrClient = solrClient;
 		this.etmConfiguration = etmConfiguration;
-		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, solrClient, this.persistenceEnvironment, this.sourceCorrelations);
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, solrClient, this.persistenceEnvironment);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
 	
@@ -50,7 +44,7 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.solrClient, this.persistenceEnvironment, this.sourceCorrelations);
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.solrClient, this.persistenceEnvironment);
 		RingBuffer<TelemetryEvent> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
@@ -136,7 +130,7 @@ public class TelemetryEventProcessor {
 			event.transactionId = event.id;
 		}
 		if (event.sourceId != null) {
-			this.sourceCorrelations.put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
+			this.persistenceEnvironment.getProcessingMap().put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
 			        event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime(), event.slaRule));
 		}
 //		Statistics.preprocessingTime.addAndGet(System.nanoTime() - start);

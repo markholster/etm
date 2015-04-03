@@ -67,7 +67,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Message with msgid '" + message.getJMSMessageID() + "' could not be parsed nativly, trying to make the best of it.");
 				}
-				handleNoneNative(message);
+				handleNonNative(message);
 			}
 			this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
 		} catch (Throwable t) {
@@ -98,7 +98,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
     }
 
 
-	private void handleNoneNative(Message message) throws JMSException {
+	private void handleNonNative(Message message) throws JMSException {
 		if (message instanceof javax.jms.TextMessage) {
 			TextMessage textMessage = (TextMessage) message;
 			this.telemetryEvent.content = textMessage.getText();

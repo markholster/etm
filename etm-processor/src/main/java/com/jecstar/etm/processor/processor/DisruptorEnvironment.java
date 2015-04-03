@@ -1,14 +1,12 @@
 package com.jecstar.etm.processor.processor;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.solr.client.solrj.SolrClient;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.RingBuffer;
@@ -22,9 +20,9 @@ public class DisruptorEnvironment {
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final IndexingEventHandler[] indexingEventHandlers;
 
-	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final SolrClient solrClient, final PersistenceEnvironment persistenceEnvironment, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final SolrClient solrClient, final PersistenceEnvironment persistenceEnvironment) {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
-		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(sourceCorrelations));
+		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(persistenceEnvironment.getProcessingMap()));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		this.telemetryEventRepository = persistenceEnvironment.createTelemetryEventRepository();

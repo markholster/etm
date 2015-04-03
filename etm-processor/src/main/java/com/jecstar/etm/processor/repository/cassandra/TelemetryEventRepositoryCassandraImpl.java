@@ -4,19 +4,15 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
-import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
-import com.jecstar.etm.core.util.DateUtils;
 import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.processor.repository.AbstractTelemetryEventProcessor;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.DataRetention;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
-import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
 /**
  * Implementation of the <code>TelemetryEventRepository</code> that is backed by
@@ -25,177 +21,172 @@ import com.jecstar.etm.processor.repository.TelemetryEventRepository;
  * 
  * @author Mark Holster
  */
-public class TelemetryEventRepositoryCassandraImpl implements TelemetryEventRepository {
-
+public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEventProcessor {
 	
 	private final CassandraStatementExecutor cassandraStatementExecutor;
 	private final BatchStatement batchStatement = new BatchStatement(Type.UNLOGGED);
 	private final BatchStatement counterBatchStatement = new BatchStatement(Type.COUNTER);
-	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
 	
-	private final Date statisticsTimestamp = new Date();
-	private final Date eventOccurrenceTimestamp = new Date();
-	private final DataRetention  dataRetention = new DataRetention();
 	private final DateFormat format = new PartitionKeySuffixCreator();
 	private final Map<String, EndpointConfigResult> endpointConfigs = new HashMap<String, EndpointConfigResult>();
+	private String partitionKeySuffix;
+	private String correlationPartitionKeySuffix;
 	
 	public TelemetryEventRepositoryCassandraImpl(final CassandraStatementExecutor cassandraStatementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+		super(sourceCorrelations);
 		this.cassandraStatementExecutor = cassandraStatementExecutor;
-		this.sourceCorrelations = sourceCorrelations;
     }
 	
 	@Override
-    public void persistTelemetryEvent(final TelemetryEvent event, final TimeUnit smallestStatisticsTimeUnit) {
-		this.dataRetention.clear();
-		this.statisticsTimestamp.setTime(DateUtils.normalizeTime(event.creationTime.getTime(), smallestStatisticsTimeUnit.toMillis(1)));
-		this.eventOccurrenceTimestamp.setTime(DateUtils.normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
-		this.dataRetention.eventOccurrenceTimestamp.setTime(this.eventOccurrenceTimestamp.getTime());
-		this.dataRetention.retentionTimestamp .setTime(DateUtils.normalizeTime(event.retention.getTime() + (2 * PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+	protected void startPersist(TelemetryEvent event, DataRetention dataRetention) {
+		this.batchStatement.clear();
+		this.counterBatchStatement.clear();
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
-		final String partitionKeySuffix = this.format.format(event.creationTime);
-		final String correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
-		this.dataRetention.partionKeySuffix = partitionKeySuffix;
-		this.dataRetention.id = event.id;
-		
-		this.cassandraStatementExecutor.addTelemetryEvent(event, this.batchStatement);
-		if (event.sourceId != null) {
-			// Synchronous execution because soureCorrelation list needs to be cleared with this event after the data is present in the database.
-			this.cassandraStatementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
-			this.dataRetention.sourceId = event.sourceId;
-		}
-		if (!event.correlationData.isEmpty()) {
-			this.dataRetention.correlationData.putAll(event.correlationData);
-			event.correlationData.forEach((k,v) ->  this.cassandraStatementExecutor.addCorrelationData(event, k + partitionKeySuffix, k, v, this.batchStatement));
-		}
-		long requestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
-		long incomingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
-		long outgoingRequestCount = TelemetryEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.OUTGOING.equals(event.direction) ? 1 : 0;
-		long responseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) ? 1 : 0;
-		long incomingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
-		long outgoingResponseCount = TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && TelemetryEventDirection.OUTGOING.equals(event.direction) ? 1 : 0;
-		long datagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) ? 1 : 0;
-		long incomingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
-		long outgoingDatagramCount = TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && TelemetryEventDirection.OUTGOING.equals(event.direction) ? 1 : 0;
-		long responseTime = 0;
-		long incomingResponseTime = 0;
-		long outgoingResponseTime = 0;
-		if (responseCount > 0) {
-			if (event.creationTime.getTime() != 0 && event.correlationCreationTime.getTime() != 0) {
-				responseTime = event.creationTime.getTime() - event.correlationCreationTime.getTime(); 
-			}
-			incomingResponseTime = TelemetryEventDirection.INCOMING.equals(event.direction) ? responseTime : 0;
-			outgoingResponseTime = TelemetryEventDirection.OUTGOING.equals(event.direction) ? responseTime : 0;
-		}
-
-		if (event.application != null) {
-			this.dataRetention.applicationName = event.application;
-			this.cassandraStatementExecutor.addApplicationCounter(
-					requestCount, 
-					incomingRequestCount, 
-					outgoingRequestCount,
-			        responseCount, 
-			        incomingResponseCount, 
-			        outgoingResponseCount, 
-			        datagramCount, 
-			        incomingDatagramCount,
-			        outgoingDatagramCount, 
-			        responseTime, 
-			        incomingResponseTime, 
-			        outgoingResponseTime, 
-			        event.application,
-			        this.statisticsTimestamp,
-			        event.application + partitionKeySuffix,
-			        this.counterBatchStatement);
-			this.cassandraStatementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "Application", event.application + partitionKeySuffix, event.application, this.batchStatement);
-		}
-		if (event.name != null) {
-			this.dataRetention.eventName = event.name;
-			this.cassandraStatementExecutor.addEventNameCounter(
-					requestCount, 
-					responseCount, 
-					datagramCount, 
-					responseTime, 
-					event.name,
-					this.statisticsTimestamp,
-					event.name + partitionKeySuffix, 
-					this.counterBatchStatement);
-			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type) || TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)
-			        || TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type)) {
-				this.cassandraStatementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "MessageName", event.name  + partitionKeySuffix, event.name, this.batchStatement);
-			}
-			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.cassandraStatementExecutor.addMessageEventStart(event, event.name + partitionKeySuffix, this.batchStatement);
-			}
-		}
-		if (event.correlationId != null && event.correlationName != null && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-			this.cassandraStatementExecutor.addMessageEventFinish(event, event.correlationName + correlationPartitionKeySuffix, this.batchStatement);
-		}
-		if (event.application != null && event.name != null) {
-			this.cassandraStatementExecutor.addApplicationEventNameCounter(
-					requestCount, 
-					incomingRequestCount, 
-					outgoingRequestCount,
-			        responseCount, 
-			        incomingResponseCount, 
-			        outgoingResponseCount, 
-			        datagramCount, 
-			        incomingDatagramCount,
-			        outgoingDatagramCount, 
-			        responseTime, 
-			        incomingResponseTime, 
-			        outgoingResponseTime, 
-					event.application,
-					event.name, 
-					this.statisticsTimestamp,
-					event.application + partitionKeySuffix, 
-					this.counterBatchStatement);
-		}
-		if (event.transactionName != null) {
-			this.dataRetention.transactionName = event.transactionName;
-			this.cassandraStatementExecutor.addTransactionNameCounter(
-					requestCount, 
-					responseCount, 
-					responseTime, 
-					event.transactionName, 
-					this.statisticsTimestamp,
-					event.transactionName + partitionKeySuffix, this.counterBatchStatement);
-			this.cassandraStatementExecutor.addEventOccurence(this.eventOccurrenceTimestamp, "TransactionName", event.transactionName + partitionKeySuffix, event.transactionName, this.batchStatement);
-			if (TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-				this.cassandraStatementExecutor.addTransactionEventStart(event, event.transactionName + partitionKeySuffix, this.batchStatement);
-			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-				this.cassandraStatementExecutor.addTransactionEventFinish(event, event.transactionName + correlationPartitionKeySuffix, this.batchStatement);
-			}
-		}
-		this.cassandraStatementExecutor.addDataRetention(this.dataRetention, this.batchStatement);
-		
+		this.partitionKeySuffix = this.format.format(event.creationTime);
+		this.correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
+		dataRetention.partionKeySuffix = partitionKeySuffix;
+	}
+	
+	@Override
+	protected void endPersist() {
 		if (this.batchStatement.size() != 0) {
 			this.cassandraStatementExecutor.execute(this.batchStatement);
-			this.batchStatement.clear();
-			// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
-			this.sourceCorrelations.remove(event.sourceId);
 		}
 		if (this.counterBatchStatement.size() != 0) {
 			this.cassandraStatementExecutor.execute(this.counterBatchStatement);
-			this.counterBatchStatement.clear();
 		}
-    }
+	}
+	
+	@Override
+	protected void addTelemetryEvent(TelemetryEvent event) {
+		this.cassandraStatementExecutor.addTelemetryEvent(event, this.batchStatement);
+	}
+	
+	@Override
+	protected void addSourceIdCorrelationData(TelemetryEvent event) {
+		this.cassandraStatementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
+	}
+	
+	@Override
+	protected void addCorrelationData(TelemetryEvent event, String key, String value) {
+		this.cassandraStatementExecutor.addCorrelationData(event, key + partitionKeySuffix, key, value, this.batchStatement);
+	}
+	
+	@Override
+	protected void addApplicationCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount, long responseCount,
+	        long incomingResponseCount, long outgoingResponseCount, long datagramCount, long incomingDatagramCount,
+	        long outgoingDatagramCount, long responseTime, long incomingResponseTime, long outgoingResponseTime, String application,
+	        Date statisticsTimestamp) {
+		this.cassandraStatementExecutor.addApplicationCounter(
+				requestCount, 
+				incomingRequestCount, 
+				outgoingRequestCount, 
+				responseCount,
+		        incomingResponseCount, 
+		        outgoingResponseCount, 
+		        datagramCount, 
+		        incomingDatagramCount, 
+		        outgoingDatagramCount, 
+		        responseTime,
+		        incomingResponseTime, 
+		        outgoingResponseTime, 
+		        application, 
+		        statisticsTimestamp, 
+		        application + this.partitionKeySuffix,
+		        this.counterBatchStatement);
+	}
+	
+	@Override
+	protected void addEventOccurence(Date eventOccurrenceTimestamp, String occurrenceName, String occurrenceValue) {
+		this.cassandraStatementExecutor.addEventOccurence(
+				eventOccurrenceTimestamp, 
+				occurrenceName, 
+				occurrenceValue + this.partitionKeySuffix, 
+				occurrenceValue, this.batchStatement);	
+	}
+	
+	@Override
+	protected void addEventNameCounter(long requestCount, long responseCount, long datagramCount, long responseTime, String eventName,
+	        Date statisticsTimestamp) {
+		this.cassandraStatementExecutor.addEventNameCounter(
+			requestCount, 
+			responseCount, 
+			datagramCount, 
+			responseTime, 
+			eventName,
+			statisticsTimestamp,
+			eventName + this.partitionKeySuffix, 
+			this.counterBatchStatement);
+	}
+	
+	@Override
+	protected void addMessageEventStart(TelemetryEvent event) {
+		this.cassandraStatementExecutor.addMessageEventStart(event, event.name + this.partitionKeySuffix, this.batchStatement);
+	}
+	
+	@Override
+	protected void addMessageEventFinish(TelemetryEvent event) {
+		this.cassandraStatementExecutor.addMessageEventFinish(event, event.correlationName + this.correlationPartitionKeySuffix, this.batchStatement);
+	}
+	
+	@Override
+	protected void addApplicationEventNameCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount,
+	        long responseCount, long incomingResponseCount, long outgoingResponseCount, long datagramCount, long incomingDatagramCount,
+	        long outgoingDatagramCount, long responseTime, long incomingResponseTime, long outgoingResponseTime, String application,
+	        String eventName, Date statisticsTimestamp) {
+		this.cassandraStatementExecutor.addApplicationEventNameCounter(
+			requestCount, 
+			incomingRequestCount, 
+			outgoingRequestCount,
+	        responseCount, 
+	        incomingResponseCount, 
+	        outgoingResponseCount, 
+	        datagramCount, 
+	        incomingDatagramCount,
+	        outgoingDatagramCount, 
+	        responseTime, 
+	        incomingResponseTime, 
+	        outgoingResponseTime, 
+			application,
+			eventName, 
+			statisticsTimestamp,
+			application + this.partitionKeySuffix, 
+			this.counterBatchStatement);	
+	}
+	
+	@Override
+	protected void addTransactionNameCounter(long requestCount, long responseCount, long responseTime, String transactionName,
+	        Date statisticsTimestamp) {
+		this.cassandraStatementExecutor.addTransactionNameCounter(
+			requestCount, 
+			responseCount, 
+			responseTime, 
+			transactionName, 
+			statisticsTimestamp,
+			transactionName + this.partitionKeySuffix, 
+			this.counterBatchStatement);
+	}
+	
+	@Override
+	protected void addTransactionEventStart(TelemetryEvent event) {
+		this.cassandraStatementExecutor.addTransactionEventStart(event, event.transactionName + this.partitionKeySuffix, this.batchStatement);
+	}
+	
+	@Override
+	protected void addTransactionEventFinish(TelemetryEvent event) {
+		this.cassandraStatementExecutor.addTransactionEventFinish(event, event.transactionName + this.correlationPartitionKeySuffix, this.batchStatement);
+	}
+	
+	@Override
+	protected void addDataRetention(DataRetention dataRetention) {
+		this.cassandraStatementExecutor.addDataRetention(dataRetention, this.batchStatement);
+	}
 
 	@Override
-    public void findParent(String sourceId, CorrelationBySourceIdResult result) {
+    public void doFindParent(String sourceId, CorrelationBySourceIdResult result) {
 		if (sourceId == null) {
-			return;
-		}
-		CorrelationBySourceIdResult parent = this.sourceCorrelations.get(sourceId);
-		if (parent != null) {
-			result.id = parent.id;
-			result.transactionId = parent.transactionId;
-			result.transactionName = parent.transactionName;
-			result.creationTime = parent.creationTime;
-			result.expiryTime = parent.expiryTime;
-			result.name = parent.name;
-			result.slaRule = parent.slaRule;
 			return;
 		}
 		this.cassandraStatementExecutor.findParent(sourceId, result);

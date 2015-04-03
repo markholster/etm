@@ -99,8 +99,7 @@ Om een administratieve gebruiker toe te voegen voer
 uit vanaf een command prompt. Wees er zeker van dat de gebruiker een 'Management User' is die is toegevoegd aan het 'ManagementRealm'.
 
 Deze gebuiker is nodig om in het administration console van Wildfly in te loggen. ETM heeft ook een gebruiker nodig waarmee ingelogd kan worden in ETM zelf.
-Voer hiervoor nogmaals het add-user.sh script uit, maar zorg er deze keer voor dat de gebruiker een 'Application User' is die is toegevoegd aan het 'EtmRealm'. 
-Ook moet de gebruiker de volgende rollen krijgen:
+Voer hiervoor nogmaals het add-user.sh script uit, maar zorg er deze keer voor dat de gebruiker een 'Application User' is. Ook moet de gebruiker de volgende rollen krijgen:
 
 * etm-administrator
 * etm-searcher
