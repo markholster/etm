@@ -7,6 +7,9 @@ import javax.inject.Singleton;
 
 import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.gui.rest.repository.cassandra.EndpointRepositoryCassandraImpl;
+import com.jecstar.etm.gui.rest.repository.cassandra.QueryRepositoryCassandraImpl;
+import com.jecstar.etm.gui.rest.repository.cassandra.StatisticsRepositoryCassandraImpl;
 import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
@@ -29,7 +32,7 @@ public class RepositoryProducer {
 	public StatisticsRepository getStatisticsRepository() {
 		synchronized (this) {
 	        if (this.statisticsRepository == null) {
-	        	this.statisticsRepository = new StatisticsRepository(this.session);
+	        	this.statisticsRepository = new StatisticsRepositoryCassandraImpl(this.session);
 	        }
         }
 		return this.statisticsRepository;
@@ -39,7 +42,7 @@ public class RepositoryProducer {
 	public QueryRepository getQueryRepository() {
 		synchronized (this) {
 	        if (this.queryRepository == null) {
-	        	this.queryRepository = new QueryRepository(this.session, this.configuration);
+	        	this.queryRepository = new QueryRepositoryCassandraImpl(this.session, this.configuration);
 	        }
         }
 		return this.queryRepository;
@@ -49,7 +52,7 @@ public class RepositoryProducer {
 	public EndpointRepository getEndpointRepository() {
 		synchronized (this) {
 	        if (this.endpointRepository == null) {
-	        	this.endpointRepository = new EndpointRepository(this.session);
+	        	this.endpointRepository = new EndpointRepositoryCassandraImpl(this.session);
 	        }
         }
 		return this.endpointRepository;
