@@ -1,6 +1,8 @@
 package com.jecstar.etm.gui.rest.repository.cassandra;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -12,6 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+
+import net.sf.saxon.TransformerFactoryImpl;
 
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -52,6 +61,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 	private final PreparedStatement findChildEventCreationTimeStatement;
 	private final PreparedStatement findCorrelationsByDataStatement;
 	private final PreparedStatement findPotentialCorrelatingEventDataStatement;
+	private final TransformerFactoryImpl transformerFactory;
 
 	public QueryRepositoryCassandraImpl(Session session, EtmConfiguration etmConfiguration) {
 		this.session = session;
@@ -68,6 +78,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 		this.findChildEventCreationTimeStatement = this.session.prepare("select creationTime, correlationId, type from telemetry_event where id = ?");
 		this.findCorrelationsByDataStatement = this.session.prepare("select id, timeunit from correlation_data where name_timeunit = ? and name = ? and value = ? and timeunit >= ? and timeunit <= ?");
 		this.findPotentialCorrelatingEventDataStatement = this.session.prepare("select creationTime, correlations, expiryTime, type from telemetry_event where id = ?");
+		this.transformerFactory = new TransformerFactoryImpl();
 	}
 
 	public void addEvents(SolrDocumentList results, JsonGenerator generator) throws JsonGenerationException, IOException {
@@ -95,7 +106,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 		Row row = resultSet.one();
 		if (row != null) {
 			writeStringValue("application", row.getString(0), generator);
-			writeStringValue("content", row.getString(1), generator);
+			writeStringValue("content", formatXml(row.getString(1)), generator);
 			writeUUIDValue("correlationId", row.getUUID(2), generator);
 			generator.writeArrayFieldStart("childCorrelationIds");
 			List<UUID> correlations = row.getList(3, UUID.class);
@@ -115,6 +126,21 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 			writeStringValue("transactionName", row.getString(12), generator);
 			writeStringValue("type", row.getString(13), generator);
 		}
+	}
+	
+	private String formatXml(String unformattedXml) {
+		if (unformattedXml != null && unformattedXml.length() > 0 && unformattedXml.startsWith("<")) {
+			try {
+			Transformer transformer = this.transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			StreamResult result = new StreamResult(new StringWriter());
+			transformer.transform(new StreamSource(new StringReader(unformattedXml)), result);
+			return result.getWriter().toString();
+			} catch (Exception e) {
+				return unformattedXml;
+			}
+		}
+		return unformattedXml;
 	}
 
 	public void addEventOverview(UUID eventId, JsonGenerator generator) throws JsonGenerationException, IOException {
