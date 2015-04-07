@@ -209,7 +209,7 @@ $(function () {
 	var eventId = getUrlParameter('id');
 	
 	$('#panel_title').text('Event ' + eventId);
-	$('#back_lnk').attr('href', 'index.html?queryString=' + encodeURIComponent(getUrlParameter('queryString', '')) + '&start=' + encodeURIComponent(getUrlParameter('start', '')) + '&max=' + encodeURIComponent(getUrlParameter('max', '')));
+	$('#back_lnk').attr('href', 'index.html?queryString=' + encodeURIComponent(getUrlParameter('queryString', '')) + '&start=' + encodeURIComponent(getUrlParameter('start', '')) + '&max=' + encodeURIComponent(getUrlParameter('max', '')) + '&sortField=' + encodeURIComponent(getUrlParameter('sortField', '')) + '&sortOrder=' + encodeURIComponent(getUrlParameter('sortOrder', 'asc')));
 	$.ajax('../rest/query/event/' + eventId, { dataType: "json", cache: false, success: function (data) {
 		if (!data) {
 			return;

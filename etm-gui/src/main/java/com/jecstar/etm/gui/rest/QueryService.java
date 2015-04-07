@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.SolrQuery.SortClause;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.codehaus.jackson.JsonFactory;
@@ -51,7 +52,7 @@ public class QueryService {
 	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String performUnformattedQuery(@QueryParam("queryString") String queryString ,@QueryParam("start") int start, @QueryParam("rows") int rows) {
+	public String performUnformattedQuery(@QueryParam("queryString") String queryString ,@QueryParam("start") int start, @QueryParam("rows") int rows, @QueryParam("sortField") String sortField, @QueryParam("sortOrder") String sortOrder) {
 		if (rows <= 0) {
 			rows = 25;
 		} else if (rows > 1000) {
@@ -60,6 +61,13 @@ public class QueryService {
 		SolrQuery query = new SolrQuery(queryString);
 		query.setStart(start);
 		query.setRows(rows);
+		if (sortField != null && sortField.trim().length() > 0) {
+			if ("asc".equalsIgnoreCase(sortOrder)) {
+				query.setSort(SortClause.asc(sortField));
+			} else {
+				query.setSort(SortClause.desc(sortField));
+			}
+		}
 		try {
 			long startTime = System.nanoTime();
 	        QueryResponse queryResponse = this.solrClient.query(query);

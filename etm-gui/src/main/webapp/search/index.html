@@ -88,11 +88,11 @@
 								class="table table-condensed table-striped table-hover">
 								<thead>
 									<tr>
-										<th>Name</th>
-										<th>Application</th>
-										<th>Endpoint</th>
-										<th>Source id</th>
-										<th>Creation time</th>
+										<th><a href="#" id="sort_name">Name</a></th>
+										<th><a href="#" id="sort_application">Application</a></th>
+										<th><a href="#" id="sort_endpoint">Endpoint</a></th>
+										<th><a href="#" id="sort_source_id">Source id</a></th>
+										<th><a href="#" id="sort_creation_time">Creation time</a></th>
 									</tr>
 								</thead>
 								<tbody>
@@ -150,6 +150,8 @@ if ( !Date.prototype.toISOString ) {
 $(function () {
     var currentStart = 0;
     var rowCount = 25;
+    var sortOrder = 'asc';
+    var sortField = '';
 
 	var padNumber = function(str, max) {
 		  str = str.toString();
@@ -180,7 +182,7 @@ $(function () {
         var application = $.isEmptyObject(event.application) ? '' : event.application;
         var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint;
         var eventName = $.isEmptyObject(event.name) ? '?' : event.name; 
-        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '">' + escapeToHtml(eventName) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(endpoint) + '</div></td><td><div style="display: none;">' + escapeToHtml(event.sourceId) + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
+        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder) + '">' + escapeToHtml(eventName) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(endpoint) + '</div></td><td><div style="display: none;">' + escapeToHtml(event.sourceId) + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
         $(rowContent).appendTo($('#result_table > tbody'));
         if (animate) {
             $('#result_table > tbody > :last-child > td > div').slideDown(500);
@@ -189,10 +191,10 @@ $(function () {
         }                        
     };
 
-	var executeQuery = function(start, max, animate) {
+	var executeQuery = function(start, max, sortField, sortOrder, animate) {
 		$('#errorBox').hide('fast');
 		$('#ajax_loader').show();
-        $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max), { dataType: "json", cache: false, success: function (data) {
+        $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder), { dataType: "json", cache: false, success: function (data) {
         	$("#ajax_loader").hide();
             if (!data) {
                 return false;
@@ -222,7 +224,7 @@ $(function () {
         } else {
             $('#search_input').parent().removeClass('has-error');
             currentStart = 0;
-            executeQuery(currentStart, rowCount, true);
+            executeQuery(currentStart, rowCount, sortField, sortOrder, true);
         }
     };
 
@@ -233,6 +235,22 @@ $(function () {
             $(this).removeAttr("disabled");
          }
     });
+
+    var setSortListener = function(linkId, fieldName) {
+        $('#' + linkId).click(function() {
+            if (sortField === fieldName) {
+                if ('asc' === sortOrder) {
+                    sortOrder = 'desc';
+                } else {
+                    sortOrder = 'asc';
+                }
+            } else {
+                sortField = fieldName;
+                sortOrder = 'asc';
+            }
+            executeSearch();
+        });
+    }
     
 	$('#standard_search_btn').click(function() {
 		executeSearch();
@@ -253,7 +271,9 @@ $(function () {
 		$('#search_input').val(queryString);
 		currentStart = parseInt(getUrlParameter('start', 0));
 		rowCount = parseInt(getUrlParameter('max', 25)); 
-		executeQuery(currentStart, rowCount, false);
+		sortField = getUrlParameter('sortField');
+		sortOrder = getUrlParameter('sortOrder', 'asc');
+		executeQuery(currentStart, rowCount, sortField, sortOrder, false);
 		rowCount = 25;
 	}
 
@@ -265,7 +285,7 @@ $(function () {
 	    if($(window).scrollTop() == $(document).height() - $(window).height()) {
 	    	loading = true;
 	        $('#ajax_loader').show();
-		   	$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount, { dataType: "json", cache: false, success: function (data) {
+		   	$.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder), { dataType: "json", cache: false, success: function (data) {
 		   	   $("#ajax_loader").hide();
 		       if (!data) {
 			       return;
@@ -280,6 +300,13 @@ $(function () {
 	        }});
 		}
 	});
+
+
+    setSortListener('sort_name','name');
+    setSortListener('sort_application','application');
+    setSortListener('sort_endpoint','endpoint');
+    setSortListener('sort_source_id','sourceId');
+	setSortListener('sort_creation_time','creationTime');
 	
 });
 //]]>
