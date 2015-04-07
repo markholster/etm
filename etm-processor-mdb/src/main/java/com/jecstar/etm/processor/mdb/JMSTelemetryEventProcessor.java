@@ -64,8 +64,8 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		try {
 			this.telemetryEvent.initialize();
 			if (!handleNative(message)) {
-				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Message with msgid '" + message.getJMSMessageID() + "' could not be parsed nativly, trying to make the best of it.");
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Message with msgid '" + message.getJMSMessageID() + "' could not be parsed nativly, trying to make the best of it.");
 				}
 				handleNonNative(message);
 			}
