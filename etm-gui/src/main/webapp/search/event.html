@@ -186,8 +186,10 @@ $(function () {
         $('#' + prefix + '_tab #' + prefix + '_sourceId').text(data.sourceId);
         $('#' + prefix + '_tab #' + prefix + '_sourceCorrelationId').text(data.sourceCorrelationId);
         $('#' + prefix + '_tab #' + prefix + '_content').text(data.content);
-        var formattedHtml = prettyPrintOne($('#' + prefix + '_tab #' + prefix + '_content').html());
-        $('#' + prefix + '_tab #' + prefix + '_content').html(formattedHtml);
+        if (data.content != undefined && data.content.indexOf('<') === 0) {
+            var formattedHtml = prettyPrintOne($('#' + prefix + '_tab #' + prefix + '_content').html());
+            $('#' + prefix + '_tab #' + prefix + '_content').html(formattedHtml);
+        }
     };
 
 	$('#tabs a').click(function (e) {
