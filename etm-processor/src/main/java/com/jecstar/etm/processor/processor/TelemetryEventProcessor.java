@@ -10,6 +10,7 @@ import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
+import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
@@ -89,8 +90,22 @@ public class TelemetryEventProcessor {
 		}
 	}
 	
+	/**
+	 * Flush the pending documents to Solr.
+	 */
+	public void requestDocumentsFlush() {
+		long sequence = this.ringBuffer.next();
+		try {
+			TelemetryEvent target = this.ringBuffer.get(sequence);
+			target.initialize();
+			target.eventCommand = EventCommand.FLUSH_DOCUMENTS;
+		} finally {
+			this.ringBuffer.publish(sequence);
+		}
+	}
+	
 	private void preProcess(TelemetryEvent event) {
-		// TODO store some metrics on the application itselve.
+		// TODO store some metrics on the application itself.
 //		long start = System.nanoTime();
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());

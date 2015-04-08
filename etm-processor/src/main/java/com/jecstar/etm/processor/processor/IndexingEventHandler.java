@@ -11,6 +11,7 @@ import org.apache.solr.common.SolrInputDocument;
 
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
+import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.lmax.disruptor.EventHandler;
 
@@ -28,6 +29,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 	private final long numberOfConsumers;
 	private final List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>(this.nrOfDocumentsPerRequest);
 	private int docIx = -1;
+	private long lastAdd = 0;
 	
 	public IndexingEventHandler(final SolrClient client, final long ordinal, final long numberOfConsumers) {
 		this.client = client;
@@ -41,7 +43,18 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 	@Override
 	public void onEvent(TelemetryEvent event, long sequence, boolean endOfBatch)
 			throws Exception {
-		if (event.ignore || (sequence % this.numberOfConsumers) != this.ordinal) {
+		if (event.ignore) {
+			return;
+		}
+		if (EventCommand.FLUSH_DOCUMENTS.equals(event.eventCommand)) {
+			if (this.docIx != -1 && System.currentTimeMillis() - this.lastAdd > 60000 ) {
+				this.client.add(this.documents.subList(0, this.docIx + 1), 15000);
+				this.docIx = -1;
+				this.lastAdd = System.currentTimeMillis();
+			}			
+			return;
+		}
+		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
 //		long start = System.nanoTime();
@@ -88,6 +101,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 		if (this.docIx == this.nrOfDocumentsPerRequest - 1) {
 			this.client.add(this.documents, 15000);
 			this.docIx = -1;
+			this.lastAdd = System.currentTimeMillis();
 		}
 //		Statistics.indexingTime.addAndGet(System.nanoTime() - start);
 	}

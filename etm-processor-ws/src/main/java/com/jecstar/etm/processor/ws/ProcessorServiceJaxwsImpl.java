@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.ws;
 
 import javax.annotation.security.PermitAll;
+import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -8,6 +9,8 @@ import javax.inject.Inject;
 import javax.jws.WebService;
 import javax.xml.ws.BindingType;
 
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
@@ -18,6 +21,10 @@ import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 @PermitAll
 public class ProcessorServiceJaxwsImpl implements ProcessorService {
 
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(ProcessorServiceJaxwsImpl.class);
 	
 	@Inject
 	@ProcessorConfiguration
@@ -33,5 +40,16 @@ public class ProcessorServiceJaxwsImpl implements ProcessorService {
 		this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
 	    return true;
     }
+    
+	@Schedule(minute="*", hour="*", second="0,30")
+	public void flushDocuments() {
+		if (log.isDebugLevelEnabled()) {
+			log.logDebugMessage("Requesting flush of Solr documents");
+		}
+		if (this.telemetryEventProcessor != null) {
+			this.telemetryEventProcessor.requestDocumentsFlush();
+		}
+	}
+
 
 }

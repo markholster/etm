@@ -3,6 +3,7 @@ package com.jecstar.etm.processor.mdb;
 import java.io.StringReader;
 
 import javax.annotation.PostConstruct;
+import javax.ejb.Schedule;
 import javax.inject.Inject;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -23,6 +24,11 @@ import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 public class JMSTelemetryEventProcessor implements MessageListener {
+
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessor.class);
 	
 	public static final String JMS_PROPERTY_KEY_EVENT_APPLICATION = "JMS_ETM_Application";
 	public static final String JMS_PROPERTY_KEY_EVENT_DIRECTION = "JMS_ETM_Direction";
@@ -34,12 +40,6 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	public static final String JMS_PROPERTY_KEY_EVENT_TYPE = "JMS_ETM_Type";
 	
 	public static final String JMS_PROPERTY_KEY_EVENT_NATIVE_FORMAT = "JMS_ETM_NativeFormat";
-
-	
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessor.class);
 
 	@ProcessorConfiguration
 	@Inject
@@ -63,6 +63,15 @@ public class JMSTelemetryEventProcessor implements MessageListener {
         }
 	}
 	
+	@Schedule(minute="*", hour="*", second="0,30")
+	public void flushDocuments() {
+		if (log.isDebugLevelEnabled()) {
+			log.logDebugMessage("Requesting flush of Solr documents");
+		}
+		if (this.telemetryEventProcessor != null) {
+			this.telemetryEventProcessor.requestDocumentsFlush();
+		}
+	}
 
 	@Override
 	public void onMessage(Message message) {

@@ -114,6 +114,7 @@ public class TelemetryEvent {
 	public Map<String, String> correlationData = new HashMap<String, String>();
 	
 	// Processing state.
+	public EventCommand eventCommand;
 	public boolean ignore;
 	public Date retention = new Date(0);
 	
@@ -140,6 +141,7 @@ public class TelemetryEvent {
 		this.type = null;
 		this.ignore = false;
 		this.retention.setTime(0);
+		this.eventCommand = EventCommand.PROCESS;
 		return this;
 	}
 
@@ -166,6 +168,7 @@ public class TelemetryEvent {
 		this.transactionName = copy.transactionName;
 		this.type = copy.type;
 		this.retention.setTime(copy.retention.getTime());
+		this.eventCommand = copy.eventCommand;
 	    return this;
     }
 }

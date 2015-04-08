@@ -5,6 +5,7 @@ import java.util.List;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
+import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
@@ -35,7 +36,10 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 
 	@Override
 	public void onEvent(final TelemetryEvent event, final long sequence, final boolean endOfBatch) throws Exception {
-		if (event.ignore || (sequence % this.numberOfConsumers) != this.ordinal) {
+		if (event.ignore) {
+			return;
+		}
+		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
 //		long start = System.nanoTime();
