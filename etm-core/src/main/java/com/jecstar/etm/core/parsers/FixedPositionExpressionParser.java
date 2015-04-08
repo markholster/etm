@@ -19,8 +19,8 @@ public class FixedPositionExpressionParser implements ExpressionParser {
 		}
 		String line = null;
 		if (this.lineIx != null) {
-			String lines[] = content.split("\\r?\\n");
-			if (lines.length >= this.lineIx) {
+			String lines[] = content.split("\n");
+			if (lines.length <= this.lineIx) {
 				return null;
 			}
 			line = lines[this.lineIx];
@@ -39,7 +39,7 @@ public class FixedPositionExpressionParser implements ExpressionParser {
 		if (this.startIx != null && this.endIx == null) {
 			return line.substring(this.startIx);
 		} else if (this.startIx == null && this.endIx != null) {
-			return line.substring(0, this.startIx);
+			return line.substring(0, this.endIx);
 		} else {
 			return line.substring(this.startIx, this.endIx);
 		}
