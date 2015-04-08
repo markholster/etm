@@ -15,6 +15,7 @@ import javax.xml.bind.Unmarshaller;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
@@ -40,6 +41,10 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessor.class);
 
+	@ProcessorConfiguration
+	@Inject
+	private EtmConfiguration configration;
+	
 	@Inject
 	@ProcessorConfiguration
 	private TelemetryEventProcessor telemetryEventProcessor;
@@ -85,7 +90,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	            xmlTelemetryEvent.copyToTelemetryEvent(this.telemetryEvent);
 	            return true;
             } catch (JAXBException e) {
-            	if (log.isInfoLevelEnabled()) {
+            	if (log.isDebugLevelEnabled()) {
             		log.logDebugMessage("Unable to unmarshall event.", e);
             	}
             }
@@ -124,7 +129,27 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		this.telemetryEvent.transactionName = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME);
 		determineEventType(this.telemetryEvent, message);
 		determineDirectionType(this.telemetryEvent, message);
+		customAchmea();
     }
+
+	/**
+	 * Achmea maatwerk -> Zolang er niet van WMB events gebruik gemaakt wordt.
+	 */
+	private void customAchmea() {
+		String companyName = configration.getCompanyName();
+		if (companyName.startsWith("Achmea")) {
+			if (TelemetryEventType.MESSAGE_DATAGRAM.equals(this.telemetryEvent.type)) {
+				if (this.telemetryEvent.content != null) {
+					if (this.telemetryEvent.content.indexOf("Request") != -1) {
+						this.telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
+					} else if (this.telemetryEvent.content.indexOf("Response") != -1) {
+						this.telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
+					}
+				}
+			}
+		}
+    }
+
 
 	private void determineEventType(TelemetryEvent telemetryEvent, Message message) throws JMSException {
 		String messageType = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TYPE);
