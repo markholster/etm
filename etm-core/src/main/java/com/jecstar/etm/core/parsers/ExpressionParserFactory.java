@@ -3,6 +3,7 @@ package com.jecstar.etm.core.parsers;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 
+import net.sf.saxon.Configuration;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
@@ -18,9 +19,15 @@ public final class ExpressionParserFactory {
 	private static final LogWrapper log = LogFactory.getLogger(ExpressionParserFactory.class);
 
 	
-	private static final XPath xPath = new XPathFactoryImpl().newXPath();
-	private static final TransformerFactory transformerFactory = new TransformerFactoryImpl();
+	private static final XPath xPath;
+	private static final TransformerFactory transformerFactory;
 
+	static {
+		Configuration config = Configuration.newConfiguration();
+		config.setErrorListener(new XmlErrorListener());
+		xPath = new XPathFactoryImpl(config).newXPath();
+		transformerFactory = new TransformerFactoryImpl(config);
+	}
 
 	public static ExpressionParser createExpressionParserFromConfiguration(final String expression) {
 		if (expression.length() > 5) {
