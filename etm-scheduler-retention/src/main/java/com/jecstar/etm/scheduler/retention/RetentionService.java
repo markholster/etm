@@ -68,8 +68,8 @@ public class RetentionService extends LeaderSelectorListenerAdapter {
 		boolean stopProcessing = false;
 	    while(!stopProcessing && this.leaderSelector.hasLeadership()) {
 	    	try {
-		    	if (log.isInfoLevelEnabled()) {
-		    		log.logInfoMessage("Removing events with expired retention.");
+		    	if (log.isDebugLevelEnabled()) {
+		    		log.logDebugMessage("Removing events with expired retention.");
 		    	}
 		    	try {
 		    		Date dateTill = new Date();
