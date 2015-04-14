@@ -133,7 +133,11 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		this.telemetryEvent.endpoint = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_ENDPOINT);
 		this.telemetryEvent.application = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_APPLICATION);
 		this.telemetryEvent.name = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_NAME);
-		this.telemetryEvent.creationTime.setTime(message.getJMSDeliveryTime());
+		long time = message.getJMSDeliveryTime();
+		if (time == 0) {
+			time = message.getJMSTimestamp();
+		}
+		this.telemetryEvent.creationTime.setTime(time);
 		this.telemetryEvent.expiryTime.setTime(message.getJMSExpiration());
 		this.telemetryEvent.transactionName = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME);
 		determineEventType(this.telemetryEvent, message);
