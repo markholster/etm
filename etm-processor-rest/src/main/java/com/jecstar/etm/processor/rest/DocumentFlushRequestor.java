@@ -24,7 +24,7 @@ public class DocumentFlushRequestor {
 	private TelemetryEventProcessor telemetryEventProcessor;
 
 	
-	@Schedule(minute="*", hour="*", second="0,30")
+	@Schedule(minute="*", hour="*", second="0,30", persistent=false)
 	public void flushDocuments() {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Requesting flush of Solr documents");
