@@ -9,7 +9,7 @@ import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.AbstractTelemetryEventProcessor;
+import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.DataRetention;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
@@ -21,7 +21,7 @@ import com.jecstar.etm.processor.repository.EndpointConfigResult;
  * 
  * @author Mark Holster
  */
-public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEventProcessor {
+public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEventRepository {
 	
 	private final CassandraStatementExecutor cassandraStatementExecutor;
 	private final BatchStatement batchStatement = new BatchStatement(Type.UNLOGGED);
@@ -185,11 +185,11 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	}
 
 	@Override
-    public void doFindParent(String sourceId, CorrelationBySourceIdResult result) {
+    public void doFindParent(String sourceId, String application, CorrelationBySourceIdResult result) {
 		if (sourceId == null) {
 			return;
 		}
-		this.cassandraStatementExecutor.findParent(sourceId, result);
+		this.cassandraStatementExecutor.findParent(sourceId, application, result);
     }
 
 	@Override

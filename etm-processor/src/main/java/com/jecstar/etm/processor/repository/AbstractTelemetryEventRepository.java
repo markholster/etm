@@ -10,14 +10,14 @@ import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.core.util.DateUtils;
 import com.jecstar.etm.processor.TelemetryEvent;
 
-public abstract class AbstractTelemetryEventProcessor implements TelemetryEventRepository {
+public abstract class AbstractTelemetryEventRepository implements TelemetryEventRepository {
 
 	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
 	private final Date statisticsTimestamp = new Date();
 	private final Date eventOccurrenceTimestamp = new Date();
 	private final DataRetention dataRetention = new DataRetention();
 	
-	public AbstractTelemetryEventProcessor(final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public AbstractTelemetryEventRepository(final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
 	    this.sourceCorrelations = sourceCorrelations;
     }
 	
@@ -136,15 +136,15 @@ public abstract class AbstractTelemetryEventProcessor implements TelemetryEventR
 		
 		endPersist();
 		// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
-		this.sourceCorrelations.remove(event.sourceId);
+		this.sourceCorrelations.remove(event.sourceId + "_" + event.application);
     }
 	
 	@Override
-    public final void findParent(String sourceId, CorrelationBySourceIdResult result) {
+    public final void findParent(String sourceId, String application, CorrelationBySourceIdResult result) {
 		if (sourceId == null) {
 			return;
 		}
-		CorrelationBySourceIdResult parent = this.sourceCorrelations.get(sourceId);
+		CorrelationBySourceIdResult parent = this.sourceCorrelations.get(sourceId + "_" + application);
 		if (parent != null) {
 			result.id = parent.id;
 			result.transactionId = parent.transactionId;
@@ -155,7 +155,10 @@ public abstract class AbstractTelemetryEventProcessor implements TelemetryEventR
 			result.slaRule = parent.slaRule;
 			return;
 		}
-		doFindParent(sourceId, result);
+		doFindParent(sourceId, application, result);
+		if (result.id == null && application != null) {
+			findParent(sourceId, null, result);
+		}
     }
 	
 	protected abstract void startPersist(TelemetryEvent event, DataRetention dataRetention);
@@ -175,7 +178,7 @@ public abstract class AbstractTelemetryEventProcessor implements TelemetryEventR
 	protected abstract void addTransactionEventFinish(TelemetryEvent event);
 	protected abstract void addDataRetention(DataRetention dataRetention);
 	
-	protected abstract void doFindParent(String sourceId, CorrelationBySourceIdResult result);
+	protected abstract void doFindParent(String sourceId, String application, CorrelationBySourceIdResult result);
 	
 
 }

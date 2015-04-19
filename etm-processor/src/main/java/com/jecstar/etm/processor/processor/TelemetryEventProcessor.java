@@ -110,6 +110,7 @@ public class TelemetryEventProcessor {
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
+		EndpointConfigResult endpointConfig = null;
 		if (event.retention.getTime() == 0) {
 			// Retention time should actually be the current time added with the
 			// configured retention time, but that would cause performance
@@ -129,23 +130,30 @@ public class TelemetryEventProcessor {
 			// transaction name at this point, the only requirement is that the
 			// request is offered to ETM before the response, which is quite
 			// logical.
-			EndpointConfigResult result = new EndpointConfigResult();
-			this.disruptorEnvironment.findEndpointConfig(event.endpoint, result, this.etmConfiguration.getEndpointCacheExpiryTime());
-			if (result.eventNameParsers != null && result.eventNameParsers.size() > 0) {
-				event.name = parseValue(result.eventNameParsers, event.content);
+			endpointConfig = new EndpointConfigResult();
+			this.disruptorEnvironment.findEndpointConfig(event.endpoint, endpointConfig, this.etmConfiguration.getEndpointCacheExpiryTime());
+			if (endpointConfig.eventNameParsers != null && endpointConfig.eventNameParsers.size() > 0) {
+				event.name = parseValue(endpointConfig.eventNameParsers, event.content);
 			}
-			if (result.transactionNameParsers != null && result.transactionNameParsers.size() > 0) {
-				event.transactionName = parseValue(result.transactionNameParsers, event.content);
+			if (endpointConfig.transactionNameParsers != null && endpointConfig.transactionNameParsers.size() > 0) {
+				event.transactionName = parseValue(endpointConfig.transactionNameParsers, event.content);
 			}
 			if (event.transactionName != null) {
-				event.slaRule = result.slaRules.get(event.transactionName);
+				event.slaRule = endpointConfig.slaRules.get(event.transactionName);
 			}
 		}
 		if (event.transactionName != null) {
 			event.transactionId = event.id;
 		}
 		if (event.sourceId != null) {
-			this.persistenceEnvironment.getProcessingMap().put(event.sourceId, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
+			if (event.application == null) {
+				if (endpointConfig == null) {
+					endpointConfig = new EndpointConfigResult();
+					this.disruptorEnvironment.findEndpointConfig(event.endpoint, endpointConfig, this.etmConfiguration.getEndpointCacheExpiryTime());
+				}
+				event.application = parseValue(endpointConfig.applicationParsers, event.content);
+			}
+			this.persistenceEnvironment.getProcessingMap().put(event.sourceId + "_" + event.application, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
 			        event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime(), event.slaRule));
 		}
 //		Statistics.preprocessingTime.addAndGet(System.nanoTime() - start);

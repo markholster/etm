@@ -43,9 +43,17 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			return;
 		}
 //		long start = System.nanoTime();
+		this.endpointConfigResult.initialize();
+		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
+		// First determine the application name.
+		if (event.application == null) {
+			if (event.application == null) {
+				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
+			}			
+		}
 		if (needsCorrelation(event)) {
 			// Find the correlation event.
-			this.telemetryEventRepository.findParent(event.sourceCorrelationId, this.correlationBySourceIdResult.initialize());
+			this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application, this.correlationBySourceIdResult.initialize());
 			if (event.correlationId == null) {
 				event.correlationId = this.correlationBySourceIdResult.id;
 			}
@@ -71,12 +79,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				}
 			}
 		}
-		this.endpointConfigResult.initialize();
-		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
-		if (event.application == null || event.name == null || event.direction == null || event.transactionName == null || event.slaRule == null) {
-			if (event.application == null) {
-				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
-			}
+		if (event.name == null || event.direction == null || event.transactionName == null || event.slaRule == null) {
 			if (event.name == null && event.content != null) {
 				event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
 			}

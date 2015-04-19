@@ -69,13 +69,14 @@ public class CassandraStatementExecutor {
 				+ "slaRule) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 		this.insertSourceIdIdStatement = session.prepare("insert into sourceid_id_correlation ("
 				+ "sourceId, "
+				+ "application, "
 				+ "creationTime, "
 				+ "expiryTime, "
 				+ "id, "
 				+ "transactionId, "
 				+ "transactionName, "
 				+ "name, "
-				+ "slaRule) values (?,?,?,?,?,?,?,?);");
+				+ "slaRule) values (?,?,?,?,?,?,?,?,?);");
 		this.insertCorrelationDataStatement = session.prepare("insert into correlation_data ("
 				+ "name_timeunit, "
 				+ "timeunit, "
@@ -200,7 +201,7 @@ public class CassandraStatementExecutor {
 				+ "expiryTime, "
 				+ "name, "
 				+ "slaRule "
-				+ "from sourceid_id_correlation where sourceId = ?;");
+				+ "from sourceid_id_correlation where sourceId = ? and application = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
 				+ "direction, "
 				+ "applicationParsers, "
@@ -242,6 +243,7 @@ public class CassandraStatementExecutor {
 	public void addSourceIdCorrelationData(final TelemetryEvent event, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertSourceIdIdStatement.bind(
 				event.sourceId,
+				event.application == null ? "_unknown_" : event.application,
 				event.creationTime,
 				event.expiryTime,
 				event.id, 
@@ -417,8 +419,8 @@ public class CassandraStatementExecutor {
 	}
 	
 	
-	public void findParent(final String sourceId, final CorrelationBySourceIdResult result) {
-		final ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId));
+	public void findParent(final String sourceId, String application, final CorrelationBySourceIdResult result) {
+		final ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId, application == null ? "_unknown_" : application));
 		final Row row = resultSet.one();
 		if (row != null) {
 			result.id = row.getUUID(0);
