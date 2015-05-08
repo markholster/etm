@@ -57,7 +57,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
-//		long start = System.nanoTime();
+		long nanoTime = System.nanoTime();
 		this.docIx++;
 		SolrInputDocument document = this.documents.get(this.docIx);
 		document.clear();
@@ -103,7 +103,7 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 			this.docIx = -1;
 			this.lastAdd = System.currentTimeMillis();
 		}
-//		Statistics.indexingTime.addAndGet(System.nanoTime() - start);
+		event.indexingTime = System.nanoTime() - nanoTime;
 	}
 
 	@Override

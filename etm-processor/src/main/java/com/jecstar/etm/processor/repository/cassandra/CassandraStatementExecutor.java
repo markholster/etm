@@ -38,6 +38,7 @@ public class CassandraStatementExecutor {
 	private final PreparedStatement insertSlaStartStatement;
 	private final PreparedStatement insertSlaFinishStatement;
 	private final PreparedStatement insertDataRetentionStatement;
+	private final PreparedStatement insertPerformanceStatement;
 	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
@@ -150,6 +151,17 @@ public class CassandraStatementExecutor {
 				+ "eventName, "
 				+ "transactionName, "
 				+ "correlationData) values (?,?,?,?,?,?,?,?,?);");
+		this.insertPerformanceStatement = session.prepare("update internal_performance set "
+				+ "count = count + 1, "
+				+ "offerCount = offerCount + ?, "
+				+ "offerTime = offerTime + ?, "
+				+ "enhancingCount = enhancingCount + ?, "
+				+ "enhancingTime = enhancingTime + ?, "
+				+ "indexingCount = indexingCount + ?, "
+				+ "indexingTime = indexingTime + ?, "
+				+ "persistingCount = persistingCount + ?, "
+				+ "persistingTime = persistingTime + ? "
+				+ "where timeunit = ? and node = ? and performanceTime = ?;");
 		this.updateApplicationCounterStatement = session.prepare("update application_counter set "
 				+ "count = count + 1, "
 				+ "messageRequestCount = messageRequestCount + ?, "
@@ -501,6 +513,22 @@ public class CassandraStatementExecutor {
 
 	public ResultSet execute(BatchStatement batchCounterStatement) {
 	    return this.session.execute(batchCounterStatement);
+    }
+
+	public void persistPerformance(Date keyTime, String nodeName, Date performanceTime, int offerCount, long offerTime, int enhancingCount,
+            long enhancingTime, int indexingCount, long indexingTime, int persistingCount, long persistingTime) {
+		this.session.executeAsync(this.insertPerformanceStatement.bind(
+				(long)offerCount, 
+				offerTime, 
+				(long)enhancingCount, 
+				enhancingTime, 
+				(long)indexingCount,
+		        indexingTime, 
+		        (long)persistingCount, 
+		        persistingTime,
+		        keyTime,
+		        nodeName,
+		        performanceTime));
     }
 
 }

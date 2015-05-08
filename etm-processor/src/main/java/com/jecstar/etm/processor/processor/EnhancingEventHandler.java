@@ -42,7 +42,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
-//		long start = System.nanoTime();
+		long nanoTime = System.nanoTime();
 		this.endpointConfigResult.initialize();
 		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
 		// First determine the application name.
@@ -104,7 +104,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				}
 			});
 		}
-//		Statistics.enhancingTime.addAndGet(System.nanoTime() - start);
+		event.enhancingTime = System.nanoTime() - nanoTime;
 	}
 	
 	private boolean needsCorrelation(final TelemetryEvent event) {

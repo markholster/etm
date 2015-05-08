@@ -16,9 +16,13 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 	private final Date statisticsTimestamp = new Date();
 	private final Date eventOccurrenceTimestamp = new Date();
 	private final DataRetention dataRetention = new DataRetention();
+	private final String nodeName;
+	private final Date performanceTimestamp = new Date();
+	private final Date performanceKeyTimestamp = new Date();
 	
-	public AbstractTelemetryEventRepository(final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public AbstractTelemetryEventRepository(final Map<String, CorrelationBySourceIdResult> sourceCorrelations, String nodeName) {
 	    this.sourceCorrelations = sourceCorrelations;
+	    this.nodeName = nodeName;
     }
 	
 	@Override
@@ -140,6 +144,22 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
     }
 	
 	@Override
+    public void persistPerformance(TelemetryEvent telemetryEvent, TimeUnit statisticsTimeUnit) {
+		final long currentTimeMillis = System.currentTimeMillis();
+		this.performanceKeyTimestamp.setTime(DateUtils.normalizeTime(currentTimeMillis, PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+		this.performanceTimestamp.setTime(DateUtils.normalizeTime(currentTimeMillis, statisticsTimeUnit.toMillis(1)));
+		persistPerformance(this.performanceKeyTimestamp, this.nodeName, this.performanceTimestamp, 
+				telemetryEvent.offerTime == -1 ? 0 : 1, 
+				telemetryEvent.offerTime == -1 ? 0 : telemetryEvent.offerTime, 
+				telemetryEvent.enhancingTime == -1 ? 0 : 1, 
+				telemetryEvent.enhancingTime == -1 ? 0 : telemetryEvent.enhancingTime, 
+				telemetryEvent.indexingTime == -1 ? 0 : 1, 
+				telemetryEvent.indexingTime == -1 ? 0 : telemetryEvent.indexingTime,
+				telemetryEvent.persistingTime == -1 ? 0 : 1, 
+				telemetryEvent.persistingTime == -1 ? 0 : telemetryEvent.persistingTime);
+    }
+	
+	@Override
     public final void findParent(String sourceId, String application, CorrelationBySourceIdResult result) {
 		if (sourceId == null) {
 			return;
@@ -179,6 +199,9 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 	protected abstract void addDataRetention(DataRetention dataRetention);
 	
 	protected abstract void doFindParent(String sourceId, String application, CorrelationBySourceIdResult result);
+	
+	protected abstract void persistPerformance(Date keyTime, String nodeName, Date performanceTime, int offerCount, long offerTime, int enhancingCount, long enhancingTime, int indexingCount, long indexingTime, int persistingCount, long persistingTime);
+	
 	
 
 }

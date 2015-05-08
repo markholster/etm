@@ -30,6 +30,7 @@ public class EtmDataCleaner {
 	private final PreparedStatement deleteMessageExpirtationsStatement;
 	private final PreparedStatement deleteTransactionPerformancesStatement;
 	private final PreparedStatement deleteTransactionSlasStatement;
+	private final PreparedStatement deleteInternalPerformanceStatement;
 	private final PreparedStatement deleteDataRetentionStatement;
 
 	public EtmDataCleaner(final Session session) {
@@ -47,6 +48,7 @@ public class EtmDataCleaner {
 	    this.deleteMessageExpirtationsStatement = this.session.prepare("delete from message_expiration where name_timeunit = ?");
 	    this.deleteTransactionPerformancesStatement = this.session.prepare("delete from transaction_performance where transactionName_timeunit = ?");
 	    this.deleteTransactionSlasStatement = this.session.prepare("delete from transaction_sla where transactionName_timeunit = ?");
+	    this.deleteInternalPerformanceStatement = this.session.prepare("delete from internal_performance where timeunit = ?");
 	    this.deleteDataRetentionStatement = this.session.prepare("delete from data_retention where timeunit = ?");
     }
 
@@ -129,6 +131,9 @@ public class EtmDataCleaner {
 			if (this.counterBatchStatement.size() > 0) {
 				this.session.executeAsync(this.counterBatchStatement);
 			}
+		}
+		if (!preserveEventPerformances) {
+			this.session.executeAsync(this.deleteInternalPerformanceStatement.bind(cleanupTime));
 		}
 		this.session.executeAsync(this.deleteDataRetentionStatement.bind(cleanupTime));
     }

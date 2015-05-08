@@ -73,19 +73,21 @@ public class TelemetryEventProcessor {
 
 
 	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {
-		// TODO check what happens with invalid xml.
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
 		if (this.etmConfiguration.getLicenseExpriy().getTime() < System.currentTimeMillis()) {
 			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
 		}
+		long nanoTime = System.nanoTime();
+		TelemetryEvent target = null;
 		long sequence = this.ringBuffer.next();
 		try {
-			TelemetryEvent target = this.ringBuffer.get(sequence);
+			target = this.ringBuffer.get(sequence);
 			target.initialize(telemetryEvent);
 			preProcess(target);
 		} finally {
+			target.offerTime = System.nanoTime() - nanoTime;
 			this.ringBuffer.publish(sequence);
 		}
 	}
@@ -105,7 +107,6 @@ public class TelemetryEventProcessor {
 	}
 	
 	private void preProcess(TelemetryEvent event) {
-		// TODO store some metrics on the application itself.
 //		long start = System.nanoTime();
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
@@ -156,7 +157,6 @@ public class TelemetryEventProcessor {
 			this.persistenceEnvironment.getProcessingMap().put(event.sourceId + "_" + event.application, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
 			        event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime(), event.slaRule));
 		}
-//		Statistics.preprocessingTime.addAndGet(System.nanoTime() - start);
 	}
 	
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {

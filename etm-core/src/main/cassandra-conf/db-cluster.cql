@@ -173,6 +173,22 @@ create table data_retention (
     primary key (timeunit, id)
 );
 
+create table internal_performance (
+    timeunit timestamp,
+    node text,
+    performanceTime timestamp,
+    count counter,
+    offerCount counter,
+    offerTime counter,
+    enhancingCount counter,
+    enhancingTime counter,
+    indexingCount counter,
+    indexingTime counter,
+    persistingCount counter,
+    persistingTime counter,
+    primary key (timeunit, node, performanceTime)
+);
+
 create table endpoint_config (
     endpoint text primary key,
     direction text,

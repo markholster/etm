@@ -1,5 +1,7 @@
 package com.jecstar.etm.processor.processor;
 
+import java.util.concurrent.TimeUnit;
+
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
@@ -11,6 +13,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 	private final long ordinal;
 	private final long numberOfConsumers;
 	private final EtmConfiguration etmConfiguration;
+	
 	
 	private TelemetryEventRepository telemetryEventRepository;
 	
@@ -29,9 +32,11 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
-//		long start = System.nanoTime();
-		this.telemetryEventRepository.persistTelemetryEvent(event, this.etmConfiguration.getStatisticsTimeUnit());
-//		Statistics.persistingTime.addAndGet(System.nanoTime() - start);
+		final long nanoTime = System.nanoTime();
+		final TimeUnit statisticsTimeUnit = this.etmConfiguration.getStatisticsTimeUnit();
+		this.telemetryEventRepository.persistTelemetryEvent(event, statisticsTimeUnit);
+		event.persistingTime = System.nanoTime() - nanoTime;
+		this.telemetryEventRepository.persistPerformance(event, statisticsTimeUnit);
 	}
 
 }

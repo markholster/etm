@@ -8,7 +8,7 @@ import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.lmax.disruptor.ExceptionHandler;
 
-public class TelemetryEventExceptionHandler implements ExceptionHandler {
+public class TelemetryEventExceptionHandler implements ExceptionHandler<TelemetryEvent> {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -22,17 +22,11 @@ public class TelemetryEventExceptionHandler implements ExceptionHandler {
 	}
 
 	@Override
-	public void handleEventException(Throwable t, long sequence, Object event) {
-		if (event instanceof TelemetryEvent) {
-			TelemetryEvent telemetryEvent = (TelemetryEvent) event;
-			this.sourceCorrelations.remove(telemetryEvent.sourceId);
-			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Unable to process event '" + telemetryEvent.id + "'.", t);
-			}
-		} else {
-			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Unable to process event " + event.getClass().getName(), t);
-			}
+	public void handleEventException(Throwable t, long sequence, TelemetryEvent event) {
+		TelemetryEvent telemetryEvent = (TelemetryEvent) event;
+		this.sourceCorrelations.remove(telemetryEvent.sourceId);
+		if (log.isErrorLevelEnabled()) {
+			log.logErrorMessage("Unable to process event '" + telemetryEvent.id + "'.", t);
 		}
 	}
 

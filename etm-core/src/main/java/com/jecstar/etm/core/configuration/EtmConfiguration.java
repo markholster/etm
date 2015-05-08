@@ -73,11 +73,10 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	
 	private CassandraConfiguration cassandraConfiguration;
 	private SolrConfiguration solrConfiguration;
+	private final String nodeName;
 	
 	private Properties etmProperties;
-	
 	private CuratorFramework client;
-
 	private NodeCache globalEtmPropertiesNode;
 	private NodeCache nodeEtmPropertiesNode;
 	private NodeCache licenseNode;
@@ -87,6 +86,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	private LicenseType licenseType;
 	
 	public EtmConfiguration(String nodeName, String zkConnections, String namespace, String component) throws Exception {
+		this.nodeName = nodeName;
 		String solrZkConnectionString = Arrays.stream(zkConnections.split(",")).map(c -> c + "/" + namespace + "/solr").collect(Collectors.joining(","));
 		this.client = CuratorFrameworkFactory.builder().connectString(zkConnections).namespace(namespace).retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
 		this.client.start();
@@ -99,19 +99,19 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 			Thread.currentThread().interrupt();
 			throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION, e);
 		}
-		if (nodeName != null) {
+		if (this.nodeName != null) {
 			//TODO wrap this in transactions.
-			Stat stat = this.client.checkExists().forPath(NODE_CONFIGURATION_PATH + "/" + nodeName);
+			Stat stat = this.client.checkExists().forPath(NODE_CONFIGURATION_PATH + "/" + this.nodeName);
 			if (stat == null) {
-				this.client.create().creatingParentsIfNeeded().forPath(NODE_CONFIGURATION_PATH + "/" + nodeName);
+				this.client.create().creatingParentsIfNeeded().forPath(NODE_CONFIGURATION_PATH + "/" + this.nodeName);
 			}
 			stat = this.client.checkExists().forPath(LIVE_NODES_PATH);
 			if (stat == null) {
 				this.client.create().creatingParentsIfNeeded().forPath(LIVE_NODES_PATH);
 			}
-			stat = this.client.checkExists().forPath(LIVE_NODES_PATH + "/" + nodeName);
+			stat = this.client.checkExists().forPath(LIVE_NODES_PATH + "/" + this.nodeName);
 			if (stat == null) {
-				this.client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(LIVE_NODES_PATH +"/" + nodeName);
+				this.client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(LIVE_NODES_PATH +"/" + this.nodeName);
 			}
 		}
 		// Load the license
@@ -130,7 +130,7 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 		this.globalEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/etm.properties");
 		this.globalEtmPropertiesNode.getListenable().addListener(reloadListener);
 		this.globalEtmPropertiesNode.start();
-		if (nodeName != null) {
+		if (this.nodeName != null) {
 			this.nodeEtmPropertiesNode = new NodeCache(this.client, NODE_CONFIGURATION_PATH + "/" + nodeName + "/etm.properties");
 			this.nodeEtmPropertiesNode.getListenable().addListener(reloadListener);
 			this.nodeEtmPropertiesNode.start();
@@ -471,4 +471,8 @@ public class EtmConfiguration extends AbstractConfiguration implements Closeable
 	private enum LicenseType {
 		TRIAL, SUBSCRIPTION
 	}
+
+	public String getNodeName() {
+	    return this.nodeName;
+    }
  }
