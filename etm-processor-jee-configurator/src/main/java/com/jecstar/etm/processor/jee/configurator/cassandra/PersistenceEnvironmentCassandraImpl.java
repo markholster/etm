@@ -24,8 +24,8 @@ public class PersistenceEnvironmentCassandraImpl implements PersistenceEnvironme
     }
 
 	@Override
-    public TelemetryEventRepository createTelemetryEventRepository(String nodeName) {
-	    return new TelemetryEventRepositoryCassandraImpl(nodeName, this.statementExecutor, this.sourceCorrelations);
+    public TelemetryEventRepository createTelemetryEventRepository() {
+	    return new TelemetryEventRepositoryCassandraImpl(this.statementExecutor, this.sourceCorrelations);
     }
 
 	@Override

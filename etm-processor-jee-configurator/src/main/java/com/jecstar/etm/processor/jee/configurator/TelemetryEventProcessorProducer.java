@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 
 import org.apache.solr.client.solrj.SolrClient;
 
+import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -42,6 +43,11 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 	@Inject
 	private SolrClient solrClient;
 
+	@ProcessorConfiguration
+	@Inject
+	private MetricRegistry metricRegistry;
+
+	
 	private TelemetryEventProcessor telemetryEventProcessor;
 
 	@Produces
@@ -52,7 +58,7 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 				this.telemetryEventProcessor = new TelemetryEventProcessor();
 				this.configration.addEtmConfigurationChangeListener(this);
 				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.solrClient,
-				        this.configration);
+				        this.configration, this.metricRegistry);
 			}
 		}
 		return this.telemetryEventProcessor;

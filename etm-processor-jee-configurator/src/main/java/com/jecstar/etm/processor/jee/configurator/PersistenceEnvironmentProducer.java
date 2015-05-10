@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.jee.configurator;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.ManagedBean;
 import javax.annotation.PreDestroy;
@@ -8,6 +9,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import com.codahale.metrics.MetricRegistry;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.jecstar.etm.core.configuration.CassandraConfiguration;
@@ -17,6 +19,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
+import com.jecstar.etm.processor.jee.configurator.cassandra.CassandraMetricsReporter;
 import com.jecstar.etm.processor.jee.configurator.cassandra.PersistenceEnvironmentCassandraImpl;
 import com.jecstar.etm.processor.jee.configurator.cassandra.ReconfigurableSession;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
@@ -33,12 +36,19 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 	@ProcessorConfiguration
 	@Inject
 	private EtmConfiguration configuration;
+	
+	@ProcessorConfiguration
+	@Inject
+	private MetricRegistry metricRegistry;
 
 	private PersistenceEnvironment persistenceEnvironment;
 	
 	private ReconfigurableSession session;
 
 	private Cluster cluster;
+
+	private CassandraMetricsReporter internalMetricReporter;
+	private CassandraMetricsReporter databaseMetricReporter;
 	
 	@ProcessorConfiguration
 	@Produces
@@ -49,6 +59,10 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 				this.configuration.addCassandraConfigurationChangeListener(this);
 				this.session = new ReconfigurableSession(this.cluster.connect(this.configuration.getCassandraKeyspace()));
 				this.persistenceEnvironment = new PersistenceEnvironmentCassandraImpl(this.session);
+				this.internalMetricReporter = new CassandraMetricsReporter(this.configuration.getNodeName(), this.metricRegistry, this.session);
+				this.internalMetricReporter.start(1, TimeUnit.MINUTES);
+				this.databaseMetricReporter = new CassandraMetricsReporter(this.configuration.getNodeName() + "-cassandra", this.cluster.getMetrics().getRegistry(), this.session);
+				this.databaseMetricReporter.start(1, TimeUnit.MINUTES);
 			}
 		}
 		return this.persistenceEnvironment;
@@ -65,6 +79,7 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 		if (username != null) {
 			builder.withCredentials(username, password);
 		}
+		builder.withoutJMXReporting();
 		return builder.build();
 	}
 	
@@ -74,6 +89,14 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 			this.configuration.removeCassandraConfigurationChangeListener(this);
 		}
 		this.persistenceEnvironment.close();
+		if (this.internalMetricReporter != null) {
+			this.internalMetricReporter.close();
+		}
+		this.internalMetricReporter = null;
+		if (this.databaseMetricReporter != null) {
+			this.databaseMetricReporter.close();
+		}
+		this.databaseMetricReporter = null;
 		if (this.session != null) {
 			this.session.close();
 		}
@@ -93,7 +116,12 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 					log.logInfoMessage("Detected a change in the configuration that needs ETM to reconnect to Cassandra cluster.");
 				}
 				Cluster newCluster = createCluster();
+				if (this.databaseMetricReporter != null) {
+					this.databaseMetricReporter.close();
+				}
 				this.session.switchToSession(newCluster.connect(this.configuration.getCassandraKeyspace()));
+				this.databaseMetricReporter = new CassandraMetricsReporter(this.configuration.getNodeName() + "-cassandra", newCluster.getMetrics().getRegistry(), this.session);
+				this.databaseMetricReporter.start(1, TimeUnit.MINUTES);
 				this.cluster.closeAsync();
 				this.cluster = newCluster;
 				if (log.isInfoLevelEnabled()) {

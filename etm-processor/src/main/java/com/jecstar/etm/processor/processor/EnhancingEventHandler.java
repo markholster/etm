@@ -2,6 +2,8 @@ package com.jecstar.etm.processor.processor;
 
 import java.util.List;
 
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -22,15 +24,17 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final CorrelationBySourceIdResult correlationBySourceIdResult;
 	private final EndpointConfigResult endpointConfigResult;
+	private final Timer timer;
 	
 	
-	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration) {
+	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration, final Timer timer) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.etmConfiguration = etmConfiguration;
 		this.correlationBySourceIdResult = new CorrelationBySourceIdResult();
 		this.endpointConfigResult = new EndpointConfigResult();
+		this.timer = timer;
 		
 	}
 
@@ -42,69 +46,72 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
-		long nanoTime = System.nanoTime();
-		this.endpointConfigResult.initialize();
-		this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
-		// First determine the application name.
-		if (event.application == null) {
+		final Context timerContext = this.timer.time();
+		try {
+			this.endpointConfigResult.initialize();
+			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
+			// First determine the application name.
 			if (event.application == null) {
-				event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
-			}			
-		}
-		if (needsCorrelation(event)) {
-			// Find the correlation event.
-			this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application, this.correlationBySourceIdResult.initialize());
-			if (event.correlationId == null) {
-				event.correlationId = this.correlationBySourceIdResult.id;
+				if (event.application == null) {
+					event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
+				}			
 			}
-			if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-				// if this is a response, set the correlating data from the request on the response.
-				if (event.transactionId == null) {
-					event.transactionId = this.correlationBySourceIdResult.transactionId;
+			if (needsCorrelation(event)) {
+				// Find the correlation event.
+				this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application, this.correlationBySourceIdResult.initialize());
+				if (event.correlationId == null) {
+					event.correlationId = this.correlationBySourceIdResult.id;
+				}
+				if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
+					// if this is a response, set the correlating data from the request on the response.
+					if (event.transactionId == null) {
+						event.transactionId = this.correlationBySourceIdResult.transactionId;
+					}
+					if (event.transactionName == null) {
+						event.transactionName = this.correlationBySourceIdResult.transactionName;
+					}
+					if (event.correlationCreationTime.getTime() == 0) {
+						event.correlationCreationTime.setTime(this.correlationBySourceIdResult.creationTime.getTime());
+					}
+					if (event.correlationExpiryTime.getTime() == 0) {
+						event.correlationExpiryTime.setTime(this.correlationBySourceIdResult.expiryTime.getTime());
+					}
+					if (event.correlationName == null) {
+						event.correlationName = this.correlationBySourceIdResult.name;
+					}
+					if (event.slaRule == null) {
+						event.slaRule = this.correlationBySourceIdResult.slaRule;
+					}
+				}
+			}
+			if (event.name == null || event.direction == null || event.transactionName == null || event.slaRule == null) {
+				if (event.name == null && event.content != null) {
+					event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
+				}
+				if (event.direction == null) {
+					event.direction = this.endpointConfigResult.eventDirection;
 				}
 				if (event.transactionName == null) {
-					event.transactionName = this.correlationBySourceIdResult.transactionName;
+					event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
+					if (event.transactionName != null) {
+						event.transactionId = event.id;
+					}
 				}
-				if (event.correlationCreationTime.getTime() == 0) {
-					event.correlationCreationTime.setTime(this.correlationBySourceIdResult.creationTime.getTime());
+				if (event.slaRule == null && event.transactionName != null) {
+					event.slaRule = this.endpointConfigResult.slaRules.get(event.transactionName);
 				}
-				if (event.correlationExpiryTime.getTime() == 0) {
-					event.correlationExpiryTime.setTime(this.correlationBySourceIdResult.expiryTime.getTime());
-				}
-				if (event.correlationName == null) {
-					event.correlationName = this.correlationBySourceIdResult.name;
-				}
-				if (event.slaRule == null) {
-					event.slaRule = this.correlationBySourceIdResult.slaRule;
-				}
+	 		}
+			if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
+				this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
+					String parsedValue = parseValue(v, event.content);
+					if (parsedValue != null) {
+						event.correlationData.put(k, parsedValue);
+					}
+				});
 			}
+		} finally {
+			timerContext.stop();
 		}
-		if (event.name == null || event.direction == null || event.transactionName == null || event.slaRule == null) {
-			if (event.name == null && event.content != null) {
-				event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
-			}
-			if (event.direction == null) {
-				event.direction = this.endpointConfigResult.eventDirection;
-			}
-			if (event.transactionName == null) {
-				event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
-				if (event.transactionName != null) {
-					event.transactionId = event.id;
-				}
-			}
-			if (event.slaRule == null && event.transactionName != null) {
-				event.slaRule = this.endpointConfigResult.slaRules.get(event.transactionName);
-			}
- 		}
-		if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
-			this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
-				String parsedValue = parseValue(v, event.content);
-				if (parsedValue != null) {
-					event.correlationData.put(k, parsedValue);
-				}
-			});
-		}
-		event.enhancingTime = System.nanoTime() - nanoTime;
 	}
 	
 	private boolean needsCorrelation(final TelemetryEvent event) {

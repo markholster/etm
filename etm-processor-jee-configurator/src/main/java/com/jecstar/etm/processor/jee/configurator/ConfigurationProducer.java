@@ -5,6 +5,7 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
+import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -20,6 +21,8 @@ public class ConfigurationProducer {
 	private static final LogWrapper log = LogFactory.getLogger(ConfigurationProducer.class);
 
 	private EtmConfiguration configuration;
+	
+	private MetricRegistry metricRegistry;
 
 	@Produces
 	@ProcessorConfiguration
@@ -40,6 +43,18 @@ public class ConfigurationProducer {
 			}
 		}
 		return this.configuration;
+	}
+
+	@Produces
+	@ProcessorConfiguration
+	public MetricRegistry getMetricRegistry() {
+		synchronized (this) {
+			if (this.metricRegistry == null) {
+				this.metricRegistry = new MetricRegistry();
+			}
+		}
+		return this.metricRegistry;
+		
 	}
 	
 	@PreDestroy

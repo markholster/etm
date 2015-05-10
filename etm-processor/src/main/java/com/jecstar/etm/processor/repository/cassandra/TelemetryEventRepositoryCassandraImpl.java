@@ -32,8 +32,8 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	private String partitionKeySuffix;
 	private String correlationPartitionKeySuffix;
 	
-	public TelemetryEventRepositoryCassandraImpl(final String nodeName, final CassandraStatementExecutor cassandraStatementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
-		super(sourceCorrelations, nodeName);
+	public TelemetryEventRepositoryCassandraImpl(final CassandraStatementExecutor cassandraStatementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+		super(sourceCorrelations);
 		this.cassandraStatementExecutor = cassandraStatementExecutor;
     }
 	
@@ -212,12 +212,5 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 		result.eventDirection = cachedResult.eventDirection;
 		result.transactionNameParsers.addAll(cachedResult.transactionNameParsers);
 		result.slaRules.putAll(cachedResult.slaRules);
-    }
-
-	@Override
-    protected void persistPerformance(Date keyTime, String nodeName, Date performanceTime, int offerCount, long offerTime, int enhancingCount,
-            long enhancingTime, int indexingCount, long indexingTime, int persistingCount, long persistingTime) {
-	    this.cassandraStatementExecutor.persistPerformance(keyTime, nodeName, performanceTime, offerCount, offerTime, enhancingCount, enhancingTime, indexingCount, indexingTime, persistingCount, persistingTime);
-	    
     }
 }

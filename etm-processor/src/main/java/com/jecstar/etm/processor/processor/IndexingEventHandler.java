@@ -9,6 +9,8 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.EventCommand;
@@ -30,14 +32,16 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 	private final List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>(this.nrOfDocumentsPerRequest);
 	private int docIx = -1;
 	private long lastAdd = 0;
+	private final Timer timer;
 	
-	public IndexingEventHandler(final SolrClient client, final long ordinal, final long numberOfConsumers) {
+	public IndexingEventHandler(final SolrClient client, final long ordinal, final long numberOfConsumers, final Timer timer) {
 		this.client = client;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		for (int i=0; i < this.nrOfDocumentsPerRequest; i++) {
 			this.documents.add(new SolrInputDocument());
 		}
+		this.timer = timer;
 	}
 
 	@Override
@@ -57,53 +61,56 @@ public class IndexingEventHandler implements EventHandler<TelemetryEvent>, Close
 		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}
-		long nanoTime = System.nanoTime();
-		this.docIx++;
-		SolrInputDocument document = this.documents.get(this.docIx);
-		document.clear();
-		document.addField("id", event.id.toString());
-		if (event.application != null) {
-			document.addField("application", event.application);
+		final Context timerContext = this.timer.time();
+		try {
+			this.docIx++;
+			SolrInputDocument document = this.documents.get(this.docIx);
+			document.clear();
+			document.addField("id", event.id.toString());
+			if (event.application != null) {
+				document.addField("application", event.application);
+			}
+			if (event.content != null) {
+				document.addField("content", event.content);
+			}
+			if (event.correlationId != null) {
+				document.addField("correlationId", event.correlationId);
+			}
+			if (event.creationTime != null) {
+				document.addField("creationTime", event.creationTime);
+			}
+			if (event.endpoint != null) {
+				document.addField("endpoint", event.endpoint);
+			}
+			if (event.name != null) {
+				document.addField("name", event.name);
+			}
+			if (event.sourceCorrelationId != null) {
+				document.addField("sourceCorrelationId", event.sourceCorrelationId);
+			}
+			if (event.sourceId != null) {
+				document.addField("sourceId", event.sourceId);
+			}
+			if (event.transactionId != null) {
+				document.addField("transactionId", event.transactionId);
+			}
+			if (event.transactionName != null) {
+				document.addField("transactionName", event.transactionName);
+			}
+			if (event.type != null) {
+				document.addField("type", event.type.name());
+			}
+			if (event.retention != null) {
+				document.addField("retention", event.retention);
+			}
+			if (this.docIx == this.nrOfDocumentsPerRequest - 1) {
+				this.client.add(this.documents, 15000);
+				this.docIx = -1;
+				this.lastAdd = System.currentTimeMillis();
+			}
+		} finally {
+			timerContext.stop();
 		}
-		if (event.content != null) {
-			document.addField("content", event.content);
-		}
-		if (event.correlationId != null) {
-			document.addField("correlationId", event.correlationId);
-		}
-		if (event.creationTime != null) {
-			document.addField("creationTime", event.creationTime);
-		}
-		if (event.endpoint != null) {
-			document.addField("endpoint", event.endpoint);
-		}
-		if (event.name != null) {
-			document.addField("name", event.name);
-		}
-		if (event.sourceCorrelationId != null) {
-			document.addField("sourceCorrelationId", event.sourceCorrelationId);
-		}
-		if (event.sourceId != null) {
-			document.addField("sourceId", event.sourceId);
-		}
-		if (event.transactionId != null) {
-			document.addField("transactionId", event.transactionId);
-		}
-		if (event.transactionName != null) {
-			document.addField("transactionName", event.transactionName);
-		}
-		if (event.type != null) {
-			document.addField("type", event.type.name());
-		}
-		if (event.retention != null) {
-			document.addField("retention", event.retention);
-		}
-		if (this.docIx == this.nrOfDocumentsPerRequest - 1) {
-			this.client.add(this.documents, 15000);
-			this.docIx = -1;
-			this.lastAdd = System.currentTimeMillis();
-		}
-		event.indexingTime = System.nanoTime() - nanoTime;
 	}
 
 	@Override

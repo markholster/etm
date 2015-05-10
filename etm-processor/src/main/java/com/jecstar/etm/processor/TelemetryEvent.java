@@ -117,10 +117,6 @@ public class TelemetryEvent {
 	public EventCommand eventCommand;
 	public boolean ignore;
 	public Date retention = new Date(0);
-	public long offerTime;
-	public long enhancingTime;
-	public long indexingTime;
-	public long persistingTime;
 	
 	public TelemetryEvent initialize() {
 		this.id = UUIDs.timeBased();
@@ -146,10 +142,6 @@ public class TelemetryEvent {
 		this.ignore = false;
 		this.retention.setTime(0);
 		this.eventCommand = EventCommand.PROCESS;
-		this.offerTime = -1;
-		this.enhancingTime = -1;
-		this.indexingTime = -1;
-		this.persistingTime = -1;
 		return this;
 	}
 
@@ -177,10 +169,6 @@ public class TelemetryEvent {
 		this.type = copy.type;
 		this.retention.setTime(copy.retention.getTime());
 		this.eventCommand = copy.eventCommand;
-		this.offerTime = copy.offerTime;
-		this.enhancingTime = copy.enhancingTime;
-		this.indexingTime = copy.indexingTime;
-		this.persistingTime = copy.persistingTime;
 	    return this;
     }
 }

@@ -7,7 +7,7 @@ import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
 public interface PersistenceEnvironment {
 
-	TelemetryEventRepository createTelemetryEventRepository(String nodeName);
+	TelemetryEventRepository createTelemetryEventRepository();
 	
 	Map<String, CorrelationBySourceIdResult> getProcessingMap();
 

@@ -6,6 +6,9 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.solr.client.solrj.SolrClient;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -26,9 +29,11 @@ public class TelemetryEventProcessor {
 	private EtmConfiguration etmConfiguration;
 	private DisruptorEnvironment disruptorEnvironment;
 	private PersistenceEnvironment persistenceEnvironment;
+	private MetricRegistry metricRegistry;
+	private Timer offerTimer;
 	
 
-	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final SolrClient solrClient, final EtmConfiguration etmConfiguration) {
+	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final SolrClient solrClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
@@ -37,7 +42,9 @@ public class TelemetryEventProcessor {
 		this.persistenceEnvironment = persistenceEnvironment;
 		this.solrClient = solrClient;
 		this.etmConfiguration = etmConfiguration;
-		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, solrClient, this.persistenceEnvironment);
+		this.metricRegistry = metricRegistry;
+		this.offerTimer = this.metricRegistry.timer("event-offer");
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, solrClient, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
 	
@@ -45,7 +52,7 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.solrClient, this.persistenceEnvironment);
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.solrClient, this.persistenceEnvironment, this.metricRegistry);
 		RingBuffer<TelemetryEvent> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
@@ -79,7 +86,7 @@ public class TelemetryEventProcessor {
 		if (this.etmConfiguration.getLicenseExpriy().getTime() < System.currentTimeMillis()) {
 			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
 		}
-		long nanoTime = System.nanoTime();
+		final Context timerContext = this.offerTimer.time();
 		TelemetryEvent target = null;
 		long sequence = this.ringBuffer.next();
 		try {
@@ -87,8 +94,8 @@ public class TelemetryEventProcessor {
 			target.initialize(telemetryEvent);
 			preProcess(target);
 		} finally {
-			target.offerTime = System.nanoTime() - nanoTime;
 			this.ringBuffer.publish(sequence);
+			timerContext.stop();
 		}
 	}
 	
@@ -106,8 +113,11 @@ public class TelemetryEventProcessor {
 		}
 	}
 	
+	public MetricRegistry getMetricRegistry() {
+	    return this.metricRegistry;
+    }
+	
 	private void preProcess(TelemetryEvent event) {
-//		long start = System.nanoTime();
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}

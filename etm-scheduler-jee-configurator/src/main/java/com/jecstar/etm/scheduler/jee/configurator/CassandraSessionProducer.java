@@ -60,6 +60,7 @@ public class CassandraSessionProducer implements ConfigurationChangeListener {
 		if (username != null) {
 			builder.withCredentials(username, password);
 		}
+		builder.withoutJMXReporting();
 		return builder.build();
 	}
 	
