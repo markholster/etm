@@ -1,7 +1,6 @@
 package com.jecstar.etm.processor.jee.configurator;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.ManagedBean;
 import javax.annotation.PreDestroy;
@@ -19,10 +18,10 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
-import com.jecstar.etm.processor.jee.configurator.cassandra.CassandraMetricsReporter;
 import com.jecstar.etm.processor.jee.configurator.cassandra.PersistenceEnvironmentCassandraImpl;
 import com.jecstar.etm.processor.jee.configurator.cassandra.ReconfigurableSession;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
+import com.jecstar.etm.processor.repository.cassandra.CassandraMetricReporter;
 
 @ManagedBean
 @Singleton
@@ -47,8 +46,8 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 
 	private Cluster cluster;
 
-	private CassandraMetricsReporter internalMetricReporter;
-	private CassandraMetricsReporter databaseMetricReporter;
+	private CassandraMetricReporter internalMetricReporter;
+	private CassandraMetricReporter databaseMetricReporter;
 	
 	@ProcessorConfiguration
 	@Produces
@@ -57,12 +56,13 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 			if (this.persistenceEnvironment == null) {
 				this.cluster = createCluster();
 				this.configuration.addCassandraConfigurationChangeListener(this);
+				this.configuration.addEtmConfigurationChangeListener(this);
 				this.session = new ReconfigurableSession(this.cluster.connect(this.configuration.getCassandraKeyspace()));
 				this.persistenceEnvironment = new PersistenceEnvironmentCassandraImpl(this.session);
-				this.internalMetricReporter = new CassandraMetricsReporter(this.configuration.getNodeName(), this.metricRegistry, this.session);
-				this.internalMetricReporter.start(1, TimeUnit.MINUTES);
-				this.databaseMetricReporter = new CassandraMetricsReporter(this.configuration.getNodeName() + "-cassandra", this.cluster.getMetrics().getRegistry(), this.session);
-				this.databaseMetricReporter.start(1, TimeUnit.MINUTES);
+				this.internalMetricReporter = new CassandraMetricReporter(this.configuration.getNodeName(), this.metricRegistry, this.session, this.configuration.getStatisticsTimeUnit());
+				this.internalMetricReporter.start(1, this.configuration.getStatisticsTimeUnit());
+				this.databaseMetricReporter = new CassandraMetricReporter(this.configuration.getNodeName() + "-cassandra", this.cluster.getMetrics().getRegistry(), this.session, this.configuration.getStatisticsTimeUnit());
+				this.databaseMetricReporter.start(1, this.configuration.getStatisticsTimeUnit());
 			}
 		}
 		return this.persistenceEnvironment;
@@ -120,14 +120,26 @@ public class PersistenceEnvironmentProducer implements ConfigurationChangeListen
 					this.databaseMetricReporter.close();
 				}
 				this.session.switchToSession(newCluster.connect(this.configuration.getCassandraKeyspace()));
-				this.databaseMetricReporter = new CassandraMetricsReporter(this.configuration.getNodeName() + "-cassandra", newCluster.getMetrics().getRegistry(), this.session);
-				this.databaseMetricReporter.start(1, TimeUnit.MINUTES);
+				this.databaseMetricReporter = new CassandraMetricReporter(this.configuration.getNodeName() + "-cassandra", newCluster.getMetrics().getRegistry(), this.session, this.configuration.getStatisticsTimeUnit());
+				this.databaseMetricReporter.start(1, this.configuration.getStatisticsTimeUnit());
 				this.cluster.closeAsync();
 				this.cluster = newCluster;
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Reconnected to Cassandra cluster.");
 				}
 			}
+		}
+		if (event.isChanged(EtmConfiguration.ETM_STATISTICS_TIMEUNIT)) {
+			if (this.internalMetricReporter != null) {
+				this.internalMetricReporter.close();
+			}
+			this.internalMetricReporter = new CassandraMetricReporter(this.configuration.getNodeName(), this.metricRegistry, this.session, this.configuration.getStatisticsTimeUnit());
+			this.internalMetricReporter.start(1, this.configuration.getStatisticsTimeUnit());
+			if (this.databaseMetricReporter != null) {
+				this.databaseMetricReporter.close();
+			}
+			this.databaseMetricReporter = new CassandraMetricReporter(this.configuration.getNodeName() + "-cassandra", this.cluster.getMetrics().getRegistry(), this.session, this.configuration.getStatisticsTimeUnit());
+			this.databaseMetricReporter.start(1, this.configuration.getStatisticsTimeUnit());
 		}
     }
 
