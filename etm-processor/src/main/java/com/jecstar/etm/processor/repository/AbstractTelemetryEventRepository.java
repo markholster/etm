@@ -1,7 +1,6 @@
 package com.jecstar.etm.processor.repository;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
@@ -9,15 +8,16 @@ import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.core.util.DateUtils;
 import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.processor.processor.SourceCorrelationCache;
 
 public abstract class AbstractTelemetryEventRepository implements TelemetryEventRepository {
 
-	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
+	private final SourceCorrelationCache sourceCorrelations;
 	private final Date statisticsTimestamp = new Date();
 	private final Date eventOccurrenceTimestamp = new Date();
 	private final DataRetention dataRetention = new DataRetention();
 	
-	public AbstractTelemetryEventRepository(final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public AbstractTelemetryEventRepository(final SourceCorrelationCache sourceCorrelations) {
 	    this.sourceCorrelations = sourceCorrelations;
     }
 	
@@ -136,7 +136,7 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 		
 		endPersist();
 		// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
-		this.sourceCorrelations.remove(event.sourceId + "_" + event.application);
+		this.sourceCorrelations.removeTelemetryEvent(event);
     }
 	
 	@Override
@@ -144,7 +144,12 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 		if (sourceId == null) {
 			return;
 		}
-		CorrelationBySourceIdResult parent = this.sourceCorrelations.get(sourceId + "_" + application);
+		CorrelationBySourceIdResult parent = null;
+		if (application != null) {
+			parent = this.sourceCorrelations.getBySourceIdAndApplication(sourceId, application);
+		} else {
+			parent = this.sourceCorrelations.getBySourceId(sourceId);
+		}
 		if (parent != null) {
 			result.id = parent.id;
 			result.transactionId = parent.transactionId;

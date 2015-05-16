@@ -15,7 +15,6 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.lmax.disruptor.RingBuffer;
 
@@ -164,8 +163,7 @@ public class TelemetryEventProcessor {
 				}
 				event.application = parseValue(endpointConfig.applicationParsers, event.content);
 			}
-			this.persistenceEnvironment.getProcessingMap().put(event.sourceId + "_" + event.application, new CorrelationBySourceIdResult(event.id, event.name, event.transactionId,
-			        event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime(), event.slaRule));
+			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(event);
 		}
 	}
 	

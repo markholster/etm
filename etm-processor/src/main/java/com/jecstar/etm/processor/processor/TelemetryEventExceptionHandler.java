@@ -1,11 +1,8 @@
 package com.jecstar.etm.processor.processor;
 
-import java.util.Map;
-
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.lmax.disruptor.ExceptionHandler;
 
 public class TelemetryEventExceptionHandler implements ExceptionHandler<TelemetryEvent> {
@@ -15,18 +12,17 @@ public class TelemetryEventExceptionHandler implements ExceptionHandler<Telemetr
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventExceptionHandler.class);
 
-	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations;
+	private final SourceCorrelationCache sourceCorrelations;
 
-	public TelemetryEventExceptionHandler(Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public TelemetryEventExceptionHandler(SourceCorrelationCache sourceCorrelations) {
 		this.sourceCorrelations = sourceCorrelations;
 	}
 
 	@Override
 	public void handleEventException(Throwable t, long sequence, TelemetryEvent event) {
-		TelemetryEvent telemetryEvent = (TelemetryEvent) event;
-		this.sourceCorrelations.remove(telemetryEvent.sourceId);
+		this.sourceCorrelations.removeTelemetryEvent(event);
 		if (log.isErrorLevelEnabled()) {
-			log.logErrorMessage("Unable to process event '" + telemetryEvent.id + "'.", t);
+			log.logErrorMessage("Unable to process event '" + event.id + "'.", t);
 		}
 	}
 

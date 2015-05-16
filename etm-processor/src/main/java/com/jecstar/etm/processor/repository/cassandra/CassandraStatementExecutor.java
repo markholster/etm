@@ -42,7 +42,8 @@ public class CassandraStatementExecutor {
 	private final PreparedStatement updateEventNameCounterStatement;
 	private final PreparedStatement updateApplicationEventNameCounterStatement;
 	private final PreparedStatement updateTransactionNameCounterStatement;
-	private final PreparedStatement findParentStatement;
+	private final PreparedStatement findParentStatementWithSourceIdAndApplication;
+	private final PreparedStatement findParentStatementWithSourceId;
 	private final PreparedStatement findEndpointConfigStatement;
 	
 	public CassandraStatementExecutor(final Session session) {
@@ -193,7 +194,7 @@ public class CassandraStatementExecutor {
 				+ "transactionFinish = transactionFinish + ?, "
 				+ "transactionResponseTime = transactionResponseTime + ? "
 				+ "where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
-		this.findParentStatement = session.prepare("select "
+		this.findParentStatementWithSourceIdAndApplication = session.prepare("select "
 				+ "id, "
 				+ "transactionId, "
 				+ "transactionName, "
@@ -202,6 +203,15 @@ public class CassandraStatementExecutor {
 				+ "name, "
 				+ "slaRule "
 				+ "from sourceid_id_correlation where sourceId = ? and application = ?;");
+		this.findParentStatementWithSourceId = session.prepare("select "
+				+ "id, "
+				+ "transactionId, "
+				+ "transactionName, "
+				+ "creationTime, "
+				+ "expiryTime, "
+				+ "name, "
+				+ "slaRule "
+				+ "from sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
 				+ "direction, "
 				+ "applicationParsers, "
@@ -420,8 +430,8 @@ public class CassandraStatementExecutor {
 	
 	
 	public void findParent(final String sourceId, String application, final CorrelationBySourceIdResult result) {
-		final ResultSet resultSet = this.session.execute(this.findParentStatement.bind(sourceId, application == null ? "_unknown_" : application));
-		final Row row = resultSet.one();
+		ResultSet resultSet = this.session.execute(this.findParentStatementWithSourceIdAndApplication.bind(sourceId, application == null ? "_unknown_" : application));
+		Row row = resultSet.one();
 		if (row != null) {
 			result.id = row.getUUID(0);
 			result.transactionId = row.getUUID(1);
@@ -430,6 +440,18 @@ public class CassandraStatementExecutor {
 			result.expiryTime = row.getDate(4);
 			result.name = row.getString(5);
 			result.slaRule = SlaRule.fromConfiguration(row.getString(6));
+		} else {
+			resultSet = this.session.execute(this.findParentStatementWithSourceId.bind(sourceId));
+			row = resultSet.one();
+			if (row != null) {
+				result.id = row.getUUID(0);
+				result.transactionId = row.getUUID(1);
+				result.transactionName = row.getString(2);
+				result.creationTime = row.getDate(3);
+				result.expiryTime = row.getDate(4);
+				result.name = row.getString(5);
+				result.slaRule = SlaRule.fromConfiguration(row.getString(6));		
+			}
 		}
 	}
 	

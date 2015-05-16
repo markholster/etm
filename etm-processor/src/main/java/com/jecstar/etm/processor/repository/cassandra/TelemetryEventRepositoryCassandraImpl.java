@@ -9,6 +9,7 @@ import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.processor.processor.SourceCorrelationCache;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.DataRetention;
@@ -32,7 +33,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	private String partitionKeySuffix;
 	private String correlationPartitionKeySuffix;
 	
-	public TelemetryEventRepositoryCassandraImpl(final CassandraStatementExecutor cassandraStatementExecutor, final Map<String, CorrelationBySourceIdResult> sourceCorrelations) {
+	public TelemetryEventRepositoryCassandraImpl(final CassandraStatementExecutor cassandraStatementExecutor, final SourceCorrelationCache sourceCorrelations) {
 		super(sourceCorrelations);
 		this.cassandraStatementExecutor = cassandraStatementExecutor;
     }

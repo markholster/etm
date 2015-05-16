@@ -56,6 +56,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 					event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
 				}			
 			}
+			// TODO point-to-point messages which are added twice -> they have the same sourceId, but one is the parent of the other.
 			if (needsCorrelation(event)) {
 				// Find the correlation event.
 				this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application, this.correlationBySourceIdResult.initialize());
