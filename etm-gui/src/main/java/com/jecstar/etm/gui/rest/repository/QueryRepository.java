@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.solr.common.SolrDocumentList;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
+
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public interface QueryRepository {
 	

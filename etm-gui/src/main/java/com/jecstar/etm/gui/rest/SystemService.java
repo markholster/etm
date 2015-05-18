@@ -11,11 +11,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -44,7 +43,7 @@ public class SystemService {
 	public String getEndpointNames() {
 		try {
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
 	        generator.writeStringField("companyName", this.configuration.getCompanyName() != null ? this.configuration.getCompanyName() : "Unknown");
 	        if (this.configuration.getLicenseExpriy() != null) {
@@ -67,7 +66,7 @@ public class SystemService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public void updateLicense(String json) {
 		try {
-			JsonParser jsonParser = this.jsonFactory.createJsonParser(json);
+			JsonParser jsonParser = this.jsonFactory.createParser(json);
 			JsonToken token = jsonParser.nextToken();
 			while (token != null) {
 				token = jsonParser.nextToken();

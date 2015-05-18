@@ -22,9 +22,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.gui.rest.repository.Average;
@@ -205,7 +204,7 @@ public class StatisticsService {
 	
 	private void writeApplicationCountStatistics(Writer writer, List<String> categories, List<String> serieNames, List<List<Long>>values) {
 		try {
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
 	        generator.writeArrayFieldStart("categories");
 	        for (String category : categories) {
@@ -237,7 +236,7 @@ public class StatisticsService {
 	
 	private void writeApplicationMessagesCountStatistics(Writer writer, Map<String, Map<Long, Long>> statistics) {
 		try {
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartArray();
 	        for (String name : statistics.keySet()) {
 	        	generator.writeStartObject();
@@ -267,7 +266,7 @@ public class StatisticsService {
 	
 	private void writeMessagesAverageStatistics(Writer writer, Map<String, Map<Long, Average>> statistics) {
 		try {
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartArray();
 	        for (String name : statistics.keySet()) {
 	        	generator.writeStartObject();
@@ -297,7 +296,7 @@ public class StatisticsService {
 
     private void writeMessagesExpirationStatistics(StringWriter writer, List<ExpiredMessage> statistics) {
 		try {
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartArray();
 	        for (ExpiredMessage expiredMessage: statistics) {
 	        	generator.writeStartObject();

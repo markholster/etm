@@ -12,10 +12,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -47,7 +46,7 @@ public class RestTelemetryEventProcessor {
 	public String addEvent(InputStream data) {
 		try {
 			this.telemetryEvent.initialize();
-			JsonParser parser = this.jsonFactory.createJsonParser(data);
+			JsonParser parser = this.jsonFactory.createParser(data);
 			JsonToken token = parser.nextToken();
 			while (token != JsonToken.END_OBJECT && token != null) {
 				String name = parser.getCurrentName();

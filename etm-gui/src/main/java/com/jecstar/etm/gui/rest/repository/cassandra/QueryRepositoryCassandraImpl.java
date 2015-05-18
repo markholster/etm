@@ -24,13 +24,13 @@ import net.sf.saxon.TransformerFactoryImpl;
 
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;

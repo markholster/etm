@@ -24,13 +24,12 @@ import javax.xml.xpath.XPath;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -73,7 +72,7 @@ public class AdminService {
 	public String getEndpointNames() {
 		try {
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartArray();
 	        List<String> endpointNames = this.endpointRepository.getEndpointNames();
 	        for (String endpointName: endpointNames) {
@@ -97,7 +96,7 @@ public class AdminService {
 	public String getEndpoint(@PathParam("endpointName") String endpointName) {
 		try {
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
 	        EndpointConfiguration endpointConfiguration = this.endpointRepository.getEndpointConfiguration(endpointName);
 	        generator.writeStringField("name", endpointConfiguration.name);
@@ -159,7 +158,7 @@ public class AdminService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String saveEndpoint(@PathParam("endpointName") String endpointName, InputStream data) {
 		try {
-			JsonParser parser = this.jsonFactory.createJsonParser(data);
+			JsonParser parser = this.jsonFactory.createParser(data);
 			EndpointConfiguration endpointConfiguration = new EndpointConfiguration();
 			JsonToken token = parser.nextToken();
 			while (token != JsonToken.END_OBJECT && token != null) {

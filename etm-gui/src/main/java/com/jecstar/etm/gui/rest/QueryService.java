@@ -16,13 +16,13 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.SolrQuery.SortClause;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -73,7 +73,7 @@ public class QueryService {
 	        QueryResponse queryResponse = this.solrClient.query(query);
 	        SolrDocumentList results = queryResponse.getResults();
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
 	        generator.writeNumberField("numFound", results.getNumFound());
 	        generator.writeNumberField("numReturned", results.size());
@@ -108,7 +108,7 @@ public class QueryService {
 		try {
 			eventId = UUID.fromString(id);
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
 	        this.queryRepository.addEvent(eventId, generator);
 	        generator.writeEndObject();
@@ -132,7 +132,7 @@ public class QueryService {
 		try {
 			eventId = UUID.fromString(id);
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
 	        this.queryRepository.addEventOverview(eventId, generator);
 	        generator.writeEndObject();
