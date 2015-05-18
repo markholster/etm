@@ -37,6 +37,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.INVALID_XSLT_TEMPLATE:
 					errorMessage.setMessage("Invalid xslt template");
 					break;
+				case EtmException.INVALID_JSON_EXPRESSION:
+					errorMessage.setMessage("Invalid json path (not definite)");
+					break;
 				case EtmException.INVALID_EXPRESSION_PARSER_TYPE:
 					errorMessage.setMessage("Invalid expression parser type");
 					break;

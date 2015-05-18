@@ -12,7 +12,8 @@ public class EtmException extends RuntimeException {
 	public static final int UNMARSHALLER_CREATE_EXCEPTION 	= 100_004;
 	public static final int INVALID_XPATH_EXPRESSION 		= 100_005;
 	public static final int INVALID_XSLT_TEMPLATE 			= 100_006;
-	public static final int INVALID_EXPRESSION_PARSER_TYPE 	= 100_007;
+	public static final int INVALID_JSON_EXPRESSION			= 100_007;
+	public static final int INVALID_EXPRESSION_PARSER_TYPE 	= 100_008;
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

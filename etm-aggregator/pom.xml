@@ -81,6 +81,21 @@
 				<version>2.1.5</version>
 			</dependency>
 			<dependency>
+			    <groupId>com.jayway.jsonpath</groupId>
+			    <artifactId>json-path</artifactId>
+			    <version>2.0.0</version>
+				<exclusions>
+				  <exclusion> 
+				    <groupId>net.minidev</groupId>
+				    <artifactId>json-smart</artifactId>
+				  </exclusion>
+                  <exclusion> 
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
+                  </exclusion>
+				</exclusions> 			    
+			</dependency>			
+			<dependency>
 				<groupId>com.jecstar.etm</groupId>
 				<artifactId>etm-core</artifactId>
 				<version>${project.version}</version>
@@ -169,6 +184,11 @@
 				<artifactId>jackson-core</artifactId>
 				<version>2.5.3</version>
 			</dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.5.3</version>
+            </dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>

@@ -17,7 +17,6 @@ public final class ExpressionParserFactory {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(ExpressionParserFactory.class);
-
 	
 	private static final XPath xPath;
 	private static final TransformerFactory transformerFactory;
@@ -27,20 +26,31 @@ public final class ExpressionParserFactory {
 		config.setErrorListener(new XmlErrorListener());
 		xPath = new XPathFactoryImpl(config).newXPath();
 		transformerFactory = new TransformerFactoryImpl(config);
+		com.jayway.jsonpath.Configuration.setDefaults(new JsonPathDefaults());
 	}
 
 	public static ExpressionParser createExpressionParserFromConfiguration(final String expression) {
 		if (expression.length() > 5) {
 			if (expression.charAt(0) == 'x' &&
-					expression.charAt(1) == 's' &&
-					expression.charAt(2) == 'l' &&
-					expression.charAt(3) == 't' &&
-					expression.charAt(4) == ':') {
+				expression.charAt(1) == 's' &&
+				expression.charAt(2) == 'l' &&
+				expression.charAt(3) == 't' &&
+				expression.charAt(4) == ':') {
 				try {
 					return new XsltExpressionParser(transformerFactory, expression.substring(5));
 				} catch (EtmException e) {
 					new FixedValueExpressionParser(null);
 				}
+			} else if (expression.charAt(0) == 'j' &&
+					   expression.charAt(1) == 's' &&
+					   expression.charAt(2) == 'o' &&
+					   expression.charAt(3) == 'n' &&
+					   expression.charAt(4) == ':') {
+				try {
+					return new JsonExpressionParser(expression.substring(5));
+				} catch (EtmException e) {
+					new FixedValueExpressionParser(null);
+				} 
 			}
 		}
 		if (expression.length() > 6) {
@@ -99,6 +109,8 @@ public final class ExpressionParserFactory {
 			return "xslt:" + ((XsltExpressionParser)expressionParser).getTemplate();
 		} else if (expressionParser instanceof XPathExpressionParser) {
 			return "xpath:" + ((XPathExpressionParser)expressionParser).getExpression();
+		} else if (expressionParser instanceof JsonExpressionParser) {
+			return "json:" + ((JsonExpressionParser)expressionParser).getPath();
 		} else if (expressionParser instanceof FixedPositionExpressionParser) {
 			FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
 			String config = "fixed:";

@@ -14,6 +14,15 @@
 	<description>The etm core project.</description>
 	<name>Enterprise Telemetry Monitor - core</name>
     <dependencies>
+		<dependency>
+		<!-- Needed by json-path -->
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>com.jayway.jsonpath</groupId>
+		    <artifactId>json-path</artifactId>
+		</dependency>           
         <dependency>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
