@@ -39,6 +39,7 @@
 						<div class="tab-content">
 							<div role="tabpanel" class="tab-pane active" id="etm_tab">
 							    <div id="etm_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+							    <div id="etm_form_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
 								<form id="etm_form" class="form-horizontal">
 									<div class="form-group">
 										<label for="etm_enhancing_handler_count"
@@ -164,6 +165,7 @@
 							</div>
 							<div role="tabpanel" class="tab-pane" id="endpoint_tab">
 							    <div id="endpoint_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+							    <div id="endpoint_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
                                 <form id="endpoint_selection_form" class="form-horizontal">
                                     <div class="form-group">
                                         <label for="endpoint_select" class="col-sm-3 control-label">Endpoint</label>
@@ -244,6 +246,7 @@
 							</div>
 							<div role="tabpanel" class="tab-pane" id="solr_tab">
 							    <div id="solr_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+							    <div id="solr_form_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
 								<form id="solr_form" class="form-horizontal">
 									<div class="form-group">
 										<label for="solr_zookeeper_connection"
@@ -266,6 +269,7 @@
 							</div>
 							<div role="tabpanel" class="tab-pane" id="cassandra_tab">
 							    <div id="cassandra_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+							    <div id="cassandra_form_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
 								<form id="cassandra_form" class="form-horizontal">
 									<div class="form-group">
 										<label for="cassandra_contact_points"
@@ -299,6 +303,7 @@
 							<div role="tabpanel" class="tab-pane" id="status_tab"></div>
 							<div role="tabpanel" class="tab-pane" id="license_tab">
 							    <div id="license_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+							    <div id="license_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
                                 <form id="license_form" class="form-horizontal">
                                     <div class="form-group">
                                         <label for="license_company"
@@ -330,6 +335,9 @@
 	<script>
 //<![CDATA[        
 $(function () {
+
+	var infoDelay = 5000;
+	
 	var loadData = function(nodeName) {
 		$('#etm_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
 		$('#solr_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
@@ -661,7 +669,12 @@ $(function () {
                     error: function(jqXHR) {
                         $('#' + formId + '_errorBox').text('Error saving: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
                         $('#' + formId + '_errorBox').show('fast');
-                   }
+                    },
+                    success: function(jqXHR) {
+                    	$('#' + formId + '_infoBox').text('Configuration saved');
+                    	$('#' + formId + '_infoBox').show('fast');
+                    	$('#' + formId + '_infoBox').delay(infoDelay).hide('fast');
+                    }
 		         });
 		    });
 	};
@@ -681,9 +694,12 @@ $(function () {
 				       success: function(data) {
 					       loadEndpoints();
 				    	   loadEndpointData('*');
+                           $("#endpoint_infoBox").text('Endpoint \'' + endpointName + '\' removed');
+                           $("#endpoint_infoBox").show('fast');
+                           $("#endpoint_infoBox").delay(infoDelay).hide('fast');
 					   },
 				       error: function(jqXHR) {
-				            $("#endpoint_errorBox").text('Error removing endpoint: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+				            $("#endpoint_errorBox").text('Error removing endpoint: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
 				            $("#endpoint_errorBox").show('fast');
 				       }
 				    });
@@ -720,6 +736,15 @@ $(function () {
                     dataType: 'json',
                     success: function(data) {
                         loadEndpoints(endpointName);
+                        if ('*' === endpointName) {
+                            $('#btn_endpoint_delete').attr('disabled', 'disabled');
+                        } else {
+                            $('#btn_endpoint_delete').removeAttr('disabled');
+                        }
+                        $("#endpoint_infoBox").text('Endpoint \'' + endpointName + '\' saved');
+                        $("#endpoint_infoBox").show('fast');
+                        $("#endpoint_infoBox").delay(infoDelay).hide('fast');
+                        
                     },
                     error: function(jqXHR) {
                          $("#endpoint_errorBox").text('Error saving endpoint: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
@@ -784,7 +809,12 @@ $(function () {
 		        error: function(jqXHR) {
 		            $("#license_errorBox").text('Error updating license: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
 		            $("#license_errorBox").show('fast');
-		        }
+		        },
+				success: function(jqXHR) {
+					$("#license_infoBox").text('New license applied');
+					$("#license_infoBox").show('fast');
+					$("#license_infoBox").delay(infoDelay).hide('fast');
+				}			        
 		     });
 		});
 	};
