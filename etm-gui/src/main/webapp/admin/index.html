@@ -388,6 +388,8 @@ $(function () {
                     $('#' + elementName + '_fixed_pos_end_' + index).val(expressionParser.end_pos);
                 } else if ('fixed_value' == expressionParser.type) {
                     $('#' + elementName + '_fixed_value_' + index).val(expressionParser.value);
+                } else if ('json' == expressionParser.type) {
+                    $('#' + elementName + '_json_' + index).val(expressionParser.path);
                 } else if ('xpath' == expressionParser.type) {
                 	$('#' + elementName + '_xpath_' + index).val(expressionParser.expression);
                 } else if ('xslt' == expressionParser.type) {
@@ -433,6 +435,7 @@ $(function () {
           .append($('<select></select>').attr('id', elementName + '_select_' + index).attr('name', elementName + '_type_' + index).attr('class', 'form-control')
                   .append($('<option></option>').attr("value", 'fixed_position').text('Fixed position'))
                   .append($('<option></option>').attr("value", 'fixed_value').text('Fixed value'))
+                  .append($('<option></option>').attr("value", 'json').text('JsonPath'))
                   .append($('<option></option>').attr("value", 'xpath').text('XPath'))
                   .append($('<option></option>').attr("value", 'xslt').text('XSLT'))
         );
@@ -465,11 +468,17 @@ $(function () {
                     .attr('placeholder', 'Fixed name')
                     .attr('style', 'display: none;'))
             .append($('<input />')
-                            .attr('id', elementName + '_xpath_' + index)
-                            .attr('name', elementName + '_xpath_' + index)
-                            .attr('type', 'text').attr('class', 'form-control')
-                            .attr('placeholder', 'Xpath expression')
-                            .attr('style', 'display: none;'))
+                    .attr('id', elementName + '_json_' + index)
+                    .attr('name', elementName + '_json_' + index)
+                    .attr('type', 'text').attr('class', 'form-control')
+                    .attr('placeholder', 'JsonPath expression')
+                    .attr('style', 'display: none;'))
+            .append($('<input />')
+                    .attr('id', elementName + '_xpath_' + index)
+                    .attr('name', elementName + '_xpath_' + index)
+                    .attr('type', 'text').attr('class', 'form-control')
+                    .attr('placeholder', 'Xpath expression')
+                    .attr('style', 'display: none;'))
             .append($('<input />')
                     .attr('id', elementName + '_xslt_' + index)
                     .attr('name', elementName + '_xslt_' + index)
@@ -511,6 +520,8 @@ $(function () {
                 $('#' + elementName + '_fixed_pos_end_' + index).attr('required', 'required');
                 $('#' + elementName + '_fixed_value_' + index).hide();
                 $('#' + elementName + '_fixed_value_' + index).removeAttr('required');
+                $('#' + elementName + '_json_' + index).hide();
+                $('#' + elementName + '_json_' + index).removeAttr('required');
                 $('#' + elementName + '_xpath_' + index).hide();
                 $('#' + elementName + '_xpath_' + index).removeAttr('required');
                 $('#' + elementName + '_xslt_' + index).hide();
@@ -523,6 +534,22 @@ $(function () {
                 $('#' + elementName + '_fixed_pos_end_' + index).removeAttr('required');
                 $('#' + elementName + '_fixed_value_' + index).show();
                 $('#' + elementName + '_fixed_value_' + index).attr('required', 'required');
+                $('#' + elementName + '_json_' + index).hide();
+                $('#' + elementName + '_json_' + index).removeAttr('required');
+                $('#' + elementName + '_xpath_' + index).hide();
+                $('#' + elementName + '_xpath_' + index).removeAttr('required');
+                $('#' + elementName + '_xslt_' + index).hide();
+                $('#' + elementName + '_xslt_' + index).removeAttr('required');
+            } else if ('json' == expressionType) {
+                $('#' + elementName + '_fixed_pos_line_' + index).hide();
+                $('#' + elementName + '_fixed_pos_start_' + index).hide();
+                $('#' + elementName + '_fixed_pos_start_' + index).removeAttr('required');
+                $('#' + elementName + '_fixed_pos_end_' + index).hide();
+                $('#' + elementName + '_fixed_pos_end_' + index).removeAttr('required');
+                $('#' + elementName + '_fixed_value_' + index).hide();
+                $('#' + elementName + '_fixed_value_' + index).removeAttr('required');
+                $('#' + elementName + '_json_' + index).show();
+                $('#' + elementName + '_json_' + index).attr('required', 'required');
                 $('#' + elementName + '_xpath_' + index).hide();
                 $('#' + elementName + '_xpath_' + index).removeAttr('required');
                 $('#' + elementName + '_xslt_' + index).hide();
@@ -535,6 +562,8 @@ $(function () {
                 $('#' + elementName + '_fixed_pos_end_' + index).removeAttr('required');
                 $('#' + elementName + '_fixed_value_' + index).hide();
                 $('#' + elementName + '_fixed_value_' + index).removeAttr('required');
+                $('#' + elementName + '_json_' + index).hide();
+                $('#' + elementName + '_json_' + index).removeAttr('required');
                 $('#' + elementName + '_xpath_' + index).show();
                 $('#' + elementName + '_xpath_' + index).attr('required', 'required');
                 $('#' + elementName + '_xslt_' + index).hide();
@@ -547,6 +576,8 @@ $(function () {
                 $('#' + elementName + '_fixed_pos_end_' + index).removeAttr('required');
                 $('#' + elementName + '_fixed_value_' + index).hide();
                 $('#' + elementName + '_fixed_value_' + index).removeAttr('required');
+                $('#' + elementName + '_json_' + index).hide();
+                $('#' + elementName + '_json_' + index).removeAttr('required');
                 $('#' + elementName + '_xpath_' + index).hide();
                 $('#' + elementName + '_xpath_' + index).removeAttr('required');
                 $('#' + elementName + '_xslt_' + index).show();
@@ -721,6 +752,8 @@ $(function () {
             	json += ',"end_pos":' + parseInt($(formGroup).find('[id*="_fixed_pos_end_"]').val());
             } else if ('fixed_value' == expressionType) {
             	json += ',"value":"' + $(formGroup).find('[id*="_fixed_value_"]').val() + '"';
+            } else if ('json' == expressionType) {
+                json += ',"expression":"' + $(formGroup).find('[id*="_json_"]').val() + '"';
             } else if ('xpath' == expressionType) {
             	json += ',"expression":"' + $(formGroup).find('[id*="_xpath_"]').val() + '"';
             } else if ('xslt' == expressionType) {

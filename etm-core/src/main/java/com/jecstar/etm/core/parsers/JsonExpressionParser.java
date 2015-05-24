@@ -1,5 +1,6 @@
 package com.jecstar.etm.core.parsers;
 
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -13,6 +14,11 @@ public class JsonExpressionParser implements ExpressionParser {
 	private static final LogWrapper log = LogFactory.getLogger(JsonExpressionParser.class);
 	
 	private final JsonPath path;
+	
+	static {
+		Configuration.setDefaults(new JsonPathDefaults());
+	}
+	
 	
 	public JsonExpressionParser(String path) {
 		this.path = JsonPath.compile(path);

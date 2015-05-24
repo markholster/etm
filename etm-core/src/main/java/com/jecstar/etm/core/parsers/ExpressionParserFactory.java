@@ -26,7 +26,6 @@ public final class ExpressionParserFactory {
 		config.setErrorListener(new XmlErrorListener());
 		xPath = new XPathFactoryImpl(config).newXPath();
 		transformerFactory = new TransformerFactoryImpl(config);
-		com.jayway.jsonpath.Configuration.setDefaults(new JsonPathDefaults());
 	}
 
 	public static ExpressionParser createExpressionParserFromConfiguration(final String expression) {

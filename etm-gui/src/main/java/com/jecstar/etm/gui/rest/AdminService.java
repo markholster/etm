@@ -39,6 +39,7 @@ import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.FixedPositionExpressionParser;
 import com.jecstar.etm.core.parsers.FixedValueExpressionParser;
+import com.jecstar.etm.core.parsers.JsonExpressionParser;
 import com.jecstar.etm.core.parsers.XPathExpressionParser;
 import com.jecstar.etm.core.parsers.XsltExpressionParser;
 import com.jecstar.etm.gui.rest.repository.EndpointConfiguration;
@@ -240,7 +241,7 @@ public class AdminService {
 			} else if ("end_pos".equals(name)) {
 				parser.nextToken();
 				endPos = parser.getIntValue();
-			} else if ("value".equals(name) || "expression".equals(name) || "template".equals(name)) {
+			} else if ("value".equals(name) || "expression".equals(name) || "template".equals(name) || "path".equals(name)) {
 				parser.nextToken();
 				expression = parser.getText();
 			} 
@@ -264,6 +265,8 @@ public class AdminService {
 					expressionParser = new XPathExpressionParser(xPath, expression);
 				} else if ("xslt".equals(type)) {
 					expressionParser = new XsltExpressionParser(transformerFactory, expression);
+				} else if ("json".equals(type)) {
+					expressionParser = new JsonExpressionParser(expression);
 				} else {
 					if (log.isErrorLevelEnabled()) {
 						log.logErrorMessage("Unable to determine expression parser type '" + type + "'.");
@@ -311,6 +314,10 @@ public class AdminService {
 			generator.writeStringField("type", "xslt");
 			XsltExpressionParser parser = (XsltExpressionParser) expressionParser;
 			generator.writeStringField("template", parser.getTemplate());
+		} else if (expressionParser instanceof JsonExpressionParser) {
+			generator.writeStringField("type", "json");
+			JsonExpressionParser parser = (JsonExpressionParser) expressionParser;
+			generator.writeStringField("path", parser.getPath());
 		} else {
 			generator.writeStringField("type", "unknown");
 		}
@@ -325,7 +332,7 @@ public class AdminService {
 	public String getNodes() {
 		try {
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartArray();
 	        List<Node> nodes = this.configuration.getNodes();
 	        for (Node node : nodes) {
@@ -352,7 +359,7 @@ public class AdminService {
 	public String getNode(@PathParam("nodeName") String nodeName) {
 		try {
 	        StringWriter writer = new StringWriter();
-	        JsonGenerator generator = this.jsonFactory.createJsonGenerator(writer);
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
 	        List<String> liveNodes = this.configuration.getLiveNodes();
 	        Properties properties = this.configuration.getNodeConfiguration("cluster".equals(nodeName) ? null : nodeName);
@@ -391,7 +398,7 @@ public class AdminService {
 	public void updateNode(@PathParam("nodeName") String nodeName, String json) {
 		try {
 			Properties properties = new Properties();
-	        JsonParser jsonParser = this.jsonFactory.createJsonParser(json);
+	        JsonParser jsonParser = this.jsonFactory.createParser(json);
 	        JsonToken token = jsonParser.nextToken();
 	        while (token != null) {
 	        	token = jsonParser.nextToken();
