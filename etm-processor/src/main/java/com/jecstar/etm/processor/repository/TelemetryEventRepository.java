@@ -8,7 +8,7 @@ public interface TelemetryEventRepository {
 
 	void persistTelemetryEvent(TelemetryEvent telemetryEvent, TimeUnit statisticsTimeUnit);
 	
-	void findParent(String sourceId, String application, CorrelationBySourceIdResult result);
+	TelemetryEvent findParent(String sourceId, String application);
 	
 	void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime);
 }

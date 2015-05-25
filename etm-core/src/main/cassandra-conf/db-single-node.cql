@@ -80,13 +80,7 @@ create table event_occurrences (
 create table sourceid_id_correlation (
     sourceId text,
     application text,
-    creationTime timestamp,
-    expiryTime timestamp,
     id timeuuid,
-    transactionId timeuuid,
-    transactionName text,
-    name text,
-    slaRule text,
     primary key (sourceId, application)
 );
 

@@ -1,38 +1,66 @@
 package com.jecstar.etm.processor.processor;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+import com.jecstar.etm.core.util.ObjectUtils;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 
 public class SourceCorrelationCache {
 
-	private static final String SEPARATOR = "_!_";
-	//TODO proberen dit niet in een synchronised map te plaatsen, maar bijvoorbeeld in een ConcurrentMap
-	private final Map<String, CorrelationBySourceIdResult> sourceCorrelations = Collections.synchronizedMap(new HashMap<String, CorrelationBySourceIdResult>());
+	private final Map<String, List<TelemetryEvent>> sourceCorrelations = new HashMap<String, List<TelemetryEvent>>();
+	private final Object mutex = new Object();
 	
-	public CorrelationBySourceIdResult getBySourceId(String sourceId) {
-		Optional<String> optional = this.sourceCorrelations.keySet().stream().filter(k -> k.startsWith(sourceId + SEPARATOR)).findFirst();
-		if (optional.isPresent()) {
-			return this.sourceCorrelations.get(optional.get());
+	public TelemetryEvent getBySourceId(String sourceId) {
+		synchronized (this.mutex) {
+			List<TelemetryEvent> results = this.sourceCorrelations.get(sourceId);
+			if (results != null) {
+				return results.get(0);
+			}
 		}
 		return null;
 	}
-	
-	public CorrelationBySourceIdResult getBySourceIdAndApplication(String sourceId, String application) {
-		return this.sourceCorrelations.get(sourceId + SEPARATOR + application);
+
+	public TelemetryEvent getBySourceIdAndApplication(String sourceId, String application) {
+		synchronized (this.mutex) {
+			List<TelemetryEvent> results = this.sourceCorrelations.get(sourceId);
+			if (results != null) {
+				for (TelemetryEvent result : results) {
+					if (ObjectUtils.equalsNullProof(application, result.application)) {
+						return result;
+					}
+				}
+			}
+		}
+		return null;
 	}
-	
+
 	public void addTelemetryEvent(TelemetryEvent event) {
-		this.sourceCorrelations.put(event.sourceId + SEPARATOR + event.application, new CorrelationBySourceIdResult(event.id, event.name,
-		        event.transactionId, event.transactionName, event.creationTime.getTime(), event.expiryTime.getTime(), event.slaRule));
+		TelemetryEvent clone = event.clone();
+		synchronized (this.mutex) {
+			if (this.sourceCorrelations.containsKey(event.sourceId)) {
+				List<TelemetryEvent> list = this.sourceCorrelations.get(event.sourceId);
+				list.add(event);
+			} else {
+				List<TelemetryEvent> list = new ArrayList<TelemetryEvent>();
+				list.add(clone);
+				this.sourceCorrelations.put(event.sourceId, list);
+			}
+		}
 	}
 
 	public void removeTelemetryEvent(TelemetryEvent event) {
-		this.sourceCorrelations.remove(event.sourceId + SEPARATOR + event.application == null ? "" : event.application);
+		synchronized (this.mutex) {
+			List<TelemetryEvent> list = this.sourceCorrelations.get(event.sourceId);
+			if (list != null) {
+				list.remove(event);
+				if (list.size() == 0) {
+					this.sourceCorrelations.remove(event.sourceId);
+				}
+			}
+		}
 	}
-	
+
 }

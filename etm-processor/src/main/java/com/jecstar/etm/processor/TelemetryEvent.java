@@ -11,7 +11,7 @@ import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.sla.SlaRule;
 
 
-public class TelemetryEvent {
+public class TelemetryEvent implements Cloneable {
 	
 	/**
 	 * The unique ID of the event.
@@ -171,4 +171,26 @@ public class TelemetryEvent {
 		this.eventCommand = copy.eventCommand;
 	    return this;
     }
+	
+	@Override
+	public TelemetryEvent clone() {
+		TelemetryEvent clone = new TelemetryEvent();
+		clone.initialize(this);
+		clone.ignore = this.ignore;
+		clone.id = this.id;
+	    return clone;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TelemetryEvent) {
+			return ((TelemetryEvent)obj).id.equals(this.id);
+		}
+	    return false;
+	}
+	
+	@Override
+	public int hashCode() {
+	    return this.id.hashCode();
+	}
 }

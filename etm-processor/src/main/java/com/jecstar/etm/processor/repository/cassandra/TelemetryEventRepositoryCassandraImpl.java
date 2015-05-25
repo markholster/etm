@@ -11,7 +11,6 @@ import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.SourceCorrelationCache;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
-import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.DataRetention;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
@@ -186,11 +185,11 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	}
 
 	@Override
-    public void doFindParent(String sourceId, String application, CorrelationBySourceIdResult result) {
+    public TelemetryEvent doFindParent(String sourceId, String application) {
 		if (sourceId == null) {
-			return;
+			return null;
 		}
-		this.cassandraStatementExecutor.findParent(sourceId, application, result);
+		return this.cassandraStatementExecutor.findParent(sourceId, application);
     }
 
 	@Override

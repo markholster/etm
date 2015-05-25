@@ -13,11 +13,11 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.TelemetryEventDirection;
+import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.core.sla.SlaRule;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.DataRetention;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
@@ -45,6 +45,7 @@ public class CassandraStatementExecutor {
 	private final PreparedStatement findParentStatementWithSourceIdAndApplication;
 	private final PreparedStatement findParentStatementWithSourceId;
 	private final PreparedStatement findEndpointConfigStatement;
+	private final PreparedStatement selectTelemetryEventStatement;
 	
 	public CassandraStatementExecutor(final Session session) {
 		this.session = session;
@@ -71,13 +72,7 @@ public class CassandraStatementExecutor {
 		this.insertSourceIdIdStatement = session.prepare("insert into sourceid_id_correlation ("
 				+ "sourceId, "
 				+ "application, "
-				+ "creationTime, "
-				+ "expiryTime, "
-				+ "id, "
-				+ "transactionId, "
-				+ "transactionName, "
-				+ "name, "
-				+ "slaRule) values (?,?,?,?,?,?,?,?,?);");
+				+ "id) values (?,?,?);");
 		this.insertCorrelationDataStatement = session.prepare("insert into correlation_data ("
 				+ "name_timeunit, "
 				+ "timeunit, "
@@ -195,22 +190,10 @@ public class CassandraStatementExecutor {
 				+ "transactionResponseTime = transactionResponseTime + ? "
 				+ "where transactionName_timeunit = ? and timeunit = ? and transactionName = ?;");
 		this.findParentStatementWithSourceIdAndApplication = session.prepare("select "
-				+ "id, "
-				+ "transactionId, "
-				+ "transactionName, "
-				+ "creationTime, "
-				+ "expiryTime, "
-				+ "name, "
-				+ "slaRule "
+				+ "id "
 				+ "from sourceid_id_correlation where sourceId = ? and application = ?;");
 		this.findParentStatementWithSourceId = session.prepare("select "
-				+ "id, "
-				+ "transactionId, "
-				+ "transactionName, "
-				+ "creationTime, "
-				+ "expiryTime, "
-				+ "name, "
-				+ "slaRule "
+				+ "id "
 				+ "from sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
 				+ "direction, "
@@ -220,6 +203,26 @@ public class CassandraStatementExecutor {
 				+ "transactionNameParsers, "
 				+ "slaRules "
 				+ "from endpoint_config where endpoint = ?;");
+		this.selectTelemetryEventStatement = session.prepare("select "
+				+ "application, "
+				+ "content, "
+				+ "correlationCreationTime, "
+				+ "correlationData, "
+				+ "correlationId, "
+				+ "correlationName, "
+				+ "creationTime, "
+				+ "direction, "
+				+ "endpoint, "
+				+ "expiryTime, "
+				+ "metadata, "
+				+ "name, "
+				+ "sourceCorrelationId, "
+				+ "sourceId, "
+				+ "transactionId, "
+				+ "transactionName, "
+				+ "type, "
+				+ "slaRule "
+				+ "from telemetry_event where id = ?");
 	}
 	
 	public void addTelemetryEvent(final TelemetryEvent event, final BatchStatement batchStatement) {
@@ -227,14 +230,14 @@ public class CassandraStatementExecutor {
 				event.id, 
 				event.application, 
 				event.content,
-				event.correlationCreationTime,
+				event.correlationCreationTime.getTime() == 0 ? null : event.correlationCreationTime,
 				event.correlationData,
 				event.correlationId,
 				event.correlationName,
 				event.creationTime, 
 		        event.direction != null ? event.direction.name() : null, 
 		        event.endpoint,
-		        event.expiryTime,
+		        event.expiryTime.getTime() == 0 ? null : event.expiryTime,
 		        event.metadata,
 		        event.name, 
 		        event.sourceCorrelationId, 
@@ -254,13 +257,7 @@ public class CassandraStatementExecutor {
 		batchStatement.add(this.insertSourceIdIdStatement.bind(
 				event.sourceId,
 				event.application == null ? "_unknown_" : event.application,
-				event.creationTime,
-				event.expiryTime,
-				event.id, 
-				event.transactionId, 
-				event.transactionName,
-				event.name,
-				event.slaRule != null ? event.slaRule.toConfiguration() : null));
+				event.id));
 	}
 	
 	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
@@ -429,32 +426,52 @@ public class CassandraStatementExecutor {
 	}
 	
 	
-	public void findParent(final String sourceId, String application, final CorrelationBySourceIdResult result) {
+	public TelemetryEvent findParent(final String sourceId, String application) {
 		ResultSet resultSet = this.session.execute(this.findParentStatementWithSourceIdAndApplication.bind(sourceId, application == null ? "_unknown_" : application));
 		Row row = resultSet.one();
 		if (row != null) {
-			result.id = row.getUUID(0);
-			result.transactionId = row.getUUID(1);
-			result.transactionName = row.getString(2);
-			result.creationTime = row.getDate(3);
-			result.expiryTime = row.getDate(4);
-			result.name = row.getString(5);
-			result.slaRule = SlaRule.fromConfiguration(row.getString(6));
+			return getTelemetryEvent(row.getUUID(0));
 		} else {
 			resultSet = this.session.execute(this.findParentStatementWithSourceId.bind(sourceId));
 			row = resultSet.one();
 			if (row != null) {
-				result.id = row.getUUID(0);
-				result.transactionId = row.getUUID(1);
-				result.transactionName = row.getString(2);
-				result.creationTime = row.getDate(3);
-				result.expiryTime = row.getDate(4);
-				result.name = row.getString(5);
-				result.slaRule = SlaRule.fromConfiguration(row.getString(6));		
+				return getTelemetryEvent(row.getUUID(0));
 			}
 		}
+		return null;
 	}
 	
+	private TelemetryEvent getTelemetryEvent(UUID id) {
+	    ResultSet resultSet = this.session.execute(this.selectTelemetryEventStatement.bind(id));
+		Row row = resultSet.one();
+		if (row != null) {
+			TelemetryEvent event = new TelemetryEvent();
+			event.id = id;
+			event.application = row.getString(0);
+			event.content = row.getString(1);
+			event.correlationCreationTime = row.getDate(2);
+			event.correlationData = row.getMap(3, String.class, String.class);
+			event.correlationId = row.getUUID(4);
+			event.correlationName = row.getString(5);
+			event.creationTime = row.getDate(6);
+			String direction = row.getString(7);
+			event.direction = direction == null ? null : TelemetryEventDirection.valueOf(direction);
+			event.endpoint = row.getString(8);
+			event.expiryTime = row.getDate(9);
+			event.metadata = row.getMap(10, String.class, String.class);
+			event.name = row.getString(11);
+			event.sourceCorrelationId = row.getString(12);
+			event.sourceId = row.getString(13);
+			event.transactionId = row.getUUID(14);
+			event.transactionName = row.getString(15);
+			String type = row.getString(16);
+			event.type = type == null ? null : TelemetryEventType.valueOf(type);
+			event.slaRule = SlaRule.fromConfiguration(row.getString(17));
+			return event;
+		}	    
+	    return null;
+    }
+
 	public void findAndMergeEndpointConfig(final String endpoint, final EndpointConfigResult result) {
 		if (endpoint == null) {
 			return;

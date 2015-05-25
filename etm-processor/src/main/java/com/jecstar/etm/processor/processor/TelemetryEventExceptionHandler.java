@@ -22,7 +22,7 @@ public class TelemetryEventExceptionHandler implements ExceptionHandler<Telemetr
 	public void handleEventException(Throwable t, long sequence, TelemetryEvent event) {
 		this.sourceCorrelations.removeTelemetryEvent(event);
 		if (log.isErrorLevelEnabled()) {
-			log.logErrorMessage("Unable to process event '" + event.id + "'.", t);
+			log.logErrorMessage("Unable to process event '" + event.id + "' with sourceId '" + event.sourceId + "'.", t);
 		}
 	}
 

@@ -9,7 +9,6 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.CorrelationBySourceIdResult;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
@@ -22,7 +21,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	private final EtmConfiguration etmConfiguration;
 	
 	private final TelemetryEventRepository telemetryEventRepository;
-	private final CorrelationBySourceIdResult correlationBySourceIdResult;
 	private final EndpointConfigResult endpointConfigResult;
 	private final Timer timer;
 	
@@ -32,7 +30,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.etmConfiguration = etmConfiguration;
-		this.correlationBySourceIdResult = new CorrelationBySourceIdResult();
 		this.endpointConfigResult = new EndpointConfigResult();
 		this.timer = timer;
 		
@@ -59,29 +56,34 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			// TODO point-to-point messages which are added twice -> they have the same sourceId, but one is the parent of the other.
 			if (needsCorrelation(event)) {
 				// Find the correlation event.
-				this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application, this.correlationBySourceIdResult.initialize());
-				if (event.correlationId == null) {
-					event.correlationId = this.correlationBySourceIdResult.id;
+				TelemetryEvent parent = this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application);
+				if (parent == null) {
+					System.out.println("Could not find " + event.sourceCorrelationId + "_" + event.application);
 				}
+				
+				if (event.correlationId == null) {
+					event.correlationId = parent.id;
+				}
+				// TODO the parent could be something other than the request in case of an point to point message. Find the event with specific type of request.
 				if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
 					// if this is a response, set the correlating data from the request on the response.
 					if (event.transactionId == null) {
-						event.transactionId = this.correlationBySourceIdResult.transactionId;
+						event.transactionId = parent.transactionId;
 					}
 					if (event.transactionName == null) {
-						event.transactionName = this.correlationBySourceIdResult.transactionName;
+						event.transactionName = parent.transactionName;
 					}
 					if (event.correlationCreationTime.getTime() == 0) {
-						event.correlationCreationTime.setTime(this.correlationBySourceIdResult.creationTime.getTime());
+						event.correlationCreationTime.setTime(parent.creationTime.getTime());
 					}
 					if (event.correlationExpiryTime.getTime() == 0) {
-						event.correlationExpiryTime.setTime(this.correlationBySourceIdResult.expiryTime.getTime());
+						event.correlationExpiryTime.setTime(parent.expiryTime.getTime());
 					}
 					if (event.correlationName == null) {
-						event.correlationName = this.correlationBySourceIdResult.name;
+						event.correlationName = parent.name;
 					}
 					if (event.slaRule == null) {
-						event.slaRule = this.correlationBySourceIdResult.slaRule;
+						event.slaRule = parent.slaRule;
 					}
 				}
 			}
