@@ -1,28 +1,34 @@
 package com.jecstar.etm.processor.processor;
 
+import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.processor.TelemetryEvent;
 import com.lmax.disruptor.ExceptionHandler;
 
-public class TelemetryEventExceptionHandler implements ExceptionHandler<TelemetryEvent> {
+public class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryCommand> {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
-	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventExceptionHandler.class);
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryCommandExceptionHandler.class);
 
 	private final SourceCorrelationCache sourceCorrelations;
 
-	public TelemetryEventExceptionHandler(SourceCorrelationCache sourceCorrelations) {
+	public TelemetryCommandExceptionHandler(SourceCorrelationCache sourceCorrelations) {
 		this.sourceCorrelations = sourceCorrelations;
 	}
 
 	@Override
-	public void handleEventException(Throwable t, long sequence, TelemetryEvent event) {
-		this.sourceCorrelations.removeTelemetryEvent(event);
-		if (log.isErrorLevelEnabled()) {
-			log.logErrorMessage("Unable to process event '" + event.id + "' with sourceId '" + event.sourceId + "'.", t);
+	public void handleEventException(Throwable t, long sequence, TelemetryCommand command) {
+		switch (command.commandType) {
+		case MESSAGE_EVENT:
+			this.sourceCorrelations.removeTelemetryEvent(command.messageEvent);
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Unable to process event '" + command.messageEvent.id + "'.", t);
+			}
+			break;
+		default:
+			break;
 		}
 	}
 

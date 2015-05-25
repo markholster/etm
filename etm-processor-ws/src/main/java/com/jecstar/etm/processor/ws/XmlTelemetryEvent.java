@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryMessageEventType;
 import com.jecstar.etm.processor.TelemetryEvent;
 
 public class XmlTelemetryEvent {
@@ -88,7 +88,7 @@ public class XmlTelemetryEvent {
 	    telemetryEvent.sourceId = this.sourceId;
 	    telemetryEvent.transactionName = this.transactionName;
 	    if (this.type != null) {
-	    	telemetryEvent.type = TelemetryEventType.valueOf(this.type.name());
+	    	telemetryEvent.type = TelemetryMessageEventType.valueOf(this.type.name());
 	    }
     }
 

@@ -1,0 +1,18 @@
+package com.jecstar.etm.core;
+
+import java.util.UUID;
+
+public class TelemetryEvent {
+
+	/**
+	 * The unique ID of the event.
+	 */
+	public UUID id;
+	
+	/**
+	 * The ID of the source of this event, for example a JMSMessageID.
+	 */
+	public String sourceId;
+
+
+}

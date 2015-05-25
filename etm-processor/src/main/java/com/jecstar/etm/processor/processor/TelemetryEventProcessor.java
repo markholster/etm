@@ -1,7 +1,6 @@
 package com.jecstar.etm.processor.processor;
 
 import java.nio.channels.IllegalSelectorException;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -10,17 +9,14 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.EtmException;
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryCommand;
+import com.jecstar.etm.core.TelemetryCommand.CommandType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.parsers.ExpressionParser;
-import com.jecstar.etm.processor.EventCommand;
-import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryEventProcessor {
 	
-	private RingBuffer<TelemetryEvent> ringBuffer;
+	private RingBuffer<TelemetryCommand> ringBuffer;
 	private boolean started = false;
 	
 	private ExecutorService executorService;
@@ -52,7 +48,7 @@ public class TelemetryEventProcessor {
 			throw new IllegalStateException();
 		}
 		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.solrClient, this.persistenceEnvironment, this.metricRegistry);
-		RingBuffer<TelemetryEvent> newRingBuffer = newDisruptorEnvironment.start();
+		RingBuffer<TelemetryCommand> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
 		this.ringBuffer = newRingBuffer;
@@ -78,7 +74,7 @@ public class TelemetryEventProcessor {
 	}
 
 
-	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {
+	public void processTelemetryEvent(final TelemetryCommand telemetryCommand) {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
@@ -86,11 +82,11 @@ public class TelemetryEventProcessor {
 			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
 		}
 		final Context timerContext = this.offerTimer.time();
-		TelemetryEvent target = null;
+		TelemetryCommand target = null;
 		long sequence = this.ringBuffer.next();
 		try {
 			target = this.ringBuffer.get(sequence);
-			target.initialize(telemetryEvent);
+			target.initialize(telemetryCommand);
 			preProcess(target);
 		} finally {
 			this.ringBuffer.publish(sequence);
@@ -104,9 +100,9 @@ public class TelemetryEventProcessor {
 	public void requestDocumentsFlush() {
 		long sequence = this.ringBuffer.next();
 		try {
-			TelemetryEvent target = this.ringBuffer.get(sequence);
+			TelemetryCommand target = this.ringBuffer.get(sequence);
 			target.initialize();
-			target.eventCommand = EventCommand.FLUSH_DOCUMENTS;
+			target.commandType = CommandType.FLUSH_DOCUMENTS;
 		} finally {
 			this.ringBuffer.publish(sequence);
 		}
@@ -116,78 +112,9 @@ public class TelemetryEventProcessor {
 	    return this.metricRegistry;
     }
 	
-	private void preProcess(TelemetryEvent event) {
-		if (event.creationTime.getTime() == 0) {
-			event.creationTime.setTime(System.currentTimeMillis());
+	private void preProcess(TelemetryCommand command) {
+		if (CommandType.MESSAGE_EVENT.equals(command.commandType)) {
+			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(command.messageEvent);
 		}
-		EndpointConfigResult endpointConfig = null;
-		if (event.retention.getTime() == 0) {
-			// Retention time should actually be the current time added with the
-			// configured retention time, but that would cause performance
-			// problems while cleaning up: Now, the partition key is removed, so
-			// everything with the creation time in the same hour (the partition
-			// key) is removed with one statement. If the actual addition time
-			// is taken into account each and every row should be deleted one by
-			// one. This would cause a huge performance degradation.
-			event.retention.setTime(event.creationTime.getTime() + this.etmConfiguration.getDataRetentionTime());
-		}
-		if ((event.transactionName == null || event.name == null)&& TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-			// A little bit of enhancement before the event is processed by the
-			// disruptor. We need to make sure the eventName & transactionName
-			// is determined because the correlation of the transaction data on
-			// the response will fail if the request and response are processed
-			// at exactly the same time. By determining the event name &
-			// transaction name at this point, the only requirement is that the
-			// request is offered to ETM before the response, which is quite
-			// logical.
-			endpointConfig = new EndpointConfigResult();
-			this.disruptorEnvironment.findEndpointConfig(event.endpoint, endpointConfig, this.etmConfiguration.getEndpointCacheExpiryTime());
-			if (endpointConfig.eventNameParsers != null && endpointConfig.eventNameParsers.size() > 0) {
-				event.name = parseValue(endpointConfig.eventNameParsers, event.content);
-			}
-			if (endpointConfig.transactionNameParsers != null && endpointConfig.transactionNameParsers.size() > 0) {
-				event.transactionName = parseValue(endpointConfig.transactionNameParsers, event.content);
-			}
-			if (event.transactionName != null) {
-				event.slaRule = endpointConfig.slaRules.get(event.transactionName);
-			}
-		}
-		if (event.transactionName != null) {
-			event.transactionId = event.id;
-		}
-		if (event.sourceId != null) {
-			if (event.application == null) {
-				if (endpointConfig == null) {
-					endpointConfig = new EndpointConfigResult();
-					this.disruptorEnvironment.findEndpointConfig(event.endpoint, endpointConfig, this.etmConfiguration.getEndpointCacheExpiryTime());
-				}
-				event.application = parseValue(endpointConfig.applicationParsers, event.content);
-			}
-			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(event);
-		}
-	}
-	
-	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
-		if (content == null || expressionParsers == null) {
-			return null;
-		}
-		for (ExpressionParser expressionParser : expressionParsers) {
-			String value = parseValue(expressionParser, content);
-			if (value != null) {
-				return value;
-			}
-		}
-		return null;
-    }
-	
-	private String parseValue(ExpressionParser expressionParser, String content) {
-		if (expressionParser == null || content == null) {
-			return null;
-		}
-		String value = expressionParser.evaluate(content);
-		if (value != null && value.trim().length() > 0) {
-			return value;
-		}
-		return null;
 	}
 }

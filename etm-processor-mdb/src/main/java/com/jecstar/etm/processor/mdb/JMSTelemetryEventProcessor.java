@@ -15,7 +15,7 @@ import javax.xml.bind.Unmarshaller;
 
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryMessageEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -151,12 +151,12 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	private void customAchmea() {
 		String companyName = configration.getCompanyName();
 		if (companyName.startsWith("Achmea")) {
-			if (TelemetryEventType.MESSAGE_DATAGRAM.equals(this.telemetryEvent.type)) {
+			if (TelemetryMessageEventType.MESSAGE_DATAGRAM.equals(this.telemetryEvent.type)) {
 				if (this.telemetryEvent.content != null) {
 					if (this.telemetryEvent.content.indexOf("Request") != -1) {
-						this.telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
+						this.telemetryEvent.type = TelemetryMessageEventType.MESSAGE_REQUEST;
 					} else if (this.telemetryEvent.content.indexOf("Response") != -1) {
-						this.telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
+						this.telemetryEvent.type = TelemetryMessageEventType.MESSAGE_RESPONSE;
 					}
 				}
 			}
@@ -168,18 +168,18 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		String messageType = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TYPE);
 		if (messageType != null) {
 			try {
-				telemetryEvent.type = TelemetryEventType.valueOf(messageType);
+				telemetryEvent.type = TelemetryMessageEventType.valueOf(messageType);
 				return;
 			} catch (IllegalArgumentException e) {
 			}
 		}
 		int ibmMsgType = message.getIntProperty("JMS_IBM_MsgType");
 		if (ibmMsgType == 1) {
-			telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
+			telemetryEvent.type = TelemetryMessageEventType.MESSAGE_REQUEST;
 		} else if (ibmMsgType == 2) {
-			telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
+			telemetryEvent.type = TelemetryMessageEventType.MESSAGE_RESPONSE;
 		} else if (ibmMsgType == 8) {
-			telemetryEvent.type = TelemetryEventType.MESSAGE_DATAGRAM;
+			telemetryEvent.type = TelemetryMessageEventType.MESSAGE_DATAGRAM;
 		}
 	}
 

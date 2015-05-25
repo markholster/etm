@@ -2,13 +2,14 @@ package com.jecstar.etm.processor.repository;
 
 import java.util.concurrent.TimeUnit;
 
-import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.core.TelemetryEvent;
+import com.jecstar.etm.core.TelemetryMessageEvent;
 
 public interface TelemetryEventRepository {
 
-	void persistTelemetryEvent(TelemetryEvent telemetryEvent, TimeUnit statisticsTimeUnit);
+	void persistTelemetryEvent(TelemetryMessageEvent telemetryMessageEvent, TimeUnit statisticsTimeUnit);
 	
-	TelemetryEvent findParent(String sourceId, String application);
+	TelemetryEvent findParent(String sourceId);
 	
 	void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime);
 }

@@ -16,7 +16,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryMessageEventType;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
@@ -136,12 +136,12 @@ public class RestTelemetryEventProcessor {
 		}
 	}
 
-	private TelemetryEventType determineEventType(String eventType) {
+	private TelemetryMessageEventType determineEventType(String eventType) {
 		try {
-			return TelemetryEventType.valueOf(eventType);
+			return TelemetryMessageEventType.valueOf(eventType);
 		} catch (IllegalArgumentException e) {
 			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Unable to determine TelemetryEventType for '" + eventType + "'.", e);
+				log.logErrorMessage("Unable to determine TelemetryMessageEventType for '" + eventType + "'.", e);
 			}
 			throw new WebApplicationException(Response.Status.BAD_REQUEST);
 		}

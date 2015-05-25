@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryMessageEventType;
 
 public class CorrelationData {
 
@@ -14,7 +14,7 @@ public class CorrelationData {
 	public Map<String, String> data = new HashMap<String, String>(); 
 	public Date validFrom;
 	public Date validTill;
-	public TelemetryEventType type;
+	public TelemetryMessageEventType type;
 	public boolean expired;
 
 }

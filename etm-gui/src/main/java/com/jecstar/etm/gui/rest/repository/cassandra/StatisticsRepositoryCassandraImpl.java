@@ -19,7 +19,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryMessageEventType;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.core.util.DateUtils;
 import com.jecstar.etm.gui.rest.repository.Average;
@@ -285,13 +285,13 @@ public class StatisticsRepositoryCassandraImpl implements StatisticsRepository {
 							for (UUID childId : childIds) {
 								Row childRow = this.session.execute(this.selectEventExpirationDataStatement.bind(childId)).one();
 								if (childRow != null) {
-									TelemetryEventType type = null;
+									TelemetryMessageEventType type = null;
 									try {
-										type = TelemetryEventType.valueOf(childRow.getString(1));
+										type = TelemetryMessageEventType.valueOf(childRow.getString(1));
 									} catch (Exception e) {
 										continue;
 									}
-									if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
+									if (TelemetryMessageEventType.MESSAGE_RESPONSE.equals(type)) {
 										// False positive, update the expiration table
 										messageFinishTime = childRow.getDate(0);
 										this.session.executeAsync(this.updateMessageExpirationStatement.bind(messageFinishTime, rowKey, messageExpiryTime, id));

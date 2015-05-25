@@ -32,7 +32,7 @@ import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryMessageEventType;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -220,10 +220,10 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 					if (o1.type == null ^ o2.type == null || o1.type.equals(o2.type)) {
 						return 0;
 					}
-					if (TelemetryEventType.MESSAGE_RESPONSE.equals(o1.type)) {
+					if (TelemetryMessageEventType.MESSAGE_RESPONSE.equals(o1.type)) {
 						// Response messages last.
 						return 1;
-					} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(o2.type)) {
+					} else if (TelemetryMessageEventType.MESSAGE_RESPONSE.equals(o2.type)) {
 						// Response messages last
 						return -1;
 					}
@@ -237,7 +237,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 	}
 
 	private void calculateResponseTimes(OverviewEvent overviewEvent) {
-		if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+		if (TelemetryMessageEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
 			OverviewEvent response = overviewEvent.getMessageResponseOverviewEvent();
 			if (response != null) {
 				long responseTime = response.creationTime - overviewEvent.creationTime;
@@ -253,11 +253,11 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 	}
 
 	private long getTotalOverviewTime(OverviewEvent overviewEvent) {
-		if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+		if (TelemetryMessageEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
 			return overviewEvent.responseTime;
 		}
 		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
-			if (TelemetryEventType.MESSAGE_REQUEST.equals(childOverviewEvent.type)) {
+			if (TelemetryMessageEventType.MESSAGE_REQUEST.equals(childOverviewEvent.type)) {
 				return childOverviewEvent.responseTime;
 			}
 		}
@@ -269,10 +269,10 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 	}
 
 	private void calculateFillColors(OverviewEvent overviewEvent, long totalOverviewTime) {
-		if (TelemetryEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
+		if (TelemetryMessageEventType.MESSAGE_REQUEST.equals(overviewEvent.type)) {
 			OverviewEvent response = overviewEvent.getMessageResponseOverviewEvent();
 			if (response != null) {
-				long childResponseTimes = overviewEvent.children.stream().filter(c -> TelemetryEventType.MESSAGE_REQUEST.equals(c.type))
+				long childResponseTimes = overviewEvent.children.stream().filter(c -> TelemetryMessageEventType.MESSAGE_REQUEST.equals(c.type))
 				        .mapToLong(c -> c.responseTime).sum();
 				overviewEvent.absoluteResponseTime = overviewEvent.responseTime - childResponseTimes;
 				response.absoluteResponseTime = overviewEvent.absoluteResponseTime;
@@ -293,7 +293,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 			} else if (overviewEvent.expirationTime > -1) {
 				overviewEvent.color = "#ff0000";
 			}
-		} else if (TelemetryEventType.MESSAGE_DATAGRAM.equals(overviewEvent.type)) {
+		} else if (TelemetryMessageEventType.MESSAGE_DATAGRAM.equals(overviewEvent.type)) {
 			overviewEvent.color = "#eeeeee";
 		}
 		for (OverviewEvent childOverviewEvent : overviewEvent.children) {
@@ -303,7 +303,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 
 	private void calculateCounters(OverviewEvent overviewEvent, List<String> appNames, AtomicInteger eventCount, AtomicInteger eventDepth) {
 		eventCount.incrementAndGet();
-		if (!TelemetryEventType.MESSAGE_RESPONSE.equals(overviewEvent.type) && overviewEvent.application != null) {
+		if (!TelemetryMessageEventType.MESSAGE_RESPONSE.equals(overviewEvent.type) && overviewEvent.application != null) {
 			int appIx = appNames.lastIndexOf(overviewEvent.application);
 			if (appIx == -1) {
 				appNames.add(overviewEvent.application);
@@ -441,19 +441,19 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 				// impossibly be a parent.
 				continue;
 			}
-			TelemetryEventType type = null;
+			TelemetryMessageEventType type = null;
 			try {
-				type = TelemetryEventType.valueOf(row.getString(3));
+				type = TelemetryMessageEventType.valueOf(row.getString(3));
 			} catch (Exception e) {
 				// Without a type we cannot securely correlate by data.
 				continue;
 			}
-			if (TelemetryEventType.MESSAGE_DATAGRAM.equals(type)) {
+			if (TelemetryMessageEventType.MESSAGE_DATAGRAM.equals(type)) {
 				// Closest correlated event is a datagram message. It's still a
 				// guess if this event is the parent event, but it's a pretty
 				// good guess after all.
 				return correlationResult.id;
-			} else if (TelemetryEventType.MESSAGE_REQUEST.equals(type)) {
+			} else if (TelemetryMessageEventType.MESSAGE_REQUEST.equals(type)) {
 				// Check if the response of the found event is created after the
 				// finish time of this event. If so, we've got a winner.
 				List<UUID> childIds = row.getList(1, UUID.class);
@@ -478,7 +478,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 					if (row == null) {
 						continue;
 					} else if (correlationResult.id.equals(row.getUUID(1))
-					        && TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
+					        && TelemetryMessageEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
 						Date responseDate = row.getDate(0);
 						if (!responseDate.before(correlationData.validTill)) {
 							// The response creation time if not before this
@@ -492,7 +492,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 						}
 					}
 				}
-			} else if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
+			} else if (TelemetryMessageEventType.MESSAGE_RESPONSE.equals(type)) {
 				// On first sight it seems impossible that a response message is
 				// a parent of any other event, but it is possible! When the
 				// data of a response is used in a consecutive request the
@@ -576,7 +576,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 		}
 		overviewEvent.name = row.getString(6);
 		try {
-			overviewEvent.type = TelemetryEventType.valueOf(row.getString(7));
+			overviewEvent.type = TelemetryMessageEventType.valueOf(row.getString(7));
 		} catch (IllegalArgumentException | NullPointerException e) {
 		}
 
@@ -589,7 +589,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 		if (correlationData == null || correlationData.data.size() == 0) {
 			return result;
 		}
-		if (TelemetryEventType.MESSAGE_DATAGRAM.equals(correlationData.type)) {
+		if (TelemetryMessageEventType.MESSAGE_DATAGRAM.equals(correlationData.type)) {
 			correlationData.validTill.setTime(correlationData.validTill.getTime() + this.etmConfiguration.getDataCorrelationTimeOffset());
 		}
 		List<CorrelationResult> correlatingResults = getCorrelationResults(eventId, correlationData.data, correlationData.validFrom,
@@ -687,7 +687,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 	
 	/**
 	 * Check if the given <code>UUID</code> represents a
-	 * {@link TelemetryEventType.MESSAGE_REQUEST} and, if so, returns the
+	 * {@link TelemetryMessageEventType.MESSAGE_REQUEST} and, if so, returns the
 	 * correlation data of the corresponding response.
 	 * 
 	 * @param eventId
@@ -698,7 +698,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 		if (row == null) {
 			return null;
 		}
-		if (!TelemetryEventType.MESSAGE_REQUEST.name().equals(row.getString(5))) {
+		if (!TelemetryMessageEventType.MESSAGE_REQUEST.name().equals(row.getString(5))) {
 			return null;
 		}
 		List<UUID> correlations = row.getList(2,UUID.class);
@@ -710,7 +710,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 			if (row == null) {
 				continue;
 			}
-			if (!TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(5))) {
+			if (!TelemetryMessageEventType.MESSAGE_RESPONSE.name().equals(row.getString(5))) {
 				continue;
 			}
 			ResponseCorrelationData result = new ResponseCorrelationData();
@@ -739,15 +739,15 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 		result.validTill = new Date(result.validFrom.getTime());
 		Date expiryTime = row.getDate(4);
 		try {
-			result.type = TelemetryEventType.valueOf(row.getString(5));
+			result.type = TelemetryMessageEventType.valueOf(row.getString(5));
 		} catch (Exception e) {
 			// Without a type we cannot securely correlate by data.
 			return null;
 		}
-		if (TelemetryEventType.MESSAGE_RESPONSE.equals(result.type)) {
+		if (TelemetryMessageEventType.MESSAGE_RESPONSE.equals(result.type)) {
 			// A response should always be correlated by it's
 			// sourceCorrelationId, not by data.
-		} else if (TelemetryEventType.MESSAGE_REQUEST.equals(result.type)) {
+		} else if (TelemetryMessageEventType.MESSAGE_REQUEST.equals(result.type)) {
 			// Initially set the scope of a request to it's expiry time.
 			if (expiryTime != null && expiryTime.getTime() != 0) {
 				result.validTill.setTime(expiryTime.getTime());
@@ -757,7 +757,7 @@ public class QueryRepositoryCassandraImpl implements QueryRepository {
 				row = this.session.execute(this.findChildEventCreationTimeStatement.bind(childId)).one();
 				if (row == null) {
 					continue;
-				} else if (eventId.equals(row.getUUID(1)) && TelemetryEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
+				} else if (eventId.equals(row.getUUID(1)) && TelemetryMessageEventType.MESSAGE_RESPONSE.name().equals(row.getString(2))) {
 					// We've found the response. Set the finishTime to the time
 					// the response was created.
 					Date responseCreationTime = row.getDate(0);

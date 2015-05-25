@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.TelemetryMessageEventType;
 
 public class OverviewEvent {
 
@@ -20,7 +20,7 @@ public class OverviewEvent {
 	
 	public TelemetryEventDirection direction;
 	
-	public TelemetryEventType type;
+	public TelemetryMessageEventType type;
 	
 	public String name;
 	
@@ -35,13 +35,13 @@ public class OverviewEvent {
 	public List<OverviewEvent> children = new ArrayList<OverviewEvent>();
 	
 	public OverviewEvent getMessageResponseOverviewEvent() {
-		if (!TelemetryEventType.MESSAGE_REQUEST.equals(this.type)) {
+		if (!TelemetryMessageEventType.MESSAGE_REQUEST.equals(this.type)) {
 			return null;
 		}
 		if (this.children.size() == 0) {
 			return null;
 		}
-		Optional<OverviewEvent> optionalResponse = this.children.stream().filter(p -> TelemetryEventType.MESSAGE_RESPONSE.equals(p.type)).findFirst();
+		Optional<OverviewEvent> optionalResponse = this.children.stream().filter(p -> TelemetryMessageEventType.MESSAGE_RESPONSE.equals(p.type)).findFirst();
 		if (!optionalResponse.isPresent()) {
 			return null;
 		}

@@ -6,8 +6,8 @@ import java.util.concurrent.ExecutorService;
 import org.apache.solr.client.solrj.SolrClient;
 
 import com.codahale.metrics.MetricRegistry;
+import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.RingBuffer;
@@ -17,13 +17,13 @@ import com.lmax.disruptor.dsl.ProducerType;
 
 public class DisruptorEnvironment {
 
-	private final Disruptor<TelemetryEvent> disruptor;
+	private final Disruptor<TelemetryCommand> disruptor;
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final IndexingEventHandler[] indexingEventHandlers;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final SolrClient solrClient, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
-		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
-		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler(persistenceEnvironment.getProcessingMap()));
+		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
+		this.disruptor.handleExceptionsWith(new TelemetryCommandExceptionHandler(persistenceEnvironment.getProcessingMap()));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		this.telemetryEventRepository = persistenceEnvironment.createTelemetryEventRepository();
@@ -50,7 +50,7 @@ public class DisruptorEnvironment {
 		}
 	}
 	
-	public RingBuffer<TelemetryEvent> start() {
+	public RingBuffer<TelemetryCommand> start() {
 		return this.disruptor.start();
 	}
 
