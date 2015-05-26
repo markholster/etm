@@ -6,12 +6,12 @@ import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 
-public class JsonExpressionParser implements ExpressionParser {
+public class JsonPathExpressionParser implements ExpressionParser {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
-	private static final LogWrapper log = LogFactory.getLogger(JsonExpressionParser.class);
+	private static final LogWrapper log = LogFactory.getLogger(JsonPathExpressionParser.class);
 	
 	private final JsonPath path;
 	
@@ -20,7 +20,7 @@ public class JsonExpressionParser implements ExpressionParser {
 	}
 	
 	
-	public JsonExpressionParser(String path) {
+	public JsonPathExpressionParser(String path) {
 		this.path = JsonPath.compile(path);
 		if (!this.path.isDefinite()) {
 			throw new EtmException(EtmException.INVALID_JSON_EXPRESSION);

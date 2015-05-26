@@ -1,14 +1,18 @@
 package com.jecstar.etm.processor.repository.cassandra;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
-import com.jecstar.etm.core.sla.SlaRule;
+import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
 public class CassandraStatementExecutor {
 	
@@ -33,7 +37,7 @@ public class CassandraStatementExecutor {
 //	private final PreparedStatement updateTransactionNameCounterStatement;
 //	private final PreparedStatement findParentStatementWithSourceIdAndApplication;
 //	private final PreparedStatement findParentStatementWithSourceId;
-//	private final PreparedStatement findEndpointConfigStatement;
+	private final PreparedStatement findEndpointConfigStatement;
 //	private final PreparedStatement selectTelemetryEventStatement;
 	
 	public CassandraStatementExecutor(final Session session) {
@@ -184,14 +188,13 @@ public class CassandraStatementExecutor {
 //		this.findParentStatementWithSourceId = session.prepare("select "
 //				+ "id "
 //				+ "from sourceid_id_correlation where sourceId = ?;");
-//		this.findEndpointConfigStatement = session.prepare("select "
-//				+ "direction, "
-//				+ "applicationParsers, "
-//				+ "eventNameParsers, "
-//				+ "correlationParsers, "
-//				+ "transactionNameParsers, "
-//				+ "slaRules "
-//				+ "from endpoint_config where endpoint = ?;");
+		this.findEndpointConfigStatement = session.prepare("select "
+				+ "readingApplicationParsers, "
+				+ "writingApplicationParsers, "
+				+ "eventNameParsers, "
+				+ "correlationParsers, "
+				+ "transactionNameParsers "
+				+ "from endpoint_config where endpoint = ?;");
 //		this.selectTelemetryEventStatement = session.prepare("select "
 //				+ "application, "
 //				+ "content, "
@@ -461,53 +464,45 @@ public class CassandraStatementExecutor {
 //	    return null;
 //    }
 //
-//	public void findAndMergeEndpointConfig(final String endpoint, final EndpointConfigResult result) {
-//		if (endpoint == null) {
-//			return;
-//		}
-//		final ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(endpoint));
-//		Row row = resultSet.one();
-//		if (row != null) {
-//			mergeRowIntoEndpointConfig(row, result);
-//		}
-//	}
-//	
-//	private void mergeRowIntoEndpointConfig(final Row row, final EndpointConfigResult result) {
-//		String direction = row.getString(0);
-//		if (direction != null) {
-//			result.eventDirection = TelemetryEventDirection.valueOf(direction);
-//		}
-//		if (result.applicationParsers == null) {
-//			result.applicationParsers = createExpressionParsers(row.getList(1, String.class));
-//		} else {
-//			result.applicationParsers.addAll(0, createExpressionParsers(row.getList(1, String.class)));
-//		}
-//		if (result.eventNameParsers == null) {
-//			result.eventNameParsers = createExpressionParsers(row.getList(2, String.class));
-//		} else {
-//			result.eventNameParsers.addAll(0, createExpressionParsers(row.getList(2, String.class)));
-//		}
-//		Map<String, String> map = row.getMap(3, String.class, String.class);
-//		Iterator<String> iterator = map.keySet().iterator();
-//		while (iterator.hasNext()) {
-//			String key = iterator.next();
-//			result.correlationDataParsers.put(key, ExpressionParserFactory.createExpressionParserFromConfiguration(map.get(key)));
-//		}
-//		if (result.transactionNameParsers == null) {
-//			result.transactionNameParsers = createExpressionParsers(row.getList(4, String.class));
-//		} else {
-//			result.transactionNameParsers.addAll(0, createExpressionParsers(row.getList(4, String.class)));
-//		}
-//		map = row.getMap(5, String.class, String.class);
-//		iterator = map.keySet().iterator();
-//		while (iterator.hasNext()) {
-//			String key = iterator.next();
-//			SlaRule slaRule = createSlaRule(map.get(key));
-//			if (slaRule != null) {
-//				result.slaRules.put(key, slaRule);
-//			}
-//		}
-//    }
+	public void findAndMergeEndpointConfig(final String endpoint, final EndpointConfigResult result) {
+		if (endpoint == null) {
+			return;
+		}
+		final ResultSet resultSet = this.session.execute(this.findEndpointConfigStatement.bind(endpoint));
+		Row row = resultSet.one();
+		if (row != null) {
+			mergeRowIntoEndpointConfig(row, result);
+		}
+	}
+	
+	private void mergeRowIntoEndpointConfig(final Row row, final EndpointConfigResult result) {
+		if (result.readingApplicationParsers == null) {
+			result.readingApplicationParsers = createExpressionParsers(row.getList(0, String.class));
+		} else {
+			result.readingApplicationParsers.addAll(0, createExpressionParsers(row.getList(0, String.class)));
+		}
+		if (result.writingApplicationParsers == null) {
+			result.writingApplicationParsers = createExpressionParsers(row.getList(1, String.class));
+		} else {
+			result.writingApplicationParsers.addAll(0, createExpressionParsers(row.getList(1, String.class)));
+		}
+		if (result.eventNameParsers == null) {
+			result.eventNameParsers = createExpressionParsers(row.getList(2, String.class));
+		} else {
+			result.eventNameParsers.addAll(0, createExpressionParsers(row.getList(2, String.class)));
+		}
+		Map<String, String> map = row.getMap(3, String.class, String.class);
+		Iterator<String> iterator = map.keySet().iterator();
+		while (iterator.hasNext()) {
+			String key = iterator.next();
+			result.correlationDataParsers.put(key, ExpressionParserFactory.createExpressionParserFromConfiguration(map.get(key)));
+		}
+		if (result.transactionNameParsers == null) {
+			result.transactionNameParsers = createExpressionParsers(row.getList(4, String.class));
+		} else {
+			result.transactionNameParsers.addAll(0, createExpressionParsers(row.getList(4, String.class)));
+		}
+    }
 
 	private List<ExpressionParser> createExpressionParsers(final List<String> expressions) {
 		if (expressions == null) {
@@ -519,13 +514,6 @@ public class CassandraStatementExecutor {
 		}
 		return expressionParsers;
 	}
-	
-
-	
-	private SlaRule createSlaRule(String slaConfiguration) {
-	    return SlaRule.fromConfiguration(slaConfiguration);
-    }
-
 
 	public ResultSet execute(BatchStatement batchCounterStatement) {
 	    return this.session.execute(batchCounterStatement);

@@ -39,7 +39,7 @@ import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.FixedPositionExpressionParser;
 import com.jecstar.etm.core.parsers.FixedValueExpressionParser;
-import com.jecstar.etm.core.parsers.JsonExpressionParser;
+import com.jecstar.etm.core.parsers.JsonPathExpressionParser;
 import com.jecstar.etm.core.parsers.XPathExpressionParser;
 import com.jecstar.etm.core.parsers.XsltExpressionParser;
 import com.jecstar.etm.gui.rest.repository.EndpointConfiguration;
@@ -266,7 +266,7 @@ public class AdminService {
 				} else if ("xslt".equals(type)) {
 					expressionParser = new XsltExpressionParser(transformerFactory, expression);
 				} else if ("json".equals(type)) {
-					expressionParser = new JsonExpressionParser(expression);
+					expressionParser = new JsonPathExpressionParser(expression);
 				} else {
 					if (log.isErrorLevelEnabled()) {
 						log.logErrorMessage("Unable to determine expression parser type '" + type + "'.");
@@ -314,9 +314,9 @@ public class AdminService {
 			generator.writeStringField("type", "xslt");
 			XsltExpressionParser parser = (XsltExpressionParser) expressionParser;
 			generator.writeStringField("template", parser.getTemplate());
-		} else if (expressionParser instanceof JsonExpressionParser) {
+		} else if (expressionParser instanceof JsonPathExpressionParser) {
 			generator.writeStringField("type", "json");
-			JsonExpressionParser parser = (JsonExpressionParser) expressionParser;
+			JsonPathExpressionParser parser = (JsonPathExpressionParser) expressionParser;
 			generator.writeStringField("path", parser.getPath());
 		} else {
 			generator.writeStringField("type", "unknown");

@@ -5,7 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Test class for the <code>JsonExpressionParser</code> class.
+ * Test class for the <code>JsonPathExpressionParser</code> class.
  * 
  * @author Mark Holster
  */
@@ -45,7 +45,7 @@ public class JsonExpressionParserTest {
 	
 	@Test
 	public void testEvaluate() {
-		JsonExpressionParser parser = new JsonExpressionParser("$.store.book[0].author");
+		JsonPathExpressionParser parser = new JsonPathExpressionParser("$.store.book[0].author");
 		Assert.assertEquals("Nigel Rees", parser.evaluate(json));
 		
 	}

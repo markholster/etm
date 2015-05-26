@@ -46,7 +46,7 @@ public final class ExpressionParserFactory {
 					   expression.charAt(3) == 'n' &&
 					   expression.charAt(4) == ':') {
 				try {
-					return new JsonExpressionParser(expression.substring(5));
+					return new JsonPathExpressionParser(expression.substring(5));
 				} catch (EtmException e) {
 					new FixedValueExpressionParser(null);
 				} 
@@ -108,8 +108,8 @@ public final class ExpressionParserFactory {
 			return "xslt:" + ((XsltExpressionParser)expressionParser).getTemplate();
 		} else if (expressionParser instanceof XPathExpressionParser) {
 			return "xpath:" + ((XPathExpressionParser)expressionParser).getExpression();
-		} else if (expressionParser instanceof JsonExpressionParser) {
-			return "json:" + ((JsonExpressionParser)expressionParser).getPath();
+		} else if (expressionParser instanceof JsonPathExpressionParser) {
+			return "json:" + ((JsonPathExpressionParser)expressionParser).getPath();
 		} else if (expressionParser instanceof FixedPositionExpressionParser) {
 			FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
 			String config = "fixed:";

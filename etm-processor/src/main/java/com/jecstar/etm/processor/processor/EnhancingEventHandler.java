@@ -4,7 +4,9 @@ import java.util.List;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.core.EndpointHandler;
 import com.jecstar.etm.core.TelemetryCommand;
+import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
@@ -22,7 +24,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private final EndpointConfigResult endpointConfigResult;
 	private final Timer timer;
 	
-	
 	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration, final Timer timer) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
@@ -38,90 +39,54 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		if (sequence % this.numberOfConsumers != this.ordinal) {
 			return;
 		}
-		final Context timerContext = this.timer.time();
-		try {
-//			this.endpointConfigResult.initialize();
-//			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
-//			// First determine the application name.
-//			if (event.application == null) {
-//				if (event.application == null) {
-//					event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
-//				}			
-//			}
-//			// TODO point-to-point messages which are added twice -> they have the same sourceId, but one is the parent of the other.
-//			if (needsCorrelation(event)) {
-//				// Find the correlation event.
-//				TelemetryEvent parent = this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application);
-//				if (parent == null) {
-//					System.out.println("Could not find " + event.sourceCorrelationId + "_" + event.application);
-//				}
-//				
-//				if (event.correlationId == null) {
-//					event.correlationId = parent.id;
-//				}
-//				// TODO the parent could be something other than the request in case of an point to point message. Find the event with specific type of request.
-//				if (TelemetryMessageEventType.MESSAGE_RESPONSE.equals(event.type)) {
-//					// if this is a response, set the correlating data from the request on the response.
-//					if (event.transactionId == null) {
-//						event.transactionId = parent.transactionId;
-//					}
-//					if (event.transactionName == null) {
-//						event.transactionName = parent.transactionName;
-//					}
-//					if (event.correlationCreationTime.getTime() == 0) {
-//						event.correlationCreationTime.setTime(parent.creationTime.getTime());
-//					}
-//					if (event.correlationExpiryTime.getTime() == 0) {
-//						event.correlationExpiryTime.setTime(parent.expiryTime.getTime());
-//					}
-//					if (event.correlationName == null) {
-//						event.correlationName = parent.name;
-//					}
-//					if (event.slaRule == null) {
-//						event.slaRule = parent.slaRule;
-//					}
-//				}
-//			}
-//			if (event.name == null || event.direction == null || event.transactionName == null || event.slaRule == null) {
-//				if (event.name == null && event.content != null) {
-//					event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
-//				}
-//				if (event.direction == null) {
-//					event.direction = this.endpointConfigResult.eventDirection;
-//				}
-//				if (event.transactionName == null) {
-//					event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
-//					if (event.transactionName != null) {
-//						event.transactionId = event.id;
-//					}
-//				}
-//				if (event.slaRule == null && event.transactionName != null) {
-//					event.slaRule = this.endpointConfigResult.slaRules.get(event.transactionName);
-//				}
-//	 		}
-//			if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
-//				this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
-//					String parsedValue = parseValue(v, event.content);
-//					if (parsedValue != null) {
-//						event.correlationData.put(k, parsedValue);
-//					}
-//				});
-//			}
-		} finally {
-			timerContext.stop();
+		switch (command.commandType) {
+		case MESSAGE_EVENT:
+			enhanceTelemetryMessageEvent(command.messageEvent);
+			break;
+		default:
+			break;
 		}
 	}
 	
-//	private boolean needsCorrelation(final TelemetryEvent event) {
-//		if (event.sourceCorrelationId != null && event.correlationId == null) {
-//			return true;
-//		} else if (event.sourceCorrelationId != null
-//		        && ((event.transactionId == null || event.transactionName == null || event.correlationCreationTime.getTime() == 0 || event.correlationExpiryTime
-//		                .getTime() == 0) && TelemetryMessageEventType.MESSAGE_RESPONSE.equals(event.type))) {
-//			return true;
-//		}
-//		return false;
-//	}
+
+	private void enhanceTelemetryMessageEvent(TelemetryMessageEvent event) {
+		final Context timerContext = this.timer.time();
+		try {
+			this.endpointConfigResult.initialize();
+			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
+			if (event.name == null) {
+				event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
+			}
+			if (event.writingEndpointHandler.applicationName == null) {
+				event.writingEndpointHandler.applicationName = parseValue(this.endpointConfigResult.writingApplicationParsers, event.content);
+			}
+			if (event.writingEndpointHandler.handlingTime.getTime() == 0) {
+				event.writingEndpointHandler.handlingTime.setTime(System.currentTimeMillis());
+			}
+			if (event.readingEndpointHandlers.size() == 0) {
+				String readingApplication = parseValue(this.endpointConfigResult.readingApplicationParsers, event.content);
+				if (readingApplication != null) {
+					EndpointHandler endpointHandler = new EndpointHandler();
+					endpointHandler.applicationName = readingApplication;
+					event.readingEndpointHandlers.add(endpointHandler);
+				}
+			}
+			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
+				if (endpointHandler.handlingTime.getTime() == 0) {
+					endpointHandler.handlingTime.setTime(event.writingEndpointHandler.handlingTime.getTime());
+				}
+			}
+			if (event.transactionName == null) {
+				event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
+			}
+			// TODO determine ID en CorrelationID. ID kan gecopieerd worden van
+			// een eerder event met dezelfde sourceId. CorrelationId moet
+			// bepaald worden indien SourceCorrelationID is gevuld.
+		} finally {
+			timerContext.stop();
+		}
+	    
+    }
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
 		if (content == null || expressionParsers == null) {

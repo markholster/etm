@@ -194,22 +194,21 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	@Override
     public void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime) {
 		EndpointConfigResult cachedResult = this.endpointConfigs.get(endpoint);
-//		if (cachedResult == null || System.currentTimeMillis() - cachedResult.retrieved > cacheExpiryTime) {
-//			if (cachedResult == null) {
-//				cachedResult = new EndpointConfigResult();
-//			}
-//			cachedResult.initialize();
-//			// First check the global configuration
-//			this.cassandraStatementExecutor.findAndMergeEndpointConfig("*", cachedResult);
-//			this.cassandraStatementExecutor.findAndMergeEndpointConfig(endpoint, cachedResult);
-//			cachedResult.retrieved = System.currentTimeMillis();
-//			this.endpointConfigs.put(endpoint, cachedResult);
-//		} 
-//		result.applicationParsers.addAll(cachedResult.applicationParsers);
-//		result.eventNameParsers.addAll(cachedResult.eventNameParsers);
-//		result.correlationDataParsers.putAll(cachedResult.correlationDataParsers);
-//		result.eventDirection = cachedResult.eventDirection;
-//		result.transactionNameParsers.addAll(cachedResult.transactionNameParsers);
-//		result.slaRules.putAll(cachedResult.slaRules);
+		if (cachedResult == null || System.currentTimeMillis() - cachedResult.retrieved > cacheExpiryTime) {
+			if (cachedResult == null) {
+				cachedResult = new EndpointConfigResult();
+			}
+			cachedResult.initialize();
+			// First check the global configuration
+			this.cassandraStatementExecutor.findAndMergeEndpointConfig("*", cachedResult);
+			this.cassandraStatementExecutor.findAndMergeEndpointConfig(endpoint, cachedResult);
+			cachedResult.retrieved = System.currentTimeMillis();
+			this.endpointConfigs.put(endpoint, cachedResult);
+		} 
+		result.readingApplicationParsers.addAll(cachedResult.readingApplicationParsers);
+		result.writingApplicationParsers.addAll(cachedResult.writingApplicationParsers);
+		result.eventNameParsers.addAll(cachedResult.eventNameParsers);
+		result.correlationDataParsers.putAll(cachedResult.correlationDataParsers);
+		result.transactionNameParsers.addAll(cachedResult.transactionNameParsers);
     }
 }

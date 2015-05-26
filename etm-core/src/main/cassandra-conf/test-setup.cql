@@ -10,3 +10,7 @@ insert into endpoint_config(endpoint, direction, applicationParsers, correlation
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.PRL', 'INCOMING', ['Parel']);
 insert into endpoint_config(endpoint, direction, applicationParsers) values ('PRL.RPL.ESB', 'OUTGOING', ['Parel']);
 insert into endpoint_config(endpoint, slaRules) values ('KCS.REQ.ESB', {'DeleteOvereenkomst':'30000,3,900000,3600000,email:m.holster@home.nl'});
+
+
+
+insert into endpoint_config(endpoint, eventNameParsers) values ('*', ['xpath:local-name(/*:Envelope/*:Body/*)','xpath:local-name(/*)']);
