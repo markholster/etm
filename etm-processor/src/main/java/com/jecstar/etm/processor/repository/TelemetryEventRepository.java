@@ -9,7 +9,7 @@ public interface TelemetryEventRepository {
 
 	void persistTelemetryEvent(TelemetryMessageEvent telemetryMessageEvent, TimeUnit statisticsTimeUnit);
 	
-	TelemetryEvent findParent(String sourceId);
+	TelemetryEvent findBySourceId(String sourceId);
 	
 	void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime);
 }

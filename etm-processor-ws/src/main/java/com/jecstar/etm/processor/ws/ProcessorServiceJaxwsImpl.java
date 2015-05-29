@@ -13,7 +13,7 @@ import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
+import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
 @Stateless(name="ProcessorService")
 @WebService(serviceName="ProcessorService", targetNamespace="http://ws.etm.jecstar.com/processorservice", portName="ProcessorServicePort", endpointInterface="com.jecstar.etm.processor.ws.ProcessorService")
@@ -28,7 +28,7 @@ public class ProcessorServiceJaxwsImpl implements ProcessorService {
 	
 	@Inject
 	@ProcessorConfiguration
-	private TelemetryEventProcessor telemetryEventProcessor;
+	private TelemetryCommandProcessor telemetryCommandProcessor;
 
 	private final TelemetryEvent telemetryEvent = new TelemetryEvent();
 
@@ -37,7 +37,7 @@ public class ProcessorServiceJaxwsImpl implements ProcessorService {
     public boolean addTelemetryEvent(XmlTelemetryEvent xmlTelemetryEvent) {
 		this.telemetryEvent.initialize();
 		xmlTelemetryEvent.copyToTelemetryEvent(this.telemetryEvent);
-		this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
+		this.telemetryCommandProcessor.processTelemetryEvent(this.telemetryEvent);
 	    return true;
     }
     
@@ -46,8 +46,8 @@ public class ProcessorServiceJaxwsImpl implements ProcessorService {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Requesting flush of Solr documents");
 		}
-		if (this.telemetryEventProcessor != null) {
-			this.telemetryEventProcessor.requestDocumentsFlush();
+		if (this.telemetryCommandProcessor != null) {
+			this.telemetryCommandProcessor.requestDocumentsFlush();
 		}
 	}
 

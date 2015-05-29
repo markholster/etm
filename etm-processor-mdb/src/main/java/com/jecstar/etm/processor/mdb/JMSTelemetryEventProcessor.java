@@ -14,6 +14,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import com.jecstar.etm.core.EtmException;
+import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryMessageEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -21,14 +22,14 @@ import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
+import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
 public class JMSTelemetryEventProcessor implements MessageListener {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
-	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessor.class);
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryCommandProcessor.class);
 	
 	public static final String JMS_PROPERTY_KEY_EVENT_APPLICATION = "JMS_ETM_Application";
 	public static final String JMS_PROPERTY_KEY_EVENT_DIRECTION = "JMS_ETM_Direction";
@@ -47,9 +48,9 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	
 	@Inject
 	@ProcessorConfiguration
-	private TelemetryEventProcessor telemetryEventProcessor;
+	private TelemetryCommandProcessor telemetryCommandProcessor;
 
-	private final TelemetryEvent telemetryEvent = new TelemetryEvent();
+	private final TelemetryCommand telemetryCommand = new TelemetryCommand();
 	
 	private Unmarshaller unmarshaller;
 	
@@ -68,22 +69,22 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Requesting flush of Solr documents");
 		}
-		if (this.telemetryEventProcessor != null) {
-			this.telemetryEventProcessor.requestDocumentsFlush();
+		if (this.telemetryCommandProcessor != null) {
+			this.telemetryCommandProcessor.requestDocumentsFlush();
 		}
 	}
 
 	@Override
 	public void onMessage(Message message) {
 		try {
-			this.telemetryEvent.initialize();
+			this.telemetryCommand.initialize();
 			if (!handleNative(message)) {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Message with msgid '" + message.getJMSMessageID() + "' could not be parsed nativly, trying to make the best of it.");
 				}
 				handleNonNative(message);
 			}
-			this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
+			this.telemetryCommandProcessor.processTelemetryEvent(this.telemetryCommand);
 		} catch (Throwable t) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage(t.getMessage(), t);
@@ -96,7 +97,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 			TextMessage textMessage = (TextMessage) message;
 			try (StringReader reader = new StringReader(textMessage.getText());) {
 	            XmlTelemetryEvent xmlTelemetryEvent = (XmlTelemetryEvent) this.unmarshaller.unmarshal(reader);
-	            xmlTelemetryEvent.copyToTelemetryEvent(this.telemetryEvent);
+	            xmlTelemetryEvent.copyToTelemetryEvent(this.telemetryCommand);
 	            return true;
             } catch (JAXBException e) {
             	if (log.isDebugLevelEnabled()) {
@@ -115,33 +116,33 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	private void handleNonNative(Message message) throws JMSException {
 		if (message instanceof javax.jms.TextMessage) {
 			TextMessage textMessage = (TextMessage) message;
-			this.telemetryEvent.content = textMessage.getText();
+			this.telemetryCommand.content = textMessage.getText();
 		} else {
 			if (log.isInfoLevelEnabled()) {
 				log.logInfoMessage("Message with msgid '" + message.getJMSMessageID() + "' is not a TextMessage, but a '"
 				        + message.getClass().getName() + "'. Unable to retrieve content");
 			}
 		}
-		this.telemetryEvent.sourceId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_ID);
-		if (this.telemetryEvent.sourceId == null) {
-			this.telemetryEvent.sourceId = message.getJMSMessageID();
+		this.telemetryCommand.sourceId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_ID);
+		if (this.telemetryCommand.sourceId == null) {
+			this.telemetryCommand.sourceId = message.getJMSMessageID();
 		}
-		this.telemetryEvent.sourceCorrelationId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID);
-		if (this.telemetryEvent.sourceCorrelationId == null) {
-			this.telemetryEvent.sourceCorrelationId = message.getJMSCorrelationID();
+		this.telemetryCommand.sourceCorrelationId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID);
+		if (this.telemetryCommand.sourceCorrelationId == null) {
+			this.telemetryCommand.sourceCorrelationId = message.getJMSCorrelationID();
 		}
-		this.telemetryEvent.endpoint = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_ENDPOINT);
-		this.telemetryEvent.application = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_APPLICATION);
-		this.telemetryEvent.name = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_NAME);
+		this.telemetryCommand.endpoint = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_ENDPOINT);
+		this.telemetryCommand.application = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_APPLICATION);
+		this.telemetryCommand.name = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_NAME);
 		long time = message.getJMSDeliveryTime();
 		if (time == 0) {
 			time = message.getJMSTimestamp();
 		}
-		this.telemetryEvent.creationTime.setTime(time);
-		this.telemetryEvent.expiryTime.setTime(message.getJMSExpiration());
-		this.telemetryEvent.transactionName = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME);
-		determineEventType(this.telemetryEvent, message);
-		determineDirectionType(this.telemetryEvent, message);
+		this.telemetryCommand.creationTime.setTime(time);
+		this.telemetryCommand.expiryTime.setTime(message.getJMSExpiration());
+		this.telemetryCommand.transactionName = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME);
+		determineEventType(this.telemetryCommand, message);
+		determineDirectionType(this.telemetryCommand, message);
 		customAchmea();
     }
 
@@ -151,12 +152,12 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	private void customAchmea() {
 		String companyName = configration.getCompanyName();
 		if (companyName.startsWith("Achmea")) {
-			if (TelemetryMessageEventType.MESSAGE_DATAGRAM.equals(this.telemetryEvent.type)) {
-				if (this.telemetryEvent.content != null) {
-					if (this.telemetryEvent.content.indexOf("Request") != -1) {
-						this.telemetryEvent.type = TelemetryMessageEventType.MESSAGE_REQUEST;
-					} else if (this.telemetryEvent.content.indexOf("Response") != -1) {
-						this.telemetryEvent.type = TelemetryMessageEventType.MESSAGE_RESPONSE;
+			if (TelemetryMessageEventType.MESSAGE_DATAGRAM.equals(this.telemetryCommand.type)) {
+				if (this.telemetryCommand.content != null) {
+					if (this.telemetryCommand.content.indexOf("Request") != -1) {
+						this.telemetryCommand.type = TelemetryMessageEventType.MESSAGE_REQUEST;
+					} else if (this.telemetryCommand.content.indexOf("Response") != -1) {
+						this.telemetryCommand.type = TelemetryMessageEventType.MESSAGE_RESPONSE;
 					}
 				}
 			}

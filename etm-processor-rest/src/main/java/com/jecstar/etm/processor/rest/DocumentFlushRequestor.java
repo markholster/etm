@@ -8,7 +8,7 @@ import javax.inject.Inject;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
-import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
+import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
 @ManagedBean
 @Singleton
@@ -21,7 +21,7 @@ public class DocumentFlushRequestor {
 
 	@Inject
 	@ProcessorConfiguration
-	private TelemetryEventProcessor telemetryEventProcessor;
+	private TelemetryCommandProcessor telemetryCommandProcessor;
 
 	
 	@Schedule(minute="*", hour="*", second="0,30", persistent=false)
@@ -29,8 +29,8 @@ public class DocumentFlushRequestor {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Requesting flush of Solr documents");
 		}
-		if (this.telemetryEventProcessor != null) {
-			this.telemetryEventProcessor.requestDocumentsFlush();
+		if (this.telemetryCommandProcessor != null) {
+			this.telemetryCommandProcessor.requestDocumentsFlush();
 		}
 	}
 }

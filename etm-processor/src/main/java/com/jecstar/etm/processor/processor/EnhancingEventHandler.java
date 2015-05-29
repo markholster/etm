@@ -6,6 +6,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.EndpointHandler;
 import com.jecstar.etm.core.TelemetryCommand;
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -52,6 +53,18 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private void enhanceTelemetryMessageEvent(TelemetryMessageEvent event) {
 		final Context timerContext = this.timer.time();
 		try {
+			if (event.sourceId != null) {
+				TelemetryEvent other = this.telemetryEventRepository.findBySourceId(event.sourceId);
+				if (other != null) {
+					event.id = other.id;
+				}
+			}
+			if (event.sourceCorrelationId != null) {
+				TelemetryEvent other = this.telemetryEventRepository.findBySourceId(event.sourceCorrelationId);
+				if (other != null) {
+					event.correlationId = other.correlationId;
+				}				
+			}
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
 			if (event.name == null) {
@@ -79,9 +92,14 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			if (event.transactionName == null) {
 				event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
 			}
-			// TODO determine ID en CorrelationID. ID kan gecopieerd worden van
-			// een eerder event met dezelfde sourceId. CorrelationId moet
-			// bepaald worden indien SourceCorrelationID is gevuld.
+			if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
+				this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
+					String parsedValue = parseValue(v, event.content);
+					if (parsedValue != null) {
+						event.correlationData.put(k, parsedValue);
+					}
+				});
+			}
 		} finally {
 			timerContext.stop();
 		}

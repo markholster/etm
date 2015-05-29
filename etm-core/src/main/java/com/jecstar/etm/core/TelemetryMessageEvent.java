@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import com.jecstar.etm.core.util.UUIDUtils;
 
@@ -22,11 +21,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	 */
 	public Map<String, String> correlationData = new HashMap<String, String>();
 	
-	/**
-	 * The ID of the event this event is correlated to. This is mainly used match a response to a certain request.
-	 */
-	public UUID correlationId;
-
 	/**
 	 * The endpoint this event was send to, and received from.
 	 */
@@ -46,11 +40,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	 * The name of the event.
 	 */
 	public String name;
-
-	/**
-	 * The ID of the parent event.
-	 */
-	public UUID parentID;
 
 	/**
 	 * The correlating source ID, for example a JMSCorrelationID.
@@ -91,7 +80,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 		this.expiryTime.setTime(0);
 		this.metadata.clear();
 		this.name = null;
-		this.parentID = null;
 		this.readingEndpointHandlers.clear();
 		this.sourceCorrelationId = null;
 		this.sourceId = null;
@@ -110,7 +98,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	    this.expiryTime.setTime(copy.expiryTime.getTime());
 	    this.metadata.putAll(copy.metadata);
 	    this.name = copy.name;
-	    this.parentID = copy.parentID;
 	    this.readingEndpointHandlers.addAll(copy.readingEndpointHandlers);
 	    this.sourceCorrelationId = copy.sourceCorrelationId;
 	    this.sourceId = copy.sourceId;

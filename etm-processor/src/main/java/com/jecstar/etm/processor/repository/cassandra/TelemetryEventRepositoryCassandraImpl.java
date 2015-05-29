@@ -183,7 +183,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 //	}
 
 	@Override
-    public TelemetryEvent doFindParent(String sourceId) {
+    public TelemetryEvent doFindBySourceId(String sourceId) {
 		if (sourceId == null) {
 			return null;
 		}

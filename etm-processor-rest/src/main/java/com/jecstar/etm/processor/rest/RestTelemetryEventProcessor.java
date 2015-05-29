@@ -21,7 +21,7 @@ import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
+import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
 @Path("/event")
 public class RestTelemetryEventProcessor {
@@ -33,7 +33,7 @@ public class RestTelemetryEventProcessor {
 
 	@Inject
 	@ProcessorConfiguration
-	private TelemetryEventProcessor telemetryEventProcessor;
+	private TelemetryCommandProcessor telemetryCommandProcessor;
 
 	private final TelemetryEvent telemetryEvent = new TelemetryEvent();
 
@@ -115,7 +115,7 @@ public class RestTelemetryEventProcessor {
 				}
 				token = parser.nextToken();
 			}
-			this.telemetryEventProcessor.processTelemetryEvent(this.telemetryEvent);
+			this.telemetryCommandProcessor.processTelemetryEvent(this.telemetryEvent);
 			return "{ \"status\": \"success\" }";
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {

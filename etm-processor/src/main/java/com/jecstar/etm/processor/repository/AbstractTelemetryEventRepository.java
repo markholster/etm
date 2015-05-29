@@ -137,15 +137,15 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
     }
 	
 	@Override
-    public final TelemetryEvent findParent(String sourceId) {
+    public final TelemetryEvent findBySourceId(String sourceId) {
 		if (sourceId == null) {
 			return null;
 		}
-		TelemetryEvent parent = this.sourceCorrelations.getBySourceId(sourceId);
-		if (parent != null) {
-			return parent;
+		TelemetryEvent event = this.sourceCorrelations.getBySourceId(sourceId);
+		if (event != null) {
+			return event;
 		}
-		return doFindParent(sourceId);
+		return doFindBySourceId(sourceId);
     }
 	
 //	protected abstract void startPersist(TelemetryEvent event, DataRetention dataRetention);
@@ -165,6 +165,6 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 //	protected abstract void addTransactionEventFinish(TelemetryEvent event);
 //	protected abstract void addDataRetention(DataRetention dataRetention);
 	
-	protected abstract TelemetryEvent doFindParent(String sourceId);
+	protected abstract TelemetryEvent doFindBySourceId(String sourceId);
 
 }

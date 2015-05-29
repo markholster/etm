@@ -14,7 +14,7 @@ import com.jecstar.etm.core.TelemetryCommand.CommandType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.lmax.disruptor.RingBuffer;
 
-public class TelemetryEventProcessor {
+public class TelemetryCommandProcessor {
 	
 	private RingBuffer<TelemetryCommand> ringBuffer;
 	private boolean started = false;
@@ -38,7 +38,7 @@ public class TelemetryEventProcessor {
 		this.solrClient = solrClient;
 		this.etmConfiguration = etmConfiguration;
 		this.metricRegistry = metricRegistry;
-		this.offerTimer = this.metricRegistry.timer("event-offer");
+		this.offerTimer = this.metricRegistry.timer("event-offering");
 		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, solrClient, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
@@ -103,6 +103,7 @@ public class TelemetryEventProcessor {
 			TelemetryCommand target = this.ringBuffer.get(sequence);
 			target.initialize();
 			target.commandType = CommandType.FLUSH_DOCUMENTS;
+			preProcess(target);
 		} finally {
 			this.ringBuffer.publish(sequence);
 		}

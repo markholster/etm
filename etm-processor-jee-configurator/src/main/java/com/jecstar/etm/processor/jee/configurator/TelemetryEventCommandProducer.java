@@ -20,16 +20,16 @@ import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
-import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
+import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
 @ManagedBean
 @Singleton
-public class TelemetryEventProcessorProducer implements ConfigurationChangeListener {
+public class TelemetryEventCommandProducer implements ConfigurationChangeListener {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
-	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessorProducer.class);
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventCommandProducer.class);
 	
 	@ProcessorConfiguration
 	@Inject
@@ -48,26 +48,26 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 	private MetricRegistry metricRegistry;
 
 	
-	private TelemetryEventProcessor telemetryEventProcessor;
+	private TelemetryCommandProcessor telemetryCommandProcessor;
 
 	@Produces
 	@ProcessorConfiguration
-	public TelemetryEventProcessor getTelemetryEventProcessor() {
+	public TelemetryCommandProcessor getTelemetryEventProcessor() {
 		synchronized (this) {
-			if (this.telemetryEventProcessor == null) {
-				this.telemetryEventProcessor = new TelemetryEventProcessor();
+			if (this.telemetryCommandProcessor == null) {
+				this.telemetryCommandProcessor = new TelemetryCommandProcessor();
 				this.configration.addEtmConfigurationChangeListener(this);
-				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.solrClient,
+				this.telemetryCommandProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.solrClient,
 				        this.configration, this.metricRegistry);
 			}
 		}
-		return this.telemetryEventProcessor;
+		return this.telemetryCommandProcessor;
 	}
 
 	@PreDestroy
 	public void preDestroy() {
-		if (this.telemetryEventProcessor != null) {
-			this.telemetryEventProcessor.stopAll();
+		if (this.telemetryCommandProcessor != null) {
+			this.telemetryCommandProcessor.stopAll();
 		}
 	}
 
@@ -99,11 +99,11 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
     public void configurationChanged(ConfigurationChangedEvent event) {
 		if (event.isAnyChanged(EtmConfiguration.ETM_ENHANCING_HANDLER_COUNT, EtmConfiguration.ETM_INDEXING_HANDLER_COUNT,
 		        EtmConfiguration.ETM_PERSISTING_HANDLER_COUNT, EtmConfiguration.ETM_RINGBUFFER_SIZE)) {
-			if (this.telemetryEventProcessor != null) {
+			if (this.telemetryCommandProcessor != null) {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Detected a change in the configuration that needs to restart ETM processor.");
 				}
-				this.telemetryEventProcessor.hotRestart();
+				this.telemetryCommandProcessor.hotRestart();
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Restarted ETM processor.");
 				}
