@@ -10,6 +10,8 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.jecstar.etm.core.TelemetryEvent;
+import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
@@ -18,7 +20,6 @@ public class CassandraStatementExecutor {
 	
 	private final Session session;
 //	private final PreparedStatement insertTelemetryEventStatement;
-//	private final PreparedStatement insertSourceIdIdStatement;
 //	private final PreparedStatement insertCorrelationDataStatement;
 //	private final PreparedStatement insertCorrelationToParentStatement;
 //	private final PreparedStatement insertEventOccurrenceStatement;
@@ -35,9 +36,8 @@ public class CassandraStatementExecutor {
 //	private final PreparedStatement updateEventNameCounterStatement;
 //	private final PreparedStatement updateApplicationEventNameCounterStatement;
 //	private final PreparedStatement updateTransactionNameCounterStatement;
-//	private final PreparedStatement findParentStatementWithSourceIdAndApplication;
-//	private final PreparedStatement findParentStatementWithSourceId;
 	private final PreparedStatement findEndpointConfigStatement;
+//	private final PreparedStatement findTelemetryEventByIdStatement;
 //	private final PreparedStatement selectTelemetryEventStatement;
 	
 	public CassandraStatementExecutor(final Session session) {
@@ -62,10 +62,6 @@ public class CassandraStatementExecutor {
 //				+ "transactionName, "
 //				+ "type, "
 //				+ "slaRule) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
-//		this.insertSourceIdIdStatement = session.prepare("insert into sourceid_id_correlation ("
-//				+ "sourceId, "
-//				+ "application, "
-//				+ "id) values (?,?,?);");
 //		this.insertCorrelationDataStatement = session.prepare("insert into correlation_data ("
 //				+ "name_timeunit, "
 //				+ "timeunit, "
@@ -185,9 +181,6 @@ public class CassandraStatementExecutor {
 //		this.findParentStatementWithSourceIdAndApplication = session.prepare("select "
 //				+ "id "
 //				+ "from sourceid_id_correlation where sourceId = ? and application = ?;");
-//		this.findParentStatementWithSourceId = session.prepare("select "
-//				+ "id "
-//				+ "from sourceid_id_correlation where sourceId = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
 				+ "readingApplicationParsers, "
 				+ "writingApplicationParsers, "
@@ -195,7 +188,7 @@ public class CassandraStatementExecutor {
 				+ "correlationParsers, "
 				+ "transactionNameParsers "
 				+ "from endpoint_config where endpoint = ?;");
-//		this.selectTelemetryEventStatement = session.prepare("select "
+//		this.findTelemetryEventByIdStatement = session.prepare("select "
 //				+ "application, "
 //				+ "content, "
 //				+ "correlationCreationTime, "
@@ -245,12 +238,6 @@ public class CassandraStatementExecutor {
 //		}
 //	}
 //	
-//	public void addSourceIdCorrelationData(final TelemetryEvent event, final BatchStatement batchStatement) {
-//		batchStatement.add(this.insertSourceIdIdStatement.bind(
-//				event.sourceId,
-//				event.application == null ? "_unknown_" : event.application,
-//				event.id));
-//	}
 //	
 //	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
 //		batchStatement.add(this.insertCorrelationDataStatement.bind(
@@ -418,52 +405,19 @@ public class CassandraStatementExecutor {
 //	}
 //	
 //	
-//	public TelemetryEvent findParent(final String sourceId, String application) {
-//		ResultSet resultSet = this.session.execute(this.findParentStatementWithSourceIdAndApplication.bind(sourceId, application == null ? "_unknown_" : application));
-//		Row row = resultSet.one();
-//		if (row != null) {
-//			return getTelemetryEvent(row.getUUID(0));
-//		} else {
-//			resultSet = this.session.execute(this.findParentStatementWithSourceId.bind(sourceId));
-//			row = resultSet.one();
-//			if (row != null) {
-//				return getTelemetryEvent(row.getUUID(0));
-//			}
-//		}
-//		return null;
-//	}
 //	
-//	private TelemetryEvent getTelemetryEvent(UUID id) {
-//	    ResultSet resultSet = this.session.execute(this.selectTelemetryEventStatement.bind(id));
+	public TelemetryEvent findTelemetryEventById(String id) {
+//	    ResultSet resultSet = this.session.execute(this.findTelemetryEventByIdStatement.bind(id));
 //		Row row = resultSet.one();
 //		if (row != null) {
-//			TelemetryEvent event = new TelemetryEvent();
-//			event.id = id;
-//			event.application = row.getString(0);
-//			event.content = row.getString(1);
-//			event.correlationCreationTime = row.getDate(2);
-//			event.correlationData = row.getMap(3, String.class, String.class);
-//			event.correlationId = row.getUUID(4);
-//			event.correlationName = row.getString(5);
-//			event.creationTime = row.getDate(6);
-//			String direction = row.getString(7);
-//			event.direction = direction == null ? null : TelemetryEventDirection.valueOf(direction);
-//			event.endpoint = row.getString(8);
-//			event.expiryTime = row.getDate(9);
-//			event.metadata = row.getMap(10, String.class, String.class);
-//			event.name = row.getString(11);
-//			event.sourceCorrelationId = row.getString(12);
-//			event.sourceId = row.getString(13);
-//			event.transactionId = row.getUUID(14);
-//			event.transactionName = row.getString(15);
-//			String type = row.getString(16);
-//			event.type = type == null ? null : TelemetryMessageEventType.valueOf(type);
-//			event.slaRule = SlaRule.fromConfiguration(row.getString(17));
-//			return event;
+			TelemetryMessageEvent event = new TelemetryMessageEvent();
+			// TODO execute statement to find event.
+			event.id = id;
+			return event;
 //		}	    
 //	    return null;
-//    }
-//
+    }
+
 	public void findAndMergeEndpointConfig(final String endpoint, final EndpointConfigResult result) {
 		if (endpoint == null) {
 			return;

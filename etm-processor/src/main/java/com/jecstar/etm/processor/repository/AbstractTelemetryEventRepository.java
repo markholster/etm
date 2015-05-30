@@ -12,27 +12,22 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 	private final SourceCorrelationCache sourceCorrelations;
 	private final Date statisticsTimestamp = new Date();
 	private final Date eventOccurrenceTimestamp = new Date();
-	private final DataRetention dataRetention = new DataRetention();
+	private final Date retentionTimestamp = new Date();
 	
 	public AbstractTelemetryEventRepository(final SourceCorrelationCache sourceCorrelations) {
 	    this.sourceCorrelations = sourceCorrelations;
     }
 	
 	@Override
-    public final void persistTelemetryEvent(TelemetryMessageEvent event, TimeUnit statisticsTimeUnit) {
-		this.dataRetention.clear();
+    public final void persistTelemetryMessageEvent(TelemetryMessageEvent event, TimeUnit statisticsTimeUnit) {
 //		this.statisticsTimestamp.setTime(DateUtils.normalizeTime(event.creationTime.getTime(), statisticsTimeUnit.toMillis(1)));
 //		this.eventOccurrenceTimestamp.setTime(DateUtils.normalizeTime(event.creationTime.getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 //		this.dataRetention.eventOccurrenceTimestamp.setTime(this.eventOccurrenceTimestamp.getTime());
-//		this.dataRetention.retentionTimestamp .setTime(DateUtils.normalizeTime(event.retention.getTime() + (2 * PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+//		this.dataRetention.retentionTimestamp.setTime(DateUtils.normalizeTime(event.retention.getTime() + (2 * PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
 //		this.dataRetention.id = event.id;
-//		startPersist(event, this.dataRetention);
+		startPersist(event);
 //		
 //		addTelemetryEvent(event);
-//		if (event.sourceId != null) {
-//			addSourceIdCorrelationData(event);
-//			this.dataRetention.sourceId = event.sourceId;
-//		}
 //		if (!event.correlationData.isEmpty()) {
 //			this.dataRetention.correlationData.putAll(event.correlationData);
 //			event.correlationData.forEach((k,v) ->  addCorrelationData(event, k, v));
@@ -131,28 +126,15 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 //		}
 //		addDataRetention(this.dataRetention);
 //		
-//		endPersist();
+		endPersist();
 		// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
 		this.sourceCorrelations.removeTelemetryEvent(event);
     }
 	
-	@Override
-    public final TelemetryEvent findBySourceId(String sourceId) {
-		if (sourceId == null) {
-			return null;
-		}
-		TelemetryEvent event = this.sourceCorrelations.getBySourceId(sourceId);
-		if (event != null) {
-			return event;
-		}
-		return doFindBySourceId(sourceId);
-    }
-	
-//	protected abstract void startPersist(TelemetryEvent event, DataRetention dataRetention);
-//	protected abstract void endPersist();
+	protected abstract void startPersist(TelemetryEvent event);
+	protected abstract void endPersist();
 //	
 //	protected abstract void addTelemetryEvent(TelemetryEvent event);
-//	protected abstract void addSourceIdCorrelationData(TelemetryEvent event);
 //	protected abstract void addCorrelationData(TelemetryEvent event, String key, String value);
 //	protected abstract void addApplicationCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount, long responseCount, long incomingResponseCount, long outgoingResponseCount, long datagramCount, long incomingDatagramCount, long outgoingDatagramCount, long responseTime, long incomingResponseTime, long outgoingResponseTime, String application, Date statisticsTimestamp);
 //	protected abstract void addEventOccurence(Date timestamp, String occurrenceName, String occurrenceValue);
@@ -165,6 +147,5 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 //	protected abstract void addTransactionEventFinish(TelemetryEvent event);
 //	protected abstract void addDataRetention(DataRetention dataRetention);
 	
-	protected abstract TelemetryEvent doFindBySourceId(String sourceId);
 
 }

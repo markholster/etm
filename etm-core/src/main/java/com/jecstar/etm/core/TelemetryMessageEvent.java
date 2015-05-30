@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.jecstar.etm.core.util.UUIDUtils;
-
 
 public class TelemetryMessageEvent extends TelemetryEvent {
 	
@@ -42,11 +40,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	public String name;
 
 	/**
-	 * The correlating source ID, for example a JMSCorrelationID.
-	 */
-	public String sourceCorrelationId;
-	
-	/**
 	 * The name of the transaction this event belongs to. Transactions are groups of events that belong to a single unit of work.
 	 */
 	public String transactionName;
@@ -72,7 +65,7 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	 * @return The initialized <code>TelemetryMessageEvent</code>
 	 */
 	public TelemetryMessageEvent initialize() {
-		this.id = UUIDUtils.timeBased();
+		this.id = null;
 		this.content = null;
 		this.correlationData.clear();
 		this.correlationId = null;
@@ -81,8 +74,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 		this.metadata.clear();
 		this.name = null;
 		this.readingEndpointHandlers.clear();
-		this.sourceCorrelationId = null;
-		this.sourceId = null;
 		this.transactionName = null;
 		this.type = null;
 		this.writingEndpointHandler.initialize();
@@ -91,6 +82,7 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	
 	public TelemetryMessageEvent initialize(TelemetryMessageEvent copy) {
 	    initialize();
+	    this.id = copy.id;
 	    this.content = copy.content;
 	    this.correlationData.putAll(copy.correlationData);
 	    this.correlationId = copy.correlationId;
@@ -99,8 +91,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	    this.metadata.putAll(copy.metadata);
 	    this.name = copy.name;
 	    this.readingEndpointHandlers.addAll(copy.readingEndpointHandlers);
-	    this.sourceCorrelationId = copy.sourceCorrelationId;
-	    this.sourceId = copy.sourceId;
 	    this.transactionName = copy.transactionName;
 	    this.type = copy.type;
 	    this.writingEndpointHandler.initialize(copy.writingEndpointHandler);

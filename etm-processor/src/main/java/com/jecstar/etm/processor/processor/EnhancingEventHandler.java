@@ -4,9 +4,9 @@ import java.util.List;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.datastax.driver.core.utils.UUIDs;
 import com.jecstar.etm.core.EndpointHandler;
 import com.jecstar.etm.core.TelemetryCommand;
-import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -53,17 +53,8 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private void enhanceTelemetryMessageEvent(TelemetryMessageEvent event) {
 		final Context timerContext = this.timer.time();
 		try {
-			if (event.sourceId != null) {
-				TelemetryEvent other = this.telemetryEventRepository.findBySourceId(event.sourceId);
-				if (other != null) {
-					event.id = other.id;
-				}
-			}
-			if (event.sourceCorrelationId != null) {
-				TelemetryEvent other = this.telemetryEventRepository.findBySourceId(event.sourceCorrelationId);
-				if (other != null) {
-					event.correlationId = other.correlationId;
-				}				
+			if (event.id == null) {
+				event.id = UUIDs.timeBased().toString();
 			}
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());

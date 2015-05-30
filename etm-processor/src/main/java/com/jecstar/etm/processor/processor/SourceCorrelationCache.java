@@ -9,8 +9,8 @@ public class SourceCorrelationCache {
 
 	private final Map<String, TelemetryEvent> sourceCorrelations = new HashMap<String, TelemetryEvent>();
 	
-	public TelemetryEvent getBySourceId(String sourceId) {
-		return this.sourceCorrelations.get(sourceId);
+	public TelemetryEvent getBySourceId(String id) {
+		return this.sourceCorrelations.get(id);
 	}
 
 	/**
@@ -20,16 +20,11 @@ public class SourceCorrelationCache {
 	 *            The <code>TelemetryEvent</code> to add.
 	 */
 	public synchronized void addTelemetryEvent(TelemetryEvent event) {
-		TelemetryEvent current = this.sourceCorrelations.get(event.sourceId);
-		if (current != null) {
-			event.id = current.id;
-		} else {
-			this.sourceCorrelations.put(event.sourceId, event);
-		}
+		this.sourceCorrelations.put(event.id, event);
 	}
 
 	public synchronized void removeTelemetryEvent(TelemetryEvent event) {
-		this.sourceCorrelations.remove(event.sourceId);
+		this.sourceCorrelations.remove(event.id);
 	}
 
 }

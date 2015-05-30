@@ -3,6 +3,7 @@ package com.jecstar.etm.processor.repository.cassandra;
 import java.text.DateFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
@@ -35,37 +36,33 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 		this.cassandraStatementExecutor = cassandraStatementExecutor;
     }
 	
-//	@Override
-//	protected void startPersist(TelemetryEvent event, DataRetention dataRetention) {
-//		this.batchStatement.clear();
-//		this.counterBatchStatement.clear();
-//		// The following 2 suffixes are defining the diversity of the partition
-//		// key in cassandra. If a partition is to big for a single key, the
-//		// dateformat should be displayed in a less general format.
+	@Override
+	protected void startPersist(TelemetryEvent event) {
+		this.batchStatement.clear();
+		this.counterBatchStatement.clear();
+		// The following 2 suffixes are defining the diversity of the partition
+		// key in cassandra. If a partition is to big for a single key, the
+		// dateformat should be displayed in a less general format.
 //		this.partitionKeySuffix = this.format.format(event.creationTime);
 //		this.correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
 //		dataRetention.partionKeySuffix = partitionKeySuffix;
-//	}
+	}
 //	
-//	@Override
-//	protected void endPersist() {
-//		if (this.batchStatement.size() != 0) {
-//			this.cassandraStatementExecutor.execute(this.batchStatement);
-//		}
-//		if (this.counterBatchStatement.size() != 0) {
-//			this.cassandraStatementExecutor.execute(this.counterBatchStatement);
-//		}
-//	}
+	@Override
+	protected void endPersist() {
+		if (this.batchStatement.size() != 0) {
+			this.cassandraStatementExecutor.execute(this.batchStatement);
+		}
+		if (this.counterBatchStatement.size() != 0) {
+			this.cassandraStatementExecutor.execute(this.counterBatchStatement);
+		}
+	}
 //	
 //	@Override
 //	protected void addTelemetryEvent(TelemetryEvent event) {
 //		this.cassandraStatementExecutor.addTelemetryEvent(event, this.batchStatement);
 //	}
 //	
-//	@Override
-//	protected void addSourceIdCorrelationData(TelemetryEvent event) {
-//		this.cassandraStatementExecutor.addSourceIdCorrelationData(event, this.batchStatement);
-//	}
 //	
 //	@Override
 //	protected void addCorrelationData(TelemetryEvent event, String key, String value) {
@@ -181,15 +178,6 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 //	protected void addDataRetention(DataRetention dataRetention) {
 //		this.cassandraStatementExecutor.addDataRetention(dataRetention, this.batchStatement);
 //	}
-
-	@Override
-    public TelemetryEvent doFindBySourceId(String sourceId) {
-		if (sourceId == null) {
-			return null;
-		}
-		return null;
-//		return this.cassandraStatementExecutor.findParent(sourceId, application);
-    }
 
 	@Override
     public void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime) {

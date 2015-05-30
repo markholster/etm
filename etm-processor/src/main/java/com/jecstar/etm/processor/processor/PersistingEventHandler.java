@@ -43,7 +43,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand> {
 	private void persistTelemetryMessageEvent(TelemetryMessageEvent event) {
 		final Context timerContext = this.timer.time();
 		try {
-			this.telemetryEventRepository.persistTelemetryEvent(event, this.etmConfiguration.getStatisticsTimeUnit());
+			this.telemetryEventRepository.persistTelemetryMessageEvent(event, this.etmConfiguration.getStatisticsTimeUnit());
 		} finally {
 			timerContext.stop();
 		}

@@ -8,6 +8,7 @@ import org.apache.solr.client.solrj.SolrClient;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.datastax.driver.core.utils.UUIDs;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.TelemetryCommand.CommandType;
@@ -115,6 +116,9 @@ public class TelemetryCommandProcessor {
 	
 	private void preProcess(TelemetryCommand command) {
 		if (CommandType.MESSAGE_EVENT.equals(command.commandType)) {
+			if (command.messageEvent.id == null) {
+				command.messageEvent.id = UUIDs.timeBased().toString();
+			}
 			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(command.messageEvent);
 		}
 	}

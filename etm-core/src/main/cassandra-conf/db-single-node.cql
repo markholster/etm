@@ -9,3 +9,12 @@ create table endpoint_config (
     correlationParsers map<text, text>,
     transactionNameParsers list<text>
 );
+
+create table telemetry_event ( 
+    id text primary key, 
+    correlationId text,
+    endpoint text, 
+    name text,
+    writingApplication text,
+    writingTime timestamp
+);
