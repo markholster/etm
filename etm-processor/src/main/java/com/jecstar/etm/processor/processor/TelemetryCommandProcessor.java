@@ -116,10 +116,10 @@ public class TelemetryCommandProcessor {
 	
 	private void preProcess(TelemetryCommand command) {
 		if (CommandType.MESSAGE_EVENT.equals(command.commandType)) {
-			if (command.messageEvent.id == null) {
-				command.messageEvent.id = UUIDs.timeBased().toString();
-			}
-			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(command.messageEvent);
+//			if (command.messageEvent.id == null) {
+//				command.messageEvent.id = UUIDs.timeBased().toString();
+//			}
+//			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(command.messageEvent);
 		}
 	}
 }

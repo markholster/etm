@@ -64,7 +64,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			if (event.writingEndpointHandler.applicationName == null) {
 				event.writingEndpointHandler.applicationName = parseValue(this.endpointConfigResult.writingApplicationParsers, event.content);
 			}
-			if (event.writingEndpointHandler.handlingTime.getTime() == 0) {
+			if (event.writingEndpointHandler.applicationName != null && event.writingEndpointHandler.handlingTime.getTime() == 0) {
 				event.writingEndpointHandler.handlingTime.setTime(System.currentTimeMillis());
 			}
 			if (event.readingEndpointHandlers.size() == 0) {

@@ -8,6 +8,7 @@ import java.util.UUID;
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
 import com.jecstar.etm.core.TelemetryEvent;
+import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
 import com.jecstar.etm.processor.processor.SourceCorrelationCache;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
@@ -58,10 +59,10 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 		}
 	}
 //	
-//	@Override
-//	protected void addTelemetryEvent(TelemetryEvent event) {
-//		this.cassandraStatementExecutor.addTelemetryEvent(event, this.batchStatement);
-//	}
+	@Override
+	protected void addTelemetryMessageEvent(TelemetryMessageEvent event) {
+		this.cassandraStatementExecutor.addTelemetryMessageEvent(event, this.batchStatement);
+	}
 //	
 //	
 //	@Override

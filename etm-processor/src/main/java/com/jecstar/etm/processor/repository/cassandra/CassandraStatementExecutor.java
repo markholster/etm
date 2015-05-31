@@ -10,6 +10,8 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -21,7 +23,7 @@ public class CassandraStatementExecutor {
 	private final Session session;
 //	private final PreparedStatement insertTelemetryEventStatement;
 //	private final PreparedStatement insertCorrelationDataStatement;
-//	private final PreparedStatement insertCorrelationToParentStatement;
+	private final PreparedStatement insertCorrelationToParentStatement;
 //	private final PreparedStatement insertEventOccurrenceStatement;
 //	private final PreparedStatement insertTransactionEventStartStatement;
 //	private final PreparedStatement insertTransactionEventFinishStatement;
@@ -68,9 +70,9 @@ public class CassandraStatementExecutor {
 //				+ "name, "
 //				+ "value, "
 //				+ "id) values (?,?,?,?,?);");
-//		this.insertCorrelationToParentStatement = session.prepare("update telemetry_event set "
-//				+ "correlations = correlations + ? "
-//				+ "where id = ?;");
+		this.insertCorrelationToParentStatement = session.prepare("update telemetry_event set "
+				+ "correlations = correlations + ? "
+				+ "where id = ?;");
 //		this.insertEventOccurrenceStatement = session.prepare("insert into event_occurrences ("
 //				+ "timeunit, "
 //				+ "type, "
@@ -210,7 +212,28 @@ public class CassandraStatementExecutor {
 //				+ "from telemetry_event where id = ?");
 	}
 	
-//	public void addTelemetryEvent(final TelemetryEvent event, final BatchStatement batchStatement) {
+	public void addTelemetryMessageEvent(final TelemetryMessageEvent event, final BatchStatement batchStatement) {
+		Insert insert = QueryBuilder.insertInto("telemetry_event");
+		insert.value("id", event.id);
+		if (event.correlationId != null) {
+			insert.value("correlationId", event.correlationId);
+		}
+		if (event.content != null) {
+			insert.value("content", event.content);
+		}
+		if (event.endpoint != null) {
+			insert.value("endpoint", event.endpoint);
+		}
+		if (event.name != null) {
+			insert.value("name", event.name);
+		}
+		if (event.writingEndpointHandler.applicationName != null) {
+			insert.value("writingApplication", event.writingEndpointHandler.applicationName);
+		}
+		if (event.writingEndpointHandler.handlingTime.getTime() != 0) {
+			insert.value("writingTime", event.writingEndpointHandler.handlingTime);
+		}
+		batchStatement.add(insert);
 //		batchStatement.add(this.insertTelemetryEventStatement.bind(
 //				event.id, 
 //				event.application, 
@@ -231,12 +254,12 @@ public class CassandraStatementExecutor {
 //		        event.transactionName,
 //		        event.type != null ? event.type.name() : null,
 //				event.slaRule != null ? event.slaRule.toConfiguration() : null));
-//		if (event.correlationId != null) {
-//			final List<UUID> correlation = new ArrayList<UUID>(1);
-//			correlation.add(event.id);
-//			batchStatement.add(this.insertCorrelationToParentStatement.bind(correlation, event.correlationId));
-//		}
-//	}
+		if (event.correlationId != null) {
+			final List<String> correlation = new ArrayList<String>(1);
+			correlation.add(event.id);
+			batchStatement.add(this.insertCorrelationToParentStatement.bind(correlation, event.correlationId));
+		}
+	}
 //	
 //	
 //	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {

@@ -1,16 +1,11 @@
-insert into endpoint_config(endpoint, eventNameParsers, correlationParsers) values ('*', ['xpath:local-name(/*:Envelope/*:Body/*)','xpath:local-name(/*)'], {'CustomerId':'xpath:/*/relatienummer', 'PolicyNr':'xpath:/*/overeenkomstnummer', 'AccountNr':'xpath:/*/rekeningnummer'});
-insert into endpoint_config(endpoint, direction, applicationParsers, transactionNameParsers) values ('KCS.REQ.ESB', 'OUTGOING', ['KCS'], ['xpath:substring(local-name(//*[ends-with(name(), ''Request'')][1]), 0, string-length(local-name(//*[ends-with(name(), ''Request'')][1])) - 6)']);
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.RPL.KCS', 'INCOMING', ['KCS']);
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.LG5', 'INCOMING', ['Nieuw Woon']);
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG5.REQ.ESB', 'OUTGOING', ['Nieuw Woon']);
-insert into endpoint_config(endpoint, direction, applicationParsers, correlationParsers) values ('LG5.DTG.ESB', 'OUTGOING', ['Nieuw Woon'], {'AccountNr':'xpath:/*/reknr'});
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.RPL.LG5', 'INCOMING', ['Nieuw Woon']);
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('LG5.RPL.ESB', 'OUTGOING', ['Nieuw Woon']);
-insert into endpoint_config(endpoint, direction, applicationParsers, correlationParsers) values ('ESB.DTG.CRM', 'INCOMING', ['Sap CRM'], {'AccountNr':'xpath:/*/reknr'});
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('ESB.REQ.PRL', 'INCOMING', ['Parel']);
-insert into endpoint_config(endpoint, direction, applicationParsers) values ('PRL.RPL.ESB', 'OUTGOING', ['Parel']);
-insert into endpoint_config(endpoint, slaRules) values ('KCS.REQ.ESB', {'DeleteOvereenkomst':'30000,3,900000,3600000,email:m.holster@home.nl'});
-
-
-
 insert into endpoint_config(endpoint, eventNameParsers) values ('*', ['xpath:local-name(/*:Envelope/*:Body/*)','xpath:local-name(/*)']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('KCS.REQ.ESB', ['KCS'], ['IIB']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('ESB.RPL.KCS', ['IIB'], ['KCS']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('ESB.REQ.LG5', ['IIB'], ['Nieuw Woon']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('LG5.REQ.ESB', ['Nieuw Woon'], ['IIB']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('LG5.DTG.ESB', ['Nieuw Woon'], ['IIB']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('ESB.RPL.LG5', ['IIB'], ['Nieuw Woon']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('LG5.RPL.ESB', ['Nieuw Woon'], ['IIB']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('ESB.DTG.CRM', ['IIB'], ['Sap CRM']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('ESB.REQ.PRL', ['IIB'], ['Parel']);
+insert into endpoint_config(endpoint, writingApplicationParsers, readingApplicationParsers) values ('PRL.RPL.ESB', ['Parel'], ['IIB']);

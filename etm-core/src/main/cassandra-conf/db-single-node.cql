@@ -12,7 +12,9 @@ create table endpoint_config (
 
 create table telemetry_event ( 
     id text primary key, 
+    content text,
     correlationId text,
+    correlations list<text>,
     endpoint text, 
     name text,
     writingApplication text,

@@ -27,7 +27,7 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 //		this.dataRetention.id = event.id;
 		startPersist(event);
 //		
-//		addTelemetryEvent(event);
+		addTelemetryMessageEvent(event);
 //		if (!event.correlationData.isEmpty()) {
 //			this.dataRetention.correlationData.putAll(event.correlationData);
 //			event.correlationData.forEach((k,v) ->  addCorrelationData(event, k, v));
@@ -128,13 +128,13 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 //		
 		endPersist();
 		// TODO check this.sourceCorrelations on values that are in the map for longer than x minutes. If so, remove them to prevent garbage in the map.
-		this.sourceCorrelations.removeTelemetryEvent(event);
+//		this.sourceCorrelations.removeTelemetryEvent(event);
     }
 	
 	protected abstract void startPersist(TelemetryEvent event);
 	protected abstract void endPersist();
 //	
-//	protected abstract void addTelemetryEvent(TelemetryEvent event);
+	protected abstract void addTelemetryMessageEvent(TelemetryMessageEvent event);
 //	protected abstract void addCorrelationData(TelemetryEvent event, String key, String value);
 //	protected abstract void addApplicationCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount, long responseCount, long incomingResponseCount, long outgoingResponseCount, long datagramCount, long incomingDatagramCount, long outgoingDatagramCount, long responseTime, long incomingResponseTime, long outgoingResponseTime, String application, Date statisticsTimestamp);
 //	protected abstract void addEventOccurence(Date timestamp, String occurrenceName, String occurrenceValue);
