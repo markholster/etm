@@ -28,10 +28,9 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 		startPersist(event);
 //		
 		addTelemetryMessageEvent(event);
-//		if (!event.correlationData.isEmpty()) {
-//			this.dataRetention.correlationData.putAll(event.correlationData);
-//			event.correlationData.forEach((k,v) ->  addCorrelationData(event, k, v));
-//		}
+		if (!event.correlationData.isEmpty()) {
+			event.correlationData.forEach((k,v) ->  addCorrelationData(event, k, v));
+		}
 //		long requestCount = TelemetryMessageEventType.MESSAGE_REQUEST.equals(event.type) ? 1 : 0;
 //		long incomingRequestCount = TelemetryMessageEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.INCOMING.equals(event.direction) ? 1 : 0;
 //		long outgoingRequestCount = TelemetryMessageEventType.MESSAGE_REQUEST.equals(event.type) && TelemetryEventDirection.OUTGOING.equals(event.direction) ? 1 : 0;
@@ -135,7 +134,7 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 	protected abstract void endPersist();
 //	
 	protected abstract void addTelemetryMessageEvent(TelemetryMessageEvent event);
-//	protected abstract void addCorrelationData(TelemetryEvent event, String key, String value);
+	protected abstract void addCorrelationData(TelemetryEvent event, String key, String value);
 //	protected abstract void addApplicationCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount, long responseCount, long incomingResponseCount, long outgoingResponseCount, long datagramCount, long incomingDatagramCount, long outgoingDatagramCount, long responseTime, long incomingResponseTime, long outgoingResponseTime, String application, Date statisticsTimestamp);
 //	protected abstract void addEventOccurence(Date timestamp, String occurrenceName, String occurrenceValue);
 //	protected abstract void addEventNameCounter(long requestCount, long responseCount, long datagramCount, long responseTime, String eventName, Date timestamp);

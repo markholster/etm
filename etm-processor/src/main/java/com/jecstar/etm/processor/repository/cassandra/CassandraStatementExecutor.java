@@ -22,7 +22,7 @@ public class CassandraStatementExecutor {
 	
 	private final Session session;
 //	private final PreparedStatement insertTelemetryEventStatement;
-//	private final PreparedStatement insertCorrelationDataStatement;
+	private final PreparedStatement insertCorrelationDataStatement;
 	private final PreparedStatement insertCorrelationToParentStatement;
 //	private final PreparedStatement insertEventOccurrenceStatement;
 //	private final PreparedStatement insertTransactionEventStartStatement;
@@ -44,32 +44,12 @@ public class CassandraStatementExecutor {
 	
 	public CassandraStatementExecutor(final Session session) {
 		this.session = session;
-//		this.insertTelemetryEventStatement = session.prepare("insert into telemetry_event ("
-//				+ "id, "
-//				+ "application, "
-//				+ "content, "
-//				+ "correlationCreationTime, "
-//				+ "correlationData, "
-//				+ "correlationId, "
-//				+ "correlationName, "
-//				+ "creationTime, "
-//				+ "direction, "
-//				+ "endpoint, "
-//				+ "expiryTime, "
-//				+ "metadata, "
-//				+ "name, "
-//				+ "sourceCorrelationId, "
-//				+ "sourceId, "
-//				+ "transactionId, "
-//				+ "transactionName, "
-//				+ "type, "
-//				+ "slaRule) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
-//		this.insertCorrelationDataStatement = session.prepare("insert into correlation_data ("
-//				+ "name_timeunit, "
-//				+ "timeunit, "
-//				+ "name, "
-//				+ "value, "
-//				+ "id) values (?,?,?,?,?);");
+		this.insertCorrelationDataStatement = session.prepare("insert into correlation_data ("
+				+ "name_timeunit, "
+				+ "event_time, "
+				+ "name, "
+				+ "value, "
+				+ "event_id) values (?,?,?,?,?);");
 		this.insertCorrelationToParentStatement = session.prepare("update telemetry_event set "
 				+ "correlations = correlations + ? "
 				+ "where id = ?;");
@@ -184,11 +164,11 @@ public class CassandraStatementExecutor {
 //				+ "id "
 //				+ "from sourceid_id_correlation where sourceId = ? and application = ?;");
 		this.findEndpointConfigStatement = session.prepare("select "
-				+ "readingApplicationParsers, "
-				+ "writingApplicationParsers, "
-				+ "eventNameParsers, "
-				+ "correlationParsers, "
-				+ "transactionNameParsers "
+				+ "reading_application_parsers, "
+				+ "writing_application_parsers, "
+				+ "event_name_parsers, "
+				+ "correlation_parsers, "
+				+ "transaction_name_parsers "
 				+ "from endpoint_config where endpoint = ?;");
 //		this.findTelemetryEventByIdStatement = session.prepare("select "
 //				+ "application, "
@@ -216,7 +196,7 @@ public class CassandraStatementExecutor {
 		Insert insert = QueryBuilder.insertInto("telemetry_event");
 		insert.value("id", event.id);
 		if (event.correlationId != null) {
-			insert.value("correlationId", event.correlationId);
+			insert.value("correlation_id", event.correlationId);
 		}
 		if (event.content != null) {
 			insert.value("content", event.content);
@@ -228,32 +208,12 @@ public class CassandraStatementExecutor {
 			insert.value("name", event.name);
 		}
 		if (event.writingEndpointHandler.applicationName != null) {
-			insert.value("writingApplication", event.writingEndpointHandler.applicationName);
+			insert.value("writing_application", event.writingEndpointHandler.applicationName);
 		}
 		if (event.writingEndpointHandler.handlingTime.getTime() != 0) {
-			insert.value("writingTime", event.writingEndpointHandler.handlingTime);
+			insert.value("writing_time", event.writingEndpointHandler.handlingTime);
 		}
 		batchStatement.add(insert);
-//		batchStatement.add(this.insertTelemetryEventStatement.bind(
-//				event.id, 
-//				event.application, 
-//				event.content,
-//				event.correlationCreationTime.getTime() == 0 ? null : event.correlationCreationTime,
-//				event.correlationData,
-//				event.correlationId,
-//				event.correlationName,
-//				event.creationTime, 
-//		        event.direction != null ? event.direction.name() : null, 
-//		        event.endpoint,
-//		        event.expiryTime.getTime() == 0 ? null : event.expiryTime,
-//		        event.metadata,
-//		        event.name, 
-//		        event.sourceCorrelationId, 
-//		        event.sourceId, 
-//		        event.transactionId, 
-//		        event.transactionName,
-//		        event.type != null ? event.type.name() : null,
-//				event.slaRule != null ? event.slaRule.toConfiguration() : null));
 		if (event.correlationId != null) {
 			final List<String> correlation = new ArrayList<String>(1);
 			correlation.add(event.id);
@@ -262,14 +222,14 @@ public class CassandraStatementExecutor {
 	}
 //	
 //	
-//	public void addCorrelationData(final TelemetryEvent event, final String key, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
-//		batchStatement.add(this.insertCorrelationDataStatement.bind(
-//				key,
-//				event.creationTime,
-//				correlationDataName, 
-//				correlationDataValue,
-//				event.id));
-//	}
+	public void addCorrelationData(final TelemetryEvent event, final String partitionKey, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
+		batchStatement.add(this.insertCorrelationDataStatement.bind(
+				partitionKey,
+				event.getEventTime(),
+				correlationDataName, 
+				correlationDataValue,
+				event.id));
+	}
 //	
 //	public void addEventOccurence(final Date timestamp, final String occurrenceName, final String occurrenceValue, final String originalName, final BatchStatement batchStatement) {
 //		batchStatement.add(this.insertEventOccurrenceStatement.bind(

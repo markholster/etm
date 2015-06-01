@@ -15,11 +15,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	public String content;
 	
 	/**
-	 * Data to be used for correlating event's that aren't correlated by the correlation id.
-	 */
-	public Map<String, String> correlationData = new HashMap<String, String>();
-	
-	/**
 	 * The endpoint this event was send to, and received from.
 	 */
 	public String endpoint;
@@ -96,7 +91,6 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	    this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
 	    return this;
 	}
-
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -110,5 +104,19 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	public int hashCode() {
 	    return this.id.hashCode();
 	}
+
+	@Override
+    public Date getEventTime() {
+		if (this.writingEndpointHandler.handlingTime.getTime() != 0) {
+			return this.writingEndpointHandler.handlingTime;
+		}
+		for (EndpointHandler endpointHandler : this.readingEndpointHandlers) {
+			if (endpointHandler.handlingTime.getTime() !=0 ) {
+				return endpointHandler.handlingTime;
+			}
+		}
+		// TODO, really throw this exception?
+	    throw new IllegalStateException();
+    }
 	
 }

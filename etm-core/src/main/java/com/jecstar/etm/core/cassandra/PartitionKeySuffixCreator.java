@@ -1,9 +1,7 @@
 package com.jecstar.etm.core.cassandra;
 
-import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -23,10 +21,4 @@ public class PartitionKeySuffixCreator extends SimpleDateFormat {
 		setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
 
-	@Override
-	public StringBuffer format(Date date, StringBuffer toAppendTo, FieldPosition pos) {
-		toAppendTo.append("-");
-	    return super.format(date, toAppendTo, pos);
-	}
-	
 }

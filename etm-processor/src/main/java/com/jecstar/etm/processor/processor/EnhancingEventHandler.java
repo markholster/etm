@@ -75,6 +75,10 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 					event.readingEndpointHandlers.add(endpointHandler);
 				}
 			}
+			// If no reading endpointhandlers, and no writing endpointhandler, at least set the time of the writingEndpointHandler to the current system time.
+			if (event.writingEndpointHandler.applicationName == null && event.readingEndpointHandlers.size() == 0 && event.writingEndpointHandler.handlingTime.getTime() == 0) {
+				event.writingEndpointHandler.handlingTime.setTime(System.currentTimeMillis());
+			}
 			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
 				if (endpointHandler.handlingTime.getTime() == 0) {
 					endpointHandler.handlingTime.setTime(event.writingEndpointHandler.handlingTime.getTime());
@@ -93,8 +97,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			}
 		} finally {
 			timerContext.stop();
-		}
-	    
+		}	    
     }
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {

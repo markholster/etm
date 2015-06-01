@@ -44,7 +44,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
-//		this.partitionKeySuffix = this.format.format(event.creationTime);
+		this.partitionKeySuffix = "-" + this.format.format(event.getEventTime());
 //		this.correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
 //		dataRetention.partionKeySuffix = partitionKeySuffix;
 	}
@@ -65,10 +65,10 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	}
 //	
 //	
-//	@Override
-//	protected void addCorrelationData(TelemetryEvent event, String key, String value) {
-//		this.cassandraStatementExecutor.addCorrelationData(event, key + partitionKeySuffix, key, value, this.batchStatement);
-//	}
+	@Override
+	protected void addCorrelationData(TelemetryEvent event, String key, String value) {
+		this.cassandraStatementExecutor.addCorrelationData(event, key + partitionKeySuffix, key, value, this.batchStatement);
+	}
 //	
 //	@Override
 //	protected void addApplicationCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount, long responseCount,
