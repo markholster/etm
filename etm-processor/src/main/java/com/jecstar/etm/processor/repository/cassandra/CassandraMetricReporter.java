@@ -42,24 +42,24 @@ public class CassandraMetricReporter extends ScheduledReporter {
 	        SortedMap<String, Meter> meters, SortedMap<String, Timer> timers) {
 		this.batchStatement.clear();
 		final long timestamp = this.clock.getTime();
-		Date partitionKey = new Date(DateUtils.normalizeTime(timestamp, PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
-		Date statisticsTime = new Date(DateUtils.normalizeTime(timestamp, this.statisticsTimeUnit.toMillis(1)));
+//		Date partitionKey = new Date(DateUtils.normalizeTime(timestamp, PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1)));
+//		Date statisticsTime = new Date(DateUtils.normalizeTime(timestamp, this.statisticsTimeUnit.toMillis(1)));
 
-		for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
-			reportGauge(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
-		}
-		for (Map.Entry<String, Counter> entry : counters.entrySet()) {
-			reportCounter(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
-		}
-		for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
-			reportHistogram(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
-		}
-		for (Map.Entry<String, Meter> entry : meters.entrySet()) {
-			reportMeter(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
-		}
-		for (Map.Entry<String, Timer> entry : timers.entrySet()) {
-			reportTimer(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
-		}
+//		for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+//			reportGauge(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
+//		}
+//		for (Map.Entry<String, Counter> entry : counters.entrySet()) {
+//			reportCounter(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
+//		}
+//		for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
+//			reportHistogram(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
+//		}
+//		for (Map.Entry<String, Meter> entry : meters.entrySet()) {
+//			reportMeter(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
+//		}
+//		for (Map.Entry<String, Timer> entry : timers.entrySet()) {
+//			reportTimer(this.batchStatement, partitionKey, this.nodeName, statisticsTime, entry.getKey(), entry.getValue());
+//		}
 		this.session.executeAsync(this.batchStatement);
 	}
 

@@ -12,17 +12,10 @@ public class TelemetryCommandExceptionHandler implements ExceptionHandler<Teleme
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryCommandExceptionHandler.class);
 
-	private final SourceCorrelationCache sourceCorrelations;
-
-	public TelemetryCommandExceptionHandler(SourceCorrelationCache sourceCorrelations) {
-		this.sourceCorrelations = sourceCorrelations;
-	}
-
 	@Override
 	public void handleEventException(Throwable t, long sequence, TelemetryCommand command) {
 		switch (command.commandType) {
 		case MESSAGE_EVENT:
-			this.sourceCorrelations.removeTelemetryEvent(command.messageEvent);
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Unable to process event '" + command.messageEvent.id + "'.", t);
 			}

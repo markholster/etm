@@ -1,10 +1,9 @@
 package com.jecstar.etm.processor.repository.cassandra;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoField;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -21,11 +20,10 @@ import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.core.statistics.StatisticsTimeUnit;
+import com.jecstar.etm.core.util.DateUtils;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
 public class CassandraStatementExecutor {
-	
-	private final ZoneId ZONE_UTC = ZoneId.of("Z");
 	
 	private final Session session;
 //	private final PreparedStatement insertTelemetryEventStatement;
@@ -52,10 +50,10 @@ public class CassandraStatementExecutor {
 	public CassandraStatementExecutor(final Session session) {
 		this.session = session;
 		this.insertCorrelationDataStatement = session.prepare("insert into correlation_data ("
-				+ "name_timeunit, "
-				+ "event_time, "
 				+ "name, "
+				+ "day, "
 				+ "value, "
+				+ "event_time, "
 				+ "event_id) values (?,?,?,?,?);");
 		this.insertCorrelationToParentStatement = session.prepare("update telemetry_event set "
 				+ "correlations = correlations + ? "
@@ -139,12 +137,12 @@ public class CassandraStatementExecutor {
 //				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
 //				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
 //				+ "where application_timeunit = ? and timeunit = ? and application = ?;");
-		this.updateEventNameCounterStatement = session.prepare("update eventname_counter set "
+		this.updateEventNameCounterStatement = session.prepare("update event_name_counter set "
 				+ "count = count + 1, "
-				+ "messageRequestCount = messageRequestCount + ?, "
-				+ "messageResponseCount = messageResponseCount + ?, "
-				+ "messageDatagramCount = messageDatagramCount + ? "
-				+ "where event_name = ? and event_name_day = ? and aggregation = ? and event_time = ?;");
+				+ "message_request_count = message_request_count + ?, "
+				+ "message_response_count = message_response_count + ?, "
+				+ "message_datagram_count = message_datagram_count + ? "
+				+ "where event_name = ? and day = ? and aggregation = ? and event_time = ?;");
 //		this.updateApplicationEventNameCounterStatement = session.prepare("update application_event_counter set "
 //				+ "count = count + 1, "
 //				+ "messageRequestCount = messageRequestCount + ?, "
@@ -217,7 +215,7 @@ public class CassandraStatementExecutor {
 			insert.value("writing_application", event.writingEndpointHandler.applicationName);
 		}
 		if (event.writingEndpointHandler.handlingTime != null) {
-			insert.value("writing_time", event.writingEndpointHandler.handlingTime);
+			insert.value("writing_time", DateUtils.toDate(event.writingEndpointHandler.handlingTime));
 		}
 		batchStatement.add(insert);
 		if (event.correlationId != null) {
@@ -226,14 +224,13 @@ public class CassandraStatementExecutor {
 			batchStatement.add(this.insertCorrelationToParentStatement.bind(correlation, event.correlationId));
 		}
 	}
-//	
-//	
-	public void addCorrelationData(final TelemetryEvent event, final String partitionKey, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
+	
+	public void addCorrelationData(final TelemetryEvent event, final String correlationDataName, final String correlationDataValue, final BatchStatement batchStatement) {
 		batchStatement.add(this.insertCorrelationDataStatement.bind(
-				partitionKey,
-				event.getEventTime(),
-				correlationDataName, 
+				correlationDataName,
+				DateUtils.toUTCDay(event.getEventTime()),
 				correlationDataValue,
+				DateUtils.toDate(event.getEventTime()), 
 				event.id));
 	}
 //	
@@ -347,16 +344,14 @@ public class CassandraStatementExecutor {
 //	}
 //	
 	public void addEventNameCounter(final String eventName, final LocalDateTime timestamp, final StatisticsTimeUnit statisticsTimeUnit, final long requestCount, final long responseCount, final long datagramCount, final BatchStatement batchStatement) {
-		ZonedDateTime zonedDateTime = timestamp.atZone(ZONE_UTC);
-		String daySuffix = "_" + zonedDateTime.get(ChronoField.YEAR) + zonedDateTime.get(ChronoField.MONTH_OF_YEAR) + zonedDateTime.get(ChronoField.DAY_OF_MONTH); 
 		batchStatement.add(this.updateEventNameCounterStatement.bind(
 				requestCount, 
 				responseCount, 
 				datagramCount,
 				eventName,
-				eventName + daySuffix,
+				DateUtils.toUTCDay(timestamp),
 				statisticsTimeUnit.name(),
-				timestamp));
+				statisticsTimeUnit.toDate(timestamp)));
 	}
 //	
 //	public void addApplicationEventNameCounter(final long requestCount, final long incomingRequestCount,
@@ -419,6 +414,10 @@ public class CassandraStatementExecutor {
 		}
 	}
 	
+	public ResultSet execute(BatchStatement batchCounterStatement) {
+		return this.session.execute(batchCounterStatement);
+	}
+	
 	private void mergeRowIntoEndpointConfig(final Row row, final EndpointConfigResult result) {
 		if (result.readingApplicationParsers == null) {
 			result.readingApplicationParsers = createExpressionParsers(row.getList(0, String.class));
@@ -458,8 +457,4 @@ public class CassandraStatementExecutor {
 		}
 		return expressionParsers;
 	}
-
-	public ResultSet execute(BatchStatement batchCounterStatement) {
-	    return this.session.execute(batchCounterStatement);
-    }
 }

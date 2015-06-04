@@ -6,8 +6,6 @@ public interface PersistenceEnvironment {
 
 	TelemetryEventRepository createTelemetryEventRepository();
 	
-	SourceCorrelationCache getProcessingMap();
-
 	void close();
 	
 }

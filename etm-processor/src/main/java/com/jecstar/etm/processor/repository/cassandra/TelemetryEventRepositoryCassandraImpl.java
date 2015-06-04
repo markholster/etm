@@ -44,7 +44,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
 		// TODO, dit moet met Java 8 API.
-		this.partitionKeySuffix = "-" + this.format.format(event.getEventTime());
+//		this.partitionKeySuffix = "-" + this.format.format(event.getEventTime());
 //		this.correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
 //		dataRetention.partionKeySuffix = partitionKeySuffix;
 	}
@@ -67,7 +67,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 //	
 	@Override
 	protected void addCorrelationData(TelemetryEvent event, String key, String value) {
-		this.cassandraStatementExecutor.addCorrelationData(event, key + partitionKeySuffix, key, value, this.batchStatement);
+		this.cassandraStatementExecutor.addCorrelationData(event, key, value, this.batchStatement);
 	}
 //	
 //	@Override

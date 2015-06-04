@@ -1,24 +1,33 @@
 package com.jecstar.etm.core.util;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoField;
 import java.util.Date;
-import java.util.TimeZone;
 
 public final class DateUtils {
 	
-	private static DateFormat GMT_DAY_FORMAT = new SimpleDateFormat("yyyyMMdd");
+	public static String toUTCDay(Date date) {
+		return toUTCDay(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()));
+	}
+	
+	public static String toUTCDay(LocalDateTime localDateTime) {
+		return localDateTime.get(ChronoField.YEAR) + addLeadingZeroes(localDateTime.get(ChronoField.MONTH_OF_YEAR)) + addLeadingZeroes(localDateTime.get(ChronoField.DAY_OF_MONTH));
+	}
+	
+	public static Date toDate(LocalDateTime localDateTime) {
+	    long epochMilliSeconds = localDateTime.atZone(ZoneOffset.systemDefault()).toEpochSecond() * 1000;
+		return new Date(epochMilliSeconds);
+	}
+	
+	private static String addLeadingZeroes(int timeUnit) {
+		if (timeUnit < 10) {
+			return "0" + timeUnit;
+		}
+		return "" + timeUnit;
+	}
+	
 
-	static {
-		GMT_DAY_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-	}
-	
-	public static long normalizeTime(long timeInMillis, long factor) {
-		return (timeInMillis / factor) * factor;
-    }
-	
-	public static String toGMTDay(Date date) {
-		return GMT_DAY_FORMAT.format(date);
-	}
 
 }
