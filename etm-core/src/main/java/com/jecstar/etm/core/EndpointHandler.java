@@ -1,6 +1,6 @@
 package com.jecstar.etm.core;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class EndpointHandler {
 
@@ -12,18 +12,18 @@ public class EndpointHandler {
 	/**
 	 * The time the handling took place.
 	 */
-	public Date handlingTime = new Date(0);
+	public LocalDateTime handlingTime;
 	
 	public EndpointHandler initialize() {
 		this.applicationName = null;
-		this.handlingTime.setTime(0);
+		this.handlingTime = null;
 		return this;
 	}
 	
 	public EndpointHandler initialize(EndpointHandler copy) {
 		initialize();
 		this.applicationName = copy.applicationName;
-		this.handlingTime.setTime(copy.handlingTime.getTime());
+		this.handlingTime = copy.handlingTime;
 		return this;
 	}
 	

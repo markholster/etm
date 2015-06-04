@@ -1,16 +1,16 @@
 package com.jecstar.etm.processor.repository.cassandra;
 
 import java.text.DateFormat;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BatchStatement.Type;
 import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
-import com.jecstar.etm.processor.processor.SourceCorrelationCache;
+import com.jecstar.etm.core.statistics.StatisticsTimeUnit;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
@@ -32,8 +32,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	private String partitionKeySuffix;
 	private String correlationPartitionKeySuffix;
 	
-	public TelemetryEventRepositoryCassandraImpl(final CassandraStatementExecutor cassandraStatementExecutor, final SourceCorrelationCache sourceCorrelations) {
-		super(sourceCorrelations);
+	public TelemetryEventRepositoryCassandraImpl(final CassandraStatementExecutor cassandraStatementExecutor) {
 		this.cassandraStatementExecutor = cassandraStatementExecutor;
     }
 	
@@ -44,6 +43,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 		// The following 2 suffixes are defining the diversity of the partition
 		// key in cassandra. If a partition is to big for a single key, the
 		// dateformat should be displayed in a less general format.
+		// TODO, dit moet met Java 8 API.
 		this.partitionKeySuffix = "-" + this.format.format(event.getEventTime());
 //		this.correlationPartitionKeySuffix = this.format.format(event.correlationCreationTime);
 //		dataRetention.partionKeySuffix = partitionKeySuffix;
@@ -103,19 +103,20 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 //				occurrenceValue, this.batchStatement);	
 //	}
 //	
-//	@Override
-//	protected void addEventNameCounter(long requestCount, long responseCount, long datagramCount, long responseTime, String eventName,
-//	        Date statisticsTimestamp) {
-//		this.cassandraStatementExecutor.addEventNameCounter(
-//			requestCount, 
-//			responseCount, 
-//			datagramCount, 
-//			responseTime, 
-//			eventName,
-//			statisticsTimestamp,
-//			eventName + this.partitionKeySuffix, 
-//			this.counterBatchStatement);
-//	}
+	@Override
+	protected void addEventNameCounter(String eventName, LocalDateTime eventTime, long requestCount, long responseCount, long datagramCount) {
+		for (StatisticsTimeUnit timeUnit :  StatisticsTimeUnit.values()) {
+			this.cassandraStatementExecutor.addEventNameCounter(
+					eventName,
+					eventTime,
+					timeUnit,
+					requestCount, 
+					responseCount, 
+					datagramCount, 
+					this.counterBatchStatement);
+			}			
+		}
+		
 //	
 //	@Override
 //	protected void addMessageEventStart(TelemetryEvent event) {

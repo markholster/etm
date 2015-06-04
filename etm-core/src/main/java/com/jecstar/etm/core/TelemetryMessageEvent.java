@@ -1,7 +1,8 @@
 package com.jecstar.etm.core;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	/**
 	 * The time after which the event expires.
 	 */
-	public Date expiryTime = new Date(0);
+	public Duration expiryTime;
 	
 	/**
 	 * Metadata of the event. Not used by the application, but can be filled by the end user. 
@@ -65,7 +66,7 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 		this.correlationData.clear();
 		this.correlationId = null;
 		this.endpoint = null;
-		this.expiryTime.setTime(0);
+		this.expiryTime = null;
 		this.metadata.clear();
 		this.name = null;
 		this.readingEndpointHandlers.clear();
@@ -82,7 +83,7 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	    this.correlationData.putAll(copy.correlationData);
 	    this.correlationId = copy.correlationId;
 	    this.endpoint = copy.endpoint;
-	    this.expiryTime.setTime(copy.expiryTime.getTime());
+	    this.expiryTime = copy.expiryTime;
 	    this.metadata.putAll(copy.metadata);
 	    this.name = copy.name;
 	    this.readingEndpointHandlers.addAll(copy.readingEndpointHandlers);
@@ -106,12 +107,12 @@ public class TelemetryMessageEvent extends TelemetryEvent {
 	}
 
 	@Override
-    public Date getEventTime() {
-		if (this.writingEndpointHandler.handlingTime.getTime() != 0) {
+    public LocalDateTime getEventTime() {
+		if (this.writingEndpointHandler.handlingTime != null) {
 			return this.writingEndpointHandler.handlingTime;
 		}
 		for (EndpointHandler endpointHandler : this.readingEndpointHandlers) {
-			if (endpointHandler.handlingTime.getTime() !=0 ) {
+			if (endpointHandler.handlingTime != null ) {
 				return endpointHandler.handlingTime;
 			}
 		}

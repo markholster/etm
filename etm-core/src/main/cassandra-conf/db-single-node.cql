@@ -39,5 +39,5 @@ create table event_name_counter (
     message_request_count counter,
     message_response_count counter,
     message_datagram_count counter,
-    primary key ((eventName, event_name_day), aggregation, event_time)
+    primary key ((event_name, event_name_day), aggregation, event_time)
 );

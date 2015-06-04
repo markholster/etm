@@ -1,6 +1,6 @@
 package com.jecstar.etm.core;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +28,6 @@ public abstract class TelemetryEvent {
 	 * 
 	 * @return The time the event occurred.
 	 */
-	public abstract Date getEventTime();
+	public abstract LocalDateTime getEventTime();
 
 }

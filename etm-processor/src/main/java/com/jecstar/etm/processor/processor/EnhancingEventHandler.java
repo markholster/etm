@@ -1,5 +1,6 @@
 package com.jecstar.etm.processor.processor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.codahale.metrics.Timer;
@@ -53,6 +54,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private void enhanceTelemetryMessageEvent(TelemetryMessageEvent event) {
 		final Context timerContext = this.timer.time();
 		try {
+			final LocalDateTime now = LocalDateTime.now();
 			if (event.id == null) {
 				event.id = UUIDs.timeBased().toString();
 			}
@@ -64,9 +66,10 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			if (event.writingEndpointHandler.applicationName == null) {
 				event.writingEndpointHandler.applicationName = parseValue(this.endpointConfigResult.writingApplicationParsers, event.content);
 			}
-			if (event.writingEndpointHandler.applicationName != null && event.writingEndpointHandler.handlingTime.getTime() == 0) {
-				event.writingEndpointHandler.handlingTime.setTime(System.currentTimeMillis());
+			if (event.writingEndpointHandler.applicationName != null && event.writingEndpointHandler.handlingTime == null) {
+				event.writingEndpointHandler.handlingTime = now;
 			}
+			
 			if (event.readingEndpointHandlers.size() == 0) {
 				String readingApplication = parseValue(this.endpointConfigResult.readingApplicationParsers, event.content);
 				if (readingApplication != null) {
@@ -75,13 +78,15 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 					event.readingEndpointHandlers.add(endpointHandler);
 				}
 			}
-			// If no reading endpointhandlers, and no writing endpointhandler, at least set the time of the writingEndpointHandler to the current system time.
-			if (event.writingEndpointHandler.applicationName == null && event.readingEndpointHandlers.size() == 0 && event.writingEndpointHandler.handlingTime.getTime() == 0) {
-				event.writingEndpointHandler.handlingTime.setTime(System.currentTimeMillis());
+			// If no reading endpointhandlers, and no writing endpointhandler,
+			// at least set the time of the writingEndpointHandler to the
+			// current system time. Otherwise no event time can be determined.
+			if (event.writingEndpointHandler.applicationName == null && event.readingEndpointHandlers.size() == 0 && event.writingEndpointHandler.handlingTime == null) {
+				event.writingEndpointHandler.handlingTime = now;
 			}
 			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
-				if (endpointHandler.handlingTime.getTime() == 0) {
-					endpointHandler.handlingTime.setTime(event.writingEndpointHandler.handlingTime.getTime());
+				if (endpointHandler.handlingTime == null) {
+					endpointHandler.handlingTime = event.writingEndpointHandler.handlingTime != null ? event.writingEndpointHandler.handlingTime : now;
 				}
 			}
 			if (event.transactionName == null) {

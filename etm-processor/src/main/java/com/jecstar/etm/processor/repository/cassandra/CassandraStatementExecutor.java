@@ -1,5 +1,9 @@
 package com.jecstar.etm.processor.repository.cassandra;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,9 +20,12 @@ import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
+import com.jecstar.etm.core.statistics.StatisticsTimeUnit;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
 public class CassandraStatementExecutor {
+	
+	private final ZoneId ZONE_UTC = ZoneId.of("Z");
 	
 	private final Session session;
 //	private final PreparedStatement insertTelemetryEventStatement;
@@ -35,7 +42,7 @@ public class CassandraStatementExecutor {
 //	private final PreparedStatement insertSlaFinishStatement;
 //	private final PreparedStatement insertDataRetentionStatement;
 //	private final PreparedStatement updateApplicationCounterStatement;
-//	private final PreparedStatement updateEventNameCounterStatement;
+	private final PreparedStatement updateEventNameCounterStatement;
 //	private final PreparedStatement updateApplicationEventNameCounterStatement;
 //	private final PreparedStatement updateTransactionNameCounterStatement;
 	private final PreparedStatement findEndpointConfigStatement;
@@ -132,13 +139,12 @@ public class CassandraStatementExecutor {
 //				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
 //				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
 //				+ "where application_timeunit = ? and timeunit = ? and application = ?;");
-//		this.updateEventNameCounterStatement = session.prepare("update eventname_counter set "
-//				+ "count = count + 1, "
-//				+ "messageRequestCount = messageRequestCount + ?, "
-//				+ "messageResponseCount = messageResponseCount + ?, "
-//				+ "messageDatagramCount = messageDatagramCount + ?, "
-//				+ "messageResponseTime = messageResponseTime + ? "
-//				+ "where eventName_timeunit = ? and timeunit = ? and eventName = ?;");
+		this.updateEventNameCounterStatement = session.prepare("update eventname_counter set "
+				+ "count = count + 1, "
+				+ "messageRequestCount = messageRequestCount + ?, "
+				+ "messageResponseCount = messageResponseCount + ?, "
+				+ "messageDatagramCount = messageDatagramCount + ? "
+				+ "where event_name = ? and event_name_day = ? and aggregation = ? and event_time = ?;");
 //		this.updateApplicationEventNameCounterStatement = session.prepare("update application_event_counter set "
 //				+ "count = count + 1, "
 //				+ "messageRequestCount = messageRequestCount + ?, "
@@ -210,7 +216,7 @@ public class CassandraStatementExecutor {
 		if (event.writingEndpointHandler.applicationName != null) {
 			insert.value("writing_application", event.writingEndpointHandler.applicationName);
 		}
-		if (event.writingEndpointHandler.handlingTime.getTime() != 0) {
+		if (event.writingEndpointHandler.handlingTime != null) {
 			insert.value("writing_time", event.writingEndpointHandler.handlingTime);
 		}
 		batchStatement.add(insert);
@@ -340,17 +346,18 @@ public class CassandraStatementExecutor {
 //		        application));
 //	}
 //	
-//	public void addEventNameCounter(final long requestCount, final long responseCount, final long datagramCount,
-//	        final long responseTime, final String eventName, final Date timestamp, final String key, final BatchStatement batchStatement) {
-//		batchStatement.add(this.updateEventNameCounterStatement.bind(
-//				requestCount, 
-//				responseCount, 
-//				datagramCount, 
-//				responseTime, 
-//				key, 
-//				timestamp,
-//				eventName));
-//	}
+	public void addEventNameCounter(final String eventName, final LocalDateTime timestamp, final StatisticsTimeUnit statisticsTimeUnit, final long requestCount, final long responseCount, final long datagramCount, final BatchStatement batchStatement) {
+		ZonedDateTime zonedDateTime = timestamp.atZone(ZONE_UTC);
+		String daySuffix = "_" + zonedDateTime.get(ChronoField.YEAR) + zonedDateTime.get(ChronoField.MONTH_OF_YEAR) + zonedDateTime.get(ChronoField.DAY_OF_MONTH); 
+		batchStatement.add(this.updateEventNameCounterStatement.bind(
+				requestCount, 
+				responseCount, 
+				datagramCount,
+				eventName,
+				eventName + daySuffix,
+				statisticsTimeUnit.name(),
+				timestamp));
+	}
 //	
 //	public void addApplicationEventNameCounter(final long requestCount, final long incomingRequestCount,
 //	        final long outgoingRequestCount, final long responseCount, final long incomingResponseCount, final long outgoingResponseCount,
@@ -389,17 +396,17 @@ public class CassandraStatementExecutor {
 //	
 //	
 //	
-	public TelemetryEvent findTelemetryEventById(String id) {
+//	public TelemetryEvent findTelemetryEventById(String id) {
 //	    ResultSet resultSet = this.session.execute(this.findTelemetryEventByIdStatement.bind(id));
 //		Row row = resultSet.one();
 //		if (row != null) {
-			TelemetryMessageEvent event = new TelemetryMessageEvent();
+//			TelemetryMessageEvent event = new TelemetryMessageEvent();
 			// TODO execute statement to find event.
-			event.id = id;
-			return event;
+//			event.id = id;
+//			return event;
 //		}	    
 //	    return null;
-    }
+//    }
 
 	public void findAndMergeEndpointConfig(final String endpoint, final EndpointConfigResult result) {
 		if (endpoint == null) {
