@@ -41,3 +41,20 @@ create table event_name_counter (
     message_datagram_count counter,
     primary key ((event_name, day), aggregation, event_time)
 );
+
+create table application_name_counter (
+    application_name text,
+    day text,
+    aggregation text,
+    event_time timestamp,
+    count counter,
+    incoming_count counter,
+    incoming_message_request_count counter,
+    incoming_message_response_count counter,
+    incoming_message_datagram_count counter,
+    outgoing_count counter,
+    outgoing_message_request_count counter,
+    outgoing_message_response_count counter,
+    outgoing_message_datagram_count counter,
+    primary key ((application_name, day), aggregation, event_time)
+);

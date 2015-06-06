@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import com.jecstar.etm.core.EndpointHandler;
 import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.TelemetryMessageEventType;
@@ -33,6 +34,14 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 		// TODO beschrijven dat de counter werkt op basis van writingEndpointHandler. Bij pub/sub mag 1 reader dus maar de writingEndpointHandler vullen.
 		if (event.name != null && event.writingEndpointHandler.applicationName != null && event.writingEndpointHandler.handlingTime != null) {
 			addEventNameCounter(event.name, event.writingEndpointHandler.handlingTime, requestCount, responseCount, datagramCount);
+		}
+		if (event.writingEndpointHandler.applicationName != null && event.writingEndpointHandler.handlingTime != null) {
+			addOutgoingApplicationNameCounter(event.writingEndpointHandler.applicationName, event.writingEndpointHandler.handlingTime, requestCount, responseCount, datagramCount);
+		}
+		for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
+			if (endpointHandler.applicationName != null && endpointHandler.handlingTime != null) {
+				addIncomingApplicationNameCounter(endpointHandler.applicationName, endpointHandler.handlingTime, requestCount, responseCount, datagramCount);
+			}
 		}
 //		if (responseCount > 0) {
 //			if (event.creationTime.getTime() != 0 && event.correlationCreationTime.getTime() != 0) {
@@ -121,6 +130,7 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 //		this.sourceCorrelations.removeTelemetryEvent(event);
     }
 	
+
 	protected abstract void startPersist(TelemetryEvent event);
 	protected abstract void endPersist();
 //	
@@ -129,6 +139,8 @@ public abstract class AbstractTelemetryEventRepository implements TelemetryEvent
 //	protected abstract void addApplicationCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount, long responseCount, long incomingResponseCount, long outgoingResponseCount, long datagramCount, long incomingDatagramCount, long outgoingDatagramCount, long responseTime, long incomingResponseTime, long outgoingResponseTime, String application, Date statisticsTimestamp);
 //	protected abstract void addEventOccurence(Date timestamp, String occurrenceName, String occurrenceValue);
 	protected abstract void addEventNameCounter(String eventName, LocalDateTime eventTime, long requestCount, long responseCount, long datagramCount);
+	protected abstract void addOutgoingApplicationNameCounter(String applicationName, LocalDateTime handlingTime, long requestCount, long responseCount, long datagramCount);
+	protected abstract void addIncomingApplicationNameCounter(String applicationName, LocalDateTime handlingTime, long requestCount, long responseCount, long datagramCount);
 //	protected abstract void addMessageEventStart(TelemetryEvent event);
 //	protected abstract void addMessageEventFinish(TelemetryEvent event);
 //	protected abstract void addApplicationEventNameCounter(long requestCount, long incomingRequestCount, long outgoingRequestCount, long responseCount, long incomingResponseCount, long outgoingResponseCount, long datagramCount, long incomingDatagramCount, long outgoingDatagramCount, long responseTime, long incomingResponseTime, long outgoingResponseTime, String application, String eventName, Date timestamp);

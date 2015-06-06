@@ -20,6 +20,7 @@ public class DisruptorEnvironment {
 	private final Disruptor<TelemetryCommand> disruptor;
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final IndexingEventHandler[] indexingEventHandlers;
+	private final PersistingEventHandler[] persistingEventHandlers;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final SolrClient solrClient, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
 		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
@@ -37,13 +38,13 @@ public class DisruptorEnvironment {
 		}
 		
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
-		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
+		this.persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, etmConfiguration, metricRegistry.timer("event-persisting"));
+			this.persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, etmConfiguration, metricRegistry.timer("event-persisting"));
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
-		if (persistingEventHandlers.length > 0) {
-			this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);
+		if (this.persistingEventHandlers.length > 0) {
+			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.persistingEventHandlers);
 		}
 		if (this.indexingEventHandlers.length > 0) {
 			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.indexingEventHandlers);
@@ -62,6 +63,17 @@ public class DisruptorEnvironment {
             } catch (IOException e) {
             }
 		}
+		for (PersistingEventHandler persistingEventHandler : this.persistingEventHandlers) {
+			try {
+	            persistingEventHandler.close();
+            } catch (IOException e) {
+            }
+		}
+		try {
+	        this.telemetryEventRepository.close();
+        } catch (IOException e) {
+	        e.printStackTrace();
+        }
     }
 
 	public void findEndpointConfig(String endpoint, EndpointConfigResult result, long endpointCacheExpiryTime) {

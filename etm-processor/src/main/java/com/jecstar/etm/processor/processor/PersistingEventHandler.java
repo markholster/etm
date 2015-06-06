@@ -1,5 +1,8 @@
 package com.jecstar.etm.processor.processor;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.TelemetryCommand;
@@ -8,7 +11,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
-public class PersistingEventHandler implements EventHandler<TelemetryCommand> {
+public class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeable {
 
 	private final long ordinal;
 	private final long numberOfConsumers;
@@ -49,5 +52,10 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand> {
 		}
 
 	}
+
+	@Override
+    public void close() throws IOException {
+		this.telemetryEventRepository.close();
+    }
 
 }

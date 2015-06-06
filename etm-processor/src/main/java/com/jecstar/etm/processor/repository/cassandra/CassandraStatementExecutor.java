@@ -1,9 +1,7 @@
 package com.jecstar.etm.processor.repository.cassandra;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +39,8 @@ public class CassandraStatementExecutor {
 //	private final PreparedStatement insertDataRetentionStatement;
 //	private final PreparedStatement updateApplicationCounterStatement;
 	private final PreparedStatement updateEventNameCounterStatement;
+	private final PreparedStatement updateIncomingApplicationNameCounterStatement;
+	private final PreparedStatement updateOutgoingApplicationNameCounterStatement;
 //	private final PreparedStatement updateApplicationEventNameCounterStatement;
 //	private final PreparedStatement updateTransactionNameCounterStatement;
 	private final PreparedStatement findEndpointConfigStatement;
@@ -143,6 +143,20 @@ public class CassandraStatementExecutor {
 				+ "message_response_count = message_response_count + ?, "
 				+ "message_datagram_count = message_datagram_count + ? "
 				+ "where event_name = ? and day = ? and aggregation = ? and event_time = ?;");
+		this.updateIncomingApplicationNameCounterStatement = session.prepare("update application_name_counter set "
+				+ "count = count + 1, "
+				+ "incoming_count = incoming_count + 1, "
+				+ "incoming_message_request_count = incoming_message_request_count + ?, "
+				+ "incoming_message_response_count = incoming_message_response_count + ?, "
+				+ "incoming_message_datagram_count = incoming_message_datagram_count + ? "
+				+ "where application_name = ? and day = ? and aggregation = ? and event_time = ?");
+		this.updateOutgoingApplicationNameCounterStatement = session.prepare("update application_name_counter set "
+				+ "count = count + 1, "
+				+ "outgoing_count = outgoing_count + 1, "
+				+ "outgoing_message_request_count = outgoing_message_request_count + ?, "
+				+ "outgoing_message_response_count = outgoing_message_response_count + ?, "
+				+ "outgoing_message_datagram_count = outgoing_message_datagram_count + ? "
+				+ "where application_name = ? and day = ? and aggregation = ? and event_time = ?");
 //		this.updateApplicationEventNameCounterStatement = session.prepare("update application_event_counter set "
 //				+ "count = count + 1, "
 //				+ "messageRequestCount = messageRequestCount + ?, "
@@ -353,6 +367,32 @@ public class CassandraStatementExecutor {
 				statisticsTimeUnit.name(),
 				statisticsTimeUnit.toDate(timestamp)));
 	}
+	
+	
+	public void addOutgoingApplicationNameCounter(String applicationName, LocalDateTime timestamp, StatisticsTimeUnit statisticsTimeUnit,
+			long requestCount, long responseCount, long datagramCount, BatchStatement batchStatement) {
+		batchStatement.add(this.updateOutgoingApplicationNameCounterStatement.bind(
+				requestCount,
+				responseCount,
+				datagramCount,
+				applicationName,
+				DateUtils.toUTCDay(timestamp),
+				statisticsTimeUnit.name(),
+				statisticsTimeUnit.toDate(timestamp)));
+	}
+	
+	public void addIncomingApplicationNameCounter(String applicationName, LocalDateTime timestamp, StatisticsTimeUnit statisticsTimeUnit,
+			long requestCount, long responseCount, long datagramCount, BatchStatement batchStatement) {
+		batchStatement.add(this.updateIncomingApplicationNameCounterStatement.bind(
+				requestCount,
+				responseCount,
+				datagramCount,
+				applicationName,
+				DateUtils.toUTCDay(timestamp),
+				statisticsTimeUnit.name(),
+				statisticsTimeUnit.toDate(timestamp)));
+	}
+	
 //	
 //	public void addApplicationEventNameCounter(final long requestCount, final long incomingRequestCount,
 //	        final long outgoingRequestCount, final long responseCount, final long incomingResponseCount, final long outgoingResponseCount,
@@ -414,8 +454,8 @@ public class CassandraStatementExecutor {
 		}
 	}
 	
-	public ResultSet execute(BatchStatement batchCounterStatement) {
-		return this.session.execute(batchCounterStatement);
+	public ResultSet execute(BatchStatement batchStatement) {
+		return this.session.execute(batchStatement);
 	}
 	
 	private void mergeRowIntoEndpointConfig(final Row row, final EndpointConfigResult result) {
