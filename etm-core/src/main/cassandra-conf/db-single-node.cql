@@ -30,23 +30,12 @@ create table correlation_data (
     primary key ((name, day), value, event_time, event_id)
 );
 
-create table event_name_counter (
-    event_name text,
-    day text,
-    aggregation text,
-    event_time timestamp,
-    count counter,
-    message_request_count counter,
-    message_response_count counter,
-    message_datagram_count counter,
-    primary key ((event_name, day), aggregation, event_time)
-);
-
-create table application_name_counter (
+create table application_event_counter (
     application_name text,
     day text,
     aggregation text,
     event_time timestamp,
+    event_name text,
     count counter,
     incoming_count counter,
     incoming_message_request_count counter,
@@ -56,5 +45,5 @@ create table application_name_counter (
     outgoing_message_request_count counter,
     outgoing_message_response_count counter,
     outgoing_message_datagram_count counter,
-    primary key ((application_name, day), aggregation, event_time)
+    primary key ((application_name, day), aggregation, event_time, event_name)
 );

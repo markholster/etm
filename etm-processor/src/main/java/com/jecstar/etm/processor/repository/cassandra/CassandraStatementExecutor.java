@@ -38,10 +38,8 @@ public class CassandraStatementExecutor {
 //	private final PreparedStatement insertSlaFinishStatement;
 //	private final PreparedStatement insertDataRetentionStatement;
 //	private final PreparedStatement updateApplicationCounterStatement;
-	private final PreparedStatement updateEventNameCounterStatement;
-	private final PreparedStatement updateIncomingApplicationNameCounterStatement;
-	private final PreparedStatement updateOutgoingApplicationNameCounterStatement;
-//	private final PreparedStatement updateApplicationEventNameCounterStatement;
+	private final PreparedStatement updateIncomingApplicationEventNameCounterStatement;
+	private final PreparedStatement updateOutgoingApplicationEventNameCounterStatement;
 //	private final PreparedStatement updateTransactionNameCounterStatement;
 	private final PreparedStatement findEndpointConfigStatement;
 //	private final PreparedStatement findTelemetryEventByIdStatement;
@@ -137,41 +135,20 @@ public class CassandraStatementExecutor {
 //				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
 //				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
 //				+ "where application_timeunit = ? and timeunit = ? and application = ?;");
-		this.updateEventNameCounterStatement = session.prepare("update event_name_counter set "
-				+ "count = count + 1, "
-				+ "message_request_count = message_request_count + ?, "
-				+ "message_response_count = message_response_count + ?, "
-				+ "message_datagram_count = message_datagram_count + ? "
-				+ "where event_name = ? and day = ? and aggregation = ? and event_time = ?;");
-		this.updateIncomingApplicationNameCounterStatement = session.prepare("update application_name_counter set "
+		this.updateIncomingApplicationEventNameCounterStatement = session.prepare("update application_event_counter set "
 				+ "count = count + 1, "
 				+ "incoming_count = incoming_count + 1, "
 				+ "incoming_message_request_count = incoming_message_request_count + ?, "
 				+ "incoming_message_response_count = incoming_message_response_count + ?, "
 				+ "incoming_message_datagram_count = incoming_message_datagram_count + ? "
-				+ "where application_name = ? and day = ? and aggregation = ? and event_time = ?");
-		this.updateOutgoingApplicationNameCounterStatement = session.prepare("update application_name_counter set "
+				+ "where application_name = ? and day = ? and aggregation = ? and event_time = ? and event_name = ?");
+		this.updateOutgoingApplicationEventNameCounterStatement = session.prepare("update application_event_counter set "
 				+ "count = count + 1, "
 				+ "outgoing_count = outgoing_count + 1, "
 				+ "outgoing_message_request_count = outgoing_message_request_count + ?, "
 				+ "outgoing_message_response_count = outgoing_message_response_count + ?, "
 				+ "outgoing_message_datagram_count = outgoing_message_datagram_count + ? "
-				+ "where application_name = ? and day = ? and aggregation = ? and event_time = ?");
-//		this.updateApplicationEventNameCounterStatement = session.prepare("update application_event_counter set "
-//				+ "count = count + 1, "
-//				+ "messageRequestCount = messageRequestCount + ?, "
-//				+ "incomingMessageRequestCount = incomingMessageRequestCount + ?, "
-//				+ "outgoingMessageRequestCount = outgoingMessageRequestCount + ?, "
-//				+ "messageResponseCount = messageResponseCount + ?, "
-//				+ "incomingMessageResponseCount = incomingMessageResponseCount + ?, "
-//				+ "outgoingMessageResponseCount = outgoingMessageResponseCount + ?, "
-//				+ "messageDatagramCount = messageDatagramCount + ?, "
-//				+ "incomingMessageDatagramCount = incomingMessageDatagramCount + ?, "
-//				+ "outgoingMessageDatagramCount = outgoingMessageDatagramCount + ?, "
-//				+ "messageResponseTime = messageResponseTime + ?, "
-//				+ "incomingMessageResponseTime = incomingMessageResponseTime + ?, "
-//				+ "outgoingMessageResponseTime = outgoingMessageResponseTime + ? "
-//				+ "where application_timeunit = ? and eventName = ? and timeunit = ? and application = ?;");
+				+ "where application_name = ? and day = ? and aggregation = ? and event_time = ? and event_name = ?");
 //		this.updateTransactionNameCounterStatement = session.prepare("update transactionname_counter set "
 //				+ "count = count + 1, "
 //				+ "transactionStart = transactionStart + ?, "
@@ -335,88 +312,33 @@ public class CassandraStatementExecutor {
 //				dataRetention.correlationData));
 //	}
 //	
-//	public void addApplicationCounter(final long requestCount, final long incomingRequestCount, final long outgoingRequestCount,
-//	        final long responseCount, final long incomingResponseCount, final long outgoingResponseCount, final long datagramCount,
-//	        final long incomingDatagramCount, final long outgoingDatagramCount, final long responseTime, final long incomingResponseTime,
-//	        final long outgoingResponseTime, final String application, final Date timestamp, final String key, final BatchStatement batchStatement) {
-//		batchStatement.add(this.updateApplicationCounterStatement.bind(
-//				requestCount, 
-//				incomingRequestCount, 
-//				outgoingRequestCount,
-//		        responseCount, 
-//		        incomingResponseCount, 
-//		        outgoingResponseCount, 
-//		        datagramCount, 
-//		        incomingDatagramCount,
-//		        outgoingDatagramCount, 
-//		        responseTime, 
-//		        incomingResponseTime, 
-//		        outgoingResponseTime, 
-//		        key,
-//		        timestamp,
-//		        application));
-//	}
-//	
-	public void addEventNameCounter(final String eventName, final LocalDateTime timestamp, final StatisticsTimeUnit statisticsTimeUnit, final long requestCount, final long responseCount, final long datagramCount, final BatchStatement batchStatement) {
-		batchStatement.add(this.updateEventNameCounterStatement.bind(
-				requestCount, 
-				responseCount, 
-				datagramCount,
-				eventName,
-				DateUtils.toUTCDay(timestamp),
-				statisticsTimeUnit.name(),
-				statisticsTimeUnit.toDate(timestamp)));
-	}
 	
-	
-	public void addOutgoingApplicationNameCounter(String applicationName, LocalDateTime timestamp, StatisticsTimeUnit statisticsTimeUnit,
+	public void addOutgoingApplicationEventNameCounter(String applicationName, String eventName, LocalDateTime timestamp, StatisticsTimeUnit statisticsTimeUnit,
 			long requestCount, long responseCount, long datagramCount, BatchStatement batchStatement) {
-		batchStatement.add(this.updateOutgoingApplicationNameCounterStatement.bind(
+		batchStatement.add(this.updateOutgoingApplicationEventNameCounterStatement.bind(
 				requestCount,
 				responseCount,
 				datagramCount,
 				applicationName,
 				DateUtils.toUTCDay(timestamp),
 				statisticsTimeUnit.name(),
-				statisticsTimeUnit.toDate(timestamp)));
+				statisticsTimeUnit.toDate(timestamp),
+				eventName));
 	}
 	
-	public void addIncomingApplicationNameCounter(String applicationName, LocalDateTime timestamp, StatisticsTimeUnit statisticsTimeUnit,
+	public void addIncomingApplicationEventNameCounter(String applicationName, String eventName, LocalDateTime timestamp, StatisticsTimeUnit statisticsTimeUnit,
 			long requestCount, long responseCount, long datagramCount, BatchStatement batchStatement) {
-		batchStatement.add(this.updateIncomingApplicationNameCounterStatement.bind(
+		batchStatement.add(this.updateIncomingApplicationEventNameCounterStatement.bind(
 				requestCount,
 				responseCount,
 				datagramCount,
 				applicationName,
 				DateUtils.toUTCDay(timestamp),
 				statisticsTimeUnit.name(),
-				statisticsTimeUnit.toDate(timestamp)));
+				statisticsTimeUnit.toDate(timestamp),
+				eventName));
 	}
 	
-//	
-//	public void addApplicationEventNameCounter(final long requestCount, final long incomingRequestCount,
-//	        final long outgoingRequestCount, final long responseCount, final long incomingResponseCount, final long outgoingResponseCount,
-//	        final long datagramCount, final long incomingDatagramCount, final long outgoingDatagramCount, final long responseTime,
-//	        final long incomingResponseTime, final long outgoingResponseTime, final String application, final String eventName,
-//	        final Date timestamp, final String key, final BatchStatement batchStatement) {
-//		batchStatement.add(this.updateApplicationEventNameCounterStatement.bind(
-//				requestCount, 
-//				incomingRequestCount, 
-//				outgoingRequestCount,
-//		        responseCount, 
-//		        incomingResponseCount, 
-//		        outgoingResponseCount, 
-//		        datagramCount, 
-//		        incomingDatagramCount,
-//		        outgoingDatagramCount, 
-//		        responseTime, 
-//		        incomingResponseTime, 
-//		        outgoingResponseTime, 
-//				key, 
-//				eventName, 
-//				timestamp,
-//				application));
-//	}
 //	
 //	public void addTransactionNameCounter(final long requestCount, final long responseCount, final long responseTime,
 //	        final String transactionName, final Date timestamp, final String key, final BatchStatement batchStatement) {
@@ -497,4 +419,5 @@ public class CassandraStatementExecutor {
 		}
 		return expressionParsers;
 	}
+
 }

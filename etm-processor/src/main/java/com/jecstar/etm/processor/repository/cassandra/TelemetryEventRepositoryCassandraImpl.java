@@ -24,8 +24,10 @@ import com.jecstar.etm.processor.repository.EndpointConfigResult;
  */
 public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEventRepository {
 
-	//TODO this should be configurable
+	//TODO these should be configurable
 	private final int minimalNumberOfStatementsPerBatch = 250;
+	private final int minimalNumberOfStatementsPerCounterBatch = 2000;
+	
 	private final CassandraStatementExecutor cassandraStatementExecutor;
 	private final BatchStatement batchStatement = new BatchStatement(Type.UNLOGGED);
 	private final BatchStatement counterBatchStatement = new BatchStatement(Type.COUNTER);
@@ -61,7 +63,7 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 			this.cassandraStatementExecutor.execute(this.batchStatement);
 			this.batchStatement.clear();
 		}
-		if (this.counterBatchStatement.size() > this.minimalNumberOfStatementsPerBatch) {
+		if (this.counterBatchStatement.size() > this.minimalNumberOfStatementsPerCounterBatch) {
 			this.cassandraStatementExecutor.execute(this.counterBatchStatement);
 			this.counterBatchStatement.clear();
 		}
@@ -118,26 +120,19 @@ public class TelemetryEventRepositoryCassandraImpl extends AbstractTelemetryEven
 	// occurrenceValue, this.batchStatement);
 	// }
 	//
+	
 	@Override
-	protected void addEventNameCounter(String eventName, LocalDateTime eventTime, long requestCount, long responseCount, long datagramCount) {
+	protected void addOutgoingApplicationEventNameCounter(String applicationName, String eventName, LocalDateTime handlingTime, long requestCount, long responseCount, long datagramCount) {
 		for (StatisticsTimeUnit timeUnit : StatisticsTimeUnit.values()) {
-			this.cassandraStatementExecutor.addEventNameCounter(eventName, eventTime, timeUnit, requestCount, responseCount, datagramCount,
+			this.cassandraStatementExecutor.addOutgoingApplicationEventNameCounter(applicationName, eventName, handlingTime, timeUnit, requestCount, responseCount, datagramCount, 
 			        this.counterBatchStatement);
 		}
 	}
 	
 	@Override
-	protected void addOutgoingApplicationNameCounter(String applicationName, LocalDateTime handlingTime, long requestCount, long responseCount, long datagramCount) {
+	protected void addIncomingApplicationEventNameCounter(String applicationName, String eventName, LocalDateTime handlingTime, long requestCount, long responseCount, long datagramCount) {
 		for (StatisticsTimeUnit timeUnit : StatisticsTimeUnit.values()) {
-			this.cassandraStatementExecutor.addOutgoingApplicationNameCounter(applicationName, handlingTime, timeUnit, requestCount, responseCount, datagramCount, 
-			        this.counterBatchStatement);
-		}
-	}
-	
-	@Override
-	protected void addIncomingApplicationNameCounter(String applicationName, LocalDateTime handlingTime, long requestCount, long responseCount, long datagramCount) {
-		for (StatisticsTimeUnit timeUnit : StatisticsTimeUnit.values()) {
-			this.cassandraStatementExecutor.addIncomingApplicationNameCounter(applicationName, handlingTime, timeUnit, requestCount, responseCount, datagramCount, 
+			this.cassandraStatementExecutor.addIncomingApplicationEventNameCounter(applicationName, eventName, handlingTime, timeUnit, requestCount, responseCount, datagramCount, 
 			        this.counterBatchStatement);
 		}
 	}
