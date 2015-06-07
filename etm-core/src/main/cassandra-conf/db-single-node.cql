@@ -16,7 +16,9 @@ create table telemetry_event (
     correlation_id text,
     correlations list<text>,
     endpoint text, 
+    expiry_time timestamp,
     name text,
+    response_time timestamp,
     writing_application text,
     writing_time timestamp
 );
