@@ -3,8 +3,6 @@ package com.jecstar.etm.processor.processor;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.solr.client.solrj.SolrClient;
-
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -21,7 +19,7 @@ public class DisruptorEnvironment {
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final PersistingEventHandler[] persistingEventHandlers;
 
-	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final SolrClient solrClient, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
+	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
 		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryCommandExceptionHandler());
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();

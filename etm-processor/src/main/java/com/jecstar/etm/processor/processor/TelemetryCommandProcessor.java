@@ -3,12 +3,9 @@ package com.jecstar.etm.processor.processor;
 import java.nio.channels.IllegalSelectorException;
 import java.util.concurrent.ExecutorService;
 
-import org.apache.solr.client.solrj.SolrClient;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.datastax.driver.core.utils.UUIDs;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.TelemetryCommand.CommandType;
@@ -21,7 +18,6 @@ public class TelemetryCommandProcessor {
 	private boolean started = false;
 	
 	private ExecutorService executorService;
-	private SolrClient solrClient;
 	private EtmConfiguration etmConfiguration;
 	private DisruptorEnvironment disruptorEnvironment;
 	private PersistenceEnvironment persistenceEnvironment;
@@ -29,18 +25,17 @@ public class TelemetryCommandProcessor {
 	private Timer offerTimer;
 	
 
-	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final SolrClient solrClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
+	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
 		this.started = true;
 		this.executorService = executorService;
 		this.persistenceEnvironment = persistenceEnvironment;
-		this.solrClient = solrClient;
 		this.etmConfiguration = etmConfiguration;
 		this.metricRegistry = metricRegistry;
 		this.offerTimer = this.metricRegistry.timer("event-offering");
-		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, solrClient, this.persistenceEnvironment, this.metricRegistry);
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
 	
@@ -48,7 +43,7 @@ public class TelemetryCommandProcessor {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.solrClient, this.persistenceEnvironment, this.metricRegistry);
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.persistenceEnvironment, this.metricRegistry);
 		RingBuffer<TelemetryCommand> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
@@ -71,7 +66,6 @@ public class TelemetryCommandProcessor {
 		this.executorService.shutdown();
 		this.disruptorEnvironment.shutdown();
 		this.persistenceEnvironment.close();
-		this.solrClient.shutdown();
 	}
 
 

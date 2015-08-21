@@ -15,10 +15,6 @@
 	<name>Enterprise Telemetry Monitor - scheduler jee configurator</name>
 	<dependencies>
 		<dependency>
-			<groupId>com.datastax.cassandra</groupId>
-			<artifactId>cassandra-driver-core</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.jecstar.etm</groupId>
 			<artifactId>etm-core</artifactId>
 		</dependency>
@@ -29,10 +25,6 @@
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.solr</groupId>
-			<artifactId>solr-solrj</artifactId>
 		</dependency>
 	</dependencies>
 	<build>

@@ -72,9 +72,18 @@
 		    <dependency>
 		      <groupId>com.codahale.metrics</groupId>
 		      <artifactId>metrics-core</artifactId>
-		      <!-- The version needs to be the same as the cassandra-driver-core version -->
 		      <version>3.0.2</version>
 		    </dependency>           
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>2.5.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.5.3</version>
+            </dependency>		    
 			<dependency>
 			    <groupId>com.jayway.jsonpath</groupId>
 			    <artifactId>json-path</artifactId>
@@ -155,15 +164,10 @@
 				<version>9.6.0-7</version>
 			</dependency>
 			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-core</artifactId>
-				<version>2.5.3</version>
-			</dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>2.5.3</version>
-            </dependency>
+			    <groupId>org.elasticsearch</groupId>
+			    <artifactId>elasticsearch</artifactId>
+			    <version>1.7.0</version>
+			</dependency>            
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>

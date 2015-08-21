@@ -2,10 +2,10 @@ package com.jecstar.etm.processor.processor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.datastax.driver.core.utils.UUIDs;
 import com.jecstar.etm.core.EndpointHandler;
 import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.TelemetryMessageEvent;
@@ -56,7 +56,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		try {
 			final LocalDateTime now = LocalDateTime.now();
 			if (event.id == null) {
-				event.id = UUIDs.timeBased().toString();
+				event.id = UUID.randomUUID().toString();
 			}
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
