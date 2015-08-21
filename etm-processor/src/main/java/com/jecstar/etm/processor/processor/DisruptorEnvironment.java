@@ -19,7 +19,6 @@ public class DisruptorEnvironment {
 
 	private final Disruptor<TelemetryCommand> disruptor;
 	private final TelemetryEventRepository telemetryEventRepository;
-	private final IndexingEventHandler[] indexingEventHandlers;
 	private final PersistingEventHandler[] persistingEventHandlers;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final SolrClient solrClient, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
@@ -31,23 +30,14 @@ public class DisruptorEnvironment {
 		for (int i = 0; i < enhancingHandlerCount; i++) {
 			enhancingEvntHandler[i] = new EnhancingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, enhancingHandlerCount, etmConfiguration, metricRegistry.timer("event-enhancing"));
 		}
-		int indexingHandlerCount = etmConfiguration.getIndexingHandlerCount();
-		this.indexingEventHandlers = new IndexingEventHandler[indexingHandlerCount]; 
-		for (int i = 0; i < indexingHandlerCount; i++) {
-			this.indexingEventHandlers[i] = new IndexingEventHandler(solrClient, i, indexingHandlerCount, metricRegistry.timer("event-indexing"));
-		}
-		
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
 		this.persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			this.persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, etmConfiguration, metricRegistry.timer("event-persisting"));
+			this.persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, metricRegistry.timer("event-persisting"));
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
 		if (this.persistingEventHandlers.length > 0) {
 			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.persistingEventHandlers);
-		}
-		if (this.indexingEventHandlers.length > 0) {
-			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.indexingEventHandlers);
 		}
 	}
 	
@@ -57,12 +47,6 @@ public class DisruptorEnvironment {
 
 	public void shutdown() {
 		this.disruptor.shutdown();
-		for (IndexingEventHandler indexingEventHandler : this.indexingEventHandlers) {
-			try {
-	            indexingEventHandler.close();
-            } catch (IOException e) {
-            }
-		}
 		for (PersistingEventHandler persistingEventHandler : this.persistingEventHandlers) {
 			try {
 	            persistingEventHandler.close();
