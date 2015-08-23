@@ -2,11 +2,11 @@ package com.jecstar.etm.processor.repository;
 
 import java.io.Closeable;
 
-import com.jecstar.etm.core.TelemetryMessageEvent;
+import com.jecstar.etm.core.domain.TelemetryEvent;
 
 public interface TelemetryEventRepository extends Closeable {
 
-	void persistTelemetryMessageEvent(TelemetryMessageEvent telemetryMessageEvent);
+	void persistTelemetryEvent(TelemetryEvent telemetryEvent);
 	
 	void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime);
 }

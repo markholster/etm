@@ -4,8 +4,7 @@ import java.io.IOException;
 
 import org.elasticsearch.client.support.AbstractClient;
 
-import com.jecstar.etm.core.TelemetryEvent;
-import com.jecstar.etm.core.TelemetryMessageEvent;
+import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
@@ -38,7 +37,7 @@ public class ElasticTelemetryEventRepository extends AbstractTelemetryEventRepos
     }
 
 	@Override
-    protected void addTelemetryMessageEvent(TelemetryMessageEvent event) {
+    protected void addTelemetryEvent(TelemetryEvent event) {
 	    // TODO Auto-generated method stub
     }
 

@@ -7,9 +7,9 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.EtmException;
-import com.jecstar.etm.core.TelemetryCommand;
-import com.jecstar.etm.core.TelemetryCommand.CommandType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryCommandProcessor {
@@ -89,27 +89,13 @@ public class TelemetryCommandProcessor {
 		}
 	}
 	
-	/**
-	 * Flush the pending documents to Solr.
-	 */
-	public void requestDocumentsFlush() {
-		long sequence = this.ringBuffer.next();
-		try {
-			TelemetryCommand target = this.ringBuffer.get(sequence);
-			target.initialize();
-			target.commandType = CommandType.FLUSH_DOCUMENTS;
-			preProcess(target);
-		} finally {
-			this.ringBuffer.publish(sequence);
-		}
-	}
 	
 	public MetricRegistry getMetricRegistry() {
 	    return this.metricRegistry;
     }
 	
 	private void preProcess(TelemetryCommand command) {
-		if (CommandType.MESSAGE_EVENT.equals(command.commandType)) {
+		if (CommandType.EVENT.equals(command.commandType)) {
 //			if (command.messageEvent.id == null) {
 //				command.messageEvent.id = UUIDs.timeBased().toString();
 //			}

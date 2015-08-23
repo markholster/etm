@@ -1,8 +1,8 @@
 package com.jecstar.etm.processor.processor;
 
-import com.jecstar.etm.core.TelemetryCommand;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
+import com.jecstar.etm.processor.TelemetryCommand;
 import com.lmax.disruptor.ExceptionHandler;
 
 public class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryCommand> {
@@ -15,9 +15,9 @@ public class TelemetryCommandExceptionHandler implements ExceptionHandler<Teleme
 	@Override
 	public void handleEventException(Throwable t, long sequence, TelemetryCommand command) {
 		switch (command.commandType) {
-		case MESSAGE_EVENT:
+		case EVENT:
 			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Unable to process event '" + command.messageEvent.id + "'.", t);
+				log.logErrorMessage("Unable to process event '" + command.event.id + "'.", t);
 			}
 			break;
 		default:

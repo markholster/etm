@@ -3,7 +3,7 @@ package com.jecstar.etm.processor.processor;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.jecstar.etm.core.TelemetryEvent;
+import com.jecstar.etm.core.domain.TelemetryEvent;
 
 public class SourceCorrelationCache {
 

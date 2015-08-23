@@ -1,26 +1,28 @@
-package com.jecstar.etm.core;
+package com.jecstar.etm.processor;
+
+import com.jecstar.etm.core.domain.TelemetryEvent;
 
 public class TelemetryCommand {
 
 	public enum CommandType {
-		MESSAGE_EVENT, FLUSH_DOCUMENTS
+		EVENT
 	}
 
 	public CommandType commandType;
 
-	public TelemetryMessageEvent messageEvent = new TelemetryMessageEvent();
+	public TelemetryEvent event = new TelemetryEvent();
 
 	public void initialize() {
 		this.commandType = null;
-		this.messageEvent.initialize();
+		this.event.initialize();
 	}
 
 	public void initialize(TelemetryCommand telemetryCommand) {
 		initialize();
 		this.commandType = telemetryCommand.commandType;
 		switch (telemetryCommand.commandType) {
-		case MESSAGE_EVENT:
-			this.messageEvent.initialize(telemetryCommand.messageEvent);
+		case EVENT:
+			this.event.initialize(telemetryCommand.event);
 			break;
 		default:
 			break;

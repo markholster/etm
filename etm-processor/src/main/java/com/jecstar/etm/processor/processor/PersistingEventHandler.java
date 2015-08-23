@@ -5,8 +5,8 @@ import java.io.IOException;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.core.TelemetryCommand;
-import com.jecstar.etm.core.TelemetryMessageEvent;
+import com.jecstar.etm.core.domain.TelemetryEvent;
+import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
@@ -32,18 +32,18 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 			return;
 		}
 		switch (command.commandType) {
-		case MESSAGE_EVENT:
-			persistTelemetryMessageEvent(command.messageEvent);
+		case EVENT:
+			persistTelemetryMessageEvent(command.event);
 			break;
 		default:
 			break;
 		}
 	}
 
-	private void persistTelemetryMessageEvent(TelemetryMessageEvent event) {
+	private void persistTelemetryMessageEvent(TelemetryEvent event) {
 		final Context timerContext = this.timer.time();
 		try {
-			this.telemetryEventRepository.persistTelemetryMessageEvent(event);
+			this.telemetryEventRepository.persistTelemetryEvent(event);
 		} finally {
 			timerContext.stop();
 		}

@@ -6,11 +6,11 @@ import java.util.UUID;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.core.EndpointHandler;
-import com.jecstar.etm.core.TelemetryCommand;
-import com.jecstar.etm.core.TelemetryMessageEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.EndpointHandler;
+import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
+import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
@@ -42,8 +42,8 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			return;
 		}
 		switch (command.commandType) {
-		case MESSAGE_EVENT:
-			enhanceTelemetryMessageEvent(command.messageEvent);
+		case EVENT:
+			enhanceTelemetryEvent(command.event);
 			break;
 		default:
 			break;
@@ -51,7 +51,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	}
 	
 
-	private void enhanceTelemetryMessageEvent(TelemetryMessageEvent event) {
+	private void enhanceTelemetryEvent(TelemetryEvent event) {
 		final Context timerContext = this.timer.time();
 		try {
 			final LocalDateTime now = LocalDateTime.now();
@@ -61,40 +61,27 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
 			if (event.name == null) {
-				event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
+				event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.payload);
 			}
-			if (event.writingEndpointHandler.applicationName == null) {
-				event.writingEndpointHandler.applicationName = parseValue(this.endpointConfigResult.writingApplicationParsers, event.content);
+			if (event.writingEndpointHandler.application.name == null) {
+				event.writingEndpointHandler.application.name = parseValue(this.endpointConfigResult.writingApplicationParsers, event.payload);
 			}
-			if (event.writingEndpointHandler.applicationName != null && event.writingEndpointHandler.handlingTime == null) {
-				event.writingEndpointHandler.handlingTime = now;
-			}
-			
 			if (event.readingEndpointHandlers.size() == 0) {
-				String readingApplication = parseValue(this.endpointConfigResult.readingApplicationParsers, event.content);
-				if (readingApplication != null) {
+				String readingApplicationName = parseValue(this.endpointConfigResult.readingApplicationParsers, event.payload);
+				if (readingApplicationName != null) {
 					EndpointHandler endpointHandler = new EndpointHandler();
-					endpointHandler.applicationName = readingApplication;
+					endpointHandler.application.name = readingApplicationName;
 					event.readingEndpointHandlers.add(endpointHandler);
 				}
-			}
-			// If no reading endpointhandlers, and no writing endpointhandler,
-			// at least set the time of the writingEndpointHandler to the
-			// current system time. Otherwise no event time can be determined.
-			if (event.writingEndpointHandler.applicationName == null && event.readingEndpointHandlers.size() == 0 && event.writingEndpointHandler.handlingTime == null) {
-				event.writingEndpointHandler.handlingTime = now;
 			}
 			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
 				if (endpointHandler.handlingTime == null) {
 					endpointHandler.handlingTime = event.writingEndpointHandler.handlingTime != null ? event.writingEndpointHandler.handlingTime : now;
 				}
 			}
-			if (event.transactionName == null) {
-				event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
-			}
 			if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
 				this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
-					String parsedValue = parseValue(v, event.content);
+					String parsedValue = parseValue(v, event.payload);
 					if (parsedValue != null) {
 						event.correlationData.put(k, parsedValue);
 					}
