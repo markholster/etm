@@ -1,6 +1,5 @@
 package com.jecstar.etm.core.configuration;
 
-import java.io.Closeable;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -18,7 +17,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import org.elasticsearch.client.support.AbstractClient;
+import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -27,7 +26,7 @@ import com.jecstar.etm.core.logging.LogWrapper;
 //TODO document this class and the different properties. 
 //TODO fallback to default enum values for proprties with illegal values. 
 //TODO Zookeeper authentication
-public class EtmConfiguration implements Closeable {
+public class EtmConfiguration {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -40,6 +39,7 @@ public class EtmConfiguration implements Closeable {
 	public static final String ETM_INDEXING_HANDLER_COUNT = "etm.indexing_handler_count";
 	public static final String ETM_PERSISTING_HANDLER_COUNT = "etm.persisting_handler_count";
 	public static final String ETM_RINGBUFFER_SIZE = "etm.ringbuffer_size";
+	public static final String ETM_PERSISTING_BULK_COUNT = "etm.persisting_bulk_count";
 	public static final String ETM_ENDPOINT_CACHE_EXPIRY_TIME = "etm.endpoint_cache_expiry_time";
 	public static final String ETM_DATA_CORRELATION_MAX_MATCHES = "etm.data_correlation_max_matches";
 	public static final String ETM_DATA_CORRELATION_TIME_OFFSET = "etm.data_correlation_time_offset";
@@ -50,7 +50,7 @@ public class EtmConfiguration implements Closeable {
 	public static final String ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS = "etm.data_retention_preserve_transaction_slas";
 
 	private static final String[] CONFIGURATION_KEYS = new String[] { ETM_ENHANCING_HANDLER_COUNT, ETM_INDEXING_HANDLER_COUNT,
-	        ETM_PERSISTING_HANDLER_COUNT, ETM_RINGBUFFER_SIZE, ETM_ENDPOINT_CACHE_EXPIRY_TIME, ETM_DATA_CORRELATION_MAX_MATCHES,
+	        ETM_PERSISTING_HANDLER_COUNT, ETM_RINGBUFFER_SIZE, ETM_PERSISTING_BULK_COUNT, ETM_ENDPOINT_CACHE_EXPIRY_TIME, ETM_DATA_CORRELATION_MAX_MATCHES,
 	        ETM_DATA_CORRELATION_TIME_OFFSET, ETM_DATA_RETENTION_TIME, ETM_DATA_RETENTION_CHECK_INTERVAL,
 	        ETM_DATA_RETENTION_PRESERVE_EVENT_COUNTS, ETM_DATA_RETENTION_PRESERVE_EVENT_PERFORMANCES,
 	        ETM_DATA_RETENTION_PRESERVE_EVENT_SLAS };
@@ -65,12 +65,12 @@ public class EtmConfiguration implements Closeable {
 	private Date licenseExpiry;
 	private LicenseType licenseType;
 
-	private AbstractClient elasticClient;
+	private Client elasticClient;
 
-	public EtmConfiguration(String nodeName, AbstractClient elasticClient, String component) throws Exception {
+	public EtmConfiguration(String nodeName, Client elasticClient, String component) {
 		this.nodeName = nodeName;
 		this.elasticClient = elasticClient;
-		loadEtmProperties();
+		this.etmProperties = loadEtmProperties();
 	}
 
 	private Properties loadEtmProperties() {
@@ -106,6 +106,7 @@ public class EtmConfiguration implements Closeable {
 		checkDefaultValue(properties, ETM_INDEXING_HANDLER_COUNT, "5");
 		checkDefaultValue(properties, ETM_PERSISTING_HANDLER_COUNT, "5");
 		checkDefaultValue(properties, ETM_RINGBUFFER_SIZE, "4096");
+		checkDefaultValue(properties, ETM_PERSISTING_BULK_COUNT, "50");
 		checkDefaultValue(properties, ETM_ENDPOINT_CACHE_EXPIRY_TIME, "60000");
 		checkDefaultValue(properties, ETM_DATA_CORRELATION_MAX_MATCHES, "100");
 		checkDefaultValue(properties, ETM_DATA_CORRELATION_TIME_OFFSET, "30000");
@@ -144,8 +145,11 @@ public class EtmConfiguration implements Closeable {
 		return Integer.valueOf(this.etmProperties.getProperty(ETM_RINGBUFFER_SIZE));
 	}
 
-	// Etm endpoint configuration cache.
-
+	// Etm persistng configuration.
+	public int getPersistingBulkCount() {
+		return Integer.valueOf(this.etmProperties.getProperty(ETM_PERSISTING_BULK_COUNT));
+	}
+	
 	public long getEndpointCacheExpiryTime() {
 		return Long.valueOf(this.etmProperties.getProperty(ETM_ENDPOINT_CACHE_EXPIRY_TIME));
 	}
@@ -244,7 +248,7 @@ public class EtmConfiguration implements Closeable {
 		return properties;
 	}
 
-	private Properties getNodeConfiguration(AbstractClient elasticClient2, String nodeName2, String string) {
+	private Properties getNodeConfiguration(Client elasticClient, String nodeName, String string) {
 	    return new Properties();
     }
 
@@ -254,8 +258,7 @@ public class EtmConfiguration implements Closeable {
 		updateNodeConfiguration(this.elasticClient, nodeName, "etm.properties", CONFIGURATION_KEYS, defaultValues, properties);
 	}
 
-	private void updateNodeConfiguration(AbstractClient elasticClient2, String nodeName2, String string, String[] configurationKeys,
-            Properties defaultValues, Properties properties) {
+	private void updateNodeConfiguration(Client elasticClient, String nodeName, String string, String[] configurationKeys, Properties defaultValues, Properties properties) {
 	    
     }
 
@@ -268,10 +271,6 @@ public class EtmConfiguration implements Closeable {
 		} catch (Exception e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
-	}
-
-	@Override
-	public void close() {
 	}
 
 	private enum LicenseType {
