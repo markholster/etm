@@ -89,6 +89,4 @@ public class TelemetryEvent {
 		this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
 		return this;
 	}
-
-
 }

@@ -1,15 +1,13 @@
 package com.jecstar.etm.processor.elastic;
 
 import java.io.IOException;
-import java.io.StringWriter;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.jackson.core.JsonFactory;
-import org.elasticsearch.common.jackson.core.JsonGenerator;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.TelemetryEvent;
@@ -20,7 +18,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
-	private final JsonFactory jsonfactory = new JsonFactory();
+	private final StringBuilder sb = new StringBuilder();
 	
 	private BulkRequestBuilder bulkRequest;
 
@@ -55,27 +53,54 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void addTelemetryEvent(TelemetryEvent event) {
-		StringWriter writer = new StringWriter();
-		JsonGenerator jsonGenerator;
-		try {
-			jsonGenerator = this.jsonfactory.createGenerator(writer);
-			// TODO serialize event to json.
-			jsonGenerator.close();
+			// TODO serialize to json
 			IndexRequest indexRequest = new IndexRequest("etm", event.telemetryEventType.name().toLowerCase(), event.id)
-			        .source(writer.toString());
-			UpdateRequest updateRequest = new UpdateRequest("etm", event.telemetryEventType.name().toLowerCase(), event.id)
-			        .doc(writer.toString())
-			        .upsert(indexRequest);              
-			this.bulkRequest.add(updateRequest);
-		} catch (IOException e) {
-			// TODO handle exception.
-			e.printStackTrace();
-		}
+			        .source(eventToJson(event));
+//			UpdateRequest updateRequest = new UpdateRequest("etm", event.telemetryEventType.name().toLowerCase(), event.id)
+//			        .doc("")
+//			        .upsert(indexRequest);              
+			this.bulkRequest.add(indexRequest);
     }
 	
 	private void executeBulk() {
 		BulkResponse bulkResponse = this.bulkRequest.execute().actionGet();
 		this.bulkRequest = null;
+	}
+	
+	private String eventToJson(TelemetryEvent event) {
+		this.sb.setLength(0);
+		this.sb.append("{");
+		this.sb.append( "\"id\": \"" + event.id + "\"");
+		addStringElementToJsonBuffer("correlation_id", event.correlationId, this.sb);
+		addMapElementToJsonBuffer("correlation_data", event.correlationData, this.sb);
+		addStringElementToJsonBuffer("endpoint", event.endpoint, this.sb);
+		addStringElementToJsonBuffer("event_type", event.telemetryEventType.name(), this.sb);
+		addStringElementToJsonBuffer("name", event.name, this.sb);
+		addMapElementToJsonBuffer("metadata", event.metadata, this.sb);
+		addStringElementToJsonBuffer("payload", event.payload, this.sb);
+		addStringElementToJsonBuffer("transport_type", event.transportType.name(), this.sb);
+		// TODO add reading and writing endpoint handlers.
+		this.sb.append("}");
+		return this.sb.toString();
+	}
+	
+	private void addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer) {
+		if (elementValue == null) {
+			return;
+		}
+		buffer.append(", \"" + elementName + "\": \"" + elementValue + "\"");
+	}
+	
+	private void addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer) {
+		if (elementValues.size() < 1) {
+			return;
+		}
+		buffer.append(", \"" + elementName + "\": [");
+		buffer.append(elementValues.entrySet().stream()
+				.map(c -> "{ \"" + c.getKey() + "\": \"" + c.getValue() + "\" }")
+				.sorted()
+				.collect(Collectors.joining(",")));
+		buffer.append("]");
 	}
 
 }
