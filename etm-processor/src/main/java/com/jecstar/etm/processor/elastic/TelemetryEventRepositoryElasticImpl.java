@@ -53,13 +53,14 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void addTelemetryEvent(TelemetryEvent event) {
-			// TODO serialize to json
-			IndexRequest indexRequest = new IndexRequest("etm", event.telemetryEventType.name().toLowerCase(), event.id)
-			        .source(eventToJson(event));
+		// TODO serialize to json
+		// TODO apply indexing template to add a new alias on index creation. 
+		IndexRequest indexRequest = new IndexRequest("etm_"/* TODO add event day yyyy-MM-dd rekening houden met timezones!*/ , event.telemetryEventType.name().toLowerCase(), event.id)
+		        .source(eventToJson(event));
 //			UpdateRequest updateRequest = new UpdateRequest("etm", event.telemetryEventType.name().toLowerCase(), event.id)
 //			        .doc("")
 //			        .upsert(indexRequest);              
-			this.bulkRequest.add(indexRequest);
+		this.bulkRequest.add(indexRequest);
     }
 	
 	private void executeBulk() {
