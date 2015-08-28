@@ -93,7 +93,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			this.sb.append(", \"reading_endpoint_handlers\": [");
 			boolean added = false;
 			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
-				added = added || addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, added);
+				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, added) || added;
 			}
 			this.sb.append("]");
 		}
@@ -112,7 +112,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + elementName + "\": \"" + elementValue + "\"");
+		buffer.append("\"" + escapeToJson(elementName) + "\": \"" + escapeToJson(elementValue) + "\"");
 		return true;
 	}
 
@@ -123,7 +123,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + elementName + "\": " + elementValue);
+		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
 		return true;
 	}
 
@@ -137,7 +137,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		}
 		buffer.append("\"" + elementName + "\": [");
 		buffer.append(elementValues.entrySet().stream()
-				.map(c -> "{ \"" + c.getKey() + "\": \"" + c.getValue() + "\" }")
+				.map(c -> "{ \"" + escapeToJson(c.getKey()) + "\": \"" + escapeToJson(c.getValue()) + "\" }")
 				.sorted()
 				.collect(Collectors.joining(", ")));
 		buffer.append("]");
@@ -163,13 +163,17 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			}
 			buffer.append("\"application\" : {");
 			added = addStringElementToJsonBuffer("name", application.name, buffer, true);
-			added = added || addStringElementToJsonBuffer("instance", application.instance, buffer, !added);
-			added = added || addStringElementToJsonBuffer("version", application.version, buffer, !added);
-			added = added || addStringElementToJsonBuffer("principal", application.principal, buffer, !added);
+			added = addStringElementToJsonBuffer("instance", application.instance, buffer, !added) || added;
+			added = addStringElementToJsonBuffer("version", application.version, buffer, !added) || added;
+			added = addStringElementToJsonBuffer("principal", application.principal, buffer, !added) || added;
 			buffer.append("}");
 		}
 		buffer.append("}");
 		return true;
+	}
+	
+	private String escapeToJson(String value) {
+		return value.replace("\"", "\\\"");
 	}
 
 }
