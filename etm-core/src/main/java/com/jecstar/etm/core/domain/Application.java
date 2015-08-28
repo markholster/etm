@@ -37,6 +37,13 @@ public class Application {
 		this.principal = copy.instance;
 		this.version = copy.version;
 		return this;
+	}
+
+	public boolean isSet() {
+		if (this.name != null || this.instance != null || this.principal != null || this.version != null) {
+			return false;
+		}
+		return true; 
 	} 
 
 }

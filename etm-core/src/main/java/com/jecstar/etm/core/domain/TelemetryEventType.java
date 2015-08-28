@@ -1,5 +1,6 @@
 package com.jecstar.etm.core.domain;
 
+//TODO hier moet nog eens goed over nagedacht worden.
 public enum TelemetryEventType {
 
 	/**
@@ -11,9 +12,9 @@ public enum TelemetryEventType {
 	 */
 	HTTP,
 	/**
-	 * Enum constant representing the content of a soap request or response.
+	 * Enum constant representing the content of a xml request or response.
 	 */
-	SOAP, 
+	XML, 
 	/**
 	 * Enum constant representing the content of a SQL query or resultset.
 	 */

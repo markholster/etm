@@ -1,6 +1,6 @@
 package com.jecstar.etm.processor.processor;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,7 +54,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private void enhanceTelemetryEvent(TelemetryEvent event) {
 		final Context timerContext = this.timer.time();
 		try {
-			final LocalDateTime now = LocalDateTime.now();
+			final ZonedDateTime now = ZonedDateTime.now();
 			if (event.id == null) {
 				event.id = UUID.randomUUID().toString();
 			}

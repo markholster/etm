@@ -1,6 +1,6 @@
 package com.jecstar.etm.core.domain;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 public class EndpointHandler {
 
@@ -12,7 +12,7 @@ public class EndpointHandler {
 	/**
 	 * The time the handling took place.
 	 */
-	public LocalDateTime handlingTime;
+	public ZonedDateTime handlingTime;
 	
 	
 	public EndpointHandler initialize() {
@@ -26,6 +26,13 @@ public class EndpointHandler {
 		this.application.initialize(copy.application);
 		this.handlingTime = copy.handlingTime;
 		return this;
+	}
+	
+	public boolean isSet() {
+		if (this.handlingTime != null) {
+			return false;
+		}
+		return this.application.isSet();
 	}
 	
 }

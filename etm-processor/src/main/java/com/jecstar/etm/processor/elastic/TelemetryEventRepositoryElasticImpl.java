@@ -10,6 +10,8 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.Application;
+import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
@@ -46,7 +48,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void endPersist() {
-		if (this.bulkRequest.numberOfActions() > this.etmConfiguration.getPersistingBulkCount()) {
+		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkCount()) {
 			executeBulk();
 		}
     }
@@ -64,44 +66,110 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
     }
 	
 	private void executeBulk() {
-		BulkResponse bulkResponse = this.bulkRequest.execute().actionGet();
+		if (this.bulkRequest != null && this.bulkRequest.numberOfActions() > 0) {
+			BulkResponse bulkResponse = this.bulkRequest.execute().actionGet();
+			// TODO handle errors from bulkresponse.
+		}
 		this.bulkRequest = null;
 	}
 	
 	private String eventToJson(TelemetryEvent event) {
 		this.sb.setLength(0);
 		this.sb.append("{");
-		this.sb.append( "\"id\": \"" + event.id + "\"");
-		addStringElementToJsonBuffer("correlation_id", event.correlationId, this.sb);
-		addMapElementToJsonBuffer("correlation_data", event.correlationData, this.sb);
-		addStringElementToJsonBuffer("endpoint", event.endpoint, this.sb);
-		addStringElementToJsonBuffer("event_type", event.telemetryEventType.name(), this.sb);
-		addStringElementToJsonBuffer("name", event.name, this.sb);
-		addMapElementToJsonBuffer("metadata", event.metadata, this.sb);
-		addStringElementToJsonBuffer("payload", event.payload, this.sb);
-		addStringElementToJsonBuffer("transport_type", event.transportType.name(), this.sb);
-		// TODO add reading and writing endpoint handlers.
+		addStringElementToJsonBuffer("id", event.id, this.sb, true);
+		addStringElementToJsonBuffer("correlation_id", event.correlationId, this.sb, false);
+		addMapElementToJsonBuffer("correlation_data", event.correlationData, this.sb, false);
+		addStringElementToJsonBuffer("endpoint", event.endpoint, this.sb, false);
+		if (event.telemetryEventType != null) {
+			addStringElementToJsonBuffer("event_type", event.telemetryEventType.name(), this.sb, false);
+		}
+		addStringElementToJsonBuffer("name", event.name, this.sb, false);
+		addMapElementToJsonBuffer("metadata", event.metadata, this.sb, false);
+		addStringElementToJsonBuffer("payload", event.payload, this.sb, false);
+		if (event.transportType != null) {
+			addStringElementToJsonBuffer("transport_type", event.transportType.name(), this.sb, false);
+		}
+		if (!event.readingEndpointHandlers.isEmpty()) {
+			this.sb.append(", \"reading_endpoint_handlers\": [");
+			boolean added = false;
+			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
+				added = added || addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, added);
+			}
+			this.sb.append("]");
+		}
+		if (!event.writingEndpointHandler.isSet()) {
+			this.sb.append( ", \"writing_endpoint_handler\": ");
+			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true);
+		}
 		this.sb.append("}");
 		return this.sb.toString();
 	}
 	
-	private void addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer) {
+	private boolean addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer, boolean firstElement) {
 		if (elementValue == null) {
-			return;
+			return false;
 		}
-		buffer.append(", \"" + elementName + "\": \"" + elementValue + "\"");
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("\"" + elementName + "\": \"" + elementValue + "\"");
+		return true;
 	}
-	
-	private void addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer) {
-		if (elementValues.size() < 1) {
-			return;
+
+	private boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean firstElement) {
+		if (elementValue == null) {
+			return false;
 		}
-		buffer.append(", \"" + elementName + "\": [");
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("\"" + elementName + "\": " + elementValue);
+		return true;
+	}
+
+	
+	private boolean addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer, boolean firstElement) {
+		if (elementValues.size() < 1) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("\"" + elementName + "\": [");
 		buffer.append(elementValues.entrySet().stream()
 				.map(c -> "{ \"" + c.getKey() + "\": \"" + c.getValue() + "\" }")
 				.sorted()
-				.collect(Collectors.joining(",")));
+				.collect(Collectors.joining(", ")));
 		buffer.append("]");
+		return true;
+	}
+
+	private boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement) {
+		if (endpointHandler.isSet()) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("{");
+		boolean added = false;
+		if (endpointHandler.handlingTime != null) {
+			added = addLongElementToJsonBuffer("handling_time", endpointHandler.handlingTime.toInstant().toEpochMilli(), buffer, true);
+		}
+		Application application = endpointHandler.application;
+		if (!application.isSet()) {
+			if (added) {
+				buffer.append(", ");
+			}
+			buffer.append("\"application\" : {");
+			added = addStringElementToJsonBuffer("name", application.name, buffer, true);
+			added = added || addStringElementToJsonBuffer("instance", application.instance, buffer, !added);
+			added = added || addStringElementToJsonBuffer("version", application.version, buffer, !added);
+			added = added || addStringElementToJsonBuffer("principal", application.principal, buffer, !added);
+			buffer.append("}");
+		}
+		buffer.append("}");
+		return true;
 	}
 
 }
