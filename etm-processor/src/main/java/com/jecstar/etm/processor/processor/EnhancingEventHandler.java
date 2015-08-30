@@ -56,7 +56,12 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
 			if (event.id == null) {
+				// Assign a random id in case no id is present.
 				event.id = UUID.randomUUID().toString();
+			}
+			if (event.writingEndpointHandler.handlingTime == null) {
+				// Always set the handler time if not present. This is used to determine the elastic index name.
+				event.writingEndpointHandler.handlingTime = now;
 			}
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());

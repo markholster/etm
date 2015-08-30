@@ -7,6 +7,23 @@ import java.util.Map;
 
 
 public class TelemetryEvent {
+	
+	public static String PACKAGING_DB_DELETE = "DELETE";
+	public static String PACKAGING_DB_INSERT = "INSERT";
+	public static String PACKAGING_DB_SELECT = "SELECT";
+	public static String PACKAGING_DB_UPDATE = "UPDATE";
+	public static String PACKAGING_HTTP_CONNECT = "CONNECT";
+	public static String PACKAGING_HTTP_DELETE = "DELETE";
+	public static String PACKAGING_HTTP_GET = "GET";
+	public static String PACKAGING_HTTP_HEAD = "HEAD";
+	public static String PACKAGING_HTTP_OPTIONS = "OPTIONS";
+	public static String PACKAGING_HTTP_POST = " POST";
+	public static String PACKAGING_HTTP_PUT = "PUT";
+	public static String PACKAGING_HTTP_TRACE = "TRACE";
+	public static String PACKAGING_MQ_FIRE_AND_FORGET = "Fire And forget";
+	public static String PACKAGING_MQ_REQUEST = "Request";
+	public static String PACKAGING_MQ_RESPONSE = "Response";
+	public static String PACKAGING_SMTP_EMAIL = "Email";
 
 	/**
 	 * The unique ID of the event.
@@ -39,19 +56,24 @@ public class TelemetryEvent {
 	public Map<String, String> metadata = new HashMap<String, String>();
 
 	/**
+	 * The packaging of the payload. E.g. an Email of an MQ Request.
+	 */
+	public String packaging;
+	
+	/**
 	 * The payload of the event.
 	 */
 	public String payload;
 	
 	/**
-	 * The type of this <code>TelemetryEvent</code>. Generally speaking, this is a description of the {@link #payload}.
+	 * The format of the payload. Generally speaking, this is a description of the {@link #payload}.
 	 */
-	public TelemetryEventType telemetryEventType;
+	public PayloadFormat payloadFormat;
 	
 	/**
 	 * The transport type used to send the {@link #payload} to from the sending application to the receiving application(s).
 	 */
-	public TransportType transportType;
+	public Transport transport;
 
 	/**
 	 * The handlers that were reading the event.
@@ -68,10 +90,11 @@ public class TelemetryEvent {
 		this.correlationId = null;
 		this.correlationData.clear();
 		this.metadata.clear();
+		this.packaging = null;
 		this.payload = null;
+		this.payloadFormat = null;
 		this.readingEndpointHandlers.clear();
-		this.telemetryEventType = null;
-		this.transportType = null;
+		this.transport = null;
 		this.writingEndpointHandler.initialize();
 		return this;
 	}
@@ -82,10 +105,11 @@ public class TelemetryEvent {
 		this.correlationId = copy.correlationId;
 		this.correlationData.putAll(copy.correlationData);
 		this.metadata.putAll(copy.metadata);
+		this.packaging = copy.packaging;
 		this.payload = copy.payload;
+		this.payloadFormat = copy.payloadFormat;
 		this.readingEndpointHandlers.addAll(copy.readingEndpointHandlers);
-		this.telemetryEventType = copy.telemetryEventType;
-		this.transportType = copy.transportType;
+		this.transport = copy.transport;
 		this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
 		return this;
 	}

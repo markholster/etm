@@ -18,6 +18,7 @@ public class DisruptorEnvironment {
 	private final Disruptor<TelemetryCommand> disruptor;
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final PersistingEventHandler[] persistingEventHandlers;
+	private final PersistenceEnvironment persistenceEnvironment;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
 		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getRingbufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
@@ -37,9 +38,11 @@ public class DisruptorEnvironment {
 		if (this.persistingEventHandlers.length > 0) {
 			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.persistingEventHandlers);
 		}
+		this.persistenceEnvironment = persistenceEnvironment;
 	}
 	
 	public RingBuffer<TelemetryCommand> start() {
+		this.persistenceEnvironment.createEnvironment();
 		return this.disruptor.start();
 	}
 

@@ -1,7 +1,8 @@
 package com.jecstar.etm.core.domain;
 
-public enum TransportType {
+public enum Transport {
 
+	
 	/**
 	 * Enum constant representing FTP as the transport type of the payload.
 	 */
@@ -11,9 +12,13 @@ public enum TransportType {
 	 */
 	HTTP, 
 	/**
-	 * Enum constant representing JDB as the transport type of the payload.
+	 * Enum constant representing JDBC as the transport type of the payload.
 	 */
 	JDBC,
+	/**
+	 * Enum constant representing ODBC as the transport type of the payload.
+	 */
+	ODBC,
 	/**
 	 * Enum constant representing MQ as the transport type of the payload.
 	 */

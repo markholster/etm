@@ -6,6 +6,8 @@ public interface PersistenceEnvironment {
 
 	TelemetryEventRepository createTelemetryEventRepository();
 	
+	void createEnvironment();
+	
 	void close();
 	
 }
