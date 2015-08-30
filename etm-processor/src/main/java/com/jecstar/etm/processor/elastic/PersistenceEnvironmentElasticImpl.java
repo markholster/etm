@@ -40,10 +40,7 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 			.setCreate(false)
 			.setTemplate("etm_*")
 			.setSettings(ImmutableSettings.settingsBuilder()
-//						/**
-//						 * TODO Onderstaande properties moeten in de
-//						 * configuratie
-//						 **/
+					/** TODO Onderstaande properties moeten in de configuratie **/
 					.put("number_of_shards", 2)
 					.put("number_of_replicas", 1)
 					.build())
@@ -98,6 +95,9 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 				"           	    \"type\": \"long\"" + 
 				"               }" + 
 				"           }" + 
+				"       }," + 
+				"       \"response_time\": {" + 
+				"   	    \"type\": \"long\"" + 
 				"       }," + 
 				"       \"transport\": {" + 
 				"   	    \"type\": \"string\"," + 

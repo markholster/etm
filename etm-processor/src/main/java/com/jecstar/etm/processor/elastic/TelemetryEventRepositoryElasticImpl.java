@@ -7,12 +7,12 @@ import java.time.temporal.ChronoField;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.Application;
 import com.jecstar.etm.core.domain.EndpointHandler;
@@ -67,12 +67,16 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void addTelemetryEvent(TelemetryEvent event) {
-		// TODO create upserts.
-		IndexRequest indexRequest = new IndexRequest("etm_" + event.writingEndpointHandler.handlingTime.format(this.dateTimeFormatter), event.payloadFormat.name().toLowerCase(), event.id)
+		// TODO create upserts for reading and writing applications and to store the response time.
+		String index = "etm_" + event.writingEndpointHandler.handlingTime.format(this.dateTimeFormatter);
+		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(eventToJson(event));
-//			UpdateRequest updateRequest = new UpdateRequest("etm", event.telemetryEventType.name().toLowerCase(), event.id)
-//			        .doc("")
-//			        .upsert(indexRequest);              
+//		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+//		        .doc("")
+//		        .consistencyLevel(WriteConsistencyLevel.ONE)
+//		        .retryOnConflict(5)
+//		        .upsert(indexRequest);
 		this.bulkRequest.add(indexRequest);
     }
 	

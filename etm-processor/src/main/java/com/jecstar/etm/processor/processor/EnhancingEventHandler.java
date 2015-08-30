@@ -8,6 +8,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.EndpointHandler;
+import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.TelemetryCommand;
@@ -62,6 +63,11 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			if (event.writingEndpointHandler.handlingTime == null) {
 				// Always set the handler time if not present. This is used to determine the elastic index name.
 				event.writingEndpointHandler.handlingTime = now;
+			}
+			if (event.payloadFormat == null) {
+				// Always set the payload format, because it's a type in elastic.
+				// TODO autodetect the format?
+				event.payloadFormat = PayloadFormat.TEXT;
 			}
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
