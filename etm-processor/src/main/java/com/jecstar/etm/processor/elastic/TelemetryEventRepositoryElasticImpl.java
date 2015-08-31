@@ -68,7 +68,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	@Override
     protected void addTelemetryEvent(TelemetryEvent event) {
 		// TODO create upserts for reading and writing applications and to store the response time.
-		String index = "etm_" + event.writingEndpointHandler.handlingTime.format(this.dateTimeFormatter);
+		String index = "etm_" + event.getEventTime().format(this.dateTimeFormatter);
 		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(eventToJson(event));
@@ -97,6 +97,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		addStringElementToJsonBuffer("correlation_id", event.correlationId, this.sb, false);
 		addMapElementToJsonBuffer("correlation_data", event.correlationData, this.sb, false);
 		addStringElementToJsonBuffer("endpoint", event.endpoint, this.sb, false);
+		addMapElementToJsonBuffer("extracted_data", event.extractedData, this.sb, false);
 		addStringElementToJsonBuffer("name", event.name, this.sb, false);
 		addMapElementToJsonBuffer("metadata", event.metadata, this.sb, false);
 		addStringElementToJsonBuffer("packaging", event.packaging, this.sb, false);

@@ -14,9 +14,10 @@ public class EndpointConfigResult {
 	public List<ExpressionParser> eventNameParsers = new ArrayList<ExpressionParser>();
 	public List<ExpressionParser> transactionNameParsers = new ArrayList<ExpressionParser>();
 	public Map<String, ExpressionParser> correlationDataParsers = new HashMap<String, ExpressionParser>();
+	public Map<String, ExpressionParser> extractionDataParsers = new HashMap<String, ExpressionParser>();
 	
 	// process state
-	public long retrieved;
+	public long retrievalTimestamp;
 
 	public EndpointConfigResult initialize() {
 	    if (this.readingApplicationParsers != null) {
@@ -33,6 +34,9 @@ public class EndpointConfigResult {
 	    }
 	    if (this.correlationDataParsers != null) {
 	    	this.correlationDataParsers.clear();
+	    }
+	    if (this.extractionDataParsers != null) {
+	    	this.extractionDataParsers.clear();
 	    }
 	    return this;
     }

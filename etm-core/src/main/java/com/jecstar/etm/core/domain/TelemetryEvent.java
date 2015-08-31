@@ -1,5 +1,6 @@
 package com.jecstar.etm.core.domain;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +35,7 @@ public class TelemetryEvent {
 	 * The ID of the event this event is correlated to. This is mainly used match a response to a certain request.
 	 */
 	public String correlationId;
-	
+
 	/**
 	 * Data to be used for correlating event's that aren't correlated by the correlation id.
 	 */
@@ -44,6 +45,11 @@ public class TelemetryEvent {
 	 * The endpoint this event was send to, and received from.
 	 */
 	public String endpoint;
+	
+	/**
+	 * Data to be used to query on.
+	 */
+	public Map<String, String> extractedData = new HashMap<String, String>();
 	
 	/**
 	 * The name of the event.
@@ -89,6 +95,8 @@ public class TelemetryEvent {
 		this.id = null;
 		this.correlationId = null;
 		this.correlationData.clear();
+		this.endpoint = null;
+		this.extractedData.clear();
 		this.metadata.clear();
 		this.packaging = null;
 		this.payload = null;
@@ -104,6 +112,8 @@ public class TelemetryEvent {
 		this.id = copy.id;
 		this.correlationId = copy.correlationId;
 		this.correlationData.putAll(copy.correlationData);
+		this.endpoint = copy.endpoint;
+		this.extractedData.putAll(copy.extractedData);
 		this.metadata.putAll(copy.metadata);
 		this.packaging = copy.packaging;
 		this.payload = copy.payload;
@@ -112,5 +122,12 @@ public class TelemetryEvent {
 		this.transport = copy.transport;
 		this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
 		return this;
+	}
+	
+	public ZonedDateTime getEventTime() {
+		if (this.writingEndpointHandler.handlingTime != null) {
+			return this.writingEndpointHandler.handlingTime;
+		}
+		return this.readingEndpointHandlers.stream().sorted((h1, h2) -> h1.handlingTime.compareTo(h2.handlingTime)).findFirst().get().handlingTime;
 	}
 }
