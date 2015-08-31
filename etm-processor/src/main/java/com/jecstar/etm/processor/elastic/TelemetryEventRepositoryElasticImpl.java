@@ -69,6 +69,9 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
     protected void addTelemetryEvent(TelemetryEvent event) {
 		// TODO create upserts for reading and writing applications and to store the response time.
 		String index = "etm_" + event.getEventTime().format(this.dateTimeFormatter);
+		if (event.isResponse()) {
+			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
+		}
 		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(eventToJson(event));

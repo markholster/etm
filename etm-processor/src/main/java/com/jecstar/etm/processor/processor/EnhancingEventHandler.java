@@ -51,6 +51,10 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	}
 	
 
+	/**
+	 * TODO describe why it's a good practice to always set the writing application handling time.
+	 * @param event
+	 */
 	private void enhanceTelemetryEvent(TelemetryEvent event) {
 		final Context timerContext = this.timer.time();
 		try {

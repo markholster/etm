@@ -13,6 +13,7 @@ public class TelemetryEvent {
 	public static String PACKAGING_DB_INSERT = "INSERT";
 	public static String PACKAGING_DB_SELECT = "SELECT";
 	public static String PACKAGING_DB_UPDATE = "UPDATE";
+	public static String PACKAGING_DB_RESULT = "Response (DB)";
 	public static String PACKAGING_HTTP_CONNECT = "CONNECT";
 	public static String PACKAGING_HTTP_DELETE = "DELETE";
 	public static String PACKAGING_HTTP_GET = "GET";
@@ -21,9 +22,10 @@ public class TelemetryEvent {
 	public static String PACKAGING_HTTP_POST = " POST";
 	public static String PACKAGING_HTTP_PUT = "PUT";
 	public static String PACKAGING_HTTP_TRACE = "TRACE";
+	public static String PACKAGING_HTTP_RESPONSE = "Response (HTTP)";
 	public static String PACKAGING_MQ_FIRE_AND_FORGET = "Fire And forget";
 	public static String PACKAGING_MQ_REQUEST = "Request";
-	public static String PACKAGING_MQ_RESPONSE = "Response";
+	public static String PACKAGING_MQ_RESPONSE = "Response (MQ)";
 	public static String PACKAGING_SMTP_EMAIL = "Email";
 
 	/**
@@ -129,5 +131,12 @@ public class TelemetryEvent {
 			return this.writingEndpointHandler.handlingTime;
 		}
 		return this.readingEndpointHandlers.stream().sorted((h1, h2) -> h1.handlingTime.compareTo(h2.handlingTime)).findFirst().get().handlingTime;
+	}
+	
+	public boolean isResponse() {
+		if (this.packaging == null) {
+			return false;
+		}
+		return this.packaging.startsWith("Response (");
 	}
 }
