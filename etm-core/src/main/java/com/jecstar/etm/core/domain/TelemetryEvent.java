@@ -49,6 +49,11 @@ public class TelemetryEvent {
 	public String endpoint;
 	
 	/**
+	 * The moment this event expires, in case of a request.
+	 */
+	public ZonedDateTime expiry;
+	
+	/**
 	 * Data to be used to query on.
 	 */
 	public Map<String, String> extractedData = new HashMap<String, String>();
@@ -98,6 +103,7 @@ public class TelemetryEvent {
 		this.correlationId = null;
 		this.correlationData.clear();
 		this.endpoint = null;
+		this.expiry = null;
 		this.extractedData.clear();
 		this.metadata.clear();
 		this.packaging = null;
@@ -115,6 +121,7 @@ public class TelemetryEvent {
 		this.correlationId = copy.correlationId;
 		this.correlationData.putAll(copy.correlationData);
 		this.endpoint = copy.endpoint;
+		this.expiry = copy.expiry;
 		this.extractedData.putAll(copy.extractedData);
 		this.metadata.putAll(copy.metadata);
 		this.packaging = copy.packaging;
@@ -138,5 +145,12 @@ public class TelemetryEvent {
 			return false;
 		}
 		return this.packaging.startsWith("Response (");
+	}
+	
+	public boolean isRequest() {
+		if (this.packaging == null) {
+			return false;
+		}
+		return !isResponse() && !PACKAGING_MQ_FIRE_AND_FORGET.equals(this.packaging);
 	}
 }

@@ -11,6 +11,7 @@ import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -67,20 +68,21 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void addTelemetryEvent(TelemetryEvent event) {
+		
 		// TODO create upserts for reading and writing applications and to store the response time.
 		String index = "etm_" + event.getEventTime().format(this.dateTimeFormatter);
 		if (event.isResponse()) {
 			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
 		}
-		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
-				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .source(eventToJson(event));
-//		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
-//		        .doc("")
-//		        .consistencyLevel(WriteConsistencyLevel.ONE)
-//		        .retryOnConflict(5)
-//		        .upsert(indexRequest);
-		this.bulkRequest.add(indexRequest);
+//		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+//				.consistencyLevel(WriteConsistencyLevel.ONE)
+//		        .source(eventToJson(event));
+		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+		        .doc(eventToJson(event))
+		        .consistencyLevel(WriteConsistencyLevel.ONE)
+		        .retryOnConflict(5);
+		updateRequest.docAsUpsert(true);
+		this.bulkRequest.add(updateRequest);
     }
 	
 	private void executeBulk() {
@@ -100,6 +102,9 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		addStringElementToJsonBuffer("correlation_id", event.correlationId, this.sb, false);
 		addMapElementToJsonBuffer("correlation_data", event.correlationData, this.sb, false);
 		addStringElementToJsonBuffer("endpoint", event.endpoint, this.sb, false);
+		if (event.expiry != null) {
+			addLongElementToJsonBuffer("expiry", event.expiry.toInstant().toEpochMilli(), this.sb, false);
+		}
 		addMapElementToJsonBuffer("extracted_data", event.extractedData, this.sb, false);
 		addStringElementToJsonBuffer("name", event.name, this.sb, false);
 		addMapElementToJsonBuffer("metadata", event.metadata, this.sb, false);
@@ -108,6 +113,10 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		if (event.payloadFormat != null) {
 			addStringElementToJsonBuffer("payload_format", event.payloadFormat.name(), this.sb, false);
 		}
+		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
+			// Set the response time to the expiry initially.
+			addLongElementToJsonBuffer("response_time", event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, false);
+		}
 		if (event.transport != null) {
 			addStringElementToJsonBuffer("transport", event.transport.name(), this.sb, false);
 		}
@@ -115,7 +124,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			this.sb.append(", \"reading_endpoint_handlers\": [");
 			boolean added = false;
 			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
-				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : added) || added;
+				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added) || added;
 			}
 			this.sb.append("]");
 		}

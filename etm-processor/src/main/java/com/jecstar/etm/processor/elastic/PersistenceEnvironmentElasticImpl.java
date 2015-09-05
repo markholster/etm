@@ -7,13 +7,11 @@ import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
-import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
@@ -61,6 +59,9 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 				"       }," + 
 				"	    \"endpoint\": {" + 
 				"   	    \"type\": \"string\"" + 
+				"       }," + 
+				"	    \"expiry\": {" + 
+				"   	    \"type\": \"long\"" + 
 				"       }," + 
 				"	    \"name\": {" + 
 				"   	    \"type\": \"string\"" + 
