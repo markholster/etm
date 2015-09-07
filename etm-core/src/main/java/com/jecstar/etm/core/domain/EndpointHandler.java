@@ -29,7 +29,7 @@ public class EndpointHandler {
 	}
 	
 	public boolean isSet() {
-		if (this.handlingTime != null) {
+		if (this.handlingTime == null) {
 			return false;
 		}
 		return this.application.isSet();

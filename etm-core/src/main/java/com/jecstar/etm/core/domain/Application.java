@@ -34,16 +34,16 @@ public class Application {
 		this.initialize();
 		this.name = copy.name;
 		this.instance = copy.instance;
-		this.principal = copy.instance;
+		this.principal = copy.principal;
 		this.version = copy.version;
 		return this;
 	}
 
 	public boolean isSet() {
 		if (this.name != null || this.instance != null || this.principal != null || this.version != null) {
-			return false;
+			return true;
 		}
-		return true; 
+		return false; 
 	} 
 
 }

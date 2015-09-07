@@ -74,15 +74,20 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		if (event.isResponse()) {
 			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
 		}
-//		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
-//				.consistencyLevel(WriteConsistencyLevel.ONE)
-//		        .source(eventToJson(event));
-		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
-		        .doc(eventToJson(event))
-		        .consistencyLevel(WriteConsistencyLevel.ONE)
-		        .retryOnConflict(5);
-		updateRequest.docAsUpsert(true);
-		this.bulkRequest.add(updateRequest);
+		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+				.consistencyLevel(WriteConsistencyLevel.ONE)
+		        .source(eventToJson(event));
+		// Event kan worden geupdate als reading + writing applications apart het event loggen, of als de response eerder dan de request is toegevoegd.
+		// Dus als event.readingApplications niet leeg is, dan moet in de update deze worden toegevoegd. Kortom, maak een script waarin alle velden worden 
+		// toegevoegd als het event ze bevat.
+		
+		
+//		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+//		        .script("TODO")
+//		        .upsert(indexRequest)
+//		        .consistencyLevel(WriteConsistencyLevel.ONE)
+//		        .retryOnConflict(5);
+		this.bulkRequest.add(indexRequest);
     }
 	
 	private void executeBulk() {
@@ -128,7 +133,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			}
 			this.sb.append("]");
 		}
-		if (!event.writingEndpointHandler.isSet()) {
+		if (event.writingEndpointHandler.isSet()) {
 			this.sb.append( ", \"writing_endpoint_handler\": ");
 			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true);
 		}
@@ -176,7 +181,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	}
 
 	private boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement) {
-		if (endpointHandler.isSet()) {
+		if (!endpointHandler.isSet()) {
 			return false;
 		}
 		if (!firstElement) {
@@ -188,7 +193,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			added = addLongElementToJsonBuffer("handling_time", endpointHandler.handlingTime.toInstant().toEpochMilli(), buffer, true);
 		}
 		Application application = endpointHandler.application;
-		if (!application.isSet()) {
+		if (application.isSet()) {
 			if (added) {
 				buffer.append(", ");
 			}
