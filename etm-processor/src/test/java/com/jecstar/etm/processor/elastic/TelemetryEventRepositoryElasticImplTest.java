@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.elastic;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.time.ZonedDateTime;
@@ -77,11 +78,11 @@ public class TelemetryEventRepositoryElasticImplTest {
 	}
 	
 	/**
-	 * Test a simple persist without any updates.
+	 * Test persistence of a single event with a writing and one reading application.
 	 */
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testPersistWithoutUpdate() {
+	public void testPersistOneWriterOneReaderSingleEvent() {
 		final String id = "1";
 		TelemetryEvent event = new TelemetryEvent();
 		event.id = id;
@@ -113,6 +114,24 @@ public class TelemetryEventRepositoryElasticImplTest {
 			assertEquals(event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), writingEndpointHandler.get("handling_time"));
 			assertEquals(event.writingEndpointHandler.application.name, ((Map<String, Object>)writingEndpointHandler.get("application")).get("name"));
 		}
+	}
+
+	@Test
+	public void testPersistOneWriterTwoReadersSeparatedEvents() {
+		// TODO testcase voor het persisteren van een event wat 1 maal door een writing application en 1 of meerdere malen door een reading application is opgeslagen.
+		fail("To be implemented.");
+	}
+	
+	@Test
+	public void testPersistRequestBeforeResponseEvent() {
+		// TODO testcase waarbij het request voor het response wordt geschreven. De expiry time moet geupdate worden.
+		fail("To be implemented.");
+	}
+	
+	@Test
+	public void testPersistResponseBeforeRequestEvent() {
+		// TODO testcase waarbij het response voor het request wordt geschreven. De expiry time moet correct berekend worden.
+		fail("To be implemented.");
 	}
 
 }
