@@ -1,6 +1,6 @@
 package com.jecstar.etm.processor.elastic;
 
-import java.io.IOException;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -11,7 +11,6 @@ import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -31,7 +30,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendLiteral("-")
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
 			.appendLiteral("-")
-			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter();
+			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 
 	
 	
@@ -48,7 +47,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
     }
 
 	@Override
-    public void close() throws IOException {
+    public void close() {
 		executeBulk();
     }
 
@@ -61,7 +60,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void endPersist() {
-		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkCount()) {
+		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkSize()) {
 			executeBulk();
 		}
     }
@@ -70,11 +69,12 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
     protected void addTelemetryEvent(TelemetryEvent event) {
 		
 		// TODO create upserts for reading and writing applications and to store the response time.
-		String index = "etm_" + event.getEventTime().format(this.dateTimeFormatter);
+		String index = getElasticIndexName(event);
+		String type = getElasticType(event);
 		if (event.isResponse()) {
 			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
 		}
-		IndexRequest indexRequest = new IndexRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(eventToJson(event));
 		// Event kan worden geupdate als reading + writing applications apart het event loggen, of als de response eerder dan de request is toegevoegd.
@@ -89,6 +89,32 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 //		        .retryOnConflict(5);
 		this.bulkRequest.add(indexRequest);
     }
+	
+	/**
+	 * Gives the name of the elastic index of the given
+	 * <code>TelemetryEvent</code>.
+	 * 
+	 * @param event
+	 *            The <code>TelemetryEvent</code> to determine the elastic index
+	 *            name from.
+	 * @return The name of the index.
+	 */
+	public String getElasticIndexName(TelemetryEvent event) {
+		return "etm_" + event.getEventTime().format(this.dateTimeFormatter);
+	}
+	
+	/**
+	 * Gives the type within the elastic index of the given
+	 * <code>TelemetryEvent</code>.
+	 * 
+	 * @param event
+	 *            The <code>TelemetryEvent</code> to determine the elastic type
+	 *            from.
+	 * @return The type within the elastic index.
+	 */
+	public String getElasticType(TelemetryEvent event) {
+		return event.payloadFormat.name().toLowerCase();
+	}
 	
 	private void executeBulk() {
 		if (this.bulkRequest != null && this.bulkRequest.numberOfActions() > 0) {
