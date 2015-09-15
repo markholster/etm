@@ -11,7 +11,9 @@ import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.Application;
@@ -71,23 +73,16 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		// TODO create upserts for reading and writing applications and to store the response time.
 		String index = getElasticIndexName(event);
 		String type = getElasticType(event);
-		if (event.isResponse()) {
-			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
-		}
+		UpdateScriptBuilder scriptBuilder = new UpdateScriptBuilder(event);
 		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(eventToJson(event));
-		// Event kan worden geupdate als reading + writing applications apart het event loggen, of als de response eerder dan de request is toegevoegd.
-		// Dus als event.readingApplications niet leeg is, dan moet in de update deze worden toegevoegd. Kortom, maak een script waarin alle velden worden 
-		// toegevoegd als het event ze bevat.
-		
-		
-//		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
-//		        .script("TODO")
-//		        .upsert(indexRequest)
-//		        .consistencyLevel(WriteConsistencyLevel.ONE)
-//		        .retryOnConflict(5);
-		this.bulkRequest.add(indexRequest);
+		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
+		        .script(scriptBuilder.getScript(), ScriptType.INLINE, scriptBuilder.getScriptParameters())
+		        .upsert(indexRequest)
+		        .consistencyLevel(WriteConsistencyLevel.ONE)
+		        .retryOnConflict(5);
+		this.bulkRequest.add(updateRequest);
     }
 	
 	/**
@@ -100,7 +95,11 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	 * @return The name of the index.
 	 */
 	public String getElasticIndexName(TelemetryEvent event) {
+		if (event.isResponse()) {
+			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
+		}
 		return "etm_" + event.getEventTime().format(this.dateTimeFormatter);
+		
 	}
 	
 	/**

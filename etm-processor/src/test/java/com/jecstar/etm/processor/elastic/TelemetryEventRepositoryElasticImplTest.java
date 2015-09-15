@@ -5,11 +5,13 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.node.Node;
@@ -39,7 +41,8 @@ public class TelemetryEventRepositoryElasticImplTest {
 	@BeforeClass
 	public static void beforeClass() {
 		node = new NodeBuilder().settings(ImmutableSettings.settingsBuilder()
-				.put("http.enabled", false))
+				.put("http.enabled", false)
+				.put("path.conf", "src/test/resources/conf"))
 				.local(true).node();
 	}
 	
@@ -87,7 +90,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 		TelemetryEvent event = new TelemetryEvent();
 		event.id = id;
 		event.payloadFormat = PayloadFormat.TEXT;
-		event.payload = "This is an testcase.";
+		event.payload = "Testcase testPersistOneWriterOneReaderSingleEvent.";
 		event.writingEndpointHandler.application.name = "TestCase";
 		event.writingEndpointHandler.handlingTime = ZonedDateTime.now();
 		EndpointHandler endpointHandler = new EndpointHandler();
@@ -95,15 +98,12 @@ public class TelemetryEventRepositoryElasticImplTest {
 		endpointHandler.application.name = "TestCase";
 		event.readingEndpointHandlers.add(endpointHandler);
 		// TODO add all possible attributes of an event to the test.
-		Properties properties = new Properties();
-		properties.setProperty(EtmConfiguration.ETM_PERSISTING_BULK_SIZE, "1");
-		EtmConfiguration configuration = new EtmConfiguration(this.nodeName, this.client, this.getClass().getName());
-		configuration.update(this.nodeName, properties);
-		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(configuration, this.client)) {
+		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
 			repo.persistTelemetryEvent(event);
 			
 			// Validate all elements.
-			Map<String, Object> source = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id).get().getSourceAsMap();
+			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id).get();
+			Map<String, Object> source = getResponse.getSourceAsMap();
 			assertEquals(event.id, source.get("id"));
 			assertEquals(event.payload, source.get("payload"));
 			assertEquals(event.payloadFormat.name(), source.get("payload_format"));
@@ -116,10 +116,47 @@ public class TelemetryEventRepositoryElasticImplTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistOneWriterTwoReadersSeparatedEvents() {
-		// TODO testcase voor het persisteren van een event wat 1 maal door een writing application en 1 of meerdere malen door een reading application is opgeslagen.
-		fail("To be implemented.");
+		final String id = "2";
+		TelemetryEvent event = new TelemetryEvent();
+		event.id = id;
+		event.payloadFormat = PayloadFormat.TEXT;
+		event.payload = "Testcase testPersistOneWriterTwoReadersSeparatedEvents.";
+		event.writingEndpointHandler.application.name = "TestCase";
+		event.writingEndpointHandler.handlingTime = ZonedDateTime.now();
+		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
+			// Add the event from the writing application.
+			repo.persistTelemetryEvent(event);
+			
+			// Add the event from the first reading application.
+			event.initialize();
+			event.id = id;
+			event.payloadFormat = PayloadFormat.TEXT;
+			event.payload = "Testcase testPersistOneWriterTwoReadersSeparatedEvents.";
+			EndpointHandler endpointHandler = new EndpointHandler();
+			endpointHandler.handlingTime = ZonedDateTime.now();
+			endpointHandler.application.name = "Reading app 1";
+			event.readingEndpointHandlers.add(endpointHandler);
+			repo.persistTelemetryEvent(event);
+
+			// Add the event from the second reading application.
+			event.initialize();
+			event.id = id;
+			event.payloadFormat = PayloadFormat.TEXT;
+			event.payload = "Testcase testPersistOneWriterTwoReadersSeparatedEvents.";
+			endpointHandler = new EndpointHandler();
+			endpointHandler.handlingTime = ZonedDateTime.now().plus(10, ChronoUnit.SECONDS);
+			endpointHandler.application.name = "Reading app 2";
+			event.readingEndpointHandlers.add(endpointHandler);
+			repo.persistTelemetryEvent(event);
+			
+			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id).get();
+			Map<String, Object> source = getResponse.getSourceAsMap();
+			List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) source.get("reading_endpoint_handlers");
+			assertEquals(2, readingEndpointHandlers.size());
+		}
 	}
 	
 	@Test
@@ -132,6 +169,14 @@ public class TelemetryEventRepositoryElasticImplTest {
 	public void testPersistResponseBeforeRequestEvent() {
 		// TODO testcase waarbij het response voor het request wordt geschreven. De expiry time moet correct berekend worden.
 		fail("To be implemented.");
+	}
+	
+	private EtmConfiguration createSingleCommitConfiguration() {
+		Properties properties = new Properties();
+		properties.setProperty(EtmConfiguration.ETM_PERSISTING_BULK_SIZE, "1");
+		EtmConfiguration configuration = new EtmConfiguration(this.nodeName, this.client, this.getClass().getName());
+		configuration.update(this.nodeName, properties);
+		return configuration;
 	}
 
 }
