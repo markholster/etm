@@ -40,9 +40,8 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 			.setCreate(false)
 			.setTemplate("etm_*")
 			.setSettings(ImmutableSettings.settingsBuilder()
-					/** TODO Onderstaande properties moeten in de configuratie **/
-					.put("number_of_shards", 2)
-					.put("number_of_replicas", 1)
+					.put("number_of_shards", this.etmConfiguration.getPersistingShardsPerIndex())
+					.put("number_of_replicas", this.etmConfiguration.getPersistingReplicasPerIndex())
 					.build())
 			.addMapping("_default_", createMapping("_default_"))
 			.addAlias(new Alias("etm_all"))

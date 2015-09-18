@@ -40,6 +40,8 @@ public class EtmConfiguration {
 	public static final String ETM_PERSISTING_HANDLER_COUNT = "etm.persisting_handler_count";
 	public static final String ETM_RINGBUFFER_SIZE = "etm.ringbuffer_size";
 	public static final String ETM_PERSISTING_BULK_SIZE = "etm.persisting_bulk_size";
+	public static final String ETM_PERSISTING_SHARDS_PER_INDEX = "etm.persisting_shards_per_index";
+	public static final String ETM_PERSISTING_REPLICAS_PER_INDEX = "etm.persisting_replicas_per_index";
 	public static final String ETM_ENDPOINT_CACHE_EXPIRY_TIME = "etm.endpoint_cache_expiry_time";
 	public static final String ETM_DATA_CORRELATION_MAX_MATCHES = "etm.data_correlation_max_matches";
 	public static final String ETM_DATA_CORRELATION_TIME_OFFSET = "etm.data_correlation_time_offset";
@@ -107,6 +109,8 @@ public class EtmConfiguration {
 		checkDefaultValue(properties, ETM_PERSISTING_HANDLER_COUNT, "5");
 		checkDefaultValue(properties, ETM_RINGBUFFER_SIZE, "4096");
 		checkDefaultValue(properties, ETM_PERSISTING_BULK_SIZE, "50");
+		checkDefaultValue(properties, ETM_PERSISTING_SHARDS_PER_INDEX, "2");
+		checkDefaultValue(properties, ETM_PERSISTING_REPLICAS_PER_INDEX, "1");
 		checkDefaultValue(properties, ETM_ENDPOINT_CACHE_EXPIRY_TIME, "60000");
 		checkDefaultValue(properties, ETM_DATA_CORRELATION_MAX_MATCHES, "100");
 		checkDefaultValue(properties, ETM_DATA_CORRELATION_TIME_OFFSET, "30000");
@@ -148,6 +152,14 @@ public class EtmConfiguration {
 	// Etm persistng configuration.
 	public int getPersistingBulkSize() {
 		return Integer.valueOf(this.etmProperties.getProperty(ETM_PERSISTING_BULK_SIZE));
+	}
+	
+	public int getPersistingShardsPerIndex() {
+		return Integer.valueOf(this.etmProperties.getProperty(ETM_PERSISTING_SHARDS_PER_INDEX));
+	}
+
+	public int getPersistingReplicasPerIndex() {
+		return Integer.valueOf(this.etmProperties.getProperty(ETM_PERSISTING_REPLICAS_PER_INDEX));
 	}
 	
 	public long getEndpointCacheExpiryTime() {
