@@ -14,6 +14,7 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.ImmutableSettings;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.converter.TelemetryEventTags;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
@@ -21,6 +22,7 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
+	private final TelemetryEventTags tags = new TelemetryEventTagsElasticImpl();
 
 	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
 		this.etmConfiguration = etmConfiguration;
@@ -51,75 +53,81 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	private String createMapping(String type) {
 		return "{" + 
 				"   \"properties\": {" + 
-				"	    \"id\": {" + 
+				"	    \"" + this.tags.getIdTag() + "\": {" + 
 				"   	    \"type\": \"string\"" + 
 				"       }," + 
-				"	    \"correlation_id\": {" + 
+				"	    \"" + this.tags.getCorrelationIdTag() +"\": {" + 
 				"   	    \"type\": \"string\"" + 
 				"       }," + 
-				"	    \"endpoint\": {" + 
+				"	    \"" + this.tags.getEndpointTag() + "\": {" + 
 				"   	    \"type\": \"string\"" + 
 				"       }," + 
-				"	    \"expiry\": {" + 
+				"	    \"" + this.tags.getExpiryTag() + "\": {" + 
 				"   	    \"type\": \"long\"" + 
 				"       }," + 
-				"	    \"name\": {" + 
+				"	    \"" + this.tags.getNameTag() +"\": {" + 
 				"   	    \"type\": \"string\"" + 
 				"       }," + 
-				"       \"packaging\": {" + 
+				"       \"" + this.tags.getPackagingTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
 				"           \"index\": \"not_analyzed\"" + 
 				"       }," + 
-				"       \"payload\": {" + 
+				"       \"" + this.tags.getPayloadTag() + "\": {" + 
 				"   	    \"type\": \"string\"" + 
 				"       }," + 
-				"       \"payload_format\": {" + 
+				"       \"" + this.tags.getPayloadFormatTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
 				"           \"index\": \"not_analyzed\"" + 
 				"       }," + 
-				"       \"reading_endpoint_handlers\": {" + 
+				"       \"" + this.tags.getReadingEndpointHandlersTag() + "\": {" + 
 				"   	    \"properties\": {" + 
-				"       	    \"application\": {" + 
+				"       	    \"" + this.tags.getEndpointHandlerApplicationTag() + "\": {" + 
 				"           	    \"properties\": {" + 
-				"               	    \"instance\": {" + 
+				"               	    \"" + this.tags.getApplicationInstanceTag() + "\": {" + 
 				"                   	    \"type\": \"string\"" + 
 				"                       }," + 
-				"                       \"name\": {" + 
+				"                       \"" + this.tags.getApplicationNameTag() + "\": {" + 
 				"                   	    \"type\": \"string\"" + 
 				"                       }," + 
-				"                       \"principal\": {" + 
+				"                       \"" + this.tags.getApplicationPrincipalTag() + "\": {" + 
+				"                   	    \"type\": \"string\"" + 
+				"                       }," + 
+				"                       \"" + this.tags.getApplicationVersionTag() + "\": {" + 
 				"                   	    \"type\": \"string\"" + 
 				"                       }" + 
 				"                   }" + 
 				"               }," + 
-				"               \"handling_time\": {" + 
+				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
 				"           	    \"type\": \"long\"" + 
 				"               }" + 
 				"           }" + 
 				"       }," + 
-				"       \"response_time\": {" + 
+				"       \"" + this.tags.getResponseTimeTag() + "\": {" + 
 				"   	    \"type\": \"long\"" + 
 				"       }," + 
-				"       \"transport\": {" + 
+				"       \"" + this.tags.getTransportTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
 				"           \"index\": \"not_analyzed\"" + 
 				"       }," + 
-				"       \"writing_endpoint_handler\": {" + 
+				"       \"" + this.tags.getWritingEndpointHandlerTag() + "\": {" + 
 				"   	    \"properties\": {" + 
-				"       	    \"application\": {" + 
+				"       	    \"" + this.tags.getEndpointHandlerApplicationTag() + "\": {" + 
 				"           	    \"properties\": {" + 
-				"               	    \"instance\": {" + 
+				"               	    \"" + this.tags.getApplicationInstanceTag() + "\": {" + 
 				"                   	    \"type\": \"string\"" + 
 				"                       }," + 
-				"                       \"name\": {" + 
+				"                       \"" + this.tags.getApplicationNameTag() + "\": {" + 
 				"                   	    \"type\": \"string\"" + 
 				"                       }," + 
-				"                       \"principal\": {" + 
+				"                       \"" + this.tags.getApplicationPrincipalTag() + "\": {" + 
+				"                   	    \"type\": \"string\"" + 
+				"                       }," + 
+				"                       \"" + this.tags.getApplicationVersionTag() + "\": {" + 
 				"                   	    \"type\": \"string\"" + 
 				"                       }" + 
 				"                   }" + 
 				"               }," + 
-				"               \"handling_time\": {" + 
+				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
 				"           	    \"type\": \"long\"" + 
 				"               }" + 
 				"           }" + 

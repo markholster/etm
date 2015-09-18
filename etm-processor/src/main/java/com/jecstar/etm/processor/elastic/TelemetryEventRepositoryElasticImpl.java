@@ -4,8 +4,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -16,9 +14,10 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.Application;
-import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.TelemetryEvent;
+import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
+import com.jecstar.etm.core.domain.converter.TelemetryEventTags;
+import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
@@ -26,13 +25,14 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
-	private final StringBuilder sb = new StringBuilder();
 	private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
 			.appendLiteral("-")
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
+	private final TelemetryEventConverter<String> converter = new TelemetryEventConverterJsonImpl();
+	private final TelemetryEventTags eventTags = new TelemetryEventTagsElasticImpl();
 
 	
 	
@@ -69,14 +69,12 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void addTelemetryEvent(TelemetryEvent event) {
-		
-		// TODO create upserts for reading and writing applications and to store the response time.
 		String index = getElasticIndexName(event);
 		String type = getElasticType(event);
 		UpdateScriptBuilder scriptBuilder = new UpdateScriptBuilder(event);
 		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .source(eventToJson(event));
+		        .source(this.converter.convert(event, this.eventTags));
 		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
 		        .script(scriptBuilder.getScript(), ScriptType.INLINE, scriptBuilder.getScriptParameters())
 		        .upsert(indexRequest)
@@ -124,117 +122,4 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		}
 		this.bulkRequest = null;
 	}
-	
-	private String eventToJson(TelemetryEvent event) {
-		this.sb.setLength(0);
-		this.sb.append("{");
-		addStringElementToJsonBuffer("id", event.id, this.sb, true);
-		addStringElementToJsonBuffer("correlation_id", event.correlationId, this.sb, false);
-		addMapElementToJsonBuffer("correlation_data", event.correlationData, this.sb, false);
-		addStringElementToJsonBuffer("endpoint", event.endpoint, this.sb, false);
-		if (event.expiry != null) {
-			addLongElementToJsonBuffer("expiry", event.expiry.toInstant().toEpochMilli(), this.sb, false);
-		}
-		addMapElementToJsonBuffer("extracted_data", event.extractedData, this.sb, false);
-		addStringElementToJsonBuffer("name", event.name, this.sb, false);
-		addMapElementToJsonBuffer("metadata", event.metadata, this.sb, false);
-		addStringElementToJsonBuffer("packaging", event.packaging, this.sb, false);
-		addStringElementToJsonBuffer("payload", event.payload, this.sb, false);
-		if (event.payloadFormat != null) {
-			addStringElementToJsonBuffer("payload_format", event.payloadFormat.name(), this.sb, false);
-		}
-		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
-			// Set the response time to the expiry initially.
-			addLongElementToJsonBuffer("response_time", event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, false);
-		}
-		if (event.transport != null) {
-			addStringElementToJsonBuffer("transport", event.transport.name(), this.sb, false);
-		}
-		if (!event.readingEndpointHandlers.isEmpty()) {
-			this.sb.append(", \"reading_endpoint_handlers\": [");
-			boolean added = false;
-			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
-				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added) || added;
-			}
-			this.sb.append("]");
-		}
-		if (event.writingEndpointHandler.isSet()) {
-			this.sb.append( ", \"writing_endpoint_handler\": ");
-			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true);
-		}
-		this.sb.append("}");
-		return this.sb.toString();
-	}
-	
-	private boolean addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer, boolean firstElement) {
-		if (elementValue == null) {
-			return false;
-		}
-		if (!firstElement) {
-			buffer.append(", ");
-		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": \"" + escapeToJson(elementValue) + "\"");
-		return true;
-	}
-
-	private boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean firstElement) {
-		if (elementValue == null) {
-			return false;
-		}
-		if (!firstElement) {
-			buffer.append(", ");
-		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
-		return true;
-	}
-
-	
-	private boolean addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer, boolean firstElement) {
-		if (elementValues.size() < 1) {
-			return false;
-		}
-		if (!firstElement) {
-			buffer.append(", ");
-		}
-		buffer.append("\"" + elementName + "\": [");
-		buffer.append(elementValues.entrySet().stream()
-				.map(c -> "{ \"" + escapeToJson(c.getKey()) + "\": \"" + escapeToJson(c.getValue()) + "\" }")
-				.sorted()
-				.collect(Collectors.joining(", ")));
-		buffer.append("]");
-		return true;
-	}
-
-	private boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement) {
-		if (!endpointHandler.isSet()) {
-			return false;
-		}
-		if (!firstElement) {
-			buffer.append(", ");
-		}
-		buffer.append("{");
-		boolean added = false;
-		if (endpointHandler.handlingTime != null) {
-			added = addLongElementToJsonBuffer("handling_time", endpointHandler.handlingTime.toInstant().toEpochMilli(), buffer, true);
-		}
-		Application application = endpointHandler.application;
-		if (application.isSet()) {
-			if (added) {
-				buffer.append(", ");
-			}
-			buffer.append("\"application\" : {");
-			added = addStringElementToJsonBuffer("name", application.name, buffer, true);
-			added = addStringElementToJsonBuffer("instance", application.instance, buffer, !added) || added;
-			added = addStringElementToJsonBuffer("version", application.version, buffer, !added) || added;
-			added = addStringElementToJsonBuffer("principal", application.principal, buffer, !added) || added;
-			buffer.append("}");
-		}
-		buffer.append("}");
-		return true;
-	}
-	
-	private String escapeToJson(String value) {
-		return value.replace("\"", "\\\"");
-	}
-
 }
