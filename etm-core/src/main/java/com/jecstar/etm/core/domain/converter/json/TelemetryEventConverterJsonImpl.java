@@ -21,42 +21,42 @@ public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<
 	private StringBuilder sb = new StringBuilder();
 
 	@Override
-	public String convert(TelemetryEvent telemetryEvent, TelemetryEventConverterTags tags) {
+	public String convert(TelemetryEvent event, TelemetryEventConverterTags tags) {
 		this.sb.setLength(0);
 		this.sb.append("{");
-		addStringElementToJsonBuffer(tags.getIdTag(), telemetryEvent.id, this.sb, true);
-		addStringElementToJsonBuffer(tags.getCorrelationIdTag(), telemetryEvent.correlationId, this.sb, false);
-		addMapElementToJsonBuffer(tags.getCorrelationDataTag(), telemetryEvent.correlationData, this.sb, false);
-		addStringElementToJsonBuffer(tags.getEndpointTag(), telemetryEvent.endpoint, this.sb, false);
-		if (telemetryEvent.expiry != null) {
-			addLongElementToJsonBuffer(tags.getExpiryTag(), telemetryEvent.expiry.toInstant().toEpochMilli(), this.sb, false);
+		addStringElementToJsonBuffer(tags.getIdTag(), event.id, this.sb, true);
+		addStringElementToJsonBuffer(tags.getCorrelationIdTag(), event.correlationId, this.sb, false);
+		addMapElementToJsonBuffer(tags.getCorrelationDataTag(), event.correlationData, this.sb, false);
+		addStringElementToJsonBuffer(tags.getEndpointTag(), event.endpoint, this.sb, false);
+		if (event.expiry != null) {
+			addLongElementToJsonBuffer(tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, false);
 		}
-		addMapElementToJsonBuffer(tags.getExtractedDataTag(), telemetryEvent.extractedData, this.sb, false);
-		addStringElementToJsonBuffer(tags.getNameTag(), telemetryEvent.name, this.sb, false);
-		addMapElementToJsonBuffer(tags.getMetadataTag(), telemetryEvent.metadata, this.sb, false);
-		addStringElementToJsonBuffer(tags.getPackagingTag(), telemetryEvent.packaging, this.sb, false);
-		addStringElementToJsonBuffer(tags.getPayloadTag(), telemetryEvent.payload, this.sb, false);
-		if (telemetryEvent.payloadFormat != null) {
-			addStringElementToJsonBuffer(tags.getPayloadFormatTag(), telemetryEvent.payloadFormat.name(), this.sb, false);
+		addMapElementToJsonBuffer(tags.getExtractedDataTag(), event.extractedData, this.sb, false);
+		addStringElementToJsonBuffer(tags.getNameTag(), event.name, this.sb, false);
+		addMapElementToJsonBuffer(tags.getMetadataTag(), event.metadata, this.sb, false);
+		addStringElementToJsonBuffer(tags.getPackagingTag(), event.packaging, this.sb, false);
+		addStringElementToJsonBuffer(tags.getPayloadTag(), event.payload, this.sb, false);
+		if (event.payloadFormat != null) {
+			addStringElementToJsonBuffer(tags.getPayloadFormatTag(), event.payloadFormat.name(), this.sb, false);
 		}
-		if (telemetryEvent.isRequest() && telemetryEvent.writingEndpointHandler.isSet() && telemetryEvent.expiry != null) {
+		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
 			// Set the response time to the expiry initially.
-			addLongElementToJsonBuffer(tags.getResponseTimeTag(), telemetryEvent.expiry.toInstant().toEpochMilli() - telemetryEvent.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, false);
+			addLongElementToJsonBuffer(tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, false);
 		}
-		if (telemetryEvent.transport != null) {
-			addStringElementToJsonBuffer(tags.getTransportTag(), telemetryEvent.transport.name(), this.sb, false);
+		if (event.transport != null) {
+			addStringElementToJsonBuffer(tags.getTransportTag(), event.transport.name(), this.sb, false);
 		}
-		if (!telemetryEvent.readingEndpointHandlers.isEmpty()) {
+		if (!event.readingEndpointHandlers.isEmpty()) {
 			this.sb.append(", \"" + tags.getReadingEndpointHandlersTag() + "\": [");
 			boolean added = false;
-			for (int i = 0; i < telemetryEvent.readingEndpointHandlers.size(); i++) {
-				added = addEndpointHandlerToJsonBuffer(telemetryEvent.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, tags) || added;
+			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
+				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, tags) || added;
 			}
 			this.sb.append("]");
 		}
-		if (telemetryEvent.writingEndpointHandler.isSet()) {
+		if (event.writingEndpointHandler.isSet()) {
 			this.sb.append( ", \"" + tags.getWritingEndpointHandlerTag() + "\": ");
-			addEndpointHandlerToJsonBuffer(telemetryEvent.writingEndpointHandler, this.sb, true, tags);
+			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true, tags);
 		}
 		this.sb.append("}");		
 		return this.sb.toString();

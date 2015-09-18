@@ -15,6 +15,7 @@ public interface TelemetryEventConverterTags {
 	String getPayloadTag();
 	String getPayloadFormatTag();
 	String getResponseTimeTag();
+	String getResponsesHandlingTimeTag();
 	String getTransportTag();
 	String getReadingEndpointHandlersTag();
 	String getWritingEndpointHandlerTag();

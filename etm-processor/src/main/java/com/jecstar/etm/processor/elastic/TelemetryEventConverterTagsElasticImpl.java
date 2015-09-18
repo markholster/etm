@@ -63,6 +63,11 @@ public class TelemetryEventConverterTagsElasticImpl implements TelemetryEventCon
 	public String getResponseTimeTag() {
 		return "response_time";
 	}
+	
+	@Override
+	public String getResponsesHandlingTimeTag() {
+		return "responses_handling_time";
+	}
 
 	@Override
 	public String getTransportTag() {

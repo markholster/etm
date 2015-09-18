@@ -4,6 +4,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -33,7 +34,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 	private final TelemetryEventConverter<String> jsonConverter = new TelemetryEventConverterJsonImpl();
-	private final TelemetryEventConverterTags converterTags = new TelemetryEventConverterTagsElasticImpl();
+	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsElasticImpl();
 	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();
 
 	
@@ -75,8 +76,8 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		String type = getElasticType(event);
 		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .source(this.jsonConverter.convert(event, this.converterTags));
-		UpdateScriptResponse updateScript = this.updateScriptBuilder.createUpdateScript(event, this.converterTags);
+		        .source(this.jsonConverter.convert(event, this.tags));
+		UpdateScriptResponse updateScript = this.updateScriptBuilder.createUpdateScript(event, this.tags);
 		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
 		        .script(updateScript.getScript(), ScriptType.INLINE, updateScript.getParameters())
 		        .upsert(indexRequest)
@@ -84,7 +85,27 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		        .consistencyLevel(WriteConsistencyLevel.ONE)
 		        .retryOnConflict(5);
 		this.bulkRequest.add(updateRequest);
+		if (event.isResponse() && event.correlationId != null && event.readingEndpointHandlers.size() > 0) {
+			indexRequest = new IndexRequest(index, type, event.correlationId)
+					.consistencyLevel(WriteConsistencyLevel.ONE)
+			        .source("{ \"" + this.tags.getResponsesHandlingTimeTag() + "\": [" + event.readingEndpointHandlers.stream()
+			        	.filter(p -> p.application.name != null && p.handlingTime != null)
+			        	.map(p -> "{\"" + this.tags.getApplicationNameTag() + "\" : \"" + escapeToJson(p.application.name) + "\", \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\" : " + p.handlingTime.toInstant().toEpochMilli() + "}")
+			        	.collect(Collectors.joining(",")) + "]}");
+			updateScript = this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags);
+			updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.correlationId)
+			        .script(updateScript.getScript(), ScriptType.INLINE, updateScript.getParameters())
+			        .upsert(indexRequest)
+			        .detectNoop(true)
+			        .consistencyLevel(WriteConsistencyLevel.ONE)
+			        .retryOnConflict(5);
+			this.bulkRequest.add(updateRequest);
+		}
     }
+	
+	private String escapeToJson(String value) {
+		return value.replace("\"", "\\\"");
+	}
 	
 	/**
 	 * Gives the name of the elastic index of the given

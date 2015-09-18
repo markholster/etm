@@ -1,7 +1,6 @@
 package com.jecstar.etm.processor.elastic;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.time.ZonedDateTime;
@@ -195,7 +194,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 			event.id = id_rsp;
 			event.correlationId = id_req;
 			event.payloadFormat = PayloadFormat.TEXT;
-			event.payload = "Testcase testPersistOneWriterTwoReadersSeparatedEvents Response.";
+			event.payload = "Testcase testPersistRequestBeforeResponseEvent Response.";
 			event.transport = Transport.MQ;
 			event.packaging = TelemetryEvent.PACKAGING_MQ_RESPONSE;
 			event.writingEndpointHandler.application.name = "Request reader";
@@ -208,15 +207,61 @@ public class TelemetryEventRepositoryElasticImplTest {
 			
 			getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
 			expectedResponseTime = endpointHandler.handlingTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
-			responseTime = ((Integer) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
-			assertEquals(expectedResponseTime, responseTime);
+			long readResponseTime = ((Integer) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
+			assertEquals(expectedResponseTime, readResponseTime);
 		}		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistResponseBeforeRequestEvent() {
-		// TODO testcase waarbij het response voor het request wordt geschreven. De expiry time moet correct berekend worden.
-		fail("To be implemented.");
+		final String id_req = "5";
+		final String id_rsp = "6";
+		ZonedDateTime now = ZonedDateTime.now();
+		final ZonedDateTime requestTime = now;
+		TelemetryEvent event = new TelemetryEvent();
+		event.id = id_rsp;
+		event.correlationId = id_req;
+		event.payloadFormat = PayloadFormat.TEXT;
+		event.payload = "Testcase testPersistResponseBeforeRequestEvent Response.";
+		event.transport = Transport.MQ;
+		event.packaging = TelemetryEvent.PACKAGING_MQ_RESPONSE;
+		event.writingEndpointHandler.application.name = "Request reader";
+		event.writingEndpointHandler.handlingTime = now.plus(15, ChronoUnit.SECONDS);
+		EndpointHandler endpointHandler = new EndpointHandler();
+		endpointHandler.handlingTime = now.plus(15, ChronoUnit.SECONDS).plus(12, ChronoUnit.MILLIS);
+		endpointHandler.application.name = "Request writer";
+		event.readingEndpointHandlers.add(endpointHandler);
+		ZonedDateTime responseTime = endpointHandler.handlingTime;
+
+		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
+			// Add the response from the reading application
+			repo.persistTelemetryEvent(event);
+			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
+			List<Map<String,Object>> responsesTime = (List<Map<String, Object>>) getResponse.getSourceAsMap().get(this.tags.getResponsesHandlingTimeTag());
+			assertEquals(event.readingEndpointHandlers.size(), responsesTime.size());
+			
+			// Add the request from the writing application
+			event.initialize();
+			event.id = id_req;
+			event.payloadFormat = PayloadFormat.TEXT;
+			event.payload = "Testcase testPersistResponseBeforeRequestEvent Request.";
+			event.transport = Transport.MQ;
+			event.packaging = TelemetryEvent.PACKAGING_MQ_REQUEST;
+			event.writingEndpointHandler.application.name = "Request writer";
+			event.writingEndpointHandler.handlingTime = requestTime;
+			event.expiry = now.plus(30, ChronoUnit.SECONDS);
+			endpointHandler = new EndpointHandler();
+			endpointHandler.handlingTime = now.plus(10, ChronoUnit.MILLIS);
+			endpointHandler.application.name = "Request reader";
+			event.readingEndpointHandlers.add(endpointHandler);
+			repo.persistTelemetryEvent(event);
+			
+			getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
+			long expectedResponseTime = responseTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
+			long readResponseTime = ((Integer) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
+			assertEquals(expectedResponseTime, readResponseTime);
+		}		
 	}
 	
 	private EtmConfiguration createSingleCommitConfiguration() {
