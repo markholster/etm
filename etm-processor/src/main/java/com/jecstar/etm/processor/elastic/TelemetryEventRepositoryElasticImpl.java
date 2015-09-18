@@ -16,7 +16,7 @@ import org.elasticsearch.script.ScriptService.ScriptType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
-import com.jecstar.etm.core.domain.converter.TelemetryEventTags;
+import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
@@ -32,7 +32,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 	private final TelemetryEventConverter<String> converter = new TelemetryEventConverterJsonImpl();
-	private final TelemetryEventTags eventTags = new TelemetryEventTagsElasticImpl();
+	private final TelemetryEventConverterTags eventTags = new TelemetryEventConverterTagsElasticImpl();
 
 	
 	

@@ -7,7 +7,7 @@ import com.jecstar.etm.core.domain.Application;
 import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
-import com.jecstar.etm.core.domain.converter.TelemetryEventTags;
+import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
@@ -21,7 +21,7 @@ public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<
 	private StringBuilder sb = new StringBuilder();
 
 	@Override
-	public String convert(TelemetryEvent telemetryEvent, TelemetryEventTags tags) {
+	public String convert(TelemetryEvent telemetryEvent, TelemetryEventConverterTags tags) {
 		this.sb.setLength(0);
 		this.sb.append("{");
 		addStringElementToJsonBuffer(tags.getIdTag(), telemetryEvent.id, this.sb, true);
@@ -102,7 +102,7 @@ public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<
 		return true;
 	}
 
-	private boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags) {
+	private boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventConverterTags tags) {
 		if (!endpointHandler.isSet()) {
 			return false;
 		}

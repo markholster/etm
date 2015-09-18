@@ -1,8 +1,8 @@
 package com.jecstar.etm.processor.elastic;
 
-import com.jecstar.etm.core.domain.converter.TelemetryEventTags;
+import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
-public class TelemetryEventTagsElasticImpl implements TelemetryEventTags {
+public class TelemetryEventConverterTagsElasticImpl implements TelemetryEventConverterTags {
 
 	@Override
 	public String getIdTag() {

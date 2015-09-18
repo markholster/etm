@@ -1,6 +1,6 @@
 package com.jecstar.etm.core.domain.converter;
 
-public interface TelemetryEventTags {
+public interface TelemetryEventConverterTags {
 
 	// TelemetryEvent attributes.
 	String getIdTag();

@@ -14,7 +14,7 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.ImmutableSettings;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.converter.TelemetryEventTags;
+import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
@@ -22,7 +22,7 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
-	private final TelemetryEventTags tags = new TelemetryEventTagsElasticImpl();
+	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsElasticImpl();
 
 	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
 		this.etmConfiguration = etmConfiguration;
