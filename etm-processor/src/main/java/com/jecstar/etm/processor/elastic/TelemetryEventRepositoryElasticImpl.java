@@ -18,6 +18,7 @@ import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterJsonImpl;
+import com.jecstar.etm.processor.elastic.UpdateScriptBuilder.UpdateScriptResponse;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
@@ -32,7 +33,8 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 	private final TelemetryEventConverter<String> converter = new TelemetryEventConverterJsonImpl();
-	private final TelemetryEventConverterTags eventTags = new TelemetryEventConverterTagsElasticImpl();
+	private final TelemetryEventConverterTags converterTags = new TelemetryEventConverterTagsElasticImpl();
+	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();
 
 	
 	
@@ -71,12 +73,12 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
     protected void addTelemetryEvent(TelemetryEvent event) {
 		String index = getElasticIndexName(event);
 		String type = getElasticType(event);
-		UpdateScriptBuilder scriptBuilder = new UpdateScriptBuilder(event);
 		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .source(this.converter.convert(event, this.eventTags));
+		        .source(this.converter.convert(event, this.converterTags));
+		UpdateScriptResponse updateScript = this.updateScriptBuilder.createUpdateScript(event, this.converterTags);
 		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
-		        .script(scriptBuilder.getScript(), ScriptType.INLINE, scriptBuilder.getScriptParameters())
+		        .script(updateScript.getScript(), ScriptType.INLINE, updateScript.getParameters())
 		        .upsert(indexRequest)
 		        .consistencyLevel(WriteConsistencyLevel.ONE)
 		        .retryOnConflict(5);

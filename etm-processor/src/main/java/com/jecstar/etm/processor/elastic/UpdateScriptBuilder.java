@@ -7,52 +7,66 @@ import java.util.Map;
 
 import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.TelemetryEvent;
+import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
 public class UpdateScriptBuilder {
 
-	private StringBuilder script = null;
-	private Map<String, Object> parameters = null;
-	private TelemetryEvent event;
-
-	UpdateScriptBuilder(TelemetryEvent event) {
-		this.event = event;
-	}
-
-	public String getScript() {
-		if (this.script == null) {
-			createUpdateScript();
-		}
-		return this.script.toString();
-	}
-
-	public Map<String, Object> getScriptParameters() {
-		if (this.parameters == null) {
-			createUpdateScript();
-		}
-		return this.parameters;
-	}
+	private final UpdateScriptResponse response = new UpdateScriptResponse();
 	
-	private void createUpdateScript() {
-		this.script = new StringBuilder();
-		this.parameters = new HashMap<String, Object>();
-		if (!this.event.writingEndpointHandler.isSet() && this.event.readingEndpointHandlers.size() > 0) {
-			this.script.append("if (ctx._source.reading_endpoint_handlers) {ctx._source.reading_endpoint_handlers += reading_endpoint_handlers} else {ctx._source.reading_endpoint_handlers = reading_endpoint_handlers};");
+	UpdateScriptBuilder() {
+	}
+
+	UpdateScriptResponse createUpdateScript(TelemetryEvent event, TelemetryEventConverterTags tags) {
+		this.response.initialize();
+		if (!event.writingEndpointHandler.isSet() && event.readingEndpointHandlers.size() > 0) {
+			this.response.script.append("if (ctx._source." + tags.getReadingEndpointHandlersTag() + ") {ctx._source." + tags.getReadingEndpointHandlersTag() + " += " + tags.getReadingEndpointHandlersTag()+ "} else {ctx._source." + tags.getReadingEndpointHandlersTag() + " = " + tags.getReadingEndpointHandlersTag() + "};");
 			List<Map<String, Object>> readingEndpointHandlers = new ArrayList<Map<String, Object>>();
-			for (EndpointHandler endpointHandler : this.event.readingEndpointHandlers) {
+			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
 				Map<String, Object> endpointHandlerMap = new HashMap<String, Object>();
 				if (endpointHandler.handlingTime != null) {
-					endpointHandlerMap.put("handling_time", endpointHandler.handlingTime.toInstant().toEpochMilli());
+					endpointHandlerMap.put(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime.toInstant().toEpochMilli());
 				}
 				if (endpointHandler.application.isSet()) {
 					Map<String, Object> applicationMap = new HashMap<String, Object>();
 					if (endpointHandler.application.name != null) {
-						applicationMap.put("name", endpointHandler.application.name);
+						applicationMap.put(tags.getApplicationNameTag(), endpointHandler.application.name);
 					}
-					endpointHandlerMap.put("application", applicationMap);
+					if (endpointHandler.application.version != null) {
+						applicationMap.put(tags.getApplicationVersionTag(), endpointHandler.application.version);
+					}
+					if (endpointHandler.application.instance != null) {
+						applicationMap.put(tags.getApplicationInstanceTag(), endpointHandler.application.instance);
+					}
+					if (endpointHandler.application.principal != null) {
+						applicationMap.put(tags.getApplicationPrincipalTag(), endpointHandler.application.principal);
+					}
+					endpointHandlerMap.put(tags.getEndpointHandlerApplicationTag(), applicationMap);
 				}
 				readingEndpointHandlers.add(endpointHandlerMap);
 			}
-			this.parameters.put("reading_endpoint_handlers", readingEndpointHandlers);
+			this.response.parameters.put(tags.getReadingEndpointHandlersTag(), readingEndpointHandlers);
 		}
+		return this.response;
+	}
+	
+	public class UpdateScriptResponse {
+		
+		private StringBuilder script = new StringBuilder();
+		private Map<String, Object> parameters = new HashMap<String, Object>();
+		
+		private void initialize() {
+			this.script.setLength(0);
+			this.parameters.clear();
+		}
+
+		public String getScript() {
+			return this.script.toString();
+		}
+		
+		public Map<String, Object> getParameters() {
+			return this.parameters;
+		}
+		
+		
 	}
 }
