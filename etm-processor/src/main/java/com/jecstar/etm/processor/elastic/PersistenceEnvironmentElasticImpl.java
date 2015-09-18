@@ -107,11 +107,11 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 				"       \"" + this.tags.getResponsesHandlingTimeTag() + "\": {" + 
 				"   	    \"properties\": {" +
 				"               \"" + this.tags.getApplicationNameTag() + "\": {" + 
-				"           	    \"type\": \"string\"" +
+				"           	    \"type\": \"string\"," +
 				"           		\"index\": \"not_analyzed\"" + 				
 				"               }," + 				
 				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
-				"           	    \"type\": \"long\"" +
+				"           	    \"type\": \"long\"," +
 				"           		\"index\": \"not_analyzed\"" + 				
 				"               }" + 				
 				"           }" + 				

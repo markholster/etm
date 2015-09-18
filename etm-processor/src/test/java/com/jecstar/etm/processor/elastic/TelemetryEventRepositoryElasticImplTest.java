@@ -91,13 +91,18 @@ public class TelemetryEventRepositoryElasticImplTest {
 		final String id = "1";
 		TelemetryEvent event = new TelemetryEvent();
 		event.id = id;
+		event.name = "Event 1";
 		event.payloadFormat = PayloadFormat.TEXT;
 		event.payload = "Testcase testPersistOneWriterOneReaderSingleEvent.";
 		event.writingEndpointHandler.application.name = "TestCase";
 		event.writingEndpointHandler.handlingTime = ZonedDateTime.now();
+		event.transport = Transport.MQ;
+		event.expiry = ZonedDateTime.now().plus(30, ChronoUnit.SECONDS);
 		EndpointHandler endpointHandler = new EndpointHandler();
 		endpointHandler.handlingTime = ZonedDateTime.now();
 		endpointHandler.application.name = "TestCase";
+		endpointHandler.application.instance = "Server 1";
+		endpointHandler.application.principal = "sy000012";
 		event.readingEndpointHandlers.add(endpointHandler);
 		// TODO add all possible attributes of an event to the test.
 		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
@@ -186,7 +191,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
 			// When no response is added, the response time should be the expiry time minus the writing handler time.
 			long expectedResponseTime = event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli();
-			long responseTime = ((Integer) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
+			long responseTime = ((Number) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
 			assertEquals(expectedResponseTime, responseTime);
 			
 			// Add the response from the reading and writing application
@@ -207,7 +212,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 			
 			getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
 			expectedResponseTime = endpointHandler.handlingTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
-			long readResponseTime = ((Integer) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
+			long readResponseTime = ((Number) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
 			assertEquals(expectedResponseTime, readResponseTime);
 		}		
 	}
@@ -259,7 +264,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 			
 			getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
 			long expectedResponseTime = responseTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
-			long readResponseTime = ((Integer) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
+			long readResponseTime = ((Number) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
 			assertEquals(expectedResponseTime, readResponseTime);
 		}		
 	}
