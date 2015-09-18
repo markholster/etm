@@ -91,7 +91,7 @@ public class UpdateScriptBuilder {
 			.map(f -> {
 				Map<String, Object> map = new HashMap<String, Object>();
 				map.put(tags.getApplicationNameTag(), f.application.name);
-				map.put(tags.getEndpointHandlerHandlingTimeTag(), f.handlingTime);
+				map.put(tags.getEndpointHandlerHandlingTimeTag(), f.handlingTime.toInstant().toEpochMilli());
 				return map;
 				})
 			.collect(Collectors.toList());
