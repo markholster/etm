@@ -78,7 +78,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(this.jsonConverter.convert(event, this.tags));
 		UpdateRequest updateRequest = new UpdateRequest(index, type, event.id)
-		        .script("update_telemetry_event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
+		        .script("etm_update-event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
 		        .upsert(indexRequest)
 		        .detectNoop(true)
 		        .consistencyLevel(WriteConsistencyLevel.ONE)
@@ -96,12 +96,12 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 						.consistencyLevel(WriteConsistencyLevel.ONE)
 				        .source("{ \"" + this.tags.getResponseHandlingTimeTag() + "\": " + endpointHandler.handlingTime.toInstant().toEpochMilli() + " }");
 				updateRequest = new UpdateRequest(index, type, event.correlationId)
-				        .script("update_request_with_responsetime", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(endpointHandler, this.tags))
+				        .script("etm_update-request-with-responsetime", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(endpointHandler, this.tags))
 				        .upsert(indexRequest)
 				        .detectNoop(true)
 				        .consistencyLevel(WriteConsistencyLevel.ONE)
 				        .retryOnConflict(5);
-				this.bulkRequest.add(updateRequest);
+				this.bulkRequest.add(indexRequest);
 			}
 		}
     }

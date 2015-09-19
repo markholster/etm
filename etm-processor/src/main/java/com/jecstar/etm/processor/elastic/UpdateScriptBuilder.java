@@ -10,8 +10,7 @@ import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
 /**
- * Class capable of building the update map that can be provided to the scripts.. This class reuses some
- * objects in favor of performance, and hence is not thread safe!.
+ * Class capable of building the update map that can be provided to the scripts.
  * 
  * @author mark
  */
@@ -51,13 +50,13 @@ public class UpdateScriptBuilder {
 		} else {
 			addValueSetterToScript(tags.getWritingEndpointHandlerTag(), null);
 		}
-		return this.parameters;
+		return new HashMap<String, Object>(this.parameters);
 	}
 	
 	Map<String, Object> createRequestUpdateScriptFromResponse(EndpointHandler endpointHandler, TelemetryEventConverterTags tags) {
 		this.parameters.clear();
 		this.parameters.put(tags.getResponseHandlingTimeTag(), endpointHandler.handlingTime.toInstant().toEpochMilli());
-		return this.parameters;
+		return new HashMap<String, Object>(this.parameters);
 	}
 	
 	private void addValueSetterToScript(String tag, Object value) {
