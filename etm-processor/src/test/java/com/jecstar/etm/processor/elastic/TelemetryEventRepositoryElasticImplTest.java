@@ -22,9 +22,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
+import com.jecstar.etm.core.domain.TelemetryEventBuilder;
 import com.jecstar.etm.core.domain.Transport;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
@@ -90,21 +90,16 @@ public class TelemetryEventRepositoryElasticImplTest {
 	@Test
 	public void testPersistOneWriterOneReaderSingleEvent() {
 		final String id = "1";
-		TelemetryEvent event = new TelemetryEvent();
-		event.id = id;
-		event.name = "Event 1";
-		event.payloadFormat = PayloadFormat.TEXT;
-		event.payload = "Testcase testPersistOneWriterOneReaderSingleEvent.";
-		event.writingEndpointHandler.application.name = "TestCase";
-		event.writingEndpointHandler.handlingTime = ZonedDateTime.now();
-		event.transport = Transport.MQ;
-		event.expiry = ZonedDateTime.now().plus(30, ChronoUnit.SECONDS);
-		EndpointHandler endpointHandler = new EndpointHandler();
-		endpointHandler.handlingTime = ZonedDateTime.now();
-		endpointHandler.application.name = "TestCase";
-		endpointHandler.application.instance = "Server 1";
-		endpointHandler.application.principal = "sy000012";
-		event.readingEndpointHandlers.add(endpointHandler);
+		TelemetryEventBuilder builder = new TelemetryEventBuilder();
+		TelemetryEvent event = builder.setId(id)
+			.setName("Event 1")
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setPayload("Testcase testPersistOneWriterOneReaderSingleEvent.")
+			.setWritingEndpointHandler(ZonedDateTime.now(), "TestCase", null, null, null)
+			.setTransport(Transport.MQ)
+			.setExpiry(ZonedDateTime.now().plus(30, ChronoUnit.SECONDS))
+			.addReadingEndpointHandler(ZonedDateTime.now(), "TestCase", null, "Server 1", "sy000012")
+			.build();
 		// TODO add all possible attributes of an event to the test.
 		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
 			repo.persistTelemetryEvent(event);
@@ -115,8 +110,8 @@ public class TelemetryEventRepositoryElasticImplTest {
 			assertEquals(event.payload, source.get(this.tags.getPayloadTag()));
 			assertEquals(event.payloadFormat.name(), source.get(this.tags.getPayloadFormatTag()));
 			List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) source.get(this.tags.getReadingEndpointHandlersTag());
-			assertEquals(endpointHandler.handlingTime.toInstant().toEpochMilli(), readingEndpointHandlers.get(0).get(this.tags.getEndpointHandlerHandlingTimeTag()));
-			assertEquals(endpointHandler.application.name, ((Map<String, Object>)readingEndpointHandlers.get(0).get(this.tags.getEndpointHandlerApplicationTag())).get(this.tags.getApplicationNameTag()));
+			assertEquals(event.readingEndpointHandlers.get(0).handlingTime.toInstant().toEpochMilli(), readingEndpointHandlers.get(0).get(this.tags.getEndpointHandlerHandlingTimeTag()));
+			assertEquals(event.readingEndpointHandlers.get(0).application.name, ((Map<String, Object>)readingEndpointHandlers.get(0).get(this.tags.getEndpointHandlerApplicationTag())).get(this.tags.getApplicationNameTag()));
 			Map<String, Object> writingEndpointHandler = (Map<String, Object>) source.get(this.tags.getWritingEndpointHandlerTag());
 			assertEquals(event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), writingEndpointHandler.get(this.tags.getEndpointHandlerHandlingTimeTag()));
 			assertEquals(event.writingEndpointHandler.application.name, ((Map<String, Object>)writingEndpointHandler.get(this.tags.getEndpointHandlerApplicationTag())).get(this.tags.getApplicationNameTag()));
@@ -127,37 +122,31 @@ public class TelemetryEventRepositoryElasticImplTest {
 	@Test
 	public void testPersistOneWriterTwoReadersSeparatedEvents() {
 		final String id = "2";
-		TelemetryEvent event = new TelemetryEvent();
-		event.id = id;
-		event.payloadFormat = PayloadFormat.TEXT;
-		event.payload = "Testcase testPersistOneWriterTwoReadersSeparatedEvents.";
-		event.writingEndpointHandler.application.name = "TestCase";
-		event.writingEndpointHandler.handlingTime = ZonedDateTime.now();
+		TelemetryEventBuilder builder = new TelemetryEventBuilder();
+		TelemetryEvent event = builder.setId(id)
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setPayload("Testcase testPersistOneWriterTwoReadersSeparatedEvents.")
+				.setWritingEndpointHandler(ZonedDateTime.now(), "TestCase", null, null, null)
+				.build();
 		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
 			// Add the event from the writing application.
 			repo.persistTelemetryEvent(event);
 			
 			// Add the event from the first reading application.
-			event.initialize();
-			event.id = id;
-			event.payloadFormat = PayloadFormat.TEXT;
-			event.payload = "Testcase testPersistOneWriterTwoReadersSeparatedEvents.";
-			EndpointHandler endpointHandler = new EndpointHandler();
-			endpointHandler.handlingTime = ZonedDateTime.now();
-			endpointHandler.application.name = "Reading app 1";
-			event.readingEndpointHandlers.add(endpointHandler);
-			repo.persistTelemetryEvent(event);
+			builder.initialize();
+			builder.setId(id)
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setPayload("Testcase testPersistOneWriterTwoReadersSeparatedEvents.")
+				.addReadingEndpointHandler(ZonedDateTime.now(), "Reading app 1", null, null, null);
+			repo.persistTelemetryEvent(builder.build());
 
 			// Add the event from the second reading application.
-			event.initialize();
-			event.id = id;
-			event.payloadFormat = PayloadFormat.TEXT;
-			event.payload = "Testcase testPersistOneWriterTwoReadersSeparatedEvents.";
-			endpointHandler = new EndpointHandler();
-			endpointHandler.handlingTime = ZonedDateTime.now().plus(10, ChronoUnit.SECONDS);
-			endpointHandler.application.name = "Reading app 2";
-			event.readingEndpointHandlers.add(endpointHandler);
-			repo.persistTelemetryEvent(event);
+			builder.initialize();
+			builder.setId(id)
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setPayload("Testcase testPersistOneWriterTwoReadersSeparatedEvents.")
+				.addReadingEndpointHandler(ZonedDateTime.now().plus(10, ChronoUnit.SECONDS), "Reading app 2", null, null, null);
+			repo.persistTelemetryEvent(builder.build());
 			
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id).get();
 			Map<String, Object> source = getResponse.getSourceAsMap();
@@ -170,21 +159,18 @@ public class TelemetryEventRepositoryElasticImplTest {
 	public void testPersistRequestBeforeResponseEvent() {
 		final String id_req = "3";
 		final String id_rsp = "4";
-		ZonedDateTime now = ZonedDateTime.now();
-		final ZonedDateTime requestTime = now;
-		TelemetryEvent event = new TelemetryEvent();
-		event.id = id_req;
-		event.payloadFormat = PayloadFormat.TEXT;
-		event.payload = "Testcase testPersistRequestBeforeResponseEvent Request.";
-		event.transport = Transport.MQ;
-		event.packaging = TelemetryEvent.PACKAGING_MQ_REQUEST;
-		event.writingEndpointHandler.application.name = "Request writer";
-		event.writingEndpointHandler.handlingTime = requestTime;
-		event.expiry = now.plus(30, ChronoUnit.SECONDS);
-		EndpointHandler endpointHandler = new EndpointHandler();
-		endpointHandler.handlingTime = now.plus(10, ChronoUnit.MILLIS);
-		endpointHandler.application.name = "Request reader";
-		event.readingEndpointHandlers.add(endpointHandler);
+		final ZonedDateTime requestTime = ZonedDateTime.now();
+		final ZonedDateTime responseReadingTime = requestTime.plus(15, ChronoUnit.SECONDS).plus(12, ChronoUnit.MILLIS);
+		TelemetryEventBuilder builder = new TelemetryEventBuilder();
+		TelemetryEvent event = builder.setId(id_req)
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setPayload("Testcase testPersistRequestBeforeResponseEvent Request.")
+				.setTransport(Transport.MQ)
+				.setPackaging(TelemetryEvent.PACKAGING_MQ_REQUEST)
+				.setWritingEndpointHandler(requestTime, "Request writer", null, null, null)
+				.setExpiry(requestTime.plus(30, ChronoUnit.SECONDS))
+				.addReadingEndpointHandler(requestTime.plus(10, ChronoUnit.MILLIS), "Request reader", null, null, null)
+				.build();
 		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
 			// Add the event from the writing and reading application
 			repo.persistTelemetryEvent(event);
@@ -195,23 +181,19 @@ public class TelemetryEventRepositoryElasticImplTest {
 			assertEquals(expectedResponseTime, responseTime);
 			
 			// Add the response from the reading and writing application
-			event.initialize();
-			event.id = id_rsp;
-			event.correlationId = id_req;
-			event.payloadFormat = PayloadFormat.TEXT;
-			event.payload = "Testcase testPersistRequestBeforeResponseEvent Response.";
-			event.transport = Transport.MQ;
-			event.packaging = TelemetryEvent.PACKAGING_MQ_RESPONSE;
-			event.writingEndpointHandler.application.name = "Request reader";
-			event.writingEndpointHandler.handlingTime = now.plus(15, ChronoUnit.SECONDS);
-			endpointHandler = new EndpointHandler();
-			endpointHandler.handlingTime = now.plus(15, ChronoUnit.SECONDS).plus(12, ChronoUnit.MILLIS);
-			endpointHandler.application.name = "Request writer";
-			event.readingEndpointHandlers.add(endpointHandler);
+			builder.initialize();
+			event = builder.setId(id_rsp)
+				.setCorrelationId(id_req)
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setPayload("Testcase testPersistRequestBeforeResponseEvent Response.")
+				.setTransport(Transport.MQ)
+				.setPackaging(TelemetryEvent.PACKAGING_MQ_RESPONSE)
+				.setWritingEndpointHandler(responseReadingTime.minus(12, ChronoUnit.MILLIS), "Request reader", null, null, null)
+				.addReadingEndpointHandler(responseReadingTime, "Request writer", null, null, null)
+				.build();
 			repo.persistTelemetryEvent(event);
-			
 			getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
-			expectedResponseTime = endpointHandler.handlingTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
+			expectedResponseTime = responseReadingTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
 			long readResponseTime = ((Number) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
 			assertEquals(expectedResponseTime, readResponseTime);
 		}		
@@ -221,48 +203,40 @@ public class TelemetryEventRepositoryElasticImplTest {
 	public void testPersistResponseBeforeRequestEvent() {
 		final String id_req = "5";
 		final String id_rsp = "6";
-		ZonedDateTime now = ZonedDateTime.now();
-		final ZonedDateTime requestTime = now;
-		TelemetryEvent event = new TelemetryEvent();
-		event.id = id_rsp;
-		event.correlationId = id_req;
-		event.payloadFormat = PayloadFormat.TEXT;
-		event.payload = "Testcase testPersistResponseBeforeRequestEvent Response.";
-		event.transport = Transport.MQ;
-		event.packaging = TelemetryEvent.PACKAGING_MQ_RESPONSE;
-		event.writingEndpointHandler.application.name = "Request reader";
-		event.writingEndpointHandler.handlingTime = now.plus(15, ChronoUnit.SECONDS);
-		EndpointHandler endpointHandler = new EndpointHandler();
-		endpointHandler.handlingTime = now.plus(15, ChronoUnit.SECONDS).plus(12, ChronoUnit.MILLIS);
-		endpointHandler.application.name = "Request writer";
-		event.readingEndpointHandlers.add(endpointHandler);
-		ZonedDateTime responseTime = endpointHandler.handlingTime;
-
+		final ZonedDateTime requestTime = ZonedDateTime.now();
+		final ZonedDateTime responseReadingTime = requestTime.plus(15, ChronoUnit.SECONDS).plus(12, ChronoUnit.MILLIS);
+		TelemetryEventBuilder builder = new TelemetryEventBuilder();
+		TelemetryEvent event = builder.setId(id_rsp)
+				.setCorrelationId(id_req)
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setPayload("Testcase testPersistResponseBeforeRequestEvent Response.")
+				.setTransport(Transport.MQ)
+				.setPackaging(TelemetryEvent.PACKAGING_MQ_RESPONSE)
+				.setWritingEndpointHandler(responseReadingTime.minus(12, ChronoUnit.MILLIS), "Request reader", null, null, null)
+				.addReadingEndpointHandler(responseReadingTime, "Request writer", null, null, null)
+				.build();
 		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
 			// Add the response from the reading application
 			repo.persistTelemetryEvent(event);
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
 			long responseHandlingTime = ((Number) getResponse.getSourceAsMap().get(this.tags.getResponseHandlingTimeTag())).longValue();
-			assertEquals(endpointHandler.handlingTime.toInstant().toEpochMilli(), responseHandlingTime);
+			assertEquals(event.readingEndpointHandlers.get(0).handlingTime.toInstant().toEpochMilli(), responseHandlingTime);
 			
 			// Add the request from the writing application
-			event.initialize();
-			event.id = id_req;
-			event.payloadFormat = PayloadFormat.TEXT;
-			event.payload = "Testcase testPersistResponseBeforeRequestEvent Request.";
-			event.transport = Transport.MQ;
-			event.packaging = TelemetryEvent.PACKAGING_MQ_REQUEST;
-			event.writingEndpointHandler.application.name = "Request writer";
-			event.writingEndpointHandler.handlingTime = requestTime;
-			event.expiry = now.plus(30, ChronoUnit.SECONDS);
-			endpointHandler = new EndpointHandler();
-			endpointHandler.handlingTime = now.plus(10, ChronoUnit.MILLIS);
-			endpointHandler.application.name = "Request reader";
-			event.readingEndpointHandlers.add(endpointHandler);
+			builder.initialize();
+			event = builder.setId(id_req)
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setPayload("Testcase testPersistResponseBeforeRequestEvent Request.")
+				.setTransport(Transport.MQ)
+				.setPackaging(TelemetryEvent.PACKAGING_MQ_REQUEST)
+				.setWritingEndpointHandler(requestTime, "Request writer", null, null, null)
+				.setExpiry(requestTime.plus(30, ChronoUnit.SECONDS))
+				.addReadingEndpointHandler(requestTime.plus(10, ChronoUnit.MILLIS), "Request reader", null, null, null)
+				.build();
 			repo.persistTelemetryEvent(event);
 			
 			getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
-			long expectedResponseTime = responseTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
+			long expectedResponseTime = responseReadingTime.toInstant().toEpochMilli() - requestTime.toInstant().toEpochMilli();
 			long readResponseTime = ((Number) getResponse.getSourceAsMap().get(this.tags.getResponseTimeTag())).longValue();
 			assertEquals(expectedResponseTime, readResponseTime);
 		}		

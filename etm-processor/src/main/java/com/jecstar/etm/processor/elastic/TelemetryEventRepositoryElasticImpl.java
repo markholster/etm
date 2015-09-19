@@ -101,7 +101,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 				        .detectNoop(true)
 				        .consistencyLevel(WriteConsistencyLevel.ONE)
 				        .retryOnConflict(5);
-				this.bulkRequest.add(indexRequest);
+				this.bulkRequest.add(updateRequest);
 			}
 		}
     }
