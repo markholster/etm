@@ -52,27 +52,29 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	private String createMapping(String type) {
 		return "{" + 
 				"   \"properties\": {" + 
-				"	    \"" + this.tags.getIdTag() + "\": {" + 
-				"   	    \"type\": \"string\"" + 
-				"       }," + 
 				"	    \"" + this.tags.getCorrelationIdTag() +"\": {" + 
-				"   	    \"type\": \"string\"" + 
+				"   	    \"type\": \"string\"," +
+				"           \"index\": \"not_analyzed\"" + 				
 				"       }," + 
 				"	    \"" + this.tags.getEndpointTag() + "\": {" + 
-				"   	    \"type\": \"string\"" + 
+				"   	    \"type\": \"string\"," +
+				"           \"index\": \"not_analyzed\"" + 				
 				"       }," + 
 				"	    \"" + this.tags.getExpiryTag() + "\": {" + 
-				"   	    \"type\": \"long\"" + 
+				"   	    \"type\": \"long\"," +
+				"           \"index\": \"not_analyzed\"" + 				
 				"       }," + 
 				"	    \"" + this.tags.getNameTag() +"\": {" + 
-				"   	    \"type\": \"string\"" + 
+				"   	    \"type\": \"string\"," +
+				"           \"index\": \"analyzed\"" + 				
 				"       }," + 
 				"       \"" + this.tags.getPackagingTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
 				"           \"index\": \"not_analyzed\"" + 
 				"       }," + 
 				"       \"" + this.tags.getPayloadTag() + "\": {" + 
-				"   	    \"type\": \"string\"" + 
+				"   	    \"type\": \"string\"," +
+				"           \"index\": \"analyzed\"" + 				
 				"       }," + 
 				"       \"" + this.tags.getPayloadFormatTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
@@ -83,39 +85,49 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 				"       	    \"" + this.tags.getEndpointHandlerApplicationTag() + "\": {" + 
 				"           	    \"properties\": {" + 
 				"               	    \"" + this.tags.getApplicationInstanceTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"           				\"index\": \"not_analyzed\"" + 				
 				"                       }," + 
 				"                       \"" + this.tags.getApplicationNameTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"           				\"index\": \"not_analyzed\"" + 				
 				"                       }," + 
 				"                       \"" + this.tags.getApplicationPrincipalTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"           				\"index\": \"not_analyzed\"" + 				
 				"                       }," + 
 				"                       \"" + this.tags.getApplicationVersionTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"          			 		\"index\": \"not_analyzed\"" + 				
 				"                       }" + 
 				"                   }" + 
 				"               }," + 
 				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
-				"           	    \"type\": \"long\"" + 
+				"           	    \"type\": \"long\"," +
+				"           		\"index\": \"not_analyzed\"" + 				
 				"               }" + 
 				"           }" + 
 				"       }," + 
 				"       \"" + this.tags.getResponseTimeTag() + "\": {" + 
-				"   	    \"type\": \"long\"" + 
+				"   	    \"type\": \"long\"," +
+				"           \"index\": \"not_analyzed\"" + 				
 				"       }," + 
-				"       \"" + this.tags.getResponsesHandlingTimeTag() + "\": {" + 
-				"   	    \"properties\": {" +
-				"               \"" + this.tags.getApplicationNameTag() + "\": {" + 
-				"           	    \"type\": \"string\"," +
-				"           		\"index\": \"not_analyzed\"" + 				
-				"               }," + 				
-				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
-				"           	    \"type\": \"long\"," +
-				"           		\"index\": \"not_analyzed\"" + 				
-				"               }" + 				
-				"           }" + 				
+				"       \"" + this.tags.getResponseHandlingTimeTag() + "\": {" + 
+				"   	    \"type\": \"long\"," +
+				"           \"index\": \"not_analyzed\"" + 				
 				"       }," + 
+//				"       \"" + this.tags.getResponseHandlingTimeTag() + "\": {" + 
+//				"   	    \"properties\": {" +
+//				"               \"" + this.tags.getApplicationNameTag() + "\": {" + 
+//				"           	    \"type\": \"string\"," +
+//				"           		\"index\": \"not_analyzed\"" + 				
+//				"               }," + 				
+//				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
+//				"           	    \"type\": \"long\"," +
+//				"           		\"index\": \"not_analyzed\"" + 				
+//				"               }" + 				
+//				"           }" + 				
+//				"       }," + 
 				"       \"" + this.tags.getTransportTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
 				"           \"index\": \"not_analyzed\"" + 
@@ -125,21 +137,26 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 				"       	    \"" + this.tags.getEndpointHandlerApplicationTag() + "\": {" + 
 				"           	    \"properties\": {" + 
 				"               	    \"" + this.tags.getApplicationInstanceTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"           				\"index\": \"not_analyzed\"" + 				
 				"                       }," + 
 				"                       \"" + this.tags.getApplicationNameTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"           				\"index\": \"not_analyzed\"" + 				
 				"                       }," + 
 				"                       \"" + this.tags.getApplicationPrincipalTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"           				\"index\": \"not_analyzed\"" + 				
 				"                       }," + 
 				"                       \"" + this.tags.getApplicationVersionTag() + "\": {" + 
-				"                   	    \"type\": \"string\"" + 
+				"                   	    \"type\": \"string\"," +
+				"           				\"index\": \"not_analyzed\"" + 				
 				"                       }" + 
 				"                   }" + 
 				"               }," + 
 				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
-				"           	    \"type\": \"long\"" + 
+				"           	    \"type\": \"long\"," +
+				"           		\"index\": \"not_analyzed\"" + 				
 				"               }" + 
 				"           }" + 
 				"       }" + 

@@ -44,8 +44,9 @@ public class TelemetryEventRepositoryElasticImplTest {
 	public static void beforeClass() {
 		node = new NodeBuilder().settings(ImmutableSettings.settingsBuilder()
 				.put("http.enabled", false)
-				.put("path.conf", "src/test/resources/conf"))
-				.local(true).node();
+				.put("path.conf", "src/test/resources/config"))
+				.local(true)
+				.node();
 	}
 	
 	@AfterClass
@@ -111,7 +112,6 @@ public class TelemetryEventRepositoryElasticImplTest {
 			// Validate all elements.
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id).get();
 			Map<String, Object> source = getResponse.getSourceAsMap();
-			assertEquals(event.id, source.get(this.tags.getIdTag()));
 			assertEquals(event.payload, source.get(this.tags.getPayloadTag()));
 			assertEquals(event.payloadFormat.name(), source.get(this.tags.getPayloadFormatTag()));
 			List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) source.get(this.tags.getReadingEndpointHandlersTag());
@@ -217,7 +217,6 @@ public class TelemetryEventRepositoryElasticImplTest {
 		}		
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistResponseBeforeRequestEvent() {
 		final String id_req = "5";
@@ -243,8 +242,8 @@ public class TelemetryEventRepositoryElasticImplTest {
 			// Add the response from the reading application
 			repo.persistTelemetryEvent(event);
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
-			List<Map<String,Object>> responsesTime = (List<Map<String, Object>>) getResponse.getSourceAsMap().get(this.tags.getResponsesHandlingTimeTag());
-			assertEquals(event.readingEndpointHandlers.size(), responsesTime.size());
+			long responseHandlingTime = ((Number) getResponse.getSourceAsMap().get(this.tags.getResponseHandlingTimeTag())).longValue();
+			assertEquals(endpointHandler.handlingTime.toInstant().toEpochMilli(), responseHandlingTime);
 			
 			// Add the request from the writing application
 			event.initialize();

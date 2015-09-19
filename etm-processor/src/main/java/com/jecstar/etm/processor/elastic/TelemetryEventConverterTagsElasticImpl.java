@@ -35,15 +35,15 @@ public class TelemetryEventConverterTagsElasticImpl implements TelemetryEventCon
 	}
 
 	@Override
-	public String getNameTag() {
-		return "name";
-	}
-
-	@Override
 	public String getMetadataTag() {
 		return "metadata";
 	}
 
+	@Override
+	public String getNameTag() {
+		return "name";
+	}
+	
 	@Override
 	public String getPackagingTag() {
 		return "packaging";
@@ -65,18 +65,18 @@ public class TelemetryEventConverterTagsElasticImpl implements TelemetryEventCon
 	}
 	
 	@Override
-	public String getResponsesHandlingTimeTag() {
-		return "responses_handling_time";
-	}
-
-	@Override
-	public String getTransportTag() {
-		return "transport";
+	public String getResponseHandlingTimeTag() {
+		return "response_handling_time";
 	}
 
 	@Override
 	public String getReadingEndpointHandlersTag() {
 		return "reading_endpoint_handlers";
+	}
+	
+	@Override
+	public String getTransportTag() {
+		return "transport";
 	}
 
 	@Override

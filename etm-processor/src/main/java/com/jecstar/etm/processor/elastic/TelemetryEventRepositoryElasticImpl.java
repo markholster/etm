@@ -4,7 +4,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -15,11 +15,11 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterJsonImpl;
-import com.jecstar.etm.processor.elastic.UpdateScriptBuilder.UpdateScriptResponse;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
@@ -77,35 +77,34 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(this.jsonConverter.convert(event, this.tags));
-		UpdateScriptResponse updateScript = this.updateScriptBuilder.createUpdateScript(event, this.tags);
-		UpdateRequest updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.id)
-		        .script(updateScript.getScript(), ScriptType.INLINE, updateScript.getParameters())
+		UpdateRequest updateRequest = new UpdateRequest(index, type, event.id)
+		        .script("update_telemetry_event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
 		        .upsert(indexRequest)
 		        .detectNoop(true)
 		        .consistencyLevel(WriteConsistencyLevel.ONE)
 		        .retryOnConflict(5);
 		this.bulkRequest.add(updateRequest);
+		
 		if (event.isResponse() && event.correlationId != null && event.readingEndpointHandlers.size() > 0) {
-			indexRequest = new IndexRequest(index, type, event.correlationId)
-					.consistencyLevel(WriteConsistencyLevel.ONE)
-			        .source("{ \"" + this.tags.getResponsesHandlingTimeTag() + "\": [" + event.readingEndpointHandlers.stream()
-			        	.filter(p -> p.application.name != null && p.handlingTime != null)
-			        	.map(p -> "{\"" + this.tags.getApplicationNameTag() + "\" : \"" + escapeToJson(p.application.name) + "\", \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\" : " + p.handlingTime.toInstant().toEpochMilli() + "}")
-			        	.collect(Collectors.joining(",")) + "]}");
-			updateScript = this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags);
-			updateRequest = new UpdateRequest(index, event.payloadFormat.name().toLowerCase(), event.correlationId)
-			        .script(updateScript.getScript(), ScriptType.INLINE, updateScript.getParameters())
-			        .upsert(indexRequest)
-			        .detectNoop(true)
-			        .consistencyLevel(WriteConsistencyLevel.ONE)
-			        .retryOnConflict(5);
-			this.bulkRequest.add(updateRequest);
+			Optional<EndpointHandler> optionalFastestResponse = event.readingEndpointHandlers.stream()
+        	.filter(p -> p.handlingTime != null)
+        	.sorted((e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime))
+        	.findFirst();
+			if (optionalFastestResponse.isPresent()) {
+				EndpointHandler endpointHandler = optionalFastestResponse.get();
+				indexRequest = new IndexRequest(index, type, event.correlationId)
+						.consistencyLevel(WriteConsistencyLevel.ONE)
+				        .source("{ \"" + this.tags.getResponseHandlingTimeTag() + "\": " + endpointHandler.handlingTime.toInstant().toEpochMilli() + " }");
+				updateRequest = new UpdateRequest(index, type, event.correlationId)
+				        .script("update_request_with_responsetime", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(endpointHandler, this.tags))
+				        .upsert(indexRequest)
+				        .detectNoop(true)
+				        .consistencyLevel(WriteConsistencyLevel.ONE)
+				        .retryOnConflict(5);
+				this.bulkRequest.add(updateRequest);
+			}
 		}
     }
-	
-	private String escapeToJson(String value) {
-		return value.replace("\"", "\\\"");
-	}
 	
 	/**
 	 * Gives the name of the elastic index of the given

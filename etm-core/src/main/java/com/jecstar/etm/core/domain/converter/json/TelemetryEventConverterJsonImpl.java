@@ -24,41 +24,47 @@ public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<
 	public String convert(TelemetryEvent event, TelemetryEventConverterTags tags) {
 		this.sb.setLength(0);
 		this.sb.append("{");
-		addStringElementToJsonBuffer(tags.getIdTag(), event.id, this.sb, true);
-		addStringElementToJsonBuffer(tags.getCorrelationIdTag(), event.correlationId, this.sb, false);
-		addMapElementToJsonBuffer(tags.getCorrelationDataTag(), event.correlationData, this.sb, false);
-		addStringElementToJsonBuffer(tags.getEndpointTag(), event.endpoint, this.sb, false);
+		boolean added = false;
+		added = addStringElementToJsonBuffer(tags.getCorrelationIdTag(), event.correlationId, this.sb, !added) || added;
+		added = addMapElementToJsonBuffer(tags.getCorrelationDataTag(), event.correlationData, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(tags.getEndpointTag(), event.endpoint, this.sb, !added) || added;
 		if (event.expiry != null) {
-			addLongElementToJsonBuffer(tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, false);
+			added = addLongElementToJsonBuffer(tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, !added) || added;
 		}
-		addMapElementToJsonBuffer(tags.getExtractedDataTag(), event.extractedData, this.sb, false);
-		addStringElementToJsonBuffer(tags.getNameTag(), event.name, this.sb, false);
-		addMapElementToJsonBuffer(tags.getMetadataTag(), event.metadata, this.sb, false);
-		addStringElementToJsonBuffer(tags.getPackagingTag(), event.packaging, this.sb, false);
-		addStringElementToJsonBuffer(tags.getPayloadTag(), event.payload, this.sb, false);
+		added = addMapElementToJsonBuffer(tags.getExtractedDataTag(), event.extractedData, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(tags.getNameTag(), event.name, this.sb, !added) || added;
+		added = addMapElementToJsonBuffer(tags.getMetadataTag(), event.metadata, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(tags.getPackagingTag(), event.packaging, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(tags.getPayloadTag(), event.payload, this.sb, !added) || added;
 		if (event.payloadFormat != null) {
-			addStringElementToJsonBuffer(tags.getPayloadFormatTag(), event.payloadFormat.name(), this.sb, false);
+			added = addStringElementToJsonBuffer(tags.getPayloadFormatTag(), event.payloadFormat.name(), this.sb, !added) || added;
 		}
 		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
 			// Set the response time to the expiry initially.
-			addLongElementToJsonBuffer(tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, false);
+			added = addLongElementToJsonBuffer(tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, !added) || added;
 		}
 		if (event.transport != null) {
-			addStringElementToJsonBuffer(tags.getTransportTag(), event.transport.name(), this.sb, false);
+			added = addStringElementToJsonBuffer(tags.getTransportTag(), event.transport.name(), this.sb, !added) || added;
 		}
 		if (!event.readingEndpointHandlers.isEmpty()) {
-			this.sb.append(", \"" + tags.getReadingEndpointHandlersTag() + "\": [");
-			boolean added = false;
+			if (added) {
+				this.sb.append(", ");
+			}
+			this.sb.append("\"" + tags.getReadingEndpointHandlersTag() + "\": [");
+			added = false;
 			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
 				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, tags) || added;
 			}
 			this.sb.append("]");
 		}
 		if (event.writingEndpointHandler.isSet()) {
-			this.sb.append( ", \"" + tags.getWritingEndpointHandlerTag() + "\": ");
+			if (added) {
+				this.sb.append(", ");
+			}
+			this.sb.append("\"" + tags.getWritingEndpointHandlerTag() + "\": ");
 			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true, tags);
 		}
-		this.sb.append("}");		
+		this.sb.append("}");
 		return this.sb.toString();
 	}
 
