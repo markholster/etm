@@ -3,6 +3,8 @@ package com.jecstar.etm.processor.elastic;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -43,6 +45,8 @@ public class TelemetryEventRepositoryElasticImplTest {
 	@BeforeClass
 	public static void beforeClass() {
 		node = new NodeBuilder().settings(ImmutableSettings.settingsBuilder()
+				.put("cluster.name", "Enterprise Telemetry Monitor - Unit Test")
+				.put("node.name", System.getProperty("user.name"))
 				.put("http.enabled", false)
 				.put("path.conf", "src/test/resources/config"))
 				.local(true)

@@ -66,7 +66,7 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 				"       }," + 
 				"	    \"" + this.tags.getNameTag() +"\": {" + 
 				"   	    \"type\": \"string\"," +
-				"           \"index\": \"analyzed\"" + 				
+				"           \"index\": \"not_analyzed\"" + 				
 				"       }," + 
 				"       \"" + this.tags.getPackagingTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
