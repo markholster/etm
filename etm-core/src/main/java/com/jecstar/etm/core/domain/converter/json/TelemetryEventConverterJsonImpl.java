@@ -43,6 +43,7 @@ public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<
 			// Set the response time to the expiry initially.
 			added = addLongElementToJsonBuffer(tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, !added) || added;
 		}
+		added = addStringElementToJsonBuffer(tags.getTransactionIdTag(), event.transactionId, this.sb, !added) || added;
 		if (event.transport != null) {
 			added = addStringElementToJsonBuffer(tags.getTransportTag(), event.transport.name(), this.sb, !added) || added;
 		}

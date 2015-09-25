@@ -84,6 +84,11 @@ public class TelemetryEvent {
 	public PayloadFormat payloadFormat;
 	
 	/**
+	 * The ID of the transaction this event belongs to. Events with the same transactionId form and end-to-end chain in the applications landscape.
+	 */
+	public String transactionId;
+	
+	/**
 	 * The transport type used to send the {@link #payload} to from the sending application to the receiving application(s).
 	 */
 	public Transport transport;
@@ -110,6 +115,7 @@ public class TelemetryEvent {
 		this.payload = null;
 		this.payloadFormat = null;
 		this.readingEndpointHandlers.clear();
+		this.transactionId = null;
 		this.transport = null;
 		this.writingEndpointHandler.initialize();
 		return this;
@@ -128,6 +134,7 @@ public class TelemetryEvent {
 		this.payload = copy.payload;
 		this.payloadFormat = copy.payloadFormat;
 		this.readingEndpointHandlers.addAll(copy.readingEndpointHandlers);
+		this.transactionId = copy.transactionId;
 		this.transport = copy.transport;
 		this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
 		return this;

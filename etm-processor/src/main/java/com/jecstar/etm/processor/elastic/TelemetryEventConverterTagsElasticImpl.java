@@ -75,6 +75,11 @@ public class TelemetryEventConverterTagsElasticImpl implements TelemetryEventCon
 	}
 	
 	@Override
+	public String getTransactionIdTag() {
+		return "transaction_id";
+	}
+	
+	@Override
 	public String getTransportTag() {
 		return "transport";
 	}

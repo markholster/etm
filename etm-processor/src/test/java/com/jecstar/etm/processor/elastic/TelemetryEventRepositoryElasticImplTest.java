@@ -3,8 +3,6 @@ package com.jecstar.etm.processor.elastic;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -111,6 +109,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 			// Validate all elements.
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id).get();
 			Map<String, Object> source = getResponse.getSourceAsMap();
+			assertEquals(event.name, source.get(this.tags.getNameTag()));
 			assertEquals(event.payload, source.get(this.tags.getPayloadTag()));
 			assertEquals(event.payloadFormat.name(), source.get(this.tags.getPayloadFormatTag()));
 			List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) source.get(this.tags.getReadingEndpointHandlersTag());

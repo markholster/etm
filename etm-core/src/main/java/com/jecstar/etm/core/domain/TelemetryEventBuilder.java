@@ -106,6 +106,11 @@ public class TelemetryEventBuilder {
 		return this;
 	}
 
+	public TelemetryEventBuilder setTransactionId(String transactionId) {
+		this.event.transactionId = transactionId;
+		return this;
+	}
+	
 	public TelemetryEventBuilder setTransport(Transport transport) {
 		this.event.transport = transport;
 		return this;

@@ -44,6 +44,7 @@ public class UpdateScriptBuilder {
 		} else {
 			addArrayAppenderToScript(tags.getReadingEndpointHandlersTag(), null);
 		}
+		addValueSetterToScript(tags.getTransactionIdTag(), event.transactionId);
 		addValueSetterToScript(tags.getTransportTag(), event.transport == null ? null : event.transport.name());
 		if (event.writingEndpointHandler.isSet()) {
 			addValueSetterToScript(tags.getWritingEndpointHandlerTag(), createEndpointHandlerMap(event.writingEndpointHandler, tags));

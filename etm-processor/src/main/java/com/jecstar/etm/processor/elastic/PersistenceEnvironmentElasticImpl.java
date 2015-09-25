@@ -128,6 +128,10 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 //				"               }" + 				
 //				"           }" + 				
 //				"       }," + 
+				"       \"" + this.tags.getTransactionIdTag() + "\": {" + 
+				"   	    \"type\": \"string\"," + 
+				"           \"index\": \"not_analyzed\"" + 
+				"       }," + 
 				"       \"" + this.tags.getTransportTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
 				"           \"index\": \"not_analyzed\"" + 
