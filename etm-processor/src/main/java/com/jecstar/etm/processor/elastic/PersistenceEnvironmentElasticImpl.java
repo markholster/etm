@@ -40,8 +40,8 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 			.setCreate(false)
 			.setTemplate("etm_event_*")
 			.setSettings(ImmutableSettings.settingsBuilder()
-					.put("number_of_shards", this.etmConfiguration.getPersistingShardsPerIndex())
-					.put("number_of_replicas", this.etmConfiguration.getPersistingReplicasPerIndex())
+					.put("number_of_shards", this.etmConfiguration.getShardsPerIndex())
+					.put("number_of_replicas", this.etmConfiguration.getReplicasPerIndex())
 					.build())
 			.addMapping("_default_", createMapping("_default_"))
 			.addAlias(new Alias("etm_event_all"))
@@ -116,18 +116,6 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 				"   	    \"type\": \"long\"," +
 				"           \"index\": \"not_analyzed\"" + 				
 				"       }," + 
-//				"       \"" + this.tags.getResponseHandlingTimeTag() + "\": {" + 
-//				"   	    \"properties\": {" +
-//				"               \"" + this.tags.getApplicationNameTag() + "\": {" + 
-//				"           	    \"type\": \"string\"," +
-//				"           		\"index\": \"not_analyzed\"" + 				
-//				"               }," + 				
-//				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
-//				"           	    \"type\": \"long\"," +
-//				"           		\"index\": \"not_analyzed\"" + 				
-//				"               }" + 				
-//				"           }" + 				
-//				"       }," + 
 				"       \"" + this.tags.getTransactionIdTag() + "\": {" + 
 				"   	    \"type\": \"string\"," + 
 				"           \"index\": \"not_analyzed\"" + 

@@ -246,10 +246,8 @@ public class TelemetryEventRepositoryElasticImplTest {
 	}
 	
 	private EtmConfiguration createSingleCommitConfiguration() {
-		Properties properties = new Properties();
-		properties.setProperty(EtmConfiguration.ETM_PERSISTING_BULK_SIZE, "1");
-		EtmConfiguration configuration = new EtmConfiguration(this.nodeName, this.client, this.getClass().getName());
-		configuration.update(this.nodeName, properties);
+		EtmConfiguration configuration = new EtmConfiguration(this.nodeName, this.getClass().getName());
+		// TODO update persisting bulk size.
 		return configuration;
 	}
 

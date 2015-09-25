@@ -8,5 +8,5 @@ public interface TelemetryEventRepository extends Closeable {
 
 	void persistTelemetryEvent(TelemetryEvent telemetryEvent);
 	
-	void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime);
+	void findEndpointConfig(String endpoint, EndpointConfigResult result);
 }

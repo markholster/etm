@@ -48,7 +48,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
     }
 	
 	@Override
-    public void findEndpointConfig(String endpoint, EndpointConfigResult result, long cacheExpiryTime) {
+    public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
     }
 
 	@Override

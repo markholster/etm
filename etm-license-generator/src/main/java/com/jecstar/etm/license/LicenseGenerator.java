@@ -32,7 +32,7 @@ public class LicenseGenerator {
 	    final LicenseType licenseType = LicenseType.SUBSCRIPTION;
 	    final long expiry = calendar.getTimeInMillis();
 	    
-		final String licenseKey = company + ":" + expiry + ":" + licenseType.name();
+		final String licenseKey = company + "_:_" + expiry + "_:_" + licenseType.name();
 		
 		
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
