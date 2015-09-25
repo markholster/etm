@@ -38,14 +38,14 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	public void createEnvironment() {
 		new PutIndexTemplateRequestBuilder(this.elasticClient.admin().indices(), "etm")
 			.setCreate(false)
-			.setTemplate("etm_*")
+			.setTemplate("etm_event_*")
 			.setSettings(ImmutableSettings.settingsBuilder()
 					.put("number_of_shards", this.etmConfiguration.getPersistingShardsPerIndex())
 					.put("number_of_replicas", this.etmConfiguration.getPersistingReplicasPerIndex())
 					.build())
 			.addMapping("_default_", createMapping("_default_"))
-			.addAlias(new Alias("etm_all"))
-			.addAlias(new Alias("etm_today"))
+			.addAlias(new Alias("etm_event_all"))
+			.addAlias(new Alias("etm_event_today"))
 			.get();
 	}
 	

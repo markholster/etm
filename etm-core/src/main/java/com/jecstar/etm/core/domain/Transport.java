@@ -2,7 +2,10 @@ package com.jecstar.etm.core.domain;
 
 public enum Transport {
 
-	
+	/**
+	 * Enum constant representing a file system as the transport type of the payload.
+	 */
+	FILE_SYSTEM, 	
 	/**
 	 * Enum constant representing FTP as the transport type of the payload.
 	 */

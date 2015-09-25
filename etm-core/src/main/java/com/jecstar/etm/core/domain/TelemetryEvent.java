@@ -23,6 +23,7 @@ public class TelemetryEvent {
 	public static String PACKAGING_HTTP_PUT = "PUT";
 	public static String PACKAGING_HTTP_TRACE = "TRACE";
 	public static String PACKAGING_HTTP_RESPONSE = "Response (HTTP)";
+	public static String PACKAGING_LOG = "Log";
 	public static String PACKAGING_MQ_FIRE_AND_FORGET = "Fire And forget";
 	public static String PACKAGING_MQ_REQUEST = "Request";
 	public static String PACKAGING_MQ_RESPONSE = "Response (MQ)";
