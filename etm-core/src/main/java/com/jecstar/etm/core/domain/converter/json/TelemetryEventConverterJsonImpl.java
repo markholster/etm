@@ -16,7 +16,7 @@ import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
  * 
  * @author mark
  */
-public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<String> {
+public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter  implements TelemetryEventConverter<String> {
 	
 	private StringBuilder sb = new StringBuilder();
 
@@ -68,30 +68,6 @@ public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<
 		this.sb.append("}");
 		return this.sb.toString();
 	}
-
-	
-	private boolean addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer, boolean firstElement) {
-		if (elementValue == null) {
-			return false;
-		}
-		if (!firstElement) {
-			buffer.append(", ");
-		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": \"" + escapeToJson(elementValue) + "\"");
-		return true;
-	}
-
-	private boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean firstElement) {
-		if (elementValue == null) {
-			return false;
-		}
-		if (!firstElement) {
-			buffer.append(", ");
-		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
-		return true;
-	}
-
 	
 	private boolean addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer, boolean firstElement) {
 		if (elementValues.size() < 1) {
@@ -135,9 +111,5 @@ public class TelemetryEventConverterJsonImpl implements TelemetryEventConverter<
 		}
 		buffer.append("}");
 		return true;
-	}
-	
-	private String escapeToJson(String value) {
-		return value.replace("\"", "\\\"");
 	}
 }

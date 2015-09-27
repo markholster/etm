@@ -24,19 +24,25 @@ public class DisruptorEnvironment {
 		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryCommandExceptionHandler());
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
-		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
+		final EnhancingEventHandler[] enhancingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
 		this.telemetryEventRepository = persistenceEnvironment.createTelemetryEventRepository();
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEvntHandler[i] = new EnhancingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, enhancingHandlerCount, metricRegistry.timer("event-enhancing"));
+			enhancingEventHandlers[i] = new EnhancingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, enhancingHandlerCount, metricRegistry.timer("event-enhancing"));
 		}
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
 		this.persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
 			this.persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, metricRegistry.timer("event-persisting"));
 		}
-		this.disruptor.handleEventsWith(enhancingEvntHandler);
-		if (this.persistingEventHandlers.length > 0) {
-			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.persistingEventHandlers);
+		if (enhancingEventHandlers.length > 0) {
+			this.disruptor.handleEventsWith(enhancingEventHandlers);
+			if (this.persistingEventHandlers.length > 0) {
+				this.disruptor.after(enhancingEventHandlers).handleEventsWith(this.persistingEventHandlers);
+			}
+		} else {
+			if (this.persistingEventHandlers.length > 0) {
+				this.disruptor.handleEventsWith(this.persistingEventHandlers);
+			}
 		}
 		this.persistenceEnvironment = persistenceEnvironment;
 	}

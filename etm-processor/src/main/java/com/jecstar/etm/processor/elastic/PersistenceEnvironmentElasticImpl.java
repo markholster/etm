@@ -36,7 +36,8 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 
 	@Override
 	public void createEnvironment() {
-		new PutIndexTemplateRequestBuilder(this.elasticClient.admin().indices(), "etm")
+		// TODO add template for EtmConfiguration?
+		new PutIndexTemplateRequestBuilder(this.elasticClient.admin().indices(), "etm_event")
 			.setCreate(false)
 			.setTemplate("etm_event_*")
 			.setSettings(ImmutableSettings.settingsBuilder()

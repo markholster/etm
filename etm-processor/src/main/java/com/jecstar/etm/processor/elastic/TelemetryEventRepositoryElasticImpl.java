@@ -36,8 +36,6 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	private final TelemetryEventConverter<String> jsonConverter = new TelemetryEventConverterJsonImpl();
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsElasticImpl();
 	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();
-
-	
 	
 	private BulkRequestBuilder bulkRequest;
 
@@ -50,7 +48,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	@Override
     public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
     }
-
+	
 	@Override
     public void close() {
 		executeBulk();
