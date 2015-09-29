@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
@@ -102,7 +103,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 			.addReadingEndpointHandler(ZonedDateTime.now(), "TestCase", null, "Server 1", "sy000012")
 			.build();
 		// TODO add all possible attributes of an event to the test.
-		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
+		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client, new MetricRegistry())) {
 			repo.persistTelemetryEvent(event);
 			
 			// Validate all elements.
@@ -130,7 +131,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 				.setPayload("Testcase testPersistOneWriterTwoReadersSeparatedEvents.")
 				.setWritingEndpointHandler(ZonedDateTime.now(), "TestCase", null, null, null)
 				.build();
-		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
+		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client, new MetricRegistry())) {
 			// Add the event from the writing application.
 			repo.persistTelemetryEvent(event);
 			
@@ -173,7 +174,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 				.setExpiry(requestTime.plus(30, ChronoUnit.SECONDS))
 				.addReadingEndpointHandler(requestTime.plus(10, ChronoUnit.MILLIS), "Request reader", null, null, null)
 				.build();
-		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
+		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client, new MetricRegistry())) {
 			// Add the event from the writing and reading application
 			repo.persistTelemetryEvent(event);
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();
@@ -217,7 +218,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 				.setWritingEndpointHandler(responseReadingTime.minus(12, ChronoUnit.MILLIS), "Request reader", null, null, null)
 				.addReadingEndpointHandler(responseReadingTime, "Request writer", null, null, null)
 				.build();
-		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client)) {
+		try (TelemetryEventRepositoryElasticImpl repo = new TelemetryEventRepositoryElasticImpl(createSingleCommitConfiguration(), this.client, new MetricRegistry())) {
 			// Add the response from the reading application
 			repo.persistTelemetryEvent(event);
 			GetResponse getResponse = this.client.prepareGet(repo.getElasticIndexName(event), repo.getElasticType(event), id_req).get();

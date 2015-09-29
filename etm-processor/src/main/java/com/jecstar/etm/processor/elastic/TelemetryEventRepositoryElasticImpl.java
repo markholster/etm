@@ -14,6 +14,9 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.TelemetryEvent;
@@ -27,6 +30,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
+	private final Timer bulkTimer;
 	private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
 			.appendLiteral("-")
@@ -40,9 +44,10 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	private BulkRequestBuilder bulkRequest;
 
 
-	public TelemetryEventRepositoryElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
+	public TelemetryEventRepositoryElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient, final MetricRegistry metricRegistry) {
 		this.etmConfiguration = etmConfiguration;
 	    this.elasticClient = elasticClient;
+	    this.bulkTimer = metricRegistry.timer("event-processor-persisting-repository-bulk-update");
     }
 	
 	@Override
@@ -136,9 +141,14 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	
 	private void executeBulk() {
 		if (this.bulkRequest != null && this.bulkRequest.numberOfActions() > 0) {
-			BulkResponse bulkResponse = this.bulkRequest.get();
-			if (bulkResponse.hasFailures()) {
-				throw new RuntimeException(bulkResponse.buildFailureMessage());
+			final Context timerContext = this.bulkTimer.time();
+			try {
+				BulkResponse bulkResponse = this.bulkRequest.get();
+				if (bulkResponse.hasFailures()) {
+					throw new RuntimeException(bulkResponse.buildFailureMessage());
+				}
+			} finally {
+				timerContext.stop();
 			}
 		}
 		this.bulkRequest = null;

@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.domain.EndpointHandler;
@@ -25,12 +26,12 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private final EndpointConfigResult endpointConfigResult;
 	private final Timer timer;
 	
-	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final Timer timer) {
+	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final MetricRegistry metricRegistry) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.endpointConfigResult = new EndpointConfigResult();
-		this.timer = timer;
+		this.timer = metricRegistry.timer("event-processor-enhancing");
 	}
 
 	@Override

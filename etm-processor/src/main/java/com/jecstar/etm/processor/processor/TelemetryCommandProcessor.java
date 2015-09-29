@@ -5,12 +5,13 @@ import java.util.concurrent.ExecutorService;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
+import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.lmax.disruptor.RingBuffer;
 
-public class TelemetryCommandProcessor {
+public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	
 	private RingBuffer<TelemetryCommand> ringBuffer;
 	private boolean started = false;
@@ -32,7 +33,7 @@ public class TelemetryCommandProcessor {
 		this.persistenceEnvironment = persistenceEnvironment;
 		this.etmConfiguration = etmConfiguration;
 		this.metricRegistry = metricRegistry;
-		this.offerTimer = this.metricRegistry.timer("event-offering");
+		this.offerTimer = this.metricRegistry.timer("event-processor-offering");
 		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
 	}
@@ -94,11 +95,19 @@ public class TelemetryCommandProcessor {
     }
 	
 	private void preProcess(TelemetryCommand command) {
-		if (CommandType.EVENT.equals(command.commandType)) {
-//			if (command.messageEvent.id == null) {
-//				command.messageEvent.id = UUIDs.timeBased().toString();
-//			}
-//			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(command.messageEvent);
+	}
+
+	@Override
+	public void configurationChanged(ConfigurationChangedEvent event) {
+		if (this.started && event.isAnyChanged(EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
+				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT,
+				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE)) {
+			// Configuration changed in such a way that the DisruptorEnvironment needs to be recreated/restarted.
+			try {
+				hotRestart();
+			} catch (IllegalStateException e) {
+				
+			}
 		}
 	}
 }

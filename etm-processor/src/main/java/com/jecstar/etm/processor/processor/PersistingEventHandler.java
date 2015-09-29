@@ -3,6 +3,7 @@ package com.jecstar.etm.processor.processor;
 import java.io.Closeable;
 import java.io.IOException;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.domain.TelemetryEvent;
@@ -19,11 +20,11 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 	private TelemetryEventRepository telemetryEventRepository;
 
 	public PersistingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal,
-	        final long numberOfConsumers, final Timer timer) {
+	        final long numberOfConsumers, final MetricRegistry metricRegistry) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
-		this.timer = timer;
+		this.timer = metricRegistry.timer("event-processor-persisting");
 	}
 
 	@Override

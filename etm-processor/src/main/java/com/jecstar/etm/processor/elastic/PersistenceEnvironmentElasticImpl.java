@@ -13,6 +13,7 @@ import org.elasticsearch.cluster.metadata.AliasMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.ImmutableSettings;
 
+import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
@@ -22,16 +23,18 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
+	private final MetricRegistry metricRegistry;
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsElasticImpl();
 
-	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
+	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient, final MetricRegistry metricRegistry) {
 		this.etmConfiguration = etmConfiguration;
 		this.elasticClient = elasticClient;
+		this.metricRegistry = metricRegistry;
 	}
 	
 	@Override
 	public TelemetryEventRepository createTelemetryEventRepository() {
-		return new TelemetryEventRepositoryElasticImpl(this.etmConfiguration, this.elasticClient);
+		return new TelemetryEventRepositoryElasticImpl(this.etmConfiguration, this.elasticClient, this.metricRegistry);
 	}
 
 	@Override
