@@ -3,6 +3,7 @@ package com.jecstar.etm.processor.elastic;
 import java.util.Map;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
@@ -31,46 +32,36 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		super(nodeName, component);
 		this.elasticClient = elasticClient;
 		this.tags = etmConfigurationConverterTags;
-		reloadConfiguration();
+		reloadConfigurationWhenNecessary();
 	}
 
 	@Override
 	public int getEnhancingHandlerCount() {
-		if (reloadConfiguration()) {
-			broadcastUpdate();
-		}
+		reloadConfigurationWhenNecessary();
 		return super.getEnhancingHandlerCount();
 	}
 	
 	@Override
 	public int getPersistingHandlerCount() {
-		if (reloadConfiguration()) {
-			broadcastUpdate();
-		}
+		reloadConfigurationWhenNecessary();
 		return super.getPersistingHandlerCount();
 	}
 	
 	@Override
 	public int getEventBufferSize() {
-		if (reloadConfiguration()) {
-			broadcastUpdate();
-		}
+		reloadConfigurationWhenNecessary();
 		return super.getEventBufferSize();
 	}
 
 	@Override
 	public int getPersistingBulkSize() {
-		if (reloadConfiguration()) {
-			broadcastUpdate();
-		}
+		reloadConfigurationWhenNecessary();
 		return super.getPersistingBulkSize();
 	}
 	
 	@Override
 	public int getShardsPerIndex() {
-		if (reloadConfiguration()) {
-			broadcastUpdate();
-		}
+		reloadConfigurationWhenNecessary();
 		return super.getShardsPerIndex();
 	}
 	
@@ -80,13 +71,18 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return super.getReplicasPerIndex();
 	}
 	
-	private boolean reloadConfiguration() {
+	private boolean reloadConfigurationWhenNecessary() {
 		boolean changed = false;
 		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
 			return changed;
 		}
+		boolean hasIndex = this.elasticClient.admin().indices().exists(new IndicesExistsRequest(this.indexName)).actionGet().isExists();
+		if (!hasIndex) {
+			createDefault();
+		}
 		GetResponse defaultResponse = this.elasticClient.prepareGet(this.indexName, getComponent(), this.defaultId).get();
 		if (!defaultResponse.isExists()) {
+			// Should not happen, but if somehow the default configuration is lost, but the index isn't we create the new default over here.
 			createDefault();
 			defaultResponse = this.elasticClient.prepareGet(this.indexName, getComponent(), this.defaultId).get();
 		}
@@ -135,7 +131,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			.get();
 		this.elasticClient.prepareIndex(this.indexName, getComponent(), this.defaultId)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
-			.setSource(this.etmConfigurationConverter.convert(null, this, this.tags)).get();
+			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent()), this.tags)).get();
 	}
 
 	private String createMapping(String string) {

@@ -6,6 +6,13 @@ import java.util.List;
 //TODO document this class and the different properties. 
 //TODO fallback to default enum values for proprties with illegal values. 
 public class EtmConfiguration {
+	
+	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT = "enhancingHandlerCount";
+	public static final String CONFIG_KEY_PERSISTING_HANDLER_COUNT = "persistingHandlerCount";
+	public static final String CONFIG_KEY_EVENT_BUFFER_SIZE = "eventBufferSize";
+	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE = "persistingBulkSize";
+	public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
+	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -129,50 +136,50 @@ public class EtmConfiguration {
 	public void removeConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
 		this.changeListeners.remove(configurationChangeListener);
 	}
-	
-	/**
-	 * Notify the listeners the configuration is changed.
-	 */
-	public void broadcastUpdate() {
-		ConfigurationChangedEvent event = new ConfigurationChangedEvent();
-		this.changeListeners.stream().forEach(c -> c.configurationChanged(event));
-	}
 
 	/**
-	 * Merge the configuration items from the given <code>EtmConfiguration</code> into this instance.
+	 * Merge the configuration items from the given
+	 * <code>EtmConfiguration</code> into this instance.
+	 * <code>ConfigurationChangeListener</code>s are notified in a single event.
 	 * 
-	 * @param etmConfiguration The <code>EtmConfiguration</code> to merge into this instance.
-	 * @return true if values have changed after the merge, false otherwise.
+	 * @param etmConfiguration
+	 *            The <code>EtmConfiguration</code> to merge into this instance.
+	 * @return <code>true</code> when the configuration is changed,
+	 *         <code>false</code> otherwise.
 	 */
 	public boolean merge(EtmConfiguration etmConfiguration) {
-		boolean changed = false;
 		if (etmConfiguration == null) {
-			return changed;
+			return false;
 		}
+		List<String> changed = new ArrayList<String>();
 		if (this.enhancingHandlerCount != etmConfiguration.getEnhancingHandlerCount()) {
 			this.enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
-			changed = true;
+			changed.add(CONFIG_KEY_ENHANCING_HANDLER_COUNT);
 		}
 		if (this.persistingHandlerCount != etmConfiguration.getPersistingHandlerCount()) {
 			this.persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
-			changed = true;
+			changed.add(CONFIG_KEY_PERSISTING_HANDLER_COUNT);
 		}
 		if (this.eventBufferSize != etmConfiguration.getEventBufferSize()) {
 			this.eventBufferSize = etmConfiguration.getEventBufferSize();
-			changed = true;
+			changed.add(CONFIG_KEY_EVENT_BUFFER_SIZE);
 		}
 		if (this.persistingBulkSize != etmConfiguration.getPersistingBulkSize()) {
 			this.persistingBulkSize = etmConfiguration.getPersistingBulkSize();
-			changed = true;
+			changed.add(CONFIG_KEY_PERSISTING_BULK_SIZE);
 		}
 		if (this.shardsPerIndex != etmConfiguration.getShardsPerIndex()) {
 			this.shardsPerIndex = etmConfiguration.getShardsPerIndex();
-			changed = true;
+			changed.add(CONFIG_KEY_SHARDS_PER_INDEX);
 		}
 		if (this.replicasPerIndex != etmConfiguration.getReplicasPerIndex()) {
 			this.replicasPerIndex = etmConfiguration.replicasPerIndex;
-			changed = true;
+			changed.add(CONFIG_KEY_REPLICAS_PER_INDEX);
 		}
-		return changed;
+		if (changed.size() > 0) {
+			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);
+			this.changeListeners.forEach(c -> c.configurationChanged(event));
+		}
+		return changed.size() > 0;
 	}
 }
