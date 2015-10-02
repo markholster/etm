@@ -16,7 +16,7 @@ import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
  * 
  * @author mark
  */
-public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter  implements TelemetryEventConverter<String> {
+public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter implements TelemetryEventConverter<String> {
 	
 	private StringBuilder sb = new StringBuilder();
 

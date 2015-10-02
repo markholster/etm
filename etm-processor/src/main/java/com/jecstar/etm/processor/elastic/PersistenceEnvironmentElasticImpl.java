@@ -47,13 +47,13 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 					.put("number_of_shards", this.etmConfiguration.getShardsPerIndex())
 					.put("number_of_replicas", this.etmConfiguration.getReplicasPerIndex())
 					.build())
-			.addMapping("_default_", createMapping("_default_"))
+			.addMapping("_default_", createEventMapping("_default_"))
 			.addAlias(new Alias("etm_event_all"))
 			.addAlias(new Alias("etm_event_today"))
 			.get();
 	}
 	
-	private String createMapping(String type) {
+	private String createEventMapping(String type) {
 		return "{" + 
 				"   \"properties\": {" + 
 				"	    \"" + this.tags.getCorrelationIdTag() +"\": {" + 
