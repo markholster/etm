@@ -121,6 +121,10 @@ public class TelemetryEventRepositoryElasticImplTest {
 		}
 	}
 
+	/**
+	 * Test persistence of multiple events with the same id. One event with the writing application and 2 events with a reading application.
+	 */
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testPersistOneWriterTwoReadersSeparatedEvents() {
@@ -158,6 +162,9 @@ public class TelemetryEventRepositoryElasticImplTest {
 		}
 	}
 	
+	/**
+	 * Test the persistence of a request event that is processed before the response event is processed.
+	 */
 	@Test
 	public void testPersistRequestBeforeResponseEvent() {
 		final String id_req = "3";
@@ -201,7 +208,10 @@ public class TelemetryEventRepositoryElasticImplTest {
 			assertEquals(expectedResponseTime, readResponseTime);
 		}		
 	}
-	
+
+	/**
+	 * Test the persistence of a request event that is processed before the response event is processed.
+	 */
 	@Test
 	public void testPersistResponseBeforeRequestEvent() {
 		final String id_req = "5";

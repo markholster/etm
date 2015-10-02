@@ -65,6 +65,21 @@ public class License {
 	public enum LicenseType {
 		TRIAL, SUBSCRIPTION
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof License) {
+			License other = (License) obj;
+			return other.owner.equals(this.owner) && other.expiryDate.equals(this.expiryDate)
+					&& other.licenseType.equals(this.licenseType);
+		}
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return (this.owner + this.expiryDate.hashCode() + this.licenseType.name()).hashCode();
+	}
 }
 
 

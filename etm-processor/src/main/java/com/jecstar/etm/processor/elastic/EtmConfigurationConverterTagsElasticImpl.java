@@ -5,6 +5,11 @@ import com.jecstar.etm.core.domain.converter.EtmConfigurationConverterTags;
 public class EtmConfigurationConverterTagsElasticImpl implements EtmConfigurationConverterTags {
 
 	@Override
+	public String getLicenseTag() {
+		return "license";
+	}
+	
+	@Override
 	public String getEnhancingHandlerCountTag() {
 		return "enhancing_handler_count";
 	}

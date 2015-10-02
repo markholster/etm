@@ -3,10 +3,13 @@ package com.jecstar.etm.core.configuration;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jecstar.etm.core.util.ObjectUtils;
+
 //TODO document this class and the different properties. 
 //TODO fallback to default enum values for proprties with illegal values. 
 public class EtmConfiguration {
 	
+	public static final String CONFIG_KEY_LICENSE = "enhancingHandlerCount";
 	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT = "enhancingHandlerCount";
 	public static final String CONFIG_KEY_PERSISTING_HANDLER_COUNT = "persistingHandlerCount";
 	public static final String CONFIG_KEY_EVENT_BUFFER_SIZE = "eventBufferSize";
@@ -152,6 +155,10 @@ public class EtmConfiguration {
 			return false;
 		}
 		List<String> changed = new ArrayList<String>();
+		if (!ObjectUtils.equalsNullProof(this.license, etmConfiguration.getLicense())) {
+			this.license = etmConfiguration.getLicense();
+			changed.add(CONFIG_KEY_LICENSE);
+		}
 		if (this.enhancingHandlerCount != etmConfiguration.getEnhancingHandlerCount()) {
 			this.enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 			changed.add(CONFIG_KEY_ENHANCING_HANDLER_COUNT);

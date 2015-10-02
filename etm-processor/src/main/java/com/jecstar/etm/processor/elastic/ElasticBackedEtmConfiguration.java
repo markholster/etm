@@ -10,6 +10,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.configuration.License;
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
@@ -33,6 +34,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		this.elasticClient = elasticClient;
 		this.tags = etmConfigurationConverterTags;
 		reloadConfigurationWhenNecessary();
+	}
+	
+	@Override
+	public License getLicense() {
+		reloadConfigurationWhenNecessary();
+		return super.getLicense();
 	}
 
 	@Override
@@ -99,6 +106,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			}
 			this.defaultVersion = defaultResponse.getVersion();
 			EtmConfiguration etmConfiguration = new EtmConfiguration("temp-for-reload-merge", getComponent());
+			etmConfiguration.setLicenseKey(getStringValue(tags.getLicenseTag(), defaultMap, null));
 			etmConfiguration.setEnhancingHandlerCount(getIntValue(tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
 			etmConfiguration.setPersistingHandlerCount(getIntValue(tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
 			etmConfiguration.setEventBufferSize(getIntValue(tags.getEventBufferSizeTag(), defaultMap, nodeMap));
@@ -119,6 +127,15 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		}
 	}
 
+	private String getStringValue(String tag, Map<String, Object> defaultMap, Map<String, Object> nodeMap) {
+		if (nodeMap != null && nodeMap.containsKey(tag)) {
+			return nodeMap.get(tag).toString();
+		} else {
+			return defaultMap.get(tag).toString();
+		}
+	}
+
+	
 	private void createDefault() {
 		new PutIndexTemplateRequestBuilder(this.elasticClient.admin().indices(), this.indexName)
 			.setCreate(false)
@@ -137,6 +154,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	private String createMapping(String string) {
 		return "{" + 
 				"   \"properties\": {" + 
+				"	    \"" + this.tags.getLicenseTag() +"\": {" + 
+				"   	    \"type\": \"string\"," +
+				"           \"index\": \"not_analyzed\"" + 				
+				"       }," + 
 				"	    \"" + this.tags.getEnhancingHandlerCountTag() +"\": {" + 
 				"   	    \"type\": \"integer\"," +
 				"           \"index\": \"not_analyzed\"" + 				
