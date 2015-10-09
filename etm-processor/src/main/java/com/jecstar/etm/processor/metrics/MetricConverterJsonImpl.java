@@ -21,33 +21,28 @@ public class MetricConverterJsonImpl extends AbstractJsonConverter implements Me
 	@Override
 	public String convertGauges(SortedMap<String, Gauge> gauges) {
 		StringBuilder buffer = new StringBuilder();
-    	buffer.append("\"" + this.tags.getGaugesTag() + "\": [");
     	buffer.append(gauges.entrySet().stream()
-    			.map(f -> "{\"" + this.tags.getNameTag() + "\": \"" + escapeToJson(f.getKey()) + "\", \"" + this.tags.getValueTag() + "\": \"" + escapeToJson(f.getValue().getValue().toString()) + "\"}")
+    			.map(f -> "\"" + escapeToJson(f.getKey()) + "\": {\"" + this.tags.getValueTag() + "\": \"" + escapeToJson(f.getValue().getValue().toString()) + "\"}")
     			.collect(Collectors.joining(", ")));
-        buffer.append("]");
 		return buffer.toString();
 	}
 
 	@Override
 	public String convertCounters(SortedMap<String, Counter> counters) {
 		StringBuilder buffer = new StringBuilder();
-    	buffer.append("\"" + this.tags.getCountersTag() + "\": [");
     	buffer.append(counters.entrySet().stream()
-    			.map(f -> "{\"" + this.tags.getNameTag() + "\": \"" + escapeToJson(f.getKey()) + "\", \"" + this.tags.getValueTag() + "\": " + f.getValue().getCount() + "}")
+    			.map(f -> "\"" +  escapeToJson(f.getKey()) + "\": {\"" + this.tags.getCountTag() + "\": " + f.getValue().getCount() + "}")
     			.collect(Collectors.joining(", ")));
-        buffer.append("]");
 		return buffer.toString();
 	}
 
 	@Override
 	public String convertHistograms(SortedMap<String, Histogram> histograms) {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("\"" + this.tags.getHistogramsTag() + "\": [");
 		buffer.append(histograms.entrySet().stream()
 				.map(f -> {
 					Snapshot snapshot =  f.getValue().getSnapshot();
-					return "{\"" + this.tags.getNameTag() + "\": \"" + escapeToJson(f.getKey()) + "\", \"" + this.tags.getValuesTag() + "\": {" +
+					return  "\"" + escapeToJson(f.getKey()) + "\": {" +
 							"\"" + this.tags.getCountTag() + "\": " + f.getValue().getCount() +
 							", \"" + this.tags.getMinTag() + "\": " + snapshot.getMin() +
 							", \"" + this.tags.getMaxTag() + "\": " + snapshot.getMax() +
@@ -59,42 +54,38 @@ public class MetricConverterJsonImpl extends AbstractJsonConverter implements Me
 							", \"" + this.tags.get98thPercentileTag() + "\": " + snapshot.get98thPercentile() +
 							", \"" + this.tags.get99thPercentileTag() + "\": " + snapshot.get99thPercentile() +
 							", \"" + this.tags.get999thPercentileTag() + "\": " + snapshot.get999thPercentile() +
-							"}}";
+							"}";
 					})
 				.collect(Collectors.joining(", "))
 				);
-		buffer.append("]");
 		return buffer.toString();
 	}
 
 	@Override
 	public String convertMeters(SortedMap<String, Meter> meters, TimeUnit rateUnit) {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("\"" + this.tags.getMetersTag() + "\": [");
 		buffer.append(meters.entrySet().stream()
 				.map(f -> {
-					return "{\"" + this.tags.getNameTag() + "\": \"" + escapeToJson(f.getKey()) + "\", \"" + this.tags.getValuesTag() + "\": {" +
+					return  "\"" + escapeToJson(f.getKey()) + "\": {" +
 							"\"" + this.tags.getCountTag() + "\": " + f.getValue().getCount() +
 							", \"" + this.tags.getMeanRateTag(RateType.EVENTS, rateUnit) + "\": " + convertRate(f.getValue().getMeanRate(), rateUnit) +
 							", \"" + this.tags.getOneMinuteRateTag(RateType.EVENTS, rateUnit) + "\": " + convertRate(f.getValue().getOneMinuteRate(), rateUnit) +
 							", \"" + this.tags.getFiveMinuteRateTag(RateType.EVENTS, rateUnit) + "\": " + convertRate(f.getValue().getFiveMinuteRate(), rateUnit) +
 							", \"" + this.tags.getFifteenMinuteRateTag(RateType.EVENTS, rateUnit) + "\": " + convertRate(f.getValue().getFifteenMinuteRate(), rateUnit) +
-							"}}";
+							"}";
 					})
 				.collect(Collectors.joining(", "))
 				);
-		buffer.append("]");
 		return buffer.toString();
 	}
 
 	@Override
 	public String convertTimers(SortedMap<String, Timer> timers, TimeUnit rateUnit, TimeUnit durationUnit) {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("\"" + this.tags.getTimersTag() + "\": [");
 		buffer.append(timers.entrySet().stream()
 				.map(f -> {
 					Snapshot snapshot =  f.getValue().getSnapshot();
-					return "{\"" + this.tags.getNameTag() + "\": \"" + escapeToJson(f.getKey()) + "\", \"" + this.tags.getValuesTag() + "\": {" +
+					return  "\"" + escapeToJson(f.getKey()) + "\":  {" +
 							"\"" + this.tags.getCountTag() + "\": " + f.getValue().getCount() +
 							", \"" + this.tags.getMeanRateTag(RateType.CALLS, rateUnit) + "\": " + convertRate(f.getValue().getMeanRate(), rateUnit) +
 							", \"" + this.tags.getOneMinuteRateTag(RateType.CALLS, rateUnit) + "\": " + convertRate(f.getValue().getOneMinuteRate(), rateUnit) +
@@ -111,11 +102,10 @@ public class MetricConverterJsonImpl extends AbstractJsonConverter implements Me
 							", \"" + this.tags.get98thPercentileDurationTag(durationUnit) + "\": " + convertDuration(snapshot.get98thPercentile(), durationUnit) +
 							", \"" + this.tags.get99thPercentileDurationTag(durationUnit) + "\": " + convertDuration(snapshot.get99thPercentile(), durationUnit) +
 							", \"" + this.tags.get999thPercentileDurationTag(durationUnit) + "\": " + convertDuration(snapshot.get999thPercentile(), durationUnit) +
-							"}}";
+							"}";
 					})
 				.collect(Collectors.joining(", "))
 				);
-		buffer.append("]");
 		return buffer.toString();
 	}
 	

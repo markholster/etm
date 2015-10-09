@@ -10,21 +10,7 @@ public interface MetricConverterTags {
 
 	String getNodeNameTag();
 
-	String getGaugesTag();
-
-	String getCountersTag();
-
-	String getValuesTag();
-
-	String getHistogramsTag();
-
 	String getCountTag();
-
-	String getMetersTag();
-
-	String getTimersTag();
-
-	String getNameTag();
 
 	String getValueTag();
 

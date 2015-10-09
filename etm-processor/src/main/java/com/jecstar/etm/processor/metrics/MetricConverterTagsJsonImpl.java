@@ -16,45 +16,10 @@ public class MetricConverterTagsJsonImpl implements MetricConverterTags {
 	}
 
 	@Override
-	public String getGaugesTag() {
-		return "gauges";
-	}
-
-	@Override
-	public String getCountersTag() {
-		return "counters";
-	}
-	
-	@Override
-	public String getHistogramsTag() {
-		return "histograms";
-	}
-	
-	@Override
-	public String getMetersTag() {
-		return "meters";
-	}
-	
-	@Override
-	public String getTimersTag() {
-		return "timers";
-	}
-
-	@Override
-	public String getNameTag() {
-		return "name";
-	}
-
-	@Override
 	public String getValueTag() {
 		return "value";
 	}
 	
-	@Override
-	public String getValuesTag() {
-		return "values";
-	}
-
 	@Override
 	public String getCountTag() {
 		return "count";
