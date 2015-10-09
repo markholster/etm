@@ -20,8 +20,8 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	private final String indexName = "etm_configuration";
 	private final String defaultId = "default_configuration";
 	private final Client elasticClient;
-	private final EtmConfigurationConverterTags tags;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+	private final EtmConfigurationConverterTags tags = this.etmConfigurationConverter.getTags();
 	
 	private final long updateCheckInterval = 60 * 1000;
 	private long lastCheckedForUpdates;
@@ -32,7 +32,6 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	public ElasticBackedEtmConfiguration(String nodeName, String component, final Client elasticClient, final EtmConfigurationConverterTags etmConfigurationConverterTags) {
 		super(nodeName, component);
 		this.elasticClient = elasticClient;
-		this.tags = etmConfigurationConverterTags;
 		reloadConfigurationWhenNecessary();
 	}
 	
@@ -148,42 +147,11 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			.get();
 		this.elasticClient.prepareIndex(this.indexName, getComponent(), this.defaultId)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
-			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent()), this.tags)).get();
+			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent()))).get();
 	}
 
 	private String createMapping(String string) {
-		return "{" + 
-				"   \"properties\": {" + 
-				"	    \"" + this.tags.getLicenseTag() +"\": {" + 
-				"   	    \"type\": \"string\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getEnhancingHandlerCountTag() +"\": {" + 
-				"   	    \"type\": \"integer\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getPersistingHandlerCountTag() + "\": {" + 
-				"   	    \"type\": \"integer\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getEventBufferSizeTag() + "\": {" + 
-				"   	    \"type\": \"integer\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getPersistingBulkSizeTag() + "\": {" + 
-				"   	    \"type\": \"integer\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getShardsPerIndexTag() + "\": {" + 
-				"   	    \"type\": \"integer\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getReplicasPerIndexTag() + "\": {" + 
-				"   	    \"type\": \"integer\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }" + 
-				"    }" + 
-				"}";	
+		return "{\"dynamic_templates\": [{ \"all\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}";	
 		}
 
 }
