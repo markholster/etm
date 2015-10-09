@@ -29,6 +29,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 	private static final TimeUnit durationUnit = TimeUnit.MILLISECONDS;
 	private final Client elasticClient;
 	private final String nodeName;
+	
 	private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
 			.appendLiteral("-")
@@ -51,7 +52,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 		Instant now = Instant.now();
 		buffer.append("{");
 		buffer.append("\"" + this.tags.getTimestampTag() + "\": " + now.toEpochMilli());
-		buffer.append(", \"" + this.tags.getNodeNameTag() + "\": \"" + escapeToJson(this.nodeName) + "\"");
+		appendNodeInfo(buffer);
 		if (gauges != null && !gauges.isEmpty()) {
 			buffer.append(", ");
 			buffer.append(this.metricConverter.convertGauges(gauges));
@@ -78,6 +79,12 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
         	.setSource(buffer.toString()).get();
 	}
 	
+	private void appendNodeInfo(StringBuilder buffer) {
+		buffer.append(", \"" + this.tags.getNodeTag() + "\": {");
+		buffer.append("\"" + this.tags.getNameTag() + "\": \"" + escapeToJson(this.nodeName) + "\"");
+		buffer.append("}");
+	}
+
 	/**
 	 * Gives the name of the elastic index of the given
 	 * <code>TelemetryEvent</code>.

@@ -11,8 +11,13 @@ public class MetricConverterTagsJsonImpl implements MetricConverterTags {
 	}
 
 	@Override
-	public String getNodeNameTag() {
+	public String getNodeTag() {
 		return "node";
+	}
+
+	@Override
+	public String getNameTag() {
+		return "name";
 	}
 
 	@Override
@@ -157,5 +162,4 @@ public class MetricConverterTagsJsonImpl implements MetricConverterTags {
 	private String escapeToJson(String value) {
 		return value.replace("\"", "\\\"");
 	}
-
 }

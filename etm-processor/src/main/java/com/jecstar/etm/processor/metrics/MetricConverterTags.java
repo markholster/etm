@@ -8,7 +8,9 @@ public interface MetricConverterTags {
 
 	String getTimestampTag();
 
-	String getNodeNameTag();
+	String getNodeTag();
+	
+	String getNameTag();
 
 	String getCountTag();
 
@@ -61,6 +63,5 @@ public interface MetricConverterTags {
 	String get99thPercentileDurationTag(TimeUnit durationUnit);
 
 	String get999thPercentileDurationTag(TimeUnit durationUnit);
-
 
 }
