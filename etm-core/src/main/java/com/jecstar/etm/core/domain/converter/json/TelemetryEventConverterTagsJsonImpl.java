@@ -1,8 +1,8 @@
-package com.jecstar.etm.processor.elastic;
+package com.jecstar.etm.core.domain.converter.json;
 
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
-public class TelemetryEventConverterTagsElasticImpl implements TelemetryEventConverterTags {
+public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConverterTags {
 
 	@Override
 	public String getIdTag() {

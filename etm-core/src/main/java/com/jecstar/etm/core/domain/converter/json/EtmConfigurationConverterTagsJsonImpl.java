@@ -1,8 +1,8 @@
-package com.jecstar.etm.processor.elastic;
+package com.jecstar.etm.core.domain.converter.json;
 
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverterTags;
 
-public class EtmConfigurationConverterTagsElasticImpl implements EtmConfigurationConverterTags {
+public class EtmConfigurationConverterTagsJsonImpl implements EtmConfigurationConverterTags {
 
 	@Override
 	public String getLicenseTag() {

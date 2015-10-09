@@ -4,5 +4,7 @@ import com.jecstar.etm.core.domain.TelemetryEvent;
 
 public interface TelemetryEventConverter<T> {
 
-	T convert(TelemetryEvent telemetryEvent, TelemetryEventConverterTags telemetryEventConverterTags);
+	T convert(TelemetryEvent telemetryEvent);
+	
+	TelemetryEventConverterTags getTags();
 }

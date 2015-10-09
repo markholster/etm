@@ -105,7 +105,8 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			}
 			this.defaultVersion = defaultResponse.getVersion();
 			EtmConfiguration etmConfiguration = new EtmConfiguration("temp-for-reload-merge", getComponent());
-			etmConfiguration.setLicenseKey(getStringValue(tags.getLicenseTag(), defaultMap, null));
+			// TODO license stuff.
+//			etmConfiguration.setLicenseKey(getStringValue(tags.getLicenseTag(), defaultMap, null));
 			etmConfiguration.setEnhancingHandlerCount(getIntValue(tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
 			etmConfiguration.setPersistingHandlerCount(getIntValue(tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
 			etmConfiguration.setEventBufferSize(getIntValue(tags.getEventBufferSizeTag(), defaultMap, nodeMap));
@@ -143,15 +144,15 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 					.put("number_of_shards", 1)
 					.put("number_of_replicas", 5)
 					.build())
-			.addMapping("_default_", createMapping("_default_"))
+			.addMapping("_default_", createMapping())
 			.get();
 		this.elasticClient.prepareIndex(this.indexName, getComponent(), this.defaultId)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
 			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent()))).get();
 	}
 
-	private String createMapping(String string) {
-		return "{\"dynamic_templates\": [{ \"all\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}";	
-		}
+	private String createMapping() {
+		return "{\"dynamic_templates\": [{ \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}";	
+	}
 
 }

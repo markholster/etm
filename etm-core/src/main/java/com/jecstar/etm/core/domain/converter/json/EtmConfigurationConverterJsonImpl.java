@@ -10,29 +10,31 @@ import com.jecstar.etm.core.domain.converter.EtmConfigurationConverterTags;
  * @author mark
  */
 public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter implements EtmConfigurationConverter<String>{
+	
+	private EtmConfigurationConverterTags tags = new EtmConfigurationConverterTagsJsonImpl();
 
 	@Override
-	public String convert(EtmConfiguration etmConfiguration, EtmConfiguration defaultConfiguration, EtmConfigurationConverterTags tags) {
+	public String convert(EtmConfiguration etmConfiguration, EtmConfiguration defaultConfiguration) {
 		final StringBuilder sb = new StringBuilder();
 		boolean added = false;
 		sb.append("{");
 		if (etmConfiguration == null) {
 			// only add the defaults.
-			added = addIntegerElementToJsonBuffer(tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
-			added = addIntegerElementToJsonBuffer(tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
-			added = addIntegerElementToJsonBuffer(tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;
+			added = addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
+			added = addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
+			added = addIntegerElementToJsonBuffer(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;
 			
-			added = addIntegerElementToJsonBuffer(tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), sb, !added) || added;
-			added = addIntegerElementToJsonBuffer(tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), sb, !added) || added;
-			added = addIntegerElementToJsonBuffer(tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), sb, !added) || added;
+			added = addIntegerElementToJsonBuffer(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), sb, !added) || added;
+			added = addIntegerElementToJsonBuffer(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), sb, !added) || added;
+			added = addIntegerElementToJsonBuffer(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), sb, !added) || added;
 		} else {
-			added = addIntegerWhenNotDefault(tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), etmConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
-			added = addIntegerWhenNotDefault(tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), etmConfiguration.getPersistingHandlerCount(), sb, !added) || added;
-			added = addIntegerWhenNotDefault(tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), etmConfiguration.getEventBufferSize(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), etmConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), etmConfiguration.getPersistingHandlerCount(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), etmConfiguration.getEventBufferSize(), sb, !added) || added;
 			
-			added = addIntegerWhenNotDefault(tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), etmConfiguration.getPersistingBulkSize(), sb, !added) || added;
-			added = addIntegerWhenNotDefault(tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), etmConfiguration.getShardsPerIndex(), sb, !added) || added;
-			added = addIntegerWhenNotDefault(tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), etmConfiguration.getReplicasPerIndex(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), etmConfiguration.getPersistingBulkSize(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), etmConfiguration.getShardsPerIndex(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), etmConfiguration.getReplicasPerIndex(), sb, !added) || added;
 		}
 		sb.append("}");
 		return sb.toString();
@@ -43,6 +45,11 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 			return false;
 		}
 		return addIntegerElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+	}
+
+	@Override
+	public EtmConfigurationConverterTags getTags() {
+		return this.tags;
 	}
 	
 

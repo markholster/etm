@@ -1,8 +1,10 @@
 package com.jecstar.etm.processor.processor;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
@@ -22,9 +24,13 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	private PersistenceEnvironment persistenceEnvironment;
 	private MetricRegistry metricRegistry;
 	private Timer offerTimer;
+	private ScheduledReporter metricReporter;
 	
+	public TelemetryCommandProcessor() {
+		this.metricRegistry = new MetricRegistry();
+	}
 
-	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
+	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final EtmConfiguration etmConfiguration) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
@@ -32,7 +38,8 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.executorService = executorService;
 		this.persistenceEnvironment = persistenceEnvironment;
 		this.etmConfiguration = etmConfiguration;
-		this.metricRegistry = metricRegistry;
+		this.metricReporter = this.persistenceEnvironment.createMetricReporter(etmConfiguration.getNodeName(), this.metricRegistry);
+		this.metricReporter.start(1, TimeUnit.MINUTES);
 		this.offerTimer = this.metricRegistry.timer("event-processor-offering");
 		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
@@ -56,6 +63,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 			throw new IllegalStateException();
 		}
 		this.disruptorEnvironment.shutdown();
+		this.metricReporter.stop();
 	}
 	
 	public void stopAll() {

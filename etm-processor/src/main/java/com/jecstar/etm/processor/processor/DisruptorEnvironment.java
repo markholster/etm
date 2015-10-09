@@ -25,14 +25,14 @@ public class DisruptorEnvironment {
 		this.disruptor.handleExceptionsWith(new TelemetryCommandExceptionHandler());
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
-		this.telemetryEventRepository = persistenceEnvironment.createTelemetryEventRepository();
+		this.telemetryEventRepository = persistenceEnvironment.createTelemetryEventRepository(metricRegistry);
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEventHandlers[i] = new EnhancingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, enhancingHandlerCount, metricRegistry);
+			enhancingEventHandlers[i] = new EnhancingEventHandler(persistenceEnvironment.createTelemetryEventRepository(metricRegistry), i, enhancingHandlerCount, metricRegistry);
 		}
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
 		this.persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			this.persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, metricRegistry);
+			this.persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(metricRegistry), i, persistingHandlerCount, metricRegistry);
 		}
 		if (enhancingEventHandlers.length > 0) {
 			this.disruptor.handleEventsWith(enhancingEventHandlers);

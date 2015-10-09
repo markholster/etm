@@ -37,8 +37,8 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
-	private final TelemetryEventConverter<String> jsonConverter = new TelemetryEventConverterJsonImpl();
-	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsElasticImpl();
+	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
+	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();
 	
 	private BulkRequestBuilder bulkRequest;
@@ -79,7 +79,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		String type = getElasticType(event);
 		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .source(this.jsonConverter.convert(event, this.tags));
+		        .source(this.eventConverter.convert(event));
 		UpdateRequest updateRequest = new UpdateRequest(index, type, event.id)
 		        .script("etm_update-event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
 		        .upsert(indexRequest)

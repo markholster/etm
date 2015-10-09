@@ -18,43 +18,44 @@ import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
  */
 public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter implements TelemetryEventConverter<String> {
 	
-	private StringBuilder sb = new StringBuilder();
+	private final StringBuilder sb = new StringBuilder();
+	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 
 	@Override
-	public String convert(TelemetryEvent event, TelemetryEventConverterTags tags) {
+	public String convert(TelemetryEvent event) {
 		this.sb.setLength(0);
 		this.sb.append("{");
 		boolean added = false;
-		added = addStringElementToJsonBuffer(tags.getCorrelationIdTag(), event.correlationId, this.sb, !added) || added;
-		added = addMapElementToJsonBuffer(tags.getCorrelationDataTag(), event.correlationData, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(tags.getEndpointTag(), event.endpoint, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, this.sb, !added) || added;
+		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getEndpointTag(), event.endpoint, this.sb, !added) || added;
 		if (event.expiry != null) {
-			added = addLongElementToJsonBuffer(tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, !added) || added;
+			added = addLongElementToJsonBuffer(this.tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, !added) || added;
 		}
-		added = addMapElementToJsonBuffer(tags.getExtractedDataTag(), event.extractedData, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(tags.getNameTag(), event.name, this.sb, !added) || added;
-		added = addMapElementToJsonBuffer(tags.getMetadataTag(), event.metadata, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(tags.getPackagingTag(), event.packaging, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(tags.getPayloadTag(), event.payload, this.sb, !added) || added;
+		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, this.sb, !added) || added;
+		added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), event.metadata, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getPackagingTag(), event.packaging, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getPayloadTag(), event.payload, this.sb, !added) || added;
 		if (event.payloadFormat != null) {
-			added = addStringElementToJsonBuffer(tags.getPayloadFormatTag(), event.payloadFormat.name(), this.sb, !added) || added;
+			added = addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), this.sb, !added) || added;
 		}
 		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
 			// Set the response time to the expiry initially.
-			added = addLongElementToJsonBuffer(tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, !added) || added;
+			added = addLongElementToJsonBuffer(this.tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, !added) || added;
 		}
-		added = addStringElementToJsonBuffer(tags.getTransactionIdTag(), event.transactionId, this.sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), event.transactionId, this.sb, !added) || added;
 		if (event.transport != null) {
-			added = addStringElementToJsonBuffer(tags.getTransportTag(), event.transport.name(), this.sb, !added) || added;
+			added = addStringElementToJsonBuffer(this.tags.getTransportTag(), event.transport.name(), this.sb, !added) || added;
 		}
 		if (!event.readingEndpointHandlers.isEmpty()) {
 			if (added) {
 				this.sb.append(", ");
 			}
-			this.sb.append("\"" + tags.getReadingEndpointHandlersTag() + "\": [");
+			this.sb.append("\"" + this.tags.getReadingEndpointHandlersTag() + "\": [");
 			added = false;
 			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
-				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, tags) || added;
+				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, this.tags) || added;
 			}
 			this.sb.append("]");
 		}
@@ -62,8 +63,8 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 			if (added) {
 				this.sb.append(", ");
 			}
-			this.sb.append("\"" + tags.getWritingEndpointHandlerTag() + "\": ");
-			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true, tags);
+			this.sb.append("\"" + this.tags.getWritingEndpointHandlerTag() + "\": ");
+			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true, this.tags);
 		}
 		this.sb.append("}");
 		return this.sb.toString();
@@ -111,5 +112,10 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		}
 		buffer.append("}");
 		return true;
+	}
+
+	@Override
+	public TelemetryEventConverterTags getTags() {
+		return this.tags;
 	}
 }

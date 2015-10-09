@@ -4,5 +4,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 
 public interface EtmConfigurationConverter<T> {
 
-	T convert(EtmConfiguration etmConfiguration, EtmConfiguration defaultConfiguration, EtmConfigurationConverterTags etmConfigurationConverterTags);
+	T convert(EtmConfiguration etmConfiguration, EtmConfiguration defaultConfiguration);
+	
+	EtmConfigurationConverterTags getTags();
 }

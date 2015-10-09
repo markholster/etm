@@ -14,8 +14,10 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.settings.ImmutableSettings;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
@@ -23,19 +25,24 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
-	private final MetricRegistry metricRegistry;
-	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsElasticImpl();
+	private final TelemetryEventConverterTags eventTags = new TelemetryEventConverterTagsJsonImpl();
+//	private final ProcessorStatsConverterTags processorTags = new 
 
-	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient, final MetricRegistry metricRegistry) {
+	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
 		this.etmConfiguration = etmConfiguration;
 		this.elasticClient = elasticClient;
-		this.metricRegistry = metricRegistry;
 	}
 	
 	@Override
-	public TelemetryEventRepository createTelemetryEventRepository() {
-		return new TelemetryEventRepositoryElasticImpl(this.etmConfiguration, this.elasticClient, this.metricRegistry);
+	public TelemetryEventRepository createTelemetryEventRepository(final MetricRegistry metricRegistry) {
+		return new TelemetryEventRepositoryElasticImpl(this.etmConfiguration, this.elasticClient, metricRegistry);
 	}
+	
+	@Override
+	public ScheduledReporter createMetricReporter(String nodeName, MetricRegistry metricRegistry) {
+		return new MetricReporterElasticImpl(metricRegistry, nodeName, this.elasticClient);
+	}
+
 
 	@Override
 	public void createEnvironment() {
@@ -51,114 +58,28 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 			.addAlias(new Alias("etm_event_all"))
 			.addAlias(new Alias("etm_event_today"))
 			.get();
+		new PutIndexTemplateRequestBuilder(this.elasticClient.admin().indices(), "etm_stats")
+		.setCreate(false)
+		.setTemplate("etm_stats_*")
+		.setSettings(ImmutableSettings.settingsBuilder()
+				.put("number_of_shards", this.etmConfiguration.getShardsPerIndex())
+				.put("number_of_replicas", this.etmConfiguration.getReplicasPerIndex())
+				.build())
+		.addMapping("_default_", createStatsMapping())
+		.get();
 	}
 	
 	private String createEventMapping(String type) {
-		return "{" + 
-				"   \"properties\": {" + 
-				"	    \"" + this.tags.getCorrelationIdTag() +"\": {" + 
-				"   	    \"type\": \"string\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getEndpointTag() + "\": {" + 
-				"   	    \"type\": \"string\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getExpiryTag() + "\": {" + 
-				"   	    \"type\": \"long\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"	    \"" + this.tags.getNameTag() +"\": {" + 
-				"   	    \"type\": \"string\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"       \"" + this.tags.getPackagingTag() + "\": {" + 
-				"   	    \"type\": \"string\"," + 
-				"           \"index\": \"not_analyzed\"" + 
-				"       }," + 
-				"       \"" + this.tags.getPayloadTag() + "\": {" + 
-				"   	    \"type\": \"string\"," +
-				"           \"index\": \"analyzed\"" + 				
-				"       }," + 
-				"       \"" + this.tags.getPayloadFormatTag() + "\": {" + 
-				"   	    \"type\": \"string\"," + 
-				"           \"index\": \"not_analyzed\"" + 
-				"       }," + 
-				"       \"" + this.tags.getReadingEndpointHandlersTag() + "\": {" + 
-				"   	    \"properties\": {" + 
-				"       	    \"" + this.tags.getEndpointHandlerApplicationTag() + "\": {" + 
-				"           	    \"properties\": {" + 
-				"               	    \"" + this.tags.getApplicationInstanceTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"           				\"index\": \"not_analyzed\"" + 				
-				"                       }," + 
-				"                       \"" + this.tags.getApplicationNameTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"           				\"index\": \"not_analyzed\"" + 				
-				"                       }," + 
-				"                       \"" + this.tags.getApplicationPrincipalTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"           				\"index\": \"not_analyzed\"" + 				
-				"                       }," + 
-				"                       \"" + this.tags.getApplicationVersionTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"          			 		\"index\": \"not_analyzed\"" + 				
-				"                       }" + 
-				"                   }" + 
-				"               }," + 
-				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
-				"           	    \"type\": \"long\"," +
-				"           		\"index\": \"not_analyzed\"" + 				
-				"               }" + 
-				"           }" + 
-				"       }," + 
-				"       \"" + this.tags.getResponseTimeTag() + "\": {" + 
-				"   	    \"type\": \"long\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"       \"" + this.tags.getResponseHandlingTimeTag() + "\": {" + 
-				"   	    \"type\": \"long\"," +
-				"           \"index\": \"not_analyzed\"" + 				
-				"       }," + 
-				"       \"" + this.tags.getTransactionIdTag() + "\": {" + 
-				"   	    \"type\": \"string\"," + 
-				"           \"index\": \"not_analyzed\"" + 
-				"       }," + 
-				"       \"" + this.tags.getTransportTag() + "\": {" + 
-				"   	    \"type\": \"string\"," + 
-				"           \"index\": \"not_analyzed\"" + 
-				"       }," + 
-				"       \"" + this.tags.getWritingEndpointHandlerTag() + "\": {" + 
-				"   	    \"properties\": {" + 
-				"       	    \"" + this.tags.getEndpointHandlerApplicationTag() + "\": {" + 
-				"           	    \"properties\": {" + 
-				"               	    \"" + this.tags.getApplicationInstanceTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"           				\"index\": \"not_analyzed\"" + 				
-				"                       }," + 
-				"                       \"" + this.tags.getApplicationNameTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"           				\"index\": \"not_analyzed\"" + 				
-				"                       }," + 
-				"                       \"" + this.tags.getApplicationPrincipalTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"           				\"index\": \"not_analyzed\"" + 				
-				"                       }," + 
-				"                       \"" + this.tags.getApplicationVersionTag() + "\": {" + 
-				"                   	    \"type\": \"string\"," +
-				"           				\"index\": \"not_analyzed\"" + 				
-				"                       }" + 
-				"                   }" + 
-				"               }," + 
-				"               \"" + this.tags.getEndpointHandlerHandlingTimeTag() + "\": {" + 
-				"           	    \"type\": \"long\"," +
-				"           		\"index\": \"not_analyzed\"" + 				
-				"               }" + 
-				"           }" + 
-				"       }" + 
-				"    }" + 
-				"}";
+		return "{\"dynamic_templates\": ["
+				+ "{ \"" + this.eventTags.getPayloadTag() + "\": { \"match\": \"" + this.eventTags.getPayloadTag() + "\", \"mapping\": {\"index\": \"analyzed\"}}}"
+				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}"
+				+ "]}";
 	}
+	
+	private String createStatsMapping() {
+		return "{\"dynamic_templates\": [{ \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}";	
+	}
+
 	
 	private List<String> getIndicesFromAliasName(final IndicesAdminClient indicesAdminClient, final String aliasName) {
 		GetAliasesResponse aliasesResponse = new GetAliasesRequestBuilder(indicesAdminClient, aliasName).get();
@@ -171,6 +92,5 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	@Override
 	public void close() {
 	}
-
 
 }
