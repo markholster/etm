@@ -26,7 +26,6 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
 	private final TelemetryEventConverterTags eventTags = new TelemetryEventConverterTagsJsonImpl();
-//	private final ProcessorStatsConverterTags processorTags = new 
 
 	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
 		this.etmConfiguration = etmConfiguration;

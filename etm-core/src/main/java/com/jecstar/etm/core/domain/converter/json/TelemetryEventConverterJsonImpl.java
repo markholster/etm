@@ -118,4 +118,5 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 	public TelemetryEventConverterTags getTags() {
 		return this.tags;
 	}
+
 }

@@ -5,8 +5,8 @@ import java.util.concurrent.ExecutorService;
 
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
@@ -67,7 +67,7 @@ public class DisruptorEnvironment {
         }
     }
 
-	public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
+	public void findEndpointConfig(String endpoint, EndpointConfiguration result) {
 	    this.telemetryEventRepository.findEndpointConfig(endpoint, result);
     }
 }

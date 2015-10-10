@@ -4,11 +4,14 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
@@ -18,19 +21,26 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.TelemetryEvent;
+import com.jecstar.etm.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
-import com.jecstar.etm.processor.repository.EndpointConfigResult;
 
 public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventRepository {
 
+	private final String endpointConfigIndexName = "etm_configuration";
+	private final String endpointConfigIndexType = "endpoint";
+	private final String endpointConfigDefaultId = "default_configuration";
+	private final long endpointConfigExpiryTime = 60000;
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
 	private final Timer bulkTimer;
+	
 	private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
 			.appendLiteral("-")
@@ -39,10 +49,12 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
 	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
+	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();
+	private final Map<String, EndpointConfiguration> endpointConfigCache = new HashMap<String, EndpointConfiguration>();
 	
 	private BulkRequestBuilder bulkRequest;
-
+	
 
 	public TelemetryEventRepositoryElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient, final MetricRegistry metricRegistry) {
 		this.etmConfiguration = etmConfiguration;
@@ -51,7 +63,36 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
     }
 	
 	@Override
-    public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
+    public void findEndpointConfig(String endpoint, EndpointConfiguration result) {
+		result.initialize();
+		EndpointConfiguration dbInstance = null;
+		if (this.endpointConfigCache.containsKey(endpoint)) {
+			EndpointConfiguration potentialMatch = this.endpointConfigCache.get(endpoint);
+			if (System.currentTimeMillis() - potentialMatch.retrievalTimestamp < this.endpointConfigExpiryTime) {
+				dbInstance = potentialMatch;
+			}
+		} 
+		if (dbInstance == null) {
+			// Checking if the index exist isn't necessary because it's the same
+			// index as the EmtConfiguration. All those check are in the
+			// ElasticBackedEtmConfiguration which is loaded before this class.
+			GetResponse endpointResponse = this.elasticClient.prepareGet(this.endpointConfigIndexName, this.endpointConfigIndexType, endpoint).get();
+			if (!endpointResponse.isExists()) {
+				endpointResponse = this.elasticClient.prepareGet(this.endpointConfigIndexName, this.endpointConfigIndexType, this.endpointConfigDefaultId).get();
+			}
+			if (endpointResponse.isExists()) {
+				dbInstance = this.endpointConfigurationConverter.convert(endpointResponse.getSourceAsString());
+				dbInstance.retrievalTimestamp = System.currentTimeMillis();
+				this.endpointConfigCache.put(endpoint, dbInstance);
+			}
+		}
+		if (dbInstance != null) {
+			result.correlationDataParsers.putAll(dbInstance.correlationDataParsers);
+			result.eventNameParsers.addAll(dbInstance.eventNameParsers);
+			result.extractionDataParsers.putAll(dbInstance.extractionDataParsers);
+			result.readingApplicationParsers.addAll(dbInstance.readingApplicationParsers);
+			result.writingApplicationParsers.addAll(dbInstance.writingApplicationParsers);
+		}
     }
 	
 	@Override

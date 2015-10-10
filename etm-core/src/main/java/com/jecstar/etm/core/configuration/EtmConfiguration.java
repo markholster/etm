@@ -6,7 +6,6 @@ import java.util.List;
 import com.jecstar.etm.core.util.ObjectUtils;
 
 //TODO document this class and the different properties. 
-//TODO fallback to default enum values for proprties with illegal values. 
 public class EtmConfiguration {
 	
 	public static final String CONFIG_KEY_LICENSE = "enhancingHandlerCount";

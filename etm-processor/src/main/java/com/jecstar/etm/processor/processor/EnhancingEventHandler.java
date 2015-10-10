@@ -7,12 +7,12 @@ import java.util.UUID;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
@@ -23,14 +23,14 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private final long numberOfConsumers;
 	
 	private final TelemetryEventRepository telemetryEventRepository;
-	private final EndpointConfigResult endpointConfigResult;
+	private final EndpointConfiguration endpointConfiguration;
 	private final Timer timer;
 	
 	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final MetricRegistry metricRegistry) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
-		this.endpointConfigResult = new EndpointConfigResult();
+		this.endpointConfiguration = new EndpointConfiguration();
 		this.timer = metricRegistry.timer("event-processor-enhancing");
 	}
 
@@ -65,15 +65,15 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 				// Always set the payload format, because it's a type in elastic.
 				event.payloadFormat = detectPayloadFormat(event.payload);
 			}
-			this.endpointConfigResult.initialize();
-			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
+			this.endpointConfiguration.initialize();
+			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfiguration);
 			if (event.name == null) {
 				// Set the event name by the event name parsers.
-				event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.payload);
+				event.name = parseValue(this.endpointConfiguration.eventNameParsers, event.payload);
 			}
 			if (event.writingEndpointHandler.application.name == null) {
 				// Set the writing application name by the writing application parsers.
-				event.writingEndpointHandler.application.name = parseValue(this.endpointConfigResult.writingApplicationParsers, event.payload);
+				event.writingEndpointHandler.application.name = parseValue(this.endpointConfiguration.writingApplicationParsers, event.payload);
 				if (event.writingEndpointHandler.application.name != null && event.writingEndpointHandler.handlingTime == null) {
 					// If the name is set, and the handlingtime is not set, set it to the system date.
 					event.writingEndpointHandler.handlingTime = now;
@@ -81,7 +81,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			}
 			if (event.readingEndpointHandlers.size() == 0) {
 				// Check if we can find some reading applications with the reading application parsers.
-				String readingApplicationName = parseValue(this.endpointConfigResult.readingApplicationParsers, event.payload);
+				String readingApplicationName = parseValue(this.endpointConfiguration.readingApplicationParsers, event.payload);
 				if (readingApplicationName != null) {
 					EndpointHandler endpointHandler = new EndpointHandler();
 					endpointHandler.application.name = readingApplicationName;
@@ -94,24 +94,24 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 					endpointHandler.handlingTime = event.writingEndpointHandler.handlingTime != null ? event.writingEndpointHandler.handlingTime : now;
 				}
 			}
-			// Check if dont't have any reading or writing application set. If
-			// so, set the time one de writing application anyway, because
+			// Check a reading or writing application is set. If
+			// not, set the time one the writing application anyway, because
 			// elastic needs at least 1 event time to determine the index.
 			if (event.writingEndpointHandler.handlingTime == null && event.readingEndpointHandlers.size() == 0) {
 				event.writingEndpointHandler.handlingTime = now;
 			}
-			if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
+			if (!this.endpointConfiguration.correlationDataParsers.isEmpty()) {
 				// Apply the correlation parsers.
-				this.endpointConfigResult.correlationDataParsers.forEach((k,v) -> {
+				this.endpointConfiguration.correlationDataParsers.forEach((k,v) -> {
 					String parsedValue = parseValue(v, event.payload);
 					if (parsedValue != null) {
 						event.correlationData.put(k, parsedValue);
 					}
 				});
 			}
-			if (!this.endpointConfigResult.extractionDataParsers.isEmpty()) {
+			if (!this.endpointConfiguration.extractionDataParsers.isEmpty()) {
 				// Apply the data extraction parsers.
-				this.endpointConfigResult.extractionDataParsers.forEach((k,v) -> {
+				this.endpointConfiguration.extractionDataParsers.forEach((k,v) -> {
 					String parsedValue = parseValue(v, event.payload);
 					if (parsedValue != null) {
 						event.extractedData.put(k, parsedValue);
