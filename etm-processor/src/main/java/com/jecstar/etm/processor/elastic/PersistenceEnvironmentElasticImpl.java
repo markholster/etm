@@ -69,8 +69,10 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	}
 	
 	private String createEventMapping(String type) {
+		// TODO moet dit misschien met een path_match i.p.v. een match? 
 		return "{\"dynamic_templates\": ["
 				+ "{ \"" + this.eventTags.getPayloadTag() + "\": { \"match\": \"" + this.eventTags.getPayloadTag() + "\", \"mapping\": {\"index\": \"analyzed\"}}}"
+				+ "{ \"" + this.eventTags.getPayloadTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerLocationTag() + "\", \"mapping\": {\"type\": \"geo_point\"}}}"
 				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}"
 				+ "]}";
 	}

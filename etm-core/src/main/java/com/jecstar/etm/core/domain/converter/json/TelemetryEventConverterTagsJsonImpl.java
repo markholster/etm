@@ -119,4 +119,19 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 		return "principal";
 	}
 
+	@Override
+	public String getEndpointHandlerLocationTag() {
+		return "location";
+	}
+
+	@Override
+	public String getLatitudeTag() {
+		return "lat";
+	}
+
+	@Override
+	public String getLongitudeTag() {
+		return "lon";
+	}
+
 }

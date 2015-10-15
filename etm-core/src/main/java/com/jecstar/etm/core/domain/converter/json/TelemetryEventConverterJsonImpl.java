@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import com.jecstar.etm.core.domain.Application;
 import com.jecstar.etm.core.domain.EndpointHandler;
+import com.jecstar.etm.core.domain.Location;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
@@ -109,6 +110,16 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 			added = addStringElementToJsonBuffer(tags.getApplicationVersionTag(), application.version, buffer, !added) || added;
 			added = addStringElementToJsonBuffer(tags.getApplicationPrincipalTag(), application.principal, buffer, !added) || added;
 			buffer.append("}");
+		}
+		Location location = endpointHandler.location;
+		if (location.isSet()) {
+			if (added) {
+				buffer.append(", ");
+			}
+			buffer.append("\"" + tags.getEndpointHandlerLocationTag() + "\" : {");
+			added = addDoubleElementToJsonBuffer(tags.getLatitudeTag(), location.latitude, buffer, true);
+			added = addDoubleElementToJsonBuffer(tags.getLongitudeTag(), location.longitude, buffer, !added) || added;
+			buffer.append("}");			
 		}
 		buffer.append("}");
 		return true;

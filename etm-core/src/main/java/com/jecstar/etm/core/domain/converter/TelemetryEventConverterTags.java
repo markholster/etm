@@ -30,4 +30,9 @@ public interface TelemetryEventConverterTags {
 	String getApplicationInstanceTag();
 	String getApplicationVersionTag();
 	String getApplicationPrincipalTag();
+	
+	// Location attributes.
+	String getEndpointHandlerLocationTag();
+	String getLatitudeTag();
+	String getLongitudeTag();
 }

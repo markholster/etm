@@ -51,7 +51,13 @@ public abstract class AbstractJsonConverter {
 		}
 		return null;
 	}
-
+	
+	protected Double getDouble(String tag, Map<String, Object> valueMap) {
+		if (valueMap.containsKey(tag)) {
+			return ((Double)valueMap.get(tag)).doubleValue();
+		}
+		return null;
+	}
 
 	protected boolean addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer, boolean firstElement) {
 		if (elementValue == null) {
@@ -65,6 +71,17 @@ public abstract class AbstractJsonConverter {
 	}
 
 	protected boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean firstElement) {
+		if (elementValue == null) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
+		return true;
+	}
+	
+	protected boolean addDoubleElementToJsonBuffer(String elementName, Double elementValue, StringBuilder buffer, boolean firstElement) {
 		if (elementValue == null) {
 			return false;
 		}
