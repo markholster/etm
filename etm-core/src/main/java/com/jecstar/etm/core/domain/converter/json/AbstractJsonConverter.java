@@ -1,6 +1,7 @@
 package com.jecstar.etm.core.domain.converter.json;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -102,6 +103,18 @@ public abstract class AbstractJsonConverter {
 		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
 		return true;
 	}
+	
+	protected boolean addInetAddressElementToJsonBuffer(String elementName, InetAddress elementValue, StringBuilder buffer, boolean firstElement) {
+		if (elementValue == null) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("\"" + escapeToJson(elementName) + "\": \"" + elementValue.getHostAddress() + "\"");
+		return true;
+	}
+
 	
 	protected String escapeToJson(String value) {
 		return value.replace("\"", "\\\"");

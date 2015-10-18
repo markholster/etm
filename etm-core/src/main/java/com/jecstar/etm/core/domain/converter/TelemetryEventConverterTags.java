@@ -27,6 +27,7 @@ public interface TelemetryEventConverterTags {
 	
 	// Application attributes
 	String getApplicationNameTag();
+	String getApplicationHostAddressTag();
 	String getApplicationInstanceTag();
 	String getApplicationVersionTag();
 	String getApplicationPrincipalTag();

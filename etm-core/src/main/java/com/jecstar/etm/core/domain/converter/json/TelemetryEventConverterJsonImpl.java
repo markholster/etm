@@ -106,6 +106,7 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 			}
 			buffer.append("\"" + tags.getEndpointHandlerApplicationTag() + "\" : {");
 			added = addStringElementToJsonBuffer(tags.getApplicationNameTag(), application.name, buffer, true);
+			added = addInetAddressElementToJsonBuffer(tags.getApplicationHostAddressTag(), application.hostAddress, buffer, !added) || added;
 			added = addStringElementToJsonBuffer(tags.getApplicationInstanceTag(), application.instance, buffer, !added) || added;
 			added = addStringElementToJsonBuffer(tags.getApplicationVersionTag(), application.version, buffer, !added) || added;
 			added = addStringElementToJsonBuffer(tags.getApplicationPrincipalTag(), application.principal, buffer, !added) || added;

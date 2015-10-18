@@ -103,6 +103,11 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	public String getApplicationNameTag() {
 		return "name";
 	}
+	
+	@Override
+	public String getApplicationHostAddressTag() {
+		return "host_address";
+	}
 
 	@Override
 	public String getApplicationInstanceTag() {

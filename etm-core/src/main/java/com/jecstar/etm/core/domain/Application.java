@@ -1,5 +1,7 @@
 package com.jecstar.etm.core.domain;
 
+import java.net.InetAddress;
+
 public class Application {
 	
 	/**
@@ -8,7 +10,12 @@ public class Application {
 	public String name;
 	
 	/**
-	 * The instance of the application. Useful if the application is clustered, or to store the IP address of the browser in case of a http request.
+	 * The hostAddress of the application.
+	 */
+	public InetAddress hostAddress;
+	
+	/**
+	 * The instance of the application. Useful if the application is clustered.
 	 */
 	public String instance;
 	
@@ -24,6 +31,7 @@ public class Application {
 	
 	public Application initialize() {
 		this.name = null;
+		this.hostAddress = null;
 		this.instance = null;
 		this.principal = null;
 		this.version = null;
@@ -33,6 +41,7 @@ public class Application {
 	public Application initialize(Application copy) {
 		this.initialize();
 		this.name = copy.name;
+		this.hostAddress = copy.hostAddress;
 		this.instance = copy.instance;
 		this.principal = copy.principal;
 		this.version = copy.version;
@@ -40,7 +49,7 @@ public class Application {
 	}
 
 	public boolean isSet() {
-		if (this.name != null || this.instance != null || this.principal != null || this.version != null) {
+		if (this.name != null || this.instance != null || this.principal != null || this.version != null || this.hostAddress != null) {
 			return true;
 		}
 		return false; 
