@@ -65,6 +65,9 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	@Override
     public void findEndpointConfig(String endpoint, EndpointConfiguration result) {
 		result.initialize();
+		if (endpoint == null || endpoint.length() == 0) {
+			return;
+		}
 		EndpointConfiguration dbInstance = null;
 		if (this.endpointConfigCache.containsKey(endpoint)) {
 			EndpointConfiguration potentialMatch = this.endpointConfigCache.get(endpoint);

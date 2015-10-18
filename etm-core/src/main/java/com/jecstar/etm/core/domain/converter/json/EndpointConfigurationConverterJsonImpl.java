@@ -116,4 +116,9 @@ public class EndpointConfigurationConverterJsonImpl extends AbstractJsonConverte
 			throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
 		}
 	}
+
+	@Override
+	public EndpointConfigurationConverterTags getTags() {
+		return this.tags;
+	}
 }
