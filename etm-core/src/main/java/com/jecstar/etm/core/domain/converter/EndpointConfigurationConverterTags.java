@@ -16,4 +16,11 @@ public interface EndpointConfigurationConverterTags {
 	String getPathTag();
 	String getExpressionTag();
 	String getTemplateTag();
+	
+	String getCorrelationDataParserNameTag();
+	String getCorrelationDataParserExpressionTag();
+	
+	String getExtractionDataParserNameTag();
+	String getExtractionDataParserExpressionTag();
+
 }

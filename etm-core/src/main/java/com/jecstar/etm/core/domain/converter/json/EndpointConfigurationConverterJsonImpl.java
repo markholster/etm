@@ -13,6 +13,8 @@ import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.EndpointConfigurationConverterTags;
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.FixedPositionExpressionParser;
 import com.jecstar.etm.core.parsers.FixedValueExpressionParser;
@@ -25,6 +27,12 @@ import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
 public class EndpointConfigurationConverterJsonImpl extends AbstractJsonConverter implements EndpointConfigurationConverter<String> {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(EndpointConfigurationConverterJsonImpl.class);
+
 
 	private static final String EXPR_TYPE_FIXED_POSITION = "fixed_position"; 
 	private static final String EXPR_TYPE_FIXED_VALUE = "fixed_value"; 
@@ -39,14 +47,17 @@ public class EndpointConfigurationConverterJsonImpl extends AbstractJsonConverte
 	    config.setErrorListener(new ErrorListener() {
 			@Override
 			public void warning(TransformerException exception) throws TransformerException {
+				log.logWarningMessage(exception.getMessage(), exception);
 			}
 			
 			@Override
 			public void fatalError(TransformerException exception) throws TransformerException {
+				log.logFatalMessage(exception.getMessage(), exception);
 			}
 			
 			@Override
 			public void error(TransformerException exception) throws TransformerException {
+				log.logErrorMessage(exception.getMessage(), exception);
 			}
 		});
 		XPathFactory xpf = new XPathFactoryImpl(config);
@@ -67,7 +78,18 @@ public class EndpointConfigurationConverterJsonImpl extends AbstractJsonConverte
 		writingApplicationMaps.forEach(c -> config.writingApplicationParsers.add(convertToExpressionParser(c)));
 		List<Map<String, Object>> eventNameMaps = getArray(this.tags.getEventNameParsersTag(), valueMap);
 		eventNameMaps.forEach(c -> config.eventNameParsers.add(convertToExpressionParser(c)));
-		// TODO add data correlation & data extraction parsers.
+		List<Map<String, Object>> correlationDataParsers = getArray(this.tags.getCorrelationDataParsersTag(), valueMap);
+		correlationDataParsers.forEach(c -> {
+			String dataName = getString(this.tags.getCorrelationDataParserNameTag(), c);
+			ExpressionParser expressionParser = convertToExpressionParser(getObject(this.tags.getCorrelationDataParserExpressionTag(), c));
+			config.correlationDataParsers.put(dataName, expressionParser);
+		});
+		List<Map<String, Object>> extractionDataParsers = getArray(this.tags.getExtractionDataParsersTag(), valueMap);
+		extractionDataParsers.forEach(c -> {
+			String extractionName = getString(this.tags.getExtractionDataParserNameTag(), c);
+			ExpressionParser expressionParser = convertToExpressionParser(getObject(this.tags.getExtractionDataParserExpressionTag(), c));
+			config.extractionDataParsers.put(extractionName, expressionParser);
+		});
 		return config;
 	}
 

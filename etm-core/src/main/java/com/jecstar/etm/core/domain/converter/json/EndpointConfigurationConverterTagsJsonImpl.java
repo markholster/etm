@@ -69,4 +69,24 @@ public class EndpointConfigurationConverterTagsJsonImpl implements EndpointConfi
 		return "template";
 	}
 
+	@Override
+	public String getCorrelationDataParserNameTag() {
+		return "correlation_data_parsers_name";
+	}
+
+	@Override
+	public String getCorrelationDataParserExpressionTag() {
+		return "correlation_data_parsers_expression";
+	}
+
+	@Override
+	public String getExtractionDataParserNameTag() {
+		return "extraction_data_parsers_name";
+	}
+
+	@Override
+	public String getExtractionDataParserExpressionTag() {
+		return "extraction_data_parsers_expression";
+	}
+
 }
