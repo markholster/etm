@@ -21,13 +21,18 @@
 			<modules>
 				<module>../etm-core</module>
 				<module>../etm-processor</module>
+<!-- 				
 				<module>../etm-processor-mdb</module>
+ -->				
 				<module>../etm-processor-rest</module>
+                <module>../etm-launcher</module>				
+<!-- 				
 				<module>../etm-processor-ws</module>
 				<module>../etm-gui</module>
 				<module>../etm-scheduler-retention</module>
 				<module>../etm-documentation</module>
 				<module>../etm-distribution</module>
+ -->				
 			</modules>
 		</profile>
 		<profile>
@@ -37,23 +42,31 @@
 			</activation>
 			<modules>
 				<module>../etm-core</module>
+<!-- 				
 				<module>../etm-jee-configurator-core</module>
 				<module>../etm-processor-jee-configurator</module>
+ -->				
 				<module>../etm-processor</module>
+<!--				
 				<module>../etm-processor-mdb</module>
+-->				
 				<module>../etm-processor-rest</module>
+				<module>../etm-launcher</module>
+<!-- 				
 				<module>../etm-processor-ws</module>
 				<module>../etm-gui-jee-configurator</module>
 				<module>../etm-gui</module>
 				<module>../etm-scheduler-jee-configurator</module>
 				<module>../etm-scheduler-retention</module>
-				<module>../etm-license-generator</module>
+ -->
+ 				<module>../etm-license-generator</module>
 			</modules>
 		</profile>
 	</profiles>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.jdk.level>1.8</project.jdk.level>
+		<version.wildfly-swarm>1.0.0.Alpha4</version.wildfly-swarm>
 	</properties>
 	<repositories>
 		<repository>
@@ -135,7 +148,6 @@
 				<groupId>com.jecstar.etm</groupId>
 				<artifactId>etm-processor-rest</artifactId>
 				<version>${project.version}</version>
-				<type>war</type>
 			</dependency>
 			<dependency>
 				<groupId>com.lmax</groupId>
@@ -182,6 +194,11 @@
 				<artifactId>slf4j-simple</artifactId>
 				<version>1.7.9</version>
 			</dependency>
+			<dependency>
+			  <groupId>org.wildfly.swarm</groupId>
+			  <artifactId>wildfly-swarm-jaxrs</artifactId>
+			  <version>${version.wildfly-swarm}</version>
+			</dependency>			
 		</dependencies>
 	</dependencyManagement>
 	<build>

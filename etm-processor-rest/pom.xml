@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.jecstar.etm</groupId>
 	<artifactId>etm-processor-rest</artifactId>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<description>A RESTService that takes events in JSON format and passes
 		them to the processor.</description>
 	<name>Enterprise Telemetry Monitor - processor rest</name>
@@ -19,18 +19,10 @@
 			<groupId>com.jecstar.etm</groupId>
 			<artifactId>etm-processor</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.jecstar.etm</groupId>
-			<artifactId>etm-processor-jee-configurator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-api</artifactId>
-		</dependency>
-		<dependency>
-		    <groupId>com.fasterxml.jackson.core</groupId>
-		    <artifactId>jackson-core</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+        </dependency>		
 	</dependencies>
 	<build>
 		<plugins>
