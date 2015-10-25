@@ -27,7 +27,6 @@ import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.TelemetryEventBuilder;
 import com.jecstar.etm.core.domain.Transport;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
-import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterTagsJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
 
 /**
@@ -258,7 +257,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 	}
 	
 	private EtmConfiguration createSingleCommitConfiguration() {
-		EtmConfiguration configuration = new ElasticBackedEtmConfiguration(this.nodeName, this.getClass().getName(), this.client, new EtmConfigurationConverterTagsJsonImpl());
+		EtmConfiguration configuration = new ElasticBackedEtmConfiguration(this.nodeName, this.getClass().getName(), this.client);
 		configuration.setPersistingBulkSize(1);
 		return configuration;
 	}

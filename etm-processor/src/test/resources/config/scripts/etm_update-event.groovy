@@ -1,4 +1,3 @@
-if (id) {ctx._sourceid = id};
 if (correlation_id) {ctx._source.correlation_id = correlation_id};
 if (correlation_data) {if (ctx._source.correlation_data) {ctx._source.correlation_data += correlation_data} else {ctx._source.correlation_data = correlation_data}};
 if (endpoint) {ctx._source.endpoint = endpoint};

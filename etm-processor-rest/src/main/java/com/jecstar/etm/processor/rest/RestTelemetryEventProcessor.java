@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -30,12 +29,17 @@ public class RestTelemetryEventProcessor {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(RestTelemetryEventProcessor.class);
 
-	@Inject
-	private TelemetryCommandProcessor telemetryCommandProcessor;
+	private static TelemetryCommandProcessor telemetryCommandProcessor;
 
 	private final TelemetryCommand command = new TelemetryCommand();
 	
 	private final TelemetryEventConverter<String> telemetryEventConverter = new TelemetryEventConverterJsonImpl();
+
+	public static void setProcessor(TelemetryCommandProcessor processor) {
+		telemetryCommandProcessor = processor;
+		
+	}
+
 	
 	@POST
 	@Path("/add")
@@ -52,7 +56,7 @@ public class RestTelemetryEventProcessor {
 		    this.command.initialize();
 		    this.command.commandType = CommandType.EVENT;
 		    this.telemetryEventConverter.convert(out.toString(), command.event);
-		    this.telemetryCommandProcessor.processTelemetryCommand(command);
+		    telemetryCommandProcessor.processTelemetryCommand(command);
 			return "{ \"status\": \"success\" }";
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {
@@ -61,6 +65,4 @@ public class RestTelemetryEventProcessor {
 			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
 		}
 	}
-
-
 }

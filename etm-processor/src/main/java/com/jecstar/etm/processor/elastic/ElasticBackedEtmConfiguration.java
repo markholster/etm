@@ -10,7 +10,6 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.License;
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
-import com.jecstar.etm.core.domain.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
@@ -20,7 +19,6 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	private final String defaultId = "default_configuration";
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
-	private final EtmConfigurationConverterTags tags = this.etmConfigurationConverter.getTags();
 	
 	private final long updateCheckInterval = 60 * 1000;
 	private long lastCheckedForUpdates;
@@ -28,7 +26,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	private long nodeVersion = -1;
 	
 	
-	public ElasticBackedEtmConfiguration(String nodeName, String component, final Client elasticClient, final EtmConfigurationConverterTags etmConfigurationConverterTags) {
+	public ElasticBackedEtmConfiguration(String nodeName, String component, final Client elasticClient) {
 		super(nodeName, component);
 		this.elasticClient = elasticClient;
 		reloadConfigurationWhenNecessary();
