@@ -60,14 +60,14 @@ public class TelemetryEvent {
 	public Map<String, String> extractedData = new HashMap<String, String>();
 	
 	/**
-	 * The name of the event.
-	 */
-	public String name;
-	
-	/**
 	 * Metadata of the event. Not used by the application, but can be filled by the end user. 
 	 */
 	public Map<String, String> metadata = new HashMap<String, String>();
+	
+	/**
+	 * The name of the event.
+	 */
+	public String name;
 
 	/**
 	 * The packaging of the payload. E.g. an Email of an MQ Request.

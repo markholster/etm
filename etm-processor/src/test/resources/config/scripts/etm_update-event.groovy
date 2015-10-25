@@ -1,3 +1,4 @@
+if (id) {ctx._sourceid = id};
 if (correlation_id) {ctx._source.correlation_id = correlation_id};
 if (correlation_data) {if (ctx._source.correlation_data) {ctx._source.correlation_data += correlation_data} else {ctx._source.correlation_data = correlation_data}};
 if (endpoint) {ctx._source.endpoint = endpoint};
@@ -9,6 +10,7 @@ if (packaging) {ctx._source.packaging = packaging};
 if (payload) {ctx._source.payload = payload};
 if (payload_format) {ctx._source.payload_format = payload_format};
 if (reading_endpoint_handlers) {if (ctx._source.reading_endpoint_handlers) {ctx._source.reading_endpoint_handlers += reading_endpoint_handlers} else {ctx._source.reading_endpoint_handlers = reading_endpoint_handlers}};
+if (transaction_id) {ctx._source.transaction_id = transaction_id};
 if (transport) {ctx._source.transport = transport};
 if (writing_endpoint_handler) {ctx._source.writing_endpoint_handler = writing_endpoint_handler};
 if (writing_endpoint_handler && writing_endpoint_handler.handling_time && ctx._source.response_handling_time) {ctx._source.response_time = ctx._source.response_handling_time - writing_endpoint_handler.handling_time; ctx._source.remove('response_handling_time')};
