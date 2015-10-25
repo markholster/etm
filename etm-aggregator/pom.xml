@@ -82,7 +82,12 @@
 		      <groupId>com.codahale.metrics</groupId>
 		      <artifactId>metrics-core</artifactId>
 		      <version>3.0.2</version>
-		    </dependency>           
+		    </dependency>
+		    <dependency>
+                <groupId>com.esotericsoftware.yamlbeans</groupId>
+                <artifactId>yamlbeans</artifactId>
+                <version>1.09</version>
+            </dependency>		               
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
@@ -321,6 +326,11 @@
 					<artifactId>maven-jdocbook-plugin</artifactId>
 					<version>2.3.8</version>
 				</plugin>
+	            <plugin>
+	                <groupId>org.wildfly.swarm</groupId>
+	                <artifactId>wildfly-swarm-plugin</artifactId>
+                    <version>${version.wildfly-swarm}</version>				
+                </plugin>    
 			</plugins>
 		</pluginManagement>
 	</build>
