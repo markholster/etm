@@ -21,7 +21,7 @@ import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
-@Path("/rest/event")
+@Path("/event")
 public class RestTelemetryEventProcessor {
 
 	/**
