@@ -37,9 +37,7 @@ public class RestTelemetryEventProcessor {
 
 	public static void setProcessor(TelemetryCommandProcessor processor) {
 		telemetryCommandProcessor = processor;
-		
 	}
-
 	
 	@POST
 	@Path("/add")

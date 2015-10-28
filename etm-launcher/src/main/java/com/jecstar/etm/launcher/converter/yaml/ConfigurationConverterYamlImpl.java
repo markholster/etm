@@ -28,6 +28,9 @@ public class ConfigurationConverterYamlImpl implements ConfigurationConverter<Ma
 		if (content.containsKey(this.tags.getHttpPortTag())) {
 			configuration.httpPort = Integer.valueOf(content.get(this.tags.getHttpPortTag()).toString());
 		}
+		if (content.containsKey(this.tags.getDataPathTag())) {
+			configuration.dataPath = content.get(this.tags.getDataPathTag()).toString();
+		}
 		if (content.containsKey(this.tags.getRestEnabledTag())) {
 			configuration.restEnabled = Boolean.valueOf(content.get(this.tags.getRestEnabledTag()).toString());
 		}

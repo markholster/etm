@@ -45,9 +45,9 @@ public class TelemetryEventRepositoryElasticImplTest {
 	public static void beforeClass() {
 		node = new NodeBuilder().settings(ImmutableSettings.settingsBuilder()
 				.put("cluster.name", "Enterprise Telemetry Monitor - Unit Test")
-				.put("node.name", System.getProperty("user.name"))
+				.put("node.name", "Unit test " + System.getProperty("user.name"))
 				.put("http.enabled", false)
-				.put("path.conf", "src/test/resources/config"))
+				.put("path.conf", "src/main/resources/config"))
 				.local(true)
 				.node();
 	}

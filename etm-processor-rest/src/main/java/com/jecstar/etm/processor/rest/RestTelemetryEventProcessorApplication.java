@@ -5,7 +5,13 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
+import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
+
 public class RestTelemetryEventProcessorApplication extends Application {
+
+	public RestTelemetryEventProcessorApplication(TelemetryCommandProcessor processor) {
+		RestTelemetryEventProcessor.setProcessor(processor);
+	}
 
 	@Override
     public Set<Class<?>> getClasses()

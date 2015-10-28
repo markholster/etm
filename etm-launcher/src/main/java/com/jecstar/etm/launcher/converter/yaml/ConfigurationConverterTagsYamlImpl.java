@@ -30,8 +30,14 @@ public class ConfigurationConverterTagsYamlImpl implements ConfigurationConverte
 	}
 
 	@Override
+	public String getDataPathTag() {
+		return "path.data";
+	}
+	
+	@Override
 	public String getRestEnabledTag() {
 		return "rest.enabled";
 	}
+
 
 }
