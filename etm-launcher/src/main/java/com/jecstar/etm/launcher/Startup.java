@@ -30,6 +30,7 @@ import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -49,27 +50,17 @@ public class Startup {
 	private static Node node;
 
 	public static void main(String[] args) {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				if (processor != null) {
-					processor.stopAll();
-				}
-				if (node != null) {
-					node.close();
-				}
-			}
-		});
 		try {
 			Configuration configuration = loadConfiguration();
 			final PathHandler root = Handlers.path();
+			GracefulShutdownHandler shutdownHandler = Handlers.gracefulShutdown(root);
 			final ServletContainer container = ServletContainer.Factory.newInstance();
 			Undertow server = Undertow.builder()
 					.addHttpListener(configuration.httpPort + configuration.bindingPortOffset,
 							configuration.bindingAddress)
 					.setHandler(root).build();
 			if (configuration.restEnabled) {
-				 initializeProcessor(configuration);
+				initializeProcessor(configuration);
 				RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(
 						processor);
 				ResteasyDeployment deployment = new ResteasyDeployment();
@@ -82,6 +73,24 @@ public class Startup {
 				manager.deploy();
 				root.addPrefixPath(di.getContextPath(), manager.start());
 			}
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				@Override
+				public void run() {
+					shutdownHandler.shutdown();
+					try {
+						shutdownHandler.awaitShutdown(30000);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+					server.stop();
+					if (processor != null) {
+						processor.stopAll();
+					}
+					if (node != null) {
+						node.close();
+					}
+				}
+			});
 			server.start();
 		} catch (FileNotFoundException e) {
 			log.logFatalMessage("Error reading configuration file", e);
@@ -127,7 +136,10 @@ public class Startup {
 								.put("path.data", configuration.dataPath)
 								.put("client.transport.sniff", true)
 								.put("http.enabled", false))
-						.client(false).data(true).clusterName(configuration.clusterName).node();
+						.client(!configuration.nodeData)
+						.data(configuration.nodeData)
+						.clusterName(configuration.clusterName)
+						.node();
 			}
 			Client elasticClient = node.client();
 			ExecutorService executor = Executors.newCachedThreadPool();

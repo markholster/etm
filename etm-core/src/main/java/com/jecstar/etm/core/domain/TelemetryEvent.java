@@ -124,6 +124,9 @@ public class TelemetryEvent {
 	
 	public TelemetryEvent initialize(TelemetryEvent copy) {
 		this.initialize();
+		if (copy == null) {
+			return this;
+		}
 		this.id = copy.id;
 		this.correlationId = copy.correlationId;
 		this.correlationData.putAll(copy.correlationData);

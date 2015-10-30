@@ -72,6 +72,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}		
 		this.executorService.shutdown();
 		this.disruptorEnvironment.shutdown();
+		this.metricReporter.stop();
 		this.persistenceEnvironment.close();
 	}
 

@@ -28,6 +28,9 @@ public class EndpointHandler {
 	
 	public EndpointHandler initialize(EndpointHandler copy) {
 		initialize();
+		if (copy == null) {
+			return this;
+		}
 		this.application.initialize(copy.application);
 		this.location.initialize(copy.location);
 		this.handlingTime = copy.handlingTime;

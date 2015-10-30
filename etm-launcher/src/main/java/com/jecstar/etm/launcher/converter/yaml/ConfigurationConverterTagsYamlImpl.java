@@ -30,6 +30,11 @@ public class ConfigurationConverterTagsYamlImpl implements ConfigurationConverte
 	}
 
 	@Override
+	public String getNodeDataTag() {
+		return "node.data";
+	}
+	
+	@Override
 	public String getDataPathTag() {
 		return "path.data";
 	}

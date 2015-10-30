@@ -10,6 +10,7 @@ public class Configuration {
 	public int bindingPortOffset = 0;
 	public int httpPort = 8080;
 	
+	public boolean nodeData = true;
 	public String dataPath = "data";
 	public boolean restEnabled = true;
 	

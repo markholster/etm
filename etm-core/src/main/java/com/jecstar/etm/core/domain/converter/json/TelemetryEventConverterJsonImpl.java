@@ -1,12 +1,16 @@
 package com.jecstar.etm.core.domain.converter.json;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.jecstar.etm.core.domain.Application;
 import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.Location;
+import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
+import com.jecstar.etm.core.domain.Transport;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
@@ -137,6 +141,44 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		telemetryEvent.initialize();
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
+		telemetryEvent.endpoint = getString(this.tags.getEndpointTag(), valueMap);
+		telemetryEvent.expiry = getZonedDateTime(this.tags.getExpiryTag(), valueMap);
+		telemetryEvent.name = getString(this.tags.getNameTag(), valueMap);
+		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> c.forEach((k, v) -> telemetryEvent.metadata.put(k, v.toString())));
+		telemetryEvent.packaging = getString(this.tags.getPackagingTag(), valueMap);
+		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
+		telemetryEvent.payloadFormat = PayloadFormat.saveValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
+		getArray(this.tags.getReadingEndpointHandlersTag(), valueMap).forEach(c -> telemetryEvent.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
+		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
+		telemetryEvent.transport = Transport.saveValueOf(getString(this.tags.getTransportTag(), valueMap));
+		telemetryEvent.writingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(this.tags.getWritingEndpointHandlerTag(), valueMap)));
 	}
 
+	private EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
+		if (valueMap.isEmpty()) {
+			return null;
+		}
+		EndpointHandler endpointHandler = new EndpointHandler();
+		Map<String, Object> applicationValueMap = getObject(this.tags.getEndpointHandlerApplicationTag(), valueMap);
+		if (!applicationValueMap.isEmpty()) {
+			String stringHostAddress = getString(this.tags.getApplicationHostAddressTag(), applicationValueMap);
+			if (stringHostAddress != null) {
+				try {
+					endpointHandler.application.hostAddress = InetAddress.getByName(stringHostAddress);
+				} catch (UnknownHostException e) {
+				}
+			}
+			endpointHandler.application.instance = getString(this.tags.getApplicationInstanceTag(), applicationValueMap);
+			endpointHandler.application.name = getString(this.tags.getApplicationNameTag(), applicationValueMap);
+			endpointHandler.application.principal = getString(this.tags.getApplicationPrincipalTag(), applicationValueMap);
+			endpointHandler.application.version = getString(this.tags.getApplicationVersionTag(), applicationValueMap);
+		}
+		endpointHandler.handlingTime = getZonedDateTime(this.tags.getEndpointHandlerHandlingTimeTag(), valueMap);
+		Map<String, Object> locationValueMap = getObject(this.tags.getEndpointHandlerLocationTag(), valueMap);
+		if (locationValueMap != null) {
+			endpointHandler.location.latitude = getDouble(this.tags.getLatitudeTag(), locationValueMap);
+			endpointHandler.location.longitude = getDouble(this.tags.getLongitudeTag(), locationValueMap);
+		}
+		return endpointHandler;
+	}
 }

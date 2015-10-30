@@ -20,6 +20,9 @@ public class Location {
 	
 	public Location initialize(Location copy) {
 		this.initialize();
+		if (copy == null) {
+			return this;
+		}
 		this.latitude = copy.latitude;
 		this.longitude = copy.longitude;
 		return this;

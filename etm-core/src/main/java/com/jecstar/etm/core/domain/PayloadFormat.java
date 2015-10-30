@@ -7,5 +7,16 @@ public enum PayloadFormat {
 	SOAP,
 	SQL,
 	TEXT,
-	XML
+	XML;
+	
+	public static PayloadFormat saveValueOf(String value) {
+		if (value == null) {
+			return null;
+		}
+		try {
+			return PayloadFormat.valueOf(value.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
 }

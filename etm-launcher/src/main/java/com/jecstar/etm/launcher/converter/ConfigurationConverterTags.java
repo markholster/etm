@@ -12,6 +12,8 @@ public interface ConfigurationConverterTags {
 
 	String getHttpPortTag();
 
+	String getNodeDataTag();
+	
 	String getDataPathTag();
 	
 	String getRestEnabledTag();

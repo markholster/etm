@@ -40,6 +40,9 @@ public class Application {
 
 	public Application initialize(Application copy) {
 		this.initialize();
+		if (copy == null) {
+			return this;
+		}
 		this.name = copy.name;
 		this.hostAddress = copy.hostAddress;
 		this.instance = copy.instance;

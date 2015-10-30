@@ -29,5 +29,16 @@ public enum Transport {
 	/**
 	 * Enum constant representing SMTP as the transport type of the payload.
 	 */
-	SMTP 
+	SMTP;
+
+	public static Transport saveValueOf(String value) {
+		if (value == null) {
+			return null;
+		}
+		try {
+			return Transport.valueOf(value.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	} 
 }
