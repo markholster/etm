@@ -16,7 +16,7 @@ public interface ConfigurationConverterTags {
 	
 	String getDataPathTag();
 	
-	String getRestEnabledTag();
+	String getRestProcessorEnabledTag();
 	
 
 }

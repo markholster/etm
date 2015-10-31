@@ -40,8 +40,8 @@ public class ConfigurationConverterTagsYamlImpl implements ConfigurationConverte
 	}
 	
 	@Override
-	public String getRestEnabledTag() {
-		return "rest.enabled";
+	public String getRestProcessorEnabledTag() {
+		return "procossor.rest.enabled";
 	}
 
 

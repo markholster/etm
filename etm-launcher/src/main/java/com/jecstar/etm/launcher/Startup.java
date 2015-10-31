@@ -1,7 +1,5 @@
 package com.jecstar.etm.launcher;
 
-import static io.undertow.servlet.Servlets.servlet;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -13,8 +11,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
-import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
-import org.jboss.resteasy.spi.ResteasyDeployment;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
@@ -26,16 +22,6 @@ import com.jecstar.etm.launcher.converter.yaml.ConfigurationConverterYamlImpl;
 import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
-import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
-
-import io.undertow.Handlers;
-import io.undertow.Undertow;
-import io.undertow.server.handlers.GracefulShutdownHandler;
-import io.undertow.server.handlers.PathHandler;
-import io.undertow.servlet.api.DeploymentInfo;
-import io.undertow.servlet.api.DeploymentManager;
-import io.undertow.servlet.api.ServletContainer;
-import io.undertow.servlet.api.ServletInfo;
 
 public class Startup {
 
@@ -47,42 +33,25 @@ public class Startup {
 	private static ConfigurationConverter<Map<String, Object>> configurationConverter = new ConfigurationConverterYamlImpl();
 
 	private static TelemetryCommandProcessor processor;
+	private static HttpServer httpServer;
 	private static Node node;
 
 	public static void main(String[] args) {
 		try {
-			Configuration configuration = loadConfiguration();
-			final PathHandler root = Handlers.path();
-			GracefulShutdownHandler shutdownHandler = Handlers.gracefulShutdown(root);
-			final ServletContainer container = ServletContainer.Factory.newInstance();
-			Undertow server = Undertow.builder()
-					.addHttpListener(configuration.httpPort + configuration.bindingPortOffset,
-							configuration.bindingAddress)
-					.setHandler(root).build();
-			if (configuration.restEnabled) {
+			final Configuration configuration = loadConfiguration();
+			if (configuration.isProcessorNecessary()) {
 				initializeProcessor(configuration);
-				RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(
-						processor);
-				ResteasyDeployment deployment = new ResteasyDeployment();
-				deployment.setApplication(processorApplication);
-				DeploymentInfo di = undertowRestDeployment(deployment, "/");
-				di.setClassLoader(processorApplication.getClass().getClassLoader());
-				di.setContextPath("/rest/processor/");
-				di.setDeploymentName("Rest event processor - " + di.getContextPath());
-				DeploymentManager manager = container.addDeployment(di);
-				manager.deploy();
-				root.addPrefixPath(di.getContextPath(), manager.start());
+			}
+			if (configuration.isHttpServerNecessary()) {
+				 httpServer = new HttpServer(configuration, processor);
+				 httpServer.start();
 			}
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				@Override
 				public void run() {
-					shutdownHandler.shutdown();
-					try {
-						shutdownHandler.awaitShutdown(30000);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
+					if (httpServer != null) {
+						httpServer.stop();
 					}
-					server.stop();
 					if (processor != null) {
 						processor.stopAll();
 					}
@@ -91,7 +60,6 @@ public class Startup {
 					}
 				}
 			});
-			server.start();
 		} catch (FileNotFoundException e) {
 			log.logFatalMessage("Error reading configuration file", e);
 		} catch (YamlException e) {
@@ -100,30 +68,6 @@ public class Startup {
 			log.logFatalMessage("Error launching Enterprise Telemetry Monitor", e);
 		} finally {
 		}
-	}
-
-	private static DeploymentInfo undertowRestDeployment(ResteasyDeployment deployment, String mapping) {
-		if (mapping == null) {
-			mapping = "/";
-		}
-		if (!mapping.startsWith("/")) {
-			mapping = "/" + mapping;
-		}
-		if (!mapping.endsWith("/")) {
-			mapping += "/";
-		}
-		mapping = mapping + "*";
-		String prefix = null;
-		if (!mapping.equals("/*")) {
-			prefix = mapping.substring(0, mapping.length() - 2);
-		}
-		ServletInfo resteasyServlet = servlet("ResteasyServlet", HttpServletDispatcher.class).setAsyncSupported(true)
-				.setLoadOnStartup(1).addMapping(mapping);
-		if (prefix != null) {
-			resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
-		}
-		return new DeploymentInfo().addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
-				.addServlet(resteasyServlet);
 	}
 
 	private static void initializeProcessor(Configuration configuration) {

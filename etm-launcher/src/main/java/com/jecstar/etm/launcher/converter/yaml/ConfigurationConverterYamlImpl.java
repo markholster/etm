@@ -34,8 +34,8 @@ public class ConfigurationConverterYamlImpl implements ConfigurationConverter<Ma
 		if (content.containsKey(this.tags.getDataPathTag())) {
 			configuration.dataPath = content.get(this.tags.getDataPathTag()).toString();
 		}
-		if (content.containsKey(this.tags.getRestEnabledTag())) {
-			configuration.restEnabled = Boolean.valueOf(content.get(this.tags.getRestEnabledTag()).toString());
+		if (content.containsKey(this.tags.getRestProcessorEnabledTag())) {
+			configuration.restProcessorEnabled = Boolean.valueOf(content.get(this.tags.getRestProcessorEnabledTag()).toString());
 		}
 		return configuration;
 	}
