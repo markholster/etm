@@ -47,6 +47,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 				.put("cluster.name", "Enterprise Telemetry Monitor - Unit Test")
 				.put("node.name", "Unit test " + System.getProperty("user.name"))
 				.put("http.enabled", false)
+				.put("path.home", "./")
 				.put("path.conf", "src/main/resources/config"))
 				.local(true)
 				.node();
