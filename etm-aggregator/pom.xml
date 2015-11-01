@@ -172,7 +172,7 @@
 			    <groupId>org.elasticsearch</groupId>
 			    <artifactId>elasticsearch</artifactId>
 			    <!-- When version is updates also make sure the Groovy version used in elasticsearch is the same as referenced in this project. -->
-			    <version>1.7.2</version>
+			    <version>1.7.3</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.jboss.resteasy</groupId>
