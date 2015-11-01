@@ -1,53 +1,56 @@
 package com.jecstar.etm.launcher.converter.yaml;
 
+import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Map;
 
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.launcher.Configuration;
+import com.jecstar.etm.launcher.YamlConfiguration;
 import com.jecstar.etm.launcher.converter.ConfigurationConverter;
-import com.jecstar.etm.launcher.converter.ConfigurationConverterTags;
 
-public class ConfigurationConverterYamlImpl implements ConfigurationConverter<Map<String, Object>>{
+public class ConfigurationConverterYamlImpl implements ConfigurationConverter<Map<String, Object>> {
 	
-	private ConfigurationConverterTags tags = new ConfigurationConverterTagsYamlImpl();
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(ConfigurationConverterYamlImpl.class);
+
 	
 	@Override
 	public Configuration convert(Map<String, Object> content) {
 		Configuration configuration = new Configuration();
-		if (content.containsKey(this.tags.getClusterNameTag())) {
-			configuration.clusterName = content.get(this.tags.getClusterNameTag()).toString();
-		}
-		if (content.containsKey(this.tags.getNodeNameTag())) {
-			configuration.nodeName = content.get(this.tags.getNodeNameTag()).toString();
-		}
-		if (content.containsKey(this.tags.getBindingAddressTag())) {
-			configuration.bindingAddress = content.get(this.tags.getBindingAddressTag()).toString();
-		}
-		if (content.containsKey(this.tags.getBindingPortOffsetTag())) {
-			configuration.bindingPortOffset = Integer.valueOf(content.get(this.tags.getBindingPortOffsetTag()).toString());
-		}
-		if (content.containsKey(this.tags.getHttpPortTag())) {
-			configuration.httpPort = Integer.valueOf(content.get(this.tags.getHttpPortTag()).toString());
-		}
-		if (content.containsKey(this.tags.getNodeDataTag())) {
-			configuration.nodeData = Boolean.valueOf(content.get(this.tags.getNodeDataTag()).toString());
-		}
-		if (content.containsKey(this.tags.getDataPathTag())) {
-			configuration.dataPath = content.get(this.tags.getDataPathTag()).toString();
-		}
-		if (content.containsKey(this.tags.getRestProcessorEnabledTag())) {
-			configuration.restProcessorEnabled = Boolean.valueOf(content.get(this.tags.getRestProcessorEnabledTag()).toString());
+		Field[] fields = Configuration.class.getDeclaredFields();
+		for (Field field : fields) {
+			YamlConfiguration yamlConfiguration = field.getAnnotation(YamlConfiguration.class);
+			if (yamlConfiguration == null) {
+				continue;
+			}
+			String configKey = yamlConfiguration.key();
+			if (!content.containsKey(configKey)) {
+				continue;
+			}
+			String configValue = content.get(configKey).toString();
+			Class<?> fieldType = field.getType();
+			try {
+				if (String.class.equals(fieldType)) {
+					field.set(configuration, configValue);
+				} else if (Integer.class.equals(fieldType) || int.class.equals(fieldType)) {
+					field.setInt(configuration, Integer.valueOf(configValue));
+				} else if (Boolean.class.equals(fieldType) || boolean.class.equals(fieldType)) {
+					field.setBoolean(configuration, Boolean.valueOf(configValue));
+				} else if (File.class.equals(fieldType)) {
+					field.set(configuration, new File(configValue));
+				} else {
+					log.logErrorMessage("Error setting configuration value for '" + configKey + "' with value '"
+							+ configValue + "' because the type '" + fieldType.getName() + "' is unknown.");
+				}
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				log.logErrorMessage("Error setting configuration value for '" + configKey + "' with value '" + configValue + "'", e);
+			}
 		}
 		return configuration;
-	}
-
-	@Override
-	public Map<String, Object> convert(Configuration configuration) {
-		return null;
-	}
-
-	@Override
-	public ConfigurationConverterTags getTags() {
-		return null;
 	}
 
 }
