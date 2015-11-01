@@ -77,7 +77,7 @@ public class MetricConverterTagsJsonImpl implements MetricConverterTags {
 	
 	@Override
 	public String get999thPercentileTag() {
-		return "99.9%%";
+		return "99_9%%";
 	}
 
 	@Override

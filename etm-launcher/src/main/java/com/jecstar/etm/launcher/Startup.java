@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
@@ -74,7 +74,7 @@ public class Startup {
 		if (processor == null) {
 			if (node == null) {
 				node = new NodeBuilder()
-						.settings(ImmutableSettings.settingsBuilder()
+						.settings(Settings.settingsBuilder()
 								.put("cluster.name", configuration.clusterName)
 								.put("node.name", configuration.nodeName)
 								.put("path.data", configuration.dataPath)
