@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.configuration.License;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
@@ -45,9 +46,10 @@ public class SystemService {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        generator.writeStringField("companyName", this.configuration.getCompanyName() != null ? this.configuration.getCompanyName() : "Unknown");
-	        if (this.configuration.getLicenseExpriy() != null) {
-	        	generator.writeNumberField("licenseExpiry", this.configuration.getLicenseExpriy().getTime());
+	        License license = this.configuration.getLicense();
+	        generator.writeStringField("companyName", license != null && license.getOwner() != null ? license.getOwner() : "Unknown");
+	        if (license != null && license.getExpiryDate() != null) {
+	        	generator.writeNumberField("licenseExpiry", license.getExpiryDate().getTime());
 	        }
 	        generator.writeEndObject();
 	        generator.close();

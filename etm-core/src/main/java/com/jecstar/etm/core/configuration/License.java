@@ -6,8 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.time.Instant;
 import java.util.Base64;
+import java.util.Date;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -22,7 +22,7 @@ public class License {
 	
 	private String owner;
 	
-	private Instant expiryDate;
+	private Date expiryDate;
 	
 	private LicenseType licenseType;
 	
@@ -42,7 +42,7 @@ public class License {
 				throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
 			}
 			this.owner = split[0];
-			this.expiryDate = Instant.ofEpochMilli(Long.valueOf(split[1]));
+			this.expiryDate = new Date(Long.valueOf(split[1]));
 			this.licenseType = LicenseType.valueOf(split[2]);
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException
 		        | IllegalBlockSizeException | BadPaddingException | IllegalArgumentException e) {
@@ -54,7 +54,7 @@ public class License {
 		return this.owner;
 	}
 	
-	public Instant getExpiryDate() {
+	public Date getExpiryDate() {
 		return expiryDate;
 	}
 	

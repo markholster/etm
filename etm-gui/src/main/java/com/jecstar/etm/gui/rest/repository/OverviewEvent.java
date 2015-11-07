@@ -3,14 +3,13 @@ package com.jecstar.etm.gui.rest.repository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
 
 public class OverviewEvent {
 
-	public UUID id;
+	public String id;
 	
 	public long creationTime;
 	

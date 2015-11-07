@@ -2,7 +2,6 @@ package com.jecstar.etm.gui.rest;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -14,12 +13,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.solr.client.solrj.SolrClient;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrQuery.SortClause;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocumentList;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -40,13 +38,12 @@ public class QueryService {
 	
 	@GuiConfiguration
 	@Inject
-	private SolrClient solrClient;
+	private Client elasticClient;
 	
 	@Inject
 	private QueryRepository queryRepository;
 
 	private final JsonFactory jsonFactory = new JsonFactory();
-
 	
 	@GET
 	@Path("/")
@@ -58,39 +55,34 @@ public class QueryService {
 		} else if (rows > 1000) {
 			rows = 1000;
 		}
-		SolrQuery query = new SolrQuery(queryString);
-		query.setStart(start);
-		query.setRows(rows);
+		SearchRequestBuilder searchRequest = this.elasticClient.prepareSearch("etm_event_all")
+				.setFrom(start)
+				.setSize(rows)
+				.setQuery(QueryBuilders.queryStringQuery(queryString).defaultField("content"));
 		if (sortField != null && sortField.trim().length() > 0) {
 			if ("asc".equalsIgnoreCase(sortOrder)) {
-				query.setSort(SortClause.asc(sortField));
+				searchRequest.addSort(sortField, SortOrder.ASC);
 			} else {
-				query.setSort(SortClause.desc(sortField));
+				searchRequest.addSort(sortField, SortOrder.DESC);
 			}
 		}
 		try {
 			long startTime = System.nanoTime();
-	        QueryResponse queryResponse = this.solrClient.query(query);
-	        SolrDocumentList results = queryResponse.getResults();
+			SearchResponse searchResponse = searchRequest.get();
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        generator.writeNumberField("numFound", results.getNumFound());
-	        generator.writeNumberField("numReturned", results.size());
-	        generator.writeNumberField("start", results.getStart());
-	        generator.writeNumberField("end", results.getStart() + results.size() - 1);
+	        generator.writeNumberField("numFound", searchResponse.getHits().getTotalHits());
+	        generator.writeNumberField("numReturned", searchResponse.getHits().getHits().length);
+	        generator.writeNumberField("start", start);
+	        generator.writeNumberField("end", start + searchResponse.getHits().getHits().length - 1);
 	        generator.writeArrayFieldStart("events");
-	        this.queryRepository.addEvents(results, generator);
+	        this.queryRepository.addEvents(searchResponse.getHits(), generator);
 	        generator.writeEndArray();
 	        generator.writeNumberField("queryTime", TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTime, TimeUnit.NANOSECONDS));
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();
-        } catch (SolrServerException e) {
-        	if (log.isErrorLevelEnabled()) {
-        		log.logErrorMessage("Error executing query '" + queryString + "'.", e);
-        	}
-        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error executing query '" + queryString + "'.", e);
@@ -104,13 +96,11 @@ public class QueryService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEventById(@PathParam("id") String id) {
-		UUID eventId = null;
 		try {
-			eventId = UUID.fromString(id);
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        this.queryRepository.addEvent(eventId, generator);
+	        this.queryRepository.addEvent(id, generator);
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();
@@ -128,13 +118,11 @@ public class QueryService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEventOverviewById(@PathParam("id") String id) {
-		UUID eventId = null;
 		try {
-			eventId = UUID.fromString(id);
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        this.queryRepository.addEventOverview(eventId, generator);
+	        this.queryRepository.addEventOverview(id, generator);
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();

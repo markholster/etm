@@ -132,7 +132,6 @@ public class AdminService {
         		}
         		generator.writeEndArray();
         	}
-        	// TODO SLA's
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();

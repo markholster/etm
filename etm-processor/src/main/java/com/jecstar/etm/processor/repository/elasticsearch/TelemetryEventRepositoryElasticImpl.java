@@ -12,6 +12,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -54,6 +55,7 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 		IndexRequest indexRequest = new IndexRequest(index, ETM_EVENT_INDEX_TYPE, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(this.eventConverter.convert(event));
+		// TODO add id to parent if this is a response.
 		this.bulkRequest.add(indexRequest);
 		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkSize()) {
 			executeBulk();
@@ -97,15 +99,14 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 	private TelemetryEvent doFindParent(String id, String application) {
 		FilterBuilder filterBuilder = null;
 		if (application != null) {
-			filterBuilder = FilterBuilders.boolFilter()
-					.must(FilterBuilders.termFilter(this.tags.getIdTag(), id))
-					.must(FilterBuilders.termFilter(this.tags.getApplicationTag(), application));
+			filterBuilder = FilterBuilders.andFilter(FilterBuilders.termFilter(this.tags.getIdTag(), id), 
+					FilterBuilders.termFilter(this.tags.getApplicationTag(), application));
 		} else {
 			filterBuilder = FilterBuilders.termFilter(this.tags.getIdTag(), id);
 		}
 		SearchHits hits = this.elasticClient.prepareSearch(ETM_SEARCH_INDEX)
 			.setTypes(ETM_EVENT_INDEX_TYPE)
-			.setPostFilter(filterBuilder)
+			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder)) 
 			.setFrom(0)
 			.setSize(1)
 			.get()

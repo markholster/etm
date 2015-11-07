@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
@@ -51,27 +50,27 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				}			
 			}
 			// TODO point-to-point messages which are added twice -> they have the same sourceId, but one is the parent of the other.
-			if (needsCorrelation(event)) {
-				// Find the correlation event.
-				TelemetryEvent parent = this.telemetryEventRepository.findParent(event.correlationId, event.application);
-				if (parent == null) {
-					System.out.println("Could not find " + event.correlationId + "_" + event.application);
-				}
-				
-				if (event.correlationId == null) {
-					event.correlationId = parent.id;
-				}
-				// TODO the parent could be something other than the request in case of an point to point message. Find the event with specific type of request.
-				if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-					// if this is a response, set the correlating data from the request on the response.
-					if (event.transactionId == null) {
-						event.transactionId = parent.transactionId;
-					}
-					if (event.transactionName == null) {
-						event.transactionName = parent.transactionName;
-					}
-				}
-			}
+//			if (needsCorrelation(event)) {
+//				// Find the correlation event.
+//				TelemetryEvent parent = this.telemetryEventRepository.findParent(event.correlationId, event.application);
+//				if (parent == null) {
+//					System.out.println("Could not find " + event.correlationId + "_" + event.application);
+//				}
+//				
+//				if (event.correlationId == null) {
+//					event.correlationId = parent.id;
+//				}
+//				// TODO the parent could be something other than the request in case of an point to point message. Find the event with specific type of request.
+//				if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
+//					// if this is a response, set the correlating data from the request on the response.
+//					if (event.transactionId == null) {
+//						event.transactionId = parent.transactionId;
+//					}
+//					if (event.transactionName == null) {
+//						event.transactionName = parent.transactionName;
+//					}
+//				}
+//			}
 			if (event.name == null || event.direction == null || event.transactionName == null) {
 				if (event.name == null && event.content != null) {
 					event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
@@ -99,9 +98,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		}
 	}
 	
-	private boolean needsCorrelation(final TelemetryEvent event) {
-		return event.correlationId != null;
-	}
+//	private boolean needsCorrelation(final TelemetryEvent event) {
+//		return event.correlationId != null;
+//	}
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
 		if (content == null || expressionParsers == null) {

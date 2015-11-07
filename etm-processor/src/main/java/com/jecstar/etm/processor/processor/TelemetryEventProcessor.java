@@ -1,7 +1,6 @@
 package com.jecstar.etm.processor.processor;
 
 import java.nio.channels.IllegalSelectorException;
-import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
@@ -82,7 +81,7 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
-		if (this.etmConfiguration.getLicense().getExpiryDate().isBefore(Instant.now())) {
+		if (this.etmConfiguration.getLicense().getExpiryDate().getTime() < System.currentTimeMillis()) {
 			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
 		}
 		final Context timerContext = this.offerTimer.time();

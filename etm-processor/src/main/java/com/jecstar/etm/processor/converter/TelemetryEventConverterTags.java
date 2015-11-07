@@ -20,4 +20,7 @@ public interface TelemetryEventConverterTags {
 	
 	// Retention attributes
 	String getRetentionTag();
+	
+	// Correlation tags.
+	String getChildCorrelationIdsTag();
 }
