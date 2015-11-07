@@ -1,25 +1,32 @@
 package com.jecstar.etm.gui.jee.configurator;
 
 import javax.annotation.ManagedBean;
-import javax.annotation.PreDestroy;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
+import com.jecstar.etm.gui.jee.configurator.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
 @Singleton
 public class ConfigurationProducer {
-	
+
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(ConfigurationProducer.class);
 
 	private EtmConfiguration configuration;
+	
+	@GuiConfiguration
+	@Inject
+	private Client elasticClient;
 
 	@Produces
 	@GuiConfiguration
@@ -27,10 +34,11 @@ public class ConfigurationProducer {
 		synchronized (this) {
 			if (this.configuration == null) {
 				try {
-					String nodename = System.getProperty("etm.nodename");
-					String connections = System.getProperty("etm.zookeeper.clients", "127.0.0.1:2181/etm");
-					String namespace = System.getProperty("etm.zookeeper.namespace", "dev");
-	                this.configuration = new EtmConfiguration(nodename, connections, namespace, "gui");
+					String nodeName = System.getProperty("etm.node.name");
+					if (nodeName == null) {
+						nodeName = "Node_1@local";
+					}
+	                this.configuration = new ElasticBackedEtmConfiguration(nodeName, "gui", this.elasticClient);
                 } catch (Exception e) {
                 	this.configuration = null;
                 	if (log.isErrorLevelEnabled()) {
@@ -40,12 +48,5 @@ public class ConfigurationProducer {
 			}
 		}
 		return this.configuration;
-	}
-	
-	@PreDestroy
-	public void preDestroy() {
-		if (this.configuration != null) {
-			this.configuration.close();
-		}
 	}
 }

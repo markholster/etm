@@ -10,8 +10,6 @@ import org.elasticsearch.client.Client;
 
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.logging.LogFactory;
-import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.jee.configurator.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
@@ -19,11 +17,6 @@ import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 @ManagedBean
 @Singleton
 public class PersistenceEnvironmentProducer {
-
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(PersistenceEnvironmentProducer.class);
 
 	@ProcessorConfiguration
 	@Inject

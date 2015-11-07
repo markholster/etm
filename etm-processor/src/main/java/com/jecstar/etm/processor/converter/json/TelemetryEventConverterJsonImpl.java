@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.converter.json.AbstractJsonConverter;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.converter.TelemetryEventConverter;
 import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
@@ -48,6 +49,7 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		if (event.type != null) {
 			added = addStringElementToJsonBuffer(this.tags.getTypeTag(), event.type.name(), this.sb, !added) || added;
 		}
+		added = addLongElementToJsonBuffer(this.tags.getRetentionTag(), event.retention.getTime(), this.sb, !added) || added;
 		this.sb.append("}");
 		return this.sb.toString();
 	}

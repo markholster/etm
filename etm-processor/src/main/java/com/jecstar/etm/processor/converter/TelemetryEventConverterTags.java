@@ -17,4 +17,7 @@ public interface TelemetryEventConverterTags {
 	String getTransactionIdTag();
 	String getTransactionNameTag();
 	String getTypeTag();
+	
+	// Retention attributes
+	String getRetentionTag();
 }

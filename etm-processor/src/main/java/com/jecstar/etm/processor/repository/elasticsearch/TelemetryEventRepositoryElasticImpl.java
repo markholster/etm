@@ -27,7 +27,7 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 	
 	private final DateFormat indexDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private final String ETM_EVENT_INDEX_TYPE = "event";
-	private final String ETM_SEARCH_INDEX = "etm_all";
+	private final String ETM_SEARCH_INDEX = "etm_event_all";
 	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
 	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	
@@ -51,7 +51,7 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 			this.bulkRequest = this.elasticClient.prepareBulk();
 		}
 		String index = getElasticIndexName();
-		IndexRequest indexRequest = new IndexRequest(index, "event", event.id)
+		IndexRequest indexRequest = new IndexRequest(index, ETM_EVENT_INDEX_TYPE, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(this.eventConverter.convert(event));
 		this.bulkRequest.add(indexRequest);

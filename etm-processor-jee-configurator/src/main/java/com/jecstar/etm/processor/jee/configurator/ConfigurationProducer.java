@@ -12,7 +12,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
-import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
+import com.jecstar.etm.processor.jee.configurator.elastic.ElasticBackedEtmConfiguration;
 
 @ManagedBean
 @Singleton

@@ -73,4 +73,9 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	public String getTypeTag() {
 		return "type";
 	}
+
+	@Override
+	public String getRetentionTag() {
+		return "retention";
+	}
 }
