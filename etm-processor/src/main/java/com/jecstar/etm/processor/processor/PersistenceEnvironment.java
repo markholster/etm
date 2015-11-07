@@ -9,5 +9,7 @@ public interface PersistenceEnvironment {
 	IdCorrelationCache getProcessingMap();
 
 	void close();
+
+	void createEnvironment();
 	
 }

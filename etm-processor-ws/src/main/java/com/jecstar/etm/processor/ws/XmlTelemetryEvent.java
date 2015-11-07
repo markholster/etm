@@ -32,10 +32,16 @@ public class XmlTelemetryEvent {
 	}
 	
 	@XmlElement
+	public String id;
+	
+	@XmlElement
 	public String application;
 	
 	@XmlElement
 	public String content;
+	
+	@XmlElement
+	public String correlationId;
 
 	@XmlElement
 	public Date creationTime;
@@ -54,12 +60,6 @@ public class XmlTelemetryEvent {
 	
 	@XmlElement
 	public String name;
-
-	@XmlElement
-	public String sourceCorrelationId;
-	
-	@XmlElement
-	public String sourceId;
 
 	@XmlElement
 	public String transactionName;
@@ -84,8 +84,8 @@ public class XmlTelemetryEvent {
 	    	telemetryEvent.metadata.putAll(this.metadata);
 	    }
 	    telemetryEvent.name = this.name;
-	    telemetryEvent.sourceCorrelationId = this.sourceCorrelationId;
-	    telemetryEvent.sourceId = this.sourceId;
+	    telemetryEvent.correlationId = this.correlationId;
+	    telemetryEvent.id = this.id;
 	    telemetryEvent.transactionName = this.transactionName;
 	    if (this.type != null) {
 	    	telemetryEvent.type = TelemetryEventType.valueOf(this.type.name());

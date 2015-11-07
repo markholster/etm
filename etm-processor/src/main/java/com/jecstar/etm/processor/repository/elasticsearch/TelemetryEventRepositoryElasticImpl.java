@@ -32,14 +32,14 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	
 	
-	private final IdCorrelationCache sourceCorrelations;
+	private final IdCorrelationCache idCorrelations;
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
 	
 	private BulkRequestBuilder bulkRequest;
 	
-	public TelemetryEventRepositoryElasticImpl(final IdCorrelationCache sourceCorrelations, final Client elasticClient, final EtmConfiguration etmConfiguration) {
-		this.sourceCorrelations = sourceCorrelations;
+	public TelemetryEventRepositoryElasticImpl(final IdCorrelationCache idCorrelations, final Client elasticClient, final EtmConfiguration etmConfiguration) {
+		this.idCorrelations = idCorrelations;
 		this.elasticClient = elasticClient;
 		this.indexDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		this.etmConfiguration = etmConfiguration;
@@ -79,9 +79,9 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 		}
 		TelemetryEvent parent = null;
 		if (application != null) {
-			parent = this.sourceCorrelations.getBySourceIdAndApplication(sourceId, application);
+			parent = this.idCorrelations.getBySourceIdAndApplication(sourceId, application);
 		} else {
-			parent = this.sourceCorrelations.getBySourceId(sourceId);
+			parent = this.idCorrelations.getBySourceId(sourceId);
 		}
 		if (parent != null) {
 			return parent;

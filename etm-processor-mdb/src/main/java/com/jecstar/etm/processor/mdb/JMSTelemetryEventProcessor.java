@@ -122,13 +122,13 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 				        + message.getClass().getName() + "'. Unable to retrieve content");
 			}
 		}
-		this.telemetryEvent.sourceId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_ID);
-		if (this.telemetryEvent.sourceId == null) {
-			this.telemetryEvent.sourceId = message.getJMSMessageID();
+		this.telemetryEvent.id = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_ID);
+		if (this.telemetryEvent.id == null) {
+			this.telemetryEvent.id = message.getJMSMessageID();
 		}
-		this.telemetryEvent.sourceCorrelationId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID);
-		if (this.telemetryEvent.sourceCorrelationId == null) {
-			this.telemetryEvent.sourceCorrelationId = message.getJMSCorrelationID();
+		this.telemetryEvent.correlationId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID);
+		if (this.telemetryEvent.correlationId == null) {
+			this.telemetryEvent.correlationId = message.getJMSCorrelationID();
 		}
 		this.telemetryEvent.endpoint = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_ENDPOINT);
 		this.telemetryEvent.application = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_APPLICATION);
@@ -149,7 +149,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	 * Achmea maatwerk -> Zolang er niet van WMB events gebruik gemaakt wordt.
 	 */
 	private void customAchmea() {
-		String companyName = configration.getCompanyName();
+		String companyName = configration.getLicense().getOwner();
 		if (companyName.startsWith("Achmea")) {
 			if (TelemetryEventType.MESSAGE_DATAGRAM.equals(this.telemetryEvent.type)) {
 				if (this.telemetryEvent.content != null) {

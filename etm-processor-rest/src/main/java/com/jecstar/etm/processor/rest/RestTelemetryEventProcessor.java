@@ -102,10 +102,10 @@ public class RestTelemetryEventProcessor {
 					this.telemetryEvent.name = parser.getText();
 				} else if ("sourceCorrelationId".equals(name)) {
 					parser.nextToken();
-					this.telemetryEvent.sourceCorrelationId = parser.getText();
+					this.telemetryEvent.correlationId = parser.getText();
 				} else if ("sourceId".equals(name)) {
 					parser.nextToken();
-					this.telemetryEvent.sourceId = parser.getText();
+					this.telemetryEvent.id = parser.getText();
 				} else if ("transactionName".equals(name)) {
 					parser.nextToken();
 					this.telemetryEvent.transactionName = parser.getText();

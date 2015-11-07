@@ -4,6 +4,10 @@
     "description": "A telemetry event for Enterprise Telemetry Monitor",
     "type": "object",
     "properties": {
+        "id": {
+            "description": "The id of the event",
+            "type": "string"
+        },    
         "application": {
             "description": "The name of the application which send or receives the event",
             "type": "string"
@@ -12,6 +16,10 @@
             "description": "The content of the event",
             "type": "string"
         },
+        "correlationId": {
+            "description": "The id of the related/parent event",
+            "type": "string"
+        },        
         "creationTime": {
             "description": "The creation time of the event",
             "type": "integer"
@@ -43,14 +51,6 @@
         },
         "name": {
             "description": "The name of the event",
-            "type": "string"
-        },
-        "sourceCorrelationId": {
-            "description": "The id of the related/parent event",
-            "type": "string"
-        },
-        "sourceId": {
-            "description": "The id of the event",
             "type": "string"
         },
         "transactionName": {
