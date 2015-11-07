@@ -71,6 +71,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	
 	@Override
 	public int getReplicasPerIndex() {
+		reloadConfigurationWhenNecessary();
 		return super.getReplicasPerIndex();
 	}
 	
