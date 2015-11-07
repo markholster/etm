@@ -15,6 +15,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE = "persistingBulkSize";
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
+	public static final String CONFIG_KEY_DATA_RETENTION_TIME = "dataRetentionTime";
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -25,7 +26,11 @@ public class EtmConfiguration {
 	private int persistingBulkSize = 50;
 	private int shardsPerIndex = 2;
 	private int replicasPerIndex = 1;
+	
+	// Data configuration properties;
+	private long dataRetentionTime = 1000 * 60 * 60 * 24 * 7; 
 
+	// Other stuff.		
 	private final String nodeName;
 
 	private License license;
@@ -120,6 +125,17 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public long getDataRetentionTime() {
+		return this.dataRetentionTime;
+	}
+	
+	public EtmConfiguration setDataRetentionTime(long dataRetentionTime) {
+		if (dataRetentionTime > 0) {
+			this.dataRetentionTime = dataRetentionTime;
+		}
+		return this;
+	}
 
 	public String getNodeName() {
 		return this.nodeName;
@@ -159,28 +175,32 @@ public class EtmConfiguration {
 			changed.add(CONFIG_KEY_LICENSE);
 		}
 		if (this.enhancingHandlerCount != etmConfiguration.getEnhancingHandlerCount()) {
-			this.enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
+			setEnhancingHandlerCount(etmConfiguration.getEnhancingHandlerCount());
 			changed.add(CONFIG_KEY_ENHANCING_HANDLER_COUNT);
 		}
 		if (this.persistingHandlerCount != etmConfiguration.getPersistingHandlerCount()) {
-			this.persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
+			setPersistingHandlerCount(etmConfiguration.getPersistingHandlerCount());
 			changed.add(CONFIG_KEY_PERSISTING_HANDLER_COUNT);
 		}
 		if (this.eventBufferSize != etmConfiguration.getEventBufferSize()) {
-			this.eventBufferSize = etmConfiguration.getEventBufferSize();
+			setEventBufferSize(etmConfiguration.getEventBufferSize());
 			changed.add(CONFIG_KEY_EVENT_BUFFER_SIZE);
 		}
 		if (this.persistingBulkSize != etmConfiguration.getPersistingBulkSize()) {
-			this.persistingBulkSize = etmConfiguration.getPersistingBulkSize();
+			setPersistingBulkSize(etmConfiguration.getPersistingBulkSize());
 			changed.add(CONFIG_KEY_PERSISTING_BULK_SIZE);
 		}
 		if (this.shardsPerIndex != etmConfiguration.getShardsPerIndex()) {
-			this.shardsPerIndex = etmConfiguration.getShardsPerIndex();
+			setShardsPerIndex(etmConfiguration.getShardsPerIndex());
 			changed.add(CONFIG_KEY_SHARDS_PER_INDEX);
 		}
 		if (this.replicasPerIndex != etmConfiguration.getReplicasPerIndex()) {
-			this.replicasPerIndex = etmConfiguration.replicasPerIndex;
+			setReplicasPerIndex(etmConfiguration.replicasPerIndex);
 			changed.add(CONFIG_KEY_REPLICAS_PER_INDEX);
+		}
+		if (this.dataRetentionTime != etmConfiguration.getDataRetentionTime()) {
+			 setDataRetentionTime(etmConfiguration.getDataRetentionTime());
+			 changed.add(CONFIG_KEY_DATA_RETENTION_TIME);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);
