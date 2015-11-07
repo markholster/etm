@@ -10,6 +10,7 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.License;
 import com.jecstar.etm.processor.converter.EtmConfigurationConverter;
+import com.jecstar.etm.processor.converter.json.EtmConfigurationConverterJsonImpl;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 

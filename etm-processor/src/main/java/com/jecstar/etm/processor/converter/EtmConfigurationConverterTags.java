@@ -16,6 +16,6 @@ public interface EtmConfigurationConverterTags {
 
 	String getReplicasPerIndexTag();
 	
-	String getDataretentionTag();
+	String getDataRetentionTag();
 
 }
