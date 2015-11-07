@@ -5,7 +5,6 @@ import java.util.List;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.TelemetryEventType;
-import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
@@ -18,18 +17,16 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	
 	private final long ordinal;
 	private final long numberOfConsumers;
-	private final EtmConfiguration etmConfiguration;
 	
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final EndpointConfigResult endpointConfigResult;
 	private final Timer timer;
 	
 	
-	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration, final Timer timer) {
+	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final Timer timer) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
-		this.etmConfiguration = etmConfiguration;
 		this.endpointConfigResult = new EndpointConfigResult();
 		this.timer = timer;
 		
@@ -46,7 +43,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		final Context timerContext = this.timer.time();
 		try {
 			this.endpointConfigResult.initialize();
-			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult, this.etmConfiguration.getEndpointCacheExpiryTime());
+			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
 			// First determine the application name.
 			if (event.application == null) {
 				if (event.application == null) {

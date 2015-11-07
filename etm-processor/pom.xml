@@ -15,6 +15,10 @@
 	<name>Enterprise Telemetry Monitor - processor</name>
 	<dependencies>
         <dependency>
+          <groupId>com.codahale.metrics</groupId>
+          <artifactId>metrics-core</artifactId>
+        </dependency>           	
+        <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
         </dependency>

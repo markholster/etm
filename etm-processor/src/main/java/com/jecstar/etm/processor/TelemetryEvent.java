@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.sla.SlaRule;
@@ -119,7 +118,7 @@ public class TelemetryEvent implements Cloneable {
 	public Date retention = new Date(0);
 	
 	public TelemetryEvent initialize() {
-		this.id = UUIDs.timeBased();
+		this.id = UUID.randomUUID();
 		this.application = null;
 		this.content = null;
 		this.correlationCreationTime.setTime(0);
