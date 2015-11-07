@@ -1,39 +1,20 @@
 package com.jecstar.etm.processor.converter;
 
 public interface TelemetryEventConverterTags {
-
+	
 	// TelemetryEvent attributes.
 	String getIdTag();
+	String getApplicationTag();
+	String getContentTag();
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
+	String getCreationTimeTag();
+	String getDirectionTag();
 	String getEndpointTag();
-	String getExpiryTag();
-	String getExtractedDataTag();
-	String getNameTag();
+	String getExpiryTimeTag();
 	String getMetadataTag();
-	String getPackagingTag();
-	String getPayloadTag();
-	String getPayloadFormatTag();
-	String getResponseTimeTag();
-	String getResponseHandlingTimeTag();
+	String getNameTag();
 	String getTransactionIdTag();
-	String getTransportTag();
-	String getReadingEndpointHandlersTag();
-	String getWritingEndpointHandlerTag();
-	
-	// EndpointHandler attributes
-	String getEndpointHandlerHandlingTimeTag();
-	String getEndpointHandlerApplicationTag();
-	
-	// Application attributes
-	String getApplicationNameTag();
-	String getApplicationHostAddressTag();
-	String getApplicationInstanceTag();
-	String getApplicationVersionTag();
-	String getApplicationPrincipalTag();
-	
-	// Location attributes.
-	String getEndpointHandlerLocationTag();
-	String getLatitudeTag();
-	String getLongitudeTag();
+	String getTransactionNameTag();
+	String getTypeTag();
 }

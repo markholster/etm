@@ -53,9 +53,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			// TODO point-to-point messages which are added twice -> they have the same sourceId, but one is the parent of the other.
 			if (needsCorrelation(event)) {
 				// Find the correlation event.
-				TelemetryEvent parent = this.telemetryEventRepository.findParent(event.sourceCorrelationId, event.application);
+				TelemetryEvent parent = this.telemetryEventRepository.findParent(event.correlationId, event.application);
 				if (parent == null) {
-					System.out.println("Could not find " + event.sourceCorrelationId + "_" + event.application);
+					System.out.println("Could not find " + event.correlationId + "_" + event.application);
 				}
 				
 				if (event.correlationId == null) {
@@ -70,21 +70,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 					if (event.transactionName == null) {
 						event.transactionName = parent.transactionName;
 					}
-					if (event.correlationCreationTime.getTime() == 0) {
-						event.correlationCreationTime.setTime(parent.creationTime.getTime());
-					}
-					if (event.correlationExpiryTime.getTime() == 0) {
-						event.correlationExpiryTime.setTime(parent.expiryTime.getTime());
-					}
-					if (event.correlationName == null) {
-						event.correlationName = parent.name;
-					}
-					if (event.slaRule == null) {
-						event.slaRule = parent.slaRule;
-					}
 				}
 			}
-			if (event.name == null || event.direction == null || event.transactionName == null || event.slaRule == null) {
+			if (event.name == null || event.direction == null || event.transactionName == null) {
 				if (event.name == null && event.content != null) {
 					event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
 				}
@@ -96,9 +84,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 					if (event.transactionName != null) {
 						event.transactionId = event.id;
 					}
-				}
-				if (event.slaRule == null && event.transactionName != null) {
-					event.slaRule = this.endpointConfigResult.slaRules.get(event.transactionName);
 				}
 	 		}
 			if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {
@@ -115,14 +100,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	}
 	
 	private boolean needsCorrelation(final TelemetryEvent event) {
-		if (event.sourceCorrelationId != null && event.correlationId == null) {
-			return true;
-		} else if (event.sourceCorrelationId != null
-		        && ((event.transactionId == null || event.transactionName == null || event.correlationCreationTime.getTime() == 0 || event.correlationExpiryTime
-		                .getTime() == 0) && TelemetryEventType.MESSAGE_RESPONSE.equals(event.type))) {
-			return true;
-		}
-		return false;
+		return event.correlationId != null;
 	}
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {

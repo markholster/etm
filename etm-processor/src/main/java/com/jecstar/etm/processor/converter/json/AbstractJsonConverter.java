@@ -56,6 +56,13 @@ public abstract class AbstractJsonConverter {
 		}
 		return null;
 	}
+
+	protected Long getLong(String tag, Map<String, Object> valueMap) {
+		if (valueMap.containsKey(tag)) {
+			return ((Number)valueMap.get(tag)).longValue();
+		}
+		return null;
+	}
 	
 	protected Double getDouble(String tag, Map<String, Object> valueMap) {
 		if (valueMap.containsKey(tag)) {

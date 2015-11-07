@@ -6,7 +6,7 @@ import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.search.SearchHits;
 
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.processor.SourceCorrelationCache;
+import com.jecstar.etm.processor.processor.IdCorrelationCache;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
@@ -14,18 +14,16 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 	
 	private final String ETM_SEARCH_INDEX = "etm_all";
 	
-	private final SourceCorrelationCache sourceCorrelations;
+	private final IdCorrelationCache sourceCorrelations;
 	private final Client elasticClient;
 	
-	public TelemetryEventRepositoryElasticImpl(final SourceCorrelationCache sourceCorrelations, final Client elasticClient) {
+	public TelemetryEventRepositoryElasticImpl(final IdCorrelationCache sourceCorrelations, final Client elasticClient) {
 		this.sourceCorrelations = sourceCorrelations;
 		this.elasticClient = elasticClient;
 	}
 
 	@Override
 	public void persistTelemetryEvent(TelemetryEvent telemetryEvent) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

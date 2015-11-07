@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
-import com.jecstar.etm.core.sla.SlaRule;
 
 
 public class TelemetryEvent implements Cloneable {
@@ -15,12 +14,12 @@ public class TelemetryEvent implements Cloneable {
 	/**
 	 * The unique ID of the event.
 	 */
-	public UUID id;
+	public String id;
 	
 	/**
 	 * The ID of the event this event is correlated to. This is mainly used match a response to a certain request.
 	 */
-	public UUID correlationId;
+	public String correlationId;
 	
 	/**
 	 * The name of the event.
@@ -40,7 +39,7 @@ public class TelemetryEvent implements Cloneable {
 	/**
 	 * The ID of the transaction this event belongs to. Transactions are groups of events that belong to a single unit of work.
 	 */
-	public UUID transactionId;
+	public String transactionId;
 	
 	/**
 	 * The name of the transaction this event belongs to. Transactions are groups of events that belong to a single unit of work.
@@ -73,36 +72,6 @@ public class TelemetryEvent implements Cloneable {
 	public Date expiryTime = new Date(0);
 	
 	/**
-	 * The ID of the source of this event, for example a JMSMessageID.
-	 */
-	public String sourceId;
-	
-	/**
-	 * The correlating source ID, for example a JMSCorrelationID.
-	 */
-	public String sourceCorrelationId;
-	
-	/**
-	 * The creationTime of the event this event is correlated to.
-	 */
-	public Date correlationCreationTime = new Date(0);
-
-	/**
-	 * The expiryTime of the event this event is correlated to.
-	 */
-	public Date correlationExpiryTime = new Date(0);
-	
-	/**
-	 * The name of the event this event is correlated to.
-	 */
-	public String correlationName;
-	
-	/**
-	 * The SLA Rule for this event.
-	 */
-	public SlaRule slaRule;
-	
-	/**
 	 * Metadata of the event. Not used by the application, but can be filled by the end user. 
 	 */
 	public Map<String, String> metadata = new HashMap<String, String>();
@@ -118,23 +87,17 @@ public class TelemetryEvent implements Cloneable {
 	public Date retention = new Date(0);
 	
 	public TelemetryEvent initialize() {
-		this.id = UUID.randomUUID();
+		this.id = UUID.randomUUID().toString();
 		this.application = null;
 		this.content = null;
-		this.correlationCreationTime.setTime(0);
 		this.correlationData.clear();
-		this.correlationExpiryTime.setTime(0);
 		this.correlationId = null;
-		this.correlationName = null;
 		this.creationTime.setTime(0);
 		this.direction = null;
 		this.endpoint = null;
 		this.expiryTime.setTime(0);
 		this.metadata.clear();
 		this.name = null;
-		this.slaRule = null;
-		this.sourceCorrelationId = null;
-		this.sourceId = null;
 		this.transactionId = null;
 		this.transactionName = null;
 		this.type = null;
@@ -149,20 +112,14 @@ public class TelemetryEvent implements Cloneable {
 	    initialize();
 		this.application = copy.application;
 		this.content = copy.content;
-		this.correlationCreationTime.setTime(copy.correlationCreationTime.getTime());
 		this.correlationData.putAll(copy.correlationData);
-		this.correlationExpiryTime.setTime(copy.correlationExpiryTime.getTime());
 		this.correlationId = copy.correlationId;
-		this.correlationName = copy.correlationName;
 		this.creationTime.setTime(copy.creationTime.getTime());
 		this.direction = copy.direction;
 		this.endpoint = copy.endpoint;
 		this.expiryTime.setTime(copy.expiryTime.getTime());
 		this.metadata.putAll(copy.metadata);
 		this.name = copy.name;
-		this.slaRule = copy.slaRule;
-		this.sourceCorrelationId = copy.sourceCorrelationId;
-		this.sourceId = copy.sourceId;
 		this.transactionId = copy.transactionId;
 		this.transactionName = copy.transactionName;
 		this.type = copy.type;

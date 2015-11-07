@@ -12,9 +12,9 @@ public class TelemetryEventExceptionHandler implements ExceptionHandler<Telemetr
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventExceptionHandler.class);
 
-	private final SourceCorrelationCache sourceCorrelations;
+	private final IdCorrelationCache sourceCorrelations;
 
-	public TelemetryEventExceptionHandler(SourceCorrelationCache sourceCorrelations) {
+	public TelemetryEventExceptionHandler(IdCorrelationCache sourceCorrelations) {
 		this.sourceCorrelations = sourceCorrelations;
 	}
 
@@ -22,7 +22,7 @@ public class TelemetryEventExceptionHandler implements ExceptionHandler<Telemetr
 	public void handleEventException(Throwable t, long sequence, TelemetryEvent event) {
 		this.sourceCorrelations.removeTelemetryEvent(event);
 		if (log.isErrorLevelEnabled()) {
-			log.logErrorMessage("Unable to process event '" + event.id + "' with sourceId '" + event.sourceId + "'.", t);
+			log.logErrorMessage("Unable to process event '" + event.id + "'.", t);
 		}
 	}
 

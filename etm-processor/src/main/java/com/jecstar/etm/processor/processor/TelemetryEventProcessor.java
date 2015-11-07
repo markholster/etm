@@ -148,14 +148,11 @@ public class TelemetryEventProcessor {
 			if (endpointConfig.transactionNameParsers != null && endpointConfig.transactionNameParsers.size() > 0) {
 				event.transactionName = parseValue(endpointConfig.transactionNameParsers, event.content);
 			}
-			if (event.transactionName != null) {
-				event.slaRule = endpointConfig.slaRules.get(event.transactionName);
-			}
 		}
 		if (event.transactionName != null) {
 			event.transactionId = event.id;
 		}
-		if (event.sourceId != null) {
+		if (event.id != null) {
 			if (event.application == null) {
 				if (endpointConfig == null) {
 					endpointConfig = new EndpointConfigResult();

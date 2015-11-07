@@ -8,14 +8,14 @@ import java.util.Map;
 import com.jecstar.etm.core.util.ObjectUtils;
 import com.jecstar.etm.processor.TelemetryEvent;
 
-public class SourceCorrelationCache {
+public class IdCorrelationCache {
 
-	private final Map<String, List<TelemetryEvent>> sourceCorrelations = new HashMap<String, List<TelemetryEvent>>();
+	private final Map<String, List<TelemetryEvent>> idCorrelations = new HashMap<String, List<TelemetryEvent>>();
 	private final Object mutex = new Object();
 	
 	public TelemetryEvent getBySourceId(String sourceId) {
 		synchronized (this.mutex) {
-			List<TelemetryEvent> results = this.sourceCorrelations.get(sourceId);
+			List<TelemetryEvent> results = this.idCorrelations.get(sourceId);
 			if (results != null) {
 				return results.get(0);
 			}
@@ -23,9 +23,9 @@ public class SourceCorrelationCache {
 		return null;
 	}
 
-	public TelemetryEvent getBySourceIdAndApplication(String sourceId, String application) {
+	public TelemetryEvent getBySourceIdAndApplication(String id, String application) {
 		synchronized (this.mutex) {
-			List<TelemetryEvent> results = this.sourceCorrelations.get(sourceId);
+			List<TelemetryEvent> results = this.idCorrelations.get(id);
 			if (results != null) {
 				for (TelemetryEvent result : results) {
 					if (ObjectUtils.equalsNullProof(application, result.application)) {
@@ -40,24 +40,24 @@ public class SourceCorrelationCache {
 	public void addTelemetryEvent(TelemetryEvent event) {
 		TelemetryEvent clone = event.clone();
 		synchronized (this.mutex) {
-			if (this.sourceCorrelations.containsKey(event.sourceId)) {
-				List<TelemetryEvent> list = this.sourceCorrelations.get(event.sourceId);
+			if (this.idCorrelations.containsKey(event.id)) {
+				List<TelemetryEvent> list = this.idCorrelations.get(event.id);
 				list.add(event);
 			} else {
 				List<TelemetryEvent> list = new ArrayList<TelemetryEvent>();
 				list.add(clone);
-				this.sourceCorrelations.put(event.sourceId, list);
+				this.idCorrelations.put(event.id, list);
 			}
 		}
 	}
 
 	public void removeTelemetryEvent(TelemetryEvent event) {
 		synchronized (this.mutex) {
-			List<TelemetryEvent> list = this.sourceCorrelations.get(event.sourceId);
+			List<TelemetryEvent> list = this.idCorrelations.get(event.id);
 			if (list != null) {
 				list.remove(event);
 				if (list.size() == 0) {
-					this.sourceCorrelations.remove(event.sourceId);
+					this.idCorrelations.remove(event.id);
 				}
 			}
 		}
