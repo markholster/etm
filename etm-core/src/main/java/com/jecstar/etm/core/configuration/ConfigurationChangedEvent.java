@@ -1,36 +1,17 @@
 package com.jecstar.etm.core.configuration;
 
-import java.util.Properties;
-
-import com.jecstar.etm.core.util.ObjectUtils;
+import java.util.List;
 
 public class ConfigurationChangedEvent {
 
-	private Properties oldProperties = new Properties();
-	private Properties currentProperties = new Properties();
-	private Properties changedProperties = new Properties();
-	
-	public ConfigurationChangedEvent(Properties oldProperties, Properties currentProperties) {
-		if (oldProperties != null) {
-			this.oldProperties.putAll(oldProperties);
-		}
-		if (currentProperties != null) {
-			this.currentProperties.putAll(currentProperties);
-			for (String key : currentProperties.stringPropertyNames()) {
-				String currentValue = currentProperties.getProperty(key);
-				String oldValue = null;
-				if (oldProperties != null) {
-					oldValue = oldProperties.getProperty(key);
-				}
-				if (!ObjectUtils.equalsNullProof(currentValue, oldValue)) {
-					this.changedProperties.setProperty(key, currentValue);
-				}
-			}
-		}
+	private List<String> changedConfigurationKeys;
+
+	public ConfigurationChangedEvent(List<String> changedConfigurationKeys) {
+		this.changedConfigurationKeys = changedConfigurationKeys;
 	}
 	
 	public boolean isChanged(String configurationKey) {
-		return this.changedProperties.containsKey(configurationKey);
+		return this.changedConfigurationKeys.contains(configurationKey);
 	}
 	
 	public boolean isAnyChanged(String ... configurationKeys) {
