@@ -10,7 +10,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.apache.solr.client.solrj.SolrClient;
+import org.elasticsearch.client.Client;
 
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
@@ -41,7 +41,7 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 
 	@ProcessorConfiguration
 	@Inject
-	private SolrClient solrClient;
+	private Client elasticClient;
 
 	@ProcessorConfiguration
 	@Inject
@@ -56,8 +56,8 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 		synchronized (this) {
 			if (this.telemetryEventProcessor == null) {
 				this.telemetryEventProcessor = new TelemetryEventProcessor();
-				this.configration.addEtmConfigurationChangeListener(this);
-				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.solrClient,
+				this.configration.addConfigurationChangeListener(this);
+				this.telemetryEventProcessor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.elasticClient,
 				        this.configration, this.metricRegistry);
 			}
 		}
@@ -97,8 +97,8 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 
 	@Override
     public void configurationChanged(ConfigurationChangedEvent event) {
-		if (event.isAnyChanged(EtmConfiguration.ETM_ENHANCING_HANDLER_COUNT, EtmConfiguration.ETM_INDEXING_HANDLER_COUNT,
-		        EtmConfiguration.ETM_PERSISTING_HANDLER_COUNT, EtmConfiguration.ETM_RINGBUFFER_SIZE)) {
+		if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
+				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT, EtmConfiguration.CONFIG_KEY_EVENT_BUFFER_SIZE)) {
 			if (this.telemetryEventProcessor != null) {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Detected a change in the configuration that needs to restart ETM processor.");
