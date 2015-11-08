@@ -8,9 +8,9 @@ import javax.inject.Singleton;
 import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.gui.rest.repository.elastic.EndpointRepositoryCassandraImpl;
-import com.jecstar.etm.gui.rest.repository.elastic.QueryRepositoryCassandraImpl;
-import com.jecstar.etm.gui.rest.repository.elastic.StatisticsRepositoryCassandraImpl;
+import com.jecstar.etm.gui.rest.repository.elastic.EndpointRepositoryElasticImpl;
+import com.jecstar.etm.gui.rest.repository.elastic.QueryRepositoryElasticImpl;
+import com.jecstar.etm.gui.rest.repository.elastic.StatisticsRepositoryElasticImpl;
 import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
 
 @ManagedBean
@@ -43,7 +43,7 @@ public class RepositoryProducer {
 	public QueryRepository getQueryRepository() {
 		synchronized (this) {
 	        if (this.queryRepository == null) {
-	        	this.queryRepository = new QueryRepositoryElasticImpl(this.elasticClient, this.configuration);
+	        	this.queryRepository = new QueryRepositoryElasticImpl(this.elasticClient);
 	        }
         }
 		return this.queryRepository;

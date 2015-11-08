@@ -55,7 +55,7 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 		IndexRequest indexRequest = new IndexRequest(index, ETM_EVENT_INDEX_TYPE, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(this.eventConverter.convert(event));
-		// TODO add id to parent if this is a response.
+		// TODO add id to parent if this is a response and set response time.
 		this.bulkRequest.add(indexRequest);
 		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkSize()) {
 			executeBulk();

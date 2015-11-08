@@ -333,13 +333,14 @@ public class AdminService {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartArray();
-	        List<Node> nodes = this.configuration.getNodes();
-	        for (Node node : nodes) {
-	        	generator.writeStartObject();
-	        	generator.writeStringField("name", node.getName());
-	        	generator.writeBooleanField("active", node.isActive());
-	        	generator.writeEndObject();
-	        }
+	        // TODO node selection.
+//	        List<Node> nodes = this.configuration.getNodes();
+//	        for (Node node : nodes) {
+//	        	generator.writeStartObject();
+//	        	generator.writeStringField("name", node.getName());
+//	        	generator.writeBooleanField("active", node.isActive());
+//	        	generator.writeEndObject();
+//	        }
 	        generator.writeEndArray();
 	        generator.close();
 	        return writer.toString();
@@ -360,25 +361,26 @@ public class AdminService {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        List<String> liveNodes = this.configuration.getLiveNodes();
-	        Properties properties = this.configuration.getNodeConfiguration("cluster".equals(nodeName) ? null : nodeName);
-        	generator.writeStringField("name", nodeName);
-        	generator.writeBooleanField("active", "cluster".equals(nodeName) ? true : liveNodes.contains(nodeName));
-        	for (Object key : properties.keySet()) {
-        		Object value = properties.get(key);
-        		try {
-        			Long longValue = Long.valueOf(value.toString());
-        			generator.writeNumberField(key.toString(), longValue);
-        		} catch (NumberFormatException e) {
-        			if ("true".equals(value.toString()) || "false".equals(value.toString())) {
-        				generator.writeBooleanField(key.toString(), new Boolean(value.toString()));
-        			} else {
-        				generator.writeStringField(key.toString(), value.toString());
-        			}
-        		}
-        		
-        		
-        	}
+	        // TODO node selection.
+//	        List<String> liveNodes = this.configuration.getLiveNodes();
+//	        Properties properties = this.configuration.getNodeConfiguration("cluster".equals(nodeName) ? null : nodeName);
+//        	generator.writeStringField("name", nodeName);
+//        	generator.writeBooleanField("active", "cluster".equals(nodeName) ? true : liveNodes.contains(nodeName));
+//        	for (Object key : properties.keySet()) {
+//        		Object value = properties.get(key);
+//        		try {
+//        			Long longValue = Long.valueOf(value.toString());
+//        			generator.writeNumberField(key.toString(), longValue);
+//        		} catch (NumberFormatException e) {
+//        			if ("true".equals(value.toString()) || "false".equals(value.toString())) {
+//        				generator.writeBooleanField(key.toString(), new Boolean(value.toString()));
+//        			} else {
+//        				generator.writeStringField(key.toString(), value.toString());
+//        			}
+//        		}
+//        		
+//        		
+//        	}
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();
@@ -408,7 +410,8 @@ public class AdminService {
 	        	}
 	        }
 	        if (properties.size() > 0) {
-	        	this.configuration.update("cluster".equals(nodeName) ? null : nodeName, properties);
+	        	// TODO update configuration.
+	        	//this.configuration.update("cluster".equals(nodeName) ? null : nodeName, properties);
 	        }
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {

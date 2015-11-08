@@ -121,10 +121,10 @@ public class StatisticsService {
         Collections.sort(applictions);
         for (String application : applictions) {
         	Map<String, Long> appStats = statistics.get(application);
-        	incomingRequests.add(appStats.get("incomingMessageRequest"));
-        	outgoingRequests.add(appStats.get("outgoingMessageRequest"));
-        	incomingDatagrams.add(appStats.get("incomingDatagramRequest"));
-        	outgoingDatagrams.add(appStats.get("outgoingDatagramRequest"));
+        	incomingRequests.add(appStats.get("Incoming request messages"));
+        	outgoingRequests.add(appStats.get("Outgoing request messages"));
+        	incomingDatagrams.add(appStats.get("Incoming datagram messages"));
+        	outgoingDatagrams.add(appStats.get("Outgoing datagram messages"));
         }
         List<List<Long>> values = new ArrayList<List<Long>>();
         values.add(incomingRequests);

@@ -63,6 +63,11 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	public String getNameTag() {
 		return "name";
 	}
+	
+	@Override
+	public String getResponsetimeTag() {
+		return "responsetime";
+	}
 
 	@Override
 	public String getTransactionIdTag() {

@@ -3,19 +3,15 @@ package com.jecstar.etm.gui.rest.repository;
 public class Average {
 
 	private long count;
-	private long value;
+	private float value;
 
-	public Average(long value) {
-		this.count = 1;
+	public Average(float value, long count) {
+		this.count = count;
 		this.value = value;
-	}
-	public void add(long value) {
-		this.count++;
-		this.value += value;
 	}
 	
 	public float getAverage() {
-		return (float)this.value / (float)this.count;
+		return this.value;
 	}
 	
 	public long getCount() {

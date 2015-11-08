@@ -23,4 +23,5 @@ public interface TelemetryEventConverterTags {
 	
 	// Correlation tags.
 	String getChildCorrelationIdsTag();
+	String getResponsetimeTag();
 }

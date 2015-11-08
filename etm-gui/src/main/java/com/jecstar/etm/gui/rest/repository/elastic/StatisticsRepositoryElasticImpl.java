@@ -1,170 +1,193 @@
 package com.jecstar.etm.gui.rest.repository.elastic;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.AndFilterBuilder;
+import org.elasticsearch.index.query.FilterBuilder;
+import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuilder;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
+import org.elasticsearch.search.aggregations.metrics.avg.Avg;
+import org.elasticsearch.search.aggregations.metrics.avg.AvgBuilder;
 
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
-import com.jecstar.etm.core.cassandra.PartitionKeySuffixCreator;
-import com.jecstar.etm.core.util.DateUtils;
+import com.jecstar.etm.gui.rest.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.gui.rest.repository.Average;
 import com.jecstar.etm.gui.rest.repository.ExpiredMessage;
 import com.jecstar.etm.gui.rest.repository.StatisticsRepository;
 
 public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 
+	private final String eventIndex = "etm_event_all";
+	private final TelemetryEventConverterTagsJsonImpl tags = new TelemetryEventConverterTagsJsonImpl();
 	private final Client elasticClient;
-
-//	private final PreparedStatement selectTransactionPerformanceStatement;
-//	private final PreparedStatement selectMessagePerformanceStatement;
-//	private final PreparedStatement selectMessageExpirationStatement;
-//	private final PreparedStatement selectApplicationCountsStatement;
-//	private final PreparedStatement selectEventCorrelations;
-//	private final PreparedStatement selectEventExpirationDataStatement;
-//	private final PreparedStatement selectApplicationMessagesCountStatement;
-//	private final PreparedStatement selectApplicationMessageNamesStatement;
-//	private final PreparedStatement updateMessageExpirationStatement;
-	
-	 
 	
 	public StatisticsRepositoryElasticImpl(Client elasticClient) {
 		this.elasticClient = elasticClient;
-//		this.selectTransactionPerformanceStatement = this.session.prepare("select transactionName, startTime, finishTime, expiryTime from transaction_performance where transactionName_timeunit = ? and startTime >= ? and startTime <= ?");
-//		this.selectMessagePerformanceStatement = this.session.prepare("select name, startTime, finishTime, expiryTime, application from message_performance where name_timeunit = ? and startTime >= ? and startTime <= ?");
-//		this.selectMessageExpirationStatement = this.session.prepare("select id, name, startTime, finishTime, expiryTime, application, name_timeunit from message_expiration where name_timeunit = ? and expiryTime >= ? and expiryTime <= ?");
-//		this.selectApplicationCountsStatement = this.session.prepare("select application, incomingMessageRequestCount, incomingMessageDatagramCount, outgoingMessageRequestCount, outgoingMessageDatagramCount from application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
-//		this.selectEventCorrelations = this.session.prepare("select correlations from telemetry_event where id = ?");
-//		this.selectEventExpirationDataStatement = this.session.prepare("select creationTime, type from telemetry_event where id = ?");
-//		this.selectApplicationMessagesCountStatement = this.session.prepare("select timeunit, incomingMessageRequestCount, outgoingMessageRequestCount, incomingMessageResponseCount, outgoingMessageResponseCount, incomingMessageDatagramCount, outgoingMessageDatagramCount, incomingMessageResponseTime, outgoingMessageResponseTime from application_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
-//		this.selectApplicationMessageNamesStatement = this.session.prepare("select timeunit, eventName, count from application_event_counter where application_timeunit = ? and timeunit >= ? and timeunit <= ?");
-//		this.updateMessageExpirationStatement = this.session.prepare("update message_expiration set finishTime = ? where name_timeunit = ? and expiryTime = ? and id = ?");
 	}
 	
 	public Map<String, Map<Long, Average>> getTransactionPerformanceStatistics(Long startTime, Long endTime, int maxTransactions, TimeUnit timeUnit) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-//		List<String> transactionNames = getTransactionNameTimeframes(startTime, endTime);
-//		if (transactionNames.size() == 0) {
-//			return Collections.emptyMap();
-//		}
-//		final Map<String, Long> highest = new HashMap<String, Long>();
-//		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
-//		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-//		for (String transactionName : transactionNames) {
-//			resultSets.add(this.session.executeAsync(this.selectTransactionPerformanceStatement.bind(transactionName, new Date(startTime), new Date(endTime))));
-//		}
-//		for (ResultSetFuture resultSetFuture : resultSets) {
-//			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-//			Iterator<Row> iterator = resultSet.iterator();
-//			while (iterator.hasNext()) {
-//				Row row = iterator.next();
-//				String transactionName = row.getString(0);
-//				if (transactionName == null) {
-//					continue;
-//				}
-//				Date transactionStartTime = row.getDate(1);
-//				Date transactionFinishTime = row.getDate(2);
-//				Date transactionExpiryTime = row.getDate(3);
-//				long timeUnitValue = DateUtils.normalizeTime(transactionStartTime.getTime(), timeUnit.toMillis(1));
-//				long responseTime = determineResponseTime(transactionStartTime, transactionFinishTime, transactionExpiryTime);
-//				if (responseTime == -1) {
-//						continue;
-//				}
-//				storeWhenHighest(highest, transactionName, responseTime);
-//				addToTimeBasedAverageDataMap(data, transactionName, timeUnitValue, responseTime);
-//			}
-//		}
-//		filterAveragesToMaxResults(maxTransactions, highest, data);
-//		return data;
+		final String distinctTransactionsAggregation = "distinct_transactions";
+		final String dateIntervalAggregation = "date_interval";
+		final String avgResponsetimeAggregation = "avg_responsetime";
+		
+		AvgBuilder avgBuilder = AggregationBuilders.avg(avgResponsetimeAggregation).field(this.tags.getResponsetimeTag());
+		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
+		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctTransactionsAggregation).field(this.tags.getTransactionNameTag()).subAggregation(dateHistogramBuilder);
+		
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+			.setSearchType(SearchType.COUNT)
+			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime)))
+			.addAggregation(termsBuilder)
+			.get();
+		
+		final Map<String, Float> highest = new HashMap<String, Float>();
+		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
+		Terms terms = searchResponse.getAggregations().get(distinctTransactionsAggregation);
+		List<Terms.Bucket> transactionBuckets = terms.getBuckets();
+		for (Terms.Bucket transactionBucket : transactionBuckets) {
+			String transactionName = transactionBucket.getKey();
+			DateHistogram dateHistogram = transactionBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			Map<Long, Average> averages = new HashMap<Long, Average>();
+			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+				long count = dateHistogramBucket.getDocCount();
+				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
+				float average = new Double(avg.getValue()).floatValue();
+				averages.put(time, new Average(average, count));
+				storeWhenHighest(highest, transactionName, average);
+			}
+			data.put(transactionName, averages);
+		}
+		filterAveragesToMaxResults(maxTransactions, highest, data);
+		return data;
     }
-
+	
 	public Map<String, Map<Long, Average>> getMessagesPerformanceStatistics(Long startTime, Long endTime, int maxMessages, TimeUnit timeUnit) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
-		if (messageNames.size() == 0) {
-			return Collections.emptyMap();
-		}
-		final Map<String, Long> highest = new HashMap<String, Long>();
+		final String distinctMessagesAggregation = "distinct_messages";
+		final String dateIntervalAggregation = "date_interval";
+		final String avgResponsetimeAggregation = "avg_responsetime";
+		
+		AvgBuilder avgBuilder = AggregationBuilders.avg(avgResponsetimeAggregation).field(this.tags.getResponsetimeTag());
+		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
+		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
+		
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+			.setSearchType(SearchType.COUNT)
+			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime)))
+			.addAggregation(termsBuilder)
+			.get();
+		
+		final Map<String, Float> highest = new HashMap<String, Float>();
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
-		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-		for (String messageName : messageNames) {
-			resultSets.add(this.session.executeAsync(this.selectMessagePerformanceStatement.bind(messageName, new Date(startTime), new Date(endTime))));
-		}
-		for (ResultSetFuture resultSetFuture : resultSets) {
-			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			Iterator<Row> iterator = resultSet.iterator();
-			while (iterator.hasNext()) {
-				Row row = iterator.next();
-				String messageName = row.getString(0);
-				if (messageName == null) {
-					continue;
-				}
-				Date messageStartTime = row.getDate(1);
-				Date messageFinishTime = row.getDate(2);
-				Date messageExpiryTime = row.getDate(3);
-				long timeUnitValue = DateUtils.normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
-				long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
-				if (responseTime == -1) {
-						continue;
-				}
-				storeWhenHighest(highest, messageName, responseTime);
-				addToTimeBasedAverageDataMap(data, messageName, timeUnitValue, responseTime);
-			}		
+		Terms terms = searchResponse.getAggregations().get(distinctMessagesAggregation);
+		List<Terms.Bucket> transactionBuckets = terms.getBuckets();
+		for (Terms.Bucket transactionBucket : transactionBuckets) {
+			String eventName = transactionBucket.getKey();
+			DateHistogram dateHistogram = transactionBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			Map<Long, Average> averages = new HashMap<Long, Average>();
+			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+				long count = dateHistogramBucket.getDocCount();
+				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
+				float average = new Double(avg.getValue()).floatValue();
+				averages.put(time, new Average(average, count));
+				storeWhenHighest(highest, eventName, average);
+			}
+			data.put(eventName, averages);
 		}
 		filterAveragesToMaxResults(maxMessages, highest, data);
 		return data;
+
     }
 	
 	public Map<String, Map<Long, Long>> getApplicationMessagesCountStatistics(String application, Long startTime, Long endTime, TimeUnit timeUnit) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> applicationNames = getApplicationNameTimeframes(application, startTime, endTime);
-		if (applicationNames.size() == 0) {
-			return Collections.emptyMap();
-		}
+		
+		final String dateIntervalAggregation = "date_interval";
+		final String distinctDirectionAggregation = "distinct_directions";
+		final String distinctTypeAggregation = "distinct_type";
+
+		
+		TermsBuilder typeTermsBuilder = AggregationBuilders.terms(distinctDirectionAggregation).field(this.tags.getTypeTag());
+		TermsBuilder directionTermsBuilder = AggregationBuilders.terms(distinctDirectionAggregation).field(this.tags.getDirectionTag()).subAggregation(typeTermsBuilder);
+		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(directionTermsBuilder);	
+
+		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
+				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
+				FilterBuilders.termFilter(this.tags.getApplicationTag(), application)
+		);		
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setSearchType(SearchType.COUNT)
+				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.addAggregation(dateHistogramBuilder)
+				.get();
+		
 		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
-		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-		for (String applicationName : applicationNames) {
-			resultSets.add(this.session.executeAsync(this.selectApplicationMessagesCountStatement.bind(applicationName, new Date(startTime), new Date(endTime))));
-		}
-		for (ResultSetFuture resultSetFuture : resultSets) {
-			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			Iterator<Row> iterator = resultSet.iterator();
-			while (iterator.hasNext()) {
-				Row row = iterator.next();
-				long timeUnitValue = DateUtils.normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
-				addToTimeBasedCounterDataMap(data, "Incoming request messages", timeUnitValue, row.getLong(1));
-				addToTimeBasedCounterDataMap(data, "Outgoing request messages", timeUnitValue, row.getLong(2));
-				addToTimeBasedCounterDataMap(data, "Incoming response messages", timeUnitValue, row.getLong(3));
-				addToTimeBasedCounterDataMap(data, "Outgoing response messages", timeUnitValue, row.getLong(4));
-				addToTimeBasedCounterDataMap(data, "Incoming datagram messages", timeUnitValue, row.getLong(5));
-				addToTimeBasedCounterDataMap(data, "Outgoing datagram messages", timeUnitValue, row.getLong(6));
-				
+		DateHistogram dateHistogram = searchResponse.getAggregations().get(dateIntervalAggregation);
+		List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+		for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+			long time = dateHistogramBucket.getKeyAsNumber().longValue();
+			Terms directionTerms = dateHistogramBucket.getAggregations().get(distinctDirectionAggregation);
+			for (Terms.Bucket directionBucket : directionTerms.getBuckets()) {
+				TelemetryEventDirection direction = TelemetryEventDirection.valueOf(directionBucket.getKey());
+				Terms typeTerms = directionBucket.getAggregations().get(distinctTypeAggregation);
+				for (Terms.Bucket typeBucket : typeTerms.getBuckets()) {
+					TelemetryEventType type = TelemetryEventType.valueOf(typeBucket.getKey());
+					addToTimeBasedCounterDataMap(data, directionToString(direction) + " " + typeToString(type) + " messages", time, typeBucket.getDocCount());
+				}
 			}
 		}
 	    return data;
     }
+	
+	private String directionToString(TelemetryEventDirection direction) {
+		switch (direction) {
+		case INCOMING:
+			return "Incoming";
+		case OUTGOING:
+			return "Outgoing";
+		default:
+			return direction.name().toLowerCase();
+		}
+	}
+	
+	private String typeToString(TelemetryEventType type) {
+		switch (type) {
+		case MESSAGE_DATAGRAM:
+			return "datagram";
+		case MESSAGE_REQUEST:
+			return "request";
+		case MESSAGE_RESPONSE:
+			return "response";
+		default:
+			return type.name().toLowerCase();
+		}
+	}
 	
 	public Map<String, Map<Long, Average>> getApplicationMessagesPerformanceStatistics(String application, Long startTime, Long endTime, TimeUnit timeUnit) {
 		if (startTime > endTime) {
@@ -173,37 +196,43 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		if (application == null) {
 			return Collections.emptyMap();
 		}
-		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
-		if (messageNames.size() == 0) {
-			return Collections.emptyMap();
-		}
+		
+		final String distinctMessagesAggregation = "distinct_messages";
+		final String dateIntervalAggregation = "date_interval";
+		final String avgResponsetimeAggregation = "avg_responsetime";
+		
+		AvgBuilder avgBuilder = AggregationBuilders.avg(avgResponsetimeAggregation).field(this.tags.getResponsetimeTag());
+		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
+		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
+
+		
+		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
+				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
+				FilterBuilders.termFilter(this.tags.getApplicationTag(), application)
+		);		
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setSearchType(SearchType.COUNT)
+				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.addAggregation(termsBuilder)
+				.get();
+
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
-		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-		for (String messageName : messageNames) {
-			resultSets.add(this.session.executeAsync(this.selectMessagePerformanceStatement.bind(messageName, new Date(startTime), new Date(endTime))));
-		}
-		for (ResultSetFuture resultSetFuture : resultSets) {
-			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			Iterator<Row> iterator = resultSet.iterator();
-			while (iterator.hasNext()) {
-				Row row = iterator.next();
-				if (!application.equals(row.getString(4))) {
-					continue;
-				}
-				String messageName = row.getString(0);
-				if (messageName == null) {
-					continue;
-				}
-				Date messageStartTime = row.getDate(1);
-				Date messageFinishTime = row.getDate(2);
-				Date messageExpiryTime = row.getDate(3);
-				long timeUnitValue = DateUtils.normalizeTime(messageStartTime.getTime(), timeUnit.toMillis(1));
-				long responseTime = determineResponseTime(messageStartTime, messageFinishTime, messageExpiryTime);
-				if (responseTime == -1) {
-						continue;
-				}
-				addToTimeBasedAverageDataMap(data, messageName, timeUnitValue, responseTime);
-			}		
+		
+		Terms terms = searchResponse.getAggregations().get(distinctMessagesAggregation);
+		List<Terms.Bucket> messageBuckets = terms.getBuckets();
+		for (Terms.Bucket messageBucket : messageBuckets) {
+			String eventName = messageBucket.getKey();
+			DateHistogram dateHistogram = messageBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			Map<Long, Average> averages = new HashMap<Long, Average>();
+			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+				long count = dateHistogramBucket.getDocCount();
+				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
+				float average = new Double(avg.getValue()).floatValue();
+				averages.put(time, new Average(average, count));
+			}
+			data.put(eventName, averages);
 		}
 		return data;
     }
@@ -212,26 +241,41 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> applicationNames = getApplicationNameTimeframes(application, startTime, endTime);
-		if (applicationNames.size() == 0) {
-			return Collections.emptyMap();
-		}
+		
+		final String distinctMessagesAggregation = "distinct_messages";
+		final String dateIntervalAggregation = "date_interval";
+		
+		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1));
+		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
+
+		
+		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
+				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
+				FilterBuilders.termFilter(this.tags.getApplicationTag(), application)
+		);		
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setSearchType(SearchType.COUNT)
+				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.addAggregation(termsBuilder)
+				.get();
+
 		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
-		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-		for (String applicationName : applicationNames) {
-			resultSets.add(this.session.executeAsync(this.selectApplicationMessageNamesStatement.bind(applicationName, new Date(startTime), new Date(endTime))));
-		}
-		for (ResultSetFuture resultSetFuture : resultSets) {
-			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			Iterator<Row> iterator = resultSet.iterator();
-			while (iterator.hasNext()) {
-				Row row = iterator.next();
-				long timeUnitValue = DateUtils.normalizeTime(row.getDate(0).getTime(), timeUnit.toMillis(1));
-				String eventName = row.getString(1);
-				addToTimeBasedCounterDataMap(data, eventName, timeUnitValue, row.getLong(2));
+		
+		Terms terms = searchResponse.getAggregations().get(distinctMessagesAggregation);
+		List<Terms.Bucket> messageBuckets = terms.getBuckets();
+		for (Terms.Bucket messageBucket : messageBuckets) {
+			String eventName = messageBucket.getKey();
+			DateHistogram dateHistogram = messageBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			Map<Long, Long> counts = new HashMap<Long, Long>();
+			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+				long count = dateHistogramBucket.getDocCount();
+				counts.put(time, count);
 			}
+			data.put(eventName, counts);
 		}
-	    return data;
+		return data;		
     }
 	
 	public List<ExpiredMessage> getApplicationMessagesExpirationStatistics(String application, Long startTime, Long endTime, int maxExpirations) {
@@ -249,130 +293,132 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyList();
 		}
-		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
-		if (messageNames.size() == 0) {
-			return Collections.emptyList();
+		FilterBuilder filterBuilder;
+		if (application != null) {
+			filterBuilder = FilterBuilders.andFilter(
+					FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
+					FilterBuilders.termFilter(this.tags.getApplicationTag(), application),
+					FilterBuilders.termFilter(this.tags.getTypeTag(), TelemetryEventType.MESSAGE_REQUEST.name())
+			);		
+		} else {
+			filterBuilder = FilterBuilders.andFilter(
+					FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
+					FilterBuilders.termFilter(this.tags.getTypeTag(), TelemetryEventType.MESSAGE_REQUEST.name())			
+			);
 		}
+
+		// TODO nog even bekijken hoe we de expired messages eruit halen.
 		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
-		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-		for (String messageName : messageNames) {
-			resultSets.add(this.session.executeAsync(this.selectMessageExpirationStatement.bind(messageName, new Date(startTime), new Date(endTime))));
-		}
-		for (ResultSetFuture resultSetFuture : resultSets) {
-			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			Iterator<Row> iterator = resultSet.iterator();
-			while (iterator.hasNext()) {
-				Row row = iterator.next();
-				UUID id = row.getUUID(0);
-				if (id == null) {
-					continue;
-				}
-				String eventApplication = row.getString(5);
-				if (application != null && !application.equals(eventApplication)) {
-					continue;
-				}
-				String messageName = row.getString(1);
-				if (messageName == null) {
-					messageName = "undefined";
-				}
-				Date messageStartTime = row.getDate(2);
-				Date messageFinishTime = row.getDate(3);
-				Date messageExpiryTime = row.getDate(4);
-				String rowKey = row.getString(6);
-				if (messageFinishTime == null || messageFinishTime.getTime() == 0) {
-					Row eventRow = this.session.execute(this.selectEventCorrelations.bind(id)).one();
-					if (eventRow != null) {
-						List<UUID> childIds = eventRow.getList(0, UUID.class);
-						if (childIds != null) {
-							for (UUID childId : childIds) {
-								Row childRow = this.session.execute(this.selectEventExpirationDataStatement.bind(childId)).one();
-								if (childRow != null) {
-									TelemetryEventType type = null;
-									try {
-										type = TelemetryEventType.valueOf(childRow.getString(1));
-									} catch (Exception e) {
-										continue;
-									}
-									if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
-										// False positive, update the expiration table
-										messageFinishTime = childRow.getDate(0);
-										this.session.executeAsync(this.updateMessageExpirationStatement.bind(messageFinishTime, rowKey, messageExpiryTime, id));
-										break;
-									}
-								}
-							}
-						}
-					}
-				}
-				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
-					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
-						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
-                        }
-					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
-						synchronized (expiredMessages) {
-							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
-                        }
-					}
-				}
-			}
-		}
-		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());		
+		
+//		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
+//		if (messageNames.size() == 0) {
+//			return Collections.emptyList();
+//		}
+//		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
+//		for (String messageName : messageNames) {
+//			resultSets.add(this.session.executeAsync(this.selectMessageExpirationStatement.bind(messageName, new Date(startTime), new Date(endTime))));
+//		}
+//		for (ResultSetFuture resultSetFuture : resultSets) {
+//			ResultSet resultSet = resultSetFuture.getUninterruptibly();
+//			Iterator<Row> iterator = resultSet.iterator();
+//			while (iterator.hasNext()) {
+//				Row row = iterator.next();
+//				UUID id = row.getUUID(0);
+//				if (id == null) {
+//					continue;
+//				}
+//				String eventApplication = row.getString(5);
+//				if (application != null && !application.equals(eventApplication)) {
+//					continue;
+//				}
+//				String messageName = row.getString(1);
+//				if (messageName == null) {
+//					messageName = "undefined";
+//				}
+//				Date messageStartTime = row.getDate(2);
+//				Date messageFinishTime = row.getDate(3);
+//				Date messageExpiryTime = row.getDate(4);
+//				String rowKey = row.getString(6);
+//				if (messageFinishTime == null || messageFinishTime.getTime() == 0) {
+//					Row eventRow = this.session.execute(this.selectEventCorrelations.bind(id)).one();
+//					if (eventRow != null) {
+//						List<UUID> childIds = eventRow.getList(0, UUID.class);
+//						if (childIds != null) {
+//							for (UUID childId : childIds) {
+//								Row childRow = this.session.execute(this.selectEventExpirationDataStatement.bind(childId)).one();
+//								if (childRow != null) {
+//									TelemetryEventType type = null;
+//									try {
+//										type = TelemetryEventType.valueOf(childRow.getString(1));
+//									} catch (Exception e) {
+//										continue;
+//									}
+//									if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
+//										// False positive, update the expiration table
+//										messageFinishTime = childRow.getDate(0);
+//										this.session.executeAsync(this.updateMessageExpirationStatement.bind(messageFinishTime, rowKey, messageExpiryTime, id));
+//										break;
+//									}
+//								}
+//							}
+//						}
+//					}
+//				}
+//				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
+//					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
+//						synchronized (expiredMessages) {
+//							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
+//                        }
+//					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
+//						synchronized (expiredMessages) {
+//							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
+//                        }
+//					}
+//				}
+//			}
+//		}
+		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());
 	}
 	
 	public Map<String, Map<String, Long>> getApplicationCountStatistics(Long startTime, Long endTime, int maxApplications) {
 		if (startTime > endTime) {
 			return Collections.emptyMap();
 		}
-		List<String> applicationNames = getApplicationNameTimeframes(startTime, endTime);
-		if (applicationNames.size() == 0) {
-			return Collections.emptyMap();
-		}
+		final String distinctApplicationAggregation = "distinct_applications";
+		final String distinctDirectionAggregation = "distinct_directions";
+		final String distinctTypeAggregation = "distinct_type";
+
+		
+		TermsBuilder typeTermsBuilder = AggregationBuilders.terms(distinctDirectionAggregation).field(this.tags.getTypeTag());
+		TermsBuilder directionTermsBuilder = AggregationBuilders.terms(distinctDirectionAggregation).field(this.tags.getDirectionTag()).subAggregation(typeTermsBuilder);
+		TermsBuilder applicationTermsBuilder = AggregationBuilders.terms(distinctApplicationAggregation).field(this.tags.getApplicationTag()).subAggregation(directionTermsBuilder);
+
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setSearchType(SearchType.COUNT)
+				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime)))
+				.addAggregation(applicationTermsBuilder)
+				.get();
+		
 		final Map<String, Long> totals = new HashMap<String, Long>();
 		final Map<String, Map<String, Long>> data = new HashMap<String, Map<String, Long>>();
-		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
 		
-		for (String applicationName : applicationNames) {
-			resultSets.add(this.session.executeAsync(this.selectApplicationCountsStatement.bind(applicationName, new Date(startTime), new Date(endTime))));
-		}
-		for (ResultSetFuture resultSetFuture : resultSets) {
-			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-			Iterator<Row> iterator = resultSet.iterator();
-			while (iterator.hasNext()) {
-				Row row = iterator.next();
-				String applicationName = row.getString(0);
-				if (applicationName == null) {
-					continue;
-				}
-				long incomingMessageRequestCount = row.getLong(1);
-				long incomingMessageDatagramCount = row.getLong(2);
-				long outgoingMessageRequestCount = row.getLong(3);
-				long outgoingMessageDatagramCount = row.getLong(4);
-				long total = incomingMessageRequestCount + incomingMessageDatagramCount + outgoingMessageRequestCount + outgoingMessageDatagramCount;
-				if (total == 0) {
-					continue;
-				}
-				if (!totals.containsKey(applicationName)) {
-					totals.put(applicationName, total);
-				} else {
-					Long currentValue = totals.get(applicationName);
-					totals.put(applicationName, currentValue + total);
-				}
-				if (!data.containsKey(applicationName)) {
-					Map<String, Long> appTotals = new HashMap<String, Long>();
-					appTotals.put("incomingMessageRequest", incomingMessageRequestCount);
-					appTotals.put("incomingDatagramRequest", incomingMessageDatagramCount);
-					appTotals.put("outgoingMessageRequest", outgoingMessageRequestCount);
-					appTotals.put("outgoingDatagramRequest", outgoingMessageDatagramCount);
-					data.put(applicationName, appTotals);
-				} else {
-					Map<String, Long> currentValues = data.get(applicationName);
-					currentValues.put("incomingMessageRequest", currentValues.get("incomingMessageRequest") + incomingMessageRequestCount);
-					currentValues.put("incomingDatagramRequest", currentValues.get("incomingDatagramRequest") + incomingMessageDatagramCount);
-					currentValues.put("outgoingMessageRequest", currentValues.get("outgoingMessageRequest") + outgoingMessageRequestCount);
-					currentValues.put("outgoingDatagramRequest", currentValues.get("outgoingDatagramRequest") + outgoingMessageDatagramCount);				
+		Terms applicationTerms = searchResponse.getAggregations().get(distinctApplicationAggregation);
+		List<Terms.Bucket> applicationBuckets = applicationTerms.getBuckets();
+		for (Terms.Bucket applicationBucket : applicationBuckets) {
+			String applicationName = applicationBucket.getKey();
+			Terms directionTerms = applicationBucket.getAggregations().get(distinctDirectionAggregation);
+			Map<String, Long> appTotals = new HashMap<String, Long>();
+			for (Terms.Bucket directionBucket : directionTerms.getBuckets()) {
+				TelemetryEventDirection direction = TelemetryEventDirection.valueOf(directionBucket.getKey());
+				Terms typeTerms = directionBucket.getAggregations().get(distinctTypeAggregation);
+				for (Terms.Bucket typeBucket : typeTerms.getBuckets()) {
+					TelemetryEventType type = TelemetryEventType.valueOf(typeBucket.getKey());
+					appTotals.put(directionToString(direction) + " " + typeToString(type) + " messages", typeBucket.getDocCount());
+					
 				}
 			}
+			totals.put(applicationName, applicationBucket.getDocCount());
+			data.put(applicationName, appTotals);
 		}
 		filterCountsToMaxResults(maxApplications, totals, data);
 		return data;
@@ -397,14 +443,14 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		}
 	}
 	
-	private void filterAveragesToMaxResults(int maxResults, Map<String, Long> highest, Map<String, Map<Long, Average>> data) {
-		List<Long> values = new ArrayList<>(highest.values().size());
+	private void filterAveragesToMaxResults(int maxResults, Map<String, Float> highest, Map<String, Map<Long, Average>> data) {
+		List<Float> values = new ArrayList<>(highest.values().size());
 		values.addAll(highest.values());
 		Collections.sort(values);
 		Collections.reverse(values);
 		if (values.size() > maxResults) {
 			for (int i = maxResults; i < values.size(); i++) {
-				Long valueToRemove = values.get(i);
+				Float valueToRemove = values.get(i);
 				for (String name : highest.keySet()) {
 					if (highest.get(name).equals(valueToRemove)) {
 						data.remove(name);
@@ -434,121 +480,16 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 			}
 		}		
 	}
-	
-	private void addToTimeBasedAverageDataMap(Map<String, Map<Long, Average>> data, String key, Long timeUnitValue, Long responseTime) {
-		if (!data.containsKey(key)) {
-			Map<Long, Average> values = new HashMap<Long, Average>();
-			values.put(timeUnitValue, new Average(responseTime));
-			data.put(key, values);
-		} else {
-			Map<Long, Average> values = data.get(key);
-			if (!values.containsKey(timeUnitValue)) {
-				values.put(timeUnitValue, new Average(responseTime));
-			} else {
-				Average currentValue = values.get(timeUnitValue);
-				currentValue.add(responseTime);
-			}
-		}
-	}
-	
-	private void storeWhenHighest(Map<String, Long> highest, String key, long value) {
+		
+	private void storeWhenHighest(Map<String, Float> highest, String key, float value) {
 		if (!highest.containsKey(key)) {
 			highest.put(key, value);
 		} else {
-			Long currentValue = highest.get(key);
+			Float currentValue = highest.get(key);
 			if (value > currentValue) {
 				highest.put(key, value);
 			}
 		}
     }
-	
-	private long determineResponseTime(Date startTime, Date finishTime, Date expiryTime) {
-		if (finishTime != null && finishTime.getTime() != 0) {
-			return finishTime.getTime() - startTime.getTime(); 
-		} else if (expiryTime != null && expiryTime.getTime() != 0) {
-			if (expiryTime.getTime() < System.currentTimeMillis()) {
-				// transaction expired, set response time to expiry time.
-				return expiryTime.getTime() - startTime.getTime();
-			} else {
-				// transaction not yet finished, and transaction not expired. Ignore this one.
-				return -1;
-			}
-		} 
-		// transaction not yet finished, and no expiry time available. Ignore this one.
-		return -1;
-	}
-	
-	private List<String> getTransactionNameTimeframes(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "TransactionName"));
-		List<String> transactionNames = new ArrayList<String>();
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String name = row.getString(0);
-			if (!transactionNames.contains(name)) {
-				transactionNames.add(name);
-			}
-		}
-		return transactionNames;
-	}
-	
-	private List<String> getMessageNameTimeframes(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "MessageName"));
-		List<String> eventNames = new ArrayList<String>();
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String name = row.getString(0);
-			if (!eventNames.contains(name)) {
-				eventNames.add(name);
-			}
-		}
-		return eventNames;
-	}
-	
-	private List<String> getApplicationNameTimeframes(long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
-		List<String> eventNames = new ArrayList<String>();
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String name = row.getString(0);
-			if (!eventNames.contains(name)) {
-				eventNames.add(name);
-			}
-		}
-		return eventNames;
-	}
-	
-	private List<String> getApplicationNameTimeframes(String applicationName, long startTime, long endTime) {
-		BuiltStatement builtStatement = QueryBuilder.select("name_timeframe", "name").from("event_occurrences").where(QueryBuilder.in("timeunit", determineTimeFrame(startTime, endTime))).and(QueryBuilder.eq("type", "Application"));
-		List<String> eventNames = new ArrayList<String>();
-		ResultSet resultSet = this.session.execute(builtStatement);
-		Iterator<Row> iterator = resultSet.iterator();
-		while (iterator.hasNext()) {
-			Row row = iterator.next();
-			String name = row.getString(0);
-			if (!eventNames.contains(name) && applicationName.equals(row.getString(1))) {
-				eventNames.add(name);
-			}
-		}
-		return eventNames;
-	}
-	
-	private List<Object> determineTimeFrame(long startTime, long endTime) {
-	    Calendar startCalendar = Calendar.getInstance();
-	    Calendar endCalendar = Calendar.getInstance();
-	    startCalendar.setTimeInMillis(startTime);
-	    endCalendar.setTimeInMillis(endTime);
-	    // For unknown reasons cassandra gives an error when the arraylist is created with the Date generic type.
-	    List<Object> result = new ArrayList<Object>();
-	    do {
-	    	result.add(new Date(DateUtils.normalizeTime(startCalendar.getTime().getTime(), PartitionKeySuffixCreator.SMALLEST_TIMUNIT_UNIT.toMillis(1))));
-	    	startCalendar.add(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT, 1);
-	    } while (startCalendar.before(endCalendar) || (!startCalendar.before(endCalendar) && startCalendar.get(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT) == endCalendar.get(PartitionKeySuffixCreator.SMALLEST_CALENDAR_UNIT)));
-	    return result;
-    }
+		
 }

@@ -50,6 +50,10 @@ public class TelemetryEventConverterTagsJsonImpl {
 	public String getNameTag() {
 		return "name";
 	}
+	
+	public String getResponsetimeTag() {
+		return "responsetime";
+	}
 
 	public String getTransactionIdTag() {
 		return "transaction_id";

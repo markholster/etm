@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.parsers.ExpressionParser;
-import com.jecstar.etm.core.sla.SlaRule;
 
 public class EndpointConfiguration {
 
@@ -23,6 +22,5 @@ public class EndpointConfiguration {
 	
 	public Map<String, ExpressionParser> correlationParsers = new LinkedHashMap<String, ExpressionParser>();
 	
-	public Map<String, SlaRule> slaRules = new LinkedHashMap<String, SlaRule>();
 	
 }

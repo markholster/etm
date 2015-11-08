@@ -47,7 +47,10 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(QueryRepositoryElasticImpl.class);
-
+	
+	private final String eventIndex = "etm_event_all";
+	private final String eventIndexType = "event";
+	
 	private final Client elasticClient;
 	private final TransformerFactoryImpl transformerFactory;
 	private final TelemetryEventConverterTagsJsonImpl tags = new TelemetryEventConverterTagsJsonImpl();
@@ -74,7 +77,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 
 	public void addEvent(String eventId, JsonGenerator generator) throws JsonGenerationException, IOException {
-		GetResponse getResponse = this.elasticClient.prepareGet("etm_event_all", "event", eventId).get();
+		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
 		if (!getResponse.isExists()) {
 			return;
 		}
@@ -342,7 +345,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 	
 	private String findParentId(String eventId, Date considerdataFrom) {
-		GetResponse getResponse = this.elasticClient.prepareGet("etm_event_all", "event", eventId).get();
+		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -403,7 +406,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 			}
 		});
 		for (CorrelationResult correlationResult : correlatingResults) {
-			GetResponse getResponse = this.elasticClient.prepareGet("etm_event_all", "event", correlationResult.id).get();
+			GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, correlationResult.id).get();
 			if (!getResponse.isExists()) {
 				continue;
 			}
@@ -447,7 +450,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 					}
 				}
 				for (String childId : childIds) {
-					GetResponse getChildResponse = this.elasticClient.prepareGet("etm_event_all", "event", childId).get();
+					GetResponse getChildResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, childId).get();
 					if (!getChildResponse.isExists()) {
 						continue;
 					}
@@ -483,7 +486,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 
 	private void findChildren(String eventId, OverviewEvent parent, List<OverviewEvent> overviewEvents) {
-		GetResponse getResponse = this.elasticClient.prepareGet("etm_event_all", "event", eventId).get();
+		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
 		if (!getResponse.isExists()) {
 			return;
 		}
@@ -618,7 +621,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	private List<CorrelationResult> getCorrelationResults(String eventId, Map<String, String> correlationData, Date startTime, Date finishTime) {
 		List<CorrelationResult> correlatingResults = new ArrayList<CorrelationResult>();
 		for (String correlationKey : correlationData.keySet()) {
-			SearchResponse searchResponse = this.elasticClient.prepareSearch("etm_event_all")
+			SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
 				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), 
 						FilterBuilders.andFilter(
 								FilterBuilders.termFilter(this.tags.getCorrelationDataTag() + "." + correlationKey, correlationData.get(correlationKey)),
@@ -658,7 +661,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	 * @return
 	 */
 	private ResponseCorrelationData getResponseCorrelationData(String eventId) {
-		GetResponse getResponse = this.elasticClient.prepareGet("etm_event_all", "event", eventId).get();
+		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -671,7 +674,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 			return null;
 		}
 		for (String correlationId : correlations) {
-			GetResponse getChildResponse = this.elasticClient.prepareGet("etm_event_all", "event", correlationId).get();
+			GetResponse getChildResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, correlationId).get();
 			if (!getResponse.isExists()) {
 				continue;
 			}
@@ -692,7 +695,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		CorrelationData result = new CorrelationData();
 		result.eventId = eventId;
 		
-		GetResponse getResponse = this.elasticClient.prepareGet("etm_event_all", "event", eventId).get();
+		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -723,7 +726,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 				result.expired = true;
 			}
 			for (String childId : childCorrelations) {
-				GetResponse childResponse = this.elasticClient.prepareGet("etm_event_all", "event", childId).get();
+				GetResponse childResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, childId).get();
 				if (!childResponse.isExists()) {
 					continue;
 				}
