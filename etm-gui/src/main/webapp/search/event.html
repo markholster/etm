@@ -59,9 +59,9 @@
                                 <div class="col-sm-4">
                                   <p id="event_endpoint" class="form-control-static" style="padding-bottom: 0px;"></p>
                                 </div>
-                                <label class="col-sm-2 control-label">Source id</label>
+                                <label class="col-sm-2 control-label">Id</label>
                                 <div class="col-sm-4">
-                                  <p id="event_sourceId" class="form-control-static" style="padding-bottom: 0px;"></p>
+                                  <p id="event_id" class="form-control-static" style="padding-bottom: 0px;"></p>
                                 </div>
 							  </div>
                               <div class="form-group">  
@@ -69,9 +69,9 @@
                                 <div class="col-sm-4">
                                   <p id="event_transactionName" class="form-control-static" style="padding-bottom: 0px;"></p>
                                 </div>
-                                <label class="col-sm-2 control-label">Source correlation id</label>
+                                <label class="col-sm-2 control-label">Correlation id</label>
                                 <div class="col-sm-4">
-                                  <p id="event_sourceCorrelationId" class="form-control-static" style="padding-bottom: 0px;"></p>
+                                  <p id="event_correlationId" class="form-control-static" style="padding-bottom: 0px;"></p>
                                 </div>
                               </div>
                               <div class="form-group">  
@@ -183,8 +183,8 @@ $(function () {
             $('#' + prefix + '_tab #' + prefix + '_expiryTime').text(formatDate(new Date(data.expiryTime)));
         }
         $('#' + prefix + '_tab #' + prefix + '_transactionName').text(data.transactionName);
-        $('#' + prefix + '_tab #' + prefix + '_sourceId').text(data.sourceId);
-        $('#' + prefix + '_tab #' + prefix + '_sourceCorrelationId').text(data.sourceCorrelationId);
+        $('#' + prefix + '_tab #' + prefix + '_id').text(data.id);
+        $('#' + prefix + '_tab #' + prefix + '_correlationId').text(data.correlationId);
         $('#' + prefix + '_tab #' + prefix + '_content').text(data.content);
         if (data.content != undefined && data.content.indexOf('<') === 0) {
             var formattedHtml = prettyPrintOne($('#' + prefix + '_tab #' + prefix + '_content').html());

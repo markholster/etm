@@ -389,7 +389,7 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		final String distinctTypeAggregation = "distinct_type";
 
 		
-		TermsBuilder typeTermsBuilder = AggregationBuilders.terms(distinctDirectionAggregation).field(this.tags.getTypeTag());
+		TermsBuilder typeTermsBuilder = AggregationBuilders.terms(distinctTypeAggregation).field(this.tags.getTypeTag());
 		TermsBuilder directionTermsBuilder = AggregationBuilders.terms(distinctDirectionAggregation).field(this.tags.getDirectionTag()).subAggregation(typeTermsBuilder);
 		TermsBuilder applicationTermsBuilder = AggregationBuilders.terms(distinctApplicationAggregation).field(this.tags.getApplicationTag()).subAggregation(directionTermsBuilder);
 

@@ -19,15 +19,13 @@
 					   <ul>
 					       <li>application</li>
 					       <li>content</li>
-					       <li>correlationId</li>
-					       <li>creationTime</li>
+					       <li>correlation_id</li>
+					       <li>creation_time</li>
 					       <li>endpoint</li>
 					       <li>id</li>
 					       <li>name</li>
-					       <li>sourceCorrelationId</li>
-					       <li>sourceId</li>
-					       <li>transactionId</li>
-					       <li>transactionName</li>
+					       <li>transaction_id</li>
+					       <li>transaction_name</li>
 					       <li>type</li>
 					   </ul>
 					</div>
@@ -91,7 +89,7 @@
 										<th><a href="#" id="sort_name">Name</a></th>
 										<th><a href="#" id="sort_application">Application</a></th>
 										<th><a href="#" id="sort_endpoint">Endpoint</a></th>
-										<th><a href="#" id="sort_source_id">Source id</a></th>
+										<th><a href="#" id="sort_id">Id</a></th>
 										<th><a href="#" id="sort_creation_time">Creation time</a></th>
 									</tr>
 								</thead>
@@ -108,11 +106,11 @@
                     <div class="panel-heading">Search templates</div>
                     <div class="panel-body">
                        <ul>
-                           <li><a href="#" onclick="$('#search_input').val('application:&quot;x&quot;');return false;">application &lt;x&gt;</a></li>
-                           <li><a href="#" onclick="$('#search_input').val('endpoint:&quot;x&quot;');return false;">endpoint &lt;x&gt;</a></li>
-                           <li><a href="#" onclick="$('#search_input').val('creationTime:[NOW-1HOUR TO NOW]');return false;">last hour</a></li>
-                           <li><a href="#" onclick="$('#search_input').val('creationTime:[NOW-1HOUR TO NOW] AND application:&quot;x&quot;');return false;">last hour of application &lt;x&gt;</a></li>
-                           <li><a href="#" onclick="$('#search_input').val('creationTime:[' + new Date(new Date().setHours(0,0,0,0) - 86400000).toISOString() + ' TO ' + new Date(new Date().setHours(23,59,59,999) - 86400000).toISOString() + ']');return false;">yesterday</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('application: &quot;x&quot;');return false;">application &lt;x&gt;</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('endpoint: &quot;x&quot;');return false;">endpoint &lt;x&gt;</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('creation_time: [NOW-1HOUR TO NOW]');return false;">last hour</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('creation_time: [NOW-1HOUR TO NOW] AND application:&quot;x&quot;');return false;">last hour of application &lt;x&gt;</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('creation_time: [' + new Date(new Date().setHours(0,0,0,0) - 86400000).toISOString() + ' TO ' + new Date(new Date().setHours(23,59,59,999) - 86400000).toISOString() + ']');return false;">yesterday</a></li>
                        </ul>
                     </div>
                 </div>
@@ -182,7 +180,7 @@ $(function () {
         var application = $.isEmptyObject(event.application) ? '' : event.application;
         var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint;
         var eventName = $.isEmptyObject(event.name) ? '?' : event.name; 
-        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder) + '">' + escapeToHtml(eventName) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(endpoint) + '</div></td><td><div style="display: none;">' + escapeToHtml(event.sourceId) + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
+        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder) + '">' + escapeToHtml(eventName) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(endpoint) + '</div></td><td><div style="display: none;">' + escapeToHtml(event.id) + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
         $(rowContent).appendTo($('#result_table > tbody'));
         if (animate) {
             $('#result_table > tbody > :last-child > td > div').slideDown(500);
@@ -305,8 +303,8 @@ $(function () {
     setSortListener('sort_name','name');
     setSortListener('sort_application','application');
     setSortListener('sort_endpoint','endpoint');
-    setSortListener('sort_source_id','sourceId');
-	setSortListener('sort_creation_time','creationTime');
+    setSortListener('sort_id','id');
+	setSortListener('sort_creation_time','creation_time');
 	
 });
 //]]>

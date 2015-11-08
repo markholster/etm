@@ -219,7 +219,11 @@ public class StatisticsService {
 	        	generator.writeArrayFieldStart("data");
 	        	List<Long> serieValues = values.get(i);
 	        	for (Long value : serieValues) {
-	        		generator.writeNumber(value);
+	        		if (value == null) {
+	        			generator.writeNumber(0);
+	        		} else {
+	        			generator.writeNumber(value);
+	        		}
 	        	}
 	        	generator.writeEndArray();
 	        	generator.writeEndObject();
