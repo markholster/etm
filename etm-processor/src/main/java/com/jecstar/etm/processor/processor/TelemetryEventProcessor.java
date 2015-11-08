@@ -2,6 +2,7 @@ package com.jecstar.etm.processor.processor;
 
 import java.nio.channels.IllegalSelectorException;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
 import org.elasticsearch.client.Client;
@@ -9,7 +10,6 @@ import org.elasticsearch.client.Client;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -81,9 +81,10 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
-		if (this.etmConfiguration.getLicense().getExpiryDate().getTime() < System.currentTimeMillis()) {
-			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
-		}
+		// TODO license check.
+//		if (this.etmConfiguration.getLicense().getExpiryDate().getTime() < System.currentTimeMillis()) {
+//			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
+//		}
 		final Context timerContext = this.offerTimer.time();
 		TelemetryEvent target = null;
 		long sequence = this.ringBuffer.next();
@@ -116,6 +117,9 @@ public class TelemetryEventProcessor {
     }
 	
 	private void preProcess(TelemetryEvent event) {
+		if (event.id == null) {
+			event.id = UUID.randomUUID().toString();
+		}
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}

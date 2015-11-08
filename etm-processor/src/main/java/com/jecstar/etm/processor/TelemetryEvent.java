@@ -87,7 +87,7 @@ public class TelemetryEvent implements Cloneable {
 	public Date retention = new Date(0);
 	
 	public TelemetryEvent initialize() {
-		this.id = UUID.randomUUID().toString();
+		this.id = null;
 		this.application = null;
 		this.content = null;
 		this.correlationData.clear();
@@ -110,6 +110,7 @@ public class TelemetryEvent implements Cloneable {
 
 	public TelemetryEvent initialize(TelemetryEvent copy) {
 	    initialize();
+	    this.id = copy.id;
 		this.application = copy.application;
 		this.content = copy.content;
 		this.correlationData.putAll(copy.correlationData);
