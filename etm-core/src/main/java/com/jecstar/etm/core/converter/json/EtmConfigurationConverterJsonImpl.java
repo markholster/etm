@@ -51,8 +51,9 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 		Map<String, Object> nodeMap = nodeJsonContent == null ? null : toMap(nodeJsonContent);
 		Map<String, Object> defaultMap = toMap(defaultJsonContent);
 		EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName, component);
-		// TODO license stuff.
-//		etmConfiguration.setLicenseKey(getStringValue(tags.getLicenseTag(), defaultMap, null));
+		if (defaultMap.containsKey(this.tags.getLicenseTag())) {
+			etmConfiguration.setLicenseKey(getStringValue(this.tags.getLicenseTag(), defaultMap, nodeMap));
+		}
 		etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingHandlerCount(getIntValue(this.tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setEventBufferSize(getIntValue(this.tags.getEventBufferSizeTag(), defaultMap, nodeMap));

@@ -10,6 +10,7 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.License;
 import com.jecstar.etm.core.converter.EtmConfigurationConverter;
+import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterJsonImpl;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
@@ -19,6 +20,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	private final String defaultId = "default_configuration";
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+	private final EtmConfigurationConverterTags tags = etmConfigurationConverter.getTags();
 	
 	private final long updateCheckInterval = 60 * 1000;
 	private long lastCheckedForUpdates;
@@ -36,6 +38,15 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	public License getLicense() {
 		reloadConfigurationWhenNecessary();
 		return super.getLicense();
+	}
+	
+	@Override
+	public void setLicenseKey(String licenseKey) {
+		super.setLicenseKey(licenseKey);
+		this.elasticClient.prepareUpdate(this.indexName, this.indexType, this.defaultId)
+			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.setDoc("{ \"" + this.tags.getLicenseTag() + "\" : \"" + licenseKey.replace("\"", "\\\"") + "\"}")
+			.get();
 	}
 
 	@Override

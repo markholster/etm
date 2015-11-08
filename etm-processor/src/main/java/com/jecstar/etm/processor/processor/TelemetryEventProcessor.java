@@ -10,6 +10,7 @@ import org.elasticsearch.client.Client;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -81,10 +82,9 @@ public class TelemetryEventProcessor {
 		if (!this.started) {
 			throw new IllegalSelectorException();
 		}
-		// TODO license check.
-//		if (this.etmConfiguration.getLicense().getExpiryDate().getTime() < System.currentTimeMillis()) {
-//			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
-//		}
+		if (this.etmConfiguration.getLicense() == null || this.etmConfiguration.getLicense().getExpiryDate().getTime() < System.currentTimeMillis()) {
+			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
+		}
 		final Context timerContext = this.offerTimer.time();
 		TelemetryEvent target = null;
 		long sequence = this.ringBuffer.next();

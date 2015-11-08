@@ -52,8 +52,6 @@ public class EtmConfiguration {
 
 	public void setLicenseKey(String licenseKey) {
 		this.license = new License(licenseKey);
-		// TODO Controleren of de huidige versie een trial is en de nieuwe ook.
-		// Als dat zo is, dan de key afwijzen?
 	}
 	
 	// Etm processor configuration
