@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.parsers.ExpressionParser;
-import com.jecstar.etm.core.sla.SlaRule;
 
 public class EndpointConfigResult {
 
@@ -38,7 +37,13 @@ public class EndpointConfigResult {
     }
 
 	public void merge(EndpointConfigResult endpointConfigResult) {
-		// TODO Auto-generated method stub
+		this.applicationParsers.addAll(endpointConfigResult.applicationParsers);
+		this.eventNameParsers.addAll(endpointConfigResult.eventNameParsers);
+		this.transactionNameParsers.addAll(endpointConfigResult.transactionNameParsers);
+		this.correlationDataParsers.putAll(endpointConfigResult.correlationDataParsers);
+		if (endpointConfigResult.eventDirection != null) {
+			this.eventDirection = endpointConfigResult.eventDirection; 
+		}
 	}
 	
 	

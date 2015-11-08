@@ -21,9 +21,6 @@ import javax.ws.rs.core.Response;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 
-import net.sf.saxon.TransformerFactoryImpl;
-import net.sf.saxon.xpath.XPathFactoryImpl;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -33,7 +30,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.configuration.Node;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -45,6 +41,9 @@ import com.jecstar.etm.core.parsers.XsltExpressionParser;
 import com.jecstar.etm.gui.rest.repository.EndpointConfiguration;
 import com.jecstar.etm.gui.rest.repository.EndpointRepository;
 import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
+
+import net.sf.saxon.TransformerFactoryImpl;
+import net.sf.saxon.xpath.XPathFactoryImpl;
 
 @Path("/admin")
 public class AdminService {

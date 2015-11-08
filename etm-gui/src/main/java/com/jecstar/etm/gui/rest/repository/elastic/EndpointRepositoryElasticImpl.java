@@ -28,6 +28,7 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 
 	private final String configurationIndex = "etm_configuration";
 	private final String configurationIndexTypeEndpoints = "endpoint";
+	private final String defaultEndpointConfigName = "*";
 	private final Client elasticClient;
 	
 
@@ -52,7 +53,7 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 		for (Terms.Bucket transactionBucket : endpointBuckets) {
 			endpointNames.add(transactionBucket.getKey());
 		}
-		int ix = endpointNames.indexOf("*");
+		int ix = endpointNames.indexOf(this.defaultEndpointConfigName);
 		if (ix != -1) {
 			endpointNames.remove(ix);
 		}
@@ -79,7 +80,9 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
     }
 	
 	public void deleteEndpointConfiguration(String endpointName) {
-		this.elasticClient.prepareDelete(this.configurationIndex, this.configurationIndexTypeEndpoints, endpointName).get();
+		this.elasticClient.prepareDelete(this.configurationIndex, this.configurationIndexTypeEndpoints, endpointName)
+			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.get();
     }
 	
 	private void addExpressionParsers(List<ExpressionParser> expressionParsers, List<String> dbValues) {
@@ -104,7 +107,7 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 		Map<String, Object> source = new HashMap<String, Object>();
 		source.put("name", endpointConfiguration.name);
 		if (endpointConfiguration.direction != null) {
-			source.put("diredction", endpointConfiguration.direction.name());
+			source.put("direction", endpointConfiguration.direction.name());
 		}
 		source.put("application_parsers", toExpressionConfigurationList(endpointConfiguration.applicationParsers));
 		source.put("eventname_parsers", toExpressionConfigurationList(endpointConfiguration.eventNameParsers));

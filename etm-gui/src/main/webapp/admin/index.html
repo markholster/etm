@@ -29,8 +29,6 @@
 						<ul class="nav nav-tabs" role="tablist">
 							<li id="etm_tab_header" role="presentation" class="active"><a href="#etm_tab" aria-controls="home" role="tab" data-toggle="tab">ETM</a></li>
 							<li id="endpoint_tab_header" role="presentation"><a href="#endpoint_tab" aria-controls="home" role="tab" data-toggle="tab">Endpoint</a></li>
-							<li id="solr_tab_header" role="presentation"><a href="#solr_tab" aria-controls="home" role="tab" data-toggle="tab">Solr</a></li>
-							<li id="cassandra_tab_header" role="presentation"><a href="#cassandra_tab" aria-controls="home" role="tab" data-toggle="tab">Cassandra</a></li>
 							<li id="status_tab_header" role="presentation"><a href="#status_tab" aria-controls="home" role="tab" data-toggle="tab">Status</a></li>
 							<li id="license_tab_header" role="presentation"><a href="#license_tab" aria-controls="home" role="tab" data-toggle="tab">License</a></li>
 						</ul>
@@ -244,62 +242,6 @@
                                     <input type="submit" id="btn_endpoint_delete" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" />          
                                 </form>
 							</div>
-							<div role="tabpanel" class="tab-pane" id="solr_tab">
-							    <div id="solr_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
-							    <div id="solr_form_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-								<form id="solr_form" class="form-horizontal">
-									<div class="form-group">
-										<label for="solr_zookeeper_connection"
-											class="col-sm-3 control-label">Solr zookeeper
-											connection</label>
-										<div class="col-sm-3">
-											<input id="solr_zookeeper_connection"
-												name="solr.zookeeper_connection" type="text"
-												class="form-control" required="required" />
-										</div>
-										<label for="solr_collection" class="col-sm-3 control-label">Collection
-											name</label>
-										<div class="col-sm-3">
-											<input id="solr_collection" name="solr.collection"
-												type="text" class="form-control" required="required" />
-										</div>
-									</div>
-									<input type="submit" class="btn btn-default" value="Save" />
-								</form>
-							</div>
-							<div role="tabpanel" class="tab-pane" id="cassandra_tab">
-							    <div id="cassandra_form_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
-							    <div id="cassandra_form_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-								<form id="cassandra_form" class="form-horizontal">
-									<div class="form-group">
-										<label for="cassandra_contact_points"
-											class="col-sm-3 control-label">Contact points</label>
-										<div class="col-sm-3">
-											<input id="cassandra_contact_points" name="cassandra.contact_points" type="text"
-												class="form-control" required="required" />
-										</div>
-										<label for="cassandra_username" class="col-sm-3 control-label">Username</label>
-										<div class="col-sm-3">
-											<input id="cassandra_username" name="cassandra.username" type="text"
-												class="form-control" />
-										</div>
-									</div>
-
-									<div class="form-group">
-										<label for="cassandra_keyspace" class="col-sm-3 control-label">Keyspace</label>
-										<div class="col-sm-3">
-											<input id="cassandra_keyspace" name="cassandra.keyspace" type="text"
-												class="form-control" required="required" />
-										</div>
-										<label for="cassandra_password" class="col-sm-3 control-label">Password</label>
-										<div class="col-sm-3">
-											<input id="cassandra_password" name="cassandra.password" type="password"
-												class="form-control" />
-										</div>
-									</div>
-									<input type="submit" class="btn btn-default" value="Save" />
-								</form>
-							</div>
 							<div role="tabpanel" class="tab-pane" id="status_tab"></div>
 							<div role="tabpanel" class="tab-pane" id="license_tab">
 							    <div id="license_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
@@ -340,8 +282,6 @@ $(function () {
 	
 	var loadData = function(nodeName) {
 		$('#etm_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
-		$('#solr_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
-		$('#cassandra_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
 		$('#license_form').attr('action', '../rest/system/license');
 		$.getJSON('../rest/admin/node/' + encodeURIComponent(nodeName), function (data) {
 			if (!data) {
@@ -372,12 +312,6 @@ $(function () {
             } else {
                 $('#etm_data_retention_preserve_transaction_slas').removeAttr('checked');
             }
-            $('#solr_zookeeper_connection').val(data['solr.zookeeper_connection']);
-            $('#solr_collection').val(data['solr.collection']);
-            $('#cassandra_contact_points').val(data['cassandra.contact_points']);
-            $('#cassandra_keyspace').val(data['cassandra.keyspace']);
-            $('#cassandra_username').val(data['cassandra.username']);
-            $('#cassandra_password').val(data['cassandra.password']);
             $('#status_tab').text(data.name + ' is ' + (data.active ? 'up' : 'down'));
 		});
 	};
@@ -853,19 +787,15 @@ $(function () {
 	    if ('cluster' == nodeName) {
             $('#endpoint_tab_header').removeClass('hidden');
             $('#endpoint_tab').removeClass('hidden');
-            $('#solr_tab_header').removeClass('hidden');
-            $('#solr_tab').removeClass('hidden');
             $('#license_tab_header').removeClass('hidden');
             $('#license_tab').removeClass('hidden');
 		} else {
 			var activeTab = $("#tabs > ul > li.active > a").attr('href');
-            if ('#endpoint_tab' == activeTab || '#solr_tab' == activeTab || '#license_tab' == activeTab) {
+            if ('#endpoint_tab' == activeTab || '#license_tab' == activeTab) {
                 $('#tabs a[href="#etm_tab"]').tab('show')
             }
 			$('#endpoint_tab_header').addClass('hidden');
             $('#endpoint_tab').addClass('hidden');
-            $('#solr_tab_header').addClass('hidden');
-            $('#solr_tab').addClass('hidden');
             $('#license_tab_header').addClass('hidden');
             $('#license_tab').addClass('hidden');
 	    }
@@ -904,8 +834,6 @@ $(function () {
 	loadEndpointData('*');
 	loadLicenseData();
 	handleSubmit('etm_form');
-	handleSubmit('solr_form');
-	handleSubmit('cassandra_form');
 	handleEndpointSubmit();
 	handleLicenseSubmit();
 

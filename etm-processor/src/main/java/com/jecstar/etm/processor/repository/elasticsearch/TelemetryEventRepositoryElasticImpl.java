@@ -2,8 +2,10 @@ package com.jecstar.etm.processor.repository.elasticsearch;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -18,7 +20,11 @@ import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHits;
 
+import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.converter.json.AbstractJsonConverter;
+import com.jecstar.etm.core.parsers.ExpressionParser;
+import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.converter.TelemetryEventConverter;
 import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
@@ -27,7 +33,7 @@ import com.jecstar.etm.processor.processor.IdCorrelationCache;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
-public class TelemetryEventRepositoryElasticImpl implements TelemetryEventRepository {
+public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter implements TelemetryEventRepository {
 	
 	private final DateFormat indexDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private final String eventIndexType = "event";
@@ -141,17 +147,78 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 	@Override
 	public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
 		result.initialize();
-		if (this.endpointCache.containsKey(endpoint)) {
-			EndpointConfigResult endpointConfigResult = this.endpointCache.get(endpoint);
-			if (endpointConfigResult.retrieved + 30000 < System.currentTimeMillis()) {
-				this.endpointCache.remove(endpoint);
-			} else {
-				result.merge(endpointConfigResult);
+		EndpointConfigResult cachedResult = this.endpointCache.get(endpoint);
+		if (cachedResult == null || System.currentTimeMillis() - cachedResult.retrieved > 30000) {
+			if (cachedResult == null) {
+				cachedResult = new EndpointConfigResult();
 			}
-		}
-		GetResponse getResponse = this.elasticClient.prepareGet(this.configurationIndex, this.configurationIndexTypeEndpoints, endpoint).get();
-		
-		
+			cachedResult.initialize();
+			GetResponse getResponse = this.elasticClient.prepareGet(this.configurationIndex, this.configurationIndexTypeEndpoints, endpoint).get();
+			if (getResponse.isExists()) {
+				cachedResult.merge(toEndpointConfig(getResponse.getSourceAsMap()));
+			}
+			getResponse = this.elasticClient.prepareGet(this.configurationIndex, this.configurationIndexTypeEndpoints, "*").get();
+			if (getResponse.isExists()) {
+				cachedResult.merge(toEndpointConfig(getResponse.getSourceAsMap()));
+			}
+			cachedResult.retrieved = System.currentTimeMillis();
+			this.endpointCache.put(endpoint, cachedResult);
+		} 
+		result.merge(cachedResult);
 	}
+	
+	private EndpointConfigResult toEndpointConfig(Map<String, Object> valueMap) {
+		EndpointConfigResult endpointConfiguration = new EndpointConfigResult();
+		endpointConfiguration.initialize();
+    	String direction = getString("direction", valueMap);
+    	if (direction != null) {
+    		endpointConfiguration.eventDirection = TelemetryEventDirection.valueOf(direction);
+    	}
+    	addExpressionParsers(endpointConfiguration.applicationParsers, getStringListValue("application_parsers", valueMap));
+    	addExpressionParsers(endpointConfiguration.eventNameParsers, getStringListValue("eventname_parsers", valueMap));
+    	addExpressionParsers(endpointConfiguration.correlationDataParsers, getStringMapValue("correlation_parsers", valueMap));
+    	addExpressionParsers(endpointConfiguration.transactionNameParsers, getStringListValue("transactionname_parsers", valueMap));
+    	return endpointConfiguration;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private List<String> getStringListValue(String key, Map<String, Object> valueMap) {
+		if (valueMap.containsKey(key)) {
+			return (List<String>) valueMap.get(key);
+		}
+		return Collections.emptyList();
+	}
+	
+	private Map<String, String> getStringMapValue(String key, Map<String, Object> valueMap) {
+		if (valueMap.containsKey(key)) {
+			Map<String, String> result = new HashMap<String, String>();
+			List<Map<String, Object>> array = getArray(key, valueMap);
+			for (Map<String, Object> parse : array) {
+				String resultKey = parse.keySet().iterator().next();
+				result.put(resultKey, parse.get(resultKey).toString());
+			}
+			return result;
+		}
+		return Collections.emptyMap();
+	}
+	
+	private void addExpressionParsers(List<ExpressionParser> expressionParsers, List<String> dbValues) {
+		if (dbValues == null || dbValues.size() == 0) {
+			return;
+		}
+		for (String value : dbValues) {
+			expressionParsers.add(ExpressionParserFactory.createExpressionParserFromConfiguration(value));
+		}
+	}
+	
+	private void addExpressionParsers(Map<String, ExpressionParser> expressionParsers, Map<String, String> dbValues) {
+		if (dbValues == null || dbValues.size() == 0) {
+			return;
+		}
+		for (String value : dbValues.keySet()) {
+			expressionParsers.put(value, ExpressionParserFactory.createExpressionParserFromConfiguration(dbValues.get(value)));
+		}
+	}
+
 
 }
