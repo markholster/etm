@@ -45,119 +45,62 @@
 											count</label>
 										<div class="col-sm-3">
 											<input id="etm_enhancing_handler_count"
-												name="etm.enhancing_handler_count" type="number"
+												name="enhancing_handler_count" type="number"
 												class="form-control" required="required" min="0" />
 										</div>
-										<label for="etm_data_correlation_time_offset"
-											class="col-sm-3 control-label">Data correlation time
-											offset</label>
-										<div class="col-sm-3">
-											<input id="etm_data_correlation_time_offset"
-												name="etm.data_correlation_time_offset" type="number"
-												class="form-control" required="required" min="1" />
-										</div>
-									</div>
-
-									<div class="form-group">
-										<label for="etm_indexing_handler_count"
-											class="col-sm-3 control-label">Indexing handler count</label>
-										<div class="col-sm-3"> 
-											<input id="etm_indexing_handler_count"
-												name="etm.indexing_handler_count" type="number"
-												class="form-control" required="required" min="0" />
-										</div>
-										<label for="etm_data_retention_time"
-											class="col-sm-3 control-label">Data retention time</label>
-										<div class="col-sm-3">
-											<input id="etm_data_retention_time"
-												name="etm.data_retention_time" type="number"
-												class="form-control" required="required" min="-1" />
-										</div>
-									</div>
-
-									<div class="form-group">
-										<label for="etm_persisting_handler_count"
-											class="col-sm-3 control-label">Persisting handler count</label>
-										<div class="col-sm-3">
-											<input id="etm_persisting_handler_count"
-												name="etm.persisting_handler_count" type="number"
-												class="form-control" required="required" min="0" />
-										</div>
-										<label for="etm_data_retention_check_interval"
-											class="col-sm-3 control-label">Data retention check interval</label>
-										<div class="col-sm-3">
-											<input id="etm_data_retention_check_interval"
-												name="etm.data_retention_check_interval" type="number"
-												class="form-control" required="required" min="1" />
-										</div>
-									</div>
-
-									<div class="form-group">
-										<label for="etm_ringbuffer_size"
-											class="col-sm-3 control-label">Ringbuffer size</label>
-										<div class="col-sm-3">
-											<input id="etm_ringbuffer_size" name="etm.ringbuffer_size"
-												type="number" class="form-control" required="required"
-												min="255" />
-										</div>
-                                        <label for="etm_data_retention_preserve_event_counts"
-                                            class="col-sm-3 control-label">Data retention preserve event counts</label>
+                                        <label for="etm_data_retention_time"
+                                            class="col-sm-3 control-label">Data retention time</label>
                                         <div class="col-sm-3">
-                                            <input id="etm_data_retention_preserve_event_counts"
-                                                name="etm.data_retention_preserve_event_counts"
-                                                type="checkbox" class="form-control" />
+                                            <input id="etm_data_retention_time"
+                                                name="data_retention" type="number"
+                                                class="form-control" required="required" min="-1" />
                                         </div>
 									</div>
 
 									<div class="form-group">
-										<label for="etm_endpoint_cache_expiry_time"
-											class="col-sm-3 control-label">Endpoint cache expiry time</label>
-										<div class="col-sm-3">
-											<input id="etm_endpoint_cache_expiry_time"
-												name="etm.endpoint_cache_expiry_time" type="number"
-												class="form-control" required="required" min="1" />
-										</div>
-                                        <label for="etm_data_retention_preserve_event_performances"
-                                            class="col-sm-3 control-label">Data retention
-                                            preserve event performances</label>
+                                        <label for="etm_persisting_handler_count"
+                                            class="col-sm-3 control-label">Persisting handler count</label>
                                         <div class="col-sm-3">
-                                            <input id="etm_data_retention_preserve_event_performances" 
-                                                name="etm.data_retention_preserve_event_performances"
-                                                type="checkbox" class="form-control" />
+                                            <input id="etm_persisting_handler_count"
+                                                name="persisting_handler_count" type="number"
+                                                class="form-control" required="required" min="0" />
+                                        </div>
+                                        <label for="etm_shards_per_index"
+                                            class="col-sm-3 control-label">Shards per index</label>
+                                        <div class="col-sm-3"> 
+                                            <input id="etm_shards_per_index"
+                                                name="shards_per_index" type="number"
+                                                class="form-control" required="required" min="1" />
                                         </div>
 									</div>
 
 									<div class="form-group">
-										<label for="etm_statistics_time_unit"
-											class="col-sm-3 control-label">Statistics time unit</label>
-										<div class="col-sm-3">
-											<select id="etm_statistics_time_unit" name="etm.statistics_timeunit" class="form-control">
-												<option value="SECONDS">Seconds</option>
-												<option value="MINUTES">Minutes</option>
-												<option value="HOURS">Hours</option>
-												<option value="DAYS">Days</option>
-											</select>
-										</div>
-                                        <label for="etm_data_retention_preserve_transaction_slas"
-                                            class="col-sm-3 control-label">Data retention
-                                            preserve event SLA's</label>
+                                        <label for="etm_ringbuffer_size"
+                                            class="col-sm-3 control-label">Ringbuffer size</label>
                                         <div class="col-sm-3">
-                                            <input id="etm_data_retention_preserve_transaction_slas"
-                                                name="etm.data_retention_preserve_transaction_slas"
-                                                type="checkbox" class="form-control" />
+                                            <input id="etm_ringbuffer_size" name="event_buffer_size"
+                                                type="number" class="form-control" required="required"
+                                                min="255" />
+                                        </div>
+                                        <label for="etm_replicas_per_index"
+                                            class="col-sm-3 control-label">Replicas per index</label>
+                                        <div class="col-sm-3">
+                                            <input id="etm_replicas_per_index"
+                                                name="_replicas_per_index" type="number"
+                                                class="form-control" required="required" min="0" />
                                         </div>
 									</div>
 
 									<div class="form-group">
-										<label for="etm_data_correlation_max_matches"
-											class="col-sm-3 control-label">Data correlation max
-											matches</label>
-										<div class="col-sm-3">
-											<input id="etm_data_correlation_max_matches"
-												name="etm.data_correlation_max_matches" type="number"
-												class="form-control" required="required" min="1" />
-										</div>
+                                        <label for="etm_persisting_bulk_size"
+                                            class="col-sm-3 control-label">Persisting bulk size</label>
+                                        <div class="col-sm-3">
+                                            <input id="etm_persisting_bulk_size"
+                                                name="persisting_bulk_size" type="number"
+                                                class="form-control" required="required" min="1" />
+                                        </div>
 									</div>
+
 									<input type="submit" class="btn btn-default" value="Save" />
 								</form>
 							</div>
@@ -287,31 +230,13 @@ $(function () {
 			if (!data) {
 			    return;
 			}
-			$('#etm_enhancing_handler_count').val(data['etm.enhancing_handler_count']);
-			$('#etm_indexing_handler_count').val(data['etm.indexing_handler_count']);
-			$('#etm_persisting_handler_count').val(data['etm.persisting_handler_count']);
-			$('#etm_ringbuffer_size').val(data['etm.ringbuffer_size']);
-			$('#etm_endpoint_cache_expiry_time').val(data['etm.endpoint_cache_expiry_time']);
-			$('#etm_statistics_time_unit').val(data['etm.statistics_timeunit']);
-			$('#etm_data_correlation_max_matches').val(data['etm.data_correlation_max_matches']);
-			$('#etm_data_correlation_time_offset').val(data['etm.data_correlation_time_offset']);
-			$('#etm_data_retention_time').val(data['etm.data_retention_time']);
-			$('#etm_data_retention_check_interval').val(data['etm.data_retention_check_interval']);
-			if (data['etm.data_retention_preserve_event_counts']) {
-				$('#etm_data_retention_preserve_event_counts').attr('checked', 'checked');
-			} else {
-				$('#etm_data_retention_preserve_event_counts').removeAttr('checked');
-			}
-            if (data['etm.data_retention_preserve_event_performances']) {
-                $('#etm_data_retention_preserve_event_performances').attr('checked', 'checked');
-            } else {
-                $('#etm_data_retention_preserve_event_performances').removeAttr('checked');
-            }
-            if (data['etm.data_retention_preserve_transaction_slas']) {
-                $('#etm_data_retention_preserve_transaction_slas').attr('checked', 'checked');
-            } else {
-                $('#etm_data_retention_preserve_transaction_slas').removeAttr('checked');
-            }
+			$('#etm_enhancing_handler_count').val(data['enhancing_handler_count']);
+			$('#etm_persisting_handler_count').val(data['persisting_handler_count']);
+			$('#etm_ringbuffer_size').val(data['event_buffer_size']);
+			$('#etm_persisting_bulk_size').val(data['persisting_bulk_size']);
+			$('#etm_data_retention_time').val(data['data_retention']);
+			$('#etm_shards_per_index').val(data['shards_per_index']);
+			$('#etm_replicas_per_index').val(data['replicas_per_index']);
             $('#status_tab').text(data.name + ' is ' + (data.active ? 'up' : 'down'));
 		});
 	};

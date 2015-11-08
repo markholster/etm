@@ -9,6 +9,7 @@ import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.gui.rest.repository.elastic.EndpointRepositoryElasticImpl;
+import com.jecstar.etm.gui.rest.repository.elastic.NodeRepositoryElasticImpl;
 import com.jecstar.etm.gui.rest.repository.elastic.QueryRepositoryElasticImpl;
 import com.jecstar.etm.gui.rest.repository.elastic.StatisticsRepositoryElasticImpl;
 import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
@@ -28,6 +29,7 @@ public class RepositoryProducer {
 	private StatisticsRepository statisticsRepository;
 	private QueryRepository queryRepository;
 	private EndpointRepository endpointRepository;
+	private NodeRepository nodeRepository;
 
 	@Produces
 	public StatisticsRepository getStatisticsRepository() {
@@ -57,6 +59,16 @@ public class RepositoryProducer {
 	        }
         }
 		return this.endpointRepository;
+	}
+	
+	@Produces
+	public NodeRepository getNodeRepository() {
+		synchronized (this) {
+	        if (this.nodeRepository == null) {
+	        	this.nodeRepository = new NodeRepositoryElasticImpl(this.elasticClient);
+	        }
+        }
+		return this.nodeRepository;
 	}
 	
 }

@@ -40,6 +40,7 @@ import com.jecstar.etm.core.parsers.XPathExpressionParser;
 import com.jecstar.etm.core.parsers.XsltExpressionParser;
 import com.jecstar.etm.gui.rest.repository.EndpointConfiguration;
 import com.jecstar.etm.gui.rest.repository.EndpointRepository;
+import com.jecstar.etm.gui.rest.repository.NodeRepository;
 import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
 
 import net.sf.saxon.TransformerFactoryImpl;
@@ -62,6 +63,10 @@ public class AdminService {
 	
 	@Inject
 	private EndpointRepository endpointRepository;
+	
+	@Inject
+	private NodeRepository nodeRepository;
+
 
 	private final JsonFactory jsonFactory = new JsonFactory();
 
@@ -360,26 +365,23 @@ public class AdminService {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        // TODO node selection.
 //	        List<String> liveNodes = this.configuration.getLiveNodes();
-//	        Properties properties = this.configuration.getNodeConfiguration("cluster".equals(nodeName) ? null : nodeName);
-//        	generator.writeStringField("name", nodeName);
+	        Map<String, Object> nodeConfiguration = this.nodeRepository.getNodeConfiguration(nodeName);
+        	generator.writeStringField("name", nodeName);
 //        	generator.writeBooleanField("active", "cluster".equals(nodeName) ? true : liveNodes.contains(nodeName));
-//        	for (Object key : properties.keySet()) {
-//        		Object value = properties.get(key);
-//        		try {
-//        			Long longValue = Long.valueOf(value.toString());
-//        			generator.writeNumberField(key.toString(), longValue);
-//        		} catch (NumberFormatException e) {
-//        			if ("true".equals(value.toString()) || "false".equals(value.toString())) {
-//        				generator.writeBooleanField(key.toString(), new Boolean(value.toString()));
-//        			} else {
-//        				generator.writeStringField(key.toString(), value.toString());
-//        			}
-//        		}
-//        		
-//        		
-//        	}
+        	for (String key : nodeConfiguration.keySet()) {
+        		Object value = nodeConfiguration.get(key);
+        		try {
+        			Long longValue = Long.valueOf(value.toString());
+        			generator.writeNumberField(key.toString(), longValue);
+        		} catch (NumberFormatException e) {
+        			if ("true".equals(value.toString()) || "false".equals(value.toString())) {
+        				generator.writeBooleanField(key.toString(), new Boolean(value.toString()));
+        			} else {
+        				generator.writeStringField(key.toString(), value.toString());
+        			}
+        		}
+        	}
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();

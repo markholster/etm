@@ -6,6 +6,7 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 
+import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -57,10 +58,12 @@ public class RetentionService {
 		    	bulkDelete.add(new DeleteRequestBuilder(this.elasticClient)
 		    			.setIndex(hit.getIndex())
 		    			.setType(hit.getType())
-		    			.setId(hit.getId()));
+		    			.setId(hit.getId())
+		    			.setConsistencyLevel(WriteConsistencyLevel.ONE));
 		    }
 		    bulkDelete.get();
 		    scrollResp = this.elasticClient.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(60000)).execute().actionGet();
 		}
+		//TODO check for empty indici, and remove them if so.
 	}
 }
