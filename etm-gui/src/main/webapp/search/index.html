@@ -55,7 +55,7 @@
 							<mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
 							to the field value. For example, to query the events of the last
 							half hour the search string will be
-							<mark>creationTime:[NOW-30MINUTES TO NOW]</mark>
+							<mark>creationTime: [now-30m TO now]</mark>
 							.
 						</p>
 						<div id="errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
@@ -108,8 +108,8 @@
                        <ul>
                            <li><a href="#" onclick="$('#search_input').val('application: &quot;x&quot;');return false;">application &lt;x&gt;</a></li>
                            <li><a href="#" onclick="$('#search_input').val('endpoint: &quot;x&quot;');return false;">endpoint &lt;x&gt;</a></li>
-                           <li><a href="#" onclick="$('#search_input').val('creation_time: [NOW-1HOUR TO NOW]');return false;">last hour</a></li>
-                           <li><a href="#" onclick="$('#search_input').val('creation_time: [NOW-1HOUR TO NOW] AND application:&quot;x&quot;');return false;">last hour of application &lt;x&gt;</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('creation_time: [now-1h TO now]');return false;">last hour</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('creation_time: [now-1h TO now] AND application:&quot;x&quot;');return false;">last hour of application &lt;x&gt;</a></li>
                            <li><a href="#" onclick="$('#search_input').val('creation_time: [' + new Date(new Date().setHours(0,0,0,0) - 86400000).toISOString() + ' TO ' + new Date(new Date().setHours(23,59,59,999) - 86400000).toISOString() + ']');return false;">yesterday</a></li>
                        </ul>
                     </div>

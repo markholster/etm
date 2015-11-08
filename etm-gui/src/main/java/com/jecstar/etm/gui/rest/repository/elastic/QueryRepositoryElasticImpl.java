@@ -86,9 +86,18 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		writeStringValue("content", formatXml(getStringValue(this.tags.getContentTag(), valueMap)), generator);
 		writeStringValue("correlationId", getStringValue(this.tags.getCorrelationIdTag(), valueMap), generator);
 		generator.writeArrayFieldStart("childCorrelationIds");
-		List<String> list = getStringListValue(this.tags.getChildCorrelationIdsTag(), valueMap);
-		for (String childCorrelation : list) {
-			generator.writeString(childCorrelation);
+		
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+			.setTypes(this.eventIndexType)
+			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), FilterBuilders.termFilter("correlation_id", eventId)))
+			.setFetchSource(false)
+			.get();
+		
+		SearchHit[] hits = searchResponse.getHits().hits();
+		if (hits != null) {
+			for (SearchHit hit : hits) {
+				generator.writeString(hit.getId());
+			}
 		}
 		generator.writeEndArray();
 		writeDateValue("creationTime", getDateValue(this.tags.getCreationTimeTag(), valueMap), generator);
