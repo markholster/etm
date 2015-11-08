@@ -15,7 +15,6 @@ public class EndpointConfigResult {
 	public List<ExpressionParser> eventNameParsers = new ArrayList<ExpressionParser>();
 	public List<ExpressionParser> transactionNameParsers = new ArrayList<ExpressionParser>();
 	public Map<String, ExpressionParser> correlationDataParsers = new HashMap<String, ExpressionParser>();
-	public Map<String, SlaRule> slaRules = new HashMap<String, SlaRule>();
 	public TelemetryEventDirection eventDirection;
 	
 	// process state
@@ -34,12 +33,13 @@ public class EndpointConfigResult {
 	    if (this.correlationDataParsers != null) {
 	    	this.correlationDataParsers.clear();
 	    }
-	    if (this.slaRules != null) {
-	    	this.slaRules.clear();
-	    }
 	    this.eventDirection = null;
 	    return this;
     }
+
+	public void merge(EndpointConfigResult endpointConfigResult) {
+		// TODO Auto-generated method stub
+	}
 	
 	
 }

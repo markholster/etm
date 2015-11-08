@@ -3,11 +3,14 @@ package com.jecstar.etm.processor.repository.elasticsearch;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.FilterBuilder;
@@ -27,8 +30,12 @@ import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 public class TelemetryEventRepositoryElasticImpl implements TelemetryEventRepository {
 	
 	private final DateFormat indexDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-	private final String ETM_EVENT_INDEX_TYPE = "event";
-	private final String ETM_SEARCH_INDEX = "etm_event_all";
+	private final String eventIndexType = "event";
+	private final String eventIndex = "etm_event_all";
+	
+	private final String configurationIndex = "etm_configuration";
+	private final String configurationIndexTypeEndpoints = "endpoint";
+
 	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
 	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	
@@ -38,6 +45,8 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 	private final EtmConfiguration etmConfiguration;
 	
 	private BulkRequestBuilder bulkRequest;
+	
+	private final Map<String, EndpointConfigResult> endpointCache = new HashMap<String, EndpointConfigResult>();
 	
 	public TelemetryEventRepositoryElasticImpl(final IdCorrelationCache idCorrelations, final Client elasticClient, final EtmConfiguration etmConfiguration) {
 		this.idCorrelations = idCorrelations;
@@ -52,7 +61,7 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 			this.bulkRequest = this.elasticClient.prepareBulk();
 		}
 		String index = getElasticIndexName();
-		IndexRequest indexRequest = new IndexRequest(index, ETM_EVENT_INDEX_TYPE, event.id)
+		IndexRequest indexRequest = new IndexRequest(index, eventIndexType, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(this.eventConverter.convert(event));
 		// TODO add id to parent if this is a response and set response time.
@@ -104,8 +113,8 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 		} else {
 			filterBuilder = FilterBuilders.termFilter(this.tags.getIdTag(), id);
 		}
-		SearchHits hits = this.elasticClient.prepareSearch(ETM_SEARCH_INDEX)
-			.setTypes(ETM_EVENT_INDEX_TYPE)
+		SearchHits hits = this.elasticClient.prepareSearch(this.eventIndex)
+			.setTypes(eventIndexType)
 			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder)) 
 			.setFrom(0)
 			.setSize(1)
@@ -131,7 +140,17 @@ public class TelemetryEventRepositoryElasticImpl implements TelemetryEventReposi
 
 	@Override
 	public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
-		// TODO Auto-generated method stub
+		result.initialize();
+		if (this.endpointCache.containsKey(endpoint)) {
+			EndpointConfigResult endpointConfigResult = this.endpointCache.get(endpoint);
+			if (endpointConfigResult.retrieved + 30000 < System.currentTimeMillis()) {
+				this.endpointCache.remove(endpoint);
+			} else {
+				result.merge(endpointConfigResult);
+			}
+		}
+		GetResponse getResponse = this.elasticClient.prepareGet(this.configurationIndex, this.configurationIndexTypeEndpoints, endpoint).get();
+		
 		
 	}
 
