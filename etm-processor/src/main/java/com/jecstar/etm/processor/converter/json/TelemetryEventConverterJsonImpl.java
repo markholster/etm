@@ -49,7 +49,6 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		if (event.type != null) {
 			added = addStringElementToJsonBuffer(this.tags.getTypeTag(), event.type.name(), this.sb, !added) || added;
 		}
-		added = addLongElementToJsonBuffer(this.tags.getRetentionTag(), event.retention.getTime(), this.sb, !added) || added;
 		this.sb.append("}");
 		return this.sb.toString();
 	}

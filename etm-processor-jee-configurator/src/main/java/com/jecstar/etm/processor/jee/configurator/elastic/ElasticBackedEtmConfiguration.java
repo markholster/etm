@@ -74,10 +74,11 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return super.getReplicasPerIndex();
 	}
 	
+	
 	@Override
-	public long getDataRetentionTime() {
+	public int getMaxIndexCount() {
 		reloadConfigurationWhenNecessary();		
-		return super.getDataRetentionTime();
+		return super.getMaxIndexCount();
 	}
 	
 	private boolean reloadConfigurationWhenNecessary() {

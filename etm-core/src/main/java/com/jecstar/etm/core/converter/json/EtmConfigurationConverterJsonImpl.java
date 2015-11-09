@@ -29,8 +29,7 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 			added = addIntegerElementToJsonBuffer(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = addIntegerElementToJsonBuffer(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), sb, !added) || added;
 			added = addIntegerElementToJsonBuffer(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), sb, !added) || added;
-			
-			added = addLongElementToJsonBuffer(this.tags.getDataRetentionTag(), defaultConfiguration.getDataRetentionTime(), sb, !added) || added;
+			added = addIntegerElementToJsonBuffer(this.tags.getMaxIndexCountTag(), defaultConfiguration.getMaxIndexCount(), sb, !added) || added;
 		} else {
 			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -39,8 +38,7 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), nodeConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), nodeConfiguration.getShardsPerIndex(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), nodeConfiguration.getReplicasPerIndex(), sb, !added) || added;
-			
-			added = addLongWhenNotDefault(this.tags.getDataRetentionTag(), defaultConfiguration.getDataRetentionTime(), nodeConfiguration.getDataRetentionTime(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getMaxIndexCountTag(), defaultConfiguration.getMaxIndexCount(), nodeConfiguration.getMaxIndexCount(), sb, !added) || added;
 		}
 		sb.append("}");
 		return sb.toString();
@@ -60,7 +58,7 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 		etmConfiguration.setPersistingBulkSize(getIntValue(this.tags.getPersistingBulkSizeTag(), defaultMap, nodeMap));
 		etmConfiguration.setShardsPerIndex(getIntValue(this.tags.getShardsPerIndexTag(), defaultMap, nodeMap));
 		etmConfiguration.setReplicasPerIndex(getIntValue(this.tags.getReplicasPerIndexTag(), defaultMap, nodeMap));
-		etmConfiguration.setDataRetentionTime(getLongValue(this.tags.getDataRetentionTag(), defaultMap, nodeMap));
+		etmConfiguration.setMaxIndexCount(getIntValue(this.tags.getMaxIndexCountTag(), defaultMap, nodeMap));
 		return etmConfiguration;
 	}
 	
@@ -80,29 +78,12 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 		}
 	}
 	
-	private Long getLongValue(String tag, Map<String, Object> defaultMap, Map<String, Object> nodeMap) {
-		if (nodeMap != null && nodeMap.containsKey(tag)) {
-			return ((Number) nodeMap.get(tag)).longValue();
-		} else {
-			return ((Number) defaultMap.get(tag)).longValue();
-		}
-	}
-
-	
 	private boolean addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, StringBuilder buffer, boolean firstElement) {
 		if (defaultValue == specificValue) {
 			return false;
 		}
 		return addIntegerElementToJsonBuffer(tag, specificValue, buffer, firstElement);
 	}
-	
-	private boolean addLongWhenNotDefault(String tag, long defaultValue, long specificValue, StringBuilder buffer, boolean firstElement) {
-		if (defaultValue == specificValue) {
-			return false;
-		}
-		return addLongElementToJsonBuffer(tag, specificValue, buffer, firstElement);
-	}
-
 
 	@Override
 	public EtmConfigurationConverterTags getTags() {

@@ -3,7 +3,6 @@ package com.jecstar.etm.processor;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
@@ -84,7 +83,6 @@ public class TelemetryEvent implements Cloneable {
 	// Processing state.
 	public EventCommand eventCommand;
 	public boolean ignore;
-	public Date retention = new Date(0);
 	
 	public TelemetryEvent initialize() {
 		this.id = null;
@@ -102,7 +100,6 @@ public class TelemetryEvent implements Cloneable {
 		this.transactionName = null;
 		this.type = null;
 		this.ignore = false;
-		this.retention.setTime(0);
 		this.eventCommand = EventCommand.PROCESS;
 		return this;
 	}
@@ -124,7 +121,6 @@ public class TelemetryEvent implements Cloneable {
 		this.transactionId = copy.transactionId;
 		this.transactionName = copy.transactionName;
 		this.type = copy.type;
-		this.retention.setTime(copy.retention.getTime());
 		this.eventCommand = copy.eventCommand;
 	    return this;
     }

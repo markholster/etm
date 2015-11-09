@@ -48,12 +48,12 @@
 												name="enhancing_handler_count" type="number"
 												class="form-control" required="required" min="0" />
 										</div>
-                                        <label for="etm_data_retention_time"
-                                            class="col-sm-3 control-label">Data retention time</label>
+                                        <label for="etm_max_index_count"
+                                            class="col-sm-3 control-label">Max index count</label>
                                         <div class="col-sm-3">
-                                            <input id="etm_data_retention_time"
-                                                name="data_retention" type="number"
-                                                class="form-control" required="required" min="-1" />
+                                            <input id="etm_max_index_count"
+                                                name="max_index_count" type="number"
+                                                class="form-control" required="required" min="1" />
                                         </div>
 									</div>
 
@@ -86,7 +86,7 @@
                                             class="col-sm-3 control-label">Replicas per index</label>
                                         <div class="col-sm-3">
                                             <input id="etm_replicas_per_index"
-                                                name="_replicas_per_index" type="number"
+                                                name="replicas_per_index" type="number"
                                                 class="form-control" required="required" min="0" />
                                         </div>
 									</div>
@@ -234,7 +234,7 @@ $(function () {
 			$('#etm_persisting_handler_count').val(data['persisting_handler_count']);
 			$('#etm_ringbuffer_size').val(data['event_buffer_size']);
 			$('#etm_persisting_bulk_size').val(data['persisting_bulk_size']);
-			$('#etm_data_retention_time').val(data['data_retention']);
+			$('#etm_max_index_count').val(data['max_index_count']);
 			$('#etm_shards_per_index').val(data['shards_per_index']);
 			$('#etm_replicas_per_index').val(data['replicas_per_index']);
             $('#status_tab').text(data.name + ' is ' + (data.active ? 'up' : 'down'));

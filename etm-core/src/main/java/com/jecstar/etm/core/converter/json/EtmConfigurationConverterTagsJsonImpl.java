@@ -40,8 +40,8 @@ public class EtmConfigurationConverterTagsJsonImpl implements EtmConfigurationCo
 	}
 
 	@Override
-	public String getDataRetentionTag() {
-		return "data_retention";
+	public String getMaxIndexCountTag() {
+		return "max_index_count";
 	}
 
 }

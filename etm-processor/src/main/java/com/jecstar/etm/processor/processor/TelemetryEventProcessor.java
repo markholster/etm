@@ -124,9 +124,6 @@ public class TelemetryEventProcessor {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
 		EndpointConfigResult endpointConfig = null;
-		if (event.retention.getTime() == 0) {
-			event.retention.setTime(System.currentTimeMillis() + this.etmConfiguration.getDataRetentionTime());
-		}
 		if ((event.transactionName == null || event.name == null)&& TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
 			// A little bit of enhancement before the event is processed by the
 			// disruptor. We need to make sure the eventName & transactionName

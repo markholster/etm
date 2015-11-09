@@ -3,9 +3,9 @@ package com.jecstar.etm.gui.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonParser.NumberType;
 import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventDirection;
@@ -399,7 +400,7 @@ public class AdminService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public void updateNode(@PathParam("nodeName") String nodeName, String json) {
 		try {
-			Properties properties = new Properties();
+			Map<String, Object> values = new HashMap<String, Object>();
 	        JsonParser jsonParser = this.jsonFactory.createParser(json);
 	        JsonToken token = jsonParser.nextToken();
 	        while (token != null) {
@@ -407,10 +408,32 @@ public class AdminService {
 	        	if (JsonToken.FIELD_NAME.equals(token)) {
 	        		String key = jsonParser.getCurrentName();
 	        		jsonParser.nextToken();
-	        		properties.setProperty(key, jsonParser.getText());
+	        		NumberType numberType = jsonParser.getNumberType();
+	        		if (numberType == null) {
+	        			values.put(key, jsonParser.getText());
+	        		} else {
+	        			switch (numberType) {
+	        			case INT:
+	        				values.put(key, jsonParser.getIntValue());
+	        				break;
+	        			case FLOAT:
+	        				values.put(key, jsonParser.getFloatValue());
+	        				break;
+						case LONG:
+							values.put(key, jsonParser.getLongValue());
+							break;
+						case DOUBLE:
+							values.put(key, jsonParser.getDoubleValue());
+							break;
+						default:
+							values.put(key, jsonParser.getText());
+							break;
+						}
+	        		}
+	        		
 	        	}
 	        }
-	        if (properties.size() > 0) {
+	        if (values.size() > 0) {
 	        	// TODO update configuration.
 	        	//this.configuration.update("cluster".equals(nodeName) ? null : nodeName, properties);
 	        }

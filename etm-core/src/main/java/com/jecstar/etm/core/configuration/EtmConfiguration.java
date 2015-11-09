@@ -15,7 +15,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE = "persistingBulkSize";
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
-	public static final String CONFIG_KEY_DATA_RETENTION_TIME = "dataRetentionTime";
+	public static final String CONFIG_KEY_MAX_INDEX_COUNT = "maxIndexCount";
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -28,7 +28,7 @@ public class EtmConfiguration {
 	private int replicasPerIndex = 1;
 	
 	// Data configuration properties;
-	private long dataRetentionTime = 1000 * 60 * 60 * 24 * 7; 
+	private int maxIndexCount = 7; 
 
 	// Other stuff.		
 	private final String nodeName;
@@ -124,13 +124,13 @@ public class EtmConfiguration {
 		return this;
 	}
 	
-	public long getDataRetentionTime() {
-		return this.dataRetentionTime;
+	public int getMaxIndexCount() {
+		return this.maxIndexCount;
 	}
 	
-	public EtmConfiguration setDataRetentionTime(long dataRetentionTime) {
-		if (dataRetentionTime > 0) {
-			this.dataRetentionTime = dataRetentionTime;
+	public EtmConfiguration setMaxIndexCount(int maxIndexCount) {
+		if (maxIndexCount > 0) {
+			this.maxIndexCount = maxIndexCount;
 		}
 		return this;
 	}
@@ -196,9 +196,9 @@ public class EtmConfiguration {
 			setReplicasPerIndex(etmConfiguration.replicasPerIndex);
 			changed.add(CONFIG_KEY_REPLICAS_PER_INDEX);
 		}
-		if (this.dataRetentionTime != etmConfiguration.getDataRetentionTime()) {
-			 setDataRetentionTime(etmConfiguration.getDataRetentionTime());
-			 changed.add(CONFIG_KEY_DATA_RETENTION_TIME);
+		if (this.maxIndexCount != etmConfiguration.getMaxIndexCount()) {
+			 setMaxIndexCount(etmConfiguration.getMaxIndexCount());
+			 changed.add(CONFIG_KEY_MAX_INDEX_COUNT);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);
