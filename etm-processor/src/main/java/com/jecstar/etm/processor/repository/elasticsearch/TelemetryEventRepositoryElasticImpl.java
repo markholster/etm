@@ -15,10 +15,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHits;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -27,7 +23,6 @@ import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.converter.TelemetryEventConverter;
-import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.processor.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
@@ -36,14 +31,11 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	
 	private final DateFormat indexDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private final String eventIndexType = "event";
-	private final String eventIndex = "etm_event_all";
 	
 	private final String configurationIndex = "etm_configuration";
 	private final String configurationIndexTypeEndpoints = "endpoint";
 
 	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
-	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
-	
 	
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
@@ -83,29 +75,6 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	public String getElasticIndexName() {
 		return "etm_event_" + this.indexDateFormat.format(new Date());
 		
-	}
-
-	private TelemetryEvent doFindParent(String id, String application) {
-		FilterBuilder filterBuilder = null;
-		if (application != null) {
-			filterBuilder = FilterBuilders.andFilter(FilterBuilders.termFilter(this.tags.getIdTag(), id), 
-					FilterBuilders.termFilter(this.tags.getApplicationTag(), application));
-		} else {
-			filterBuilder = FilterBuilders.termFilter(this.tags.getIdTag(), id);
-		}
-		SearchHits hits = this.elasticClient.prepareSearch(this.eventIndex)
-			.setTypes(eventIndexType)
-			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder)) 
-			.setFrom(0)
-			.setSize(1)
-			.get()
-			.getHits();
-		if (hits.totalHits() == 0) {
-			return null;
-		}
-		TelemetryEvent result = new TelemetryEvent();
-		this.eventConverter.convert(hits.getAt(0).getSourceAsString(), result);
-		return result;
 	}
 	
 	private void executeBulk() {
@@ -192,6 +161,11 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		for (String value : dbValues.keySet()) {
 			expressionParsers.put(value, ExpressionParserFactory.createExpressionParserFromConfiguration(dbValues.get(value)));
 		}
+	}
+
+	@Override
+	public void flushDocuments() {
+		executeBulk();
 	}
 
 

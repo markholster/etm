@@ -27,6 +27,9 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.ignore) {
 			return;
 		}
+		if (EventCommand.FLUSH_DOCUMENTS.equals(event.eventCommand)) {
+			this.telemetryEventRepository.flushDocuments();
+		}
 		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {
 			return;
 		}

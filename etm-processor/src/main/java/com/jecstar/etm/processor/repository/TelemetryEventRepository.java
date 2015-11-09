@@ -7,4 +7,6 @@ public interface TelemetryEventRepository {
 	void persistTelemetryEvent(TelemetryEvent telemetryEvent);
 	
 	void findEndpointConfig(String endpoint, EndpointConfigResult result);
+
+	void flushDocuments();
 }
