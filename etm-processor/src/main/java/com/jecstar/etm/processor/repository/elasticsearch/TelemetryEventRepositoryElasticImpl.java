@@ -29,7 +29,6 @@ import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.converter.TelemetryEventConverter;
 import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.processor.converter.json.TelemetryEventConverterJsonImpl;
-import com.jecstar.etm.processor.processor.IdCorrelationCache;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
@@ -46,7 +45,6 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	
 	
-	private final IdCorrelationCache idCorrelations;
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
 	
@@ -54,8 +52,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	
 	private final Map<String, EndpointConfigResult> endpointCache = new HashMap<String, EndpointConfigResult>();
 	
-	public TelemetryEventRepositoryElasticImpl(final IdCorrelationCache idCorrelations, final Client elasticClient, final EtmConfiguration etmConfiguration) {
-		this.idCorrelations = idCorrelations;
+	public TelemetryEventRepositoryElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration) {
 		this.elasticClient = elasticClient;
 		this.indexDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		this.etmConfiguration = etmConfiguration;
@@ -87,29 +84,6 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		return "etm_event_" + this.indexDateFormat.format(new Date());
 		
 	}
-
-
-	@Override
-	public TelemetryEvent findParent(String sourceId, String application) {
-		if (sourceId == null) {
-			return null;
-		}
-		TelemetryEvent parent = null;
-		if (application != null) {
-			parent = this.idCorrelations.getBySourceIdAndApplication(sourceId, application);
-		} else {
-			parent = this.idCorrelations.getBySourceId(sourceId);
-		}
-		if (parent != null) {
-			return parent;
-		}
-		parent = doFindParent(sourceId, application);
-		if (parent == null && application != null) {
-			return findParent(sourceId, null);
-		}
-		return parent;
-	}
-
 
 	private TelemetryEvent doFindParent(String id, String application) {
 		FilterBuilder filterBuilder = null;

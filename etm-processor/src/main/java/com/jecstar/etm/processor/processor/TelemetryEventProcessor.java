@@ -153,7 +153,6 @@ public class TelemetryEventProcessor {
 				}
 				event.application = parseValue(endpointConfig.applicationParsers, event.content);
 			}
-			this.persistenceEnvironment.getProcessingMap().addTelemetryEvent(event);
 		}
 	}
 	

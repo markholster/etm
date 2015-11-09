@@ -6,7 +6,5 @@ public interface TelemetryEventRepository {
 
 	void persistTelemetryEvent(TelemetryEvent telemetryEvent);
 	
-	TelemetryEvent findParent(String sourceId, String application);
-	
 	void findEndpointConfig(String endpoint, EndpointConfigResult result);
 }

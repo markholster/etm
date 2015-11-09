@@ -8,7 +8,6 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.processor.converter.json.TelemetryEventConverterTagsJsonImpl;
-import com.jecstar.etm.processor.processor.IdCorrelationCache;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.jecstar.etm.processor.repository.elasticsearch.TelemetryEventRepositoryElasticImpl;
@@ -17,8 +16,6 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
-	
-	private final IdCorrelationCache correlationCache = new IdCorrelationCache();
 	
 	private final TelemetryEventConverterTags eventTags = new TelemetryEventConverterTagsJsonImpl();
 
@@ -29,7 +26,7 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	
 	@Override
 	public TelemetryEventRepository createTelemetryEventRepository() {
-		return new TelemetryEventRepositoryElasticImpl(this.correlationCache, this.elasticClient, this.etmConfiguration);
+		return new TelemetryEventRepositoryElasticImpl(this.elasticClient, this.etmConfiguration);
 	}
 
 	@Override
@@ -59,10 +56,4 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	@Override
 	public void close() {
 	}
-
-	@Override
-	public IdCorrelationCache getProcessingMap() {
-		return this.correlationCache;
-	}
-
 }
