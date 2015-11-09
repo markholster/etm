@@ -1,20 +1,18 @@
 package com.jecstar.etm.scheduler.retention;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.annotation.ManagedBean;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 
-import org.elasticsearch.action.WriteConsistencyLevel;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.delete.DeleteRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -39,31 +37,31 @@ public class RetentionService {
 	@SchedulerConfiguration
 	private Client elasticClient;
 	
-	@Schedule(minute="*/5", hour="*", persistent=false)
+	@Schedule(minute="*/15", hour="*", persistent=false)
 	public void flushDocuments() {
 		if (log.isDebugLevelEnabled()) {
-			log.logDebugMessage("Removing events with expired retention.");
+			log.logDebugMessage("Looking for indices to remove.");
+		}		
+		ImmutableOpenMap<String, ImmutableOpenMap<String, AliasMetaData>> aliases = elasticClient.admin().cluster()
+			    .prepareState().execute()
+			    .actionGet().getState()
+			    .getMetaData().getAliases();
+		if (aliases.containsKey("etm_event_all")) {
+			ImmutableOpenMap<String, AliasMetaData> immutableOpenMap = aliases.get("etm_event_all");
+			List<String> indices = new ArrayList<String>();
+			immutableOpenMap.forEach(c -> indices.add(c.key));
+			if (indices.size() > this.etmConfiguration.getMaxIndexCount()) {
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Found " + (indices.size() - this.etmConfiguration.getMaxIndexCount()) + " indices to remove.");
+				}		
+				Collections.sort(indices);
+				for (int i = 0; i < indices.size() - this.etmConfiguration.getMaxIndexCount(); i++) {
+					if (log.isDebugLevelEnabled()) {
+						log.logDebugMessage("Removing index '" + indices.get(i) + "'.");
+					}		
+					this.elasticClient.admin().indices().prepareDelete(indices.get(i)).get();
+				}
+			}
 		}
-		SearchResponse scrollResp = this.elasticClient.prepareSearch("etm_event_all")
-		        .setSearchType(SearchType.SCAN)
-		        .setScroll(new TimeValue(60000))
-		        .setQuery(QueryBuilders.rangeQuery("retention")
-		        		.from(0)
-		        		.to(System.currentTimeMillis()))
-		        .setSize(1000).execute().actionGet();
-		
-		while (scrollResp.getHits().getHits().length != 0) {
-			BulkRequestBuilder bulkDelete = this.elasticClient.prepareBulk();
-		    for (SearchHit hit : scrollResp.getHits().getHits()) {
-		    	bulkDelete.add(new DeleteRequestBuilder(this.elasticClient)
-		    			.setIndex(hit.getIndex())
-		    			.setType(hit.getType())
-		    			.setId(hit.getId())
-		    			.setConsistencyLevel(WriteConsistencyLevel.ONE));
-		    }
-		    bulkDelete.get();
-		    scrollResp = this.elasticClient.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(60000)).execute().actionGet();
-		}
-		//TODO check for empty indici, and remove them if so.
 	}
 }
