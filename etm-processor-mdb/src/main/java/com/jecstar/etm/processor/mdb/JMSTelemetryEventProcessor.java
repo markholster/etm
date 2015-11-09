@@ -34,8 +34,8 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 	public static final String JMS_PROPERTY_KEY_EVENT_DIRECTION = "JMS_ETM_Direction";
 	public static final String JMS_PROPERTY_KEY_EVENT_ENDPOINT = "JMS_ETM_Endpoint";
 	public static final String JMS_PROPERTY_KEY_EVENT_NAME = "JMS_ETM_Name";
-	public static final String JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID = "JMS_ETM_SourceCorrelationID";
-	public static final String JMS_PROPERTY_KEY_EVENT_SOURCE_ID = "JMS_ETM_SourceID";
+	public static final String JMS_PROPERTY_KEY_EVENT_CORRELATION_ID = "JMS_ETM_CorrelationId";
+	public static final String JMS_PROPERTY_KEY_EVENT_ID = "JMS_ETM_Id";
 	public static final String JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME = "JMS_ETM_TransactionName";
 	public static final String JMS_PROPERTY_KEY_EVENT_TYPE = "JMS_ETM_Type";
 	
@@ -122,11 +122,11 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 				        + message.getClass().getName() + "'. Unable to retrieve content");
 			}
 		}
-		this.telemetryEvent.id = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_ID);
+		this.telemetryEvent.id = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_ID);
 		if (this.telemetryEvent.id == null) {
 			this.telemetryEvent.id = message.getJMSMessageID();
 		}
-		this.telemetryEvent.correlationId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_SOURCE_CORRELATION_ID);
+		this.telemetryEvent.correlationId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_CORRELATION_ID);
 		if (this.telemetryEvent.correlationId == null) {
 			this.telemetryEvent.correlationId = message.getJMSCorrelationID();
 		}
