@@ -166,6 +166,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 		if (event.isResponse()) {
 			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
 		}
+		// TODO dit moet gewoon op de tijd zoals deze nu is, niet op basis van event time.
 		return "etm_event_" + event.getEventTime().format(this.dateTimeFormatter);
 		
 	}
