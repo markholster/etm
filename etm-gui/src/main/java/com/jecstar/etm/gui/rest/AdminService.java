@@ -338,14 +338,12 @@ public class AdminService {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartArray();
-	        // TODO node selection.
-//	        List<Node> nodes = this.configuration.getNodes();
-//	        for (Node node : nodes) {
-//	        	generator.writeStartObject();
-//	        	generator.writeStringField("name", node.getName());
-//	        	generator.writeBooleanField("active", node.isActive());
-//	        	generator.writeEndObject();
-//	        }
+	        List<Node> nodes = this.nodeRepository.getNodes();
+	        for (Node node : nodes) {
+	        	generator.writeStartObject();
+	        	generator.writeStringField("name", node.name);
+	        	generator.writeEndObject();
+	        }
 	        generator.writeEndArray();
 	        generator.close();
 	        return writer.toString();
@@ -434,8 +432,7 @@ public class AdminService {
 	        	}
 	        }
 	        if (values.size() > 0) {
-	        	// TODO update configuration.
-	        	//this.configuration.update("cluster".equals(nodeName) ? null : nodeName, properties);
+	        	this.nodeRepository.update(nodeName, values);
 	        }
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {
