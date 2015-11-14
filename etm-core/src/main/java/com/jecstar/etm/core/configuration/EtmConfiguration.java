@@ -24,7 +24,7 @@ public class EtmConfiguration {
 	
 	// Persisting configuration properties;
 	private int persistingBulkSize = 50;
-	private int shardsPerIndex = 2;
+	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 1;
 	
 	// Data configuration properties;
