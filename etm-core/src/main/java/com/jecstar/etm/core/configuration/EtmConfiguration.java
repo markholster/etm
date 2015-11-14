@@ -163,7 +163,7 @@ public class EtmConfiguration {
 	 * @return <code>true</code> when the configuration is changed,
 	 *         <code>false</code> otherwise.
 	 */
-	public boolean merge(EtmConfiguration etmConfiguration) {
+	public boolean mergeAndNotify(EtmConfiguration etmConfiguration) {
 		if (etmConfiguration == null) {
 			return false;
 		}

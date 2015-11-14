@@ -109,7 +109,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			}
 			this.defaultVersion = defaultResponse.getVersion();
 			EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge", getComponent()); 
-			changed = this.merge(etmConfiguration);
+			changed = this.mergeAndNotify(etmConfiguration);
 		}
 		this.lastCheckedForUpdates = System.currentTimeMillis();
 		return changed;
