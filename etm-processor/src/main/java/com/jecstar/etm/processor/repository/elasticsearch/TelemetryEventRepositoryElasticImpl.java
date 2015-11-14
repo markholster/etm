@@ -14,9 +14,11 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
+import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.converter.json.AbstractJsonConverter;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -57,10 +59,18 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		}
 		String index = getElasticIndexName();
 		IndexRequest indexRequest = new IndexRequest(index, eventIndexType, event.id)
+				.consistencyLevel(WriteConsistencyLevel.ONE);
+		UpdateRequest updateRequest = new UpdateRequest(index, eventIndexType, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .source(this.eventConverter.convert(event));
-		// TODO add id to parent if this is a response and set response time.
-		this.bulkRequest.add(indexRequest);
+		        .doc(this.eventConverter.convert(event))
+		        .retryOnConflict(5)
+		        .upsert(indexRequest)
+		        .detectNoop(true);
+		this.bulkRequest.add(updateRequest);
+		if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && event.correlationId != null) {
+			
+		}
+		
 		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkSize()) {
 			executeBulk();
 		}
