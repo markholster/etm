@@ -93,9 +93,11 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
 		
+		AndFilterBuilder filter = FilterBuilders.andFilter(FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime), FilterBuilders.existsFilter(this.tags.getResponsetimeTag()));
+		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
 			.setSearchType(SearchType.COUNT)
-			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime)))
+			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filter))
 			.addAggregation(termsBuilder)
 			.get();
 		

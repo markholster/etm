@@ -15,6 +15,6 @@ if (type) {ctx._source.type = type};
 
 // Update the response time.
 if (creation_time && ctx._source.response_handling_time) {
-    ctx._source.response_time = ctx._source.response_handling_time - creation_time; 
+    ctx._source.responsetime = ctx._source.response_handling_time - creation_time; 
     ctx._source.remove('response_handling_time');
 };
