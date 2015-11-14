@@ -7,8 +7,6 @@ import org.elasticsearch.client.Client;
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.EndpointConfigResult;
-import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -17,14 +15,12 @@ import com.lmax.disruptor.dsl.ProducerType;
 public class DisruptorEnvironment {
 
 	private final Disruptor<TelemetryEvent> disruptor;
-	private final TelemetryEventRepository telemetryEventRepository;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final Client elasticClient, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getEventBufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.handleExceptionsWith(new TelemetryEventExceptionHandler());
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
-		this.telemetryEventRepository = persistenceEnvironment.createTelemetryEventRepository();
 		for (int i = 0; i < enhancingHandlerCount; i++) {
 			enhancingEvntHandler[i] = new EnhancingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, enhancingHandlerCount, metricRegistry.timer("event-enhancing"));
 		}
@@ -48,7 +44,4 @@ public class DisruptorEnvironment {
 		this.disruptor.shutdown();
     }
 
-	public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
-	    this.telemetryEventRepository.findEndpointConfig(endpoint, result);
-    }
 }

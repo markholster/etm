@@ -16,6 +16,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
@@ -25,6 +26,7 @@ import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.converter.TelemetryEventConverter;
+import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.processor.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
@@ -38,6 +40,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	private final String configurationIndexTypeEndpoints = "endpoint";
 
 	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
+	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
@@ -58,18 +61,31 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 			this.bulkRequest = this.elasticClient.prepareBulk();
 		}
 		String index = getElasticIndexName();
-		IndexRequest indexRequest = new IndexRequest(index, eventIndexType, event.id)
-				.consistencyLevel(WriteConsistencyLevel.ONE);
-		UpdateRequest updateRequest = new UpdateRequest(index, eventIndexType, event.id)
+		
+		IndexRequest indexRequest = new IndexRequest(index, this.eventIndexType, event.id)
 				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .doc(this.eventConverter.convert(event))
-		        .retryOnConflict(5)
+		        .source(this.eventConverter.convert(event));
+		UpdateRequest updateRequest = new UpdateRequest(index, this.eventIndexType, event.id)
+		        .script("etm_update-event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
 		        .upsert(indexRequest)
-		        .detectNoop(true);
+		        .detectNoop(true)
+		        .consistencyLevel(WriteConsistencyLevel.ONE)
+		        .retryOnConflict(5);
 		this.bulkRequest.add(updateRequest);
+		
 		if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && event.correlationId != null) {
-			
+			indexRequest = new IndexRequest(index, this.eventIndexType, event.correlationId)
+					.consistencyLevel(WriteConsistencyLevel.ONE)
+			        .source("{ \"response_handling_time\": " + event.creationTime.getTime() + ", \"correlation_id\": \"" + escapeToJson(event.correlationId) + "\" }");
+			updateRequest = new UpdateRequest("etm_event_all", this.eventIndexType, event.correlationId)
+			        .script("etm_update-request-with-responsedata", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(endpointHandler, this.tags))
+			        .upsert(indexRequest)
+			        .detectNoop(true)
+			        .consistencyLevel(WriteConsistencyLevel.ONE)
+			        .retryOnConflict(5);
+			this.bulkRequest.add(updateRequest);
 		}
+	
 		
 		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkSize()) {
 			executeBulk();

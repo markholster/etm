@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.processor;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
@@ -40,6 +41,12 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			return;
 		}
 		final Context timerContext = this.timer.time();
+		if (event.id == null) {
+			event.id = UUID.randomUUID().toString();
+		}
+		if (event.creationTime.getTime() == 0) {
+			event.creationTime.setTime(System.currentTimeMillis());
+		}
 		try {
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
@@ -49,28 +56,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 					event.application = parseValue(this.endpointConfigResult.applicationParsers, event.content);
 				}			
 			}
-			// TODO point-to-point messages which are added twice -> they have the same sourceId, but one is the parent of the other.
-//			if (needsCorrelation(event)) {
-//				// Find the correlation event.
-//				TelemetryEvent parent = this.telemetryEventRepository.findParent(event.correlationId, event.application);
-//				if (parent == null) {
-//					System.out.println("Could not find " + event.correlationId + "_" + event.application);
-//				}
-//				
-//				if (event.correlationId == null) {
-//					event.correlationId = parent.id;
-//				}
-//				// TODO the parent could be something other than the request in case of an point to point message. Find the event with specific type of request.
-//				if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type)) {
-//					// if this is a response, set the correlating data from the request on the response.
-//					if (event.transactionId == null) {
-//						event.transactionId = parent.transactionId;
-//					}
-//					if (event.transactionName == null) {
-//						event.transactionName = parent.transactionName;
-//					}
-//				}
-//			}
 			if (event.name == null || event.direction == null || event.transactionName == null) {
 				if (event.name == null && event.content != null) {
 					event.name = parseValue(this.endpointConfigResult.eventNameParsers, event.content);
@@ -80,9 +65,6 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				}
 				if (event.transactionName == null) {
 					event.transactionName = parseValue(this.endpointConfigResult.transactionNameParsers, event.content);
-					if (event.transactionName != null) {
-						event.transactionId = event.id;
-					}
 				}
 	 		}
 			if (!this.endpointConfigResult.correlationDataParsers.isEmpty()) {

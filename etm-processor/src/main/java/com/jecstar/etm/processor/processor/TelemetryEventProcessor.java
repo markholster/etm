@@ -1,8 +1,6 @@
 package com.jecstar.etm.processor.processor;
 
 import java.nio.channels.IllegalSelectorException;
-import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
 import org.elasticsearch.client.Client;
@@ -11,12 +9,9 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.EtmException;
-import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.EventCommand;
 import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryEventProcessor {
@@ -117,66 +112,6 @@ public class TelemetryEventProcessor {
     }
 	
 	private void preProcess(TelemetryEvent event) {
-		if (event.id == null) {
-			event.id = UUID.randomUUID().toString();
-		}
-		if (event.creationTime.getTime() == 0) {
-			event.creationTime.setTime(System.currentTimeMillis());
-		}
-		EndpointConfigResult endpointConfig = null;
-		if ((event.transactionName == null || event.name == null)&& TelemetryEventType.MESSAGE_REQUEST.equals(event.type)) {
-			// A little bit of enhancement before the event is processed by the
-			// disruptor. We need to make sure the eventName & transactionName
-			// is determined because the correlation of the transaction data on
-			// the response will fail if the request and response are processed
-			// at exactly the same time. By determining the event name &
-			// transaction name at this point, the only requirement is that the
-			// request is offered to ETM before the response, which is quite
-			// logical.
-			endpointConfig = new EndpointConfigResult();
-			this.disruptorEnvironment.findEndpointConfig(event.endpoint, endpointConfig);
-			if (endpointConfig.eventNameParsers != null && endpointConfig.eventNameParsers.size() > 0) {
-				event.name = parseValue(endpointConfig.eventNameParsers, event.content);
-			}
-			if (endpointConfig.transactionNameParsers != null && endpointConfig.transactionNameParsers.size() > 0) {
-				event.transactionName = parseValue(endpointConfig.transactionNameParsers, event.content);
-			}
-		}
-		if (event.transactionName != null) {
-			event.transactionId = event.id;
-		}
-		if (event.id != null) {
-			if (event.application == null) {
-				if (endpointConfig == null) {
-					endpointConfig = new EndpointConfigResult();
-					this.disruptorEnvironment.findEndpointConfig(event.endpoint, endpointConfig);
-				}
-				event.application = parseValue(endpointConfig.applicationParsers, event.content);
-			}
-		}
 	}
 	
-	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
-		if (content == null || expressionParsers == null) {
-			return null;
-		}
-		for (ExpressionParser expressionParser : expressionParsers) {
-			String value = parseValue(expressionParser, content);
-			if (value != null) {
-				return value;
-			}
-		}
-		return null;
-    }
-	
-	private String parseValue(ExpressionParser expressionParser, String content) {
-		if (expressionParser == null || content == null) {
-			return null;
-		}
-		String value = expressionParser.evaluate(content);
-		if (value != null && value.trim().length() > 0) {
-			return value;
-		}
-		return null;
-	}
 }
