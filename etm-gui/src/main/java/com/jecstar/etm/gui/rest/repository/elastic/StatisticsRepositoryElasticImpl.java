@@ -2,11 +2,11 @@ package com.jecstar.etm.gui.rest.repository.elastic;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -15,6 +15,8 @@ import org.elasticsearch.index.query.AndFilterBuilder;
 import org.elasticsearch.index.query.FilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuilder;
@@ -22,6 +24,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.avg.AvgBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
@@ -52,9 +55,12 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctTransactionsAggregation).field(this.tags.getTransactionNameTag()).subAggregation(dateHistogramBuilder);
 		
+		FilterBuilder filterBuilder = FilterBuilders.andFilter(FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime), 
+				FilterBuilders.existsFilter(this.tags.getResponsetimeTag()));
+		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
 			.setSearchType(SearchType.COUNT)
-			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime)))
+			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
 			.addAggregation(termsBuilder)
 			.get();
 		
@@ -93,11 +99,12 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
 		
-		AndFilterBuilder filter = FilterBuilders.andFilter(FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime), FilterBuilders.existsFilter(this.tags.getResponsetimeTag()));
+		FilterBuilder filterBuilder = FilterBuilders.andFilter(FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime), 
+				FilterBuilders.existsFilter(this.tags.getResponsetimeTag()));
 		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
 			.setSearchType(SearchType.COUNT)
-			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filter))
+			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
 			.addAggregation(termsBuilder)
 			.get();
 		
@@ -206,12 +213,13 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		AvgBuilder avgBuilder = AggregationBuilders.avg(avgResponsetimeAggregation).field(this.tags.getResponsetimeTag());
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
-
-		
-		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
+	
+		FilterBuilder filterBuilder = FilterBuilders.andFilter(
 				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
-				FilterBuilders.termFilter(this.tags.getApplicationTag(), application)
-		);		
+				FilterBuilders.termFilter(this.tags.getApplicationTag(), application),
+				FilterBuilders.existsFilter(this.tags.getResponsetimeTag())
+		);
+				
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
 				.setSearchType(SearchType.COUNT)
 				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
@@ -251,7 +259,7 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
 
 		
-		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
+		FilterBuilder filterBuilder = FilterBuilders.andFilter(
 				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
 				FilterBuilders.termFilter(this.tags.getApplicationTag(), application)
 		);		
@@ -295,91 +303,47 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyList();
 		}
-		FilterBuilder filterBuilder;
+		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
+				// The timeframe of the expired messages. This should always be in the past for this query to work.
+				FilterBuilders.rangeFilter(this.tags.getExpiryTimeTag()).from(startTime).to(endTime),
+				// Filter expired messages, or messages without a responsetime (and hence no response is logged).
+				FilterBuilders.orFilter(FilterBuilders.termFilter("expired", true), FilterBuilders.notFilter(FilterBuilders.existsFilter(this.tags.getResponsetimeTag())))
+				
+		);
 		if (application != null) {
-			filterBuilder = FilterBuilders.andFilter(
-					FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
-					FilterBuilders.termFilter(this.tags.getApplicationTag(), application),
-					FilterBuilders.termFilter(this.tags.getTypeTag(), TelemetryEventType.MESSAGE_REQUEST.name())
-			);		
-		} else {
-			filterBuilder = FilterBuilders.andFilter(
-					FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
-					FilterBuilders.termFilter(this.tags.getTypeTag(), TelemetryEventType.MESSAGE_REQUEST.name())			
-			);
+			filterBuilder.add(FilterBuilders.termFilter(this.tags.getApplicationTag(), application));
 		}
-
-		// TODO nog even bekijken hoe we de expired messages eruit halen.
-		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
 		
-//		List<String> messageNames = getMessageNameTimeframes(startTime, endTime);
-//		if (messageNames.size() == 0) {
-//			return Collections.emptyList();
-//		}
-//		List<ResultSetFuture> resultSets = new ArrayList<ResultSetFuture>();
-//		for (String messageName : messageNames) {
-//			resultSets.add(this.session.executeAsync(this.selectMessageExpirationStatement.bind(messageName, new Date(startTime), new Date(endTime))));
-//		}
-//		for (ResultSetFuture resultSetFuture : resultSets) {
-//			ResultSet resultSet = resultSetFuture.getUninterruptibly();
-//			Iterator<Row> iterator = resultSet.iterator();
-//			while (iterator.hasNext()) {
-//				Row row = iterator.next();
-//				UUID id = row.getUUID(0);
-//				if (id == null) {
-//					continue;
-//				}
-//				String eventApplication = row.getString(5);
-//				if (application != null && !application.equals(eventApplication)) {
-//					continue;
-//				}
-//				String messageName = row.getString(1);
-//				if (messageName == null) {
-//					messageName = "undefined";
-//				}
-//				Date messageStartTime = row.getDate(2);
-//				Date messageFinishTime = row.getDate(3);
-//				Date messageExpiryTime = row.getDate(4);
-//				String rowKey = row.getString(6);
-//				if (messageFinishTime == null || messageFinishTime.getTime() == 0) {
-//					Row eventRow = this.session.execute(this.selectEventCorrelations.bind(id)).one();
-//					if (eventRow != null) {
-//						List<UUID> childIds = eventRow.getList(0, UUID.class);
-//						if (childIds != null) {
-//							for (UUID childId : childIds) {
-//								Row childRow = this.session.execute(this.selectEventExpirationDataStatement.bind(childId)).one();
-//								if (childRow != null) {
-//									TelemetryEventType type = null;
-//									try {
-//										type = TelemetryEventType.valueOf(childRow.getString(1));
-//									} catch (Exception e) {
-//										continue;
-//									}
-//									if (TelemetryEventType.MESSAGE_RESPONSE.equals(type)) {
-//										// False positive, update the expiration table
-//										messageFinishTime = childRow.getDate(0);
-//										this.session.executeAsync(this.updateMessageExpirationStatement.bind(messageFinishTime, rowKey, messageExpiryTime, id));
-//										break;
-//									}
-//								}
-//							}
-//						}
-//					}
-//				}
-//				if (messageExpiryTime != null && messageExpiryTime.getTime() > 0) {
-//					if ((messageFinishTime == null || messageFinishTime.getTime() == 0) && new Date().after(messageExpiryTime)) {
-//						synchronized (expiredMessages) {
-//							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
-//                        }
-//					} else if (messageFinishTime != null && messageFinishTime.getTime() > 0 && messageFinishTime.after(messageExpiryTime)) {
-//						synchronized (expiredMessages) {
-//							expiredMessages.add(new ExpiredMessage(id, messageName, messageStartTime, messageExpiryTime, eventApplication));
-//                        }
-//					}
-//				}
-//			}
-//		}
-		return expiredMessages.stream().sorted((e1, e2) -> e2.getExpirationTime().compareTo(e1.getExpirationTime())).limit(maxExpirations).collect(Collectors.toList());
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.addSort(this.tags.getExpiryTimeTag(), SortOrder.DESC)
+				.addField(this.tags.getNameTag())
+				.addField(this.tags.getCreationTimeTag())
+				.addField(this.tags.getExpiryTimeTag())
+				.addField(this.tags.getApplicationTag())
+				.setSize(maxExpirations)
+				.get();
+
+		List<ExpiredMessage> expiredMessages =  new ArrayList<ExpiredMessage>();
+		for (SearchHit searchHit : searchResponse.getHits().getHits()) {
+			Map<String, SearchHitField> fields = searchHit.getFields();
+			String id = searchHit.getId();
+			String eventName = "?";
+			if (fields.containsKey(this.tags.getNameTag())) {
+				eventName = fields.get(this.tags.getNameTag()).getValue();
+			}
+			long time = fields.get(this.tags.getCreationTimeTag()).getValue();
+			Date creationTime = new Date(time);
+			time = fields.get(this.tags.getExpiryTimeTag()).getValue();
+			Date expiryTime = new Date(time);
+			String applicationName = null;
+			if (fields.containsKey(this.tags.getApplicationTag())) {
+				applicationName = fields.get(this.tags.getApplicationTag()).getValue();
+			}
+			expiredMessages.add(new ExpiredMessage(id, eventName, creationTime, expiryTime, applicationName));
+		
+		}
+		return expiredMessages;
 	}
 	
 	public Map<String, Map<String, Long>> getApplicationCountStatistics(Long startTime, Long endTime, int maxApplications) {

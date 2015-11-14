@@ -1,11 +1,10 @@
 package com.jecstar.etm.gui.rest.repository;
 
 import java.util.Date;
-import java.util.UUID;
 
 public class ExpiredMessage {
 
-	private UUID id;
+	private String id;
 	
 	private String name;
 	
@@ -15,7 +14,7 @@ public class ExpiredMessage {
 	
 	private Date expirationTime;
 
-	public ExpiredMessage(UUID id, String name, Date startTime, Date expirationTime, String application) {
+	public ExpiredMessage(String id, String name, Date startTime, Date expirationTime, String application) {
 		this.id = id;
 	    this.name = name;
 	    this.startTime = startTime;
@@ -23,7 +22,7 @@ public class ExpiredMessage {
 	    this.application = application;
     }
 
-	public UUID getId() {
+	public String getId() {
 	    return this.id;
     }
 	

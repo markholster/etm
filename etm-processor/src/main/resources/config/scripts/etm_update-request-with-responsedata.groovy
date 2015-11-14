@@ -2,6 +2,9 @@ if (ctx._source.creation_time) {
 // The request is present, calculate the response time
     if (!ctx._source.responsetime || (ctx._source.responsetime && ctx._source.responsetime > (creation_time - ctx._source.creation_time))) {
         ctx._source.responsetime = creation_time - ctx._source.creation_time;
+        if (ctx._source.expiry_time && (creation_time >= ctx._source.expiry_time)) {
+            ctx._source.expired = true;
+        }
     }
 } else {
 // The request is not stored yet, store the response data in the request.
