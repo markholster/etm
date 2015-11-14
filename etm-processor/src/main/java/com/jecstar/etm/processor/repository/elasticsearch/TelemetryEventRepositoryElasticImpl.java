@@ -41,6 +41,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 
 	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
 	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
+	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();
 	
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
@@ -76,9 +77,9 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && event.correlationId != null) {
 			indexRequest = new IndexRequest(index, this.eventIndexType, event.correlationId)
 					.consistencyLevel(WriteConsistencyLevel.ONE)
-			        .source("{ \"response_handling_time\": " + event.creationTime.getTime() + ", \"correlation_id\": \"" + escapeToJson(event.correlationId) + "\" }");
-			updateRequest = new UpdateRequest("etm_event_all", this.eventIndexType, event.correlationId)
-			        .script("etm_update-request-with-responsedata", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(endpointHandler, this.tags))
+			        .source("{ \"response_handling_time\": " + event.creationTime.getTime() + ", \"child_correlation_ids\": [\"" + escapeToJson(event.id) + "\"] }");
+			updateRequest = new UpdateRequest(index, this.eventIndexType, event.correlationId)
+			        .script("etm_update-request-with-responsedata", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags))
 			        .upsert(indexRequest)
 			        .detectNoop(true)
 			        .consistencyLevel(WriteConsistencyLevel.ONE)

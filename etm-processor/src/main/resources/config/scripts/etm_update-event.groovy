@@ -1,10 +1,11 @@
+if (id) {ctx._source.id = id};
 if (application) {ctx._source.application = application};
 if (content) {ctx._source.content = content};
-if (endpoint) {ctx._source.endpoint = endpoint};
-if (expiry_time) {ctx._source.expiry_time = expiry_time};
 if (correlation_id) {ctx._source.correlation_id = correlation_id};
 if (correlation_data) {if (ctx._source.correlation_data) {ctx._source.correlation_data += correlation_data} else {ctx._source.correlation_data = correlation_data}};
 if (creation_time) {ctx._source.creation_time = creation_time};
+if (endpoint) {ctx._source.endpoint = endpoint};
+if (expiry_time) {ctx._source.expiry_time = expiry_time};
 if (direction) {ctx._source.direction = direction};
 if (metadata) {if (ctx._source.metadata) {ctx._source.metadata += metadata} else {ctx._source.metadata = metadata}};
 if (name) {ctx._source.name = name};
