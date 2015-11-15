@@ -117,6 +117,9 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	@Override
 	public void findEndpointConfig(String endpoint, EndpointConfigResult result) {
 		result.initialize();
+		if (endpoint == null || endpoint.trim().length() == 0) {
+			endpoint = "*";
+		}
 		EndpointConfigResult cachedResult = this.endpointCache.get(endpoint);
 		if (cachedResult == null || System.currentTimeMillis() - cachedResult.retrieved > 30000) {
 			if (cachedResult == null) {
@@ -127,9 +130,11 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 			if (getResponse.isExists()) {
 				cachedResult.merge(toEndpointConfig(getResponse.getSourceAsMap()));
 			}
-			getResponse = this.elasticClient.prepareGet(this.configurationIndex, this.configurationIndexTypeEndpoints, "*").get();
-			if (getResponse.isExists()) {
-				cachedResult.merge(toEndpointConfig(getResponse.getSourceAsMap()));
+			if (!"*".equals(endpoint)) {
+				getResponse = this.elasticClient.prepareGet(this.configurationIndex, this.configurationIndexTypeEndpoints, "*").get();
+				if (getResponse.isExists()) {
+					cachedResult.merge(toEndpointConfig(getResponse.getSourceAsMap()));
+				}
 			}
 			cachedResult.retrieved = System.currentTimeMillis();
 			this.endpointCache.put(endpoint, cachedResult);

@@ -642,6 +642,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 
 			for (SearchHit searchHit : searchResponse.getHits()) {
 				Map<String, SearchHitField> valueMap = searchHit.getFields();
+				
 				String correlationId = getStringValue(this.tags.getIdTag(), valueMap);
 				if (correlationId.equals(eventId)) {
 					continue;
@@ -774,6 +775,10 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	
 	private String getStringValue(String key, Map<String, ?> valueMap) {
 		if (valueMap.containsKey(key)) {
+			Object object = valueMap.get(key);
+			if (object instanceof SearchHitField) {
+				return ((SearchHitField)object).getValue();
+			}
 			return valueMap.get(key).toString();
 		}
 		return null;
@@ -782,6 +787,10 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	@SuppressWarnings("unchecked")
 	private List<String> getStringListValue(String key, Map<String, Object> valueMap) {
 		if (valueMap.containsKey(key)) {
+			Object object = valueMap.get(key);
+			if (object instanceof SearchHitField) {
+				return ((SearchHitField)object).getValue();
+			}
 			return (List<String>) valueMap.get(key);
 		}
 		return Collections.emptyList();
@@ -790,6 +799,11 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	
 	private Date getDateValue(String key, Map<String, ?> valueMap) {
 		if (valueMap.containsKey(key)) {
+			Object object = valueMap.get(key);
+			if (object instanceof SearchHitField) {
+				long time = ((SearchHitField)object).getValue(); 
+				return new Date(time);
+			}
 			return new Date(((Number)valueMap.get(key)).longValue());
 		}
 		return null;

@@ -1,8 +1,6 @@
 package com.jecstar.etm.processor.repository.elasticsearch;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.jecstar.etm.processor.TelemetryEvent;
@@ -52,21 +50,15 @@ public class UpdateScriptBuilder {
 		parameters.put(tag, value);
 	}
 	
-	private void addArrayAppenderToScript(Map<String, Object> parameters, String tag, Object value) {
-		parameters.put(tag, value);		
-	}
-	
 	private void addMapAppenderToScript(Map<String, Object> parameters, String tag, Map<String, String> map) {
 		if (map == null || map.size() <= 0) {
-			addArrayAppenderToScript(parameters, tag, null);
+			parameters.put(tag, null);		
 			return;
 		}
-		List<Map<String, Object>> jsonData = new ArrayList<Map<String, Object>>();
+		Map<String, Object> jsonData = new HashMap<String, Object>();
 		for (String key : map.keySet()) {
-			Map<String, Object> data = new HashMap<String, Object>();
-			data.put(key, map.get(key));
-			jsonData.add(data);
+			jsonData.put(key, map.get(key));
 		}
-		addArrayAppenderToScript(parameters, tag, jsonData);
+		parameters.put(tag, jsonData);		
 	}
 }
