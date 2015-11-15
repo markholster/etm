@@ -42,7 +42,7 @@ public class UpdateScriptBuilder {
 	Map<String, Object> createRequestUpdateScriptFromResponse(TelemetryEvent event, TelemetryEventConverterTags tags) {
 		Map<String, Object> parameters = new HashMap<String, Object>();
 		parameters.put(tags.getCreationTimeTag(), event.creationTime.getTime() == 0 ? null : event.creationTime.getTime());
-		parameters.put(tags.getCorrelationIdTag(), event.correlationId);
+		parameters.put(tags.getCorrelationIdTag(), event.id);
 		return parameters;
 	}
 	

@@ -354,12 +354,16 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 	
 	private String findParentId(String eventId, Date considerdataFrom) {
-		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
+		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId)
+				.setFields(this.tags.getCorrelationIdTag())
+				.get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
-		Map<String, Object> valueMap = getResponse.getSourceAsMap();
-		String parentId = getStringValue(this.tags.getCorrelationIdTag(), valueMap);
+		String parentId = null;
+		if (getResponse.getFields().containsKey(this.tags.getCorrelationIdTag())) {
+			parentId = getResponse.getField(this.tags.getCorrelationIdTag()).getValue().toString();
+		}
 		if (parentId == null) {
 			parentId = findParentIdByDataCorrelation(eventId, considerdataFrom);
 		}
@@ -380,7 +384,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	 *            <code>creationTime</code> will be considered unless
 	 *            <code>considerdataFrom</code> not is <code>null</code>. In
 	 *            that case
-	 *            <code>considerdataFrom> till <code>creationTime</code> will be
+	 *            <code>considerdataFrom</code> till <code>creationTime</code> will be
 	 *            considered to find a parent.
 	 * @return The ID of the parent or <code>null</code> if no parent could be
 	 *         found.
@@ -428,7 +432,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 			}
 			TelemetryEventType type = null;
 			try {
-				type = TelemetryEventType.valueOf(getResponse.getType());
+				type = TelemetryEventType.valueOf(getStringValue(this.tags.getTypeTag(), valueMap));
 			} catch (Exception e) {
 				// Without a type we cannot securely correlate by data.
 				continue;
@@ -522,9 +526,9 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 			List<String> children = new ArrayList<String>();
 			children.addAll(getStringListValue(this.tags.getChildCorrelationIdsTag(), valueMap));
 			Collection<String> childIdsByDataCorrelation = findChildIdsByDataCorrelation(eventId);
-			for (String uuid : childIdsByDataCorrelation) {
-				if (!children.contains(uuid)) {
-					children.add(uuid);
+			for (String id : childIdsByDataCorrelation) {
+				if (!children.contains(id)) {
+					children.add(id);
 				}
 			}
 			for (String child : children) {
@@ -637,7 +641,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 								FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime.getTime()).to(finishTime.getTime()))))
 				.setSize(this.dataCorrelationMaxResults)
 				.addField(this.tags.getIdTag())
-				.addField(this.tags.getExpiryTimeTag())
+				.addField(this.tags.getCreationTimeTag())
 				.get();
 
 			for (SearchHit searchHit : searchResponse.getHits()) {
@@ -653,7 +657,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 					}
 					break;
 				}
-				CorrelationResult correlationResult = new CorrelationResult(correlationId, getDateValue(this.tags.getExpiryTimeTag(), valueMap));
+				CorrelationResult correlationResult = new CorrelationResult(correlationId, getDateValue(this.tags.getCreationTimeTag(), valueMap));
 				if (!correlatingResults.contains(correlationResult)) {
 					correlatingResults.add(correlationResult);
 				}
