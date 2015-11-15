@@ -60,12 +60,12 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + elementName + "\": [");
+		buffer.append("\"" + elementName + "\": {");
 		buffer.append(elementValues.entrySet().stream()
-				.map(c -> "{ \"" + escapeToJson(c.getKey()) + "\": \"" + escapeToJson(c.getValue()) + "\" }")
+				.map(c -> "\"" + escapeToJson(c.getKey()) + "\": \"" + escapeToJson(c.getValue()) + "\"")
 				.sorted()
 				.collect(Collectors.joining(", ")));
-		buffer.append("]");
+		buffer.append("}");
 		return true;
 	}
 

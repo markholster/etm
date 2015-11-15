@@ -1,5 +1,7 @@
 package com.jecstar.etm.processor.processor;
 
+import java.io.Closeable;
+
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.processor.EventCommand;
@@ -7,7 +9,7 @@ import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
-public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
+public class PersistingEventHandler implements EventHandler<TelemetryEvent>, Closeable {
 
 	private final long ordinal;
 	private final long numberOfConsumers;
@@ -40,6 +42,11 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent> {
 		} finally {
 			timerContext.stop();
 		}
+	}
+
+	@Override
+	public void close() {
+		this.telemetryEventRepository.flushDocuments();
 	}
 
 }

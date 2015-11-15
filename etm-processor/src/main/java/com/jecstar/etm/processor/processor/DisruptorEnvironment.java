@@ -15,6 +15,7 @@ import com.lmax.disruptor.dsl.ProducerType;
 public class DisruptorEnvironment {
 
 	private final Disruptor<TelemetryEvent> disruptor;
+	private final PersistingEventHandler[] persistingEventHandlers;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final Client elasticClient, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
 		this.disruptor = new Disruptor<TelemetryEvent>(TelemetryEvent::new, etmConfiguration.getEventBufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
@@ -26,13 +27,13 @@ public class DisruptorEnvironment {
 		}
 		
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
-		final PersistingEventHandler[] persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
+		this.persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, metricRegistry.timer("event-persisting"));
+			this.persistingEventHandlers[i] = new PersistingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, persistingHandlerCount, metricRegistry.timer("event-persisting"));
 		}
 		this.disruptor.handleEventsWith(enhancingEvntHandler);
-		if (persistingEventHandlers.length > 0) {
-			this.disruptor.after(enhancingEvntHandler).handleEventsWith(persistingEventHandlers);
+		if (this.persistingEventHandlers.length > 0) {
+			this.disruptor.after(enhancingEvntHandler).handleEventsWith(this.persistingEventHandlers);
 		}
 	}
 	
@@ -42,6 +43,11 @@ public class DisruptorEnvironment {
 
 	public void shutdown() {
 		this.disruptor.shutdown();
+		if (this.persistingEventHandlers != null && this.persistingEventHandlers.length > 0) {
+			for (PersistingEventHandler persistingEventHandler : this.persistingEventHandlers) {
+				persistingEventHandler.close();
+			}
+		}
     }
 
 }
