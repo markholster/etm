@@ -194,116 +194,138 @@
                                 </form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="status_tab">
-	                            <div id="cluster_status" class="form-group">
+	                            <div id="cluster_status">
 	                                <fieldset><legend>Cluster information</legend></fieldset>
-	                                <label class="col-sm-3 control-label">Cluster name</label>
-	                                <p id="status_cluster_name" class="col-sm-3"></p>
-	                                <label class="col-sm-3 control-label">Active shards</label>
-	                                <p id="status_cluster_active_shards" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Cluster status</label>
-                                    <p id="status_cluster_status" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Active primary shards</label>
-                                    <p id="status_cluster_active_primary_shards" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Nodes</label>
-                                    <p id="status_cluster_nodes" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Relocating shards</label>
-                                    <p id="status_cluster_relocating_shards" class="col-sm-3"></p>
-                                    
-                                    <label class="col-sm-3 control-label">Data nodes</label>
-                                    <p id="status_cluster_data_nodes" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Initializing shards</label>
-                                    <p id="status_cluster_initializing_shards" class="col-sm-3"></p>
-                                    
-                                    <label class="col-sm-3 control-label">Pending tasks</label>
-                                    <p id="status_cluster_pending_tasks" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Unassigned shards</label>
-                                    <p id="status_cluster_unassigned_shards" class="col-sm-3"></p>
-                                    
-                                    <label class="col-sm-3 control-label">Inflight fetch</label>
-                                    <p id="status_cluster_inflight_fetch" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Delayed unassigned shards</label>
-                                    <p id="status_cluster_delayed_unassigned_shards" class="col-sm-3"></p>                                    
-	                                <div id="shard_status" class="form-group">
-	                                </div>
+	                                <div class="row">
+		                                <label class="col-sm-3 control-label">Cluster name</label>
+		                                <p id="status_cluster_name" class="col-sm-3"></p>
+		                                <label class="col-sm-3 control-label">Active shards</label>
+		                                <p id="status_cluster_active_shards" class="col-sm-3"></p>
+		                            </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Cluster status</label>
+	                                    <p id="status_cluster_status" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Active primary shards</label>
+	                                    <p id="status_cluster_active_primary_shards" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Nodes</label>
+	                                    <p id="status_cluster_nodes" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Relocating shards</label>
+	                                    <p id="status_cluster_relocating_shards" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Data nodes</label>
+	                                    <p id="status_cluster_data_nodes" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Initializing shards</label>
+	                                    <p id="status_cluster_initializing_shards" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Pending tasks</label>
+	                                    <p id="status_cluster_pending_tasks" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Unassigned shards</label>
+	                                    <p id="status_cluster_unassigned_shards" class="col-sm-3"></p>
+                                    </div>
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Inflight fetch</label>
+	                                    <p id="status_cluster_inflight_fetch" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Delayed unassigned shards</label>
+	                                    <p id="status_cluster_delayed_unassigned_shards" class="col-sm-3"></p>
+	                                </div>                                        
 	                            </div>
-	                            <div id="node_status" class="form-group">
-                                    <fieldset><legend>Node</legend></fieldset>                                    
-                                    <label class="col-sm-3 control-label">Id</label>
-                                    <p id="status_node_id" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Master</label>
-                                    <p id="status_node_master" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Hostname</label>
-                                    <p id="status_node_hostname" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Client</label>
-                                    <p id="status_node_client" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Address</label>
-                                    <p id="status_node_address" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Data</label>
-                                    <p id="status_node_data" class="col-sm-3"></p>
-                                    
+                                <div id="shard_status">
+                                </div>
+	                            <div id="node_status">
+                                    <fieldset><legend>Node</legend></fieldset>    
+                                    <div class="row">                                
+	                                    <label class="col-sm-3 control-label">Id</label>
+	                                    <p id="status_node_id" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Master</label>
+	                                    <p id="status_node_master" class="col-sm-3"></p>
+                                    </div>
+                                    <div class="row">                                
+	                                    <label class="col-sm-3 control-label">Hostname</label>
+	                                    <p id="status_node_hostname" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Client</label>
+	                                    <p id="status_node_client" class="col-sm-3"></p>
+                                    </div>
+                                    <div class="row">                                
+	                                    <label class="col-sm-3 control-label">Address</label>
+	                                    <p id="status_node_address" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Data</label>
+	                                    <p id="status_node_data" class="col-sm-3"></p>
+                                    </div>
                                     
                                     <fieldset><legend>JVM</legend></fieldset>
-                                    <label class="col-sm-3 control-label">Name</label>
-                                    <p id="status_node_jvm_name" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Start time</label>
-                                    <p id="status_node_jvm_start_time" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Vendor</label>
-                                    <p id="status_node_jvm_vendor" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Pid</label>
-                                    <p id="status_node_jvm_pid" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Version</label>
-                                    <p id="status_node_jvm_version" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Direct max memory</label>
-                                    <p id="status_node_jvm_mem_max_direct" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Heap memory init</label>
-                                    <p id="status_node_jvm_mem_heap_init" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Non heap memory init</label>
-                                    <p id="status_node_jvm_mem_non_heap_init" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Heap memory max</label>
-                                    <p id="status_node_jvm_mem_heap_max" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Non heap memory max</label>
-                                    <p id="status_node_jvm_mem_non_heap_max" class="col-sm-3"></p>
-                                    
+                                    <div class="row">                                
+	                                    <label class="col-sm-3 control-label">Name</label>
+	                                    <p id="status_node_jvm_name" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Start time</label>
+	                                    <p id="status_node_jvm_start_time" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">                        
+	                                    <label class="col-sm-3 control-label">Vendor</label>
+	                                    <p id="status_node_jvm_vendor" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Pid</label>
+	                                    <p id="status_node_jvm_pid" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Version</label>
+	                                    <p id="status_node_jvm_version" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Direct max memory</label>
+	                                    <p id="status_node_jvm_mem_max_direct" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Heap memory init</label>
+	                                    <p id="status_node_jvm_mem_heap_init" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Non heap memory init</label>
+	                                    <p id="status_node_jvm_mem_non_heap_init" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Heap memory max</label>
+	                                    <p id="status_node_jvm_mem_heap_max" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Non heap memory max</label>
+	                                    <p id="status_node_jvm_mem_non_heap_max" class="col-sm-3"></p>
+                                    </div>
                                     
                                     <fieldset><legend>OS</legend></fieldset>
-                                    <label class="col-sm-3 control-label">Available processors</label>
-                                    <p id="status_node_os_available_processors" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Total memory</label>
-                                    <p id="status_node_os_total_memory" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Refresh interval</label>
-                                    <p id="status_node_os_refresh_interval" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Total swap</label>
-                                    <p id="status_node_os_total_swap" class="col-sm-3"></p>
-                                    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Available processors</label>
+	                                    <p id="status_node_os_available_processors" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Total memory</label>
+	                                    <p id="status_node_os_total_memory" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Refresh interval</label>
+	                                    <p id="status_node_os_refresh_interval" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Total swap</label>
+	                                    <p id="status_node_os_total_swap" class="col-sm-3"></p>
+                                    </div>
                                     
                                     <fieldset><legend>CPU</legend></fieldset>
-                                    <label class="col-sm-3 control-label">Model</label>
-                                    <p id="status_node_cpu_model" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Total cores</label>
-                                    <p id="status_node_cpu_total_cores" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Vendor</label>
-                                    <p id="status_node_cpu_vendor" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Total sockets</label>
-                                    <p id="status_node_cpu_total_sockets" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Mhz</label>
-                                    <p id="status_node_cpu_mhz" class="col-sm-3"></p>
-                                    <label class="col-sm-3 control-label">Cores per socket</label>
-                                    <p id="status_node_cpu_cores_per_socket" class="col-sm-3"></p>
-
-                                    <label class="col-sm-3 control-label">Cache size</label>
-                                    <p id="status_node_cpu_cache_size" class="col-sm-3"></p>
-	                            </div>
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Model</label>
+	                                    <p id="status_node_cpu_model" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Total cores</label>
+	                                    <p id="status_node_cpu_total_cores" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Vendor</label>
+	                                    <p id="status_node_cpu_vendor" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Total sockets</label>
+	                                    <p id="status_node_cpu_total_sockets" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Mhz</label>
+	                                    <p id="status_node_cpu_mhz" class="col-sm-3"></p>
+	                                    <label class="col-sm-3 control-label">Cores per socket</label>
+	                                    <p id="status_node_cpu_cores_per_socket" class="col-sm-3"></p>
+	                                </div>    
+                                    <div class="row">
+	                                    <label class="col-sm-3 control-label">Cache size</label>
+	                                    <p id="status_node_cpu_cache_size" class="col-sm-3"></p>
+	                                </div>    
+		                        </div>        
 							</div>
 							<div role="tabpanel" class="tab-pane" id="license_tab">
 							    <div id="license_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
@@ -386,7 +408,9 @@ $(function () {
 	           $('#shard_status').empty();
 	           if (data.indices) {
 	               $.each(data.indices, function(index, dbIndex) {
-	               $('#shard_status').append($('<br />'));
+	                   if (index != 0) {
+	                       $('#shard_status').append($('<br />'));
+	                   }
 	                   $('#shard_status').append($('<fieldset />').append($('<legend />').text('Index ' + dbIndex.name)));
 	                   if (dbIndex.shards) {
 	                       var tbody = $('<tbody />')
@@ -429,6 +453,7 @@ $(function () {
 	           
 	           $('#node_status').hide();
 	           $('#cluster_status').show();
+	           $('#shard_status').show();
 	        } else {
 	           $('#status_node_id').text(data['id']);
 	           $('#status_node_hostname').text(data.hostname);
@@ -457,8 +482,10 @@ $(function () {
                $('#status_node_cpu_total_cores').text(data.cpu.total_cores);
                $('#status_node_cpu_total_sockets').text(data.cpu.total_sockets);
                $('#status_node_cpu_cores_per_socket').text(data.cpu.cores_per_socket);
-               $('#node_status').show();	        
+               
+               $('#node_status').show();
                $('#cluster_status').hide();
+               $('#shard_status').hide();	        
 	        }
         }).fail(function() {
             $('#status_tab_header > a').addClass('status_error');
