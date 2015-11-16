@@ -122,7 +122,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			.setTemplate(this.indexName)
 			.setSettings(ImmutableSettings.settingsBuilder()
 					.put("number_of_shards", 1)
-					.put("number_of_replicas", 2))
+					.put("number_of_replicas", 1))
 			.addMapping("_default_", createMapping())
 			.get();
 		this.elasticClient.prepareIndex(this.indexName, this.indexType, this.defaultId)
