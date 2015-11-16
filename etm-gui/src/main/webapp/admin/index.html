@@ -195,6 +195,7 @@
 							</div>
 							<div role="tabpanel" class="tab-pane" id="status_tab">
 	                            <div id="cluster_status" class="form-group">
+	                                <fieldset><legend>Cluster information</legend></fieldset>
 	                                <label class="col-sm-3 control-label">Cluster name</label>
 	                                <p id="status_cluster_name" class="col-sm-3"></p>
 	                                <label class="col-sm-3 control-label">Active shards</label>
@@ -223,7 +224,9 @@
                                     <label class="col-sm-3 control-label">Inflight fetch</label>
                                     <p id="status_cluster_inflight_fetch" class="col-sm-3"></p>
                                     <label class="col-sm-3 control-label">Delayed unassigned shards</label>
-                                    <p id="status_cluster_delayed_unassigned_shards" class="col-sm-3"></p>
+                                    <p id="status_cluster_delayed_unassigned_shards" class="col-sm-3"></p>                                    
+	                                <div id="shard_status" class="form-group">
+	                                </div>
 	                            </div>
 	                            <div id="node_status" class="form-group">
                                     <fieldset><legend>Node</legend></fieldset>                                    
@@ -379,6 +382,51 @@ $(function () {
 	           $('#status_cluster_initializing_shards').text(data.initializing_shards);
 	           $('#status_cluster_unassigned_shards').text(data.unassigned_shards);
 	           $('#status_cluster_delayed_unassigned_shards').text(data.delayed_unassigned_shards);
+	           
+	           $('#shard_status').empty();
+	           if (data.indices) {
+	               $.each(data.indices, function(index, dbIndex) {
+	               $('#shard_status').append($('<br />'));
+	                   $('#shard_status').append($('<fieldset />').append($('<legend />').text('Index ' + dbIndex.name)));
+	                   if (dbIndex.shards) {
+	                       var tbody = $('<tbody />')
+	                       $.each(dbIndex.shards, function(shardIx, shard) {
+	                           var row  = $('<tr />')
+	                               .append($('<td />').text(shard.id))
+	                               .append($('<td />').text(shard.primary))
+	                               .append($('<td />').text(shard.active))
+	                               .append($('<td />').text(shard.assigned))
+	                               .append($('<td />').text(shard.initializing))
+	                               .append($('<td />').text(shard.relocating))
+	                               .append($('<td />').text(shard.node));
+	                           if (shard.primary && !shard.active) {
+	                               $(row).attr('class', 'status_error');
+	                           } else if (!shard.active) {
+	                               $(row).attr('class', 'status_warning');
+	                           }    
+	                           $(tbody).append($(row));
+	                       });
+	                       $('#shard_status')
+	                           .append($('<div />').attr('class', 'table-responsive')
+	                               .append($('<table />').attr('class', 'table').attr('class', 'table-condensed')
+	                                   .append($('<thead />')
+	                                       .append($('<tr />')
+	                                           .append($('<th />').text('Id'))
+	                                           .append($('<th />').text('Primary'))
+	                                           .append($('<th />').text('Active'))
+	                                           .append($('<th />').text('Assigned'))
+	                                           .append($('<th />').text('Initializing'))
+	                                           .append($('<th />').text('Relocating'))
+	                                           .append($('<th />').text('Node'))
+	                                       )
+	                                   )
+	                                   .append($(tbody))
+	                               )
+	                           );
+	                   }
+	               });
+	           }
+	           
 	           $('#node_status').hide();
 	           $('#cluster_status').show();
 	        } else {

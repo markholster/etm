@@ -12,8 +12,13 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
+import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder;
+import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.routing.MutableShardRouting;
+import org.elasticsearch.cluster.routing.RoutingNodes;
+import org.elasticsearch.common.base.Predicate;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.monitor.jvm.JvmInfo;
 import org.elasticsearch.monitor.os.OsInfo;
@@ -24,13 +29,16 @@ import org.elasticsearch.monitor.os.OsInfo.Swap;
 import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterTagsJsonImpl;
 import com.jecstar.etm.gui.rest.ClusterStatus;
-import com.jecstar.etm.gui.rest.StatusCode;
+import com.jecstar.etm.gui.rest.ClusterStatus.ShardStatus;
 import com.jecstar.etm.gui.rest.Node;
 import com.jecstar.etm.gui.rest.NodeStatus;
+import com.jecstar.etm.gui.rest.StatusCode;
 import com.jecstar.etm.gui.rest.repository.NodeRepository;
 
 public class NodeRepositoryElasticImpl implements NodeRepository {
-
+	
+	private Predicate<MutableShardRouting> isEtmIndex() {return p -> p.getIndex().startsWith("etm_event_") || p.getIndex().equals("etm_configuration");};
+	
 	private final String indexName = "etm_configuration";
 	private final String indexType = "node";
 	private final String defaultId = "default_configuration";
@@ -150,7 +158,31 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 		clusterStatus.numberOfDelayedUnassignedShards = clusterHealthResponse.getDelayedUnassignedShards();
 		clusterStatus.numberOfPendingTasks = clusterHealthResponse.getNumberOfPendingTasks();
 		clusterStatus.numberOfInFlightFethch = clusterHealthResponse.getNumberOfInFlightFetch();
+		ClusterStateResponse stateResponse = new ClusterStateRequestBuilder(this.elasticClient.admin().cluster()).all().get();
+		RoutingNodes routingNodes = stateResponse.getState().getRoutingNodes();
+		List<MutableShardRouting> shards = routingNodes.shards(isEtmIndex());
+		addShardToClusterStatus(clusterStatus, shards, stateResponse, isEtmIndex());
+		addShardToClusterStatus(clusterStatus, routingNodes.unassigned(), stateResponse, isEtmIndex());
 		return clusterStatus;
+	}
+	
+	private void addShardToClusterStatus(ClusterStatus clusterStatus, Iterable<MutableShardRouting> shards, ClusterStateResponse stateResponse, Predicate<MutableShardRouting> predicate) {
+		for (MutableShardRouting shard : shards) {
+			if (!predicate.apply(shard)) {
+				continue;
+			}
+			ShardStatus shardStatus = clusterStatus.new ShardStatus();
+			shardStatus.id = shard.getId();
+			shardStatus.active = shard.active();
+			shardStatus.assigned = shard.assignedToNode();
+			shardStatus.initializing = shard.initializing();
+			if (shard.currentNodeId() != null) {
+				shardStatus.node = stateResponse.getState().getNodes().get(shard.currentNodeId()).getName();
+			}
+			shardStatus.primary = shard.primary();
+			shardStatus.relocating = shard.relocating();
+			clusterStatus.addShardStatus(shard.getIndex(), shardStatus);
+		}
 	}
 
 	@Override

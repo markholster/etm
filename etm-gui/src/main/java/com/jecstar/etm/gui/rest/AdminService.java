@@ -3,6 +3,7 @@ package com.jecstar.etm.gui.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,8 @@ import com.jecstar.etm.core.parsers.FixedValueExpressionParser;
 import com.jecstar.etm.core.parsers.JsonExpressionParser;
 import com.jecstar.etm.core.parsers.XPathExpressionParser;
 import com.jecstar.etm.core.parsers.XsltExpressionParser;
+import com.jecstar.etm.gui.rest.ClusterStatus.IndexStatus;
+import com.jecstar.etm.gui.rest.ClusterStatus.ShardStatus;
 import com.jecstar.etm.gui.rest.repository.EndpointConfiguration;
 import com.jecstar.etm.gui.rest.repository.EndpointRepository;
 import com.jecstar.etm.gui.rest.repository.NodeRepository;
@@ -465,6 +468,45 @@ public class AdminService {
 	        	generator.writeNumberField("delayed_unassigned_shards", clusterStatus.numberOfDelayedUnassignedShards);
 	        	generator.writeNumberField("pending_tasks", clusterStatus.numberOfPendingTasks);
 	        	generator.writeNumberField("in_flight_fetch", clusterStatus.numberOfInFlightFethch);
+	        	clusterStatus.indexStatuses.sort(new Comparator<IndexStatus>() {
+					@Override
+					public int compare(IndexStatus o1, IndexStatus o2) {
+						return o1.indexName.compareTo(o2.indexName);
+					}
+	        	});
+	        	generator.writeArrayFieldStart("indices");
+	        	for (IndexStatus indexStatus : clusterStatus.indexStatuses) {
+	        		generator.writeStartObject();
+	        		indexStatus.shardStatuses.sort(new Comparator<ShardStatus>() {
+						@Override
+						public int compare(ShardStatus o1, ShardStatus o2) {
+							if (o1.id == o2.id) {
+								if (o1.primary) {
+									return -1;
+								} else if (o2.primary) {
+									return 1;
+								}
+								return 0;
+							}
+							return Integer.compare(o1.id, o2.id);
+						}});
+	        		generator.writeStringField("name", indexStatus.indexName);
+	        		generator.writeArrayFieldStart("shards");
+	        		for (ShardStatus shardStatus : indexStatus.shardStatuses) {
+	        			generator.writeStartObject();
+	        			generator.writeNumberField("id", shardStatus.id);
+	        			generator.writeBooleanField("primary", shardStatus.primary);
+	        			generator.writeBooleanField("active", shardStatus.active);
+	        			generator.writeBooleanField("assigned", shardStatus.assigned);
+	        			generator.writeBooleanField("initializing", shardStatus.initializing);
+	        			generator.writeBooleanField("relocating", shardStatus.relocating);
+	        			generator.writeStringField("node", shardStatus.node);
+	        			generator.writeEndObject();
+	        		}
+	        		generator.writeEndArray();
+	        		generator.writeEndObject();
+	        	}
+	        	generator.writeEndArray();
 	        	
 	        } else {
 	        	NodeStatus nodeStatus = this.nodeRepository.getNodeStatus(nodeName);
