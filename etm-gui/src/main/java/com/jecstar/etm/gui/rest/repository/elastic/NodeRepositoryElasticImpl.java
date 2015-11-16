@@ -15,6 +15,11 @@ import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.monitor.jvm.JvmInfo;
+import org.elasticsearch.monitor.os.OsInfo;
+import org.elasticsearch.monitor.os.OsInfo.Cpu;
+import org.elasticsearch.monitor.os.OsInfo.Mem;
+import org.elasticsearch.monitor.os.OsInfo.Swap;
 
 import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterTagsJsonImpl;
@@ -150,8 +155,62 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 
 	@Override
 	public NodeStatus getNodeStatus(String node) {
-		// TODO Auto-generated method stub
-		return null;
+		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient.admin().cluster())
+				.setNodesIds(node)
+				.get(TimeValue.timeValueMillis(10000));
+		NodeStatus nodeStatus = new NodeStatus();
+		if (nodesInfoResponse.getNodes() == null || nodesInfoResponse.getNodes().length < 1) {
+			return nodeStatus;
+		}
+		NodeInfo nodeInfo = nodesInfoResponse.getNodes()[0];
+		nodeStatus.id = nodeInfo.getNode().getId();
+		nodeStatus.hostname = nodeInfo.getHostname();
+		nodeStatus.address = nodeInfo.getNetwork().getPrimaryInterface().address();
+		nodeStatus.client = nodeInfo.getNode().isClientNode();
+		nodeStatus.data = nodeInfo.getNode().isDataNode();
+		nodeStatus.master = nodeInfo.getNode().isMasterNode();
+		
+		OsInfo os = nodeInfo.getOs();
+		if (os != null) {
+			nodeStatus.osAvailableProcessors =  os.availableProcessors();
+			nodeStatus.osRefreshInterval = os.getRefreshInterval();
+			Cpu osCpu = os.cpu();
+			if (osCpu != null) {
+				nodeStatus.osCpuCacheSize =  osCpu.getCacheSize().bytes();
+				nodeStatus.osCpuCoresPerSocket = osCpu.getCoresPerSocket();
+				nodeStatus.osCpuMhz = osCpu.getMhz();
+				nodeStatus.osCpuModel = osCpu.getModel();
+				nodeStatus.osCpuTotalCores = osCpu.getTotalCores();
+				nodeStatus.osCpuTotalSockets = osCpu.getTotalSockets();
+				nodeStatus.osCpuVendor = osCpu.getVendor();
+			}
+			Mem osMem = os.getMem();
+			if (osMem != null) {
+				nodeStatus.osMemTotal = osMem.getTotal().bytes();
+			}
+			Swap osSwap = os.getSwap();
+			if (osSwap != null) {
+				nodeStatus.osSwapTotal = osSwap.getTotal().bytes();
+			}
+		}
+		
+		JvmInfo jvm = nodeInfo.getJvm();
+		if (jvm != null) {
+			nodeStatus.jvmStartTime = jvm.getStartTime();
+			nodeStatus.jvmPid = jvm.getPid();
+			nodeStatus.jvmName = jvm.getVmName();
+			nodeStatus.jvmVendor =  jvm.getVmVendor();
+			nodeStatus.jvmVersion =  jvm.getVmVersion();
+			org.elasticsearch.monitor.jvm.JvmInfo.Mem jvmMem = jvm.mem();
+			if (jvmMem != null) {
+				nodeStatus.jvmMemDirectMax = jvmMem.getDirectMemoryMax().bytes();
+				nodeStatus.jvmMemHeapInit = jvmMem.getHeapInit().bytes();
+				nodeStatus.jvmMemHeapMax = jvmMem.getHeapMax().bytes();
+				nodeStatus.jvmMemNonHeapInit = jvmMem.getNonHeapInit().getBytes();
+				nodeStatus.jvmMemNonHeapMax = jvmMem.getNonHeapMax().getBytes();
+			}
+		}
+		return nodeStatus;
 	}
 
 }

@@ -468,6 +468,39 @@ public class AdminService {
 	        	
 	        } else {
 	        	NodeStatus nodeStatus = this.nodeRepository.getNodeStatus(nodeName);
+	        	generator.writeStringField("id", nodeStatus.id);
+	        	generator.writeStringField("hostname", nodeStatus.hostname);
+	        	generator.writeStringField("address", nodeStatus.address);
+	        	generator.writeBooleanField("master", nodeStatus.master);
+	        	generator.writeBooleanField("client", nodeStatus.client);
+	        	generator.writeBooleanField("data", nodeStatus.data);
+	        	generator.writeObjectFieldStart("os");
+	        	generator.writeNumberField("available_processors", nodeStatus.osAvailableProcessors);
+	        	generator.writeNumberField("refresh_interval", nodeStatus.osRefreshInterval);
+	        	generator.writeNumberField("mem_total", nodeStatus.osMemTotal);
+	        	generator.writeNumberField("swap_total", nodeStatus.osSwapTotal);
+	        	generator.writeEndObject();
+	        	generator.writeObjectFieldStart("cpu");
+	        	generator.writeStringField("model", nodeStatus.osCpuModel);
+	        	generator.writeStringField("vendor", nodeStatus.osCpuVendor);
+	        	generator.writeNumberField("mhz", nodeStatus.osCpuMhz);
+	        	generator.writeNumberField("cache_size", nodeStatus.osCpuCacheSize);
+	        	generator.writeNumberField("total_cores", nodeStatus.osCpuTotalCores);
+	        	generator.writeNumberField("total_sockets", nodeStatus.osCpuTotalSockets);
+	        	generator.writeNumberField("cores_per_socket", nodeStatus.osCpuCoresPerSocket);
+	        	generator.writeEndObject();
+	        	generator.writeObjectFieldStart("jvm");
+	        	generator.writeNumberField("start_time", nodeStatus.jvmStartTime);
+	        	generator.writeNumberField("pid", nodeStatus.jvmPid);
+	        	generator.writeStringField("name", nodeStatus.jvmName);
+	        	generator.writeStringField("vendor", nodeStatus.jvmVendor);
+	        	generator.writeStringField("version", nodeStatus.jvmVersion);
+	        	generator.writeNumberField("memory_direct_max", nodeStatus.jvmMemDirectMax);
+	        	generator.writeNumberField("memory_heap_init", nodeStatus.jvmMemHeapInit);
+	        	generator.writeNumberField("memory_heap_max", nodeStatus.jvmMemHeapMax);
+	        	generator.writeNumberField("memory_non_heap_init", nodeStatus.jvmMemNonHeapInit);
+	        	generator.writeNumberField("memory_non_heap_max", nodeStatus.jvmMemNonHeapMax);
+	        	generator.writeEndObject();
 	        }
 	        generator.writeEndObject();
 	        generator.close();
