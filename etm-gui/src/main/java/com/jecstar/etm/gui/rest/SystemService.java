@@ -48,8 +48,17 @@ public class SystemService {
 	        generator.writeStartObject();
 	        License license = this.configuration.getLicense();
 	        generator.writeStringField("companyName", license != null && license.getOwner() != null ? license.getOwner() : "Unknown");
-	        if (license != null && license.getExpiryDate() != null) {
+	        if (license != null) {
 	        	generator.writeNumberField("licenseExpiry", license.getExpiryDate().getTime());
+	        	if (license.isExpired()) {
+	        		generator.writeStringField("status", StatusCode.ERROR.name());
+	        	} else if (license.isAboutToExpire()) {
+	        		generator.writeStringField("status", StatusCode.WARNING.name());
+	        	} else {
+	        		generator.writeStringField("status", StatusCode.OK.name());
+	        	}
+	        } else {
+	        	generator.writeStringField("status", StatusCode.ERROR.name());
 	        }
 	        generator.writeEndObject();
 	        generator.close();

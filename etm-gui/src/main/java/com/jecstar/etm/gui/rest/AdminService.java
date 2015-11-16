@@ -441,4 +441,42 @@ public class AdminService {
         	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
         }
 	}
+	
+	@GET
+	@Path("/status/{nodeName}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getNodeStatus(@PathParam("nodeName") String nodeName) {
+		try {
+	        StringWriter writer = new StringWriter();
+	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
+	        generator.writeStartObject();
+	        if ("cluster".equals(nodeName)) {
+	        	ClusterStatus clusterStatus = this.nodeRepository.getClusterStatus();
+	        	generator.writeStringField("name", clusterStatus.clusterName);
+	        	generator.writeStringField("status", clusterStatus.statusCode.name());
+	        	generator.writeNumberField("nodes", clusterStatus.numberOfNodes);
+	        	generator.writeNumberField("data_nodes", clusterStatus.numberOfDataNodes);
+	        	generator.writeNumberField("active_primary_shards", clusterStatus.numberOfActivePrimaryShards);
+	        	generator.writeNumberField("active_shards", clusterStatus.numberOfActiveShards);
+	        	generator.writeNumberField("relocating_shards", clusterStatus.numberOfRelocatingShards);
+	        	generator.writeNumberField("initializing_shards", clusterStatus.numberOfInitializingShards);
+	        	generator.writeNumberField("unassigned_shards", clusterStatus.numberOfUnassignedShards);
+	        	generator.writeNumberField("delayed_unassigned_shards", clusterStatus.numberOfDelayedUnassignedShards);
+	        	generator.writeNumberField("pending_tasks", clusterStatus.numberOfPendingTasks);
+	        	generator.writeNumberField("in_flight_fetch", clusterStatus.numberOfInFlightFethch);
+	        	
+	        } else {
+	        	NodeStatus nodeStatus = this.nodeRepository.getNodeStatus(nodeName);
+	        }
+	        generator.writeEndObject();
+	        generator.close();
+	        return writer.toString();
+        } catch (IOException e) {
+        	if (log.isErrorLevelEnabled()) {
+        		log.logErrorMessage("Unable to get node configurations.", e);
+        	}       
+        }
+		return null;	
+	}
 }

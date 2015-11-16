@@ -7,6 +7,14 @@
 <title>Enterprise Telemetry Monitor - Administration</title>
 <link rel="stylesheet"
 	href="../resources/styles/bootstrap-3.3.1.min.css" />
+<style>
+.status_error {
+ background-color: #f78181;
+}
+.status_warning {
+ background-color: #f2f5a9;
+}
+</style>
 <script src="../resources/scripts/jquery-2.1.3.min.js"></script>
 <script src="../resources/scripts/bootstrap-3.3.1.min.js"></script>
 </head>
@@ -185,7 +193,41 @@
                                     <input type="submit" id="btn_endpoint_delete" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" />          
                                 </form>
 							</div>
-							<div role="tabpanel" class="tab-pane" id="status_tab"></div>
+							<div role="tabpanel" class="tab-pane" id="status_tab">
+	                            <div id="cluster_status" class="form-group">
+	                                <label class="col-sm-3 control-label">Cluster name</label>
+	                                <p id="status_cluster_name" class="col-sm-3"></p>
+	                                <label class="col-sm-3 control-label">Active shards</label>
+	                                <p id="status_cluster_active_shards" class="col-sm-3"></p>
+
+                                    <label class="col-sm-3 control-label">Cluster status</label>
+                                    <p id="status_cluster_status" class="col-sm-3"></p>
+                                    <label class="col-sm-3 control-label">Active primary shards</label>
+                                    <p id="status_cluster_active_primary_shards" class="col-sm-3"></p>
+
+                                    <label class="col-sm-3 control-label">Nodes</label>
+                                    <p id="status_cluster_nodes" class="col-sm-3"></p>
+                                    <label class="col-sm-3 control-label">Relocating shards</label>
+                                    <p id="status_cluster_relocating_shards" class="col-sm-3"></p>
+                                    
+                                    <label class="col-sm-3 control-label">Data nodes</label>
+                                    <p id="status_cluster_data_nodes" class="col-sm-3"></p>
+                                    <label class="col-sm-3 control-label">Initializing shards</label>
+                                    <p id="status_cluster_initializing_shards" class="col-sm-3"></p>
+                                    
+                                    <label class="col-sm-3 control-label">Pending tasks</label>
+                                    <p id="status_cluster_pending_tasks" class="col-sm-3"></p>
+                                    <label class="col-sm-3 control-label">Unassigned shards</label>
+                                    <p id="status_cluster_unassigned_shards" class="col-sm-3"></p>
+                                    
+                                    <label class="col-sm-3 control-label">Inflight fetch</label>
+                                    <p id="status_cluster_inflight_fetch" class="col-sm-3"></p>
+                                    <label class="col-sm-3 control-label">Delayed unassigned shards</label>
+                                    <p id="status_cluster_delayed_unassigned_shards" class="col-sm-3"></p>
+	                            </div>
+	                            <div id="node_status" class="form-group">
+	                            </div>
+							</div>
 							<div role="tabpanel" class="tab-pane" id="license_tab">
 							    <div id="license_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
 							    <div id="license_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
@@ -237,8 +279,42 @@ $(function () {
 			$('#etm_max_index_count').val(data['max_index_count']);
 			$('#etm_shards_per_index').val(data['shards_per_index']);
 			$('#etm_replicas_per_index').val(data['replicas_per_index']);
-            $('#status_tab').text(data.name + ' is ' + (data.active ? 'up' : 'down'));
 		});
+		$.getJSON('../rest/admin/status/' + encodeURIComponent(nodeName), function (data) {
+		    if (!data) {
+		      return;
+		    }
+		    if ('ERROR' == data['status']) {
+		      $('#status_tab_header > a').addClass('status_error');
+		    } else if ('WARNING' == data['status']) {
+		      $('#status_tab_header > a').addClass('status_warning');
+		    } else {
+     		  $('#status_tab_header > a').removeClass('status_error');
+		      $('#status_tab_header > a').removeClass('status_warning');
+		    }
+	        if ('cluster' == nodeName) {
+	           $('#status_cluster_name').text(data['name']);
+	           $('#status_cluster_status').text(data['status']);
+	           $('#status_cluster_nodes').text(data['nodes']);
+	           $('#status_cluster_data_nodes').text(data['data_nodes']);
+	           $('#status_cluster_pending_tasks').text(data['pending_tasks']);
+	           $('#status_cluster_inflight_fetch').text(data['in_flight_fetch']);
+	           $('#status_cluster_active_shards').text(data['active_shards']);
+	           $('#status_cluster_active_primary_shards').text(data['active_primary_shards']);
+	           $('#status_cluster_relocating_shards').text(data['relocating_shards']);
+	           $('#status_cluster_initializing_shards').text(data['initializing_shards']);
+	           $('#status_cluster_unassigned_shards').text(data['unassigned_shards']);
+	           $('#status_cluster_delayed_unassigned_shards').text(data['delayed_unassigned_shards']);
+	           $('#node_status').hide();
+	           $('#cluster_status').show();
+	        } else {
+               $('#node_status').show();	        
+               $('#cluster_status').hide();
+	        }
+        }).fail(function() {
+            $('#status_tab_header > a').addClass('status_error');
+        });
+		
 	};
 
 	var addExpressionParsers = function(divId, elementName, expressionParsers, includeName) {
@@ -491,11 +567,22 @@ $(function () {
    var loadLicenseData = function(endpointName) {
           $.getJSON('../rest/system/info', function (data) {
                 if (!data) {
+                    $('#license_tab_header > a').addClass('status_error');
                     return;
                 }
                 $('#license_company').val(data.companyName);
                 $('#license_expiry').val(new Date(data.licenseExpiry).toUTCString());
                 $('#license_key').val('');
+	            if ('ERROR' == data['status']) {
+	              $('#license_tab_header > a').addClass('status_error');
+	            } else if ('WARNING' == data['status']) {
+	              $('#license_tab_header > a').addClass('status_warning');
+	            } else {
+	              $('#license_tab_header > a').removeClass('status_error');
+	              $('#license_tab_header > a').removeClass('status_warning');
+	            }                
+          }).fail(function() {
+            $('#license_tab_header > a').addClass('status_error');
           });
     };
 

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
@@ -16,7 +18,10 @@ import org.elasticsearch.common.unit.TimeValue;
 
 import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterTagsJsonImpl;
+import com.jecstar.etm.gui.rest.ClusterStatus;
+import com.jecstar.etm.gui.rest.StatusCode;
 import com.jecstar.etm.gui.rest.Node;
+import com.jecstar.etm.gui.rest.NodeStatus;
 import com.jecstar.etm.gui.rest.repository.NodeRepository;
 
 public class NodeRepositoryElasticImpl implements NodeRepository {
@@ -122,6 +127,31 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 				
 			}
 		}
+	}
+
+	@Override
+	public ClusterStatus getClusterStatus() {
+		ClusterStatus clusterStatus = new ClusterStatus();
+		ClusterHealthResponse clusterHealthResponse = new ClusterHealthRequestBuilder(this.elasticClient.admin().cluster()).get();
+		clusterStatus.clusterName = clusterHealthResponse.getClusterName();
+		clusterStatus.statusCode = StatusCode.fromClusterHealthStatus(clusterHealthResponse.getStatus());
+		clusterStatus.numberOfNodes =  clusterHealthResponse.getNumberOfNodes();
+		clusterStatus.numberOfDataNodes = clusterHealthResponse.getNumberOfDataNodes();
+		clusterStatus.numberOfActivePrimaryShards = clusterHealthResponse.getActivePrimaryShards();
+		clusterStatus.numberOfActiveShards = clusterHealthResponse.getActiveShards();
+		clusterStatus.numberOfRelocatingShards = clusterHealthResponse.getRelocatingShards();
+		clusterStatus.numberOfInitializingShards = clusterHealthResponse.getInitializingShards();
+		clusterStatus.numberOfUnassignedShards = clusterHealthResponse.getUnassignedShards();
+		clusterStatus.numberOfDelayedUnassignedShards = clusterHealthResponse.getDelayedUnassignedShards();
+		clusterStatus.numberOfPendingTasks = clusterHealthResponse.getNumberOfPendingTasks();
+		clusterStatus.numberOfInFlightFethch = clusterHealthResponse.getNumberOfInFlightFetch();
+		return clusterStatus;
+	}
+
+	@Override
+	public NodeStatus getNodeStatus(String node) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

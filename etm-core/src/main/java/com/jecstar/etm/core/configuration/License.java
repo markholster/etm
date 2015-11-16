@@ -66,6 +66,14 @@ public class License {
 		TRIAL, SUBSCRIPTION
 	}
 	
+	public boolean isExpired() {
+		return this.expiryDate.getTime() < System.currentTimeMillis();
+	}
+	
+	public boolean isAboutToExpire() {
+		return this.expiryDate.getTime() < (System.currentTimeMillis() + (1000 * 60 * 60 * 24 * 30));
+	}
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof License) {
@@ -80,6 +88,5 @@ public class License {
 	public int hashCode() {
 		return (this.owner + this.expiryDate.hashCode() + this.licenseType.name()).hashCode();
 	}
+
 }
-
-
