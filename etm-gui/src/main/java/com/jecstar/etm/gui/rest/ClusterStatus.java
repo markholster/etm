@@ -39,11 +39,12 @@ public class ClusterStatus {
 	
 	public class ShardStatus {
 		public int id;
-		public boolean active;
-		public boolean assigned;
 		public boolean primary;
-		public boolean initializing;
-		public boolean relocating;
+		public boolean active;
+		public String status;
 		public String node;
+		public String nodeId;
+		public String relocatingNode;
+		public String relocatingNodeId;
 	}
 }

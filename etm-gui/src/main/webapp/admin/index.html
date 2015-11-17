@@ -364,10 +364,10 @@ $(function () {
 
 	var infoDelay = 5000;
 	
-	var loadData = function(nodeName) {
-		$('#etm_form').attr('action', '../rest/admin/node/' + encodeURIComponent(nodeName));
+	var loadData = function(node) {
+		$('#etm_form').attr('action', '../rest/admin/node/' + encodeURIComponent(node.name));
 		$('#license_form').attr('action', '../rest/system/license');
-		$.getJSON('../rest/admin/node/' + encodeURIComponent(nodeName), function (data) {
+		$.getJSON('../rest/admin/node/' + encodeURIComponent(node.name), function (data) {
 			if (!data) {
 			    return;
 			}
@@ -379,7 +379,16 @@ $(function () {
 			$('#etm_shards_per_index').val(data['shards_per_index']);
 			$('#etm_replicas_per_index').val(data['replicas_per_index']);
 		});
-		$.getJSON('../rest/admin/status/' + encodeURIComponent(nodeName), function (data) {
+		if ('cluster' == node.name) {
+		    $('#etm_max_index_count').removeAttr('readonly', 'readonly');
+		    $('#etm_shards_per_index').removeAttr('readonly', 'readonly');
+		    $('#etm_replicas_per_index').removeAttr('readonly', 'readonly');
+		} else {
+            $('#etm_max_index_count').attr('readonly', 'readonly');
+            $('#etm_shards_per_index').attr('readonly', 'readonly');
+            $('#etm_replicas_per_index').attr('readonly', 'readonly');
+		}
+		$.getJSON('../rest/admin/status/' + encodeURIComponent(node.id), function (data) {
 		    if (!data) {
 		      return;
 		    }
@@ -391,7 +400,7 @@ $(function () {
      		  $('#status_tab_header > a').removeClass('status_error');
 		      $('#status_tab_header > a').removeClass('status_warning');
 		    }
-	        if ('cluster' == nodeName) {
+	        if ('cluster' == node.name) {
 	           $('#status_cluster_name').text(data.name);
 	           $('#status_cluster_status').text(data.status);
 	           $('#status_cluster_nodes').text(data.nodes);
@@ -419,10 +428,27 @@ $(function () {
 	                               .append($('<td />').text(shard.id))
 	                               .append($('<td />').text(shard.primary))
 	                               .append($('<td />').text(shard.active))
-	                               .append($('<td />').text(shard.assigned))
-	                               .append($('<td />').text(shard.initializing))
-	                               .append($('<td />').text(shard.relocating))
-	                               .append($('<td />').text(shard.node));
+	                               .append($('<td />').text(shard.status));
+                               if (shard.node) {
+                                   var link = $('<a />').attr('href', '').text(shard.node + ' (' + shard.node_id + ')').click(function (event) {
+                                      event.preventDefault();
+                                      $('#node_select').val(shard.node_id);
+                                      $('#node_select').change();
+                                   });
+                                   $(row).append($('<td />').append($(link)));
+                               } else {
+                                   $(row).append($('<td />'));
+                               }   
+	                           if (shard.relocating_node) {
+                                   var link = $('<a />').attr('href', '').text(shard.relocating_node + ' (' + shard.relocating_node_id + ')').click(function (event) {
+                                      event.preventDefault();
+                                      $('#node_select').val(shard.relocating_node_id);
+                                      $('#node_select').change();
+                                   });
+	                               $(row).append($('<td />').append($(link)));
+	                           } else {
+	                               $(row).append($('<td />'));
+	                           }   
 	                           if (shard.primary && !shard.active) {
 	                               $(row).attr('class', 'status_error');
 	                           } else if (!shard.active) {
@@ -438,10 +464,9 @@ $(function () {
 	                                           .append($('<th />').text('Id'))
 	                                           .append($('<th />').text('Primary'))
 	                                           .append($('<th />').text('Active'))
-	                                           .append($('<th />').text('Assigned'))
-	                                           .append($('<th />').text('Initializing'))
-	                                           .append($('<th />').text('Relocating'))
+	                                           .append($('<th />').text('Status'))
 	                                           .append($('<th />').text('Node'))
+	                                           .append($('<th />').text('Relocating node'))
 	                                       )
 	                                   )
 	                                   .append($(tbody))
@@ -947,7 +972,7 @@ $(function () {
             return;
         }
         $.each(data, function(index, nodeData) {
-        	$('#node_select').append($('<option></option>').attr("value", nodeData.name).text(nodeData.name));
+        	$('#node_select').append($('<option></option>').attr("value", nodeData.id).text(nodeData.name));
         });		
 	});
     // Add all endpoints to the endpoint select.
@@ -970,8 +995,9 @@ $(function () {
     	
 	// Add the change listener to the node select.
 	$('#node_select').change(function() {
-		var nodeName = $(this).val();
-	    $('#node_title').text('ETM Administration - ' + nodeName);
+		var nodeId = $(this).val();
+		var nodeName = $('#node_select > option:selected').text();
+	    $('#node_title').text('ETM Administration - ' + nodeId);
 	    if ('cluster' == nodeName) {
             $('#endpoint_tab_header').removeClass('hidden');
             $('#endpoint_tab').removeClass('hidden');
@@ -987,7 +1013,8 @@ $(function () {
             $('#license_tab_header').addClass('hidden');
             $('#license_tab').addClass('hidden');
 	    }
-	    loadData(nodeName);    
+	    var node = {id: nodeId, name: nodeName}
+	    loadData(node);    
 	});
 
 	// Add the change listener to the endpoint select.
@@ -1017,7 +1044,7 @@ $(function () {
     	$(this).attr("clicked", "true");        
     });
 
-	loadData('cluster');
+	loadData({id: 'cluster', name: 'cluster'});
     loadEndpoints();
 	loadEndpointData('*');
 	loadLicenseData();

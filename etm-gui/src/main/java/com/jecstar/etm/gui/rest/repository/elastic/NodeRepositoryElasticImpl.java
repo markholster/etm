@@ -95,12 +95,9 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 		for (NodeInfo nodeInfo : nodes) {
 			Node node = new Node();
 			node.name = nodeInfo.getNode().getName();
-			node.hostAddress = nodeInfo.getNode().getHostAddress();
-			node.hostName = nodeInfo.getNode().getHostName();
-			node.active = true;
+			node.id = nodeInfo.getNode().getId();
 			result.add(node);
 		}
-		// TODO haal de inactive configuraties uit de config database.
 		return result;
 	}
 
@@ -174,21 +171,24 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 			ShardStatus shardStatus = clusterStatus.new ShardStatus();
 			shardStatus.id = shard.getId();
 			shardStatus.active = shard.active();
-			shardStatus.assigned = shard.assignedToNode();
-			shardStatus.initializing = shard.initializing();
+			shardStatus.status = shard.state().name();
 			if (shard.currentNodeId() != null) {
 				shardStatus.node = stateResponse.getState().getNodes().get(shard.currentNodeId()).getName();
+				shardStatus.nodeId = shard.currentNodeId();
+			}
+			if (shard.relocatingNodeId() != null) {
+				shardStatus.relocatingNode = stateResponse.getState().getNodes().get(shard.relocatingNodeId()).getName();
+				shardStatus.relocatingNodeId = shard.relocatingNodeId();				
 			}
 			shardStatus.primary = shard.primary();
-			shardStatus.relocating = shard.relocating();
 			clusterStatus.addShardStatus(shard.getIndex(), shardStatus);
 		}
 	}
 
 	@Override
-	public NodeStatus getNodeStatus(String node) {
+	public NodeStatus getNodeStatus(String nodeId) {
 		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient.admin().cluster())
-				.setNodesIds(node)
+				.setNodesIds(nodeId)
 				.get(TimeValue.timeValueMillis(10000));
 		NodeStatus nodeStatus = new NodeStatus();
 		if (nodesInfoResponse.getNodes() == null || nodesInfoResponse.getNodes().length < 1) {
@@ -232,7 +232,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 			nodeStatus.jvmPid = jvm.getPid();
 			nodeStatus.jvmName = jvm.getVmName();
 			nodeStatus.jvmVendor =  jvm.getVmVendor();
-			nodeStatus.jvmVersion =  jvm.getVmVersion();
+			nodeStatus.jvmVersion =  jvm.getVersion() + " (" + jvm.getVmVersion() + ")";			
 			org.elasticsearch.monitor.jvm.JvmInfo.Mem jvmMem = jvm.mem();
 			if (jvmMem != null) {
 				nodeStatus.jvmMemDirectMax = jvmMem.getDirectMemoryMax().bytes();

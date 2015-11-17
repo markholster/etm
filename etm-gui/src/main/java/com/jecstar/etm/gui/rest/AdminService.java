@@ -345,6 +345,7 @@ public class AdminService {
 	        for (Node node : nodes) {
 	        	generator.writeStartObject();
 	        	generator.writeStringField("name", node.name);
+	        	generator.writeStringField("id", node.id);
 	        	generator.writeEndObject();
 	        }
 	        generator.writeEndArray();
@@ -497,10 +498,11 @@ public class AdminService {
 	        			generator.writeNumberField("id", shardStatus.id);
 	        			generator.writeBooleanField("primary", shardStatus.primary);
 	        			generator.writeBooleanField("active", shardStatus.active);
-	        			generator.writeBooleanField("assigned", shardStatus.assigned);
-	        			generator.writeBooleanField("initializing", shardStatus.initializing);
-	        			generator.writeBooleanField("relocating", shardStatus.relocating);
+	        			generator.writeStringField("status", shardStatus.status);
 	        			generator.writeStringField("node", shardStatus.node);
+	        			generator.writeStringField("node_id", shardStatus.nodeId);
+	        			generator.writeStringField("relocating_node", shardStatus.relocatingNode);
+	        			generator.writeStringField("relocating_node_id", shardStatus.relocatingNodeId);
 	        			generator.writeEndObject();
 	        		}
 	        		generator.writeEndArray();
