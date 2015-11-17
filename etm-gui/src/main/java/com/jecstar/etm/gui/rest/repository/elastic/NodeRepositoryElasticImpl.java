@@ -65,25 +65,6 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 		if (getResponse.isExists()) {
 			statusData.putAll(getResponse.getSourceAsMap());
 		}
-//		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient.admin().cluster()).all().get(TimeValue.timeValueMillis(10000));
-//		NodeInfo[] nodes = nodesInfoResponse.getNodes();
-//		for (NodeInfo nodeInfo : nodes) {
-//			if (nodeName.equals(nodeInfo.getNode().getName())) {
-//				try {
-//		            XContentBuilder builder = XContentFactory.jsonBuilder().prettyPrint();
-//		            builder.startObject();
-//		            nodeInfo.getOs().toXContent(builder, ToXContent.EMPTY_PARAMS);
-//		            nodeInfo.getJvm().toXContent(builder, ToXContent.EMPTY_PARAMS);
-//		            nodeInfo.getNetwork().toXContent(builder, ToXContent.EMPTY_PARAMS);
-//		            nodeInfo.getProcess().toXContent(builder, ToXContent.EMPTY_PARAMS);
-//		            builder.endObject();
-//					statusData.put("status", builder.string());
-//				} catch (Exception e) {
-//					
-//				}
-//				break;
-//			}
-//		}
 		return statusData;
 	}
 
