@@ -45,10 +45,8 @@
 					<attributes>
 						<etm_version>${project.version}</etm_version>
 						<java_version>${project.jdk.level}</java_version>
-						<cassandra_version>2.0.12</cassandra_version>
-						<solr_version>5.0.0</solr_version>
-						<zookeeper_version>3.4.6</zookeeper_version>
-						<wildfly_version>8.2.0.Final</wildfly_version>
+						<elasticsearch_version>1.7.3</elasticsearch_version>
+						<wildfly_version>9.0.2.Final</wildfly_version>
 					</attributes>
 				</configuration>
 			</plugin>

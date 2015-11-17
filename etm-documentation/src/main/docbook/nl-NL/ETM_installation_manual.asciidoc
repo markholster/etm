@@ -14,12 +14,27 @@ worden naar '<ETM_UNZIP_DIR>'. Hiermee wordt de directory bedoeld waar u uw ETM 
 == Systeemeisen
 * Java {java_version}
 * Wildfly {wildfly_version}
-* Cassandra {cassandra_version}
-* Solr {solr_version}
-* Zookeeper {zookeeper_version}
+* Elasticsearch {elasticsearch_version}
 
 ETM is ontwikkeld en getest met OpenJDK {java_version} op Fedora Linux. Aangezien ETM een pure Java applicatie is, is het aannemelijk
 dat ETM ook zonder problemen op andere besturingssystemen werkt.
+
+=== Geheugen
+ETM werkt het best met machines die zijn uitgerust met 8 tot 64 GB RAM. Bij het overschreiden van deze grenzen gaat er veel tijd verloren 
+met het garbage collection proces van de JVM. Het is beter te schalen naar meer machines in plaats van grotere machines. Dit maakt uw cluster
+dynamischer en is uiteindelijk goedkoper.
+
+=== Hard disks
+Hard disks zijn in de meeste gevallen de bottle neck van uw ETM cluster. Veel van de werkzaamheden in ETM zullen resulteren in schrijfacties
+naar de hard disks. Kies daarom voor een zo snel mogelijk hard disk medium. De voorkeur gaat uit voor SSD's, maar als deze buiten budget 
+liggen kies dan voor hard disks met een zo hoog mogelijk toerental. Ook een raid-0 opstelling komt de performance van ETM ten goede. Laat het 
+filesysteem nooit repliceren met bijvoorbeeld raid-1, aangezien ETM ingebouwde replicatiemogelijkheden heeft.
+
+=== CPU
+De CPU requirements van ETM doen er minder toe dan het geheugen of de hard disks. Het is waarsschijnlijk dat uw cluster eerder tegen de 
+limieten van het geheugen en/of de hard disks aanloopt, dan de limiet van uw cpu's. Als u moet kiezen tussen snellere CPU's of meerdere cores,
+kies dan altijd voor meerdere cores. ETM maakt veelvuldig gebruik van parallele verwerking wat het beste werkt met meerdere cores.
+
 
 [[chap-ETM_Installation-Single_Machine_Installation]]
 == Installatie op 1 machine
@@ -29,62 +44,36 @@ configuratie. Om de volledige voordelen op het gebied van schaalbaarheid en hoge
 
 Voor deze installatie gelden de volgende specificaties:
 
-* Een standalone Solr {solr_version} installatie, waarbinnen een Zookeeper instantie draait.
-* Een standalone Cassandra {cassandra_version} installatie.
+* Een standalone Elastisearch {elasticsearch_version} installatie.
 * Een standalone Wildfly {wildfly_version} draaiend op het 'standalone' profiel.
 
 Voor deze installatie geldt dat er geen replicatie, hoge beschikbaarheid en schaalbaarheid mogelijk is.
 
-=== Standalone Solr
-Download Solr {solr_version} van de Solr http://lucene.apache.org/solr/[website], en extract de bestanden van het gedownloade archief. Het archief
-kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <SOLR_INSTALL_DIR> genoemd.
+[[standalone-elasticsearch]]
+=== Standalone Elastisearch
+Download Elasticsearch {elasticsearch_version} van de Elastic https://www.elastic.co/downloads/past-releases[website], en extract de bestanden van het 
+gedownloade archief. Het archief kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <ELASTICSEARCH_INSTALL_DIR> genoemd.
 
-Kopieer nadat Solr is uitgepakt het bestand <ETM_UNZIP_DIR>/resources/solr/schema.xml
-naar <SOLR_INSTALL_DIR>/server/solr/configsets/basic_configs/schema.xml. Het bestaande bestand mag overschreven worden.
+Open nadat Elasticsearch is uitgepakt het bestand <ELASTICSEARCH_INSTALL_DIR>/config/elasticsearch.yml en pas de volgende waardes aan:
 
-Hierna kan de installatie wizard uitgevoerd worden. Voer hiervoor 
-[source,shell] 
-----
-<SOLR_INSTALL_DIR>/bin/solr -e cloud
-----
-uit vanaf een command prompt. Gebruik de onderstaande tabel als input voor de wizard.
 [options="header"]
 |=======================
-|Vraag|Waarde
-|aantal nodes|1
-|port |8983
-|collection naam|etm
-|aantal shards|1
-|replicas|1
-|configuration|basic_configs
+|Parameter|Waarde
+|cluster.name|<de naam van uw ETM cluster>
+|node.name |<de unieke naam van uw node, bijv de hostname>
+|bootstrap.mlockall|true
+|http.enabled|false
 |=======================
 
-Als u later nogmaals Solr wilt starten voert u 
+Kopieer vervolgende de bestanden uit <ETM_UNZIP_DIR>/resources/elasticsearch/scripts/ naar <ELASTICSEARCH_INSTALL_DIR>/config/scripts/. Het is mogelijk
+dat de scripts directory nog niet bestaat en deze nog aangemaakt moet worden. 
+
+Nadat de wijzigingen zijn doorgevoerd kunt u Elasticsearch starten door  
 [source,shell] 
 ----
-<SOLR_INSTALL_DIR>/bin/solr start -cloud -s example/cloud/node1/solr -p 8983
+<ELASTICSEARCH_INSTALL_DIR>/bin/elasticsearch 
 ----
-uit vanaf een command prompt.
-
-Browse naar http://localhost:8983/solr/ om te controleren dat Solr correct gestart is.
-
-=== Standalone Cassandra
-Download Cassandra {cassandra_version} van de Cassandra http://cassandra.apache.org/download/[website], en extract de bestanden van het gedownloade archief.
-Het archief kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <CASSANDRA_INSTALL_DIR> genoemd.
-
-Om Cassandra te starten voer
-[source,shell] 
-----
-<CASSANDRA_INSTALL_DIR>/bin/cassandra
-----
-uit vanaf een command prompt.
-
-Nadat Cassandra is gestart voer
-[source,shell]
----- 
-<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-single-node.cql
-----
-uit vanaf een command prompt. Het uitgevoerde script zorgt ervoor dat de ETM keyspace + bijbehorende tabellen worden aangemaakt.
+uit te voeren vanaf een command prompt.
 
 [[standalone-wildfly]]
 === Standalone Wildfly
@@ -143,9 +132,7 @@ Selecteer het 'Configuration' menu en klik op System Properties op het submenu a
 [options="header"]
 |=======================
 |Key|Value
-|etm.nodename|<een unieke node name>
-|etm.zookeeper.clients|127.0.0.1:9983
-|etm.zookeeper.namespace|demo
+|etm.cluster.name|<de naam van uw ETM cluster>
 |=======================
 
 De volgende stap is om de gewenste ETM componenten te deployen. Afhankelijk van uw behoefte kunt u 1 of meerdere componenten deployen vanaf de
@@ -156,108 +143,20 @@ duurt hierna enkele seconden. Bekijk voor een gedetailleerd overzicht van de com
 
 [[chap-ETM_Installation-Clustered_Installation]]
 == Geclusterde installatie
-IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Zookeeper, Solr en Cassandra om
-volledig te functioneren. Hoe u uw Wildfly, Zookeeper, Solr en Cassandra clusters in gaat richten hangt af van uw wensen en kan niet in 1 enkele installatie 
-handleiding samengevat worden. Dit hoofdstuk kan als voorbeeld genomen worden voor het opzetten van uw Wildfly, Zookeeper, Solr en Cassandra clusters, 
+IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Elasticsearcg om
+volledig te functioneren. Hoe u uw Wildfly en Elasticsearch clusters in gaat richten hangt af van uw wensen en kan niet in 1 enkele installatie 
+handleiding samengevat worden. Dit hoofdstuk kan als voorbeeld genomen worden voor het opzetten van uw Wildfly en Elasticsearcg clusters, 
 maar voor een optimale situatie zullen deze clusters zo geconfigureerd moeten worden dat deze ideaal zijn voor uw wensen. 
 
-Voor uitgebreide handleidingen dient u de handleidingen van Wildfly, Solr en Cassandra te raadplegen:
+Voor uitgebreide handleidingen dient u de handleidingen van Wildfly en Elasticsearch te raadplegen:
 
-* https://docs.jboss.org/author/display/WFLY8/Documentation[Wildfly documentatie]
-* http://zookeeper.apache.org/doc/r{zookeeper_version}/[Zookeeper documentatie]
-* http://lucene.apache.org/solr/resources.html#documentation[Solr documentatie]
-* http://www.datastax.com/docs[Cassandra documentatie @Datastax]
+* https://docs.jboss.org/author/display/WFLY9/Documentation/[Wildfly documentatie]
+* https://www.elastic.co/guide/en/elasticsearch/reference/current/[Elasticsearch documentatie]
 
-=== Zookeeper cluster
-
-Browse naar http://zookeeper.apache.org/doc/r3.4.6/zookeeperAdmin.html#sc_zkMulitServerSetup en voer de installatie uit. Belangrijk is dat er gekozen wordt voor een oneven
-aantal instanties in het Zookeeper ensemble. Aangeraden wordt een ensemble van maximaal 3 of 5 Zookeeper instanties samen te stellen. Bij 3 instanties kan er 1 instantie 
-uitvallen zonder dat dit invloed heeft op de werking van de Zookeeper cluster. Bij 5 instanties mogen er 2 instanties uitvallen. Hierdoor is het mogelijk onderhoud te plegen 
-op 1 instantie en mag er tijdens dat onderhoud nog een instantie uitvallen zonder dat dit invloed heeft op de werking van de Zookeeper cluster.
-Meer dan 5 instanties in een ensemble wordt afgeraden, doordat dit een negatieve impact op de performance gaat hebben.
-
-Nadat u Zookeeper heeft geinstalleerd en gestart moeten er enkele paden in Zookeeper aangemaakt worden. Open hiervoor een Zookeeper shell door 
-[source,shell]
----- 
-<ZOOKEEPER_INSTALL_DIR>/bin/zkCli.sh
-----
-uit te voeren vanaf een command prompt.
-
-In de Zookeeper shell voert u vervolgens de volgende commando's uit:
-[source,shell]
----- 
-create /etm etm               
-create /etm/dev etm-development
-create /etm/dev/solr solr-development
-quit
-----
-
-Bovenstaande commando's maken een 'development' omgeving aan. U kunt bijvoorbeeld een productie omgeving aanmaken door de volgende commando's uit te voeren:
-[source,shell]
----- 
-create /etm etm               
-create /etm/prod etm-production
-create /etm/prod/solr solr-production
-quit
-----
-
-Beide omgevingen kunnen naast elkaar bestaan in dezelfde Zookeeper ensemble, maar wilt u een strikt gescheiden OTAP omgeving dan behoort iedere omgeving zijn eigen
-Zookeeper ensemble te hebben. Belangrijk is te onthouden wat het pad naar de huidige omgeving is (bijvoorbeeld '/etm/prod'). Deze heeft u later nodig in meerdere 
-stappen van de configuratie.
-
-=== Solr cluster
-
-Browse naar https://cwiki.apache.org/confluence/display/solr/Apache+Solr+Reference+Guide en maak u vertrouwd met het 'SolrCloud' hoofdstuk. Eventueel kunt u
-enkele voorbeelden uitproberen door 
-[source,shell]
----- 
-<SOLR_INSTALL_DIR>/bin/solr.sh -e cloud               
-----
-uit te voeren. Dit script helpt u bij het opzetten van een cluster, waarbij de Solr index is gedistribueerd over meerdere Solr instanties. Voordat u begint aan de
-daadwerkelijke installatie is het verstandig met een verse Solr installatie te beginnen. Extract eventueel het gedownloade Solr archief opnieuw naar een schone locatie.
- 
-Zodra u klaar bent voor de installatie kopieert u het bestand <ETM_UNZIP_DIR>/resources/solr/schema.xml
-naar <SOLR_INSTALL_DIR>/server/solr/configsets/basic_configs/schema.xml. Het bestaande bestand mag overschreven worden. 
-
-Indien u uw Zookeeper ensemble nog niet gestart heeft, doe dit dan alsnog en voer hierna
-[source,shell]
----- 
-<SOLR_INSTALL_DIR>/bin/solr -z localhost:2181/etm/dev/solr -e cloud               
----- 
-uit vanaf een command prompt. 
-
-TIP: Uiteraard kan het voorkomen dat uw Zookeeper ensemble op (een) andere machine(s) staat, en dat u een ander path voor Solr in Zookeeper hebt aangemaakt. Pas in
-dat geval de connectiestring achter de '-z' optie aan in het commando.
-
-Een connectie naar een geclusterde Zookeeper productie ensemble zou er als volgt uit kunnen zien:
-[source,shell]
----- 
-<SOLR_INSTALL_DIR>/bin/solr -z 10.0.0.1:2181,10.0.0.2:2181,10.0.0.3:2181/etm/prod/solr -e cloud               
----- 
-
-Het script helpt u stapsgewijs bij het opzetten van een Solr cluster. Wees er zeker van dat u voor de collectienaam 'etm' gebruikt. Wanneer er gevraagd wordt om een 
-naam van de configuratie directory beantwoord dan met 'basic_configs'. 
-
-Zodra het script klaar is, is uw Solr cluster aangemaakt en gestart. De data directory van uw instanties is te vinden onder <SOLR_INSTALL_DIR>/example/cloud/node<x>.
-U doet er verstandig aan deze directory te verplaatsen naar een voor u logische plaats. Doe dit pas nadat u de instantie gestopt hebt.
-
-Starten van een instantie kan door 
-[source,shell]
----- 
-<SOLR_INSTALL_DIR>/bin/solr start -c -p <poortnummer> -z <zookeeper-ensamble-connectie-string> -s <node-data-dir>/solr               
----- 
-uit te voeren vanaf een command prompt.
-
-=== Cassandra cluster
-
-Browse naar http://www.datastax.com/documentation/cassandra/2.0/cassandra/gettingStartedCassandraIntro.html en volg de handleidingen voor het installeren en initializeren
-van een Cassandra cluster.
-Maak hierna een keyspace aan met de gewenste replication factor, en start Cassandra. Nadat Cassandra gestart is kunt u het volgende command
-[source,shell]
----- 
-<CASSANDRA_INSTALL_DIR>/bin/cqlsh -f <ETM_UNZIP_DIR>/resources/cassandra/cassandra-setup-cluster.cql
-----
-uitvoeren vanaf een command prompt. Het script zal er voor zorgen dat de juiste tabellen worden aangemaakt.
+=== Elasticsearch cluster
+In verband met data replicatie wordt er voor het gebruik van ETM in een productie omgeving een minimum van 2 Elasticsearch installaties geadviseerd. Hiervoor kan
+het <<standalone-elasticsearch, Standalone Elasticsearch>> hoofdstuk worden uitgevoerd op verschillende machines. De instanties zullen elkaar automatisch vinden
+en een cluster vormen.
 
 === Wildfly cluster
 
@@ -268,19 +167,18 @@ eindgebruiker naar actieve Wildfly instanties gerouteerd kunnen worden. Let wel,
 gedeployed worden.
 
 Wilt u evengoed gebruik maken van een geclusterde Wildfly opstelling, waar de eindgebruiker niets mag merken van eventuele uitval van Wildfly instanties, volg dan de handleiding 
-op https://docs.jboss.org/author/display/WFLY8/High+Availability+Guide
+op https://docs.jboss.org/author/display/WFLY9/High+Availability+Guide
 
 Zodra uw gewenste Wildfly cluster indeling is geinstalleerd moet er een security-domain met de naam "etm" worden aangemaakt. Een voorbeeld hiervan is te vinden in de 
 <<standalone-wildfly, Standalone Wildfly>> paragraaf. Dit voorbeeld maakt via een RealmRedirect gebruik van property bestanden voor het beheer van uw gebruikers, maar er zijn 
 meerdere mogelijkheden. Zo is het bijvoorbeeld ook mogelijk om een connectie te leggen met een LDAP server voor het autoriseren en authenticeren van gebruikers.
 
-Als laatste moet er per Wildfly instantie een 3-tal System Properties worden toegevoegd. 
+Als laatste moet er per Wildfly instantie een aantal System Properties worden toegevoegd. 
 [options="header"]
 |=======================
 |Key|Value
-|etm.nodename|<een unieke node name>
-|etm.zookeeper.clients|<zookeeper connectie string>
-|etm.zookeeper.namespace|<dev>
+|etm.cluster.name|<de naam van uw ETM cluster>
+|etm.cluster.addresses|Een optionele komma gescheiden lijst van Elasticsearch hosts in de vorm van ip-adres:poortnr. Gebruik dit alleen als uw firewall de auto-discovery functionaliteit van Elasticsearch blokkeert.
 |=======================
 
 [[chap-ETM_Installation-ETM_Components]]

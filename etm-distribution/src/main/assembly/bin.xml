@@ -30,22 +30,12 @@
             <outputDirectory>documentation</outputDirectory>
             <directory>../etm-documentation/target/docbook/publish</directory>
         </fileSet>
+        <fileSet>
+            <outputDirectory>resources/elasticsearch/scripts</outputDirectory>
+            <directory>../etm-processor/src/main/resources/config/scripts</directory>
+        </fileSet>
 	</fileSets>
 	<files>
-        <file>
-            <source>../etm-core/src/main/cassandra-conf/db-single-node.cql</source>
-            <outputDirectory>resources/cassandra</outputDirectory>
-            <destName>cassandra-setup-single-node.cql</destName>
-        </file>
-        <file>
-            <source>../etm-core/src/main/cassandra-conf/db-cluster.cql</source>
-            <outputDirectory>resources/cassandra</outputDirectory>
-            <destName>cassandra-setup-cluster.cql</destName>
-        </file>
-		<file>
-			<source>../etm-core/src/main/solr-scripts/schema.xml</source>
-			<outputDirectory>resources/solr</outputDirectory>
-		</file>
         <file>
             <source>../etm-processor-mdb/target/generated-resources/schemagen/schema1.xsd</source>
             <outputDirectory>resources/schemas</outputDirectory>
