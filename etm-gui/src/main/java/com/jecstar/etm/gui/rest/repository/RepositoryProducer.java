@@ -7,7 +7,6 @@ import javax.inject.Singleton;
 
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.gui.rest.repository.elastic.EndpointRepositoryElasticImpl;
 import com.jecstar.etm.gui.rest.repository.elastic.NodeRepositoryElasticImpl;
 import com.jecstar.etm.gui.rest.repository.elastic.QueryRepositoryElasticImpl;
@@ -21,11 +20,7 @@ public class RepositoryProducer {
 	@Inject
 	@GuiConfiguration
 	private Client elasticClient;
-	
-	@GuiConfiguration
-	@Inject
-	private EtmConfiguration configuration;
-	
+
 	private StatisticsRepository statisticsRepository;
 	private QueryRepository queryRepository;
 	private EndpointRepository endpointRepository;

@@ -31,7 +31,6 @@ import com.fasterxml.jackson.core.JsonParser.NumberType;
 import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -45,7 +44,6 @@ import com.jecstar.etm.gui.rest.ClusterStatus.ShardStatus;
 import com.jecstar.etm.gui.rest.repository.EndpointConfiguration;
 import com.jecstar.etm.gui.rest.repository.EndpointRepository;
 import com.jecstar.etm.gui.rest.repository.NodeRepository;
-import com.jecstar.etm.jee.configurator.core.GuiConfiguration;
 
 import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.xpath.XPathFactoryImpl;
@@ -60,17 +58,12 @@ public class AdminService {
 
 	private static final XPath xPath = new XPathFactoryImpl().newXPath();
 	private static final TransformerFactory transformerFactory = new TransformerFactoryImpl();
-	
-	@GuiConfiguration
-	@Inject
-	private EtmConfiguration configuration;
-	
+
 	@Inject
 	private EndpointRepository endpointRepository;
 	
 	@Inject
 	private NodeRepository nodeRepository;
-
 
 	private final JsonFactory jsonFactory = new JsonFactory();
 

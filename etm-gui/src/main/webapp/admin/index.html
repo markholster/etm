@@ -516,7 +516,7 @@ $(function () {
                $('#cluster_status').hide();
                $('#shard_status').hide();	        
 	        }
-        }).fail(function() {
+        }).fail(function(jqXHR) {
             $("#status_errorBox").text('Error loading node data: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
             $("#status_errorBox").show('fast');        
             $('#status_tab_header > a').addClass('status_error');

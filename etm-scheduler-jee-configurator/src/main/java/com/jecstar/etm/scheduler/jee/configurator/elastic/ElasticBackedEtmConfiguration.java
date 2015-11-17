@@ -1,5 +1,6 @@
 package com.jecstar.etm.scheduler.jee.configurator.elastic;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
@@ -7,6 +8,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 
+import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.License;
 import com.jecstar.etm.core.converter.EtmConfigurationConverter;
@@ -81,37 +83,41 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	private boolean reloadConfigurationWhenNecessary() {
-		boolean changed = false;
-		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
-			return changed;
-		}
-		boolean hasIndex = this.elasticClient.admin().indices().exists(new IndicesExistsRequest(this.indexName)).actionGet().isExists();
-		if (!hasIndex) {
-			createDefault();
-		}
-		GetResponse defaultResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, this.defaultId).get();
-		if (!defaultResponse.isExists()) {
-			// Should not happen, but if somehow the default configuration is lost, but the index isn't we create the new default over here.
-			createDefault();
-			defaultResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, this.defaultId).get();
-		}
-		GetResponse nodeResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, getNodeName()).get();
-
-		String defaultContent = defaultResponse.getSourceAsString();
-		String nodeContent = null;
-
-		if (defaultResponse.getVersion() != this.defaultVersion ||
-				(nodeResponse.isExists() && nodeResponse.getVersion() != this.nodeVersion)) {
-			if (nodeResponse.isExists()) {
-				nodeContent = nodeResponse.getSourceAsString();
-				this.nodeVersion = nodeResponse.getVersion();
+		try {
+			boolean changed = false;
+			if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
+				return changed;
 			}
-			this.defaultVersion = defaultResponse.getVersion();
-			EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge", getComponent()); 
-			changed = this.mergeAndNotify(etmConfiguration);
-		}
-		this.lastCheckedForUpdates = System.currentTimeMillis();
-		return changed;
+			boolean hasIndex = this.elasticClient.admin().indices().exists(new IndicesExistsRequest(this.indexName)).actionGet().isExists();
+			if (!hasIndex) {
+				createDefault();
+			}
+			GetResponse defaultResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, this.defaultId).get();
+			if (!defaultResponse.isExists()) {
+				// Should not happen, but if somehow the default configuration is lost, but the index isn't we create the new default over here.
+				createDefault();
+				defaultResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, this.defaultId).get();
+			}
+			GetResponse nodeResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, getNodeName()).get();
+	
+			String defaultContent = defaultResponse.getSourceAsString();
+			String nodeContent = null;
+	
+			if (defaultResponse.getVersion() != this.defaultVersion ||
+					(nodeResponse.isExists() && nodeResponse.getVersion() != this.nodeVersion)) {
+				if (nodeResponse.isExists()) {
+					nodeContent = nodeResponse.getSourceAsString();
+					this.nodeVersion = nodeResponse.getVersion();
+				}
+				this.defaultVersion = defaultResponse.getVersion();
+				EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge", getComponent()); 
+				changed = this.mergeAndNotify(etmConfiguration);
+			}
+			this.lastCheckedForUpdates = System.currentTimeMillis();
+			return changed;
+		} catch (ElasticsearchException e) {
+			throw new EtmException(EtmException.CONFIGURATION_LOAD_EXCEPTION, e);
+		}		
 	}
 	
 
