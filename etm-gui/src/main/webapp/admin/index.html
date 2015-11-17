@@ -194,6 +194,7 @@
                                 </form>
 							</div>
 							<div role="tabpanel" class="tab-pane" id="status_tab">
+                                <div id="status_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
 	                            <div id="cluster_status">
 	                                <fieldset><legend>Cluster information</legend></fieldset>
 	                                <div class="row">
@@ -378,7 +379,10 @@ $(function () {
 			$('#etm_max_index_count').val(data['max_index_count']);
 			$('#etm_shards_per_index').val(data['shards_per_index']);
 			$('#etm_replicas_per_index').val(data['replicas_per_index']);
-		});
+		}).fail(function(jqXHR) {
+            $("#etm_form_errorBox").text('Error loading node data: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+            $("#etm_form_errorBox").show('fast');
+        });
 		if ('cluster' == node.name) {
 		    $('#etm_max_index_count').removeAttr('readonly', 'readonly');
 		    $('#etm_shards_per_index').removeAttr('readonly', 'readonly');
@@ -513,6 +517,8 @@ $(function () {
                $('#shard_status').hide();	        
 	        }
         }).fail(function() {
+            $("#status_errorBox").text('Error loading node data: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+            $("#status_errorBox").show('fast');        
             $('#status_tab_header > a').addClass('status_error');
         });
 		
@@ -762,7 +768,10 @@ $(function () {
 		      addExpressionParsers('application_parsers', 'application_parser', data.application_parsers, false);
 		      addExpressionParsers('transactionname_parsers', 'transactionname_parser', data.transactionname_parsers, false);
 		      addExpressionParsers('correlation_parsers', 'correlation_parser', data.correlation_parsers, true);
-		});
+		}).fail(function(jqXHR) {
+            $("#endpoint_errorBox").text('Error loading endpoint data: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+            $("#endpoint_errorBox").show('fast');        
+        });
 	};
 
    var loadLicenseData = function(endpointName) {
@@ -782,7 +791,9 @@ $(function () {
 	              $('#license_tab_header > a').removeClass('status_error');
 	              $('#license_tab_header > a').removeClass('status_warning');
 	            }                
-          }).fail(function() {
+          }).fail(function(jqXHR) {
+            $("#license_errorBox").text('Error loading license data: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+            $("#license_errorBox").show('fast');        
             $('#license_tab_header > a').addClass('status_error');
           });
     };
