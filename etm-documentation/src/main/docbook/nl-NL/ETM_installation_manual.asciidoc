@@ -31,7 +31,7 @@ liggen kies dan voor hard disks met een zo hoog mogelijk toerental. Ook een raid
 filesysteem nooit repliceren met bijvoorbeeld raid-1, aangezien ETM ingebouwde replicatiemogelijkheden heeft.
 
 === CPU
-De CPU requirements van ETM doen er minder toe dan het geheugen of de hard disks. Het is waarsschijnlijk dat uw cluster eerder tegen de 
+De CPU requirements van ETM doen er minder toe dan het geheugen of de hard disks. Het is waarschijnlijk dat uw cluster eerder tegen de 
 limieten van het geheugen en/of de hard disks aanloopt, dan de limiet van uw cpu's. Als u moet kiezen tussen snellere CPU's of meerdere cores,
 kies dan altijd voor meerdere cores. ETM maakt veelvuldig gebruik van parallele verwerking wat het beste werkt met meerdere cores.
 
@@ -63,6 +63,7 @@ Open nadat Elasticsearch is uitgepakt het bestand <ELASTICSEARCH_INSTALL_DIR>/co
 |node.name |<de unieke naam van uw node, bijv de hostname>
 |bootstrap.mlockall|true
 |http.enabled|false
+|index.translog.durability|async
 |=======================
 
 Kopieer vervolgende de bestanden uit <ETM_UNZIP_DIR>/resources/elasticsearch/scripts/ naar <ELASTICSEARCH_INSTALL_DIR>/config/scripts/. Het is mogelijk
@@ -143,9 +144,9 @@ duurt hierna enkele seconden. Bekijk voor een gedetailleerd overzicht van de com
 
 [[chap-ETM_Installation-Clustered_Installation]]
 == Geclusterde installatie
-IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Elasticsearcg om
+IMPORTANT: ETM is een op JEE gebaseerde Java applicatie die binnen Wildfly gedeployed kan worden. ETM heeft een verbinding nodig met Elasticsearch om
 volledig te functioneren. Hoe u uw Wildfly en Elasticsearch clusters in gaat richten hangt af van uw wensen en kan niet in 1 enkele installatie 
-handleiding samengevat worden. Dit hoofdstuk kan als voorbeeld genomen worden voor het opzetten van uw Wildfly en Elasticsearcg clusters, 
+handleiding samengevat worden. Dit hoofdstuk kan als voorbeeld genomen worden voor het opzetten van uw Wildfly en Elasticsearch clusters, 
 maar voor een optimale situatie zullen deze clusters zo geconfigureerd moeten worden dat deze ideaal zijn voor uw wensen. 
 
 Voor uitgebreide handleidingen dient u de handleidingen van Wildfly en Elasticsearch te raadplegen:
@@ -160,7 +161,7 @@ en een cluster vormen.
 
 === Wildfly cluster
 
-Het opzetten van een Wildfly cluster is minder noodzakelijk. Het enige ETM component wat een een sessie gebruikt en daarmee geschikt zou zijn voor session-replication is
+Het opzetten van een Wildfly cluster is minder noodzakelijk. Het enige ETM component dat een sessie gebruikt en daarmee geschikt zou zijn voor session-replication is
 etm-gui-{etm_version}.war. Binnen de sessie wordt enkel bewaard of een gebruiker is ingelogd, en zo ja, met welke rollen. Als u het acceptabel vindt dat een gebruiker opnieuw
 moet inloggen indien een server uitvalt, dan volstaat het dubbel uitvoeren van Wildfly servers zonder replication. Door middel van een load-balancer voor Wildfly zou de 
 eindgebruiker naar actieve Wildfly instanties gerouteerd kunnen worden. Let wel, bij een dergelijke opstelling moeten de ETM componenten handmatig op de afzonderlijke machines

@@ -63,7 +63,7 @@ op te geven die dynamisch de bovengenoemde velden gaat vaststellen.
 
 Een event dat is toegevoegd is niet direct doorzoekbaar. Om een zo hoog mogelijk volume van events per seconde te kunnen verwerken wordt er batchgewijs geindexeerd. Per batch worden 
 250 events verwerkt. Als uw volume dus ligt rond de 250 events per seconde, zal er dus maximaal een seconde liggen tussen het tijdstip van opvoeren en het tijdstip waarop het
-event terug te vinden is in de zoekresultaten. Om te voorkomen dat berichten bij een lage toevoer langduring niet beschikbaar zijn wordt een batch minstens 1 maal per dertig 
+event terug te vinden is in de zoekresultaten. Om te voorkomen dat berichten bij een lage toevoer langdurig niet beschikbaar zijn wordt een batch minstens 1 maal per dertig 
 seconden geindexeerd. Een event is dus altijd na maximaal 30 seconden terug te vinden. 
 
 === Events toevoegen via REST
@@ -83,7 +83,7 @@ via http://localhost:8080/etm/processor/ws/processorservice?wsdl de wsdl downloa
 === Performance optimalisatie
 Om een grotere doorvoersnelheid van het verwerken van events te realiseren kan het nodig zijn de ETM configuratie te optimaliseren. Opent u hiervoor het administratie panel 
 in uw browser. Indien u ETM op uw lokale machine heeft draaien is de url http://localhost:8080/etm/admin/index.html  
-Onder de tab 'ETM' vind u in de linker kolom vier configuratie opties die van belang zijn bij het verwerken van events:
+Onder de tab 'ETM' vindt u in de linker kolom vier configuratie opties die van belang zijn bij het verwerken van events:
 
 image:usage/etm-process-config.png["Performance optimalisatie", link="usage/etm-process-config.png"]
 
@@ -100,7 +100,7 @@ geplaatst voordat ze door een handler zijn verwerkt. U kunt deze waarde ophogen 
 in het geheugen van de JVM geplaatst. Een te grote waarde in dit veld kan er dus voor zorgen dat uw JVM uit zijn geheugen gaat lopen.
 
 Als laatste wordt met de 'Persisting bulk size' instelling bepaald hoeveel events per batch worden opgeslagen. Deze instelling geldt per 'Persisting handler'. Stel er staan 5
-'Persisting handlers' ingestgeld en de 'Persisting bulk size' staat op 100, dan zullen er op elk moment 5 batches van maximaal 100 events worden gebruikt. 
+'Persisting handlers' ingesteld en de 'Persisting bulk size' staat op 100, dan zullen er op elk moment 5 batches van maximaal 100 events worden gebruikt. 
 
 Standaard toont het administratie panel de configuratie die voor alle instanties in het cluster geldt. Indien u voor een enkele node een configuratie wijziging wilt doorvoeren 
 kan dit door rechtsboven in de dropdown box de gewenste node te selecteren en daarna de configuratie instelling aan te passen.
@@ -110,7 +110,7 @@ wijziginen opslaat.
 
 === Data spreiding
 Intern wordt een index opgedeeld in zogenaamde shards. Hoe meer shards, hoe sneller het zoeken in events zal gaan. Er zit natuurlijk wel een keerzijde aan een hoog aantal. 
-Elke shard heeft zijn eigen set resources (denk aan file handles etc) nodig op een systeem. Als vuistregel geldt kan de volgende formule worden gebruikt:
+Elke shard heeft zijn eigen set resources (denk aan file handles etc) nodig op een systeem. Als vuistregel geldt de volgende formule:
 
 aantal shards = (verwachte datastroom in GB per dag / laagst toegewezen geheugen in GB aan Elasticsearch node) + 1
 
@@ -150,7 +150,7 @@ standaard zoekopdracht voor u ingevuld in het invoerscherm.
 IMPORTANT: Pas op voor het gebruik van zoektermen die beginnen met een * of ?. Deze zoekopdrachten vergen veel geheugen en rekenkracht!
 
 === Zoekresultaten
-Nadat u uw event hebt teruggevonden kunt u de inhoud bekijken door op de eventnaam te klikken. Allereerst vindt u hier enkele eigenschappen van het event terug, maark ook de inhoud
+Nadat u uw event hebt teruggevonden kunt u de inhoud bekijken door op de eventnaam te klikken. Allereerst vindt u hier enkele eigenschappen van het event terug, maar ook de inhoud
 van het event. Indien het event van het type "MESSAGE_REQUEST" of "MESSAGE_RESPONSE" is wordt automatisch het gecorreleerde bericht getoond in de tab naast het geselecteerde
 bericht. Als laatste wordt er een overview getoond van het bericht en alle gerelateerde berichten in uw applicatie landschap. Een voorbeeld hiervan is:
 
@@ -185,12 +185,12 @@ oplossingen:
 |=======================
 |Code|Oorzaak|Oplossing
 |[[error-100000]]100000|Onbekende fout|Controleer de logfiles op gedetailleerde foutmeldingen
-|[[error-100001]]100001|Ongeldige licentie sleutel|De ingevulde licentie sleutel is niet geldig. Neem contact op met Jecstar support.
-|[[error-100002]]100002|De licentie sleutel is verlopen|De huidige licentie sleutel is niet meer gelidg. Neem contact op met Jecstar support.
+|[[error-100001]]100001|Ongeldige licentie sleutel|De ingevulde licentie sleutel is niet geldig. Neem contact op met Jecstar Innovation support.
+|[[error-100002]]100002|De licentie sleutel is verlopen|De huidige licentie sleutel is niet meer gelidg. Neem contact op met Jecstar Innovation support.
 |[[error-100003]]100003|Fout bij laden configuratie|De configuratie kon niet ingeladen worden. Controleer of uw Elasticsearch cluster actief is. Indien dit het geval is, controleer dan de logfiles 
 op gedetailleerde informatie.
 |[[error-100004]]100004|Fout bij aanmaken unmarshaller|De MDB is niet in staat een unmarshaller voor de berichten aan te maken. Controleer de logfiles op gedetailleerde foutmeldingen
 |[[error-100005]]100005|Ongeldige XPath expressie|De opgegeven waarde is een ongeldige xpath expressie.
 |[[error-100006]]100006|Ongeldige XSLT template|De opgegeven waarde is een ongeldige xslt template.
-|[[error-100007]]100007|Ongeldige expressie parser|De expressie parser wordt niet herkend. Neem contact op met Jecstar support. 
+|[[error-100007]]100007|Ongeldige expressie parser|De expressie parser wordt niet herkend. Neem contact op met Jecstar Innovation support. 
 |=======================
