@@ -3,10 +3,11 @@ package com.jecstar.etm.scheduler.jee.configurator.elastic;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -123,10 +124,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
 	
 	private void createDefault() {
-		new PutIndexTemplateRequestBuilder(this.elasticClient.admin().indices(), this.indexName)
+		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, this.indexName)
 			.setCreate(false)
 			.setTemplate(this.indexName)
-			.setSettings(ImmutableSettings.settingsBuilder()
+			.setSettings(Settings.settingsBuilder()
 					.put("number_of_shards", 1)
 					.put("number_of_replicas", 1))
 			.addMapping("_default_", createMapping())

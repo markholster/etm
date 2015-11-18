@@ -1,9 +1,10 @@
 package com.jecstar.etm.processor.jee.configurator.elastic;
 
 import org.elasticsearch.action.admin.indices.alias.Alias;
+import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
@@ -32,10 +33,10 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	@Override
 	public void createEnvironment() {
 		// TODO add template for EtmConfiguration?
-		new PutIndexTemplateRequestBuilder(this.elasticClient.admin().indices(), "etm_event")
+		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, "etm_event")
 			.setCreate(false)
 			.setTemplate("etm_event_*")
-			.setSettings(ImmutableSettings.settingsBuilder()
+			.setSettings(Settings.settingsBuilder()
 					.put("number_of_shards", this.etmConfiguration.getShardsPerIndex())
 					.put("number_of_replicas", this.etmConfiguration.getReplicasPerIndex()))
 			.addMapping("_default_", createEventMapping("_default_"))

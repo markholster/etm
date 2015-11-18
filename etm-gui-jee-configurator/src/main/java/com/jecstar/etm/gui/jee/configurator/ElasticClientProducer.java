@@ -9,8 +9,8 @@ import javax.inject.Singleton;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.ImmutableSettings.Builder;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
@@ -42,15 +42,16 @@ public class ElasticClientProducer {
 					if (clusterName == null) {
 						clusterName = "Enterprise Telemetry Monitor";
 					}
-					Builder settings = ImmutableSettings.settingsBuilder().put("client.transport.sniff", true)
-							.put("cluster.name", clusterName);
+					Builder settings = Settings.settingsBuilder().put("client.transport.sniff", true)
+							.put("cluster.name", clusterName)
+							.put("path.home", "./");
 					String clusterAddresses = System.getProperty("etm.cluster.addresses");
 					if (clusterAddresses != null) {
 						String[] addresses = clusterAddresses.split(",");
-						TransportClient transportClient = new TransportClient(settings);
+						TransportClient transportClient = TransportClient.builder().settings(settings).build();
 						for (String address : addresses) {
 							String[] split = address.split(":");
-							 transportClient.addTransportAddress(new InetSocketTransportAddress(split[0], Integer.valueOf(split[1])));
+							 transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(split[0]), Integer.valueOf(split[1])));
 						}
 						this.elasticClient = transportClient;
 					} else {

@@ -20,7 +20,6 @@ import javax.xml.transform.stream.StreamSource;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
@@ -626,10 +625,11 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		List<CorrelationResult> correlatingResults = new ArrayList<CorrelationResult>();
 		for (String correlationKey : correlationData.keySet()) {
 			SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), 
-						FilterBuilders.andFilter(
-								FilterBuilders.termFilter(this.tags.getCorrelationDataTag() + "." + correlationKey, correlationData.get(correlationKey)),
-								FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime.getTime()).to(finishTime.getTime()))))
+				.setQuery(QueryBuilders.boolQuery()
+						.must(QueryBuilders.matchAllQuery())
+						.filter(QueryBuilders.boolQuery()
+								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + "." + correlationKey, correlationData.get(correlationKey)))
+								.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime.getTime()).to(finishTime.getTime()))))
 				.setSize(this.dataCorrelationMaxResults)
 				.addField(this.tags.getIdTag())
 				.addField(this.tags.getCreationTimeTag())

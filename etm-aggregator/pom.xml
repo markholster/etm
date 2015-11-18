@@ -58,6 +58,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.jdk.level>1.8</project.jdk.level>
+		<version.elasticsearch>2.0.0</version.elasticsearch>
 	</properties>
 	<repositories>
 		<repository>
@@ -166,7 +167,7 @@
             <dependency>
                 <groupId>org.elasticsearch</groupId>
                 <artifactId>elasticsearch</artifactId>
-                <version>1.7.3</version>
+                <version>${version.elasticsearch}</version>
             </dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>

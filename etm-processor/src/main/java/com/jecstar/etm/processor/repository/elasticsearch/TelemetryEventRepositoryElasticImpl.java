@@ -16,6 +16,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
@@ -67,7 +68,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 				.consistencyLevel(WriteConsistencyLevel.ONE)
 		        .source(this.eventConverter.convert(event));
 		UpdateRequest updateRequest = new UpdateRequest(index, this.eventIndexType, event.id)
-		        .script("etm_update-event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
+				.script(new Script("etm_update-event", ScriptType.FILE, "groovy",  this.updateScriptBuilder.createUpdateParameterMap(event, this.tags)))
 		        .upsert(indexRequest)
 		        .detectNoop(true)
 		        .consistencyLevel(WriteConsistencyLevel.ONE)
@@ -79,7 +80,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 					.consistencyLevel(WriteConsistencyLevel.ONE)
 			        .source("{ \"response_handling_time\": " + event.creationTime.getTime() + ", \"child_correlation_ids\": [\"" + escapeToJson(event.id) + "\"] }");
 			updateRequest = new UpdateRequest(index, this.eventIndexType, event.correlationId)
-			        .script("etm_update-request-with-responsedata", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags))
+			        .script(new Script("etm_update-request-with-responsedata", ScriptType.FILE, "groovy", this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags)))
 			        .upsert(indexRequest)
 			        .detectNoop(true)
 			        .consistencyLevel(WriteConsistencyLevel.ONE)

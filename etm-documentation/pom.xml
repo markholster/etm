@@ -45,7 +45,7 @@
 					<attributes>
 						<etm_version>${project.version}</etm_version>
 						<java_version>${project.jdk.level}</java_version>
-						<elasticsearch_version>1.7.3</elasticsearch_version>
+						<elasticsearch_version>${version.elasticsearch}</elasticsearch_version>
 						<wildfly_version>9.0.2.Final</wildfly_version>
 					</attributes>
 				</configuration>

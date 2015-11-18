@@ -7,25 +7,25 @@ import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthAction;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequestBuilder;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
+import org.elasticsearch.action.admin.cluster.node.info.NodesInfoAction;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
+import org.elasticsearch.action.admin.cluster.state.ClusterStateAction;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.routing.MutableShardRouting;
 import org.elasticsearch.cluster.routing.RoutingNodes;
-import org.elasticsearch.common.base.Predicate;
+import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.monitor.jvm.JvmInfo;
 import org.elasticsearch.monitor.os.OsInfo;
-import org.elasticsearch.monitor.os.OsInfo.Cpu;
-import org.elasticsearch.monitor.os.OsInfo.Mem;
-import org.elasticsearch.monitor.os.OsInfo.Swap;
 
+import com.google.common.base.Predicate;
 import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterTagsJsonImpl;
 import com.jecstar.etm.gui.rest.ClusterStatus;
@@ -37,7 +37,7 @@ import com.jecstar.etm.gui.rest.repository.NodeRepository;
 
 public class NodeRepositoryElasticImpl implements NodeRepository {
 	
-	private Predicate<MutableShardRouting> isEtmIndex() {return p -> p.getIndex().startsWith("etm_event_") || p.getIndex().equals("etm_configuration");};
+	private Predicate<ShardRouting> isEtmIndex() {return p -> p.getIndex().startsWith("etm_event_") || p.getIndex().equals("etm_configuration");};
 	
 	private final String indexName = "etm_configuration";
 	private final String indexType = "node";
@@ -70,7 +70,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 
 	@Override
 	public List<Node> getNodes() {
-		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient.admin().cluster()).all().get(TimeValue.timeValueMillis(10000));
+		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient, NodesInfoAction.INSTANCE).all().get(TimeValue.timeValueMillis(10000));
 		NodeInfo[] nodes = nodesInfoResponse.getNodes();
 		List<Node> result = new ArrayList<Node>();
 		for (NodeInfo nodeInfo : nodes) {
@@ -123,7 +123,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 	@Override
 	public ClusterStatus getClusterStatus() {
 		ClusterStatus clusterStatus = new ClusterStatus();
-		ClusterHealthResponse clusterHealthResponse = new ClusterHealthRequestBuilder(this.elasticClient.admin().cluster()).get();
+		ClusterHealthResponse clusterHealthResponse = new ClusterHealthRequestBuilder(this.elasticClient, ClusterHealthAction.INSTANCE).get();
 		clusterStatus.clusterName = clusterHealthResponse.getClusterName();
 		clusterStatus.statusCode = StatusCode.fromClusterHealthStatus(clusterHealthResponse.getStatus());
 		clusterStatus.numberOfNodes =  clusterHealthResponse.getNumberOfNodes();
@@ -136,16 +136,16 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 		clusterStatus.numberOfDelayedUnassignedShards = clusterHealthResponse.getDelayedUnassignedShards();
 		clusterStatus.numberOfPendingTasks = clusterHealthResponse.getNumberOfPendingTasks();
 		clusterStatus.numberOfInFlightFethch = clusterHealthResponse.getNumberOfInFlightFetch();
-		ClusterStateResponse stateResponse = new ClusterStateRequestBuilder(this.elasticClient.admin().cluster()).all().get();
+		ClusterStateResponse stateResponse = new ClusterStateRequestBuilder(this.elasticClient, ClusterStateAction.INSTANCE).all().get();
 		RoutingNodes routingNodes = stateResponse.getState().getRoutingNodes();
-		List<MutableShardRouting> shards = routingNodes.shards(isEtmIndex());
+		List<ShardRouting> shards = routingNodes.shards(isEtmIndex());
 		addShardToClusterStatus(clusterStatus, shards, stateResponse, isEtmIndex());
 		addShardToClusterStatus(clusterStatus, routingNodes.unassigned(), stateResponse, isEtmIndex());
 		return clusterStatus;
 	}
 	
-	private void addShardToClusterStatus(ClusterStatus clusterStatus, Iterable<MutableShardRouting> shards, ClusterStateResponse stateResponse, Predicate<MutableShardRouting> predicate) {
-		for (MutableShardRouting shard : shards) {
+	private void addShardToClusterStatus(ClusterStatus clusterStatus, Iterable<ShardRouting> shards, ClusterStateResponse stateResponse, Predicate<ShardRouting> predicate) {
+		for (ShardRouting shard : shards) {
 			if (!predicate.apply(shard)) {
 				continue;
 			}
@@ -168,7 +168,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 
 	@Override
 	public NodeStatus getNodeStatus(String nodeId) {
-		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient.admin().cluster())
+		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient, NodesInfoAction.INSTANCE)
 				.setNodesIds(nodeId)
 				.get(TimeValue.timeValueMillis(10000));
 		NodeStatus nodeStatus = new NodeStatus();
@@ -178,33 +178,34 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 		NodeInfo nodeInfo = nodesInfoResponse.getNodes()[0];
 		nodeStatus.id = nodeInfo.getNode().getId();
 		nodeStatus.hostname = nodeInfo.getHostname();
-		nodeStatus.address = nodeInfo.getNetwork().getPrimaryInterface().address();
+		nodeStatus.address = nodeInfo.getTransport().getAddress().publishAddress().getAddress();
 		nodeStatus.client = nodeInfo.getNode().isClientNode();
 		nodeStatus.data = nodeInfo.getNode().isDataNode();
 		nodeStatus.master = nodeInfo.getNode().isMasterNode();
 		
 		OsInfo os = nodeInfo.getOs();
+		
 		if (os != null) {
-			nodeStatus.osAvailableProcessors =  os.availableProcessors();
+			nodeStatus.osAvailableProcessors =  os.getAvailableProcessors();
 			nodeStatus.osRefreshInterval = os.getRefreshInterval();
-			Cpu osCpu = os.cpu();
-			if (osCpu != null) {
-				nodeStatus.osCpuCacheSize =  osCpu.getCacheSize().bytes();
-				nodeStatus.osCpuCoresPerSocket = osCpu.getCoresPerSocket();
-				nodeStatus.osCpuMhz = osCpu.getMhz();
-				nodeStatus.osCpuModel = osCpu.getModel();
-				nodeStatus.osCpuTotalCores = osCpu.getTotalCores();
-				nodeStatus.osCpuTotalSockets = osCpu.getTotalSockets();
-				nodeStatus.osCpuVendor = osCpu.getVendor();
-			}
-			Mem osMem = os.getMem();
-			if (osMem != null) {
-				nodeStatus.osMemTotal = osMem.getTotal().bytes();
-			}
-			Swap osSwap = os.getSwap();
-			if (osSwap != null) {
-				nodeStatus.osSwapTotal = osSwap.getTotal().bytes();
-			}
+//			Cpu osCpu = os.cpu();
+//			if (osCpu != null) {
+//				nodeStatus.osCpuCacheSize =  osCpu.getCacheSize().bytes();
+//				nodeStatus.osCpuCoresPerSocket = osCpu.getCoresPerSocket();
+//				nodeStatus.osCpuMhz = osCpu.getMhz();
+//				nodeStatus.osCpuModel = osCpu.getModel();
+//				nodeStatus.osCpuTotalCores = osCpu.getTotalCores();
+//				nodeStatus.osCpuTotalSockets = osCpu.getTotalSockets();
+//				nodeStatus.osCpuVendor = osCpu.getVendor();
+//			}
+//			Mem osMem = os.getMem();
+//			if (osMem != null) {
+//				nodeStatus.osMemTotal = osMem.getTotal().bytes();
+//			}
+//			Swap osSwap = os.getSwap();
+//			if (osSwap != null) {
+//				nodeStatus.osSwapTotal = osSwap.getTotal().bytes();
+//			}
 		}
 		
 		JvmInfo jvm = nodeInfo.getJvm();
@@ -214,7 +215,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 			nodeStatus.jvmName = jvm.getVmName();
 			nodeStatus.jvmVendor =  jvm.getVmVendor();
 			nodeStatus.jvmVersion =  jvm.getVersion() + " (" + jvm.getVmVersion() + ")";			
-			org.elasticsearch.monitor.jvm.JvmInfo.Mem jvmMem = jvm.mem();
+			org.elasticsearch.monitor.jvm.JvmInfo.Mem jvmMem = jvm.getMem();
 			if (jvmMem != null) {
 				nodeStatus.jvmMemDirectMax = jvmMem.getDirectMemoryMax().bytes();
 				nodeStatus.jvmMemHeapInit = jvmMem.getHeapInit().bytes();

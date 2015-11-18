@@ -11,20 +11,20 @@ import java.util.concurrent.TimeUnit;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.AndFilterBuilder;
-import org.elasticsearch.index.query.FilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuilder;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.avg.AvgBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.joda.time.DateTime;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
@@ -55,13 +55,15 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctTransactionsAggregation).field(this.tags.getTransactionNameTag()).subAggregation(dateHistogramBuilder);
 		
-		FilterBuilder filterBuilder = FilterBuilders.andFilter(FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime), 
-				FilterBuilders.existsFilter(this.tags.getResponsetimeTag()));
+		QueryBuilder filterQuery = QueryBuilders.boolQuery()
+				.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime).to(endTime)) 
+				.must(QueryBuilders.existsQuery(this.tags.getResponsetimeTag()));
 		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-			.setSearchType(SearchType.COUNT)
-			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+			.setSearchType(SearchType.QUERY_THEN_FETCH)
+			.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(filterQuery))
 			.addAggregation(termsBuilder)
+			.setSize(0)
 			.get();
 		
 		final Map<String, Float> highest = new HashMap<String, Float>();
@@ -69,12 +71,12 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		Terms terms = searchResponse.getAggregations().get(distinctTransactionsAggregation);
 		List<Terms.Bucket> transactionBuckets = terms.getBuckets();
 		for (Terms.Bucket transactionBucket : transactionBuckets) {
-			String transactionName = transactionBucket.getKey();
-			DateHistogram dateHistogram = transactionBucket.getAggregations().get(dateIntervalAggregation);
-			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			String transactionName = transactionBucket.getKeyAsString();
+			Histogram dateHistogram = transactionBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends Histogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
 			Map<Long, Average> averages = new HashMap<Long, Average>();
-			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
-				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+			for (Histogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = ((DateTime) dateHistogramBucket.getKey()).getMillis();
 				long count = dateHistogramBucket.getDocCount();
 				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
 				float average = new Double(avg.getValue()).floatValue();
@@ -99,13 +101,15 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
 		
-		FilterBuilder filterBuilder = FilterBuilders.andFilter(FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime), 
-				FilterBuilders.existsFilter(this.tags.getResponsetimeTag()));
+		QueryBuilder filterQuery = QueryBuilders.boolQuery()
+				.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime).to(endTime)) 
+				.must(QueryBuilders.existsQuery(this.tags.getResponsetimeTag()));
 		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-			.setSearchType(SearchType.COUNT)
-			.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+			.setSearchType(SearchType.QUERY_THEN_FETCH)
+			.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(filterQuery))
 			.addAggregation(termsBuilder)
+			.setSize(0)
 			.get();
 		
 		final Map<String, Float> highest = new HashMap<String, Float>();
@@ -113,12 +117,12 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		Terms terms = searchResponse.getAggregations().get(distinctMessagesAggregation);
 		List<Terms.Bucket> transactionBuckets = terms.getBuckets();
 		for (Terms.Bucket transactionBucket : transactionBuckets) {
-			String eventName = transactionBucket.getKey();
-			DateHistogram dateHistogram = transactionBucket.getAggregations().get(dateIntervalAggregation);
-			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			String eventName = transactionBucket.getKeyAsString();
+			Histogram dateHistogram = transactionBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends Histogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
 			Map<Long, Average> averages = new HashMap<Long, Average>();
-			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
-				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+			for (Histogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = ((DateTime) dateHistogramBucket.getKey()).getMillis();
 				long count = dateHistogramBucket.getDocCount();
 				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
 				float average = new Double(avg.getValue()).floatValue();
@@ -146,27 +150,28 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		TermsBuilder directionTermsBuilder = AggregationBuilders.terms(distinctDirectionAggregation).field(this.tags.getDirectionTag()).subAggregation(typeTermsBuilder);
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(directionTermsBuilder);	
 
-		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
-				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
-				FilterBuilders.termFilter(this.tags.getApplicationTag(), application)
-		);		
+		QueryBuilder filterQuery = QueryBuilders.boolQuery()
+				.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime).to(endTime))
+				.must(QueryBuilders.termQuery(this.tags.getApplicationTag(), application));
+		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-				.setSearchType(SearchType.COUNT)
-				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.setSearchType(SearchType.QUERY_THEN_FETCH)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(filterQuery))
 				.addAggregation(dateHistogramBuilder)
+				.setSize(0)
 				.get();
 		
 		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
-		DateHistogram dateHistogram = searchResponse.getAggregations().get(dateIntervalAggregation);
-		List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
-		for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
-			long time = dateHistogramBucket.getKeyAsNumber().longValue();
+		Histogram dateHistogram = searchResponse.getAggregations().get(dateIntervalAggregation);
+		List<? extends Histogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+		for (Histogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+			long time = ((DateTime) dateHistogramBucket.getKey()).getMillis();
 			Terms directionTerms = dateHistogramBucket.getAggregations().get(distinctDirectionAggregation);
 			for (Terms.Bucket directionBucket : directionTerms.getBuckets()) {
-				TelemetryEventDirection direction = TelemetryEventDirection.valueOf(directionBucket.getKey());
+				TelemetryEventDirection direction = TelemetryEventDirection.valueOf(directionBucket.getKeyAsString());
 				Terms typeTerms = directionBucket.getAggregations().get(distinctTypeAggregation);
 				for (Terms.Bucket typeBucket : typeTerms.getBuckets()) {
-					TelemetryEventType type = TelemetryEventType.valueOf(typeBucket.getKey());
+					TelemetryEventType type = TelemetryEventType.valueOf(typeBucket.getKeyAsString());
 					addToTimeBasedCounterDataMap(data, directionToString(direction) + " " + typeToString(type) + " messages", time, typeBucket.getDocCount());
 				}
 			}
@@ -214,16 +219,16 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		DateHistogramBuilder dateHistogramBuilder = AggregationBuilders.dateHistogram(dateIntervalAggregation).field(this.tags.getCreationTimeTag()).interval(timeUnit.toMillis(1)).subAggregation(avgBuilder);
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
 	
-		FilterBuilder filterBuilder = FilterBuilders.andFilter(
-				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
-				FilterBuilders.termFilter(this.tags.getApplicationTag(), application),
-				FilterBuilders.existsFilter(this.tags.getResponsetimeTag())
-		);
+		QueryBuilder filterQuery = QueryBuilders.boolQuery()
+				.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime).to(endTime))
+				.must(QueryBuilders.termQuery(this.tags.getApplicationTag(), application))
+				.must(QueryBuilders.existsQuery(this.tags.getResponsetimeTag()));
 				
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-				.setSearchType(SearchType.COUNT)
-				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.setSearchType(SearchType.QUERY_THEN_FETCH)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(filterQuery))
 				.addAggregation(termsBuilder)
+				.setSize(0)
 				.get();
 
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
@@ -231,12 +236,12 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		Terms terms = searchResponse.getAggregations().get(distinctMessagesAggregation);
 		List<Terms.Bucket> messageBuckets = terms.getBuckets();
 		for (Terms.Bucket messageBucket : messageBuckets) {
-			String eventName = messageBucket.getKey();
-			DateHistogram dateHistogram = messageBucket.getAggregations().get(dateIntervalAggregation);
-			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			String eventName = messageBucket.getKeyAsString();
+			Histogram dateHistogram = messageBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends Histogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
 			Map<Long, Average> averages = new HashMap<Long, Average>();
-			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
-				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+			for (Histogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = ((DateTime) dateHistogramBucket.getKey()).getMillis();
 				long count = dateHistogramBucket.getDocCount();
 				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
 				float average = new Double(avg.getValue()).floatValue();
@@ -259,14 +264,15 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		TermsBuilder termsBuilder = AggregationBuilders.terms(distinctMessagesAggregation).field(this.tags.getNameTag()).subAggregation(dateHistogramBuilder);
 
 		
-		FilterBuilder filterBuilder = FilterBuilders.andFilter(
-				FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime),
-				FilterBuilders.termFilter(this.tags.getApplicationTag(), application)
-		);		
+		QueryBuilder filterQuery = QueryBuilders.boolQuery()
+				.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime).to(endTime))
+				.must(QueryBuilders.termQuery(this.tags.getApplicationTag(), application));
+		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-				.setSearchType(SearchType.COUNT)
-				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.setSearchType(SearchType.QUERY_THEN_FETCH)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(filterQuery))
 				.addAggregation(termsBuilder)
+				.setSize(0)
 				.get();
 
 		final Map<String, Map<Long, Long>> data = new HashMap<String, Map<Long, Long>>();
@@ -274,12 +280,12 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		Terms terms = searchResponse.getAggregations().get(distinctMessagesAggregation);
 		List<Terms.Bucket> messageBuckets = terms.getBuckets();
 		for (Terms.Bucket messageBucket : messageBuckets) {
-			String eventName = messageBucket.getKey();
-			DateHistogram dateHistogram = messageBucket.getAggregations().get(dateIntervalAggregation);
-			List<? extends DateHistogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
+			String eventName = messageBucket.getKeyAsString();
+			Histogram dateHistogram = messageBucket.getAggregations().get(dateIntervalAggregation);
+			List<? extends Histogram.Bucket> dateHistogramBuckets = dateHistogram.getBuckets();
 			Map<Long, Long> counts = new HashMap<Long, Long>();
-			for (DateHistogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
-				long time = dateHistogramBucket.getKeyAsNumber().longValue();
+			for (Histogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
+				long time = ((DateTime) dateHistogramBucket.getKey()).getMillis();
 				long count = dateHistogramBucket.getDocCount();
 				counts.put(time, count);
 			}
@@ -303,19 +309,21 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		if (startTime > endTime) {
 			return Collections.emptyList();
 		}
-		AndFilterBuilder filterBuilder = FilterBuilders.andFilter(
+		BoolQueryBuilder filterQuery = QueryBuilders.boolQuery()
 				// The timeframe of the expired messages. This should always be in the past for this query to work.
-				FilterBuilders.rangeFilter(this.tags.getExpiryTimeTag()).from(startTime).to(endTime),
+				.must(QueryBuilders.rangeQuery(this.tags.getExpiryTimeTag()).from(startTime).to(endTime))
 				// Filter expired messages, or messages without a responsetime (and hence no response is logged).
-				FilterBuilders.orFilter(FilterBuilders.termFilter("expired", true), FilterBuilders.notFilter(FilterBuilders.existsFilter(this.tags.getResponsetimeTag())))
+				.must(QueryBuilders.boolQuery()
+						.should(QueryBuilders.termQuery("expired", true)) 
+						.should(QueryBuilders.notQuery(QueryBuilders.existsQuery(this.tags.getResponsetimeTag())))
 				
-		);
+				);
 		if (application != null) {
-			filterBuilder.add(FilterBuilders.termFilter(this.tags.getApplicationTag(), application));
+			filterQuery.must(QueryBuilders.termQuery(this.tags.getApplicationTag(), application));
 		}
 		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), filterBuilder))
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(filterQuery))
 				.addSort(this.tags.getExpiryTimeTag(), SortOrder.DESC)
 				.addField(this.tags.getNameTag())
 				.addField(this.tags.getCreationTimeTag())
@@ -360,9 +368,10 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		TermsBuilder applicationTermsBuilder = AggregationBuilders.terms(distinctApplicationAggregation).field(this.tags.getApplicationTag()).subAggregation(directionTermsBuilder);
 
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
-				.setSearchType(SearchType.COUNT)
-				.setQuery(QueryBuilders.filteredQuery(QueryBuilders.matchAllQuery(), FilterBuilders.rangeFilter(this.tags.getCreationTimeTag()).from(startTime).to(endTime)))
+				.setSearchType(SearchType.QUERY_THEN_FETCH)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime).to(endTime)))
 				.addAggregation(applicationTermsBuilder)
+				.setSize(0)
 				.get();
 		
 		final Map<String, Long> totals = new HashMap<String, Long>();
@@ -371,16 +380,15 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		Terms applicationTerms = searchResponse.getAggregations().get(distinctApplicationAggregation);
 		List<Terms.Bucket> applicationBuckets = applicationTerms.getBuckets();
 		for (Terms.Bucket applicationBucket : applicationBuckets) {
-			String applicationName = applicationBucket.getKey();
+			String applicationName = applicationBucket.getKeyAsString();
 			Terms directionTerms = applicationBucket.getAggregations().get(distinctDirectionAggregation);
 			Map<String, Long> appTotals = new HashMap<String, Long>();
 			for (Terms.Bucket directionBucket : directionTerms.getBuckets()) {
-				TelemetryEventDirection direction = TelemetryEventDirection.valueOf(directionBucket.getKey());
+				TelemetryEventDirection direction = TelemetryEventDirection.valueOf(directionBucket.getKeyAsString());
 				Terms typeTerms = directionBucket.getAggregations().get(distinctTypeAggregation);
 				for (Terms.Bucket typeBucket : typeTerms.getBuckets()) {
-					TelemetryEventType type = TelemetryEventType.valueOf(typeBucket.getKey());
+					TelemetryEventType type = TelemetryEventType.valueOf(typeBucket.getKeyAsString());
 					appTotals.put(directionToString(direction) + " " + typeToString(type) + " messages", typeBucket.getDocCount());
-					
 				}
 			}
 			totals.put(applicationName, applicationBucket.getDocCount());

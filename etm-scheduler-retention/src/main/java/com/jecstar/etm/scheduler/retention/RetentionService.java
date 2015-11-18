@@ -3,6 +3,7 @@ package com.jecstar.etm.scheduler.retention;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.SortedMap;
 
 import javax.annotation.ManagedBean;
 import javax.ejb.Schedule;
@@ -11,8 +12,7 @@ import javax.ejb.Startup;
 import javax.inject.Inject;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.metadata.AliasMetaData;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.cluster.metadata.AliasOrIndex;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
@@ -42,14 +42,14 @@ public class RetentionService {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Looking for indices to remove.");
 		}		
-		ImmutableOpenMap<String, ImmutableOpenMap<String, AliasMetaData>> aliases = elasticClient.admin().cluster()
+		SortedMap<String, AliasOrIndex> aliases = elasticClient.admin().cluster()
 			    .prepareState().execute()
 			    .actionGet().getState()
-			    .getMetaData().getAliases();
+			    .getMetaData().getAliasAndIndexLookup();
 		if (aliases.containsKey("etm_event_all")) {
-			ImmutableOpenMap<String, AliasMetaData> immutableOpenMap = aliases.get("etm_event_all");
+			AliasOrIndex aliasOrIndex = aliases.get("etm_event_all");
 			List<String> indices = new ArrayList<String>();
-			immutableOpenMap.forEach(c -> indices.add(c.key));
+			aliasOrIndex.getIndices().forEach(c -> indices.add(c.getIndex()));
 			if (indices.size() > this.etmConfiguration.getMaxIndexCount()) {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Found " + (indices.size() - this.etmConfiguration.getMaxIndexCount()) + " indices to remove.");

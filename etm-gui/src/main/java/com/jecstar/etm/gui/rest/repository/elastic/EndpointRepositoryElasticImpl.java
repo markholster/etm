@@ -42,16 +42,17 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.configurationIndex)
 				.setTypes(this.configurationIndexTypeEndpoints)
-				.setSearchType(SearchType.COUNT)
+				.setSearchType(SearchType.QUERY_THEN_FETCH)
 				.setQuery(QueryBuilders.matchAllQuery())
 				.addAggregation(termsBuilder)
+				.setSize(0)
 				.get();
 		
 		List<String> endpointNames = new ArrayList<String>();
 		Terms terms = searchResponse.getAggregations().get(distinctEndpointsAggregation);
 		List<Terms.Bucket> endpointBuckets = terms.getBuckets();
 		for (Terms.Bucket transactionBucket : endpointBuckets) {
-			endpointNames.add(transactionBucket.getKey());
+			endpointNames.add(transactionBucket.getKeyAsString());
 		}
 		int ix = endpointNames.indexOf(this.defaultEndpointConfigName);
 		if (ix != -1) {
