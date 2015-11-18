@@ -80,8 +80,10 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 				long count = dateHistogramBucket.getDocCount();
 				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
 				float average = new Double(avg.getValue()).floatValue();
-				averages.put(time, new Average(average, count));
-				storeWhenHighest(highest, transactionName, average);
+				if (count != 0) {
+					averages.put(time, new Average(average, count));
+					storeWhenHighest(highest, transactionName, average);
+				}
 			}
 			data.put(transactionName, averages);
 		}
@@ -126,8 +128,10 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 				long count = dateHistogramBucket.getDocCount();
 				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
 				float average = new Double(avg.getValue()).floatValue();
-				averages.put(time, new Average(average, count));
-				storeWhenHighest(highest, eventName, average);
+				if (count != 0) {
+					averages.put(time, new Average(average, count));
+					storeWhenHighest(highest, eventName, average);
+				}
 			}
 			data.put(eventName, averages);
 		}
@@ -245,7 +249,9 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 				long count = dateHistogramBucket.getDocCount();
 				Avg avg = dateHistogramBucket.getAggregations().get(avgResponsetimeAggregation);
 				float average = new Double(avg.getValue()).floatValue();
-				averages.put(time, new Average(average, count));
+				if (count != 0) {
+					averages.put(time, new Average(average, count));
+				}
 			}
 			data.put(eventName, averages);
 		}

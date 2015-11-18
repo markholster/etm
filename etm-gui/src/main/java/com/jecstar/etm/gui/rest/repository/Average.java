@@ -11,6 +11,9 @@ public class Average {
 	}
 	
 	public float getAverage() {
+		if (this.count == 0) {
+			return 0;
+		}
 		return this.value;
 	}
 	
