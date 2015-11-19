@@ -244,6 +244,7 @@ Als laatste moet er per Wildfly instantie een aantal System Properties worden to
 |Key|Value
 |etm.cluster.name|<de naam van uw ETM cluster>
 |etm.master.addresses|Een komma gescheiden lijst van Elasticsearch master nodes in de vorm van ip-adres:poortnr.
+|etm.node.name|Optioneel, de naam van deze node.
 |=======================
 
 [[chap-ETM_Installation-ETM_Components]]
