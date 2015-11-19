@@ -155,9 +155,73 @@ Voor uitgebreide handleidingen dient u de handleidingen van Wildfly en Elasticse
 * https://www.elastic.co/guide/en/elasticsearch/reference/current/[Elasticsearch documentatie]
 
 === Elasticsearch cluster
-In verband met data replicatie wordt er voor het gebruik van ETM in een productie omgeving een minimum van 2 Elasticsearch installaties geadviseerd. Hiervoor kan
-het <<standalone-elasticsearch, Standalone Elasticsearch>> hoofdstuk worden uitgevoerd op verschillende machines. De instanties zullen elkaar automatisch vinden
-en een cluster vormen.
+Een Elasticsearch cluster heeft een zogenaamde master node nodig om goed te functioneren. Deze master node bepaald of een index aangemaakt mag worden, en op welke nodes
+in het cluster dit mag gebeuren. Het bepalen welke node de master node wordt gebeurd aan de hand van een stemmingsronde onder de nodes. Om een stabiel cluster te krijgen
+is het dus noodzakelijk een oneven aantal mogelijke master nodes te hebben. 1 master node zorgt voor een single-point-of-failure. Het dringend advies is om 3 nodes in
+te zetten als dedicated master nodes. Deze nodes zullen geen data bevatten en zijn enkel verantwoordelijk voor het cluster management. Is uw cluster kleinschalig, dan valt 
+te overwegen enkele data nodes ook als master nodes in te zetten.
+
+
+==== Installatie Elasticsearch master nodes
+Download Elasticsearch {elasticsearch_version} van de Elastic https://www.elastic.co/downloads/past-releases[website], en extract de bestanden van het 
+gedownloade archief. Het archief kan uitgepakt worden naar elke willekeurige locatie. Deze locatie wordt vanaf nu <ELASTICSEARCH_INSTALL_DIR> genoemd.
+
+Open nadat Elasticsearch is uitgepakt het bestand <ELASTICSEARCH_INSTALL_DIR>/config/elasticsearch.yml en pas de volgende waardes aan:
+
+[options="header"]
+|=======================
+|Parameter|Waarde
+|cluster.name|<de naam van uw ETM cluster>
+|node.name |<de unieke naam van uw node, bijv de hostname_master>
+|bootstrap.mlockall|true
+|http.enabled|false
+|node.data|false
+|node.master|true
+|transport.tcp.port|<de poort waarop de listener moet draaien, bij 9301>
+|network.host|<de naam of het adres voor de socket binding, bijvoorbeeld 10.0.0.1>
+|discovery.zen.ping.multicast.enabled|false
+|discovery.zen.ping.unicast.hosts|<de lijst met ip-adressen en poort van andere master nodes, bijvoorbeeld ["10.0.0.1:9302", "10.0.0.1:9303"]
+|discovery.zen.minimum_master_nodes: <1 meer dan de helft van het aantal master nodes, in dit voorbeeld dus 2> 
+|=======================
+
+Nadat de wijzigingen zijn doorgevoerd kunt u Elasticsearch master nodes starten door  
+[source,shell] 
+----
+<ELASTICSEARCH_INSTALL_DIR>/bin/elasticsearch 
+----
+uit te voeren vanaf een command prompt. Zodra het aantal nodes gespecificeerd in 'discovery.zen.minimum_master_nodes' gestart is zal er een master node aangewezen worden.
+ 
+==== Installatie Elasticsearch data nodes
+Nadat de master nodes gestart zijn is het tijd om de data nodes te gaan installeren en configureren. Extract wederom de bestanden uit het gedownloadde archief naar
+een gewenste locatie. Open nadat Elasticsearch is uitgepakt het bestand <ELASTICSEARCH_INSTALL_DIR>/config/elasticsearch.yml en pas de volgende waardes aan:
+
+[options="header"]
+|=======================
+|Parameter|Waarde
+|cluster.name|<de naam van uw ETM cluster>
+|node.name |<de unieke naam van uw node, bijv de hostname_master>
+|http.enabled|false
+|node.data|true
+|node.master|false
+|transport.tcp.port|<de poort waarop de listener moet draaien, bij 9310>
+|network.host|<de naam of het adres voor de socket binding, bijvoorbeeld 10.0.0.1>
+|discovery.zen.ping.multicast.enabled|false
+|discovery.zen.ping.unicast.hosts|<de lijst met ip-adressen en poort van de master nodes, bijvoorbeeld ["10.0.0.1:9301", "10.0.0.1:9302", "10.0.0.1:9303"]
+|discovery.zen.minimum_master_nodes: <1 meer dan de helft van het aantal master nodes, in dit voorbeeld dus 2>
+|index.translog.durability|async 
+|=======================
+
+Kopieer vervolgende de bestanden uit <ETM_UNZIP_DIR>/resources/elasticsearch/scripts/ naar <ELASTICSEARCH_INSTALL_DIR>/config/scripts/. Het is mogelijk
+dat de scripts directory nog niet bestaat en deze nog aangemaakt moet worden. 
+
+Nadat de wijzigingen zijn doorgevoerd kunt u Elasticsearch starten door  
+[source,shell] 
+----
+<ELASTICSEARCH_INSTALL_DIR>/bin/elasticsearch 
+----
+uit te voeren vanaf een command prompt.
+
+Om replicatie van de data mogelijk te maken is het nodig meerdere data instanties aan te maken.
 
 === Wildfly cluster
 
@@ -179,7 +243,7 @@ Als laatste moet er per Wildfly instantie een aantal System Properties worden to
 |=======================
 |Key|Value
 |etm.cluster.name|<de naam van uw ETM cluster>
-|etm.cluster.addresses|Een optionele komma gescheiden lijst van Elasticsearch hosts in de vorm van ip-adres:poortnr. Gebruik dit alleen als uw firewall de auto-discovery functionaliteit van Elasticsearch blokkeert.
+|etm.master.addresses|Een komma gescheiden lijst van Elasticsearch master nodes in de vorm van ip-adres:poortnr.
 |=======================
 
 [[chap-ETM_Installation-ETM_Components]]

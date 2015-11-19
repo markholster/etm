@@ -8,10 +8,8 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
@@ -45,28 +43,25 @@ public class ElasticClientProducer {
 					Builder settings = Settings.settingsBuilder().put("client.transport.sniff", true)
 							.put("cluster.name", clusterName)
 							.put("path.home", "./");
-					String clusterAddresses = System.getProperty("etm.cluster.addresses");
-					if (clusterAddresses != null) {
-						String[] addresses = clusterAddresses.split(",");
-						TransportClient transportClient = TransportClient.builder().settings(settings).build();
-						for (String address : addresses) {
-							String[] split = address.split(":");
-							 transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(split[0]), Integer.valueOf(split[1])));
-						}
-						this.elasticClient = transportClient;
+					String masterAddresses = System.getProperty("etm.master.addresses");
+					if (masterAddresses != null) {
+						settings.put("node.master", false);
+						settings.put("discovery.zen.ping.multicast.enabled", false);
+						settings.put("discovery.zen.ping.unicast.hosts", masterAddresses);
+					} 
+					String nodeName = System.getProperty("etm.node.name");
+					if (nodeName != null) {
+						nodeName = "SchedulerNode@" + nodeName;
 					} else {
-						String nodeName = System.getProperty("etm.node.name");
-						if (nodeName == null) {
-							nodeName = "SchedulerNode@" + getHostName();
-						}
-						settings.put("http.enabled", false);
-						settings.put("node.name", nodeName);
-						this.node = NodeBuilder.nodeBuilder().settings(settings)
-							        .client(true)
-							        .data(false)
-							        .clusterName(clusterName).node();
-						this.elasticClient =  this.node.client();
+						nodeName = "SchedulerNode@" + getHostName();
 					}
+					settings.put("http.enabled", false);
+					settings.put("node.name", nodeName);
+					this.node = NodeBuilder.nodeBuilder().settings(settings)
+						        .client(true)
+						        .data(false)
+						        .clusterName(clusterName).node();
+					this.elasticClient =  this.node.client();
                 } catch (Exception e) {
                 	this.elasticClient = null;
                 	if (log.isErrorLevelEnabled()) {

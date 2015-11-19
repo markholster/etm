@@ -42,7 +42,7 @@ public class RetentionService {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Looking for indices to remove.");
 		}		
-		SortedMap<String, AliasOrIndex> aliases = elasticClient.admin().cluster()
+		SortedMap<String, AliasOrIndex> aliases = this.elasticClient.admin().cluster()
 			    .prepareState().execute()
 			    .actionGet().getState()
 			    .getMetaData().getAliasAndIndexLookup();
@@ -51,13 +51,13 @@ public class RetentionService {
 			List<String> indices = new ArrayList<String>();
 			aliasOrIndex.getIndices().forEach(c -> indices.add(c.getIndex()));
 			if (indices.size() > this.etmConfiguration.getMaxIndexCount()) {
-				if (log.isDebugLevelEnabled()) {
-					log.logDebugMessage("Found " + (indices.size() - this.etmConfiguration.getMaxIndexCount()) + " indices to remove.");
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Found " + (indices.size() - this.etmConfiguration.getMaxIndexCount()) + " indices to remove.");
 				}		
 				Collections.sort(indices);
 				for (int i = 0; i < indices.size() - this.etmConfiguration.getMaxIndexCount(); i++) {
-					if (log.isDebugLevelEnabled()) {
-						log.logDebugMessage("Removing index '" + indices.get(i) + "'.");
+					if (log.isInfoLevelEnabled()) {
+						log.logInfoMessage("Removing index '" + indices.get(i) + "'.");
 					}		
 					this.elasticClient.admin().indices().prepareDelete(indices.get(i)).get();
 				}

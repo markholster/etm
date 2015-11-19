@@ -33,7 +33,9 @@ public class ConfigurationProducer {
 		synchronized (this) {
 			if (this.configuration == null) {
 				String nodeName = System.getProperty("etm.node.name");
-				if (nodeName == null) {
+				if (nodeName != null) {
+					nodeName = "ProcessorNode@" + nodeName;
+				} else {
 					nodeName = "ProcessorNode@" + getHostName();
 				}
                 this.configuration = new ElasticBackedEtmConfiguration(nodeName, "processor", this.elasticClient);

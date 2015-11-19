@@ -2,6 +2,7 @@ package com.jecstar.etm.gui.rest.repository.elastic;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -70,15 +71,20 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 
 	@Override
 	public List<Node> getNodes() {
-		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient, NodesInfoAction.INSTANCE).all().get(TimeValue.timeValueMillis(10000));
-		NodeInfo[] nodes = nodesInfoResponse.getNodes();
+		ClusterStateResponse clusterStateResponse = new ClusterStateRequestBuilder(this.elasticClient, ClusterStateAction.INSTANCE).clear().setNodes(true).get();
 		List<Node> result = new ArrayList<Node>();
-		for (NodeInfo nodeInfo : nodes) {
+		clusterStateResponse.getState().getNodes().getNodes().forEach(c -> {
 			Node node = new Node();
-			node.name = nodeInfo.getNode().getName();
-			node.id = nodeInfo.getNode().getId();
+			node.name = c.value.getName();
+			node.id = c.value.getId();
 			result.add(node);
-		}
+		});
+		Collections.sort(result, new Comparator<Node>() {
+			@Override
+			public int compare(Node o1, Node o2) {
+				return o1.name.toLowerCase().compareTo(o2.name.toLowerCase());
+			}
+		});
 		return result;
 	}
 
@@ -169,6 +175,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 	@Override
 	public NodeStatus getNodeStatus(String nodeId) {
 		NodesInfoResponse nodesInfoResponse = new NodesInfoRequestBuilder(this.elasticClient, NodesInfoAction.INSTANCE)
+				.all()
 				.setNodesIds(nodeId)
 				.get(TimeValue.timeValueMillis(10000));
 		NodeStatus nodeStatus = new NodeStatus();
