@@ -60,12 +60,12 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + elementName + "\": {");
+		buffer.append("\"" + elementName + "\": [");
 		buffer.append(elementValues.entrySet().stream()
-				.map(c -> "\"" + escapeToJson(c.getKey()) + "\": \"" + escapeToJson(c.getValue()) + "\"")
+				.map(c -> "{\"" + this.tags.getMapKeyTag() + "\": \"" + escapeToJson(c.getKey()) + "\", \"" + this.tags.getMapValueTag() + "\": \"" + escapeToJson(c.getValue()) + "\"}")
 				.sorted()
 				.collect(Collectors.joining(", ")));
-		buffer.append("}");
+		buffer.append("]");
 		return true;
 	}
 
@@ -82,7 +82,7 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		telemetryEvent.application = getString(this.tags.getApplicationTag(), valueMap);
 		telemetryEvent.content = getString(this.tags.getContentTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
-		getArray(this.tags.getCorrelationDataTag(), valueMap).forEach(c -> c.forEach((k, v) -> telemetryEvent.correlationData.put(k, v.toString())));
+		getArray(this.tags.getCorrelationDataTag(), valueMap).forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
 		Long longValue = getLong(this.tags.getCreationTimeTag(), valueMap);
 		if (longValue != null) {
 			telemetryEvent.creationTime.setTime(longValue);
@@ -96,7 +96,7 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		if (longValue != null) {
 			telemetryEvent.expiryTime.setTime(longValue);
 		}
-		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> c.forEach((k, v) -> telemetryEvent.metadata.put(k, v.toString())));
+		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> telemetryEvent.metadata.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
 		telemetryEvent.name = getString(this.tags.getNameTag(), valueMap);
 		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
 		telemetryEvent.transactionName = getString(this.tags.getTransactionNameTag(), valueMap);

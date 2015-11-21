@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -628,7 +629,8 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 				.setQuery(QueryBuilders.boolQuery()
 						.must(QueryBuilders.matchAllQuery())
 						.filter(QueryBuilders.boolQuery()
-								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + "." + correlationKey, correlationData.get(correlationKey)))
+								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + ".key", correlationKey))
+								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + ".value", correlationData.get(correlationKey)))
 								.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime.getTime()).to(finishTime.getTime()))))
 				.setSize(this.dataCorrelationMaxResults)
 				.addField(this.tags.getIdTag())
@@ -807,7 +809,12 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> getMapValue(String key, Map<String, Object> valueMap) {
 		if (valueMap.containsKey(key)) {
-			return (Map<String, Object>) valueMap.get(key);
+			Map<String, Object> result = new HashMap<String, Object>();
+			List<Map<String, Object>> mapValues = (List<Map<String, Object>>) valueMap.get(key);
+			for (Map<String, Object> mapValue : mapValues) {
+				result.put(mapValue.get(this.tags.getMapKeyTag()).toString(), mapValue.get(this.tags.getMapValueTag()));
+			}
+			return result;
 		}
 		return Collections.emptyMap();		
 	}

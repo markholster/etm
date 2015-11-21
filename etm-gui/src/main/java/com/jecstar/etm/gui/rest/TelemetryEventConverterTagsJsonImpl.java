@@ -1,7 +1,16 @@
 package com.jecstar.etm.gui.rest;
 
 
+// TODO remove this duplicate in favor of the one in the processor.
 public class TelemetryEventConverterTagsJsonImpl {
+	
+	public String getMapKeyTag() {
+		return "key";
+	}
+	
+	public String getMapValueTag() {
+		return "value";
+	}
 	
 	public String getIdTag() {
 		return "id";
