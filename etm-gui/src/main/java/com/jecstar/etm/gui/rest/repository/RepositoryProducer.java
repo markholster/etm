@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 
 import org.elasticsearch.client.Client;
 
+import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.gui.rest.repository.elastic.EndpointRepositoryElasticImpl;
 import com.jecstar.etm.gui.rest.repository.elastic.NodeRepositoryElasticImpl;
 import com.jecstar.etm.gui.rest.repository.elastic.QueryRepositoryElasticImpl;
@@ -20,6 +21,10 @@ public class RepositoryProducer {
 	@Inject
 	@GuiConfiguration
 	private Client elasticClient;
+	
+	@Inject
+	@GuiConfiguration
+	private EtmConfiguration etmConfiguration;
 
 	private StatisticsRepository statisticsRepository;
 	private QueryRepository queryRepository;
@@ -50,7 +55,7 @@ public class RepositoryProducer {
 	public EndpointRepository getEndpointRepository() {
 		synchronized (this) {
 	        if (this.endpointRepository == null) {
-	        	this.endpointRepository = new EndpointRepositoryElasticImpl(this.elasticClient);
+	        	this.endpointRepository = new EndpointRepositoryElasticImpl(this.elasticClient, this.etmConfiguration);
 	        }
         }
 		return this.endpointRepository;
@@ -60,7 +65,7 @@ public class RepositoryProducer {
 	public NodeRepository getNodeRepository() {
 		synchronized (this) {
 	        if (this.nodeRepository == null) {
-	        	this.nodeRepository = new NodeRepositoryElasticImpl(this.elasticClient);
+	        	this.nodeRepository = new NodeRepositoryElasticImpl(this.elasticClient, this.etmConfiguration);
 	        }
         }
 		return this.nodeRepository;

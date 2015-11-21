@@ -27,6 +27,7 @@ import org.elasticsearch.monitor.jvm.JvmInfo;
 import org.elasticsearch.monitor.os.OsInfo;
 
 import com.google.common.base.Predicate;
+import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterTagsJsonImpl;
 import com.jecstar.etm.gui.rest.ClusterStatus;
@@ -46,9 +47,11 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 	
 	private final EtmConfigurationConverterTags tags = new EtmConfigurationConverterTagsJsonImpl();
 	private final Client elasticClient;
+	private final EtmConfiguration etmConfiguration;
 
-	public NodeRepositoryElasticImpl(Client elasticClient) {
+	public NodeRepositoryElasticImpl(Client elasticClient, EtmConfiguration etmConfiguration) {
 		this.elasticClient = elasticClient;
+		this.etmConfiguration = etmConfiguration;
 	}
 	
 	@Override
@@ -92,7 +95,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 	public void update(String nodeName, Map<String, Object> values) {
 		if ("cluster".equals(nodeName)) {
 			this.elasticClient.prepareUpdate(this.indexName, this.indexType, this.defaultId)
-				.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 				.setDetectNoop(true)
 				.setDoc(values)
 				.get();
@@ -114,11 +117,11 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 			}
 			if (values.size() == 0) {
 				this.elasticClient.prepareDelete(this.indexName, this.indexType, nodeName)
-					.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
+					.setConsistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 					.get();
 			} else {
 				this.elasticClient.prepareIndex(this.indexName, this.indexType, nodeName)
-					.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
+					.setConsistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 					.setSource(values)
 					.get();
 				

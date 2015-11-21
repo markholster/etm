@@ -107,6 +107,14 @@
                                                 name="persisting_bulk_size" type="number"
                                                 class="form-control" required="required" min="1" />
                                         </div>
+                                        <label for="etm_write_consistency"
+                                            class="col-sm-3 control-label">Write consistency</label>
+                                        <div class="col-sm-3">
+                                            <select id="etm_write_consistency"
+                                                name="write_consistency"
+                                                class="form-control" required="required">
+                                            </select>    
+                                        </div>
 									</div>
 
 									<input type="submit" class="btn btn-default" value="Save" />
@@ -372,6 +380,10 @@ $(function () {
 			if (!data) {
 			    return;
 			}
+			$('#etm_write_consistency').empty();
+			$.each(data['write_consistency_possibilities'], function(index, write_consistency) {
+                $('#etm_write_consistency').append($('<option></option>').attr("value", write_consistency).text(write_consistency));
+            });     
 			$('#etm_enhancing_handler_count').val(data['enhancing_handler_count']);
 			$('#etm_persisting_handler_count').val(data['persisting_handler_count']);
 			$('#etm_ringbuffer_size').val(data['event_buffer_size']);
@@ -379,6 +391,7 @@ $(function () {
 			$('#etm_max_index_count').val(data['max_index_count']);
 			$('#etm_shards_per_index').val(data['shards_per_index']);
 			$('#etm_replicas_per_index').val(data['replicas_per_index']);
+			$('#etm_write_consistency').val(data['write_consistency']);
 		}).fail(function(jqXHR) {
             $("#etm_form_errorBox").text('Error loading node data: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
             $("#etm_form_errorBox").show('fast');
@@ -387,10 +400,12 @@ $(function () {
 		    $('#etm_max_index_count').removeAttr('readonly', 'readonly');
 		    $('#etm_shards_per_index').removeAttr('readonly', 'readonly');
 		    $('#etm_replicas_per_index').removeAttr('readonly', 'readonly');
+		    $('#etm_write_consistency').removeAttr('readonly', 'readonly');
 		} else {
             $('#etm_max_index_count').attr('readonly', 'readonly');
             $('#etm_shards_per_index').attr('readonly', 'readonly');
             $('#etm_replicas_per_index').attr('readonly', 'readonly');
+		    $('#etm_write_consistency').attr('readonly', 'readonly');
 		}
 		$.getJSON('../rest/admin/status/' + encodeURIComponent(node.id), function (data) {
 		    if (!data) {

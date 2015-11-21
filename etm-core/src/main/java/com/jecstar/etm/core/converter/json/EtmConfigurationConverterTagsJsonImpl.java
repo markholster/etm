@@ -44,4 +44,9 @@ public class EtmConfigurationConverterTagsJsonImpl implements EtmConfigurationCo
 		return "max_index_count";
 	}
 
+	@Override
+	public String getWriteConsistencyTag() {
+		return "write_consistency";
+	}
+
 }

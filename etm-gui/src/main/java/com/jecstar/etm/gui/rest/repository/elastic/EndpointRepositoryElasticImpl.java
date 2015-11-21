@@ -18,6 +18,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
+import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.converter.json.AbstractJsonConverter;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
@@ -30,10 +31,12 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 	private final String configurationIndexTypeEndpoints = "endpoint";
 	private final String defaultEndpointConfigName = "*";
 	private final Client elasticClient;
+	private final EtmConfiguration etmConfiguration;
 	
 
-	public EndpointRepositoryElasticImpl(Client elasticClient) {
+	public EndpointRepositoryElasticImpl(Client elasticClient, EtmConfiguration etmConfiguration) {
 	    this.elasticClient = elasticClient;
+	    this.etmConfiguration = etmConfiguration;
     }
 	
 	public List<String> getEndpointNames() {
@@ -82,7 +85,7 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 	
 	public void deleteEndpointConfiguration(String endpointName) {
 		this.elasticClient.prepareDelete(this.configurationIndex, this.configurationIndexTypeEndpoints, endpointName)
-			.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 			.get();
     }
 	
@@ -115,7 +118,7 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 		source.put("correlation_parsers", toExpressionCongigurationMap(endpointConfiguration.correlationParsers));
 		source.put("transactionname_parsers", toExpressionConfigurationList(endpointConfiguration.transactionNameParsers));
 		this.elasticClient.prepareUpdate(this.configurationIndex, this.configurationIndexTypeEndpoints, endpointConfiguration.name)
-			.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 			.setDocAsUpsert(true)
 			.setDoc(source)
 			.get();

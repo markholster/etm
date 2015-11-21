@@ -65,25 +65,25 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		String index = getElasticIndexName();
 		
 		IndexRequest indexRequest = new IndexRequest(index, this.eventIndexType, event.id)
-				.consistencyLevel(WriteConsistencyLevel.QUORUM)
+				.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 		        .source(this.eventConverter.convert(event));
 		UpdateRequest updateRequest = new UpdateRequest(index, this.eventIndexType, event.id)
 				.script(new Script("etm_update-event", ScriptType.FILE, "groovy",  this.updateScriptBuilder.createUpdateParameterMap(event, this.tags)))
 		        .upsert(indexRequest)
 		        .detectNoop(true)
-		        .consistencyLevel(WriteConsistencyLevel.QUORUM)
+		        .consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 		        .retryOnConflict(5);
 		this.bulkRequest.add(updateRequest);
 		
 		if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && event.correlationId != null) {
 			indexRequest = new IndexRequest(index, this.eventIndexType, event.correlationId)
-					.consistencyLevel(WriteConsistencyLevel.QUORUM)
+					.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 			        .source("{ \"response_handling_time\": " + event.creationTime.getTime() + ", \"child_correlation_ids\": [\"" + escapeToJson(event.id) + "\"] }");
 			updateRequest = new UpdateRequest(index, this.eventIndexType, event.correlationId)
 			        .script(new Script("etm_update-request-with-responsedata", ScriptType.FILE, "groovy", this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags)))
 			        .upsert(indexRequest)
 			        .detectNoop(true)
-			        .consistencyLevel(WriteConsistencyLevel.QUORUM)
+			        .consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 			        .retryOnConflict(5);
 			this.bulkRequest.add(updateRequest);
 		}

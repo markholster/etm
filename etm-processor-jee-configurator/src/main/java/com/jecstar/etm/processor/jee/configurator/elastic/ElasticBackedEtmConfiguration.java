@@ -12,6 +12,7 @@ import org.elasticsearch.common.settings.Settings;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.License;
+import com.jecstar.etm.core.configuration.WriteConsistency;
 import com.jecstar.etm.core.converter.EtmConfigurationConverter;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterJsonImpl;
 
@@ -77,11 +78,16 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return super.getReplicasPerIndex();
 	}
 	
-	
 	@Override
 	public int getMaxIndexCount() {
 		reloadConfigurationWhenNecessary();		
 		return super.getMaxIndexCount();
+	}
+	
+	@Override
+	public WriteConsistency getWriteConsistency() {
+		reloadConfigurationWhenNecessary();
+		return super.getWriteConsistency();
 	}
 	
 	private boolean reloadConfigurationWhenNecessary() {
@@ -133,9 +139,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 					.put("number_of_replicas", 1))
 			.addMapping("_default_", createMapping())
 			.get();
+		EtmConfiguration tempConfig = new EtmConfiguration("temp-for-creating-default", getComponent());
 		this.elasticClient.prepareIndex(this.indexName, this.indexType, this.defaultId)
-			.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
-			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent()))).get();
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(tempConfig.getWriteConsistency().name()))
+			.setSource(this.etmConfigurationConverter.convert(null, tempConfig)).get();
 	}
 
 	private String createMapping() {

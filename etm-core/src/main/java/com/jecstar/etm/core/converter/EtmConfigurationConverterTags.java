@@ -17,5 +17,7 @@ public interface EtmConfigurationConverterTags {
 	String getReplicasPerIndexTag();
 	
 	String getMaxIndexCountTag();
+	
+	String getWriteConsistencyTag();
 
 }

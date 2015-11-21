@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonParser.NumberType;
 import com.fasterxml.jackson.core.JsonToken;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEventDirection;
+import com.jecstar.etm.core.configuration.WriteConsistency;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -378,6 +379,11 @@ public class AdminService {
         			}
         		}
         	}
+        	generator.writeArrayFieldStart("write_consistency_possibilities");
+        	for (WriteConsistency writeConsistency : WriteConsistency.values()) {
+        		generator.writeString(writeConsistency.name());
+        	}
+        	generator.writeEndArray();
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();
@@ -402,11 +408,15 @@ public class AdminService {
 	        	token = jsonParser.nextToken();
 	        	if (JsonToken.FIELD_NAME.equals(token)) {
 	        		String key = jsonParser.getCurrentName();
-	        		jsonParser.nextToken();
-	        		NumberType numberType = jsonParser.getNumberType();
-	        		if (numberType == null) {
+	        		JsonToken currentToken = jsonParser.nextToken();
+	        		if (currentToken == JsonToken.VALUE_STRING) {
 	        			values.put(key, jsonParser.getText());
-	        		} else {
+	        		} else if (currentToken == JsonToken.VALUE_FALSE) {
+	        			values.put(key, false);
+	        		} else if (currentToken == JsonToken.VALUE_TRUE) {
+	        			values.put(key, true);
+	        		} else if (currentToken == JsonToken.VALUE_NUMBER_FLOAT || currentToken == JsonToken.VALUE_NUMBER_INT) {
+	        			NumberType numberType = jsonParser.getNumberType();
 	        			switch (numberType) {
 	        			case INT:
 	        				values.put(key, jsonParser.getIntValue());
@@ -425,7 +435,6 @@ public class AdminService {
 							break;
 						}
 	        		}
-	        		
 	        	}
 	        }
 	        if (values.size() > 0) {

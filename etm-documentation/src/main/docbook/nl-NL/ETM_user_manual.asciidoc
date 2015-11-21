@@ -121,7 +121,14 @@ aantal shards = (100 / 32) + 1 = 4.1
 Naast spreiding is er ook de mogelijkheid om de data gedupliceerd op te slaan in het cluster. Hoe vaak de data gedupliceerd moet worden is in te stellen via de 'Replicas per index'
 instelling. Een waarde van 1 of 2 is het meest optimaal. Er mogen in dat geval 1 of 2 nodes uitstaan/uitvallen voordat er data verloren gaat.   
 
-image:usage/retention-config.png["Data spreiding invoer", link="usage/data-duplication.png"]
+image:usage/data-duplication.png["Data spreiding invoer", link="usage/data-duplication.png"]
+
+De instelling 'Write Consistency' bepaalt wanneer een schrijf- of delete operatie in het cluster afgerond is. De instelling heeft 3 mogelijk opties:
+
+* ONE, een operatie is afgerond zodra 1 van de nodes de actie heeft afgehandeld.
+* QUORUM, een operatie is afgerond zodra <aantal replica's> / 2 + 1 nodes de actie hebben afgehandeld. Indien het aantal replica's op 1 is ingesteld is de actie afgerond
+ indien 1 van de nodes de actie uitgevoerd heeft.
+* ALL, een operatie is afgerond zodra alle replica's de actie hebben afgehandeld. 
 
 [[chap-ETM_Usage-Remove_Events]]
 == Events verwijderen

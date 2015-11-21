@@ -16,6 +16,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
 	public static final String CONFIG_KEY_MAX_INDEX_COUNT = "maxIndexCount";
+	public static final String CONFIG_KEY_WRITE_CONSISTENCY = "writeConsistency";
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -26,6 +27,7 @@ public class EtmConfiguration {
 	private int persistingBulkSize = 50;
 	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 1;
+	private WriteConsistency writeConsistency = WriteConsistency.QUORUM;
 	
 	// Data configuration properties;
 	private int maxIndexCount = 7; 
@@ -134,6 +136,17 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public WriteConsistency getWriteConsistency() {
+		return this.writeConsistency;
+	}
+	
+	public EtmConfiguration setWriteConsistency(WriteConsistency writeConsistency) {
+		if (writeConsistency != null) {
+			this.writeConsistency = writeConsistency;
+		}
+		return this;
+	}
 
 	public String getNodeName() {
 		return this.nodeName;
@@ -199,6 +212,10 @@ public class EtmConfiguration {
 		if (this.maxIndexCount != etmConfiguration.getMaxIndexCount()) {
 			 setMaxIndexCount(etmConfiguration.getMaxIndexCount());
 			 changed.add(CONFIG_KEY_MAX_INDEX_COUNT);
+		}
+		if (!this.writeConsistency.equals(etmConfiguration.getWriteConsistency())) {
+			setWriteConsistency(etmConfiguration.getWriteConsistency());
+			changed.add(CONFIG_KEY_WRITE_CONSISTENCY);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);
