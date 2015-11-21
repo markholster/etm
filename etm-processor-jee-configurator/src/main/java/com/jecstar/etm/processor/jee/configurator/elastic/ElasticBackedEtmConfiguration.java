@@ -134,7 +134,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			.addMapping("_default_", createMapping())
 			.get();
 		this.elasticClient.prepareIndex(this.indexName, this.indexType, this.defaultId)
-			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
 			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent()))).get();
 	}
 

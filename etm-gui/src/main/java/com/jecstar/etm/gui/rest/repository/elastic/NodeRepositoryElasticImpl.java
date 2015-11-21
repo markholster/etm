@@ -92,7 +92,7 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 	public void update(String nodeName, Map<String, Object> values) {
 		if ("cluster".equals(nodeName)) {
 			this.elasticClient.prepareUpdate(this.indexName, this.indexType, this.defaultId)
-				.setConsistencyLevel(WriteConsistencyLevel.ONE)
+				.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
 				.setDetectNoop(true)
 				.setDoc(values)
 				.get();
@@ -114,11 +114,11 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 			}
 			if (values.size() == 0) {
 				this.elasticClient.prepareDelete(this.indexName, this.indexType, nodeName)
-					.setConsistencyLevel(WriteConsistencyLevel.ONE)
+					.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
 					.get();
 			} else {
 				this.elasticClient.prepareIndex(this.indexName, this.indexType, nodeName)
-					.setConsistencyLevel(WriteConsistencyLevel.ONE)
+					.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
 					.setSource(values)
 					.get();
 				

@@ -82,7 +82,7 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 	
 	public void deleteEndpointConfiguration(String endpointName) {
 		this.elasticClient.prepareDelete(this.configurationIndex, this.configurationIndexTypeEndpoints, endpointName)
-			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
 			.get();
     }
 	
@@ -115,7 +115,7 @@ public class EndpointRepositoryElasticImpl extends AbstractJsonConverter impleme
 		source.put("correlation_parsers", toExpressionCongigurationMap(endpointConfiguration.correlationParsers));
 		source.put("transactionname_parsers", toExpressionConfigurationList(endpointConfiguration.transactionNameParsers));
 		this.elasticClient.prepareUpdate(this.configurationIndex, this.configurationIndexTypeEndpoints, endpointConfiguration.name)
-			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.setConsistencyLevel(WriteConsistencyLevel.QUORUM)
 			.setDocAsUpsert(true)
 			.setDoc(source)
 			.get();
