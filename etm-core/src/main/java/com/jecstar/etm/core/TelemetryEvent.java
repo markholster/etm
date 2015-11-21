@@ -1,12 +1,8 @@
-package com.jecstar.etm.processor;
+package com.jecstar.etm.core;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.jecstar.etm.core.TelemetryEventDirection;
-import com.jecstar.etm.core.TelemetryEventType;
-
 
 public class TelemetryEvent implements Cloneable {
 	

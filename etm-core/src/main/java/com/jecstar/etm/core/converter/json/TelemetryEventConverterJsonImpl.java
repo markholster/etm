@@ -1,14 +1,13 @@
-package com.jecstar.etm.processor.converter.json;
+package com.jecstar.etm.core.converter.json;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
-import com.jecstar.etm.core.converter.json.AbstractJsonConverter;
-import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.converter.TelemetryEventConverter;
-import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.converter.TelemetryEventConverter;
+import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.

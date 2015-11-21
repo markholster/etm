@@ -9,9 +9,9 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.EtmException;
+import com.jecstar.etm.core.EventCommand;
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.processor.EventCommand;
-import com.jecstar.etm.processor.TelemetryEvent;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryEventProcessor {

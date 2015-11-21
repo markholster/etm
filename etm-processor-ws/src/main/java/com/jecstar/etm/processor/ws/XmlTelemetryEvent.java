@@ -7,9 +7,9 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;
 
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
-import com.jecstar.etm.processor.TelemetryEvent;
 
 public class XmlTelemetryEvent {
 

@@ -1,9 +1,9 @@
 package com.jecstar.etm.processor.processor;
 
+import com.jecstar.etm.core.TelemetryEvent;
+import com.jecstar.etm.core.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.converter.json.TelemetryEventConverterJsonImpl;
 import com.lmax.disruptor.ExceptionHandler;
 
 public class TelemetryEventExceptionHandler implements ExceptionHandler<TelemetryEvent> {

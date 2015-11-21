@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor;
+package com.jecstar.etm.core;
 
 public enum EventCommand {
 

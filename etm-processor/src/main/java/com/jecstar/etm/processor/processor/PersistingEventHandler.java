@@ -4,8 +4,8 @@ import java.io.Closeable;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.processor.EventCommand;
-import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.core.EventCommand;
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 

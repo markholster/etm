@@ -5,8 +5,8 @@ import java.util.concurrent.ExecutorService;
 import org.elasticsearch.client.Client;
 
 import com.codahale.metrics.MetricRegistry;
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.processor.TelemetryEvent;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;

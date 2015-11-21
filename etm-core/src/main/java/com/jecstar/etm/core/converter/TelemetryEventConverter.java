@@ -1,6 +1,6 @@
-package com.jecstar.etm.processor.converter;
+package com.jecstar.etm.core.converter;
 
-import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.core.TelemetryEvent;
 
 public interface TelemetryEventConverter<T> {
 

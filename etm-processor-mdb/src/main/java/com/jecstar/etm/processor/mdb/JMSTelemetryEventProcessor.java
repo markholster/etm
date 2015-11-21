@@ -14,13 +14,13 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import com.jecstar.etm.core.EtmException;
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
-import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 public class JMSTelemetryEventProcessor implements MessageListener {

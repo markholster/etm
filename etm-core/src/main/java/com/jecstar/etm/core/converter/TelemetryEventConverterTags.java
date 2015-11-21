@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.converter;
+package com.jecstar.etm.core.converter;
 
 public interface TelemetryEventConverterTags {
 	

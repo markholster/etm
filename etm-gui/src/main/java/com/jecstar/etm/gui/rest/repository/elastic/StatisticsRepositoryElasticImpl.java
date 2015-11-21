@@ -28,7 +28,8 @@ import org.joda.time.DateTime;
 
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
-import com.jecstar.etm.gui.rest.TelemetryEventConverterTagsJsonImpl;
+import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.converter.json.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.gui.rest.repository.Average;
 import com.jecstar.etm.gui.rest.repository.ExpiredMessage;
 import com.jecstar.etm.gui.rest.repository.StatisticsRepository;
@@ -36,7 +37,7 @@ import com.jecstar.etm.gui.rest.repository.StatisticsRepository;
 public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 
 	private final String eventIndex = "etm_event_all";
-	private final TelemetryEventConverterTagsJsonImpl tags = new TelemetryEventConverterTagsJsonImpl();
+	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	private final Client elasticClient;
 	
 	public StatisticsRepositoryElasticImpl(Client elasticClient) {

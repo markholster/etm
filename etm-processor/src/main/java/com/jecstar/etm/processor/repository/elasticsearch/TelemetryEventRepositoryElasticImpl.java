@@ -19,16 +19,16 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.converter.TelemetryEventConverter;
+import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.converter.json.AbstractJsonConverter;
+import com.jecstar.etm.core.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
-import com.jecstar.etm.processor.TelemetryEvent;
-import com.jecstar.etm.processor.converter.TelemetryEventConverter;
-import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
-import com.jecstar.etm.processor.converter.json.TelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 

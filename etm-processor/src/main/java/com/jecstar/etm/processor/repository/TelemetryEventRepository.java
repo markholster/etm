@@ -1,6 +1,6 @@
 package com.jecstar.etm.processor.repository;
 
-import com.jecstar.etm.processor.TelemetryEvent;
+import com.jecstar.etm.core.TelemetryEvent;
 
 public interface TelemetryEventRepository {
 

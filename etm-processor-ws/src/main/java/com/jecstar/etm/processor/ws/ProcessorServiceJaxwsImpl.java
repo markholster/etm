@@ -9,10 +9,10 @@ import javax.inject.Inject;
 import javax.jws.WebService;
 import javax.xml.ws.BindingType;
 
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
-import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 @Stateless(name="ProcessorService")

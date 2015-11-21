@@ -1,6 +1,6 @@
-package com.jecstar.etm.processor.converter.json;
+package com.jecstar.etm.core.converter.json;
 
-import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
 
 public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConverterTags {
 	

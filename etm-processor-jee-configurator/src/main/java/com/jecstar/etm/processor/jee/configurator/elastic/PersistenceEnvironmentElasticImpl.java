@@ -7,8 +7,8 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.processor.converter.TelemetryEventConverterTags;
-import com.jecstar.etm.processor.converter.json.TelemetryEventConverterTagsJsonImpl;
+import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.converter.json.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.jecstar.etm.processor.repository.elasticsearch.TelemetryEventRepositoryElasticImpl;

@@ -30,10 +30,11 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.converter.json.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.util.ObjectUtils;
-import com.jecstar.etm.gui.rest.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.gui.rest.repository.CorrelationData;
 import com.jecstar.etm.gui.rest.repository.OverviewEvent;
 import com.jecstar.etm.gui.rest.repository.QueryRepository;
@@ -53,7 +54,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	
 	private final Client elasticClient;
 	private final TransformerFactoryImpl transformerFactory;
-	private final TelemetryEventConverterTagsJsonImpl tags = new TelemetryEventConverterTagsJsonImpl();
+	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	private final long dataCorrelationTimeOffset = 30000;
 	private final int dataCorrelationMaxResults = 500;
 

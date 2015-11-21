@@ -15,12 +15,12 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventDirection;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
-import com.jecstar.etm.processor.TelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 @Path("/event")
