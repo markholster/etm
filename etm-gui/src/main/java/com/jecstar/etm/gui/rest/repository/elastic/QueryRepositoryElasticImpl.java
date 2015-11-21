@@ -98,6 +98,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		writeDateValue("expiryTime", getDateValue(this.tags.getExpiryTimeTag(), valueMap), generator);
 		writeStringValue("id", eventId, generator);
 		writeStringValue("name", getStringValue(this.tags.getNameTag(), valueMap), generator);
+		writeLongValue("responsetime", getLongValue(this.tags.getResponsetimeTag(), valueMap), generator);
 		writeStringValue("transactionId", getStringValue(this.tags.getTransactionIdTag(), valueMap), generator);
 		writeStringValue("transactionName", getStringValue(this.tags.getTransactionNameTag(), valueMap), generator);
 		writeStringValue("type", getStringValue(this.tags.getTypeTag(), valueMap), generator);
@@ -762,6 +763,14 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		}
 		generator.writeStringField(fieldName, fieldValue);
 	}
+	
+	private void writeLongValue(String fieldName, Long fieldValue, JsonGenerator generator) throws JsonGenerationException, IOException {
+		if (fieldValue == null) {
+			return;
+		}
+		generator.writeNumberField(fieldName, fieldValue);
+	}
+
 
 	private void writeDateValue(String fieldName, Date fieldValue, JsonGenerator generator) throws JsonGenerationException, IOException {
 		if (fieldValue == null) {
@@ -778,6 +787,17 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 				return ((SearchHitField)object).getValue();
 			}
 			return valueMap.get(key).toString();
+		}
+		return null;
+	}
+	
+	private Long getLongValue(String key, Map<String, ?> valueMap) {
+		if (valueMap.containsKey(key)) {
+			Object object = valueMap.get(key);
+			if (object instanceof SearchHitField) {
+				return ((SearchHitField)object).getValue();
+			}
+			return ((Number)valueMap.get(key)).longValue();
 		}
 		return null;
 	}
