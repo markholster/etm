@@ -7,8 +7,8 @@ import com.jecstar.etm.core.domain.MessagingTelemetryEvent.MessagingEventType;
 
 public class MessagingTelemetryEventBuilder extends TelemetryEventBuilder<MessagingTelemetryEvent, MessagingTelemetryEventBuilder> {
 
-	public MessagingTelemetryEventBuilder(MessagingTelemetryEvent event) {
-		super(event);
+	public MessagingTelemetryEventBuilder() {
+		super(new MessagingTelemetryEvent());
 	}
 
 	public MessagingTelemetryEventBuilder setExpiry(ZonedDateTime expiry) {

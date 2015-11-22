@@ -6,8 +6,8 @@ import com.jecstar.etm.core.domain.DbQueryTelemetryEvent.DbQueryEventType;
 
 public class DbQueryTelemetryEventBuilder extends TelemetryEventBuilder<DbQueryTelemetryEvent, DbQueryTelemetryEventBuilder> {
 
-	public DbQueryTelemetryEventBuilder(DbQueryTelemetryEvent event) {
-		super(event);
+	public DbQueryTelemetryEventBuilder() {
+		super(new DbQueryTelemetryEvent());
 	}
 	
 	public DbQueryTelemetryEventBuilder setDbQueryEventType(DbQueryEventType dbQueryEventType) {
@@ -28,5 +28,4 @@ public class DbQueryTelemetryEventBuilder extends TelemetryEventBuilder<DbQueryT
 		this.event.readingEndpointHandler.application.principal = principal;
 		return this;
 	}
-
 }

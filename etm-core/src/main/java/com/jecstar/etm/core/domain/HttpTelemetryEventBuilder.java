@@ -6,8 +6,8 @@ import com.jecstar.etm.core.domain.HttpTelemetryEvent.HttpEventType;
 
 public class HttpTelemetryEventBuilder extends TelemetryEventBuilder<HttpTelemetryEvent, HttpTelemetryEventBuilder> {
 
-	public HttpTelemetryEventBuilder(HttpTelemetryEvent event) {
-		super(event);
+	public HttpTelemetryEventBuilder() {
+		super(new HttpTelemetryEvent());
 	}
 	
 	public HttpTelemetryEventBuilder setHttpEventType(HttpEventType httpEventType) {

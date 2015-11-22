@@ -15,13 +15,30 @@ public class TelemetryCommandExceptionHandler implements ExceptionHandler<Teleme
 	@Override
 	public void handleEventException(Throwable t, long sequence, TelemetryCommand command) {
 		switch (command.commandType) {
-		case EVENT:
+		case DB_QUERY_EVENT:
 			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Unable to process event '" + command.event.id + "'.", t);
+				log.logErrorMessage("Unable to process db event '" + command.dbQueryTelemetryEvent.id + "'.", t);
+			}
+			break;
+		case HTTP_EVENT:
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Unable to process http event '" + command.httpTelemetryEvent.id + "'.", t);
+			}
+			break;
+		case LOG_EVENT:
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Unable to process log event '" + command.logTelemetryEvent.id + "'.", t);
+			}
+			break;
+		case MESSAGING_EVENT:
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Unable to process log event '" + command.messagingTelemetryEvent.id + "'.", t);
 			}
 			break;
 		default:
-			break;
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Unable to process event '" + command.commandType.name() + "'.", t);
+			}
 		}
 	}
 

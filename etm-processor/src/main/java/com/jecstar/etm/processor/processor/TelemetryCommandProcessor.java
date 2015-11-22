@@ -10,6 +10,10 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.DbQueryTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.HttpTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.LogTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.lmax.disruptor.RingBuffer;
 
@@ -76,8 +80,67 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.persistenceEnvironment.close();
 	}
 
-
-	public void processTelemetryCommand(final TelemetryCommand telemetryCommand) {
+	public void processDbQueryTelemetryEvent(final DbQueryTelemetryEventBuilder builder) {
+		preProcess();
+		final Context timerContext = this.offerTimer.time();
+		TelemetryCommand target = null;
+		long sequence = this.ringBuffer.next();
+		try {
+			target = this.ringBuffer.get(sequence);
+			target.initialize(builder);
+		} finally {
+			this.ringBuffer.publish(sequence);
+			timerContext.stop();
+		}
+	}
+	
+	public void processHttpTelemetryEvent(final HttpTelemetryEventBuilder builder) {
+		preProcess();
+		final Context timerContext = this.offerTimer.time();
+		TelemetryCommand target = null;
+		long sequence = this.ringBuffer.next();
+		try {
+			target = this.ringBuffer.get(sequence);
+			target.initialize(builder);
+		} finally {
+			this.ringBuffer.publish(sequence);
+			timerContext.stop();
+		}
+	}
+	
+	public void processLogTelemetryEvent(final LogTelemetryEventBuilder builder) {
+		preProcess();
+		final Context timerContext = this.offerTimer.time();
+		TelemetryCommand target = null;
+		long sequence = this.ringBuffer.next();
+		try {
+			target = this.ringBuffer.get(sequence);
+			target.initialize(builder);
+		} finally {
+			this.ringBuffer.publish(sequence);
+			timerContext.stop();
+		}
+	}
+	
+	public void processMessagingTelemetryEvent(final MessagingTelemetryEventBuilder builder) {
+		preProcess();
+		final Context timerContext = this.offerTimer.time();
+		TelemetryCommand target = null;
+		long sequence = this.ringBuffer.next();
+		try {
+			target = this.ringBuffer.get(sequence);
+			target.initialize(builder);
+		} finally {
+			this.ringBuffer.publish(sequence);
+			timerContext.stop();
+		}
+	}
+	
+	public MetricRegistry getMetricRegistry() {
+	    return this.metricRegistry;
+    }
+	
+	private void preProcess() {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
@@ -85,25 +148,6 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 //		if (this.etmConfiguration.getLicenseExpriy().getTime() < System.currentTimeMillis()) {
 //			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
 //		}
-		final Context timerContext = this.offerTimer.time();
-		TelemetryCommand target = null;
-		long sequence = this.ringBuffer.next();
-		try {
-			target = this.ringBuffer.get(sequence);
-			target.initialize(telemetryCommand);
-			preProcess(target);
-		} finally {
-			this.ringBuffer.publish(sequence);
-			timerContext.stop();
-		}
-	}
-	
-	
-	public MetricRegistry getMetricRegistry() {
-	    return this.metricRegistry;
-    }
-	
-	private void preProcess(TelemetryCommand command) {
 	}
 
 	@Override
