@@ -14,7 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
-import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterJsonImpl;
+import com.jecstar.etm.core.domain.converter.json.AbstractJsonTelemetryEventConverter;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
@@ -33,7 +33,7 @@ public class RestTelemetryEventProcessor {
 
 	private final TelemetryCommand command = new TelemetryCommand();
 	
-	private final TelemetryEventConverter<String> telemetryEventConverter = new TelemetryEventConverterJsonImpl();
+	private final TelemetryEventConverter<String> telemetryEventConverter = new AbstractJsonTelemetryEventConverter();
 
 	public static void setProcessor(TelemetryCommandProcessor processor) {
 		telemetryCommandProcessor = processor;

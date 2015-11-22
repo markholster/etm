@@ -1,158 +1,135 @@
 package com.jecstar.etm.core.domain;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 
-public class TelemetryEventBuilder {
+public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>, Builder extends TelemetryEventBuilder<Event, Builder>> {
 	
-	private TelemetryEvent event;
+	protected Event event;
 
-	public TelemetryEventBuilder() {
-		this.event = new TelemetryEvent();
+	protected TelemetryEventBuilder(Event event) {
+		this.event = event;
 	}
 
-	public TelemetryEvent build() {
+	public Event build() {
 		return this.event;
 	}
 	
-	public TelemetryEventBuilder initialize() {
+	@SuppressWarnings("unchecked")
+	public Builder initialize() {
 		this.event.initialize();
-		return this;
+		return (Builder) this;
 	}
 	
-	public TelemetryEventBuilder setId(String id) {
+	@SuppressWarnings("unchecked")
+	public Builder setId(String id) {
 		this.event.id = id;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setCorrelationId(String correlationId) {
+	@SuppressWarnings("unchecked")
+	public Builder setCorrelationId(String correlationId) {
 		this.event.correlationId = correlationId;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setCorrelationData(Map<String, String> correlationData) {
+	@SuppressWarnings("unchecked")
+	public Builder setCorrelationData(Map<String, String> correlationData) {
 		this.event.correlationData = correlationData;
-		return this;
+		return (Builder) this;
 	}
 	
-	public TelemetryEventBuilder addCorrelationData(Map<String, String> correlationData) {
+	@SuppressWarnings("unchecked")
+	public Builder addCorrelationData(Map<String, String> correlationData) {
 		this.event.correlationData.putAll(correlationData);
-		return this;		
+		return (Builder) this;		
 	}
 
-	public TelemetryEventBuilder addCorrelationData(String key, String value) {
+	@SuppressWarnings("unchecked")
+	public Builder addCorrelationData(String key, String value) {
 		this.event.correlationData.put(key, value);
-		return this;		
+		return (Builder) this;		
 	}
 
-	public TelemetryEventBuilder setEndpoint(String endpoint) {
+	@SuppressWarnings("unchecked")
+	public Builder setEndpoint(String endpoint) {
 		this.event.endpoint = endpoint;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setExpiry(ZonedDateTime expiry) {
-		this.event.expiry = expiry;
-		return this;
-	}
-
-	public TelemetryEventBuilder setExtractedData(Map<String, String> extractedData) {
+	@SuppressWarnings("unchecked")
+	public Builder setExtractedData(Map<String, String> extractedData) {
 		this.event.extractedData = extractedData;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder addExtractedData(Map<String, String> extractedData) {
+	@SuppressWarnings("unchecked")
+	public Builder addExtractedData(Map<String, String> extractedData) {
 		this.event.extractedData.putAll(extractedData);
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder addExtractedData(String key, String value) {
+	@SuppressWarnings("unchecked")
+	public Builder addExtractedData(String key, String value) {
 		this.event.extractedData.put(key, value);
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setName(String name) {
+	@SuppressWarnings("unchecked")
+	public Builder setName(String name) {
 		this.event.name = name;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setMetadata(Map<String, String> metadata) {
+	@SuppressWarnings("unchecked")
+	public Builder setMetadata(Map<String, String> metadata) {
 		this.event.metadata = metadata;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder addMetadata(Map<String, String> metadata) {
+	@SuppressWarnings("unchecked")
+	public Builder addMetadata(Map<String, String> metadata) {
 		this.event.metadata.putAll(metadata);;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder addMetadata(String key, String value) {
+	@SuppressWarnings("unchecked")
+	public Builder addMetadata(String key, String value) {
 		this.event.metadata.put(key, value);
-		return this;
-	}
-	
-	public TelemetryEventBuilder setPackaging(String packaging) {
-		this.event.packaging = packaging;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setPayload(String payload) {
+	@SuppressWarnings("unchecked")
+	public Builder setPayload(String payload) {
 		this.event.payload = payload;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setPayloadFormat(PayloadFormat payloadFormat) {
+	@SuppressWarnings("unchecked")
+	public Builder setPayloadFormat(PayloadFormat payloadFormat) {
 		this.event.payloadFormat = payloadFormat;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setTransactionId(String transactionId) {
+	@SuppressWarnings("unchecked")
+	public Builder setTransactionId(String transactionId) {
 		this.event.transactionId = transactionId;
-		return this;
-	}
-	
-	public TelemetryEventBuilder setTransport(Transport transport) {
-		this.event.transport = transport;
-		return this;
+		return (Builder) this;
 	}
 
-	public TelemetryEventBuilder setReadingEndpointHandlers(List<EndpointHandler> readingEndpointHandlers) {
-		this.event.readingEndpointHandlers = readingEndpointHandlers;
-		return this;
-	}
-
-	public TelemetryEventBuilder addReadingEndpointHandlers(List<EndpointHandler> readingEndpointHandlers) {
-		this.event.readingEndpointHandlers.addAll(readingEndpointHandlers);
-		return this;
-	}
-
-	public TelemetryEventBuilder addReadingEndpointHandler(EndpointHandler readingEndpointHandler) {
-		this.event.readingEndpointHandlers.add(readingEndpointHandler);
-		return this;
-	}
-	
-	public TelemetryEventBuilder addReadingEndpointHandler(ZonedDateTime handlingTime, String applicationName, String applicationVersion, String applicationInstance, String principal) {
-		EndpointHandler endpointHandler = new EndpointHandler();
-		endpointHandler.handlingTime = handlingTime;
-		endpointHandler.application.name = applicationName;
-		endpointHandler.application.version = applicationVersion;
-		endpointHandler.application.instance = applicationInstance;
-		endpointHandler.application.principal = principal;
-		addReadingEndpointHandler(endpointHandler);
-		return this;
-	}
-
-	public TelemetryEventBuilder setWritingEndpointHandler(EndpointHandler writingEndpointHandler) {
+	@SuppressWarnings("unchecked")
+	public Builder setWritingEndpointHandler(EndpointHandler writingEndpointHandler) {
 		this.event.writingEndpointHandler = writingEndpointHandler;
-		return this;
+		return (Builder) this;
 	}
 	
-	public TelemetryEventBuilder setWritingEndpointHandler(ZonedDateTime handlingTime, String applicationName, String applicationVersion, String applicationInstance, String principal) {
+	@SuppressWarnings("unchecked")
+	public Builder setWritingEndpointHandler(ZonedDateTime handlingTime, String applicationName, String applicationVersion, String applicationInstance, String principal) {
 		this.event.writingEndpointHandler.handlingTime = handlingTime;
 		this.event.writingEndpointHandler.application.name = applicationName;
 		this.event.writingEndpointHandler.application.version = applicationVersion;
 		this.event.writingEndpointHandler.application.instance = applicationInstance;
 		this.event.writingEndpointHandler.application.principal = principal;
-		return this;
+		return (Builder) this;
 	}
 }

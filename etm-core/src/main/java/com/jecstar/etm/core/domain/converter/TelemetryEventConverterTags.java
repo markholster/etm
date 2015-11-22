@@ -2,6 +2,10 @@ package com.jecstar.etm.core.domain.converter;
 
 public interface TelemetryEventConverterTags {
 
+	// Map attributes
+	String getMapKeyTag();
+	String getMapValueTag();
+	
 	// TelemetryEvent attributes.
 	String getIdTag();
 	String getCorrelationIdTag();

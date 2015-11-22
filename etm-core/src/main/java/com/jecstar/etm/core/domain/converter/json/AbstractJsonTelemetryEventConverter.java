@@ -10,7 +10,6 @@ import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.Location;
 import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
-import com.jecstar.etm.core.domain.Transport;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 
@@ -21,59 +20,57 @@ import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
  * 
  * @author mark
  */
-public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter implements TelemetryEventConverter<String> {
+public abstract class AbstractJsonTelemetryEventConverter<Event extends TelemetryEvent<Event>> extends AbstractJsonConverter implements TelemetryEventConverter<String, Event> {
 	
-	private final StringBuilder sb = new StringBuilder();
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 
 	@Override
-	public String convert(TelemetryEvent event) {
-		this.sb.setLength(0);
-		this.sb.append("{");
+	public String convert(Event event) {
+		final StringBuilder sb = new StringBuilder();
 		boolean added = false;
-		added = addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, this.sb, !added) || added;
-		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(this.tags.getEndpointTag(), event.endpoint, this.sb, !added) || added;
-		if (event.expiry != null) {
-			added = addLongElementToJsonBuffer(this.tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, !added) || added;
-		}
-		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, this.sb, !added) || added;
-		added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), event.metadata, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(this.tags.getPackagingTag(), event.packaging, this.sb, !added) || added;
-		added = addStringElementToJsonBuffer(this.tags.getPayloadTag(), event.payload, this.sb, !added) || added;
+		sb.append("{");
+		added = addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
+		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getEndpointTag(), event.endpoint, sb, !added) || added;
+//		if (event.expiry != null) {
+//			added = addLongElementToJsonBuffer(this.tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, !added) || added;
+//		}
+		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, sb, !added) || added;
+		added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), event.metadata, sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getPayloadTag(), event.payload, sb, !added) || added;
 		if (event.payloadFormat != null) {
-			added = addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), this.sb, !added) || added;
+			added = addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), sb, !added) || added;
 		}
-		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
-			// Set the response time to the expiry initially.
-			added = addLongElementToJsonBuffer(this.tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, !added) || added;
-		}
-		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), event.transactionId, this.sb, !added) || added;
-		if (event.transport != null) {
-			added = addStringElementToJsonBuffer(this.tags.getTransportTag(), event.transport.name(), this.sb, !added) || added;
-		}
-		if (!event.readingEndpointHandlers.isEmpty()) {
-			if (added) {
-				this.sb.append(", ");
-			}
-			this.sb.append("\"" + this.tags.getReadingEndpointHandlersTag() + "\": [");
-			added = false;
-			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
-				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, this.tags) || added;
-			}
-			this.sb.append("]");
-		}
+//		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
+//			// Set the response time to the expiry initially.
+//			added = addLongElementToJsonBuffer(this.tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, !added) || added;
+//		}
+		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), event.transactionId, sb, !added) || added;
+//		if (!event.readingEndpointHandlers.isEmpty()) {
+//			if (added) {
+//				this.sb.append(", ");
+//			}
+//			this.sb.append("\"" + this.tags.getReadingEndpointHandlersTag() + "\": [");
+//			added = false;
+//			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
+//				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, this.tags) || added;
+//			}
+//			this.sb.append("]");
+//		}
 		if (event.writingEndpointHandler.isSet()) {
 			if (added) {
-				this.sb.append(", ");
+				sb.append(", ");
 			}
-			this.sb.append("\"" + this.tags.getWritingEndpointHandlerTag() + "\": ");
-			addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, this.sb, true, this.tags);
+			sb.append("\"" + this.tags.getWritingEndpointHandlerTag() + "\": ");
+			added = addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, sb, true, this.tags) || added;
 		}
-		this.sb.append("}");
-		return this.sb.toString();
+		doConvert(event, sb, !added);
+		sb.append("}");
+		return sb.toString();
 	}
+	
+	abstract void doConvert(Event event, StringBuilder sb, boolean firstElement);
 	
 	private boolean addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer, boolean firstElement) {
 		if (elementValues.size() < 1) {
@@ -84,7 +81,7 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 		}
 		buffer.append("\"" + elementName + "\": [");
 		buffer.append(elementValues.entrySet().stream()
-				.map(c -> "{ \"" + escapeToJson(c.getKey()) + "\": \"" + escapeToJson(c.getValue()) + "\" }")
+				.map(c -> "{\"" + this.tags.getMapKeyTag() + "\": \"" + escapeToJson(c.getKey()) + "\", \"" + this.tags.getMapValueTag() + "\": \"" + escapeToJson(c.getValue()) + "\"}")
 				.sorted()
 				.collect(Collectors.joining(", ")));
 		buffer.append("]");
@@ -136,23 +133,24 @@ public class TelemetryEventConverterJsonImpl extends AbstractJsonConverter imple
 	}
 
 	@Override
-	public void convert(String jsonContent, TelemetryEvent telemetryEvent) {
+	public void convert(String jsonContent, Event telemetryEvent) {
 		Map<String, Object> valueMap = toMap(jsonContent);
 		telemetryEvent.initialize();
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
 		telemetryEvent.endpoint = getString(this.tags.getEndpointTag(), valueMap);
-		telemetryEvent.expiry = getZonedDateTime(this.tags.getExpiryTag(), valueMap);
+//		telemetryEvent.expiry = getZonedDateTime(this.tags.getExpiryTag(), valueMap);
 		telemetryEvent.name = getString(this.tags.getNameTag(), valueMap);
 		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> c.forEach((k, v) -> telemetryEvent.metadata.put(k, v.toString())));
-		telemetryEvent.packaging = getString(this.tags.getPackagingTag(), valueMap);
 		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
 		telemetryEvent.payloadFormat = PayloadFormat.saveValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
-		getArray(this.tags.getReadingEndpointHandlersTag(), valueMap).forEach(c -> telemetryEvent.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
+//		getArray(this.tags.getReadingEndpointHandlersTag(), valueMap).forEach(c -> telemetryEvent.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
 		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
-		telemetryEvent.transport = Transport.saveValueOf(getString(this.tags.getTransportTag(), valueMap));
 		telemetryEvent.writingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(this.tags.getWritingEndpointHandlerTag(), valueMap)));
+		doConvert(telemetryEvent, valueMap);
 	}
+
+	abstract void doConvert(Event telemetryEvent, Map<String, Object> valueMap);
 
 	private EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
 		if (valueMap.isEmpty()) {

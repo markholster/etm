@@ -28,7 +28,7 @@ import com.jecstar.etm.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
-import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterJsonImpl;
+import com.jecstar.etm.core.domain.converter.json.AbstractJsonTelemetryEventConverter;
 import com.jecstar.etm.processor.repository.AbstractTelemetryEventRepository;
 
 public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventRepository {
@@ -47,7 +47,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
-	private final TelemetryEventConverter<String> eventConverter = new TelemetryEventConverterJsonImpl();
+	private final TelemetryEventConverter<String> eventConverter = new AbstractJsonTelemetryEventConverter();
 	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();

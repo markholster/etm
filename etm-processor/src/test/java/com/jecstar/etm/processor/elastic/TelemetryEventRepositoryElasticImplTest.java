@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.junit.After;
@@ -43,7 +43,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 
 	@BeforeClass
 	public static void beforeClass() {
-		node = new NodeBuilder().settings(ImmutableSettings.settingsBuilder()
+		node = new NodeBuilder().settings(Settings.settingsBuilder()
 				.put("cluster.name", "Enterprise Telemetry Monitor - Unit Test")
 				.put("node.name", "Unit test " + System.getProperty("user.name"))
 				.put("http.enabled", false)

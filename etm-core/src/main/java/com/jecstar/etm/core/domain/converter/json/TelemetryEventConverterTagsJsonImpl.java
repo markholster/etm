@@ -5,6 +5,16 @@ import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConverterTags {
 
 	@Override
+	public String getMapKeyTag() {
+		return "key";
+	}
+
+	@Override
+	public String getMapValueTag() {
+		return "value";
+	}
+	
+	@Override
 	public String getIdTag() {
 		return "id";
 	}
@@ -138,5 +148,4 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	public String getLongitudeTag() {
 		return "lon";
 	}
-
 }
