@@ -4,12 +4,25 @@ import java.time.ZonedDateTime;
 
 public class DbQueryTelemetryEvent extends TelemetryEvent<DbQueryTelemetryEvent>{
 
-	public enum QueryEventType {DELETE, INSERT, SELECT, UPDATE, RESULTSET}
+	public enum DbQueryEventType {
+		DELETE, INSERT, SELECT, UPDATE, RESULTSET;
+		
+		public static DbQueryEventType saveValueOf(String value) {
+			if (value == null) {
+				return null;
+			}
+			try {
+				return DbQueryEventType.valueOf(value.toUpperCase());
+			} catch (IllegalArgumentException e) {
+				return null;
+			}
+		}
+	}
 	
 	/**
 	 * The query event type that is represented by this event.
 	 */
-	public QueryEventType queryEventType;
+	public DbQueryEventType dbQueryEventType;
 
 	/**
 	 * The handler that was reading the event.
@@ -18,7 +31,7 @@ public class DbQueryTelemetryEvent extends TelemetryEvent<DbQueryTelemetryEvent>
 	
 	@Override
 	public DbQueryTelemetryEvent initialize() {
-		this.queryEventType = null;
+		this.dbQueryEventType = null;
 		this.readingEndpointHandler.initialize();
 		return this;
 	}
@@ -27,7 +40,7 @@ public class DbQueryTelemetryEvent extends TelemetryEvent<DbQueryTelemetryEvent>
 	public DbQueryTelemetryEvent initialize(DbQueryTelemetryEvent copy) {
 		super.internalInitialize(copy);
 		this.initialize();		
-		this.queryEventType = copy.queryEventType;
+		this.dbQueryEventType = copy.dbQueryEventType;
 		this.readingEndpointHandler.initialize(copy.readingEndpointHandler);
 		return this;
 	}

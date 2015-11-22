@@ -11,7 +11,6 @@ public interface TelemetryEventConverterTags {
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
 	String getEndpointTag();
-	String getExpiryTag();
 	String getExtractedDataTag();
 	String getNameTag();
 	String getMetadataTag();
@@ -22,6 +21,7 @@ public interface TelemetryEventConverterTags {
 	String getResponseHandlingTimeTag();
 	String getTransactionIdTag();
 	String getTransportTag();
+	String getReadingEndpointHandlerTag();
 	String getReadingEndpointHandlersTag();
 	String getWritingEndpointHandlerTag();
 	
@@ -40,4 +40,17 @@ public interface TelemetryEventConverterTags {
 	String getEndpointHandlerLocationTag();
 	String getLatitudeTag();
 	String getLongitudeTag();
+	
+	// Messaging event attributes
+	String getExpiryTag();
+	String getMessagingEventTypeTag();
+	
+	// Log event attributes
+	String getLogLevelTag();
+	
+	// Http event attributes
+	String getHttpEventTypeTag();
+	
+	// DbQuery event attributes
+	String getDbQueryEventTypeTag();
 }

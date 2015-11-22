@@ -32,9 +32,6 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		added = addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getEndpointTag(), event.endpoint, sb, !added) || added;
-//		if (event.expiry != null) {
-//			added = addLongElementToJsonBuffer(this.tags.getExpiryTag(), event.expiry.toInstant().toEpochMilli(), this.sb, !added) || added;
-//		}
 		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), event.metadata, sb, !added) || added;
@@ -42,22 +39,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		if (event.payloadFormat != null) {
 			added = addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), sb, !added) || added;
 		}
-//		if (event.isRequest() && event.writingEndpointHandler.isSet() && event.expiry != null) {
-//			// Set the response time to the expiry initially.
-//			added = addLongElementToJsonBuffer(this.tags.getResponseTimeTag(), event.expiry.toInstant().toEpochMilli() - event.writingEndpointHandler.handlingTime.toInstant().toEpochMilli(), this.sb, !added) || added;
-//		}
 		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), event.transactionId, sb, !added) || added;
-//		if (!event.readingEndpointHandlers.isEmpty()) {
-//			if (added) {
-//				this.sb.append(", ");
-//			}
-//			this.sb.append("\"" + this.tags.getReadingEndpointHandlersTag() + "\": [");
-//			added = false;
-//			for (int i = 0; i < event.readingEndpointHandlers.size(); i++) {
-//				added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandlers.get(i), this.sb, i == 0 ? true : !added, this.tags) || added;
-//			}
-//			this.sb.append("]");
-//		}
 		if (event.writingEndpointHandler.isSet()) {
 			if (added) {
 				sb.append(", ");
@@ -65,14 +47,14 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 			sb.append("\"" + this.tags.getWritingEndpointHandlerTag() + "\": ");
 			added = addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, sb, true, this.tags) || added;
 		}
-		doConvert(event, sb, !added);
+		added = doConvert(event, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
 	}
 	
-	abstract void doConvert(Event event, StringBuilder sb, boolean firstElement);
+	abstract boolean doConvert(Event event, StringBuilder buffer, boolean firstElement);
 	
-	private boolean addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer, boolean firstElement) {
+	protected boolean addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer, boolean firstElement) {
 		if (elementValues.size() < 1) {
 			return false;
 		}
@@ -88,7 +70,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		return true;
 	}
 
-	private boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventConverterTags tags) {
+	protected boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventConverterTags tags) {
 		if (!endpointHandler.isSet()) {
 			return false;
 		}
@@ -138,13 +120,13 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		telemetryEvent.initialize();
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
+		getArray(this.tags.getCorrelationDataTag(), valueMap).forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
 		telemetryEvent.endpoint = getString(this.tags.getEndpointTag(), valueMap);
-//		telemetryEvent.expiry = getZonedDateTime(this.tags.getExpiryTag(), valueMap);
+		getArray(this.tags.getExtractedDataTag(), valueMap).forEach(c -> telemetryEvent.extractedData.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
 		telemetryEvent.name = getString(this.tags.getNameTag(), valueMap);
-		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> c.forEach((k, v) -> telemetryEvent.metadata.put(k, v.toString())));
+		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> telemetryEvent.metadata.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
 		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
 		telemetryEvent.payloadFormat = PayloadFormat.saveValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
-//		getArray(this.tags.getReadingEndpointHandlersTag(), valueMap).forEach(c -> telemetryEvent.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
 		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
 		telemetryEvent.writingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(this.tags.getWritingEndpointHandlerTag(), valueMap)));
 		doConvert(telemetryEvent, valueMap);
@@ -152,7 +134,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 
 	abstract void doConvert(Event telemetryEvent, Map<String, Object> valueMap);
 
-	private EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
+	protected EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
 		if (valueMap.isEmpty()) {
 			return null;
 		}

@@ -78,6 +78,11 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	public String getResponseHandlingTimeTag() {
 		return "response_handling_time";
 	}
+	
+	@Override
+	public String getReadingEndpointHandlerTag() {
+		return "reading_endpoint_handler";
+	}
 
 	@Override
 	public String getReadingEndpointHandlersTag() {
@@ -147,5 +152,25 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	@Override
 	public String getLongitudeTag() {
 		return "lon";
+	}
+
+	@Override
+	public String getMessagingEventTypeTag() {
+		return "messaging_type";
+	}
+
+	@Override
+	public String getLogLevelTag() {
+		return "log_level";
+	}
+
+	@Override
+	public String getHttpEventTypeTag() {
+		return "http_type";
+	}
+
+	@Override
+	public String getDbQueryEventTypeTag() {
+		return "db_query_type";
 	}
 }

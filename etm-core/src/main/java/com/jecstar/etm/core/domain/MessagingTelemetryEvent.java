@@ -7,7 +7,21 @@ import java.util.Optional;
 
 public class MessagingTelemetryEvent extends TelemetryEvent<MessagingTelemetryEvent> {
 	
-	public enum MessagingEventType {REQUEST, RESPONSE, FIRE_FORGET}
+	public enum MessagingEventType {
+		
+		REQUEST, RESPONSE, FIRE_FORGET;
+		
+		public static MessagingEventType saveValueOf(String value) {
+			if (value == null) {
+				return null;
+			}
+			try {
+				return MessagingEventType.valueOf(value.toUpperCase());
+			} catch (IllegalArgumentException e) {
+				return null;
+			}
+		}
+	}
 	
 	/**
 	 * The moment this event expires, in case of a request.

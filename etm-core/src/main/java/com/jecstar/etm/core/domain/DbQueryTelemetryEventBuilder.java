@@ -2,7 +2,7 @@ package com.jecstar.etm.core.domain;
 
 import java.time.ZonedDateTime;
 
-import com.jecstar.etm.core.domain.DbQueryTelemetryEvent.QueryEventType;
+import com.jecstar.etm.core.domain.DbQueryTelemetryEvent.DbQueryEventType;
 
 public class DbQueryTelemetryEventBuilder extends TelemetryEventBuilder<DbQueryTelemetryEvent, DbQueryTelemetryEventBuilder> {
 
@@ -10,8 +10,8 @@ public class DbQueryTelemetryEventBuilder extends TelemetryEventBuilder<DbQueryT
 		super(event);
 	}
 	
-	public DbQueryTelemetryEventBuilder setQueryEventType(QueryEventType queryEventType) {
-		this.event.queryEventType = queryEventType;
+	public DbQueryTelemetryEventBuilder setDbQueryEventType(DbQueryEventType dbQueryEventType) {
+		this.event.dbQueryEventType = dbQueryEventType;
 		return this;
 	}
 	

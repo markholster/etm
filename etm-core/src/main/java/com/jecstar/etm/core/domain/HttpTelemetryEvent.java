@@ -4,7 +4,20 @@ import java.time.ZonedDateTime;
 
 public class HttpTelemetryEvent extends TelemetryEvent<HttpTelemetryEvent> {
 	
-	public enum HttpEventType {CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE, RESPONSE}
+	public enum HttpEventType {
+		CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE, RESPONSE;
+		
+		public static HttpEventType saveValueOf(String value) {
+			if (value == null) {
+				return null;
+			}
+			try {
+				return HttpEventType.valueOf(value.toUpperCase());
+			} catch (IllegalArgumentException e) {
+				return null;
+			}
+		}
+	}
 
 	/**
 	 * The http type that is represented by this event.
