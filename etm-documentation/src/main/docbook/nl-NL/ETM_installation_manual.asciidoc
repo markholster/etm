@@ -140,7 +140,7 @@ De volgende stap is om de gewenste ETM componenten te deployen. Afhankelijk van 
 <ETM_UNZIP_DIR>/components directory.
 
 Kopieer de gewenste componenten naar <WILDFLY_INSTALL_DIR>/standalone/deployments waar ze opgepakt worden door Wildfly. Het deployment proces
-duurt hierna enkele seconden. Bekijk voor een gedetailleerd overzicht van de componenten en hun instellingen het hoofdstuk <<chap-ETM_Installation-ETM_Components, ETM componenten>.
+duurt hierna enkele seconden. Bekijk voor een gedetailleerd overzicht van de componenten en hun instellingen het hoofdstuk <<chap-ETM_Installation-ETM_Components, ETM componenten>>.
 
 [[chap-ETM_Installation-Clustered_Installation]]
 == Geclusterde installatie
