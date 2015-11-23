@@ -3,8 +3,10 @@ package com.jecstar.etm.core.converter.json;
 import java.util.Map;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.configuration.WriteConsistency;
 import com.jecstar.etm.core.converter.EtmConfigurationConverter;
 import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
+import com.jecstar.etm.core.util.ObjectUtils;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
@@ -30,6 +32,7 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 			added = addIntegerElementToJsonBuffer(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), sb, !added) || added;
 			added = addIntegerElementToJsonBuffer(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), sb, !added) || added;
 			added = addIntegerElementToJsonBuffer(this.tags.getMaxIndexCountTag(), defaultConfiguration.getMaxIndexCount(), sb, !added) || added;
+			added = addWriteConsitencyElementToJsonBuffer(this.tags.getWriteConsistencyTag(), defaultConfiguration.getWriteConsistency(), sb, !added) || added;
 		} else {
 			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -39,6 +42,7 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 			added = addIntegerWhenNotDefault(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), nodeConfiguration.getShardsPerIndex(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), nodeConfiguration.getReplicasPerIndex(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxIndexCountTag(), defaultConfiguration.getMaxIndexCount(), nodeConfiguration.getMaxIndexCount(), sb, !added) || added;
+			added = addWriteConsistencyWhenNotDefault(this.tags.getWriteConsistencyTag(), defaultConfiguration.getWriteConsistency(), nodeConfiguration.getWriteConsistency(), sb, !added) || added;
 		}
 		sb.append("}");
 		return sb.toString();
@@ -59,6 +63,7 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 		etmConfiguration.setShardsPerIndex(getIntValue(this.tags.getShardsPerIndexTag(), defaultMap, nodeMap));
 		etmConfiguration.setReplicasPerIndex(getIntValue(this.tags.getReplicasPerIndexTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxIndexCount(getIntValue(this.tags.getMaxIndexCountTag(), defaultMap, nodeMap));
+		etmConfiguration.setWriteConsistency(getWriteConsitencyValue(this.tags.getWriteConsistencyTag(), defaultMap, nodeMap));
 		return etmConfiguration;
 	}
 	
@@ -78,11 +83,39 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 		}
 	}
 	
+	private WriteConsistency getWriteConsitencyValue(String tag, Map<String, Object> defaultMap, Map<String, Object> nodeMap) {
+		if (nodeMap != null && nodeMap.containsKey(tag)) {
+			return WriteConsistency.valueOf(nodeMap.get(tag).toString());
+		} else {
+			return WriteConsistency.valueOf(defaultMap.get(tag).toString());
+		}
+	}
+	
 	private boolean addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, StringBuilder buffer, boolean firstElement) {
 		if (defaultValue == specificValue) {
 			return false;
 		}
 		return addIntegerElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+	}
+	
+	private boolean addWriteConsistencyWhenNotDefault(String tag, WriteConsistency defaultValue, WriteConsistency specificValue, StringBuilder buffer, boolean firstElement) {
+		if (ObjectUtils.equalsNullProof(defaultValue, specificValue)) {
+			return false;
+		}
+		return addWriteConsitencyElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+	}
+
+
+	private boolean addWriteConsitencyElementToJsonBuffer(String tag, WriteConsistency writeConsistency, StringBuilder buffer, boolean firstElement) {
+		if (writeConsistency == null) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("\"" + escapeToJson(tag) + "\": \"" + escapeToJson(writeConsistency.name()) + "\"");
+		return true;
+
 	}
 
 	@Override
