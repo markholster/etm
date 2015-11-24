@@ -181,7 +181,7 @@ Open nadat Elasticsearch is uitgepakt het bestand <ELASTICSEARCH_INSTALL_DIR>/co
 |network.host|<de naam of het adres voor de socket binding, bijvoorbeeld 10.0.0.1>
 |discovery.zen.ping.multicast.enabled|false
 |discovery.zen.ping.unicast.hosts|<de lijst met ip-adressen en poort van andere master nodes, bijvoorbeeld ["10.0.0.1:9302", "10.0.0.1:9303"]
-|discovery.zen.minimum_master_nodes: <1 meer dan de helft van het aantal master nodes, in dit voorbeeld dus 2> 
+|discovery.zen.minimum_master_nodes| <1 meer dan de helft van het aantal master nodes, in dit voorbeeld dus 2> 
 |=======================
 
 Nadat de wijzigingen zijn doorgevoerd kunt u Elasticsearch master nodes starten door  
@@ -207,7 +207,7 @@ een gewenste locatie. Open nadat Elasticsearch is uitgepakt het bestand <ELASTIC
 |network.host|<de naam of het adres voor de socket binding, bijvoorbeeld 10.0.0.1>
 |discovery.zen.ping.multicast.enabled|false
 |discovery.zen.ping.unicast.hosts|<de lijst met ip-adressen en poort van de master nodes, bijvoorbeeld ["10.0.0.1:9301", "10.0.0.1:9302", "10.0.0.1:9303"]
-|discovery.zen.minimum_master_nodes: <1 meer dan de helft van het aantal master nodes, in dit voorbeeld dus 2>
+|discovery.zen.minimum_master_nodes| <1 meer dan de helft van het aantal master nodes, in dit voorbeeld dus 2>
 |index.translog.durability|async 
 |=======================
 
