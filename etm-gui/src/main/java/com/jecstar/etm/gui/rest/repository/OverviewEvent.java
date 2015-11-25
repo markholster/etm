@@ -11,6 +11,10 @@ public class OverviewEvent {
 
 	public String id;
 	
+	public String indexName;
+	
+	public String indexType;
+	
 	public long creationTime;
 	
 	public long expirationTime;

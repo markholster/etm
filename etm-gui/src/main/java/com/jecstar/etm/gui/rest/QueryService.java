@@ -92,15 +92,15 @@ public class QueryService {
 	}
 	
 	@GET
-	@Path("/event/{id}")
+	@Path("/event/{index}/{type}/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEventById(@PathParam("id") String id) {
+	public String getEventById(@PathParam("index") String index, @PathParam("type") String type, @PathParam("id") String id) {
 		try {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        this.queryRepository.addEvent(id, generator);
+	        this.queryRepository.addEvent(id, index, type, generator);
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();
@@ -114,15 +114,15 @@ public class QueryService {
 
 	
 	@GET
-	@Path("/event/{id}/overview")
+	@Path("/event/{index}/{type}/{id}/overview")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEventOverviewById(@PathParam("id") String id) {
+	public String getEventOverviewById(@PathParam("index") String index, @PathParam("type") String type, @PathParam("id") String id) {
 		try {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        this.queryRepository.addEventOverview(id, generator);
+	        this.queryRepository.addEventOverview(id, index, type, generator);
 	        generator.writeEndObject();
 	        generator.close();
 	        return writer.toString();

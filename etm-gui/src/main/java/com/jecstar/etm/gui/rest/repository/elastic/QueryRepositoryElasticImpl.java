@@ -50,7 +50,6 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	private static final LogWrapper log = LogFactory.getLogger(QueryRepositoryElasticImpl.class);
 	
 	private final String eventIndex = "etm_event_all";
-	private final String eventIndexType = "event";
 	
 	private final Client elasticClient;
 	private final TransformerFactoryImpl transformerFactory;
@@ -71,14 +70,16 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 			writeStringValue("correlationId", getStringValue(this.tags.getCorrelationIdTag(), valueMap), generator);
 			writeDateValue("creationTime", getDateValue(this.tags.getCreationTimeTag(), valueMap), generator);
 			writeStringValue("endpoint", getStringValue(this.tags.getEndpointTag(), valueMap), generator);
-			writeStringValue("id", getStringValue(this.tags.getIdTag(), valueMap), generator);
 			writeStringValue("name", getStringValue(this.tags.getNameTag(), valueMap), generator);
+			writeStringValue("id", hit.getId(), generator);
+			writeStringValue("indexName", hit.getIndex(), generator);
+			writeStringValue("indexType", hit.getType(), generator);
 			generator.writeEndObject();
 		}
 	}
 
-	public void addEvent(String eventId, JsonGenerator generator) throws JsonGenerationException, IOException {
-		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
+	public void addEvent(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException {
+		GetResponse getResponse = this.elasticClient.prepareGet(indexName, indexType, eventId).get();
 		if (!getResponse.isExists()) {
 			return;
 		}
@@ -119,7 +120,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		return unformattedXml;
 	}
 
-	public void addEventOverview(String eventId, JsonGenerator generator) throws JsonGenerationException, IOException {
+	public void addEventOverview(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException {
 		String rootEventId = findRootEventId(eventId, new ArrayList<String>());
 		OverviewEvent tree = new OverviewEvent();
 		findChildren(rootEventId, tree, new ArrayList<OverviewEvent>());
@@ -155,7 +156,9 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 				if (overviewEvent != null) {
 					generator.writeStringField("application", overviewEvent.application);
 					generator.writeStringField("eventName", overviewEvent.name == null ? "?" : overviewEvent.name);
-					generator.writeStringField("id", overviewEvent.id.toString());
+					generator.writeStringField("id", overviewEvent.id);
+					generator.writeStringField("indexName", overviewEvent.indexName);
+					generator.writeStringField("indexType", overviewEvent.indexType);
 					generator.writeStringField("endpoint", overviewEvent.endpoint);
 					generator.writeStringField("color", overviewEvent.color);
 					generator.writeNumberField("creationTime", overviewEvent.creationTime);
@@ -347,15 +350,18 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 	
 	private String findParentId(String eventId, Date considerdataFrom) {
-		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId)
-				.setFields(this.tags.getCorrelationIdTag())
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", eventId)))
+				.addField(this.tags.getCorrelationIdTag())
+				.setSize(1)
 				.get();
-		if (!getResponse.isExists()) {
+		if (searchResponse.getHits().getTotalHits() < 1) {
 			return null;
 		}
+		SearchHit searchHit = searchResponse.getHits().getAt(0);
 		String parentId = null;
-		if (getResponse.getFields().containsKey(this.tags.getCorrelationIdTag())) {
-			parentId = getResponse.getField(this.tags.getCorrelationIdTag()).getValue().toString();
+		if (searchHit.getFields().containsKey(this.tags.getCorrelationIdTag())) {
+			parentId = searchHit.getFields().get(this.tags.getCorrelationIdTag()).getValue();
 		}
 		if (parentId == null) {
 			parentId = findParentIdByDataCorrelation(eventId, considerdataFrom);
@@ -412,11 +418,19 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 			}
 		});
 		for (CorrelationResult correlationResult : correlatingResults) {
-			GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, correlationResult.id).get();
-			if (!getResponse.isExists()) {
+			SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+					.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", correlationResult.id)))
+					.addField(this.tags.getCreationTimeTag())
+					.addField(this.tags.getTypeTag())
+					.addField(this.tags.getChildCorrelationIdsTag())
+					.addField(this.tags.getExpiryTimeTag())
+					.setSize(1)
+					.get();
+			if (searchResponse.getHits().getTotalHits() < 1) {
 				continue;
 			}
-			Map<String, Object> valueMap = getResponse.getSourceAsMap();
+			SearchHit searchHit = searchResponse.getHits().getAt(0);
+			Map<String, SearchHitField> valueMap = searchHit.getFields();
 			if (getDateValue(this.tags.getCreationTimeTag(), valueMap).after(correlationData.validFrom)) {
 				// The creationTime of this event is after the creation time of
 				// the event we try to find the parent from. This can
@@ -456,11 +470,18 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 					}
 				}
 				for (String childId : childIds) {
-					GetResponse getChildResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, childId).get();
-					if (!getChildResponse.isExists()) {
+					SearchResponse searchChildResponse = this.elasticClient.prepareSearch(this.eventIndex)
+							.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", childId)))
+							.addField(this.tags.getCorrelationIdTag())
+							.addField(this.tags.getTypeTag())
+							.addField(this.tags.getCreationTimeTag())
+							.setSize(1)
+							.get();
+					if (searchResponse.getHits().getTotalHits() < 1) {
 						continue;
 					}
-					Map<String, Object> childValueMap = getChildResponse.getSourceAsMap();
+					SearchHit searchChildHit = searchChildResponse.getHits().getAt(0);
+					Map<String, SearchHitField> childValueMap = searchChildHit.fields();
 					if (correlationResult.id.equals(getStringValue(this.tags.getCorrelationIdTag(), childValueMap))
 					        && TelemetryEventType.MESSAGE_RESPONSE.name().equals(getStringValue(this.tags.getTypeTag(), childValueMap))) {
 						Date responseDate = getDateValue(this.tags.getCreationTimeTag(), childValueMap);
@@ -492,12 +513,16 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 
 	private void findChildren(String eventId, OverviewEvent parent, List<OverviewEvent> overviewEvents) {
-		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
-		if (!getResponse.isExists()) {
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", eventId)))
+				.setSize(1)
+				.get();
+		if (searchResponse.getHits().getTotalHits() < 1) {
 			return;
 		}
-		Map<String, Object> valueMap = getResponse.getSourceAsMap();
-		OverviewEvent overviewEvent = createOverviewEvent(valueMap);
+		SearchHit searchHit = searchResponse.getHits().getAt(0);
+		Map<String, Object> valueMap = searchHit.getSource();
+		OverviewEvent overviewEvent = createOverviewEvent(searchHit);
 		if (!overviewEvents.contains(overviewEvent)) {
 			if (parent != null) {
 				if (parent.direction != null && overviewEvent.direction != null) {
@@ -530,23 +555,26 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		}
 	}
 
-	private OverviewEvent createOverviewEvent(Map<String, Object> valueMap) {
+	private OverviewEvent createOverviewEvent(SearchHit searchHit) {
 		OverviewEvent overviewEvent = new OverviewEvent();
-		overviewEvent.id = getStringValue(this.tags.getIdTag(), valueMap);
-		overviewEvent.creationTime = getDateValue(this.tags.getCreationTimeTag(), valueMap).getTime();
-		overviewEvent.application = getStringValue(this.tags.getApplicationTag(), valueMap);
+		Map<String, Object> valueMape = searchHit.getSource();
+		overviewEvent.id = searchHit.getId();
+		overviewEvent.indexName = searchHit.getIndex();
+		overviewEvent.indexType = searchHit.getType();
+		overviewEvent.creationTime = getDateValue(this.tags.getCreationTimeTag(), valueMape).getTime();
+		overviewEvent.application = getStringValue(this.tags.getApplicationTag(), valueMape);
 		try {
-			overviewEvent.direction = TelemetryEventDirection.valueOf(getStringValue(this.tags.getDirectionTag(), valueMap));
+			overviewEvent.direction = TelemetryEventDirection.valueOf(getStringValue(this.tags.getDirectionTag(), valueMape));
 		} catch (IllegalArgumentException | NullPointerException e) {
 		}
-		overviewEvent.endpoint = getStringValue(this.tags.getEndpointTag(), valueMap);
-		Date date = getDateValue(this.tags.getExpiryTimeTag(), valueMap);
+		overviewEvent.endpoint = getStringValue(this.tags.getEndpointTag(), valueMape);
+		Date date = getDateValue(this.tags.getExpiryTimeTag(), valueMape);
 		if (date != null) {
 			overviewEvent.expirationTime = date.getTime();
 		}
-		overviewEvent.name = getStringValue(this.tags.getNameTag(), valueMap);
+		overviewEvent.name = getStringValue(this.tags.getNameTag(), valueMape);
 		try {
-			overviewEvent.type = TelemetryEventType.valueOf(getStringValue(this.tags.getTypeTag(), valueMap));
+			overviewEvent.type = TelemetryEventType.valueOf(getStringValue(this.tags.getTypeTag(), valueMape));
 		} catch (IllegalArgumentException | NullPointerException e) {
 		}
 
@@ -631,18 +659,17 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 				.setQuery(QueryBuilders.boolQuery()
 						.must(QueryBuilders.matchAllQuery())
 						.filter(QueryBuilders.boolQuery()
-								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + ".key", correlationKey))
-								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + ".value", correlationData.get(correlationKey)))
+								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + "." + this.tags.getMapKeyTag(), correlationKey))
+								.must(QueryBuilders.termQuery(this.tags.getCorrelationDataTag() + "." + this.tags.getMapValueTag(), correlationData.get(correlationKey)))
 								.must(QueryBuilders.rangeQuery(this.tags.getCreationTimeTag()).from(startTime.getTime()).to(finishTime.getTime()))))
 				.setSize(this.dataCorrelationMaxResults)
-				.addField(this.tags.getIdTag())
 				.addField(this.tags.getCreationTimeTag())
 				.get();
 
 			for (SearchHit searchHit : searchResponse.getHits()) {
 				Map<String, SearchHitField> valueMap = searchHit.getFields();
 				
-				String correlationId = getStringValue(this.tags.getIdTag(), valueMap);
+				String correlationId = searchHit.getId();
 				if (correlationId.equals(eventId)) {
 					continue;
 				}
@@ -670,11 +697,17 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	 * @return
 	 */
 	private ResponseCorrelationData getResponseCorrelationData(String eventId) {
-		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
-		if (!getResponse.isExists()) {
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", eventId)))
+				.setSize(1)
+				.addField(this.tags.getTypeTag())
+				.addField(this.tags.getChildCorrelationIdsTag())
+				.get();
+		if (searchResponse.getHits().getTotalHits() < 1) {
 			return null;
 		}
-		Map<String, Object> valueMap = getResponse.getSourceAsMap();
+		SearchHit searchHit = searchResponse.getHits().getAt(0);
+		Map<String, SearchHitField> valueMap = searchHit.getFields();
 		if (!TelemetryEventType.MESSAGE_REQUEST.name().equals(getStringValue(this.tags.getTypeTag(), valueMap))) {
 			return null;
 		}
@@ -683,11 +716,15 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 			return null;
 		}
 		for (String correlationId : correlations) {
-			GetResponse getChildResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, correlationId).get();
-			if (!getResponse.isExists()) {
+			SearchResponse searchCorrelationResponse = this.elasticClient.prepareSearch(this.eventIndex)
+					.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", correlationId)))
+					.setSize(1)
+					.get();
+			if (searchCorrelationResponse.getHits().getTotalHits() < 1) {
 				continue;
 			}
-			Map<String, Object> childValueMap = getChildResponse.getSourceAsMap();
+			SearchHit searchCorrelationHit = searchCorrelationResponse.getHits().getAt(0);
+			Map<String, Object> childValueMap = searchCorrelationHit.getSource();
 			if (!TelemetryEventType.MESSAGE_RESPONSE.name().equals(getStringValue(this.tags.getTypeTag(), childValueMap))) {
 				continue;
 			}
@@ -703,12 +740,16 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	private CorrelationData getCorrelationData(String eventId) {
 		CorrelationData result = new CorrelationData();
 		result.eventId = eventId;
-		
-		GetResponse getResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, eventId).get();
-		if (!getResponse.isExists()) {
+
+		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
+				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", eventId)))
+				.setSize(1)
+				.get();
+		if (searchResponse.getHits().getTotalHits() < 1) {
 			return null;
 		}
-		Map<String, Object> valueMap = getResponse.getSourceAsMap();
+		SearchHit searchHit = searchResponse.getHits().getAt(0);
+		Map<String, Object> valueMap = searchHit.getSource();
 
 		result.application = getStringValue(this.tags.getApplicationTag(), valueMap);
 		getMapValue(this.tags.getCorrelationDataTag(), valueMap).forEach((k, v) -> result.data.put(k, v.toString()));
@@ -735,12 +776,18 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 				result.expired = true;
 			}
 			for (String childId : childCorrelations) {
-				GetResponse childResponse = this.elasticClient.prepareGet(this.eventIndex, this.eventIndexType, childId).get();
-				if (!childResponse.isExists()) {
-					continue;
+				SearchResponse searchChildResponse = this.elasticClient.prepareSearch(this.eventIndex)
+						.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(QueryBuilders.termQuery("id", childId)))
+						.addField(this.tags.getTypeTag())
+						.addField(this.tags.getCreationTimeTag())
+						.setSize(1)
+						.get();
+				if (searchChildResponse.getHits().getTotalHits() < 1) {
+					return null;
 				}
-				Map<String, Object> childValueMap = childResponse.getSourceAsMap();
-				if (eventId.equals(getStringValue(this.tags.getIdTag(), childValueMap)) && 
+				SearchHit searchChildHit = searchChildResponse.getHits().getAt(0);
+				Map<String, SearchHitField> childValueMap = searchChildHit.getFields();
+				if (eventId.equals(searchHit.getId()) && 
 						TelemetryEventType.MESSAGE_RESPONSE.name().equals(getStringValue(this.tags.getTypeTag(), childValueMap))) {
 					// We've found the response. Set the finishTime to the time
 					// the response was created.
@@ -803,11 +850,17 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private List<String> getStringListValue(String key, Map<String, Object> valueMap) {
+	private List<String> getStringListValue(String key, Map<String, ?> valueMap) {
 		if (valueMap.containsKey(key)) {
 			Object object = valueMap.get(key);
 			if (object instanceof SearchHitField) {
-				return ((SearchHitField)object).getValue();
+				Object stringObject = ((SearchHitField) object).getValue();
+				if (stringObject instanceof String) {
+					List<String> result = new ArrayList<String>();
+					result.add((String) stringObject);
+					return result; 
+				}
+				return ((SearchHitField)stringObject).getValue();
 			}
 			return (List<String>) valueMap.get(key);
 		}
@@ -828,10 +881,16 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private Map<String, Object> getMapValue(String key, Map<String, Object> valueMap) {
+	private Map<String, Object> getMapValue(String key, Map<String, ?> valueMap) {
 		if (valueMap.containsKey(key)) {
 			Map<String, Object> result = new HashMap<String, Object>();
-			List<Map<String, Object>> mapValues = (List<Map<String, Object>>) valueMap.get(key);
+			Object object = valueMap.get(key);
+			List<Map<String, Object>> mapValues = null;
+			if (object instanceof SearchHitField) {
+				mapValues = ((SearchHitField)object).getValue();
+			} else {
+				mapValues = (List<Map<String, Object>>) object;
+			}
 			for (Map<String, Object> mapValue : mapValues) {
 				result.put(mapValue.get(this.tags.getMapKeyTag()).toString(), mapValue.get(this.tags.getMapValueTag()));
 			}

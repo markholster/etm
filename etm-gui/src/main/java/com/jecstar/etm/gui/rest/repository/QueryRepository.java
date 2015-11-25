@@ -11,8 +11,8 @@ public interface QueryRepository {
 	
 	public void addEvents(SearchHits results, JsonGenerator generator) throws JsonGenerationException, IOException;
 
-	public void addEvent(String eventId, JsonGenerator generator) throws JsonGenerationException, IOException;
+	public void addEvent(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException;
 
-	public void addEventOverview(String eventId, JsonGenerator generator) throws JsonGenerationException, IOException;
+	public void addEventOverview(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException;
 	
 }
