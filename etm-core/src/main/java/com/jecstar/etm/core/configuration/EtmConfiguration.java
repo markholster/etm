@@ -8,13 +8,15 @@ import com.jecstar.etm.core.util.ObjectUtils;
 //TODO document this class and the different properties. 
 public class EtmConfiguration {
 	
-	public static final String CONFIG_KEY_LICENSE = "enhancingHandlerCount";
+	public static final String CONFIG_KEY_LICENSE = "license";
 	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT = "enhancingHandlerCount";
 	public static final String CONFIG_KEY_PERSISTING_HANDLER_COUNT = "persistingHandlerCount";
 	public static final String CONFIG_KEY_EVENT_BUFFER_SIZE = "eventBufferSize";
 	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE = "persistingBulkSize";
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
+	public static final String CONFIG_KEY_MAX_INDEX_COUNT = "maxIndexCount";
+	public static final String CONFIG_KEY_WRITE_CONSISTENCY = "writeConsistency";
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -23,9 +25,14 @@ public class EtmConfiguration {
 	
 	// Persisting configuration properties;
 	private int persistingBulkSize = 50;
-	private int shardsPerIndex = 2;
+	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 1;
+	private WriteConsistency writeConsistency = WriteConsistency.QUORUM;
+	
+	// Data configuration properties;
+	private int maxIndexCount = 7; 
 
+	// Other stuff.		
 	private final String nodeName;
 
 	private License license;
@@ -47,8 +54,6 @@ public class EtmConfiguration {
 
 	public void setLicenseKey(String licenseKey) {
 		this.license = new License(licenseKey);
-		// TODO Controleren of de huidige versie een trial is en de nieuwe ook.
-		// Als dat zo is, dan de key afwijzen?
 	}
 	
 	// Etm processor configuration
@@ -120,6 +125,28 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public int getMaxIndexCount() {
+		return this.maxIndexCount;
+	}
+	
+	public EtmConfiguration setMaxIndexCount(int maxIndexCount) {
+		if (maxIndexCount > 0) {
+			this.maxIndexCount = maxIndexCount;
+		}
+		return this;
+	}
+	
+	public WriteConsistency getWriteConsistency() {
+		return this.writeConsistency;
+	}
+	
+	public EtmConfiguration setWriteConsistency(WriteConsistency writeConsistency) {
+		if (writeConsistency != null) {
+			this.writeConsistency = writeConsistency;
+		}
+		return this;
+	}
 
 	public String getNodeName() {
 		return this.nodeName;
@@ -149,7 +176,7 @@ public class EtmConfiguration {
 	 * @return <code>true</code> when the configuration is changed,
 	 *         <code>false</code> otherwise.
 	 */
-	public boolean merge(EtmConfiguration etmConfiguration) {
+	public boolean mergeAndNotify(EtmConfiguration etmConfiguration) {
 		if (etmConfiguration == null) {
 			return false;
 		}
@@ -159,28 +186,36 @@ public class EtmConfiguration {
 			changed.add(CONFIG_KEY_LICENSE);
 		}
 		if (this.enhancingHandlerCount != etmConfiguration.getEnhancingHandlerCount()) {
-			this.enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
+			setEnhancingHandlerCount(etmConfiguration.getEnhancingHandlerCount());
 			changed.add(CONFIG_KEY_ENHANCING_HANDLER_COUNT);
 		}
 		if (this.persistingHandlerCount != etmConfiguration.getPersistingHandlerCount()) {
-			this.persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
+			setPersistingHandlerCount(etmConfiguration.getPersistingHandlerCount());
 			changed.add(CONFIG_KEY_PERSISTING_HANDLER_COUNT);
 		}
 		if (this.eventBufferSize != etmConfiguration.getEventBufferSize()) {
-			this.eventBufferSize = etmConfiguration.getEventBufferSize();
+			setEventBufferSize(etmConfiguration.getEventBufferSize());
 			changed.add(CONFIG_KEY_EVENT_BUFFER_SIZE);
 		}
 		if (this.persistingBulkSize != etmConfiguration.getPersistingBulkSize()) {
-			this.persistingBulkSize = etmConfiguration.getPersistingBulkSize();
+			setPersistingBulkSize(etmConfiguration.getPersistingBulkSize());
 			changed.add(CONFIG_KEY_PERSISTING_BULK_SIZE);
 		}
 		if (this.shardsPerIndex != etmConfiguration.getShardsPerIndex()) {
-			this.shardsPerIndex = etmConfiguration.getShardsPerIndex();
+			setShardsPerIndex(etmConfiguration.getShardsPerIndex());
 			changed.add(CONFIG_KEY_SHARDS_PER_INDEX);
 		}
 		if (this.replicasPerIndex != etmConfiguration.getReplicasPerIndex()) {
-			this.replicasPerIndex = etmConfiguration.replicasPerIndex;
+			setReplicasPerIndex(etmConfiguration.replicasPerIndex);
 			changed.add(CONFIG_KEY_REPLICAS_PER_INDEX);
+		}
+		if (this.maxIndexCount != etmConfiguration.getMaxIndexCount()) {
+			 setMaxIndexCount(etmConfiguration.getMaxIndexCount());
+			 changed.add(CONFIG_KEY_MAX_INDEX_COUNT);
+		}
+		if (!this.writeConsistency.equals(etmConfiguration.getWriteConsistency())) {
+			setWriteConsistency(etmConfiguration.getWriteConsistency());
+			changed.add(CONFIG_KEY_WRITE_CONSISTENCY);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);

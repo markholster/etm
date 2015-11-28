@@ -6,9 +6,9 @@ import java.io.IOException;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.core.domain.TelemetryEvent;
+import com.jecstar.etm.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.processor.repository.TelemetryEventRepository;
+import com.jecstar.etm.processor.processor.persisting.MessagingTelemetryEventPersister;
 import com.lmax.disruptor.EventHandler;
 
 public class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeable {
@@ -16,14 +16,13 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 	private final long ordinal;
 	private final long numberOfConsumers;
 	private final Timer timer;
+	private final CommandResources commandResources;
+	private final MessagingTelemetryEventConverterJsonImpl messagingTelemetryEventConverter = new MessagingTelemetryEventConverterJsonImpl();
 
-	private TelemetryEventRepository telemetryEventRepository;
-
-	public PersistingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal,
-	        final long numberOfConsumers, final MetricRegistry metricRegistry) {
-		this.telemetryEventRepository = telemetryEventRepository;
+	public PersistingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
+		this.commandResources = commandResources;
 		this.timer = metricRegistry.timer("event-processor-persisting");
 	}
 
@@ -33,27 +32,23 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 			return;
 		}
 		switch (command.commandType) {
-		case EVENT:
-			persistTelemetryMessageEvent(command.event);
+		case MESSAGING_EVENT:
+			final MessagingTelemetryEventPersister persister = this.commandResources.getPersister(command.commandType);
+			final Context timerContext = this.timer.time();
+			try {
+				persister.persist(command.messagingTelemetryEvent, this.messagingTelemetryEventConverter);
+			} finally {
+				timerContext.stop();
+			}
 			break;
 		default:
 			break;
 		}
 	}
 
-	private void persistTelemetryMessageEvent(TelemetryEvent event) {
-		final Context timerContext = this.timer.time();
-		try {
-			this.telemetryEventRepository.persistTelemetryEvent(event);
-		} finally {
-			timerContext.stop();
-		}
-
-	}
-
 	@Override
     public void close() throws IOException {
-		this.telemetryEventRepository.close();
+		this.commandResources.close();
     }
 
 }

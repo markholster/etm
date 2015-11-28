@@ -10,6 +10,7 @@ import org.elasticsearch.common.settings.Settings;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.configuration.License;
+import com.jecstar.etm.core.configuration.WriteConsistency;
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 
@@ -69,11 +70,22 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return super.getShardsPerIndex();
 	}
 	
-	
 	@Override
 	public int getReplicasPerIndex() {
 		reloadConfigurationWhenNecessary();
 		return super.getReplicasPerIndex();
+	}
+
+	@Override
+	public int getMaxIndexCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxIndexCount();
+	}
+	
+	@Override
+	public WriteConsistency getWriteConsistency() {
+		reloadConfigurationWhenNecessary();
+		return super.getWriteConsistency();
 	}
 	
 	private boolean reloadConfigurationWhenNecessary() {
@@ -104,7 +116,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			}
 			this.defaultVersion = defaultResponse.getVersion();
 			EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge", getComponent()); 
-			changed = this.merge(etmConfiguration);
+			changed = this.mergeAndNotify(etmConfiguration);
 		}
 		this.lastCheckedForUpdates = System.currentTimeMillis();
 		return changed;

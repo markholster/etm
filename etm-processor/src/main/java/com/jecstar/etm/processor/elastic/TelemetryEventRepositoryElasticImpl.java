@@ -1,9 +1,12 @@
 package com.jecstar.etm.processor.elastic;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -47,8 +50,8 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
-	private final TelemetryEventConverter<String> eventConverter = new AbstractJsonTelemetryEventConverter();
-	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
+//	private final TelemetryEventConverter<String> eventConverter = new AbstractJsonTelemetryEventConverter();
+//	private final TelemetryEventConverterTags tags = this.eventConverter.getTags();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	private final UpdateScriptBuilder updateScriptBuilder = new UpdateScriptBuilder();
 	private final Map<String, EndpointConfiguration> endpointConfigCache = new HashMap<String, EndpointConfiguration>();
@@ -119,38 +122,38 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 
 	@Override
     protected void addTelemetryEvent(TelemetryEvent event) {
-		String index = getElasticIndexName(event);
-		String type = getElasticType(event);
-		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
-				.consistencyLevel(WriteConsistencyLevel.ONE)
-		        .source(this.eventConverter.convert(event));
-		UpdateRequest updateRequest = new UpdateRequest(index, type, event.id)
-		        .script("etm_update-event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
-		        .upsert(indexRequest)
-		        .detectNoop(true)
-		        .consistencyLevel(WriteConsistencyLevel.ONE)
-		        .retryOnConflict(5);
-		this.bulkRequest.add(updateRequest);
-		
-		if (event.isResponse() && event.correlationId != null && event.readingEndpointHandlers.size() > 0) {
-			Optional<EndpointHandler> optionalFastestResponse = event.readingEndpointHandlers.stream()
-        	.filter(p -> p.handlingTime != null)
-        	.sorted((e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime))
-        	.findFirst();
-			if (optionalFastestResponse.isPresent()) {
-				EndpointHandler endpointHandler = optionalFastestResponse.get();
-				indexRequest = new IndexRequest(index, type, event.correlationId)
-						.consistencyLevel(WriteConsistencyLevel.ONE)
-				        .source("{ \"" + this.tags.getResponseHandlingTimeTag() + "\": " + endpointHandler.handlingTime.toInstant().toEpochMilli() + " }");
-				updateRequest = new UpdateRequest(index, type, event.correlationId)
-				        .script("etm_update-request-with-responsetime", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(endpointHandler, this.tags))
-				        .upsert(indexRequest)
-				        .detectNoop(true)
-				        .consistencyLevel(WriteConsistencyLevel.ONE)
-				        .retryOnConflict(5);
-				this.bulkRequest.add(updateRequest);
-			}
-		}
+//		String index = getElasticIndexName(event);
+//		String type = getElasticType(event);
+//		IndexRequest indexRequest = new IndexRequest(index, type, event.id)
+//				.consistencyLevel(WriteConsistencyLevel.ONE)
+//		        .source(this.eventConverter.convert(event));
+//		UpdateRequest updateRequest = new UpdateRequest(index, type, event.id)
+//		        .script("etm_update-event", ScriptType.FILE, this.updateScriptBuilder.createUpdateParameterMap(event, this.tags))
+//		        .upsert(indexRequest)
+//		        .detectNoop(true)
+//		        .consistencyLevel(WriteConsistencyLevel.ONE)
+//		        .retryOnConflict(5);
+//		this.bulkRequest.add(updateRequest);
+//		
+//		if (event.isResponse() && event.correlationId != null && event.readingEndpointHandlers.size() > 0) {
+//			Optional<EndpointHandler> optionalFastestResponse = event.readingEndpointHandlers.stream()
+//        	.filter(p -> p.handlingTime != null)
+//        	.sorted((e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime))
+//        	.findFirst();
+//			if (optionalFastestResponse.isPresent()) {
+//				EndpointHandler endpointHandler = optionalFastestResponse.get();
+//				indexRequest = new IndexRequest(index, type, event.correlationId)
+//						.consistencyLevel(WriteConsistencyLevel.ONE)
+//				        .source("{ \"" + this.tags.getResponseHandlingTimeTag() + "\": " + endpointHandler.handlingTime.toInstant().toEpochMilli() + " }");
+//				updateRequest = new UpdateRequest(index, type, event.correlationId)
+//				        .script("etm_update-request-with-responsetime", ScriptType.FILE, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(endpointHandler, this.tags))
+//				        .upsert(indexRequest)
+//				        .detectNoop(true)
+//				        .consistencyLevel(WriteConsistencyLevel.ONE)
+//				        .retryOnConflict(5);
+//				this.bulkRequest.add(updateRequest);
+//			}
+//		}
     }
 	
 	/**
@@ -163,11 +166,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractTelemetryEventR
 	 * @return The name of the index.
 	 */
 	public String getElasticIndexName(TelemetryEvent event) {
-		if (event.isResponse()) {
-			// TODO check of dit de juiste index is. De bijbehorende request kan nl in een andere index zitten.
-		}
-		// TODO dit moet gewoon op de tijd zoals deze nu is, niet op basis van event time.
-		return "etm_event_" + event.getEventTime().format(this.dateTimeFormatter);
+		return "etm_event_" + this.dateTimeFormatter.format(ZonedDateTime.now());
 		
 	}
 	

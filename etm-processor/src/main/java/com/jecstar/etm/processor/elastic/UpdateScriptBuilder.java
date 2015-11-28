@@ -22,35 +22,35 @@ public class UpdateScriptBuilder {
 	}
 
 	Map<String, Object> createUpdateParameterMap(TelemetryEvent event, TelemetryEventConverterTags tags) {
-		this.parameters.clear();
-		addValueSetterToScript(tags.getCorrelationIdTag(), event.correlationId);
-		addMapAppenderToScript(tags.getCorrelationDataTag(), event.correlationData);
-		addValueSetterToScript(tags.getEndpointTag(), event.endpoint);
-		addValueSetterToScript(tags.getExpiryTag(), event.expiry == null ? null : event.expiry.toInstant().toEpochMilli());
-		addMapAppenderToScript(tags.getExtractedDataTag(), event.extractedData);
-		addMapAppenderToScript(tags.getMetadataTag(), event.metadata);
-		addValueSetterToScript(tags.getNameTag(), event.name);
-		addValueSetterToScript(tags.getPackagingTag(), event.packaging);
-		addValueSetterToScript(tags.getPayloadTag(), event.payload);
-		addValueSetterToScript(tags.getPayloadFormatTag(), event.payloadFormat == null ? null : event.payloadFormat.name());
-		if (event.readingEndpointHandlers.size() > 0) {
-			List<Map<String, Object>> readingEndpointHandlers = new ArrayList<Map<String, Object>>();
-			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
-				if (endpointHandler.isSet()) {
-					readingEndpointHandlers.add(createEndpointHandlerMap(endpointHandler, tags));
-				}
-			}
-			addArrayAppenderToScript(tags.getReadingEndpointHandlersTag(), readingEndpointHandlers);
-		} else {
-			addArrayAppenderToScript(tags.getReadingEndpointHandlersTag(), null);
-		}
-		addValueSetterToScript(tags.getTransactionIdTag(), event.transactionId);
-		addValueSetterToScript(tags.getTransportTag(), event.transport == null ? null : event.transport.name());
-		if (event.writingEndpointHandler.isSet()) {
-			addValueSetterToScript(tags.getWritingEndpointHandlerTag(), createEndpointHandlerMap(event.writingEndpointHandler, tags));
-		} else {
-			addValueSetterToScript(tags.getWritingEndpointHandlerTag(), null);
-		}
+//		this.parameters.clear();
+//		addValueSetterToScript(tags.getCorrelationIdTag(), event.correlationId);
+//		addMapAppenderToScript(tags.getCorrelationDataTag(), event.correlationData);
+//		addValueSetterToScript(tags.getEndpointTag(), event.endpoint);
+//		addValueSetterToScript(tags.getExpiryTag(), event.expiry == null ? null : event.expiry.toInstant().toEpochMilli());
+//		addMapAppenderToScript(tags.getExtractedDataTag(), event.extractedData);
+//		addMapAppenderToScript(tags.getMetadataTag(), event.metadata);
+//		addValueSetterToScript(tags.getNameTag(), event.name);
+//		addValueSetterToScript(tags.getPackagingTag(), event.packaging);
+//		addValueSetterToScript(tags.getPayloadTag(), event.payload);
+//		addValueSetterToScript(tags.getPayloadFormatTag(), event.payloadFormat == null ? null : event.payloadFormat.name());
+//		if (event.readingEndpointHandlers.size() > 0) {
+//			List<Map<String, Object>> readingEndpointHandlers = new ArrayList<Map<String, Object>>();
+//			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
+//				if (endpointHandler.isSet()) {
+//					readingEndpointHandlers.add(createEndpointHandlerMap(endpointHandler, tags));
+//				}
+//			}
+//			addArrayAppenderToScript(tags.getReadingEndpointHandlersTag(), readingEndpointHandlers);
+//		} else {
+//			addArrayAppenderToScript(tags.getReadingEndpointHandlersTag(), null);
+//		}
+//		addValueSetterToScript(tags.getTransactionIdTag(), event.transactionId);
+//		addValueSetterToScript(tags.getTransportTag(), event.transport == null ? null : event.transport.name());
+//		if (event.writingEndpointHandler.isSet()) {
+//			addValueSetterToScript(tags.getWritingEndpointHandlerTag(), createEndpointHandlerMap(event.writingEndpointHandler, tags));
+//		} else {
+//			addValueSetterToScript(tags.getWritingEndpointHandlerTag(), null);
+//		}
 		return new HashMap<String, Object>(this.parameters);
 	}
 	

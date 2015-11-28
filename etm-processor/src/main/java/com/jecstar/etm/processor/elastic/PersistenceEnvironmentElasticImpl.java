@@ -13,8 +13,8 @@ import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.processor.metrics.MetricConverterTags;
 import com.jecstar.etm.processor.metrics.MetricConverterTagsJsonImpl;
+import com.jecstar.etm.processor.processor.CommandResources;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
-import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
 public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment {
 
@@ -29,12 +29,12 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	}
 	
 	@Override
-	public TelemetryEventRepository createTelemetryEventRepository(final MetricRegistry metricRegistry) {
-		return new TelemetryEventRepositoryElasticImpl(this.etmConfiguration, this.elasticClient, metricRegistry);
+	public CommandResources createCommandResources(final MetricRegistry metricRegistry) {
+		return new CommandResources(this.elasticClient, this.etmConfiguration, metricRegistry);
 	}
 	
 	@Override
-	public ScheduledReporter createMetricReporter(String nodeName, MetricRegistry metricRegistry) {
+	public ScheduledReporter createMetricReporter(final String nodeName, final MetricRegistry metricRegistry) {
 		return new MetricReporterElasticImpl(metricRegistry, nodeName, this.elasticClient);
 	}
 

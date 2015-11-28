@@ -8,7 +8,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.domain.EndpointConfiguration;
-import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
@@ -21,16 +20,16 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	
 	private final long ordinal;
 	private final long numberOfConsumers;
+	private final CommandResources commandResources;
 	
-	private final TelemetryEventRepository telemetryEventRepository;
 	private final EndpointConfiguration endpointConfiguration;
 	private final Timer timer;
 	
-	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final MetricRegistry metricRegistry) {
-		this.telemetryEventRepository = telemetryEventRepository;
+	public EnhancingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.endpointConfiguration = new EndpointConfiguration();
+		this.commandResources = commandResources;
 		this.timer = metricRegistry.timer("event-processor-enhancing");
 	}
 
@@ -40,8 +39,8 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			return;
 		}
 		switch (command.commandType) {
-		case EVENT:
-			enhanceTelemetryEvent(command.event);
+		case MESSAGING_EVENT:
+//			enhanceTelemetryEvent(command.);
 			break;
 		default:
 			break;
@@ -62,11 +61,10 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 				event.id = UUID.randomUUID().toString();
 			}
 			if (event.payloadFormat == null) {
-				// Always set the payload format, because it's a type in elastic.
 				event.payloadFormat = detectPayloadFormat(event.payload);
 			}
 			this.endpointConfiguration.initialize();
-			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfiguration);
+//			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfiguration);
 			if (event.name == null) {
 				// Set the event name by the event name parsers.
 				event.name = parseValue(this.endpointConfiguration.eventNameParsers, event.payload);
@@ -79,27 +77,27 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 					event.writingEndpointHandler.handlingTime = now;
 				}
 			}
-			if (event.readingEndpointHandlers.size() == 0) {
-				// Check if we can find some reading applications with the reading application parsers.
-				String readingApplicationName = parseValue(this.endpointConfiguration.readingApplicationParsers, event.payload);
-				if (readingApplicationName != null) {
-					EndpointHandler endpointHandler = new EndpointHandler();
-					endpointHandler.application.name = readingApplicationName;
-					event.readingEndpointHandlers.add(endpointHandler);
-				}
-			}
-			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
-				// Add the handling time to all reading endpoint handlers without a handling time.
-				if (endpointHandler.handlingTime == null) {
-					endpointHandler.handlingTime = event.writingEndpointHandler.handlingTime != null ? event.writingEndpointHandler.handlingTime : now;
-				}
-			}
+//			if (event.readingEndpointHandlers.size() == 0) {
+//				// Check if we can find some reading applications with the reading application parsers.
+//				String readingApplicationName = parseValue(this.endpointConfiguration.readingApplicationParsers, event.payload);
+//				if (readingApplicationName != null) {
+//					EndpointHandler endpointHandler = new EndpointHandler();
+//					endpointHandler.application.name = readingApplicationName;
+//					event.readingEndpointHandlers.add(endpointHandler);
+//				}
+//			}
+//			for (EndpointHandler endpointHandler : event.readingEndpointHandlers) {
+//				// Add the handling time to all reading endpoint handlers without a handling time.
+//				if (endpointHandler.handlingTime == null) {
+//					endpointHandler.handlingTime = event.writingEndpointHandler.handlingTime != null ? event.writingEndpointHandler.handlingTime : now;
+//				}
+//			}
 			// Check a reading or writing application is set. If
 			// not, set the time one the writing application anyway, because
 			// elastic needs at least 1 event time to determine the index.
-			if (event.writingEndpointHandler.handlingTime == null && event.readingEndpointHandlers.size() == 0) {
-				event.writingEndpointHandler.handlingTime = now;
-			}
+//			if (event.writingEndpointHandler.handlingTime == null && event.readingEndpointHandlers.size() == 0) {
+//				event.writingEndpointHandler.handlingTime = now;
+//			}
 			if (!this.endpointConfiguration.correlationDataParsers.isEmpty()) {
 				// Apply the correlation parsers.
 				this.endpointConfiguration.correlationDataParsers.forEach((k,v) -> {
