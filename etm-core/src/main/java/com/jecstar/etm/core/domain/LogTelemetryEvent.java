@@ -14,7 +14,6 @@ public class LogTelemetryEvent extends TelemetryEvent<LogTelemetryEvent> {
 	@Override
 	public LogTelemetryEvent initialize(LogTelemetryEvent copy) {
 		super.internalInitialize(copy);
-		this.initialize();
 		this.logLevel = copy.logLevel;
 		return this;
 	}

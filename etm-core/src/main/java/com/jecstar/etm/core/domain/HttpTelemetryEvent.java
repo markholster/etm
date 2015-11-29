@@ -41,7 +41,6 @@ public class HttpTelemetryEvent extends TelemetryEvent<HttpTelemetryEvent> {
 	@Override
 	public HttpTelemetryEvent initialize(HttpTelemetryEvent copy) {
 		super.internalInitialize(copy);
-		this.initialize();
 		this.httpEventType = copy.httpEventType;
 		this.readingEndpointHandler.initialize(copy.readingEndpointHandler);
 		return this;

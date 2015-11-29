@@ -22,10 +22,10 @@ import org.junit.Test;
 
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
+import com.jecstar.etm.core.domain.MessagingTelemetryEvent.MessagingEventType;
+import com.jecstar.etm.core.domain.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.PayloadFormat;
-import com.jecstar.etm.core.domain.TelemetryEvent;
-import com.jecstar.etm.core.domain.TelemetryEventBuilder;
-import com.jecstar.etm.core.domain.Transport;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
 
@@ -47,6 +47,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 				.put("cluster.name", "Enterprise Telemetry Monitor - Unit Test")
 				.put("node.name", "Unit test " + System.getProperty("user.name"))
 				.put("http.enabled", false)
+				.put("path.home", System.getProperty("java.io.tmpdir"))
 				.put("path.conf", "src/main/resources/config"))
 				.local(true)
 				.node();
@@ -93,13 +94,12 @@ public class TelemetryEventRepositoryElasticImplTest {
 	@Test
 	public void testPersistOneWriterOneReaderSingleEvent() {
 		final String id = "1";
-		TelemetryEventBuilder builder = new TelemetryEventBuilder();
-		TelemetryEvent event = builder.setId(id)
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder();
+		MessagingTelemetryEvent event = builder.setId(id)
 			.setName("Event 1")
 			.setPayloadFormat(PayloadFormat.TEXT)
 			.setPayload("Testcase testPersistOneWriterOneReaderSingleEvent.")
 			.setWritingEndpointHandler(ZonedDateTime.now(), "TestCase", null, null, null)
-			.setTransport(Transport.MQ)
 			.setExpiry(ZonedDateTime.now().plus(30, ChronoUnit.SECONDS))
 			.addReadingEndpointHandler(ZonedDateTime.now(), "TestCase", null, "Server 1", "sy000012")
 			.build();
@@ -130,8 +130,8 @@ public class TelemetryEventRepositoryElasticImplTest {
 	@Test
 	public void testPersistOneWriterTwoReadersSeparatedEvents() {
 		final String id = "2";
-		TelemetryEventBuilder builder = new TelemetryEventBuilder();
-		TelemetryEvent event = builder.setId(id)
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder();
+		MessagingTelemetryEvent event = builder.setId(id)
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setPayload("Testcase testPersistOneWriterTwoReadersSeparatedEvents.")
 				.setWritingEndpointHandler(ZonedDateTime.now(), "TestCase", null, null, null)
@@ -172,12 +172,11 @@ public class TelemetryEventRepositoryElasticImplTest {
 		final String id_rsp = "4";
 		final ZonedDateTime requestTime = ZonedDateTime.now();
 		final ZonedDateTime responseReadingTime = requestTime.plus(15, ChronoUnit.SECONDS).plus(12, ChronoUnit.MILLIS);
-		TelemetryEventBuilder builder = new TelemetryEventBuilder();
-		TelemetryEvent event = builder.setId(id_req)
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder();
+		MessagingTelemetryEvent event = builder.setId(id_req)
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setPayload("Testcase testPersistRequestBeforeResponseEvent Request.")
-				.setTransport(Transport.MQ)
-				.setPackaging(TelemetryEvent.PACKAGING_MQ_REQUEST)
+				.setMessagingEventType(MessagingEventType.REQUEST)
 				.setWritingEndpointHandler(requestTime, "Request writer", null, null, null)
 				.setExpiry(requestTime.plus(30, ChronoUnit.SECONDS))
 				.addReadingEndpointHandler(requestTime.plus(10, ChronoUnit.MILLIS), "Request reader", null, null, null)
@@ -197,8 +196,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 				.setCorrelationId(id_req)
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setPayload("Testcase testPersistRequestBeforeResponseEvent Response.")
-				.setTransport(Transport.MQ)
-				.setPackaging(TelemetryEvent.PACKAGING_MQ_RESPONSE)
+				.setMessagingEventType(MessagingEventType.RESPONSE)
 				.setWritingEndpointHandler(responseReadingTime.minus(12, ChronoUnit.MILLIS), "Request reader", null, null, null)
 				.addReadingEndpointHandler(responseReadingTime, "Request writer", null, null, null)
 				.build();
@@ -219,13 +217,12 @@ public class TelemetryEventRepositoryElasticImplTest {
 		final String id_rsp = "6";
 		final ZonedDateTime requestTime = ZonedDateTime.now();
 		final ZonedDateTime responseReadingTime = requestTime.plus(15, ChronoUnit.SECONDS).plus(12, ChronoUnit.MILLIS);
-		TelemetryEventBuilder builder = new TelemetryEventBuilder();
-		TelemetryEvent event = builder.setId(id_rsp)
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder();
+		MessagingTelemetryEvent event = builder.setId(id_rsp)
 				.setCorrelationId(id_req)
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setPayload("Testcase testPersistResponseBeforeRequestEvent Response.")
-				.setTransport(Transport.MQ)
-				.setPackaging(TelemetryEvent.PACKAGING_MQ_RESPONSE)
+				.setMessagingEventType(MessagingEventType.RESPONSE)
 				.setWritingEndpointHandler(responseReadingTime.minus(12, ChronoUnit.MILLIS), "Request reader", null, null, null)
 				.addReadingEndpointHandler(responseReadingTime, "Request writer", null, null, null)
 				.build();
@@ -241,8 +238,7 @@ public class TelemetryEventRepositoryElasticImplTest {
 			event = builder.setId(id_req)
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setPayload("Testcase testPersistResponseBeforeRequestEvent Request.")
-				.setTransport(Transport.MQ)
-				.setPackaging(TelemetryEvent.PACKAGING_MQ_REQUEST)
+				.setMessagingEventType(MessagingEventType.REQUEST)
 				.setWritingEndpointHandler(requestTime, "Request writer", null, null, null)
 				.setExpiry(requestTime.plus(30, ChronoUnit.SECONDS))
 				.addReadingEndpointHandler(requestTime.plus(10, ChronoUnit.MILLIS), "Request reader", null, null, null)

@@ -51,7 +51,6 @@ public class MessagingTelemetryEvent extends TelemetryEvent<MessagingTelemetryEv
 	@Override
 	public MessagingTelemetryEvent initialize(MessagingTelemetryEvent copy) {
 		super.internalInitialize(copy);
-		this.initialize();
 		this.expiry = copy.expiry;
 		this.messagingEventType = copy.messagingEventType;
 		this.readingEndpointHandlers.addAll(copy.readingEndpointHandlers);

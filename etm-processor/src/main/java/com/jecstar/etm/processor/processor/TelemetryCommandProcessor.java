@@ -1,5 +1,6 @@
 package com.jecstar.etm.processor.processor;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -14,10 +15,18 @@ import com.jecstar.etm.core.domain.DbQueryTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.HttpTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.LogTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryCommandProcessor implements ConfigurationChangeListener {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryCommandProcessor.class);
+
 	
 	private RingBuffer<TelemetryCommand> ringBuffer;
 	private boolean started = false;
@@ -77,7 +86,13 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.executorService.shutdown();
 		this.disruptorEnvironment.shutdown();
 		this.metricReporter.stop();
-		this.persistenceEnvironment.close();
+		try {
+			this.persistenceEnvironment.close();
+		} catch (IOException e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Failed to close PersistenceEnvironment", e);
+			}
+		}
 	}
 
 	public void processDbQueryTelemetryEvent(final DbQueryTelemetryEventBuilder builder) {

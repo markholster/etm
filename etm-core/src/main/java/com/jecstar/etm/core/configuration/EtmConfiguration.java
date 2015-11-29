@@ -24,7 +24,7 @@ public class EtmConfiguration {
 	private int eventBufferSize = 4096;
 	
 	// Persisting configuration properties;
-	private int persistingBulkSize = 50;
+	private int persistingBulkSize = 1000;
 	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 1;
 	private WriteConsistency writeConsistency = WriteConsistency.QUORUM;

@@ -39,7 +39,6 @@ public class DbQueryTelemetryEvent extends TelemetryEvent<DbQueryTelemetryEvent>
 	@Override
 	public DbQueryTelemetryEvent initialize(DbQueryTelemetryEvent copy) {
 		super.internalInitialize(copy);
-		this.initialize();		
 		this.dbQueryEventType = copy.dbQueryEventType;
 		this.readingEndpointHandler.initialize(copy.readingEndpointHandler);
 		return this;

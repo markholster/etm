@@ -1,6 +1,5 @@
 package com.jecstar.etm.processor.processor;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 import com.codahale.metrics.MetricRegistry;
@@ -23,12 +22,12 @@ public class DisruptorEnvironment {
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEventHandlers[i] = new EnhancingEventHandler(i, enhancingHandlerCount, persistenceEnvironment.createCommandResources(metricRegistry), metricRegistry);
+			enhancingEventHandlers[i] = new EnhancingEventHandler(i, enhancingHandlerCount, persistenceEnvironment.getCommandResources(metricRegistry), metricRegistry);
 		}
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();
 		this.persistingEventHandlers = new PersistingEventHandler[persistingHandlerCount]; 
 		for (int i = 0; i < persistingHandlerCount; i++) {
-			this.persistingEventHandlers[i] = new PersistingEventHandler(i, persistingHandlerCount, persistenceEnvironment.createCommandResources(metricRegistry), metricRegistry);
+			this.persistingEventHandlers[i] = new PersistingEventHandler(i, persistingHandlerCount, persistenceEnvironment.getCommandResources(metricRegistry), metricRegistry);
 		}
 		if (enhancingEventHandlers.length > 0) {
 			this.disruptor.handleEventsWith(enhancingEventHandlers);
@@ -51,10 +50,7 @@ public class DisruptorEnvironment {
 	public void shutdown() {
 		this.disruptor.shutdown();
 		for (PersistingEventHandler persistingEventHandler : this.persistingEventHandlers) {
-			try {
-	            persistingEventHandler.close();
-            } catch (IOException e) {
-            }
+			persistingEventHandler.close();
 		}
     }
 }

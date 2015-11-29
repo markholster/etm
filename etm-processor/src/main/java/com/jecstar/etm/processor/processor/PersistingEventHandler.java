@@ -1,13 +1,14 @@
 package com.jecstar.etm.processor.processor;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.processor.persisting.LogTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.MessagingTelemetryEventPersister;
 import com.lmax.disruptor.EventHandler;
 
@@ -18,6 +19,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 	private final Timer timer;
 	private final CommandResources commandResources;
 	private final MessagingTelemetryEventConverterJsonImpl messagingTelemetryEventConverter = new MessagingTelemetryEventConverterJsonImpl();
+	private final LogTelemetryEventConverterJsonImpl logTelemetryEventConverter = new LogTelemetryEventConverterJsonImpl();
 
 	public PersistingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
 		this.ordinal = ordinal;
@@ -33,22 +35,30 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 		}
 		switch (command.commandType) {
 		case MESSAGING_EVENT:
-			final MessagingTelemetryEventPersister persister = this.commandResources.getPersister(command.commandType);
-			final Context timerContext = this.timer.time();
+			final MessagingTelemetryEventPersister messagingPersister = this.commandResources.getPersister(command.commandType);
+			final Context messaginTgimerContext = this.timer.time();
 			try {
-				persister.persist(command.messagingTelemetryEvent, this.messagingTelemetryEventConverter);
+				messagingPersister.persist(command.messagingTelemetryEvent, this.messagingTelemetryEventConverter);
 			} finally {
-				timerContext.stop();
+				messaginTgimerContext.stop();
 			}
 			break;
+		case LOG_EVENT:	
+			final LogTelemetryEventPersister logPersister = this.commandResources.getPersister(command.commandType);
+			final Context logTimerContext = this.timer.time();
+			try {
+				logPersister.persist(command.logTelemetryEvent, this.logTelemetryEventConverter);
+			} finally {
+				logTimerContext.stop();
+			}
+			break;			
 		default:
-			break;
+			throw new IllegalArgumentException("'" + command.commandType.name() + "' not implemented.");
 		}
 	}
 
 	@Override
-    public void close() throws IOException {
-		this.commandResources.close();
+    public void close() {
     }
 
 }

@@ -12,7 +12,6 @@ import com.jecstar.etm.core.domain.PayloadFormat;
 import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
 
 public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {

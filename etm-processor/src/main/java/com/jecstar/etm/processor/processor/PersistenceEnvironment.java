@@ -1,17 +1,16 @@
 package com.jecstar.etm.processor.processor;
 
+import java.io.Closeable;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 
-public interface PersistenceEnvironment {
+public interface PersistenceEnvironment extends Closeable {
 
-	CommandResources createCommandResources(MetricRegistry metricRegistry);
+	CommandResources getCommandResources(MetricRegistry metricRegistry);
 	
 	ScheduledReporter createMetricReporter(String nodeName, MetricRegistry metricRegistry);
 	
 	void createEnvironment();
-	
-	void close();
-
 	
 }
