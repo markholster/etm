@@ -309,6 +309,8 @@ public class StatisticsService {
 	        	generator.writeStringField("application", expiredMessage.getApplication());
 	        	generator.writeNumberField("startTime", expiredMessage.getStartTime().getTime());
 	        	generator.writeNumberField("expirationTime", expiredMessage.getExpirationTime().getTime());
+	        	generator.writeStringField("indexName", expiredMessage.getIndexName());
+	        	generator.writeStringField("indexType", expiredMessage.getIndexType());
 	        	generator.writeEndObject();
 	        }
 	        generator.writeEndArray();

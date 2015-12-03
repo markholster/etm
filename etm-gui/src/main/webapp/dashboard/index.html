@@ -338,7 +338,7 @@ $(function () {
         } else {
             application = '<div style="display: none;"><a href="application.html?name=' + encodeURIComponent(expiration.application) + '">' + escapeToHtml(expiration.application) + '</a></div>';
         }
-        var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '">' + escapeToHtml(expiration.name) + '</a></div></td><td>' + application + '</td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.startTime)) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime)) + '</div></td></tr>';  
+        var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '&index=' + encodeURIComponent(expiration.indexName) + '&type=' + encodeURIComponent(expiration.indexType) + '">' + escapeToHtml(expiration.name) + '</a></div></td><td>' + application + '</td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.startTime)) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%H:%M:%S', expiration.expirationTime)) + '</div></td></tr>';  
         $(rowContent).prependTo($('#expiry_table > tbody'));
     };
 

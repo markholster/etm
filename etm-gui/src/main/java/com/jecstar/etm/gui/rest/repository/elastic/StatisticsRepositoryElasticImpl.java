@@ -355,7 +355,7 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 			if (fields.containsKey(this.tags.getApplicationTag())) {
 				applicationName = fields.get(this.tags.getApplicationTag()).getValue();
 			}
-			expiredMessages.add(new ExpiredMessage(id, eventName, creationTime, expiryTime, applicationName));
+			expiredMessages.add(new ExpiredMessage(id, eventName, creationTime, expiryTime, applicationName, searchHit.getIndex(), searchHit.getType()));
 		
 		}
 		return expiredMessages;

@@ -71,7 +71,7 @@ public class License {
 	}
 	
 	public boolean isAboutToExpire() {
-		return this.expiryDate.getTime() < (System.currentTimeMillis() + (1000 * 60 * 60 * 24 * 30));
+		return this.expiryDate.getTime() < (System.currentTimeMillis() + (1000l * 60l * 60l * 24l * 30l));
 	}
 	
 	@Override

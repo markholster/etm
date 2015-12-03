@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.core.EtmException;
 
@@ -144,8 +145,20 @@ public abstract class AbstractJsonConverter {
 
 	
 	protected String escapeToJson(String value) {
-		return value.replace("\"", "\\\"");
+	    try {
+	    	String newValue = this.objectMapper.writeValueAsString(value);
+			return newValue.substring(1, newValue.length() - 1);
+		} catch (JsonProcessingException e) {
+			// Try to make the best of it. Unicodes outside of the range 32-0x7f should actually be escaped as well.
+			return value
+					.replace("\"", "\\\"")
+					.replace("\\", "\\\\")
+					.replace("/", "\\/")
+					.replace("\b", "\\b")
+	    			.replace("\n", "\\n")
+					.replace("\t", "\\t")
+					.replace("\f", "\\f")
+					.replace("\r", "\\r");		
+		}
 	}
-
-
 }
