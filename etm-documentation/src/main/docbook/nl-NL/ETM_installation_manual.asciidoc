@@ -270,12 +270,77 @@ door json data naar url http://localhost:8080/etm/processor/rest/event/add te po
 Een beschrijving over de layout van de json data is terug te vinden in de gebruikershandleiding.
 
 === ETM mdb processor
+IMPORTANT: Voordat etm-processor-mdb-{etm_version}.war gedeployed gaat worden is het nodig een geldige licentie ingevoerd te hebben. Als dit niet is gebeurd zullen de
+berichten gerollbacked worden wat betekend de berichten van de queue in het ergste geval verloren zullen gaan.
+
 Om events aan ETM toe te voegen via een JMS topic of JMS queue dient u de component etm-processor-mdb-{etm_version}.war te deployen in Wildfly. De MDB maakt default verbinding
 met een queue onder de jndi naam "jms/queue/EtmNotification". 
 
-Als dit niet gewenst is moet er een aanpassing in etm-processor-mdb-{etm_version}.war zelf doorgevoerd worden. Unzip
-hiervoor etm-processor-mdb-{etm_version}.war naar een gewenste lokatie en pas daarna het bestand WEB-INF/ejb-jar.xml aan. Als u bijvoorbeeld verbinding wilt maken met een 
-IBM MQ Queue en gebruik maakt van de "wmq.jmsra.rar" resource adapter moet het activation-config element als volgt gevuld worden:
+Als dit niet gewenst is moet er een aanpassing in etm-processor-mdb-{etm_version}.war zelf doorgevoerd worden. Unzip hiervoor etm-processor-mdb-{etm_version}.war naar een 
+gewenste lokatie en pas daarna het bestand WEB-INF/ejb-jar.xml aan. Zip de directory structuur opnieuw naar etm-processor-mdb-{etm_version}.war en deploy dit bestand vervolgens.
+
+De standalone configuratie biedt standaard geen ondersteuning voor messaging. Hiervoor moet een aanpassing in de standalone.xml doorgevoerd worden. Allereest moet de messaging 
+module ingeladen worden. Voeg hiervoor de regel
+[source,xml]
+----
+<extension module="org.jboss.as.messaging"/>
+----
+toe aan de het <extensions> element bovenin het bestand. De extensions staan op alfabetische volgorde dus de regel past het best na de mail module.
+
+Vervolgens moet het messaging subsystem "aangezet" worden door de configuratie hiervan op te nemen. Dit kan door de regel
+[source,xml]
+----
+<subsystem xmlns="urn:jboss:domain:messaging:3.0">
+</subsystem>
+----
+toe te voegen onder het mail subsystem. 
+
+Voeg hierna de regels 
+[source,xml]
+----
+<spec-descriptor-property-replacement>true</spec-descriptor-property-replacement>
+<jboss-descriptor-property-replacement>true</jboss-descriptor-property-replacement>
+----
+toe aan het ee subsystem (urn:jboss:domain:ee). De eerste regel kan al aanwezig zijn en moet dus vervangen worden.
+
+Als laatste moet er in het ejb3 subsytem het volgende worden toegevoegd
+[source,xml]
+----
+<mdb>
+    <resource-adapter-ref resource-adapter-name="${ejb.resource-adapter-name:hornetq-ra.rar}"/>
+    <bean-instance-pool-ref pool-name="mdb-strict-max-pool"/>
+</mdb>
+----
+
+==== Aansluiten op IBM MQ
+Voor de aansluiting van de Messaga Driven Bean op IBM MQ wordt gebruik gemaakt van de http://www-01.ibm.com/support/docview.wss?uid=swg27041968[IBM MQ Resource Adapter]. Deploy
+de wmq.jmsra.jar in Wildfly en pas tevens de overige instellingen aan in standalone.xml
+
+In het resource adapter subsystem moet de IBM MQ Resource Adapter kenbaar gemaakt worden:
+[source,xml]
+----
+<subsystem xmlns="urn:jboss:domain:resource-adapters:3.0">
+    <resource-adapters>
+        <resource-adapter id="wmq.jmsra.rar">
+            <archive>
+                wmq.jmsra.rar
+            </archive>
+        </resource-adapter>
+    </resource-adapters>
+</subsystem>             
+----
+
+Hierna moet in het ejb3 subsystem ingesteld worden dat er van de wmq.jmsra.rar resource adapter gebruik gemaakt moet worden:
+[source,xml]
+----
+<mdb>
+    <resource-adapter-ref resource-adapter-name="wmq.jmsra.rar"/>
+    <bean-instance-pool-ref pool-name="mdb-strict-max-pool"/>
+</mdb>
+----
+Eventueel kan de max-pool-size van de  "mdb-strict-max-pool" aangepast worden naar een gewenste waarde. De configuratie van Wildfly is nu kaar voor gebruik,
+maar de etm-processor-mdb-{etm_version}.war moet nog aangepast worden. Unzip hiervoor etm-processor-mdb-{etm_version}.war naar een gewenste lokatie en pas daarna
+het bestand WEB-INF\ejb-jar.xml aan. Zorg ervoor dat het element "<activation-config>" de volgende waardes krijgt:
 [source,xml]
 ----
 <activation-config-property> 
@@ -312,26 +377,17 @@ IBM MQ Queue en gebruik maakt van de "wmq.jmsra.rar" resource adapter moet het a
 </activation-config-property>
 ----
 
-Zip de directory structuur opnieuw naar etm-processor-mdb-{etm_version}.war en deploy dit bestand hierna. De MDB maakt nu gebruik van system properties om de omgeving 
-specifieke eigenschappen zoals de queue naam uit te lezen. Dit zijn de waardes die beschreven als "${<waarde>}" in de ejb-jar.xml voorkomen. U hoeft hier geen 
-gebruik te maken van system properties, maar kunt hier ook gewoon harde waardes invullen.
-
-Indien u gebruik van system properties gaat maken, vergeet deze dan niet op te voeren in de Wildfly administration console. Ook moet u nog een aanpassing in de 
-standalone.xml/domain.xml doorvoeren die ervoor zorgt dat de variabelen uit ejb-jar.xml worden vervangen door de system properties zelf. Zorg ervoor dat het "ee" subsystem
-de volgende waardes bevat:
-[source,xml]
-----
-<spec-descriptor-property-replacement>true</spec-descriptor-property-replacement>
-<jboss-descriptor-property-replacement>true</jboss-descriptor-property-replacement>
-----
-De tweede regel is niet strikt noodzakelijk, maar kan u helpen bij de onderstaande stap.
-
-Indien de MDB geen gebruik maakt van de default resource adapter die u in Wildfly geconfigureerd heeft moet u wederom een aanpassing doen in etm-processor-mdb-{etm_version}.war.
-Wijzigen hiervoor de naam van het bestand WEB-INF/jboss-ejb3-ra-adapter-example.xml naar WEB-INF/jboss-ejb3.xml, en pas de inhoud zo aan dat hier de gewenste resource adapter
-wordt genoemd. Ook hier kunt u weer gebruik maken van system properties door de waarde in de vorm "${<waarde>}" te gebruiken. Als u hiervoor kiest is de tweede regel uit de xml
-code hierboven genoemd echter wel noodzakelijk.
+Hernoem vervolgens het bestand WEB-INF/jboss-ejb3-ra-adapter-example.xml naar WEB-INF/jboss-ejb3.xml en zip de directory structuur opnieuw naar 
+etm-processor-mdb-{etm_version}.war en deploy dit bestand hierna. De MDB maakt nu gebruik van system properties om de omgeving specifieke eigenschappen 
+zoals de queue naam uit te lezen. Dit zijn de waardes die beschreven als "${<waarde>}" in de ejb-jar.xml voorkomen. U hoeft hier geen 
+gebruik te maken van system properties, maar kunt hier ook gewoon harde waardes invullen. Als er wel gebruik gemaakt gaat worden van variabelen vergeet deze
+dan niet te configureren via de Wildfly admin console!
 
 Uw MDB is nu klaar voor gebruik. Een beschrijving over de inhoud waaraan de JMS Message moet voldoen die de MDB uitleest is terug te vinden in de gebruikershandleiding.
+
+Als u ETM wilt laten lezen vanaf verschillende queue's moet in de ejb-jar.xml het "<messsage-drive>" element gedupliceerd worden. Vervolgend moet het "<ejb-name>" element
+een unieke waarde krijgen. Als laatste moet in jboss-ejb3.xml het element "<mdb:resource-adapter-binding>" gedupliceerd worden, en moet de naam van de ejb worden aangepast in de
+zojuist gekozen nieuwe naam van de ejb.
 
 === ETM web service processor
 Om events aan ETM toe te voegen via een web service dient u de component etm-processor-ws-{etm_version}.war te deployen in Wildfly. Na het deployen is de wsdl van de 
