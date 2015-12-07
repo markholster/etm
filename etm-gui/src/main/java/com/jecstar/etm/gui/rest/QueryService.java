@@ -58,7 +58,10 @@ public class QueryService {
 		SearchRequestBuilder searchRequest = this.elasticClient.prepareSearch("etm_event_all")
 				.setFrom(start)
 				.setSize(rows)
-				.setQuery(QueryBuilders.queryStringQuery(queryString).defaultField("content").lowercaseExpandedTerms(false));
+				.setQuery(QueryBuilders.queryStringQuery(queryString)
+						.defaultField("content")
+						.lowercaseExpandedTerms(false)
+						.analyzeWildcard(true));
 		if (sortField != null && sortField.trim().length() > 0) {
 			if ("asc".equalsIgnoreCase(sortOrder)) {
 				searchRequest.addSort(sortField, SortOrder.ASC);
