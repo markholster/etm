@@ -5,7 +5,7 @@
 	<groupId>com.jecstar.etm</groupId>
 	<artifactId>etm-aggregator</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.7-SNAPSHOT</version>
+	<version>1.0.7</version>
 	<description>Etm aggregator pom.</description>
 	<name>Enterprise Telemetry Monitor - aggregator</name>
 	<ciManagement>
