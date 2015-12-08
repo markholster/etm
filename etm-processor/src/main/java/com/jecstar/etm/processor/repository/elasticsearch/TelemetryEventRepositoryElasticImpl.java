@@ -2,6 +2,7 @@ package com.jecstar.etm.processor.repository.elasticsearch;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.script.groovy.GroovyScriptEngineService;
 
 import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventDirection;
@@ -73,7 +75,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 				.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 		        .source(this.eventConverter.convert(event));
 		UpdateRequest updateRequest = new UpdateRequest(index, this.eventIndexType, event.id)
-				.script(new Script("etm_update-event", ScriptType.FILE, "groovy",  this.updateScriptBuilder.createUpdateParameterMap(event, this.tags)))
+				.script(new Script("etm_update-event", ScriptType.FILE, GroovyScriptEngineService.NAME,  this.updateScriptBuilder.createUpdateParameterMap(event, this.tags)))
 		        .upsert(indexRequest)
 		        .detectNoop(true)
 		        .consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
@@ -85,7 +87,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 					.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 			        .source("{ \"response_handling_time\": " + event.creationTime.getTime() + ", \"child_correlation_ids\": [\"" + escapeToJson(event.id) + "\"] }");
 			updateRequest = new UpdateRequest(index, this.eventIndexType, event.correlationId)
-			        .script(new Script("etm_update-request-with-responsedata", ScriptType.FILE, "groovy", this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags)))
+			        .script(new Script("etm_update-request-with-responsedata", ScriptType.FILE, GroovyScriptEngineService.NAME, this.updateScriptBuilder.createRequestUpdateScriptFromResponse(event, this.tags)))
 			        .upsert(indexRequest)
 			        .detectNoop(true)
 			        .consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
@@ -114,15 +116,53 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		if (this.bulkRequest != null && this.bulkRequest.numberOfActions() > 0) {
 			BulkResponse bulkResponse = this.bulkRequest.get();
 			if (bulkResponse.hasFailures()) {
-				for (int i = 0; i < bulkResponse.getItems().length; i++) {
-					BulkItemResponse bulkItemResponse = bulkResponse.getItems()[i];
-					if (bulkItemResponse.isFailed() && log.isErrorLevelEnabled()) {
-						log.logErrorMessage("Error persisting event '" + bulkItemResponse.getId() + "'", bulkItemResponse.getFailure().getCause());
-					}
+				if (log.isErrorLevelEnabled()) {
+					log.logErrorMessage(buildFailureMessage(bulkResponse));
 				}
 			}
 		}
 		this.bulkRequest = null;
+	}
+	
+	private String buildFailureMessage(BulkResponse bulkResponse) {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("failure in bulk execution:");
+        BulkItemResponse[] responses = bulkResponse.getItems();
+        for (int i = 0; i < responses.length; i++) {
+            BulkItemResponse response = responses[i];
+            if (response.isFailed()) {
+                buffer.append("\n[").append(i)
+                        .append("]: index [").append(response.getIndex()).append("], type [").append(response.getType()).append("], id [").append(response.getId())
+                        .append("], message [").append(getFailureMessage(response)).append("]");
+            }
+        }
+        return buffer.toString();		
+	}
+	
+	private String getFailureMessage(BulkItemResponse response) {
+		if (response.getFailure() == null) {
+			return null;
+		}
+		Throwable cause = response.getFailure().getCause();
+		if (cause != null) {
+			List<Throwable> causes = new ArrayList<Throwable>();
+			Throwable rootCause = getRootCause(cause, causes);
+			return rootCause.getMessage();
+		}
+		return response.getFailureMessage();
+	}
+	
+
+	private Throwable getRootCause(Throwable cause, List<Throwable> causes) {
+		if (causes.contains(cause)) {
+			return causes.get(causes.size() - 1);
+		}
+		causes.add(cause);
+		Throwable parent = cause.getCause();
+		if (parent == null) {
+			return cause;
+		}
+		return getRootCause(parent, causes);
 	}
 
 	@Override
