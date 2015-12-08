@@ -112,6 +112,7 @@
                            <li><a href="#" onclick="$('#search_input').val('endpoint: &quot;x&quot;');return false;">endpoint &lt;x&gt;</a></li>
                            <li><a href="#" onclick="$('#search_input').val('creation_time: [now-1h TO now]');return false;">last hour</a></li>
                            <li><a href="#" onclick="$('#search_input').val('creation_time: [now-1h TO now] AND application:&quot;x&quot;');return false;">last hour of application &lt;x&gt;</a></li>
+                           <li><a href="#" onclick="$('#search_input').val('creation_time: [' + new Date(new Date().setHours(0,0,0,0)).toISOString() + ' TO ' + new Date(new Date().setHours(23,59,59,999)).toISOString() + ']');return false;">today</a></li>
                            <li><a href="#" onclick="$('#search_input').val('creation_time: [' + new Date(new Date().setHours(0,0,0,0) - 86400000).toISOString() + ' TO ' + new Date(new Date().setHours(23,59,59,999) - 86400000).toISOString() + ']');return false;">yesterday</a></li>
                        </ul>
                     </div>
