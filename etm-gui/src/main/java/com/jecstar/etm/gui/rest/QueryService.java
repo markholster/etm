@@ -61,7 +61,9 @@ public class QueryService {
 				.setQuery(QueryBuilders.queryStringQuery(queryString)
 						.defaultField("content")
 						.lowercaseExpandedTerms(false)
-						.analyzeWildcard(true));
+						.analyzeWildcard(true)
+// TODO Hard coded for Achmea, we need this to be an input field from the browser/user.						
+						.timeZone("Europe/Amsterdam"));
 		if (sortField != null && sortField.trim().length() > 0) {
 			if ("asc".equalsIgnoreCase(sortOrder)) {
 				searchRequest.addSort(sortField, SortOrder.ASC);
