@@ -134,7 +134,10 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
                 buffer.append("\n[").append(i)
                         .append("]: index [").append(response.getIndex()).append("], type [").append(response.getType()).append("], id [").append(response.getId())
                         .append("], message [").append(getFailureMessage(response)).append("]");
-            }
+                if (log.isDebugLevelEnabled() && response.getFailure() != null) {
+                	log.logDebugMessage("Error persisting event with id '" + response.getId() + "'.", response.getFailure().getCause());
+                }
+             }
         }
         return buffer.toString();		
 	}
