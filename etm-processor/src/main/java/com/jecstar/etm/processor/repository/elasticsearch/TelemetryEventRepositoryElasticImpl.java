@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -27,12 +28,16 @@ import com.jecstar.etm.core.converter.TelemetryEventConverter;
 import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.converter.json.AbstractJsonConverter;
 import com.jecstar.etm.core.converter.json.TelemetryEventConverterJsonImpl;
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.ExpressionParserFactory;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 
 public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter implements TelemetryEventRepository {
+	
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventRepositoryElasticImpl.class);
 	
 	private final DateFormat indexDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private final String eventIndexType = "event";
@@ -109,7 +114,12 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		if (this.bulkRequest != null && this.bulkRequest.numberOfActions() > 0) {
 			BulkResponse bulkResponse = this.bulkRequest.get();
 			if (bulkResponse.hasFailures()) {
-				throw new RuntimeException(bulkResponse.buildFailureMessage());
+				for (int i = 0; i < bulkResponse.getItems().length; i++) {
+					BulkItemResponse bulkItemResponse = bulkResponse.getItems()[i];
+					if (bulkItemResponse.isFailed() && log.isErrorLevelEnabled()) {
+						log.logErrorMessage("Error persisting event '" + bulkItemResponse.getId() + "'", bulkItemResponse.getFailure().getCause());
+					}
+				}
 			}
 		}
 		this.bulkRequest = null;
