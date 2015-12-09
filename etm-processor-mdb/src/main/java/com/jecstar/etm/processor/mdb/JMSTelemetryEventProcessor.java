@@ -123,11 +123,11 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 			}
 		}
 		this.telemetryEvent.id = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_ID);
-		if (this.telemetryEvent.id != null && this.telemetryEvent.id.startsWith("ID:")) {
-			this.telemetryEvent.id = this.telemetryEvent.id.substring(3);
-		}
 		if (this.telemetryEvent.id == null) {
 			this.telemetryEvent.id = message.getJMSMessageID();
+			if (this.telemetryEvent.id != null && this.telemetryEvent.id.startsWith("ID:")) {
+				this.telemetryEvent.id = this.telemetryEvent.id.substring(3);
+			}
 		}
 		this.telemetryEvent.correlationId = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_CORRELATION_ID);
 		if (this.telemetryEvent.correlationId == null) {
