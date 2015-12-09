@@ -30,6 +30,8 @@ public class UpdateScriptBuilder {
 		addValueSetterToScript(parameters, tags.getExpiryTimeTag(), event.expiryTime.getTime() == 0 ? null : event.expiryTime.getTime());
 		if (event.direction != null) {
 			addValueSetterToScript(parameters, tags.getDirectionTag(), event.direction.name());
+		} else {
+			addValueSetterToScript(parameters, tags.getDirectionTag(), null);
 		}
 		addMapAppenderToScript(parameters, tags.getMetadataTag(), event.metadata, tags);
 		addValueSetterToScript(parameters, tags.getNameTag(), event.name);
@@ -37,6 +39,8 @@ public class UpdateScriptBuilder {
 		addValueSetterToScript(parameters, tags.getTransactionNameTag(), event.transactionName);
 		if (event.type != null) {
 			addValueSetterToScript(parameters, tags.getTypeTag(), event.type.name());
+		} else {
+			addValueSetterToScript(parameters, tags.getTypeTag(), null);
 		}
 		return parameters;
 	}
