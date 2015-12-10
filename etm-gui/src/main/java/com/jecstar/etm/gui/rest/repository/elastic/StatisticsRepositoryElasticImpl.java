@@ -23,6 +23,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.avg.AvgBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTime;
 
@@ -331,7 +332,7 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 		
 		SearchResponse searchResponse = this.elasticClient.prepareSearch(this.eventIndex)
 				.setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery()).filter(filterQuery))
-				.addSort(this.tags.getExpiryTimeTag(), SortOrder.DESC)
+				.addSort(SortBuilders.fieldSort(this.tags.getExpiryTimeTag()).order(SortOrder.DESC).unmappedType("long"))
 				.addField(this.tags.getNameTag())
 				.addField(this.tags.getCreationTimeTag())
 				.addField(this.tags.getExpiryTimeTag())
