@@ -1,16 +1,30 @@
 package com.jecstar.etm.processor.processor;
 
+import java.io.StringReader;
 import java.util.List;
 import java.util.UUID;
+
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+
+import org.xml.sax.InputSource;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.EventCommand;
 import com.jecstar.etm.core.TelemetryEvent;
+import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
+import com.jecstar.etm.core.parsers.XmlErrorListener;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
+
+import net.sf.saxon.Configuration;
+import net.sf.saxon.xpath.XPathFactoryImpl;
 
 public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 
@@ -18,18 +32,32 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	private final long ordinal;
 	private final long numberOfConsumers;
 	
+	private final EtmConfiguration etmConfiguration;
 	private final TelemetryEventRepository telemetryEventRepository;
 	private final EndpointConfigResult endpointConfigResult;
 	private final Timer timer;
 	
+	// ACHMEA CUSTOM
+	private XPathExpression ibfExpression;
+	private XPathExpression oudAchmeaExpression;
+	private XPathExpression soapBodyExpression;
 	
-	public EnhancingEventHandler(final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final Timer timer) {
+	public EnhancingEventHandler(final EtmConfiguration etmConfiguration, final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final Timer timer) {
+		this.etmConfiguration = etmConfiguration;
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.endpointConfigResult = new EndpointConfigResult();
 		this.timer = timer;
-		
+		Configuration config = Configuration.newConfiguration();
+		config.setErrorListener(new XmlErrorListener());
+		XPath xpath = new XPathFactoryImpl(config).newXPath();
+		try {
+			this.ibfExpression = xpath.compile("/*[local-name()='Envelope']/*[local-name()='Header']/*[local-name()='IBFheader']/*[local-name()='MessageType']");
+			this.oudAchmeaExpression = xpath.compile("/*/*[local-name()='Header']/*[local-name()='Berichttype']/*[local-name()='identificatie']");
+			this.soapBodyExpression = xpath.compile("local-name(/*[local-name()='Envelope']/*[local-name()='Body']/*)");
+		} catch (XPathExpressionException e) {
+		}
 	}
 
 	@Override
@@ -47,6 +75,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
+		customAchmea(event);
 		try {
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
@@ -80,9 +109,56 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		}
 	}
 	
-//	private boolean needsCorrelation(final TelemetryEvent event) {
-//		return event.correlationId != null;
-//	}
+	/**
+	 * Achmea maatwerk -> Zolang er niet van WMB events gebruik gemaakt wordt.
+	 */
+	private void customAchmea(TelemetryEvent event) {
+		String companyName = this.etmConfiguration.getLicense().getOwner();
+		if (companyName.startsWith("Achmea")) {
+			if (TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && event.content != null) {
+				try {
+					String ibfType = (String) this.ibfExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
+					if (ibfType != null && ibfType.trim().length() > 0) {
+						if ("request".equalsIgnoreCase(ibfType.trim())) {
+							event.type = TelemetryEventType.MESSAGE_REQUEST;
+							return;
+						} else if ("response".equalsIgnoreCase(ibfType.trim())) {
+							event.type = TelemetryEventType.MESSAGE_RESPONSE;
+							return;
+						}
+					}
+				} catch (XPathExpressionException e) {
+				}
+				try {
+					String oudAchmeaIdentificatie = (String) this.oudAchmeaExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
+					if (oudAchmeaIdentificatie != null && oudAchmeaIdentificatie.trim().length() > 0) {
+						if (oudAchmeaIdentificatie.toLowerCase().endsWith("v")) {
+							event.type = TelemetryEventType.MESSAGE_REQUEST;
+							return;
+						} else if (oudAchmeaIdentificatie.toLowerCase().endsWith("a")) {
+							event.type = TelemetryEventType.MESSAGE_RESPONSE;
+							return;
+						}
+					}
+				} catch (XPathExpressionException e) {
+				}
+				try {
+					String soapBodyChild = (String) this.soapBodyExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
+					if (soapBodyChild != null && soapBodyChild.trim().length() > 0) {
+						if (soapBodyChild.toLowerCase().endsWith("request")) {
+							event.type = TelemetryEventType.MESSAGE_REQUEST;
+							return;
+						} else if (soapBodyChild.toLowerCase().endsWith("response")) {
+							event.type = TelemetryEventType.MESSAGE_RESPONSE;
+							return;
+						}
+					}
+				} catch (XPathExpressionException e) {
+				}
+			}
+		}
+    }
+	
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
 		if (content == null || expressionParsers == null) {

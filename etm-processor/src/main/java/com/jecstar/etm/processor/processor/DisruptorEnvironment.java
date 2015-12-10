@@ -23,7 +23,7 @@ public class DisruptorEnvironment {
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEvntHandler = new EnhancingEventHandler[enhancingHandlerCount];
 		for (int i = 0; i < enhancingHandlerCount; i++) {
-			enhancingEvntHandler[i] = new EnhancingEventHandler(persistenceEnvironment.createTelemetryEventRepository(), i, enhancingHandlerCount, metricRegistry.timer("event-enhancing"));
+			enhancingEvntHandler[i] = new EnhancingEventHandler(etmConfiguration, persistenceEnvironment.createTelemetryEventRepository(), i, enhancingHandlerCount, metricRegistry.timer("event-enhancing"));
 		}
 		
 		int persistingHandlerCount = etmConfiguration.getPersistingHandlerCount();

@@ -148,27 +148,7 @@ public class JMSTelemetryEventProcessor implements MessageListener {
 		this.telemetryEvent.transactionName = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TRANSACTION_NAME);
 		determineEventType(this.telemetryEvent, message);
 		determineDirectionType(this.telemetryEvent, message);
-		customAchmea();
     }
-
-	/**
-	 * Achmea maatwerk -> Zolang er niet van WMB events gebruik gemaakt wordt.
-	 */
-	private void customAchmea() {
-		String companyName = configration.getLicense().getOwner();
-		if (companyName.startsWith("Achmea")) {
-			if (TelemetryEventType.MESSAGE_DATAGRAM.equals(this.telemetryEvent.type)) {
-				if (this.telemetryEvent.content != null) {
-					if (this.telemetryEvent.content.indexOf("Request") != -1) {
-						this.telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
-					} else if (this.telemetryEvent.content.indexOf("Response") != -1) {
-						this.telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
-					}
-				}
-			}
-		}
-    }
-
 
 	private void determineEventType(TelemetryEvent telemetryEvent, Message message) throws JMSException {
 		String messageType = message.getStringProperty(JMS_PROPERTY_KEY_EVENT_TYPE);
