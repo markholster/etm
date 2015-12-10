@@ -119,10 +119,11 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				try {
 					String ibfType = (String) this.ibfExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
 					if (ibfType != null && ibfType.trim().length() > 0) {
-						if ("request".equalsIgnoreCase(ibfType.trim())) {
+						ibfType = ibfType.trim();
+						if ("request".equalsIgnoreCase(ibfType)) {
 							event.type = TelemetryEventType.MESSAGE_REQUEST;
 							return;
-						} else if ("response".equalsIgnoreCase(ibfType.trim())) {
+						} else if ("response".equalsIgnoreCase(ibfType)) {
 							event.type = TelemetryEventType.MESSAGE_RESPONSE;
 							return;
 						}
@@ -132,10 +133,11 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				try {
 					String oudAchmeaIdentificatie = (String) this.oudAchmeaExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
 					if (oudAchmeaIdentificatie != null && oudAchmeaIdentificatie.trim().length() > 0) {
-						if (oudAchmeaIdentificatie.toLowerCase().endsWith("v")) {
+						oudAchmeaIdentificatie = oudAchmeaIdentificatie.trim().toLowerCase();
+						if (oudAchmeaIdentificatie.endsWith("v")) {
 							event.type = TelemetryEventType.MESSAGE_REQUEST;
 							return;
-						} else if (oudAchmeaIdentificatie.toLowerCase().endsWith("a")) {
+						} else if (oudAchmeaIdentificatie.endsWith("a")) {
 							event.type = TelemetryEventType.MESSAGE_RESPONSE;
 							return;
 						}
@@ -145,10 +147,14 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 				try {
 					String soapBodyChild = (String) this.soapBodyExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
 					if (soapBodyChild != null && soapBodyChild.trim().length() > 0) {
-						if (soapBodyChild.toLowerCase().endsWith("request")) {
+						soapBodyChild = soapBodyChild.trim().toLowerCase();
+						if (soapBodyChild.endsWith("request")) {
 							event.type = TelemetryEventType.MESSAGE_REQUEST;
 							return;
-						} else if (soapBodyChild.toLowerCase().endsWith("response")) {
+						} else if (soapBodyChild.endsWith("response")) {
+							event.type = TelemetryEventType.MESSAGE_RESPONSE;
+							return;
+						} else if (soapBodyChild.equals("fault")) {
 							event.type = TelemetryEventType.MESSAGE_RESPONSE;
 							return;
 						}
