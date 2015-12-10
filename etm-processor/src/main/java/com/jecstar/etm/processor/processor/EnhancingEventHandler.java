@@ -126,6 +126,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 						} else if ("response".equalsIgnoreCase(ibfType)) {
 							event.type = TelemetryEventType.MESSAGE_RESPONSE;
 							return;
+						} else if ("datagram".equalsIgnoreCase(ibfType)) {
+							event.type = TelemetryEventType.MESSAGE_DATAGRAM;
+							return;
 						}
 					}
 				} catch (XPathExpressionException e) {
