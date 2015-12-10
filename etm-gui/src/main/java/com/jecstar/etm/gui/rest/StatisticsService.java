@@ -89,12 +89,9 @@ public class StatisticsService {
 		if (startTime > endTime) {
 			return null;
 		}
-		if (context.isUserInRole("etm-searcher")) {
-			// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
-		}
 		List<ExpiredMessage> statistics = this.statisticsRepository.getMessagesExpirationStatistics(startTime, endTime, max);
 		StringWriter writer = new StringWriter();
-		writeMessagesExpirationStatistics(writer, statistics);
+		writeMessagesExpirationStatistics(writer, statistics, context.isUserInRole("etm-searcher") || context.isUserInRole("etm-administrator"));
 		return writer.toString();
 	}
 
@@ -177,12 +174,9 @@ public class StatisticsService {
 		if (startTime > endTime) {
 			return null;
 		}
-		if (context.isUserInRole("etm-searcher")) {
-			// TODO ook bepalen of de gebruiker wel de "etm-searcher" rol heeft. Indien dit niet het geval is dan geen linkjes naar de berichten.
-		}
 		List<ExpiredMessage> statistics = this.statisticsRepository.getApplicationMessagesExpirationStatistics(application, startTime, endTime, max);
 		StringWriter writer = new StringWriter();
-		writeMessagesExpirationStatistics(writer, statistics);
+		writeMessagesExpirationStatistics(writer, statistics, context.isUserInRole("etm-searcher") || context.isUserInRole("etm-administrator"));
 		return writer.toString();
 	}
 
@@ -298,10 +292,12 @@ public class StatisticsService {
         }
 	}
 
-    private void writeMessagesExpirationStatistics(StringWriter writer, List<ExpiredMessage> statistics) {
+    private void writeMessagesExpirationStatistics(StringWriter writer, List<ExpiredMessage> statistics, boolean allowedToSeeMessages) {
 		try {
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
-	        generator.writeStartArray();
+	        generator.writeStartObject();
+	        generator.writeBooleanField("readonly", !allowedToSeeMessages);
+	        generator.writeArrayFieldStart("messages");
 	        for (ExpiredMessage expiredMessage: statistics) {
 	        	generator.writeStartObject();
 	        	generator.writeStringField("id", expiredMessage.getId().toString());
@@ -314,6 +310,7 @@ public class StatisticsService {
 	        	generator.writeEndObject();
 	        }
 	        generator.writeEndArray();
+	        generator.writeEndObject();
 	        generator.close();
         } catch (IOException e) {
         	if (log.isErrorLevelEnabled()) {

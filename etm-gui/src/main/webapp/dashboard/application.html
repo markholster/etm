@@ -329,15 +329,21 @@ $(function () {
         });
     }});
 
-    var addRow = function(expiration) {
-        var rowContent = '<tr><td><div style="display: none;"><a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '&index=' + encodeURIComponent(expiration.indexName) + '&type=' + encodeURIComponent(expiration.indexType) + '">' + escapeToHtml(expiration.name) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', expiration.startTime)) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', expiration.expirationTime)) + '</div></td></tr>';  
+    var addRow = function(expiration, readonly) {
+        var message = '';
+        if (readonly) {
+            message = escapeToHtml(expiration.name);
+        } else {
+            message = '<a href="../search/event.html?id=' + encodeURIComponent(expiration.id) + '&index=' + encodeURIComponent(expiration.indexName) + '&type=' + encodeURIComponent(expiration.indexType) + '">' + escapeToHtml(expiration.name) + '</a>';
+        }
+        var rowContent = '<tr><td><div style="display: none;">' + message + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', expiration.startTime)) + '</div></td><td><div style="display: none;">' + escapeToHtml(Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', expiration.expirationTime)) + '</div></td></tr>';  
         $(rowContent).prependTo($('#expiry_table > tbody'));
     };
 
     $.ajax('../rest/statistics/application/' + application + '/messages/expiration/' + (startTime - timeRange) + '/' + startTime + '?max=' + expirationCountMaxResults, { dataType: "json", cache: false, success: function (data) {
-        if (data) {
-            $.each(data.reverse(), function(index, expiration) {
-                addRow(expiration);
+        if (data && data.messages) {
+            $.each(data.messages.reverse(), function(index, expiration) {
+                addRow(expiration, data.readonly);
                 $("#expiry_table > tbody > :first-child > td > div").slideDown(500);
             });
         }
@@ -346,11 +352,11 @@ $(function () {
             var updateTime = new Date().getTime();
             updateTime = Math.floor(updateTime/1000)*1000;
             $.getJSON('../rest/statistics/application/' + application + '/messages/expiration/' + lastTime + '/' + updateTime + '?max=' + expirationCountMaxResults, function (data) {
-                if (!data) {
+                if (!data || !data.messages) {
                     return;
                 }
-                $.each(data.reverse(), function(index, expiration) {
-                	addRow(expiration);
+                $.each(data.messages.reverse(), function(index, expiration) {
+                	addRow(expiration, data.readonly);
                 	$('#expiry_table > tbody > :first-child > td > div').slideDown('slow', function(){ $(this).parent().addClass('new_expiry'); });
                     $('#expiry_table > tbody > :nth-child(' + expirationCountMaxResults + ')').nextAll().hide('slow', function(){ $(this).remove(); });                
                 }); 
