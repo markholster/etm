@@ -2,11 +2,13 @@ package com.jecstar.etm.gui.rest.repository.elastic;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -40,6 +42,8 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 	private final String eventIndex = "etm_event_all";
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	private final Client elasticClient;
+	private final Comparator<Map<Long, Average>> reversedAverageMaxComparator = (o1, o2) -> o2.values().stream().max(Comparator.naturalOrder()).get().compareTo(o1.values().stream().max(Comparator.naturalOrder()).get()); 
+	private final Comparator<Map<String, Long>> reversedCountSumComparator = (o1, o2) -> new Long(o2.values().stream().mapToLong(e -> e).sum()).compareTo(new Long(o1.values().stream().mapToLong(e -> e).sum()));
 	
 	public StatisticsRepositoryElasticImpl(Client elasticClient) {
 		this.elasticClient = elasticClient;
@@ -68,7 +72,6 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 			.setSize(0)
 			.get();
 		
-		final Map<String, Float> highest = new HashMap<String, Float>();
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		Terms terms = searchResponse.getAggregations().get(distinctTransactionsAggregation);
 		List<Terms.Bucket> transactionBuckets = terms.getBuckets();
@@ -84,13 +87,11 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 				float average = new Double(avg.getValue()).floatValue();
 				if (count != 0) {
 					averages.put(time, new Average(average, count));
-					storeWhenHighest(highest, transactionName, average);
 				}
 			}
 			data.put(transactionName, averages);
 		}
-		filterAveragesToMaxResults(maxTransactions, highest, data);
-		return data;
+		return filterAveragesToMaxResults(maxTransactions, data);
     }
 	
 	public Map<String, Map<Long, Average>> getMessagesPerformanceStatistics(Long startTime, Long endTime, int maxMessages, TimeUnit timeUnit) {
@@ -116,7 +117,6 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 			.setSize(0)
 			.get();
 		
-		final Map<String, Float> highest = new HashMap<String, Float>();
 		final Map<String, Map<Long, Average>> data = new HashMap<String, Map<Long, Average>>();
 		Terms terms = searchResponse.getAggregations().get(distinctMessagesAggregation);
 		List<Terms.Bucket> transactionBuckets = terms.getBuckets();
@@ -132,13 +132,11 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 				float average = new Double(avg.getValue()).floatValue();
 				if (count != 0) {
 					averages.put(time, new Average(average, count));
-					storeWhenHighest(highest, eventName, average);
 				}
 			}
 			data.put(eventName, averages);
 		}
-		filterAveragesToMaxResults(maxMessages, highest, data);
-		return data;
+		return filterAveragesToMaxResults(maxMessages, data);
 
     }
 	
@@ -382,7 +380,6 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 				.setSize(0)
 				.get();
 		
-		final Map<String, Long> totals = new HashMap<String, Long>();
 		final Map<String, Map<String, Long>> data = new HashMap<String, Map<String, Long>>();
 		
 		Terms applicationTerms = searchResponse.getAggregations().get(distinctApplicationAggregation);
@@ -399,49 +396,33 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 					appTotals.put(directionToString(direction) + " " + typeToString(type) + " messages", typeBucket.getDocCount());
 				}
 			}
-			totals.put(applicationName, applicationBucket.getDocCount());
 			data.put(applicationName, appTotals);
 		}
-		filterCountsToMaxResults(maxApplications, totals, data);
-		return data;
+		return filterCountsToMaxResults(maxApplications, data);
     }
 	
-	private void filterCountsToMaxResults(int maxResults, Map<String, Long> totals, Map<String, Map<String, Long>> data) {
-		List<Long> values = new ArrayList<>(totals.values().size());
-		values.addAll(totals.values());
-		Collections.sort(values);
-		Collections.reverse(values);
-		if (values.size() > maxResults) {
-			for (int i = maxResults; i < values.size(); i++) {
-				Long valueToRemove = values.get(i);
-				for (String name : totals.keySet()) {
-					if (totals.get(name).equals(valueToRemove)) {
-						data.remove(name);
-						totals.remove(name);
-						break;
-					}
-				}
-			}
-		}
+	private Map<String, Map<String, Long>> filterCountsToMaxResults(int maxResults, Map<String, Map<String, Long>> data) {
+		return data.entrySet().stream()
+				// Filter null or empty values from the data map.
+				.filter(p -> p.getValue() != null && !p.getValue().isEmpty())
+				// Sort by totals descending.
+				.sorted(Map.Entry.comparingByValue(this.reversedCountSumComparator))
+				// Limit to the max results.
+				.limit(maxResults)
+				// Collect the result in a map.
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 	
-	private void filterAveragesToMaxResults(int maxResults, Map<String, Float> highest, Map<String, Map<Long, Average>> data) {
-		List<Float> values = new ArrayList<>(highest.values().size());
-		values.addAll(highest.values());
-		Collections.sort(values);
-		Collections.reverse(values);
-		if (values.size() > maxResults) {
-			for (int i = maxResults; i < values.size(); i++) {
-				Float valueToRemove = values.get(i);
-				for (String name : highest.keySet()) {
-					if (highest.get(name).equals(valueToRemove)) {
-						data.remove(name);
-						highest.remove(name);
-						break;
-					}
-				}
-			}
-		}
+	private Map<String, Map<Long, Average>> filterAveragesToMaxResults(int maxResults, Map<String, Map<Long, Average>> data) {
+		return data.entrySet().stream()
+				// Filter null or empty values from the data map.
+				.filter(p -> p.getValue() != null && !p.getValue().isEmpty())
+				// Sort by highest average in descending order
+				.sorted(Map.Entry.comparingByValue(this.reversedAverageMaxComparator))
+				// Limit to max results
+				.limit(maxResults)
+				// Collect the result in a map.
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 	
 	private void addToTimeBasedCounterDataMap(Map<String, Map<Long, Long>> data, String key, Long timeUnitValue, Long count) {
@@ -462,16 +443,4 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 			}
 		}		
 	}
-		
-	private void storeWhenHighest(Map<String, Float> highest, String key, float value) {
-		if (!highest.containsKey(key)) {
-			highest.put(key, value);
-		} else {
-			Float currentValue = highest.get(key);
-			if (value > currentValue) {
-				highest.put(key, value);
-			}
-		}
-    }
-		
 }
