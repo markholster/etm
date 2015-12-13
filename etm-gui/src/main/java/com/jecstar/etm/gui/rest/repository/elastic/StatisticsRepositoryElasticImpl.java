@@ -42,7 +42,8 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 	private final String eventIndex = "etm_event_all";
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	private final Client elasticClient;
-	private final Comparator<Map<Long, Average>> reversedAverageMaxComparator = (o1, o2) -> o2.values().stream().max(Comparator.naturalOrder()).get().compareTo(o1.values().stream().max(Comparator.naturalOrder()).get()); 
+//	private final Comparator<Map<Long, Average>> reversedAverageMaxComparator = (o1, o2) -> o2.values().stream().max(Comparator.naturalOrder()).get().compareTo(o1.values().stream().max(Comparator.naturalOrder()).get());
+	private final Comparator<Map<Long, Average>> reversedAverageAvgComparator = (o1, o2) -> new Double(o2.values().stream().mapToDouble(e -> e.getAverage()).average().getAsDouble()).compareTo(o1.values().stream().mapToDouble(e -> e.getAverage()).average().getAsDouble());
 	private final Comparator<Map<String, Long>> reversedCountSumComparator = (o1, o2) -> new Long(o2.values().stream().mapToLong(e -> e).sum()).compareTo(new Long(o1.values().stream().mapToLong(e -> e).sum()));
 	
 	public StatisticsRepositoryElasticImpl(Client elasticClient) {
@@ -420,7 +421,7 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 				// Filter null or empty values from the data map.
 				.filter(p -> p.getValue() != null && !p.getValue().isEmpty())
 				// Sort by highest average in descending order
-				.sorted(Map.Entry.comparingByValue(this.reversedAverageMaxComparator))
+				.sorted(Map.Entry.comparingByValue(this.reversedAverageAvgComparator))
 				// Limit to max results
 				.limit(maxResults)
 				// Collect the result in a map.
