@@ -293,7 +293,9 @@ public class StatisticsRepositoryElasticImpl implements StatisticsRepository {
 			for (Histogram.Bucket dateHistogramBucket : dateHistogramBuckets) {
 				long time = ((DateTime) dateHistogramBucket.getKey()).getMillis();
 				long count = dateHistogramBucket.getDocCount();
-				counts.put(time, count);
+				if (count != 0) {
+					counts.put(time, count);
+				}
 			}
 			data.put(eventName, counts);
 		}
