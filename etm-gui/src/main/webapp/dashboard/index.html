@@ -39,7 +39,16 @@
 	        <div class="col-md-4">
                 <div class="row">
                     <div class="panel panel-default" style="margin-left: 0.5em; margin-right: 0.5em;">
-                        <div class="panel-heading">Message counts</div>
+                        <div class="panel-heading">Message counts
+                            <div class="pull-right">
+                                Last <input id="application_count_duration_value" type="number" min="1" style="max-width: 7em;" value="60"/>
+                                     <select id="application_count_duration_unit">
+                                        <option value="1">Minutes</option>
+                                        <option value="60">Hours</option>
+                                        <option value="1440">Days</option>
+                                     </select>
+                            </div>
+                        </div>
                         <div id="applicationscount" style="height: 22em; width:98%;"></div>
                     </div>
                 </div>
@@ -63,13 +72,31 @@
 	        <div class="col-md-8">
 	            <div class="row">
                     <div class="panel panel-default" style="margin-left: 0.5em; margin-right: 0.5em;">
-                        <div class="panel-heading">Transaction performance</div>
+                        <div class="panel-heading">Transaction performance
+                            <div class="pull-right">
+                                Last <input id="transaction_performance_duration_value" type="number" min="1" style="max-width: 7em;" value="60"/>
+                                     <select id="transaction_performance_duration_unit">
+                                        <option value="1">Minutes</option>
+                                        <option value="60">Hours</option>
+                                        <option value="1440">Days</option>
+                                     </select>
+                            </div>                        
+                        </div>
 	                    <div id="transactionsperformance" style="height: 22em; width:98%;"></div>
 	                </div>
 	            </div>
 	            <div class="row">
 	                <div class="panel panel-default" style="margin-left: 0.5em; margin-right: 0.5em;">
-	                   <div class="panel-heading">Message performance</div>
+	                   <div class="panel-heading">Message performance
+                            <div class="pull-right">
+                                Last <input id="message_performance_duration_value" type="number" min="1" style="max-width: 7em;" value="60"/>
+                                     <select id="message_performance_duration_unit">
+                                        <option value="1">Minutes</option>
+                                        <option value="60">Hours</option>
+                                        <option value="1440">Days</option>
+                                     </select>
+                            </div>                        	                   
+	                   </div>
 	                   <div id="messagesperformance" style="height: 22em; width:98%;"></div>
 	                </div>   
 	            </div>        
@@ -101,14 +128,62 @@ $(function () {
         return $('<div/>').text(value).html();
     };
     
-    var timeRange = 60000 * parseInt(getUrlParameter('minutes', 60));
     var startTime = new Date().getTime();
-    startTime = Math.floor(startTime/1000)*1000;
     var transactionPerformanceMaxResults = 5;
     var messagePerformanceMaxResults = 5;
     var applicationCountMaxResults = 5;
     var expirationCountMaxResults = 7;
-
+    
+    var updateSplineGraph = function (chart, url) {
+        if (!chart || !url) {
+            return;
+        }
+	    $.getJSON(url, function (data) {
+	        $.each( data, function(index, serieData) {
+	            var serie = chart.get(serieData.id);
+	            if ($.isEmptyObject(serie)) {
+	                chart.addSeries(serieData);                                      
+	            } else {
+	                serie.setData(serieData.data);
+	            }
+	        });
+	        // Remove series that aren't available in the data.
+	        var dataIds = [];
+            var chartIds = [];
+            var differenceIds = [];
+            $.each( data, function(index, serieData) {
+                dataIds.push(serieData.id);
+            });
+            $.each( chart.series, function(index, serie) {
+                chartIds.push(serie.name);
+            });
+            $.grep(chartIds, function(el) {
+                if ($.inArray(el, dataIds) == -1) differenceIds.push(el);
+            });
+            $.each( differenceIds, function(index, serie) {
+                chart.get(serie).remove();
+            });
+	    });
+	};
+	
+	var updateBarGraph = function (chart, url) {
+        if (!chart || !url) {
+            return;
+        }
+        $.getJSON(url, function (data) {
+            chart.xAxis[0].setCategories(data.categories);
+            $.each( data.series, function(index, serieData) {
+                var serie = chart.get(serieData.id);
+                if ($.isEmptyObject(serie)) {
+                    chart.addSeries(serieData);                                      
+                } else {
+                    serie.setData(serieData.data);
+                }
+            });
+        });        
+    };
+	
+    var timeRange = 60000 * parseInt($('#transaction_performance_duration_value').val()) * parseInt($('#transaction_performance_duration_unit').val()); 
     $.ajax('../rest/statistics/transactions/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + transactionPerformanceMaxResults, { dataType: "json", cache: false, success: function (data) {
         $('#transactionsperformance').highcharts({
             chart: {
@@ -118,31 +193,11 @@ $(function () {
                 events: {
                     load: function () {
                         var chart = this;
-                        setInterval(function () {
+                        setInterval(function() {
                             var updateTime = new Date().getTime();
-                            updateTime = Math.floor(updateTime/1000)*1000;
-                            $.getJSON('../rest/statistics/transactions/performance/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + transactionPerformanceMaxResults, function (data) {
-                                if (!data) {
-                                    return;
-                                }
-                                $.each( data, function(index, serieData) {
-                                    var serie = chart.get(serieData.id);
-                                    if ($.isEmptyObject(serie)) {
-                                        chart.addSeries(serieData);                                      
-                                    } else {
-                                        serie.setData(serieData.data);
-                                    }
-                                });
-                                // Remove series that aren't available in the data.
-                                $.each(chart.series, function(index, serie) {
-                                    var present = $.grep( data, function( n, i ) {
-                                        return n.name == serie.name;
-                                    });
-                                    if($.isEmptyObject(present)) {
-                                        chart.get(serie.name).remove();
-                                    }
-                                });
-                            });
+                            var updateTimeRange = 60000 * parseInt($('#transaction_performance_duration_value').val()) * parseInt($('#transaction_performance_duration_unit').val());
+                            var url = '../rest/statistics/transactions/performance/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + transactionPerformanceMaxResults; 
+                            updateSplineGraph(chart, url); 
                         }, 60000);
                     }
                 },
@@ -181,7 +236,20 @@ $(function () {
             series: data
         });
     }});
+    $('#transaction_performance_duration_value').change(function() {
+            var updateTime = new Date().getTime();
+            var updateTimeRange = 60000 * parseInt($('#transaction_performance_duration_value').val()) * parseInt($('#transaction_performance_duration_unit').val());
+            var url = '../rest/statistics/transactions/performance/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + transactionPerformanceMaxResults; 
+            updateSplineGraph($('#transactionsperformance').highcharts(), url);
+        });
+    $('#transaction_performance_duration_unit').change(function() {
+            var updateTime = new Date().getTime();
+            var updateTimeRange = 60000 * parseInt($('#transaction_performance_duration_value').val()) * parseInt($('#transaction_performance_duration_unit').val());
+            var url = '../rest/statistics/transactions/performance/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + transactionPerformanceMaxResults; 
+            updateSplineGraph($('#transactionsperformance').highcharts(), url);
+        });
 
+    timeRange = 60000 * parseInt($('#message_performance_duration_value').val()) * parseInt($('#message_performance_duration_unit').val()); 
     $.ajax('../rest/statistics/messages/performance/' + (startTime - timeRange) + '/' + startTime + '?max=' + messagePerformanceMaxResults, { dataType: "json", cache: false, success: function (data) {
         $('#messagesperformance').highcharts({
             chart: {
@@ -193,29 +261,9 @@ $(function () {
                         var chart = this;
                         setInterval(function () {
                             var updateTime = new Date().getTime();
-                            updateTime = Math.floor(updateTime/1000)*1000;
-                            $.getJSON('../rest/statistics/messages/performance/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + messagePerformanceMaxResults, function (data) {
-                                if (!data) {
-                                    return;
-                                }
-                                $.each( data, function(index, serieData) {
-                                    var serie = chart.get(serieData.id);
-                                    if ($.isEmptyObject(serie)) {
-                                        chart.addSeries(serieData);                                      
-                                    } else {
-                                        serie.setData(serieData.data);
-                                    }
-                                });
-                                // Remove series that aren't available in the data.
-                                $.each(chart.series, function(index, serie) {
-                                    var present = $.grep( data, function( n, i ) {
-                                        return n.name == serie.name;
-                                    });
-                                    if($.isEmptyObject(present)) {
-                                        chart.get(serie.name).remove();
-                                    }
-                                });
-                            });
+                            var updateTimeRange = 60000 * parseInt($('#message_performance_duration_value').val()) * parseInt($('#message_performance_duration_unit').val());
+                            var url = '../rest/statistics/messages/performance/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + messagePerformanceMaxResults;
+                            updateSplineGraph(chart, url);
                         }, 60000);
                     }
                 },
@@ -254,7 +302,20 @@ $(function () {
             series: data
         });
     }});
+    $('#message_performance_duration_value').change(function() {
+            var updateTime = new Date().getTime();
+            var updateTimeRange = 60000 * parseInt($('#message_performance_duration_value').val()) * parseInt($('#message_performance_duration_unit').val());
+            var url = '../rest/statistics/messages/performance/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + messagePerformanceMaxResults;
+            updateSplineGraph($('#messagesperformance').highcharts(), url);
+        });
+    $('#message_performance_duration_unit').change(function() {
+            var updateTime = new Date().getTime();
+            var updateTimeRange = 60000 * parseInt($('#message_performance_duration_value').val()) * parseInt($('#message_performance_duration_unit').val());
+            var url = '../rest/statistics/messages/performance/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + messagePerformanceMaxResults;
+            updateSplineGraph($('#messagesperformance').highcharts(), url);
+        });
 
+    timeRange = 60000 * parseInt($('#application_count_duration_value').val()) * parseInt($('#application_count_duration_unit').val());
     $.ajax('../rest/statistics/applications/count/' + (startTime - timeRange) + '/' + startTime + '?max=' + applicationCountMaxResults, { dataType: "json", cache: false, success: function (data) {
         $('#applicationscount').highcharts({
             chart: {
@@ -266,31 +327,10 @@ $(function () {
                         var chart = this;
                         setInterval(function () {
                             var updateTime = new Date().getTime();
-                            updateTime = Math.floor(updateTime/1000)*1000;
-                            $.getJSON('../rest/statistics/applications/count/' + (updateTime - timeRange) + '/' + updateTime + '?max=' + applicationCountMaxResults, function (data) {
-                                if (!data) {
-                                    return;
-                                }
-                                chart.xAxis[0].setCategories(data.categories);
-                                chart.yAxis[0].setTitle({text: 'Message count since ' + Highcharts.dateFormat('%Y-%m-%d %H:%M', (updateTime - timeRange))});
-                                $.each( data.series, function(index, serieData) {
-                                    var serie = chart.get(serieData.id);
-                                    if ($.isEmptyObject(serie)) {
-                                        chart.addSeries(serieData);                                      
-                                    } else {
-                                        serie.setData(serieData.data);
-                                    }
-                                });
-                                // Remove series that aren't available in the data.
-                                $.each(chart.series, function(index, serie) {
-                                    var present = $.grep( data.series, function( n, i ) {
-                                        return n.name == serie.name;
-                                    });
-                                    if($.isEmptyObject(present)) {
-                                        chart.get(serie.name).remove();
-                                    }
-                                });
-                            });
+                            var updateTimeRange = 60000 * parseInt($('#application_count_duration_value').val()) * parseInt($('#application_count_duration_unit').val());
+                            var url = '../rest/statistics/applications/count/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + applicationCountMaxResults;
+                            updateBarGraph(chart, url); 
+                            chart.yAxis[0].setTitle({text: 'Message count since ' + Highcharts.dateFormat('%Y-%m-%d %H:%M', (updateTime - updateTimeRange))});
                         }, 60000);
                     },
                 }
@@ -330,6 +370,20 @@ $(function () {
             series: data.series
         });
     }});
+    $('#application_count_duration_value').change(function() {
+            var updateTime = new Date().getTime();
+            var updateTimeRange = 60000 * parseInt($('#application_count_duration_value').val()) * parseInt($('#application_count_duration_unit').val());
+            var url = '../rest/statistics/applications/count/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + applicationCountMaxResults;
+            updateBarGraph($('#applicationscount').highcharts(), url); 
+            $('#applicationscount').highcharts().yAxis[0].setTitle({text: 'Message count since ' + Highcharts.dateFormat('%Y-%m-%d %H:%M', (updateTime - updateTimeRange))});
+        });
+    $('#application_count_duration_unit').change(function() {
+            var updateTime = new Date().getTime();
+            var updateTimeRange = 60000 * parseInt($('#application_count_duration_value').val()) * parseInt($('#application_count_duration_unit').val());
+            var url = '../rest/statistics/applications/count/' + (updateTime - updateTimeRange) + '/' + updateTime + '?max=' + applicationCountMaxResults;
+            updateBarGraph($('#applicationscount').highcharts(), url); 
+            $('#applicationscount').highcharts().yAxis[0].setTitle({text: 'Message count since ' + Highcharts.dateFormat('%Y-%m-%d %H:%M', (updateTime - updateTimeRange))});
+        });
 
     var addRow = function(expiration, readonly) {
         var application = '';
@@ -358,7 +412,6 @@ $(function () {
     	var lastTime = startTime;
         setInterval(function () {
             var updateTime = new Date().getTime();
-            updateTime = Math.floor(updateTime/1000)*1000;
             $.getJSON('../rest/statistics/messages/expiration/' + lastTime + '/' + updateTime + '?max=' + expirationCountMaxResults, function (data) {
                 if (!data || !data.messages) {
                     return;
