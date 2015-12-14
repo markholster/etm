@@ -28,20 +28,12 @@ public class UpdateScriptBuilder {
 		addValueSetterToScript(parameters, tags.getCreationTimeTag(), event.creationTime.getTime() == 0 ? null : event.creationTime.getTime());
 		addValueSetterToScript(parameters, tags.getEndpointTag(), event.endpoint);
 		addValueSetterToScript(parameters, tags.getExpiryTimeTag(), event.expiryTime.getTime() == 0 ? null : event.expiryTime.getTime());
-		if (event.direction != null) {
-			addValueSetterToScript(parameters, tags.getDirectionTag(), event.direction.name());
-		} else {
-			addValueSetterToScript(parameters, tags.getDirectionTag(), null);
-		}
+		addValueSetterToScript(parameters, tags.getDirectionTag(), event.direction == null ? null : event.direction.name());
 		addMapAppenderToScript(parameters, tags.getMetadataTag(), event.metadata, tags);
 		addValueSetterToScript(parameters, tags.getNameTag(), event.name);
 		addValueSetterToScript(parameters, tags.getTransactionIdTag(), event.transactionId);
 		addValueSetterToScript(parameters, tags.getTransactionNameTag(), event.transactionName);
-		if (event.type != null) {
-			addValueSetterToScript(parameters, tags.getTypeTag(), event.type.name());
-		} else {
-			addValueSetterToScript(parameters, tags.getTypeTag(), null);
-		}
+		addValueSetterToScript(parameters, tags.getTypeTag(), event.type == null ? null : event.type.name());
 		return parameters;
 	}
 	
