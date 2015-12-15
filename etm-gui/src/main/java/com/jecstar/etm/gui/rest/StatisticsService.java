@@ -277,7 +277,9 @@ public class StatisticsService {
 	        		generator.writeStartObject();
 	        		generator.writeStringField("id", name + "_" + time);
 	        		generator.writeNumberField("x", time);
-	        		generator.writeNumberField("y", values.get(time).getAverage());
+	        		Average average = values.get(time);
+	        		generator.writeNumberField("y", average.getAverage());
+	        		generator.writeNumberField("count", average.getCount());
 	        		generator.writeEndObject();
 	        	}
 	        	generator.writeEndArray();

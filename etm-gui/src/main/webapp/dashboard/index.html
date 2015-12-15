@@ -223,8 +223,9 @@ $(function () {
             tooltip: {
                 formatter: function () {
                     return '<b>' + escapeToHtml(this.series.name) + '</b><br/>' +
-                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Response time: ' +
-                        Highcharts.numberFormat(this.y, 2);
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + 
+                        '<br/>Response time: ' + Highcharts.numberFormat(this.y, 2) +
+                        '<br/>Count: ' + Highcharts.numberFormat(this.point.count, 0);
                 }
             },
             legend: {
@@ -289,8 +290,9 @@ $(function () {
             tooltip: {
                 formatter: function () {
                     return '<b>' + escapeToHtml(this.series.name) + '</b><br/>' +
-                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + '<br/>Response time: ' +
-                        Highcharts.numberFormat(this.y, 2);
+                        Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x) + 
+                        '<br/>Response time: ' + Highcharts.numberFormat(this.y, 2) +
+                        '<br/>Count: ' + Highcharts.numberFormat(this.point.count, 0);
                 }
             },
             legend: {
