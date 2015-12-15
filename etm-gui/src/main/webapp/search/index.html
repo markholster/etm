@@ -185,7 +185,7 @@ $(function () {
         $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder), { dataType: "json", cache: false, success: function (data) {
         	$("#ajax_loader").hide();
             if (!data) {
-                return false;
+                return;
             }
             var overView = 'Found <span id="result_count_found">' + data.numFound + '</span> events in ' + data.queryTime + 'ms.';
             if (data.start < data.end) {
@@ -199,6 +199,12 @@ $(function () {
         },
         error : function(jqXHR) {
         	$("#ajax_loader").hide();
+			var contentType = jqXHR.getResponseHeader("Content-Type");
+		    if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+		        // assume that our login has expired - reload our current page
+		        window.location.reload();
+		        return;
+		    }        	
         	$("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
         	$("#errorBox").show('fast');
         }});	
