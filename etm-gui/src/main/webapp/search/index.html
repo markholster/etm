@@ -180,6 +180,7 @@ $(function () {
 
 	var executeQuery = function(start, max, sortField, sortOrder, animate) {
 		$('#errorBox').hide('fast');
+        $('#result_table > tbody').empty();
 		$('#ajax_loader').show();
         $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(start) + '&rows=' + encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder), { dataType: "json", cache: false, success: function (data) {
         	$("#ajax_loader").hide();
@@ -191,7 +192,6 @@ $(function () {
                 overView = overView + ' Showing events ' + (data.start + 1) + ' to <span id="end_range">'+ (data.end + 1) +'</span>.'; 
             }
             $('#result_overview').html('<p>' + overView + '</p>');
-            $('#result_table > tbody').empty();
             $.each(data.events, function(index, event) {
                 addRow(event, start, max, animate);
             });
