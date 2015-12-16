@@ -75,7 +75,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (event.creationTime.getTime() == 0) {
 			event.creationTime.setTime(System.currentTimeMillis());
 		}
-		customAchmea(event);
+		customAchmeaDetermineEventType(event);
 		try {
 			this.endpointConfigResult.initialize();
 			this.telemetryEventRepository.findEndpointConfig(event.endpoint, this.endpointConfigResult);
@@ -104,6 +104,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 					}
 				});
 			}
+			customAchmeaDetermineId(event);
 		} finally {
 			timerContext.stop();
 		}
@@ -111,62 +112,74 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	
 	/**
 	 * Achmea maatwerk -> Zolang er niet van WMB events gebruik gemaakt wordt.
+	 * Deze methode bepaalt het message type aan de hand van de bericht inhoud.
 	 */
-	private void customAchmea(TelemetryEvent event) {
+	private void customAchmeaDetermineEventType(TelemetryEvent event) {
 		String companyName = this.etmConfiguration.getLicense().getOwner();
-		if (companyName.startsWith("Achmea")) {
-			if (TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && event.content != null) {
-				try {
-					String ibfType = (String) this.ibfExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
-					if (ibfType != null && ibfType.trim().length() > 0) {
-						ibfType = ibfType.trim();
-						if ("request".equalsIgnoreCase(ibfType)) {
-							event.type = TelemetryEventType.MESSAGE_REQUEST;
-							return;
-						} else if ("response".equalsIgnoreCase(ibfType)) {
-							event.type = TelemetryEventType.MESSAGE_RESPONSE;
-							return;
-						} else if ("datagram".equalsIgnoreCase(ibfType)) {
-							event.type = TelemetryEventType.MESSAGE_DATAGRAM;
-							return;
-						}
+		if (!companyName.startsWith("Achmea")) {
+			return;
+		}
+		if (TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && event.content != null) {
+			try {
+				String ibfType = (String) this.ibfExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
+				if (ibfType != null && ibfType.trim().length() > 0) {
+					ibfType = ibfType.trim();
+					if ("request".equalsIgnoreCase(ibfType)) {
+						event.type = TelemetryEventType.MESSAGE_REQUEST;
+						return;
+					} else if ("response".equalsIgnoreCase(ibfType)) {
+						event.type = TelemetryEventType.MESSAGE_RESPONSE;
+						return;
+					} else if ("datagram".equalsIgnoreCase(ibfType)) {
+						event.type = TelemetryEventType.MESSAGE_DATAGRAM;
+						return;
 					}
-				} catch (XPathExpressionException e) {
 				}
-				try {
-					String oudAchmeaIdentificatie = (String) this.oudAchmeaExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
-					if (oudAchmeaIdentificatie != null && oudAchmeaIdentificatie.trim().length() > 0) {
-						oudAchmeaIdentificatie = oudAchmeaIdentificatie.trim().toLowerCase();
-						if (oudAchmeaIdentificatie.endsWith("v")) {
-							event.type = TelemetryEventType.MESSAGE_REQUEST;
-							return;
-						} else if (oudAchmeaIdentificatie.endsWith("a")) {
-							event.type = TelemetryEventType.MESSAGE_RESPONSE;
-							return;
-						}
+			} catch (XPathExpressionException e) {
+			}
+			try {
+				String oudAchmeaIdentificatie = (String) this.oudAchmeaExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
+				if (oudAchmeaIdentificatie != null && oudAchmeaIdentificatie.trim().length() > 0) {
+					oudAchmeaIdentificatie = oudAchmeaIdentificatie.trim().toLowerCase();
+					if (oudAchmeaIdentificatie.endsWith("v")) {
+						event.type = TelemetryEventType.MESSAGE_REQUEST;
+						return;
+					} else if (oudAchmeaIdentificatie.endsWith("a")) {
+						event.type = TelemetryEventType.MESSAGE_RESPONSE;
+						return;
 					}
-				} catch (XPathExpressionException e) {
 				}
-				try {
-					String soapBodyChild = (String) this.soapBodyExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
-					if (soapBodyChild != null && soapBodyChild.trim().length() > 0) {
-						soapBodyChild = soapBodyChild.trim().toLowerCase();
-						if (soapBodyChild.endsWith("request")) {
-							event.type = TelemetryEventType.MESSAGE_REQUEST;
-							return;
-						} else if (soapBodyChild.endsWith("response")) {
-							event.type = TelemetryEventType.MESSAGE_RESPONSE;
-							return;
-						} else if (soapBodyChild.equals("fault")) {
-							event.type = TelemetryEventType.MESSAGE_RESPONSE;
-							return;
-						}
+			} catch (XPathExpressionException e) {
+			}
+			try {
+				String soapBodyChild = (String) this.soapBodyExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
+				if (soapBodyChild != null && soapBodyChild.trim().length() > 0) {
+					soapBodyChild = soapBodyChild.trim().toLowerCase();
+					if (soapBodyChild.endsWith("request")) {
+						event.type = TelemetryEventType.MESSAGE_REQUEST;
+						return;
+					} else if (soapBodyChild.endsWith("response")) {
+						event.type = TelemetryEventType.MESSAGE_RESPONSE;
+						return;
+					} else if (soapBodyChild.equals("fault")) {
+						event.type = TelemetryEventType.MESSAGE_RESPONSE;
+						return;
 					}
-				} catch (XPathExpressionException e) {
 				}
+			} catch (XPathExpressionException e) {
 			}
 		}
     }
+	
+	private void customAchmeaDetermineId(TelemetryEvent event) {
+		String companyName = this.etmConfiguration.getLicense().getOwner();
+		if (!companyName.startsWith("Achmea")) {
+			return;
+		}
+		if ("WmbException".equalsIgnoreCase(event.name)) {
+			event.id += "Exc";
+		}
+	}
 	
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
