@@ -69,6 +69,9 @@ public class TelemetryEventProcessorProducer implements ConfigurationChangeListe
 		if (this.telemetryEventProcessor != null) {
 			this.telemetryEventProcessor.stopAll();
 		}
+		if (this.configration != null) {
+			this.configration.removeConfigurationChangeListener(this);
+		}
 	}
 
 	private static class EtmThreadFactory implements ThreadFactory {

@@ -6,6 +6,8 @@ import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateReque
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 
+import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
+import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.converter.json.TelemetryEventConverterTagsJsonImpl;
@@ -13,7 +15,7 @@ import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.jecstar.etm.processor.repository.elasticsearch.TelemetryEventRepositoryElasticImpl;
 
-public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment {
+public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment, ConfigurationChangeListener {
 
 	private final EtmConfiguration etmConfiguration;
 	private final Client elasticClient;
@@ -23,6 +25,7 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
 		this.etmConfiguration = etmConfiguration;
 		this.elasticClient = elasticClient;
+		this.etmConfiguration.addConfigurationChangeListener(this);
 	}
 	
 	@Override
@@ -56,5 +59,13 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	
 	@Override
 	public void close() {
+		this.etmConfiguration.removeConfigurationChangeListener(this);
+	}
+
+	@Override
+	public void configurationChanged(ConfigurationChangedEvent event) {
+		if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX, EtmConfiguration.CONFIG_KEY_SHARDS_PER_INDEX)) {
+			createEnvironment();
+		}
 	}
 }
