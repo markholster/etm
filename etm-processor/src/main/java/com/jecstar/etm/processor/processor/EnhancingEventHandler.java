@@ -171,6 +171,11 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		}
     }
 	
+	/**
+	 * Achmea Maatwerk. Een event met de naam WmbException heeft hetzelfde id
+	 * als het oorspronkelijke bericht en overschrijft het oorspronkelijk
+	 * bericht hierdoor. Dit maatwerk voorkomt dat.
+	 */
 	private void customAchmeaDetermineId(TelemetryEvent event) {
 		String companyName = this.etmConfiguration.getLicense().getOwner();
 		if (!companyName.startsWith("Achmea")) {
