@@ -181,7 +181,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		if (!companyName.startsWith("Achmea")) {
 			return;
 		}
-		if ("WmbException".equalsIgnoreCase(event.name)) {
+		if (event.content != null && event.content.trim().startsWith("WmbException")) {
 			event.id += "Exc";
 		}
 	}
