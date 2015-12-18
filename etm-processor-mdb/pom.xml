@@ -25,7 +25,14 @@
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
-		</dependency>		        
+		</dependency>
+		<dependency>
+		    <groupId>com.ibm.mq</groupId>
+		    <artifactId>allclient</artifactId>
+		    <version>8.0.0.4</version>
+		    <scope>system</scope>
+		    <systemPath>${project.basedir}/lib/com.ibm.mq.allclient.jar</systemPath>
+		</dependency>		
 	</dependencies>
     <build>
         <plugins>
@@ -66,18 +73,27 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>jaxb2-maven-plugin</artifactId>
-				<configuration>
-				    <includes>
-				        <include>**/XmlTelemetryEvent.java</include>
-				    </includes>
-				</configuration>
 				<executions> 
 				    <execution> 
 				        <id>schemagen</id> 
 				        <goals> 
 				            <goal>schemagen</goal> 
 					    </goals>
+		               <configuration>
+		                   <includes>
+		                       <include>**/XmlTelemetryEvent.java</include>
+		                   </includes>
+		               </configuration>
 					</execution>
+                    <execution> 
+                        <id>xjc</id> 
+                        <goals> 
+                            <goal>xjc</goal> 
+                        </goals>
+                       <configuration>
+                           <packageName>com.jecstar.etm.processor.mdb.ibm</packageName>
+                       </configuration>
+                    </execution>					
 				</executions>
 			</plugin>            
         </plugins>

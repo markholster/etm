@@ -313,8 +313,11 @@ Als laatste moet er in het ejb3 subsytem het volgende worden toegevoegd
 ----
 
 ==== Aansluiten op IBM MQ
-Voor de aansluiting van de Messaga Driven Bean op IBM MQ wordt gebruik gemaakt van de http://www-01.ibm.com/support/docview.wss?uid=swg27041968[IBM MQ Resource Adapter]. Deploy
-de wmq.jmsra.jar in Wildfly en pas tevens de overige instellingen aan in standalone.xml
+Voor de aansluiting van de Messaga Driven Bean op IBM MQ wordt gebruik gemaakt van de http://www-01.ibm.com/support/docview.wss?uid=swg27041968[IBM MQ Resource Adapter]. De
+IBM MQ Resource Adapter mag om licentie redenen niet meegeleverd worden met Enterprise Telemetry Monitor, en moet per installatie gedownload worden van de
+http://www-01.ibm.com/support/docview.wss?uid=swg21683398[IBM Website].
+
+Deploy de <wmq-install-dir>/JavaEE/wmq.jmsra.jar uit de WMQ installatie in Wildfly en pas tevens de overige instellingen aan in standalone.xml
 
 In het resource adapter subsystem moet de IBM MQ Resource Adapter kenbaar gemaakt worden:
 [source,xml]
