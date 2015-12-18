@@ -39,7 +39,6 @@ public class IIBEventProcessor implements MessageListener {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(IIBEventProcessor.class);
-
 	
 	@ProcessorConfiguration
 	@Inject
@@ -106,10 +105,10 @@ public class IIBEventProcessor implements MessageListener {
 		telemetryEvent.endpoint = event.eventPointData.messageFlowData.node.detail;
 		putNonNullDataInMap("IIB_Node", event.eventPointData.messageFlowData.broker.name, telemetryEvent.metadata);
 		putNonNullDataInMap("IIB_Server", event.eventPointData.messageFlowData.executionGroup.name, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_MessageFlow", event.eventPointData.messageFlowData.messageFlow.uniqueFlowName, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_FlowNode", event.eventPointData.messageFlowData.node.nodeLabel, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_FlowNodeTerminal", event.eventPointData.messageFlowData.node.terminal, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_FlowNodeType", event.eventPointData.messageFlowData.node.nodeType, telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlow", event.eventPointData.messageFlowData.messageFlow.name, telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlowNode", event.eventPointData.messageFlowData.node.nodeLabel, telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlowNodeTerminal", event.eventPointData.messageFlowData.node.terminal, telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlowNodeType", event.eventPointData.messageFlowData.node.nodeType, telemetryEvent.metadata);
 		if (event.bitstreamData != null && event.bitstreamData.bitstream != null && EncodingType.BASE_64_BINARY.equals(event.bitstreamData.bitstream.getEncoding())) {
 			byte[] decoded = null;
 			try {
