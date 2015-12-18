@@ -7,7 +7,6 @@ import java.io.StringReader;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Schedule;
 import javax.inject.Inject;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -60,16 +59,6 @@ public class IIBEventProcessor implements MessageListener {
         } catch (JAXBException e) {
         	throw new EtmException(EtmException.UNMARSHALLER_CREATE_EXCEPTION, e);
         }
-	}
-	
-	@Schedule(minute="*", hour="*", second="0,30", persistent=false)
-	public void flushDocuments() {
-		if (log.isDebugLevelEnabled()) {
-			log.logDebugMessage("Requesting flush of documents");
-		}
-		if (this.telemetryEventProcessor != null) {
-			this.telemetryEventProcessor.requestDocumentsFlush();
-		}
 	}
 	
 	@Override

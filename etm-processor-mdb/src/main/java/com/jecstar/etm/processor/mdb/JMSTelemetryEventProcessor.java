@@ -3,7 +3,6 @@ package com.jecstar.etm.processor.mdb;
 import java.io.StringReader;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Schedule;
 import javax.inject.Inject;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -63,16 +62,6 @@ public class JMSTelemetryEventProcessor implements MessageListener {
         }
 	}
 	
-	@Schedule(minute="*", hour="*", second="0,30", persistent=false)
-	public void flushDocuments() {
-		if (log.isDebugLevelEnabled()) {
-			log.logDebugMessage("Requesting flush of documents");
-		}
-		if (this.telemetryEventProcessor != null) {
-			this.telemetryEventProcessor.requestDocumentsFlush();
-		}
-	}
-
 	@Override
 	public void onMessage(Message message) {
 		try {
