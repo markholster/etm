@@ -19,8 +19,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.xpath.XPath;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -46,9 +44,6 @@ import com.jecstar.etm.gui.rest.repository.EndpointConfiguration;
 import com.jecstar.etm.gui.rest.repository.EndpointRepository;
 import com.jecstar.etm.gui.rest.repository.NodeRepository;
 
-import net.sf.saxon.TransformerFactoryImpl;
-import net.sf.saxon.xpath.XPathFactoryImpl;
-
 @Path("/admin")
 public class AdminService {
 
@@ -56,9 +51,6 @@ public class AdminService {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(AdminService.class);
-
-	private static final XPath xPath = new XPathFactoryImpl().newXPath();
-	private static final TransformerFactory transformerFactory = new TransformerFactoryImpl();
 
 	@Inject
 	private EndpointRepository endpointRepository;
@@ -263,9 +255,9 @@ public class AdminService {
 				} else if ("fixed_value".equals(type)) {
 					expressionParser = new FixedValueExpressionParser(expression);
 				} else if ("xpath".equals(type)) {
-					expressionParser = new XPathExpressionParser(xPath, expression);
+					expressionParser = new XPathExpressionParser(expression);
 				} else if ("xslt".equals(type)) {
-					expressionParser = new XsltExpressionParser(transformerFactory, expression);
+					expressionParser = new XsltExpressionParser(expression);
 				} else if ("json".equals(type)) {
 					expressionParser = new JsonExpressionParser(expression);
 				} else {

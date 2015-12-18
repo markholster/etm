@@ -1,15 +1,7 @@
 package com.jecstar.etm.processor.processor;
 
-import java.io.StringReader;
 import java.util.List;
 import java.util.UUID;
-
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-
-import org.xml.sax.InputSource;
 
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
@@ -18,13 +10,10 @@ import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.parsers.ExpressionParser;
-import com.jecstar.etm.core.parsers.XmlErrorListener;
+import com.jecstar.etm.core.parsers.XPathExpressionParser;
 import com.jecstar.etm.processor.repository.EndpointConfigResult;
 import com.jecstar.etm.processor.repository.TelemetryEventRepository;
 import com.lmax.disruptor.EventHandler;
-
-import net.sf.saxon.Configuration;
-import net.sf.saxon.xpath.XPathFactoryImpl;
 
 public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 
@@ -38,9 +27,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 	private final Timer timer;
 	
 	// ACHMEA CUSTOM
-	private XPathExpression ibfExpression;
-	private XPathExpression oudAchmeaExpression;
-	private XPathExpression soapBodyExpression;
+	private final XPathExpressionParser ibfExpression;
+	private final XPathExpressionParser oudAchmeaExpression;
+	private final XPathExpressionParser soapBodyExpression;
 	
 	public EnhancingEventHandler(final EtmConfiguration etmConfiguration, final TelemetryEventRepository telemetryEventRepository, final long ordinal, final long numberOfConsumers, final Timer timer) {
 		this.etmConfiguration = etmConfiguration;
@@ -49,15 +38,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 		this.numberOfConsumers = numberOfConsumers;
 		this.endpointConfigResult = new EndpointConfigResult();
 		this.timer = timer;
-		Configuration config = Configuration.newConfiguration();
-		config.setErrorListener(new XmlErrorListener());
-		XPath xpath = new XPathFactoryImpl(config).newXPath();
-		try {
-			this.ibfExpression = xpath.compile("/*[local-name()='Envelope']/*[local-name()='Header']/*[local-name()='IBFheader']/*[local-name()='MessageType']");
-			this.oudAchmeaExpression = xpath.compile("/*/*[local-name()='Header']/*[local-name()='Berichttype']/*[local-name()='identificatie']");
-			this.soapBodyExpression = xpath.compile("local-name(/*[local-name()='Envelope']/*[local-name()='Body']/*)");
-		} catch (XPathExpressionException e) {
-		}
+		this.ibfExpression = new XPathExpressionParser("/*[local-name()='Envelope']/*[local-name()='Header']/*[local-name()='IBFheader']/*[local-name()='MessageType']");
+		this.oudAchmeaExpression = new XPathExpressionParser("/*/*[local-name()='Header']/*[local-name()='Berichttype']/*[local-name()='identificatie']");		
+		this.soapBodyExpression = new XPathExpressionParser("local-name(/*[local-name()='Envelope']/*[local-name()='Body']/*)");
 	}
 
 	@Override
@@ -120,53 +103,46 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 			return;
 		}
 		if (TelemetryEventType.MESSAGE_DATAGRAM.equals(event.type) && event.content != null) {
-			try {
-				String ibfType = (String) this.ibfExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
-				if (ibfType != null && ibfType.trim().length() > 0) {
-					ibfType = ibfType.trim();
-					if ("request".equalsIgnoreCase(ibfType)) {
-						event.type = TelemetryEventType.MESSAGE_REQUEST;
-						return;
-					} else if ("response".equalsIgnoreCase(ibfType)) {
-						event.type = TelemetryEventType.MESSAGE_RESPONSE;
-						return;
-					} else if ("datagram".equalsIgnoreCase(ibfType)) {
-						event.type = TelemetryEventType.MESSAGE_DATAGRAM;
-						return;
-					}
+			String ibfType = this.ibfExpression.evaluate(event.content);
+			if (ibfType != null && ibfType.trim().length() > 0) {
+				ibfType = ibfType.trim();
+				if ("request".equalsIgnoreCase(ibfType)) {
+					event.type = TelemetryEventType.MESSAGE_REQUEST;
+					return;
+				} else if ("response".equalsIgnoreCase(ibfType)) {
+					event.type = TelemetryEventType.MESSAGE_RESPONSE;
+					return;
+				} else if ("datagram".equalsIgnoreCase(ibfType)) {
+					event.type = TelemetryEventType.MESSAGE_DATAGRAM;
+					return;
 				}
-			} catch (XPathExpressionException e) {
 			}
-			try {
-				String oudAchmeaIdentificatie = (String) this.oudAchmeaExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
-				if (oudAchmeaIdentificatie != null && oudAchmeaIdentificatie.trim().length() > 0) {
-					oudAchmeaIdentificatie = oudAchmeaIdentificatie.trim().toLowerCase();
-					if (oudAchmeaIdentificatie.endsWith("v")) {
-						event.type = TelemetryEventType.MESSAGE_REQUEST;
-						return;
-					} else if (oudAchmeaIdentificatie.endsWith("a")) {
-						event.type = TelemetryEventType.MESSAGE_RESPONSE;
-						return;
-					}
+			
+			String oudAchmeaIdentificatie = this.oudAchmeaExpression.evaluate(event.content);
+			if (oudAchmeaIdentificatie != null && oudAchmeaIdentificatie.trim().length() > 0) {
+				oudAchmeaIdentificatie = oudAchmeaIdentificatie.trim().toLowerCase();
+				if (oudAchmeaIdentificatie.endsWith("v")) {
+					event.type = TelemetryEventType.MESSAGE_REQUEST;
+					return;
+				} else if (oudAchmeaIdentificatie.endsWith("a")) {
+					event.type = TelemetryEventType.MESSAGE_RESPONSE;
+					return;
 				}
-			} catch (XPathExpressionException e) {
 			}
-			try {
-				String soapBodyChild = (String) this.soapBodyExpression.evaluate(new InputSource(new StringReader(event.content)), XPathConstants.STRING);
-				if (soapBodyChild != null && soapBodyChild.trim().length() > 0) {
-					soapBodyChild = soapBodyChild.trim().toLowerCase();
-					if (soapBodyChild.endsWith("request")) {
-						event.type = TelemetryEventType.MESSAGE_REQUEST;
-						return;
-					} else if (soapBodyChild.endsWith("response")) {
-						event.type = TelemetryEventType.MESSAGE_RESPONSE;
-						return;
-					} else if (soapBodyChild.equals("fault")) {
-						event.type = TelemetryEventType.MESSAGE_RESPONSE;
-						return;
-					}
+			
+			String soapBodyChild = this.soapBodyExpression.evaluate(event.content);
+			if (soapBodyChild != null && soapBodyChild.trim().length() > 0) {
+				soapBodyChild = soapBodyChild.trim().toLowerCase();
+				if (soapBodyChild.endsWith("request")) {
+					event.type = TelemetryEventType.MESSAGE_REQUEST;
+					return;
+				} else if (soapBodyChild.endsWith("response")) {
+					event.type = TelemetryEventType.MESSAGE_RESPONSE;
+					return;
+				} else if (soapBodyChild.equals("fault")) {
+					event.type = TelemetryEventType.MESSAGE_RESPONSE;
+					return;
 				}
-			} catch (XPathExpressionException e) {
 			}
 		}
     }
