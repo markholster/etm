@@ -14,6 +14,10 @@ import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.TransformerFactoryImpl;
+import net.sf.saxon.om.NamePool.NamePoolLimitException;
+
 public class XsltExpressionParser implements ExpressionParser {
 	
 	/**
@@ -21,20 +25,27 @@ public class XsltExpressionParser implements ExpressionParser {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(XsltExpressionParser.class);
 	
-	private final Transformer transformer;
+	private Transformer transformer;
 	private final String template;
 	
-	public XsltExpressionParser(TransformerFactory transformerFactory, String template) {
+	public XsltExpressionParser(String template) {
+	    this.transformer = createTransformer(template);
+		this.template = template;
+    }
+	
+	private Transformer createTransformer(String template) {
 		try {
-	        this.transformer = transformerFactory.newTransformer(new StreamSource(new StringReader(template)));
+			Configuration config = Configuration.newConfiguration();
+			config.setErrorListener(new XmlErrorListener());
+			TransformerFactory transformerFactory = new TransformerFactoryImpl(config);
+	        return transformerFactory.newTransformer(new StreamSource(new StringReader(template)));
         } catch (TransformerConfigurationException e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error creating xslt template from '" + template + ".", e);
         	}
 	        throw new EtmException(EtmException.INVALID_XSLT_TEMPLATE, e);
-        }
-		this.template = template;
-    }
+        }		
+	}
 
 	@Override
     public String evaluate(String content) {
@@ -50,7 +61,18 @@ public class XsltExpressionParser implements ExpressionParser {
         		log.logDebugMessage("XSLT template '" + this.template+ "' could not be applied on content '" + content + "'.", e);
         	}
         	return null;
-        }
+        } catch (NamePoolLimitException e) {
+        	this.transformer = createTransformer(this.template);
+    	    try {
+    	        this.transformer.transform(new StreamSource(new StringReader(content)), new StreamResult(writer));
+    	        return writer.toString();
+            } catch (TransformerException e2) {
+            	if (log.isDebugLevelEnabled()) {
+            		log.logDebugMessage("XSLT template '" + this.template+ "' could not be applied on content '" + content + "'.", e2);
+            	}
+            	return null;
+            }        	
+		}
     }
 
 	public String getTemplate() {

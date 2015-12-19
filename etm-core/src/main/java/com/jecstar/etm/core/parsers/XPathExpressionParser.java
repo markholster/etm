@@ -12,6 +12,10 @@ import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NamePool.NamePoolLimitException;
+import net.sf.saxon.xpath.XPathFactoryImpl;
+
 public class XPathExpressionParser implements ExpressionParser {
 	
 	/**
@@ -19,20 +23,27 @@ public class XPathExpressionParser implements ExpressionParser {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(XPathExpressionParser.class);
 	
-	private final XPathExpression compiledExpression;
+	private XPathExpression compiledExpression;
 	private final String expression;
 	
-	public XPathExpressionParser(XPath xPath, String expression) {
+	public XPathExpressionParser(String expression) {
+		this.compiledExpression = createCompiledExpression(expression);
+		this.expression = expression;
+    }
+	
+	private XPathExpression createCompiledExpression(String expression) {
 		try {
-	        this.compiledExpression = xPath.compile(expression);
+			Configuration config = Configuration.newConfiguration();
+			config.setErrorListener(new XmlErrorListener());
+			XPath xPath = new XPathFactoryImpl(config).newXPath();
+	        return xPath.compile(expression);
         } catch (XPathExpressionException e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error creating xpath expression from '" + expression + ".", e);
         	}
 	        throw new EtmException(EtmException.INVALID_XPATH_EXPRESSION, e);
-        }
-		this.expression = expression;
-    }
+        }		
+	}
 
 	@Override
     public String evaluate(String content) {
@@ -46,7 +57,17 @@ public class XPathExpressionParser implements ExpressionParser {
         		log.logDebugMessage("XPath expression '" + this.expression + "' could not be evaluated against content '" + content + "'.", e);
         	}
 	        return null;
-        }
+        } catch (NamePoolLimitException e) {
+			this.compiledExpression = createCompiledExpression(this.expression);
+		    try {
+		        return this.compiledExpression.evaluate(new InputSource(new StringReader(content)));
+	        } catch (XPathExpressionException e2) {
+	        	if (log.isDebugLevelEnabled()) {
+	        		log.logDebugMessage("XPath expression '" + this.expression + "' could not be evaluated against content '" + content + "'.", e2);
+	        	}
+		        return null;
+	        }
+		}
     }
 
 	public String getExpression() {

@@ -1,12 +1,5 @@
 package com.jecstar.etm.core.parsers;
 
-import javax.xml.transform.TransformerFactory;
-import javax.xml.xpath.XPath;
-
-import net.sf.saxon.Configuration;
-import net.sf.saxon.TransformerFactoryImpl;
-import net.sf.saxon.xpath.XPathFactoryImpl;
-
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -18,16 +11,6 @@ public final class ExpressionParserFactory {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(ExpressionParserFactory.class);
 	
-	private static final XPath xPath;
-	private static final TransformerFactory transformerFactory;
-
-	static {
-		Configuration config = Configuration.newConfiguration();
-		config.setErrorListener(new XmlErrorListener());
-		xPath = new XPathFactoryImpl(config).newXPath();
-		transformerFactory = new TransformerFactoryImpl(config);
-	}
-
 	public static ExpressionParser createExpressionParserFromConfiguration(final String expression) {
 		if (expression.length() > 5) {
 			if (expression.charAt(0) == 'x' &&
@@ -36,7 +19,7 @@ public final class ExpressionParserFactory {
 				expression.charAt(3) == 't' &&
 				expression.charAt(4) == ':') {
 				try {
-					return new XsltExpressionParser(transformerFactory, expression.substring(5));
+					return new XsltExpressionParser(expression.substring(5));
 				} catch (EtmException e) {
 					new FixedValueExpressionParser(null);
 				}
@@ -60,7 +43,7 @@ public final class ExpressionParserFactory {
 				expression.charAt(4) == 'h' &&
 				expression.charAt(5) == ':') {
 				try {
-					return new XPathExpressionParser(xPath, expression.substring(6));
+					return new XPathExpressionParser(expression.substring(6));
 				} catch (EtmException e) {
 					new FixedValueExpressionParser(null);
 				}

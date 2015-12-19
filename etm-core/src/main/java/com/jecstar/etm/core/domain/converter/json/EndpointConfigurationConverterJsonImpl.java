@@ -3,18 +3,10 @@ package com.jecstar.etm.core.domain.converter.json;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathFactory;
-
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.EndpointConfigurationConverterTags;
-import com.jecstar.etm.core.logging.LogFactory;
-import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.parsers.ExpressionParser;
 import com.jecstar.etm.core.parsers.FixedPositionExpressionParser;
 import com.jecstar.etm.core.parsers.FixedValueExpressionParser;
@@ -22,49 +14,14 @@ import com.jecstar.etm.core.parsers.JsonPathExpressionParser;
 import com.jecstar.etm.core.parsers.XPathExpressionParser;
 import com.jecstar.etm.core.parsers.XsltExpressionParser;
 
-import net.sf.saxon.Configuration;
-import net.sf.saxon.TransformerFactoryImpl;
-import net.sf.saxon.xpath.XPathFactoryImpl;
-
 public class EndpointConfigurationConverterJsonImpl extends AbstractJsonConverter implements EndpointConfigurationConverter<String> {
 	
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(EndpointConfigurationConverterJsonImpl.class);
-
 
 	private static final String EXPR_TYPE_FIXED_POSITION = "fixed_position"; 
 	private static final String EXPR_TYPE_FIXED_VALUE = "fixed_value"; 
 	private static final String EXPR_TYPE_JSON_PATH = "json_path"; 
 	private static final String EXPR_TYPE_XPATH = "xpath"; 
 	private static final String EXPR_TYPE_XSLT = "xlst";
-	private static final XPath XPATH;
-	private static final TransformerFactory TRANSFORMER_FACTORY;
-	
-	static {
-	    Configuration config = new Configuration();
-	    config.setErrorListener(new ErrorListener() {
-			@Override
-			public void warning(TransformerException exception) throws TransformerException {
-				log.logWarningMessage(exception.getMessage(), exception);
-			}
-			
-			@Override
-			public void fatalError(TransformerException exception) throws TransformerException {
-				log.logFatalMessage(exception.getMessage(), exception);
-			}
-			
-			@Override
-			public void error(TransformerException exception) throws TransformerException {
-				log.logErrorMessage(exception.getMessage(), exception);
-			}
-		});
-		XPathFactory xpf = new XPathFactoryImpl(config);
-		XPATH = xpf.newXPath();
-		TRANSFORMER_FACTORY = new TransformerFactoryImpl();
-
-	}
 			
 	private final EndpointConfigurationConverterTags tags = new EndpointConfigurationConverterTagsJsonImpl();
 
@@ -108,10 +65,10 @@ public class EndpointConfigurationConverterJsonImpl extends AbstractJsonConverte
 			return new JsonPathExpressionParser(path);
 		} else if (EXPR_TYPE_XPATH.equals(type)) {
 			String expression = getString(this.tags.getExpressionTag(), valueMap);
-			return new XPathExpressionParser(XPATH, expression);
+			return new XPathExpressionParser(expression);
 		} else if (EXPR_TYPE_XSLT.equals(type)) {
 			String template = getString(this.tags.getTemplateTag(), valueMap);
-			return new XsltExpressionParser(TRANSFORMER_FACTORY, template);
+			return new XsltExpressionParser(template);
 		} else {
 			throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
 		}
