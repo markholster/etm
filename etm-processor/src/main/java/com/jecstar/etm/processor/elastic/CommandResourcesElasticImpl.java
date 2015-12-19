@@ -22,6 +22,8 @@ import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.CommandResources;
 import com.jecstar.etm.processor.processor.enhancing.TelemetryEventEnhancer;
 import com.jecstar.etm.processor.processor.persisting.AbstractTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.SqlTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.HttpTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.LogTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.MessagingTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
@@ -45,8 +47,10 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		this.bulkProcessorMetricLogger = new BulkProcessorMetricLogger(metricRegistry);
 		this.bulkProcessor = createBulkProcessor();
 		this.etmConfiguration.addConfigurationChangeListener(this);
-		this.persisters.put(CommandType.MESSAGING_EVENT, new MessagingTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+		this.persisters.put(CommandType.HTTP_EVENT, new HttpTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
 		this.persisters.put(CommandType.LOG_EVENT, new LogTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+		this.persisters.put(CommandType.MESSAGING_EVENT, new MessagingTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+		this.persisters.put(CommandType.SQL_EVENT, new SqlTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
 	}
 
 	@Override

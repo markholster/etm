@@ -11,7 +11,7 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.DbQueryTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.SqlTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.HttpTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.LogTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.MessagingTelemetryEventBuilder;
@@ -95,7 +95,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}
 	}
 
-	public void processDbQueryTelemetryEvent(final DbQueryTelemetryEventBuilder builder) {
+	public void processDbQueryTelemetryEvent(final SqlTelemetryEventBuilder builder) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;

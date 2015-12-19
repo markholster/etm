@@ -51,6 +51,6 @@ public interface TelemetryEventConverterTags {
 	// Http event attributes
 	String getHttpEventTypeTag();
 	
-	// DbQuery event attributes
-	String getDbQueryEventTypeTag();
+	// Sql event attributes
+	String getSqlEventTypeTag();
 }

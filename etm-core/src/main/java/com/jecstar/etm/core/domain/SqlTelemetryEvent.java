@@ -2,17 +2,17 @@ package com.jecstar.etm.core.domain;
 
 import java.time.ZonedDateTime;
 
-public class DbQueryTelemetryEvent extends TelemetryEvent<DbQueryTelemetryEvent>{
+public class SqlTelemetryEvent extends TelemetryEvent<SqlTelemetryEvent>{
 
-	public enum DbQueryEventType {
+	public enum SqlEventType {
 		DELETE, INSERT, SELECT, UPDATE, RESULTSET;
 		
-		public static DbQueryEventType saveValueOf(String value) {
+		public static SqlEventType saveValueOf(String value) {
 			if (value == null) {
 				return null;
 			}
 			try {
-				return DbQueryEventType.valueOf(value.toUpperCase());
+				return SqlEventType.valueOf(value.toUpperCase());
 			} catch (IllegalArgumentException e) {
 				return null;
 			}
@@ -22,7 +22,7 @@ public class DbQueryTelemetryEvent extends TelemetryEvent<DbQueryTelemetryEvent>
 	/**
 	 * The query event type that is represented by this event.
 	 */
-	public DbQueryEventType dbQueryEventType;
+	public SqlEventType sqlEventType;
 
 	/**
 	 * The handler that was reading the event.
@@ -30,16 +30,16 @@ public class DbQueryTelemetryEvent extends TelemetryEvent<DbQueryTelemetryEvent>
 	public EndpointHandler readingEndpointHandler = new EndpointHandler();
 	
 	@Override
-	public DbQueryTelemetryEvent initialize() {
-		this.dbQueryEventType = null;
+	public SqlTelemetryEvent initialize() {
+		this.sqlEventType = null;
 		this.readingEndpointHandler.initialize();
 		return this;
 	}
 
 	@Override
-	public DbQueryTelemetryEvent initialize(DbQueryTelemetryEvent copy) {
+	public SqlTelemetryEvent initialize(SqlTelemetryEvent copy) {
 		super.internalInitialize(copy);
-		this.dbQueryEventType = copy.dbQueryEventType;
+		this.sqlEventType = copy.sqlEventType;
 		this.readingEndpointHandler.initialize(copy.readingEndpointHandler);
 		return this;
 	}

@@ -170,7 +170,7 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	}
 
 	@Override
-	public String getDbQueryEventTypeTag() {
-		return "db_query_type";
+	public String getSqlEventTypeTag() {
+		return "sql_type";
 	}
 }
