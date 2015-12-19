@@ -69,14 +69,15 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	
 	private BulkProcessor createBulkProcessor() {
 		return BulkProcessor.builder(this.elasticClient, this.bulkProcessorMetricLogger)
-				.setBulkActions(this.etmConfiguration.getPersistingBulkSize())
-				.setBulkSize(new ByteSizeValue(5, ByteSizeUnit.MB)).setFlushInterval(TimeValue.timeValueSeconds(30))
+				.setBulkActions(this.etmConfiguration.getPersistingBulkCount() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkCount())
+				.setBulkSize(new ByteSizeValue(this.etmConfiguration.getPersistingBulkSize() <=0 ? -1 : this.etmConfiguration.getPersistingBulkSize(), ByteSizeUnit.KB))
+				.setFlushInterval(this.etmConfiguration.getPersistingBulkTime() <= 0 ? null : TimeValue.timeValueMillis(this.etmConfiguration.getPersistingBulkTime()))
 				.build();
 	}
 
 	@Override
 	public void configurationChanged(ConfigurationChangedEvent event) {
-		if (event.isChanged(EtmConfiguration.CONFIG_KEY_EVENT_BUFFER_SIZE)) {
+		if (event.isChanged(EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE)) {
 			BulkProcessor oldBulkProcessor = this.bulkProcessor;
 			this.bulkProcessor = createBulkProcessor();
 			this.persisters.values().forEach(c -> ((AbstractTelemetryEventPersister)c).setBulkProcessor(this.bulkProcessor));

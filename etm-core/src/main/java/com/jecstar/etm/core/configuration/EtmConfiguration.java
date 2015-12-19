@@ -12,7 +12,9 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT = "enhancingHandlerCount";
 	public static final String CONFIG_KEY_PERSISTING_HANDLER_COUNT = "persistingHandlerCount";
 	public static final String CONFIG_KEY_EVENT_BUFFER_SIZE = "eventBufferSize";
+	public static final String CONFIG_KEY_PERSISTING_BULK_COUNT = "persistingBulkCount";
 	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE = "persistingBulkSize";
+	public static final String CONFIG_KEY_PERSISTING_BULK_TIME = "persistingBulkTime";
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
 	public static final String CONFIG_KEY_MAX_INDEX_COUNT = "maxIndexCount";
@@ -24,7 +26,11 @@ public class EtmConfiguration {
 	private int eventBufferSize = 4096;
 	
 	// Persisting configuration properties;
-	private int persistingBulkSize = 1000;
+	private int persistingBulkSize = 5120;
+	private int persistingBulkCount = 1000;
+	private int persistingBulkTime = 30000;
+	
+	
 	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 1;
 	private WriteConsistency writeConsistency = WriteConsistency.QUORUM;
@@ -92,14 +98,35 @@ public class EtmConfiguration {
 	}
 
 	// Etm persisting configuration.
-	
 	public int getPersistingBulkSize() {
 		return this.persistingBulkSize;
 	}
 	
 	public EtmConfiguration setPersistingBulkSize(int persistingBulkSize) {
-		if (persistingBulkSize > 0) {
+		if (persistingBulkSize >= 0) {
 			this.persistingBulkSize = persistingBulkSize;
+		}
+		return this;
+	}
+	
+	public int getPersistingBulkCount() {
+		return this.persistingBulkCount;
+	}
+	
+	public EtmConfiguration setPersistingBulkCount(int persistingBulkCount) {
+		if (persistingBulkCount >= 0) {
+			this.persistingBulkCount = persistingBulkCount;
+		}
+		return this;
+	}
+	
+	public int getPersistingBulkTime() {
+		return this.persistingBulkTime;
+	}
+	
+	public EtmConfiguration setPersistingBulkTime(int persistingBulkTime) {
+		if (persistingBulkTime >= 0) {
+			this.persistingBulkTime = persistingBulkTime;
 		}
 		return this;
 	}
