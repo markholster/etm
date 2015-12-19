@@ -17,13 +17,12 @@ public abstract class AbstractTelemetryEventPersister {
 	private final EtmConfiguration etmConfiguration;
 	protected BulkProcessor bulkProcessor;
 	
-	private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+	private final DateTimeFormatter dateTimeFormatterIndexPerDay = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
 			.appendLiteral("-")
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
-
 
 	public AbstractTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
 		this.bulkProcessor = bulkProcessor;
@@ -35,7 +34,7 @@ public abstract class AbstractTelemetryEventPersister {
 	}
     
     protected String getElasticIndexName() {
-    	return "etm_event_" + this.dateTimeFormatter.format(ZonedDateTime.now());
+    	return "etm_event_" + this.dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
     
     protected abstract String getElasticTypeName();
