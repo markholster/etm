@@ -85,12 +85,21 @@ public class Startup {
 					}
 				}
 			});
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Enterprise Telemetry Monitor started.");
+			}
 		} catch (FileNotFoundException e) {
-			log.logFatalMessage("Error reading configuration file", e);
+			if (log.isFatalLevelEnabled()) {
+				log.logFatalMessage("Error reading configuration file", e);
+			}
 		} catch (YamlException e) {
-			log.logFatalMessage("Error parsing configuration file", e);
+			if (log.isFatalLevelEnabled()) {
+				log.logFatalMessage("Error parsing configuration file", e);
+			}
 		} catch (Exception e) {
-			log.logFatalMessage("Error launching Enterprise Telemetry Monitor", e);
+			if (log.isFatalLevelEnabled()) {
+				log.logFatalMessage("Error launching Enterprise Telemetry Monitor", e);
+			}
 		} finally {
 		}
 	}

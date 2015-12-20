@@ -14,8 +14,14 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
-import com.jecstar.etm.core.domain.converter.json.AbstractJsonTelemetryEventConverter;
+import com.jecstar.etm.core.domain.HttpTelemetryEvent;
+import com.jecstar.etm.core.domain.LogTelemetryEvent;
+import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
+import com.jecstar.etm.core.domain.SqlTelemetryEvent;
+import com.jecstar.etm.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
@@ -32,8 +38,16 @@ public class RestTelemetryEventProcessor {
 
 	private static TelemetryCommandProcessor telemetryCommandProcessor;
 
-	private final TelemetryCommand command = new TelemetryCommand();
+	private final HttpTelemetryEventConverterJsonImpl httpConverter = new HttpTelemetryEventConverterJsonImpl();
+	private final LogTelemetryEventConverterJsonImpl logConverter = new LogTelemetryEventConverterJsonImpl();
+	private final MessagingTelemetryEventConverterJsonImpl messagingConverter = new MessagingTelemetryEventConverterJsonImpl();
+	private final SqlTelemetryEventConverterJsonImpl sqlConverter = new SqlTelemetryEventConverterJsonImpl();
 
+	private final HttpTelemetryEvent httpTelemetryEvent = new HttpTelemetryEvent(); 
+	private final LogTelemetryEvent logTelemetryEvent = new LogTelemetryEvent(); 
+	private final MessagingTelemetryEvent messagingTelemetryEvent = new MessagingTelemetryEvent(); 
+	private final SqlTelemetryEvent sqlTelemetryEvent = new SqlTelemetryEvent(); 
+	
 	public static void setProcessor(TelemetryCommandProcessor processor) {
 		telemetryCommandProcessor = processor;
 	}
@@ -55,11 +69,22 @@ public class RestTelemetryEventProcessor {
 		    while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
 		    	out.append(buffer, 0, bytesRead);
 		    }
-//		    TODO process data.
-//		    this.command.commandType = CommandType.EVENT;
-//		    this.telemetryEventConverter.convert(out.toString(), command.event);
-//		    telemetryCommandProcessor.processTelemetryCommand(command);
-			return "{ \"status\": \"success\" }";
+		    switch (commandType) {
+		    // Initializing is done in the converters.
+		    case HTTP_EVENT:
+		    	this.httpConverter.convert(out.toString(), this.httpTelemetryEvent);
+		    	telemetryCommandProcessor.processHttpTelemetryEvent(this.httpTelemetryEvent);
+		    case LOG_EVENT:
+		    	this.logConverter.convert(out.toString(), this.logTelemetryEvent);
+		    	telemetryCommandProcessor.processLogTelemetryEvent(this.logTelemetryEvent);
+		    case MESSAGING_EVENT:
+		    	this.messagingConverter.convert(out.toString(), this.messagingTelemetryEvent);
+		    	telemetryCommandProcessor.processMessagingTelemetryEvent(this.messagingTelemetryEvent);
+		    case SQL_EVENT:
+		    	this.sqlConverter.convert(out.toString(), this.sqlTelemetryEvent);
+		    	telemetryCommandProcessor.processSqlTelemetryEvent(this.sqlTelemetryEvent);
+		    }
+			return "{ \"status\": \"acknowledged\" }";
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Not processing rest message.", e);

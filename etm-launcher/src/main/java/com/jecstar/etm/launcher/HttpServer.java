@@ -60,17 +60,27 @@ public class HttpServer {
 		Builder builder = Undertow.builder();
 		if (this.configuration.getHttpPort() > 0) {
 			builder.addHttpListener(this.configuration.getHttpPort(), this.configuration.bindingAddress);
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Binding http listener to '" + this.configuration.bindingAddress + ":" + this.configuration.getHttpPort() + "'");
+			}
 		}
 		if (this.configuration.getHttpsPort() > 0) {
 			if (this.configuration.sslKeystoreLocation == null) {
-				log.logErrorMessage("SSL keystore not provided. Https listener not started.");
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("SSL keystore not provided. Https listener not started.");
+				}
 			} else {
 				SSLContext sslContext;
 				try {
 					sslContext = createSslContext(this.configuration);
 					builder.addHttpsListener(this.configuration.getHttpsPort(), this.configuration.bindingAddress, sslContext);
+					if (log.isInfoLevelEnabled()) {
+						log.logInfoMessage("Binding https listener to '" + this.configuration.bindingAddress + ":" + this.configuration.getHttpsPort() + "'");
+					}
 				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
-					log.logErrorMessage("Unable to create SSL context. Https listener not started.", e);
+					if (log.isErrorLevelEnabled()) {
+						log.logErrorMessage("Unable to create SSL context. Https listener not started.", e);
+					}
 				}
 			}
 		}
@@ -88,8 +98,13 @@ public class HttpServer {
 			manager.deploy();
 			try {
 				root.addPrefixPath(di.getContextPath(), manager.start());
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Bound rest processor to '" + di.getContextPath() + "'.");
+				}
 			} catch (ServletException e) {
-				log.logErrorMessage("Error deploying rest processor", e);
+				if (log.isErrorLevelEnabled()) {
+					log.logErrorMessage("Error deploying rest processor", e);
+				}
 			}
 		}
 	}
