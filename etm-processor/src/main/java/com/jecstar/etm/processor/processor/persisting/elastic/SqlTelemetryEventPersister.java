@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor.persisting;
+package com.jecstar.etm.processor.processor.persisting.elastic;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
@@ -6,8 +6,9 @@ import org.elasticsearch.action.index.IndexRequest;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.SqlTelemetryEvent;
 import com.jecstar.etm.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
 
-public class SqlTelemetryEventPersister extends AbstractTelemetryEventPersister
+public class SqlTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
 		implements TelemetryEventPersister<SqlTelemetryEvent, SqlTelemetryEventConverterJsonImpl> {
 
 	public SqlTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {

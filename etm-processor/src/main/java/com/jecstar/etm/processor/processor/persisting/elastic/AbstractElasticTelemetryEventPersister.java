@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor.persisting;
+package com.jecstar.etm.processor.processor.persisting.elastic;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -12,7 +12,7 @@ import org.elasticsearch.action.index.IndexRequest;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 
-public abstract class AbstractTelemetryEventPersister {
+public abstract class AbstractElasticTelemetryEventPersister {
 	
 	private final EtmConfiguration etmConfiguration;
 	protected BulkProcessor bulkProcessor;
@@ -24,7 +24,7 @@ public abstract class AbstractTelemetryEventPersister {
 			.appendLiteral("-")
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 
-	public AbstractTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
+	public AbstractElasticTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
 		this.bulkProcessor = bulkProcessor;
 		this.etmConfiguration = etmConfiguration;
 	}

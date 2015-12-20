@@ -21,12 +21,12 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.CommandResources;
 import com.jecstar.etm.processor.processor.enhancing.TelemetryEventEnhancer;
-import com.jecstar.etm.processor.processor.persisting.AbstractTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.SqlTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.HttpTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.LogTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.MessagingTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.AbstractElasticTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.HttpTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.LogTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.MessagingTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.SqlTelemetryEventPersister;
 
 public class CommandResourcesElasticImpl implements CommandResources, ConfigurationChangeListener {
 
@@ -84,7 +84,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		if (event.isChanged(EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE)) {
 			BulkProcessor oldBulkProcessor = this.bulkProcessor;
 			this.bulkProcessor = createBulkProcessor();
-			this.persisters.values().forEach(c -> ((AbstractTelemetryEventPersister)c).setBulkProcessor(this.bulkProcessor));
+			this.persisters.values().forEach(c -> ((AbstractElasticTelemetryEventPersister)c).setBulkProcessor(this.bulkProcessor));
 			oldBulkProcessor.close();
 		}
 	}

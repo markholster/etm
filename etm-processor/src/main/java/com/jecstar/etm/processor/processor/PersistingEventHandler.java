@@ -8,8 +8,8 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.processor.processor.persisting.LogTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.MessagingTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.LogTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.MessagingTelemetryEventPersister;
 import com.lmax.disruptor.EventHandler;
 
 public class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeable {
