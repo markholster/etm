@@ -77,6 +77,7 @@ public class Startup {
 						.settings(Settings.settingsBuilder()
 								.put("cluster.name", configuration.clusterName)
 								.put("node.name", configuration.nodeName)
+								.put("path.home", configuration.homePath)
 								.put("path.data", configuration.dataPath)
 								.put("client.transport.sniff", true)
 								.put("http.enabled", false))

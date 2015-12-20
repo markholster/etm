@@ -35,8 +35,10 @@ public class Configuration {
 	
 	@YamlConfiguration(key = "node.data")
 	public boolean nodeData = true;
+	@YamlConfiguration(key = "path.home")
+	public String homePath = "./";
 	@YamlConfiguration(key = "path.data")
-	public String dataPath = "data";
+	public String dataPath = "./data";
 	
 	@YamlConfiguration(key = "processor.rest.enabled")
 	public boolean restProcessorEnabled = true;
