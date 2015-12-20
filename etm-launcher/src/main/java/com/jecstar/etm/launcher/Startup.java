@@ -149,7 +149,7 @@ public class Startup {
 				if (ix != -1) {
 					try {
 						InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
-						int port = Integer.parseInt(host.substring(ix));
+						int port = Integer.parseInt(host.substring(ix + 1));
 						transportClient.addTransportAddress(new InetSocketTransportAddress(inetAddress, port));
 					} catch (UnknownHostException e) {
 						if (log.isWarningLevelEnabled()) {

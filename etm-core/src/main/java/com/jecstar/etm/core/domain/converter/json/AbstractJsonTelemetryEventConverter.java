@@ -117,6 +117,10 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 	@Override
 	public void convert(String jsonContent, Event telemetryEvent) {
 		Map<String, Object> valueMap = toMap(jsonContent);
+		convert(valueMap, telemetryEvent);
+	}
+	
+	public void convert(Map<String, Object> valueMap, Event telemetryEvent) {
 		telemetryEvent.initialize();
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
@@ -129,7 +133,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		telemetryEvent.payloadFormat = PayloadFormat.saveValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
 		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
 		telemetryEvent.writingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(this.tags.getWritingEndpointHandlerTag(), valueMap)));
-		doConvert(telemetryEvent, valueMap);
+		doConvert(telemetryEvent, valueMap);		
 	}
 
 	abstract void doConvert(Event telemetryEvent, Map<String, Object> valueMap);
