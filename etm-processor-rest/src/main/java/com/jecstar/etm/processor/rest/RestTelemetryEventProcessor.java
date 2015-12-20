@@ -121,7 +121,7 @@ public class RestTelemetryEventProcessor {
 				String eventType = (String) event.get("type");
 				CommandType commandType = TelemetryCommand.CommandType.valueOfStringType(eventType);
 				if (commandType == null) {
-					// Todo add error in response?
+					//TODO add error in response?
 					continue;
 				}
 				Map<String, Object> eventData = (Map<String, Object>) event.get("data");
