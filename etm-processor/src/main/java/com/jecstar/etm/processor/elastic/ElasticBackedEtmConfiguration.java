@@ -65,6 +65,18 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	@Override
+	public int getPersistingBulkCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getPersistingBulkCount();
+	}
+	
+	@Override
+	public int getPersistingBulkTime() {
+		reloadConfigurationWhenNecessary();
+		return super.getPersistingBulkTime();
+	}
+	
+	@Override
 	public int getShardsPerIndex() {
 		reloadConfigurationWhenNecessary();
 		return super.getShardsPerIndex();
