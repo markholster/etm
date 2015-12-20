@@ -36,7 +36,7 @@ public class ConfigurationConverterYamlImplTest {
 		values.put("processor.rest.enabled", restEnabled);
 		
 		Configuration configuration = converter.convert(values);
-		assertEquals(nodeName, configuration.nodeName);
+		assertEquals(nodeName, configuration.instanceName);
 		assertEquals(sslKeystoreLocation.getPath(), configuration.sslKeystoreLocation.getPath());
 		assertEquals(httpPort.intValue(), configuration.httpPort);
 		assertEquals(restEnabled.booleanValue(), configuration.restProcessorEnabled);

@@ -3,12 +3,17 @@ package com.jecstar.etm.launcher;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.Settings.Builder;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
@@ -35,6 +40,7 @@ public class Startup {
 	private static TelemetryCommandProcessor processor;
 	private static HttpServer httpServer;
 	private static Node node;
+	private static Client elasticClient;
 
 	public static void main(String[] args) {
 		try {
@@ -50,13 +56,32 @@ public class Startup {
 				@Override
 				public void run() {
 					if (httpServer != null) {
-						httpServer.stop();
+						try {
+							httpServer.stop();
+						} catch (Throwable t) {
+							
+						}
 					}
 					if (processor != null) {
-						processor.stopAll();
+						try {
+							processor.stopAll();
+						} catch (Throwable t) {
+							
+						}
+					}
+					if (elasticClient != null) {
+						try {
+							elasticClient.close();
+						} catch (Throwable t) {
+							
+						}
 					}
 					if (node != null) {
-						node.close();
+						try {
+							node.close();
+						} catch (Throwable t) {
+							
+						}
 					}
 				}
 			});
@@ -72,27 +97,59 @@ public class Startup {
 
 	private static void initializeProcessor(Configuration configuration) {
 		if (processor == null) {
+			initializeElasticsearchClient(configuration);
+			ExecutorService executor = Executors.newCachedThreadPool();
+			processor = new TelemetryCommandProcessor();
+			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, "processor", elasticClient);
+			processor.start(executor, new PersistenceEnvironmentElasticImpl(etmConfiguration, elasticClient), etmConfiguration);
+		}
+	}
+	
+	private static void initializeElasticsearchClient(Configuration configuration) {
+		if (elasticClient != null) {
+			return;
+		}
+		if (configuration.connectAsElasticsearchNode) {
 			if (node == null) {
+				Builder settingsBuilder = Settings.settingsBuilder()
+					.put("cluster.name", configuration.clusterName)
+					.put("node.name", configuration.instanceName)
+					.put("path.home", configuration.nodeHomePath)
+					.put("path.data", configuration.nodeDataPath)
+					.put("path.logs", configuration.nodeLogPath)
+					.put("http.enabled", false);
+				if (!configuration.nodeMulticast) {
+					settingsBuilder.put("discovery.zen.ping.multicast.enabled", false);
+					settingsBuilder.put("discovery.zen.ping.unicast.hosts", configuration.connectAddresses);
+				}
 				node = new NodeBuilder()
-						.settings(Settings.settingsBuilder()
-								.put("cluster.name", configuration.clusterName)
-								.put("node.name", configuration.nodeName)
-								.put("path.home", configuration.homePath)
-								.put("path.data", configuration.dataPath)
-								.put("client.transport.sniff", true)
-								.put("http.enabled", false))
+						.settings(settingsBuilder)
 						.client(!configuration.nodeData)
 						.data(configuration.nodeData)
 						.clusterName(configuration.clusterName)
 						.node();
 			}
-			Client elasticClient = node.client();
-			ExecutorService executor = Executors.newCachedThreadPool();
-			processor = new TelemetryCommandProcessor();
-			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.nodeName, "processor",
-					elasticClient);
-			processor.start(executor, new PersistenceEnvironmentElasticImpl(etmConfiguration, elasticClient),
-					etmConfiguration);
+			elasticClient = node.client();
+		} else {
+			TransportClient transportClient = TransportClient.builder().settings(Settings.settingsBuilder()
+					.put("cluster.name", configuration.clusterName)
+					.put("client.transport.sniff", true)).build();
+			String[] hosts = configuration.connectAddresses.split(",");
+			for (String host : hosts) {
+				int ix = host.lastIndexOf(":");
+				if (ix != -1) {
+					try {
+						InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
+						int port = Integer.parseInt(host.substring(ix));
+						transportClient.addTransportAddress(new InetSocketTransportAddress(inetAddress, port));
+					} catch (UnknownHostException e) {
+						if (log.isWarningLevelEnabled()) {
+							log.logWarningMessage("Unable to connect to '" + host + "'", e);
+						}
+					}
+				}
+			}
+			elasticClient = transportClient;
 		}
 	}
 

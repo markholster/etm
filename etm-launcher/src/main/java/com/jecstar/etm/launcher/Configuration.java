@@ -6,8 +6,8 @@ public class Configuration {
 
 	@YamlConfiguration(key = "cluster.name")
 	public String clusterName = "Enterprise Telemetry Monitor";
-	@YamlConfiguration(key = "node.name")
-	public String nodeName = "Node_1";
+	@YamlConfiguration(key = "instance.name")
+	public String instanceName = "Node_1";
 	
 	@YamlConfiguration(key = "binding.address")
 	public String bindingAddress = "0.0.0.0";
@@ -33,13 +33,26 @@ public class Configuration {
 	@YamlConfiguration(key = "ssl.trusttore.password")
 	public String sslTruststorePassword;
 	
+	
+	// Determines the connection mode: Node or Client  
+	@YamlConfiguration(key = "connect.node")
+	public boolean connectAsElasticsearchNode = true;
+	// Comma separated list of hosts to connect to.
+	@YamlConfiguration(key = "connect.addresses")
+	public String connectAddresses = "127.0.0.1:9300";
+	
+	// Configuration for elasticsearch node mode.
 	@YamlConfiguration(key = "node.data")
 	public boolean nodeData = true;
-	@YamlConfiguration(key = "path.home")
-	public String homePath = "./";
-	@YamlConfiguration(key = "path.data")
-	public String dataPath = "./data";
-	
+	@YamlConfiguration(key = "node.path.home")
+	public String nodeHomePath = "./";
+	@YamlConfiguration(key = "node.path.data")
+	public String nodeDataPath = "./data";
+	@YamlConfiguration(key = "node.path.data")
+	public String nodeLogPath = "./log";
+	@YamlConfiguration(key = "node.multicast")
+	public boolean nodeMulticast = true;
+
 	@YamlConfiguration(key = "processor.rest.enabled")
 	public boolean restProcessorEnabled = true;
 
