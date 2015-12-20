@@ -6,6 +6,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.LogTelemetryEvent;
 import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
 
 public class LogTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
@@ -23,7 +24,7 @@ public class LogTelemetryEventPersister extends AbstractElasticTelemetryEventPer
 
 	@Override
 	protected String getElasticTypeName() {
-		return "log";
+		return TelemetryCommand.CommandType.LOG_EVENT.toStringType();
 	}
 
 }

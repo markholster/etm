@@ -8,6 +8,7 @@ import java.io.Reader;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -32,18 +33,21 @@ public class RestTelemetryEventProcessor {
 	private static TelemetryCommandProcessor telemetryCommandProcessor;
 
 	private final TelemetryCommand command = new TelemetryCommand();
-	
-	private final TelemetryEventConverter<String> telemetryEventConverter = new AbstractJsonTelemetryEventConverter();
 
 	public static void setProcessor(TelemetryCommandProcessor processor) {
 		telemetryCommandProcessor = processor;
 	}
 	
 	@POST
-	@Path("/add")
+	@Path("/${eventType}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String addEvent(InputStream data) {
+	public String addEvent(@PathParam("eventType") String eventType, InputStream data) {
+		CommandType commandType = TelemetryCommand.CommandType.valueOfStringType(eventType);
+		if (commandType == null) {
+			throw new WebApplicationException(Response.Status.NOT_FOUND);
+		}
+		
 		try (Reader reader = new InputStreamReader(data)) {
 			final char[] buffer = new char[4096];
 		    final StringBuilder out = new StringBuilder();
@@ -51,10 +55,10 @@ public class RestTelemetryEventProcessor {
 		    while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
 		    	out.append(buffer, 0, bytesRead);
 		    }
-		    this.command.initialize();
-		    this.command.commandType = CommandType.EVENT;
-		    this.telemetryEventConverter.convert(out.toString(), command.event);
-		    telemetryCommandProcessor.processTelemetryCommand(command);
+//		    TODO process data.
+//		    this.command.commandType = CommandType.EVENT;
+//		    this.telemetryEventConverter.convert(out.toString(), command.event);
+//		    telemetryCommandProcessor.processTelemetryCommand(command);
 			return "{ \"status\": \"success\" }";
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {

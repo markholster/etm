@@ -12,9 +12,13 @@ import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.SqlTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.HttpTelemetryEvent;
 import com.jecstar.etm.core.domain.HttpTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.LogTelemetryEvent;
 import com.jecstar.etm.core.domain.LogTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.core.domain.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.core.domain.SqlTelemetryEvent;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
@@ -95,14 +99,18 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}
 	}
 
-	public void processDbQueryTelemetryEvent(final SqlTelemetryEventBuilder builder) {
+	public void processSqlTelemetryEvent(final SqlTelemetryEventBuilder builder) {
+		processSqlTelemetryEvent(builder.build());
+	}
+	
+	public void processSqlTelemetryEvent(final SqlTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
 		long sequence = this.ringBuffer.next();
 		try {
 			target = this.ringBuffer.get(sequence);
-			target.initialize(builder);
+			target.initialize(event);
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -110,13 +118,17 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	}
 	
 	public void processHttpTelemetryEvent(final HttpTelemetryEventBuilder builder) {
+		processHttpTelemetryEvent(builder.build());
+	}
+	
+	public void processHttpTelemetryEvent(final HttpTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
 		long sequence = this.ringBuffer.next();
 		try {
 			target = this.ringBuffer.get(sequence);
-			target.initialize(builder);
+			target.initialize(event);
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -124,13 +136,17 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	}
 	
 	public void processLogTelemetryEvent(final LogTelemetryEventBuilder builder) {
+		processLogTelemetryEvent(builder.build());
+	}
+	
+	public void processLogTelemetryEvent(final LogTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
 		long sequence = this.ringBuffer.next();
 		try {
 			target = this.ringBuffer.get(sequence);
-			target.initialize(builder);
+			target.initialize(event);
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -138,19 +154,22 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	}
 	
 	public void processMessagingTelemetryEvent(final MessagingTelemetryEventBuilder builder) {
+		processMessagingTelemetryEvent(builder.build());
+	}
+	
+	public void processMessagingTelemetryEvent(final MessagingTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
 		long sequence = this.ringBuffer.next();
 		try {
 			target = this.ringBuffer.get(sequence);
-			target.initialize(builder);
+			target.initialize(event);
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
 		}
 	}
-	
 	public MetricRegistry getMetricRegistry() {
 	    return this.metricRegistry;
     }
@@ -167,9 +186,12 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 
 	@Override
 	public void configurationChanged(ConfigurationChangedEvent event) {
-		if (this.started && event.isAnyChanged(EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
+		if (this.started && event.isAnyChanged(
+				EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
 				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT,
-				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE)) {
+				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_COUNT,
+				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE,
+				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_TIME)) {
 			// Configuration changed in such a way that the DisruptorEnvironment needs to be recreated/restarted.
 			try {
 				hotRestart();

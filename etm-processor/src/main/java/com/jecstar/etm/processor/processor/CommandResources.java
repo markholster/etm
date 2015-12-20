@@ -9,5 +9,4 @@ public interface CommandResources extends Closeable {
 	public <T> T getPersister(CommandType commandType);
 	
 	public <T> T getEnhancer(CommandType commandType);
-	
 }

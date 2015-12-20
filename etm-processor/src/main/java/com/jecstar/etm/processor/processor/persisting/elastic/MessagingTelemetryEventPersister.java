@@ -6,6 +6,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
 
 public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
@@ -25,6 +26,6 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
 
 	@Override
 	protected String getElasticTypeName() {
-		return "messaging";
+		return TelemetryCommand.CommandType.MESSAGING_EVENT.toStringType();
 	}
 }

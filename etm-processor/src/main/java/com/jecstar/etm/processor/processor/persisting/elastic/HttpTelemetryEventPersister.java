@@ -6,6 +6,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.HttpTelemetryEvent;
 import com.jecstar.etm.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
 
 public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
@@ -24,7 +25,7 @@ public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPe
 
 	@Override
 	protected String getElasticTypeName() {
-		return "http";
+		return TelemetryCommand.CommandType.HTTP_EVENT.toStringType();
 	}
 
 }
