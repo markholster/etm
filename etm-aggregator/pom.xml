@@ -45,6 +45,7 @@
 				<module>../etm-processor-jee-configurator</module>
 				<module>../etm-processor</module>
 				<module>../etm-processor-mdb</module>
+				<module>../etm-processor-ibmmq</module>
 				<module>../etm-processor-rest</module>
 				<module>../etm-processor-ws</module>
 				<module>../etm-gui-jee-configurator</module>
@@ -74,7 +75,7 @@
 		      <groupId>com.codahale.metrics</groupId>
 		      <artifactId>metrics-core</artifactId>
 		      <version>3.0.2</version>
-		    </dependency>           
+		    </dependency>
 			<dependency>
 			    <groupId>com.jayway.jsonpath</groupId>
 			    <artifactId>json-path</artifactId>
