@@ -14,14 +14,14 @@
 	<description>An standalone processor capable of reading from an IBM MQ messaging ifrastructure.</description>
 	<name>Enterprise Telemetry Monitor - processor ibmmq</name>
 	<dependencies>
+        <dependency>
+            <groupId>com.esotericsoftware.yamlbeans</groupId>
+            <artifactId>yamlbeans</artifactId>
+        </dependency>                      
 		<dependency>
 			<groupId>com.jecstar.etm</groupId>
 			<artifactId>etm-processor</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>com.jecstar.etm</groupId>
-            <artifactId>etm-processor-jee-configurator</artifactId>
-        </dependency>
 		<dependency>
 		    <groupId>com.ibm.mq</groupId>
 		    <artifactId>allclient</artifactId>
@@ -32,22 +32,6 @@
 	</dependencies>
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                        </manifest>
-                        <manifestEntries>
-                            <Specification-Title>${project.name}</Specification-Title>
-                            <Specification-Version>${project.version}</Specification-Version>
-                            <Implementation-Version>${buildNumber}</Implementation-Version>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>       
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-eclipse-plugin</artifactId>

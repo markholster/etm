@@ -30,7 +30,6 @@ import com.jecstar.etm.core.TelemetryEventType;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 public class IIBEventProcessor {
