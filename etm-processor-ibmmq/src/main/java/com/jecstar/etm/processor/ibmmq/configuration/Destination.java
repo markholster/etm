@@ -1,11 +1,17 @@
 package com.jecstar.etm.processor.ibmmq.configuration;
 
+import com.ibm.mq.constants.CMQC;
+
 public class Destination {
 
 	private String name;
-	private String type;
-	private int nrOfListeners;
-	private int destinationReadOptions = 0;
+	private String type = "queue";
+	private int nrOfListeners = 5;
+	
+	private int commitCount = 1000;
+	private int commitTime = 30000;
+	private int destinationGetOptions = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_CONVERT + CMQC.MQGMO_SYNCPOINT;
+	private int destinationOpenOptions = CMQC.MQOO_INQUIRE + CMQC.MQOO_FAIL_IF_QUIESCING + CMQC.MQOO_INPUT_SHARED;
 	
 	
 	public String getName() {
@@ -21,7 +27,7 @@ public class Destination {
 	}
 	
 	public void setType(String type) {
-		if (!"queue".equalsIgnoreCase(type) && !"topic".equalsIgnoreCase(type)) {
+		if (!"queue".equalsIgnoreCase(type)) {
 			throw new IllegalArgumentException("'" + type + "' is an invalid destination type.");
 		}
 		this.type = type;
@@ -38,14 +44,47 @@ public class Destination {
 		this.nrOfListeners = nrOfListeners;
 	}
 	
-	public int getDestinationReadOptions() {
-		return this.destinationReadOptions;
+	public int getCommitCount() {
+		return this.commitCount;
 	}
 	
-	public void setDestinationReadOptions(int destinationReadOptions) {
-		if (destinationReadOptions < 0) {
-			throw new IllegalArgumentException(destinationReadOptions + " is an invalid destination read option number");
+	public void setCommitCount(int commitCount) {
+		if (commitCount < 0) {
+			throw new IllegalArgumentException(commitCount + " is an invalid commit count");
 		}
-		this.destinationReadOptions = destinationReadOptions;
+		this.commitCount = commitCount;
+	}
+	
+	public int getDestinationGetOptions() {
+		return this.destinationGetOptions;
+	}
+	
+	public int getCommitTime() {
+		return this.commitTime;
+	}
+	
+	public void setCommitTime(int commitTime) {
+		if (commitTime < 0) {
+			throw new IllegalArgumentException(commitTime + " is an invalid commit time");
+		}
+		this.commitTime = commitTime;
+	}
+	
+	public void setDestinationGetOptions(int destinationGetOptions) {
+		if (destinationGetOptions < 0) {
+			throw new IllegalArgumentException(destinationGetOptions + " is an invalid destination get option number");
+		}
+		this.destinationGetOptions = destinationGetOptions;
+	}
+	
+	public int getDestinationOpenOptions() {
+		return this.destinationOpenOptions;
+	}
+	
+	public void setDestinationOpenOptions(int destinationOpenOptions) {
+		if (destinationOpenOptions < 0) {
+			throw new IllegalArgumentException(destinationOpenOptions + " is an invalid destination open option number");
+		}
+		this.destinationOpenOptions = destinationOpenOptions;
 	}
 }

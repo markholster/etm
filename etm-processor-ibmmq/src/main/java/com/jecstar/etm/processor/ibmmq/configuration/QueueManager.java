@@ -9,8 +9,6 @@ public class QueueManager {
 	private int queueManagerPort;
 	private String queueManagerChannel;
 	
-	private int queueManagerConnectOptions = 0;
-	
 	private List<Destination> destinations;
 	
 	public String getQueueManagerName() {
@@ -55,16 +53,4 @@ public class QueueManager {
 	public void setDestinations(List<Destination> destinations) {
 		this.destinations = destinations;
 	}
-	
-	public int getQueueManagerConnectOptions() {
-		return this.queueManagerConnectOptions;
-	}
-	
-	public void setQueueManagerConnectOptions(int queueManagerConnectOptions) {
-		if (queueManagerConnectOptions < 0) {
-			throw new IllegalArgumentException(queueManagerConnectOptions + " is an invalid queuemanager connection option number");
-		}
-		this.queueManagerConnectOptions = queueManagerConnectOptions;
-	}
-
 }
