@@ -8,11 +8,10 @@ public class Destination {
 	private String type = "queue";
 	private int nrOfListeners = 5;
 	
-	private int commitCount = 1000;
-	private int commitTime = 30000;
+	private int commitSize = 500;
+	private int commitTime = 10000;
 	private int destinationGetOptions = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_CONVERT + CMQC.MQGMO_SYNCPOINT;
 	private int destinationOpenOptions = CMQC.MQOO_INQUIRE + CMQC.MQOO_FAIL_IF_QUIESCING + CMQC.MQOO_INPUT_SHARED;
-	
 	
 	public String getName() {
 		return this.name;
@@ -44,15 +43,15 @@ public class Destination {
 		this.nrOfListeners = nrOfListeners;
 	}
 	
-	public int getCommitCount() {
-		return this.commitCount;
+	public int getCommitSize() {
+		return this.commitSize;
 	}
 	
-	public void setCommitCount(int commitCount) {
-		if (commitCount < 0) {
-			throw new IllegalArgumentException(commitCount + " is an invalid commit count");
+	public void setCommitSize(int commitSize) {
+		if (commitSize < 0) {
+			throw new IllegalArgumentException(commitSize + " is an invalid commit size");
 		}
-		this.commitCount = commitCount;
+		this.commitSize = commitSize;
 	}
 	
 	public int getDestinationGetOptions() {

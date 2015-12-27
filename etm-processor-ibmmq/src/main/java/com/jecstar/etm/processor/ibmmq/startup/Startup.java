@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +25,6 @@ import com.jecstar.etm.processor.ibmmq.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.ibmmq.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.configuration.Configuration;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
-import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 
 public class Startup {
@@ -106,11 +106,12 @@ public class Startup {
 		processor = new AutoManagedTelemetryEventProcessor(etmConfiguration, persistenceEnvironment, elasticClient);
 		processor.start();
 		
-		MQEnvironment.hostname = configuration.getQueueManager().getQueueManagerHost();
-		MQEnvironment.port = configuration.getQueueManager().getQueueManagerPort();
-		MQEnvironment.channel = configuration.getQueueManager().getQueueManagerChannel();
+		MQEnvironment.hostname = configuration.getQueueManager().getHost();
+		MQEnvironment.port = configuration.getQueueManager().getPort();
+		MQEnvironment.channel = configuration.getQueueManager().getChannel();
 		
 		executorService = Executors.newFixedThreadPool(nrOfListeners);
+		System.out.println(new Date());
 		for (Destination destination : configuration.getQueueManager().getDestinations()) {
 			for (int i=0; i < destination.getNrOfListeners(); i++) {
 				executorService.submit(new DestinationReader(processor, configuration.getQueueManager(), destination));
@@ -122,7 +123,7 @@ public class Startup {
 		File configFile = new File("config", "etm.yml");
 		try (FileReader reader = new FileReader(configFile)) {
 			YamlReader ymlReader = new YamlReader(reader);
-			ymlReader.getConfig().setClassTag("queuemanager", QueueManager.class);
+			ymlReader.getConfig().setClassTag("configuration", Configuration.class);
 			ymlReader.getConfig().setClassTag("destination", Destination.class);
 			return (Configuration) ymlReader.read();
 		} catch (FileNotFoundException e) {
@@ -131,6 +132,7 @@ public class Startup {
 			}
 			return new Configuration();
 		} catch (IOException e) {
+			e.printStackTrace();
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to load configuration", e);
 			}

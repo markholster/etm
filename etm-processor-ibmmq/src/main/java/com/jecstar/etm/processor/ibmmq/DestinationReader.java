@@ -1,7 +1,6 @@
 package com.jecstar.etm.processor.ibmmq;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
@@ -33,7 +32,7 @@ public class DestinationReader implements Runnable {
 	private MQQueueManager mqQueueManager;
 	private MQQueue mqQueue;
 	
-	private static AtomicInteger counter = new AtomicInteger(0);
+	private int counter = 0;
 	
 	public DestinationReader(final AutoManagedTelemetryEventProcessor processor, final QueueManager queueManager, final Destination destination) {
 		this.processor = processor;
@@ -55,23 +54,15 @@ public class DestinationReader implements Runnable {
 				message.readFully(byteContent);
 				// TODO message handling.
 				message.clearMessage();
-				if (counter.incrementAndGet() >= this.destination.getCommitCount() 
-						|| System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitTime()) {
-					if (this.mqQueueManager != null) {
-						try {
-							this.mqQueueManager.commit();
-						} catch (MQException e) {
-							if (log.isErrorLevelEnabled()) {
-								log.logErrorMessage("Unable to execute commit on queuemanager.", e);
-							}
-						}
-					}
-					counter.set(0);
-					this.lastCommitTime = System.currentTimeMillis();
+				if (++counter >= this.destination.getCommitSize()) {
+					commit();
 				}
 			} catch (MQException e) {
 				if (e.completionCode == 2 && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
 					// No message available, retry
+					if (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitTime()) {
+						commit();
+					}
 					continue;
 				}
 				switch (e.reasonCode) {
@@ -115,13 +106,27 @@ public class DestinationReader implements Runnable {
 		disconnect();
 	}
 	
+	private void commit() {
+		if (this.mqQueueManager != null) {
+			try {
+				this.mqQueueManager.commit();
+			} catch (MQException e) {
+				if (log.isErrorLevelEnabled()) {
+					log.logErrorMessage("Unable to execute commit on queuemanager.", e);
+				}
+			}
+		}
+		counter = 0;
+		this.lastCommitTime = System.currentTimeMillis();		
+	}
+	
 	private void connect() {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Connecting to queuemanager");
 		}
 		try {
-			this.mqQueueManager = new MQQueueManager(this.queueManager.getQueueManagerName());
-			this.mqQueue = mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
+			this.mqQueueManager = new MQQueueManager(this.queueManager.getName());
+			this.mqQueue = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Connected to queuemanager");
 			}
@@ -145,7 +150,7 @@ public class DestinationReader implements Runnable {
 		}
 		if (this.mqQueueManager != null) {
 			try {
-				counter.set(0);
+				counter = 0;
 				this.lastCommitTime = System.currentTimeMillis();
 				this.mqQueueManager.commit();
 			} catch (MQException e1) {

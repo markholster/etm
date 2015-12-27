@@ -4,46 +4,46 @@ import java.util.List;
 
 public class QueueManager {
 
-	private String queueManagerName;
-	private String queueManagerHost;
-	private int queueManagerPort;
-	private String queueManagerChannel;
+	private String name = "QM1";
+	private String host = "127.0.0.1";
+	private int port = 1414;
+	private String channel;
 	
 	private List<Destination> destinations;
 	
-	public String getQueueManagerName() {
-		return this.queueManagerName;
+	public String getName() {
+		return this.name;
 	}
 	
-	public void setQueueManagerName(String queueManagerName) {
-		this.queueManagerName = queueManagerName;
+	public void setName(String name) {
+		this.name = name;
 	}
 	
-	public String getQueueManagerHost() {
-		return this.queueManagerHost;
+	public String getHost() {
+		return this.host;
 	}
 	
-	public void setQueueManagerHost(String queueManagerHost) {
-		this.queueManagerHost = queueManagerHost;
+	public void setHost(String host) {
+		this.host = host;
 	}
 	
-	public int getQueueManagerPort() {
-		return this.queueManagerPort;
+	public int getPort() {
+		return this.port;
 	}
 	
-	public void setQueueManagerPort(int queueManagerPort) {
-		if (queueManagerPort < 1 || queueManagerPort > 65535) {
-			throw new IllegalArgumentException(queueManagerPort + " is an invalid port number");
+	public void setPort(int port) {
+		if (port < 1 || port > 65535) {
+			throw new IllegalArgumentException(port + " is an invalid port number");
 		}
-		this.queueManagerPort = queueManagerPort;
+		this.port = port;
 	}
 	
-	public String getQueueManagerChannel() {
-		return this.queueManagerChannel;
+	public String getChannel() {
+		return this.channel;
 	}
 	
-	public void setQueueManagerChannel(String queueManagerChannel) {
-		this.queueManagerChannel = queueManagerChannel;
+	public void setChannel(String channel) {
+		this.channel = channel;
 	}
 	
 	public List<Destination> getDestinations() {
