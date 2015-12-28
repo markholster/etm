@@ -10,16 +10,21 @@ queueManager:
    destinations: 
    - !destination
       name: AA001730.REQ
-      nrOfListeners: 5
+      nrOfListeners: 1
+      messageTypes: clone
    - !destination
       name: AA003696.REQ
-      nrOfListeners: 5
+      nrOfListeners: 1
+      messageTypes: clone
    - !destination
       name: AA003711.REQ
-      nrOfListeners: 5
+      nrOfListeners: 1
+      messageTypes: clone
    - !destination
       name: AA004579.REQ
-      nrOfListeners: 5
+      nrOfListeners: 1
+      messageTypes: clone
    - !destination
       name: AA006610.REQ
-      nrOfListeners: 5
+      nrOfListeners: 1
+      messageTypes: clone

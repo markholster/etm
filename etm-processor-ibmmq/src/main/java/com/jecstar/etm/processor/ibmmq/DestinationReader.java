@@ -13,6 +13,9 @@ import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
+import com.jecstar.etm.processor.ibmmq.handlers.ClonedMessageHandler;
+import com.jecstar.etm.processor.ibmmq.handlers.IIBEventHandler;
+import com.jecstar.etm.processor.ibmmq.handlers.XmlTelemetryEventHandler;
 import com.jecstar.etm.processor.ibmmq.startup.AutoManagedTelemetryEventProcessor;
 
 public class DestinationReader implements Runnable {
@@ -34,10 +37,18 @@ public class DestinationReader implements Runnable {
 	
 	private int counter = 0;
 	
+	// Handlers
+	private final XmlTelemetryEventHandler etmEventHandler;
+	private final IIBEventHandler iibEventHandler;
+	private final ClonedMessageHandler clonedMessageHandler;
+	
 	public DestinationReader(final AutoManagedTelemetryEventProcessor processor, final QueueManager queueManager, final Destination destination) {
 		this.processor = processor;
 		this.queueManager = queueManager;
 		this.destination = destination;
+		this.etmEventHandler = new XmlTelemetryEventHandler();
+		this.iibEventHandler = new IIBEventHandler();
+		this.clonedMessageHandler = new ClonedMessageHandler();
 	}
 	@Override
 	public void run() {
@@ -50,9 +61,29 @@ public class DestinationReader implements Runnable {
 			try {
 				MQMessage message = new MQMessage();
 				this.mqQueue.get(message, getOptions);
+				this.telemetryEvent.initialize();
 				byte[] byteContent = new byte[message.getMessageLength()];
 				message.readFully(byteContent);
-				// TODO message handling.
+				this.telemetryEvent.initialize();
+				if ("etmevent".equalsIgnoreCase(destination.getMessageTypes()) && this.etmEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
+					this.processor.processTelemetryEvent(this.telemetryEvent);
+				} else if ("ïibevent".equalsIgnoreCase(destination.getMessageTypes()) && this.iibEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
+					this.processor.processTelemetryEvent(this.telemetryEvent);
+				} else if ("clone".equalsIgnoreCase(destination.getMessageTypes()) && this.clonedMessageHandler.handleMessage(this.telemetryEvent, byteContent)) {
+					this.clonedMessageHandler.handleHeader(this.telemetryEvent, message);
+					this.processor.processTelemetryEvent(this.telemetryEvent);
+				} else {
+					if(this.etmEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
+						this.processor.processTelemetryEvent(this.telemetryEvent);
+					} else if (this.iibEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
+						this.processor.processTelemetryEvent(this.telemetryEvent);
+					} else {
+						if (this.clonedMessageHandler.handleMessage(this.telemetryEvent, byteContent)) {
+							this.clonedMessageHandler.handleHeader(this.telemetryEvent, message);
+							this.processor.processTelemetryEvent(this.telemetryEvent);
+						}						
+					}
+				}
 				message.clearMessage();
 				if (++counter >= this.destination.getCommitSize()) {
 					commit();

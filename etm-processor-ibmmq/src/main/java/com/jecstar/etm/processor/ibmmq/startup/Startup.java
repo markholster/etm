@@ -38,7 +38,8 @@ public class Startup {
 	private static AutoManagedTelemetryEventProcessor processor;
 
 	private static ExecutorService executorService;
-
+	
+	// TODO document flushing!
 	public static void main(String[] args) {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -111,7 +112,6 @@ public class Startup {
 		MQEnvironment.channel = configuration.getQueueManager().getChannel();
 		
 		executorService = Executors.newFixedThreadPool(nrOfListeners);
-		System.out.println(new Date());
 		for (Destination destination : configuration.getQueueManager().getDestinations()) {
 			for (int i=0; i < destination.getNrOfListeners(); i++) {
 				executorService.submit(new DestinationReader(processor, configuration.getQueueManager(), destination));
