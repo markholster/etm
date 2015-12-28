@@ -10,7 +10,7 @@ public class Destination {
 	private String messageTypes = "auto"; // clone, iibevent, etmevent  
 	
 	private int commitSize = 500;
-	private int commitTime = 10000;
+	private int commitInterval = 10000;
 	private int destinationGetOptions = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_CONVERT + CMQC.MQGMO_SYNCPOINT;
 	private int destinationOpenOptions = CMQC.MQOO_INQUIRE + CMQC.MQOO_FAIL_IF_QUIESCING + CMQC.MQOO_INPUT_SHARED;
 	
@@ -73,15 +73,15 @@ public class Destination {
 		return this.destinationGetOptions;
 	}
 	
-	public int getCommitTime() {
-		return this.commitTime;
+	public int getCommitInterval() {
+		return this.commitInterval;
 	}
 	
-	public void setCommitTime(int commitTime) {
-		if (commitTime < 0) {
-			throw new IllegalArgumentException(commitTime + " is an invalid commit time");
+	public void setCommitInterval(int commitInterval) {
+		if (commitInterval < 0) {
+			throw new IllegalArgumentException(commitInterval + " is an invalid commit interval");
 		}
-		this.commitTime = commitTime;
+		this.commitInterval = commitInterval;
 	}
 	
 	public void setDestinationGetOptions(int destinationGetOptions) {

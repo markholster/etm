@@ -91,7 +91,7 @@ public class DestinationReader implements Runnable {
 			} catch (MQException e) {
 				if (e.completionCode == 2 && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
 					// No message available, retry
-					if (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitTime()) {
+					if (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitInterval()) {
 						commit();
 					}
 					continue;

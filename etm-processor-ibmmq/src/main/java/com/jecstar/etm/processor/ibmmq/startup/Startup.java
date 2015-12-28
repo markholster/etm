@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +14,7 @@ import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
+import com.codahale.metrics.Slf4jReporter;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.ibm.mq.MQEnvironment;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -36,8 +36,10 @@ public class Startup {
 	private static EtmConfiguration etmConfiguration;
 	private static PersistenceEnvironment persistenceEnvironment;
 	private static AutoManagedTelemetryEventProcessor processor;
+	private static Slf4jReporter metricReporter;
 
 	private static ExecutorService executorService;
+
 	
 	// TODO document flushing!
 	public static void main(String[] args) {
@@ -79,6 +81,13 @@ public class Startup {
 					}
  					try { node.close(); } catch (Throwable t) {}
  				}
+				if (metricReporter != null) {
+					if (log.isInfoLevelEnabled()) {
+						log.logInfoMessage("Shutting down metric reporter...");
+					}
+ 					try { metricReporter.stop(); } catch (Throwable t) {}					
+				}
+
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Shutdown complete.");
 				}
@@ -117,6 +126,11 @@ public class Startup {
 				executorService.submit(new DestinationReader(processor, configuration.getQueueManager(), destination));
 			}
 		}
+		metricReporter = Slf4jReporter.forRegistry(processor.getMetricRegistry())
+	       .convertRatesTo(TimeUnit.SECONDS)
+	       .convertDurationsTo(TimeUnit.MILLISECONDS)
+	       .build();
+		metricReporter.start(30, TimeUnit.SECONDS);
 	}
 	
 	private Configuration loadConfiguration() {

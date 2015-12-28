@@ -11,15 +11,20 @@ import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 public class AutoManagedTelemetryEventProcessor implements ConfigurationChangeListener {
 	
+	private static final LogWrapper log = LogFactory.getLogger(AutoManagedTelemetryEventProcessor.class);
+	
 	private final TelemetryEventProcessor processor;
 	private final EtmConfiguration etmConfiguration;
 	private final PersistenceEnvironment persistenceEnvironment;
 	private final Client elasticClient;
+	private final  MetricRegistry metricRegistry;
 	
 	public AutoManagedTelemetryEventProcessor(final EtmConfiguration etmConfiguration, final PersistenceEnvironment persistenceEnvironment, final Client elasticClient) {
 		this.etmConfiguration = etmConfiguration;
@@ -27,10 +32,11 @@ public class AutoManagedTelemetryEventProcessor implements ConfigurationChangeLi
 		this.persistenceEnvironment = persistenceEnvironment;
 		this.elasticClient = elasticClient;
 		this.processor = new TelemetryEventProcessor();
+		this.metricRegistry = new MetricRegistry();
 	}
 	
 	public void start() {
-		this.processor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.elasticClient, this.etmConfiguration, new MetricRegistry());
+		this.processor.start(Executors.newCachedThreadPool(new EtmThreadFactory()), this.persistenceEnvironment, this.elasticClient, this.etmConfiguration, this.metricRegistry);
 	}
 	
 	public void stop() {
@@ -40,19 +46,23 @@ public class AutoManagedTelemetryEventProcessor implements ConfigurationChangeLi
 	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {
 		this.processor.processTelemetryEvent(telemetryEvent);
 	}
+	
+	public MetricRegistry getMetricRegistry() {
+		return this.metricRegistry;
+	}
 
 	@Override
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
 				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT, EtmConfiguration.CONFIG_KEY_EVENT_BUFFER_SIZE)) {
 			if (processor != null) {
-//			if (log.isInfoLevelEnabled()) {
-//				log.logInfoMessage("Detected a change in the configuration that needs to restart ETM processor.");
-//			}
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Detected a change in the configuration that needs to restart ETM processor.");
+				}
 				processor.hotRestart();
-//			if (log.isInfoLevelEnabled()) {
-//				log.logInfoMessage("Restarted ETM processor.");
-//			}
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Restarted ETM processor.");
+				}
 			}
 		}
 	}
