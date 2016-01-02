@@ -146,7 +146,6 @@ public class Startup {
 			}
 			return new Configuration();
 		} catch (IOException e) {
-			e.printStackTrace();
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to load configuration", e);
 			}

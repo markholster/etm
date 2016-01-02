@@ -60,6 +60,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.jdk.level>1.8</project.jdk.level>
 		<version.elasticsearch>2.0.0</version.elasticsearch>
+		<version.slf4j>1.7.13</version.slf4j>
 	</properties>
 	<repositories>
 		<repository>
@@ -178,8 +179,13 @@
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
-				<version>1.7.9</version>
+				<version>${version.slf4j}</version>
 			</dependency>
+			<dependency> 
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+				<version>${version.slf4j}</version>
+			</dependency>			
 		</dependencies>
 	</dependencyManagement>
 	<build>
@@ -292,6 +298,11 @@
 					<artifactId>maven-assembly-plugin</artifactId>
 					<version>2.5.3</version>
 				</plugin>
+				<plugin>
+				  <groupId>org.codehaus.mojo</groupId>
+				  <artifactId>appassembler-maven-plugin</artifactId>
+				  <version>1.10</version>
+				</plugin>				
 				<plugin>
 	                <groupId>org.codehaus.mojo</groupId>
                     <artifactId>jaxb2-maven-plugin</artifactId>
