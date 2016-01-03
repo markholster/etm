@@ -6,7 +6,7 @@ public class Destination {
 
 	private String name;
 	private String type = "queue";
-	private int nrOfListeners = 5;
+	private int nrOfListeners = 1;
 	private String messageTypes = "auto"; // clone, iibevent, etmevent  
 	
 	private int commitSize = 500;

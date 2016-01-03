@@ -61,75 +61,32 @@
                     <execution> 
                         <id>appassembler</id>
                         <goals>
-                            <goal>generate-daemons</goal>
+                            <goal>assemble</goal>
                         </goals> 
                         <configuration>
+							<binFileExtensions>
+                                <unix>.sh</unix>
+							</binFileExtensions>
+							<copyConfigurationDirectory>true</copyConfigurationDirectory>                        
 							<repositoryLayout>flat</repositoryLayout>
-							<includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
+							<repositoryName>lib</repositoryName>
+							<includeConfigurationDirectoryInClasspath>false</includeConfigurationDirectoryInClasspath>
 							<logsDirectory>logs</logsDirectory>
 							<target>${project.build.directory}</target>
-							<unixScriptTemplate>${basedir}/src/main/scripts/etm-processor</unixScriptTemplate>
+							<unixScriptTemplate>${basedir}/src/main/scripts/etm-processor-ibmmq.sh</unixScriptTemplate>
+                            <windowsScriptTemplate>${basedir}/src/main/scripts/etm-processor-ibmmq.bat</windowsScriptTemplate> 
 							<useWildcardClassPath>true</useWildcardClassPath>
-<!--                        <windowsScriptTemplate>TODO</windowsScriptTemplate> 
- -->							
-							<daemons>
-							  <daemon>
-							    <id>etm-processor-ibmmq</id>
-							    <mainClass>com.jecstar.etm.processor.ibmmq.startup.Startup</mainClass>
-<!-- 							    
-							    <commandLineArguments>
-							      <commandLineArgument>start</commandLineArgument>
-							    </commandLineArguments>
- -->							    
-							    <platforms>
-							      <platform>jsw</platform>
-							    </platforms>
-							    <generatorConfigurations>
-							      <generatorConfiguration>
-							        <generator>jsw</generator>
-							        <includes>
-							          <include>linux-x86-32</include>
-							          <include>linux-x86-64</include>
-                                      <include>windows-x86-32</include>
-                                      <include>windows-x86-64</include>
-                                      <include>macosx-universal-32</include>
-							        </includes>
-							        <configuration>
-<!-- 							        
-							          <property>
-							            <name>configuration.directory.in.classpath.first</name>
-							            <value>etc</value>
-							          </property>
- -->							          
-							          <property>
-							            <name>set.default.REPO_DIR</name>
-							            <value>lib</value>
-							          </property>
-							          <property>
-							            <name>wrapper.logfile</name>
-							            <value>logs/wrapper.log</value>
-							          </property>
-<!-- 							          
-							          <property>
-							            <name>run.as.user.envvar</name>
-							            <value>johndoe</value>
-							          </property>
- -->							          
-							        </configuration>
-							      </generatorConfiguration>
-							    </generatorConfigurations>
-							    <jvmSettings>
-							      <initialMemorySize>256M</initialMemorySize>
-							      <maxMemorySize>1024M</maxMemorySize>
-							      <systemProperties>
-							        <systemProperty>log4j.configuration=file:./etc/log4j.properties</systemProperty>
-							      </systemProperties>
-							      <extraArguments>
-							        <extraArgument>-server</extraArgument>
-							      </extraArguments>
-							    </jvmSettings>
-							  </daemon>
-							</daemons>
+							<programs>
+								<program>
+									<id>etm-processor-ibmmq</id>
+									<mainClass>com.jecstar.etm.processor.ibmmq.startup.Main</mainClass>
+									<jvmSettings>
+										<initialMemorySize>256m</initialMemorySize>
+										<maxMemorySize>1024m</maxMemorySize>
+										<maxStackSize>256m</maxStackSize>
+									</jvmSettings>									
+								</program>
+							</programs>
                         </configuration>
 		            </execution>
 		        </executions>                      

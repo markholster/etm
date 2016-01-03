@@ -31,61 +31,60 @@ public class Startup {
 	
 	private static final LogWrapper log = LogFactory.getLogger(Startup.class);
 	
-	private static Node node;
-	private static Client elasticClient;
-	private static EtmConfiguration etmConfiguration;
-	private static PersistenceEnvironment persistenceEnvironment;
-	private static AutoManagedTelemetryEventProcessor processor;
-	private static Slf4jReporter metricReporter;
+	private Node node;
+	private Client elasticClient;
+	private EtmConfiguration etmConfiguration;
+	private PersistenceEnvironment persistenceEnvironment;
+	private AutoManagedTelemetryEventProcessor processor;
+	private Slf4jReporter metricReporter;
 
-	private static ExecutorService executorService;
+	private ExecutorService executorService;
 
-	
 	// TODO document flushing!
-	public static void main(String[] args) {
+	public void launch(String baseDir, String[] args) {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				if (executorService != null) {
+				if (Startup.this.executorService != null) {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Shutting down listeners...");
 					}
-					executorService.shutdown();
+					Startup.this.executorService.shutdown();
 					try {
-						executorService.awaitTermination(1, TimeUnit.MINUTES);
+						Startup.this.executorService.awaitTermination(1, TimeUnit.MINUTES);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 					}
 				}
-				if (processor != null) {
+				if (Startup.this.processor != null) {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Shutting down event processor...");
 					}
-					try { processor.stop(); } catch (Throwable t) {}
+					try { Startup.this.processor.stop(); } catch (Throwable t) {}
 				}
-				if (persistenceEnvironment != null) {
+				if (Startup.this.persistenceEnvironment != null) {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Closing persistence environment...");
 					}
-					try { persistenceEnvironment.close(); } catch (Throwable t) {}
+					try { Startup.this.persistenceEnvironment.close(); } catch (Throwable t) {}
 				}
- 				if (elasticClient != null) {
+ 				if (Startup.this.elasticClient != null) {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Closing cluster client...");
 					}
- 					try { elasticClient.close(); } catch (Throwable t) {}
+ 					try { Startup.this.elasticClient.close(); } catch (Throwable t) {}
 				}
- 				if (node != null) {
+ 				if (Startup.this.node != null) {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Closing cluster node...");
 					}
- 					try { node.close(); } catch (Throwable t) {}
+ 					try { Startup.this.node.close(); } catch (Throwable t) {}
  				}
-				if (metricReporter != null) {
+				if (Startup.this.metricReporter != null) {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Shutting down metric reporter...");
 					}
- 					try { metricReporter.stop(); } catch (Throwable t) {}					
+ 					try { Startup.this.metricReporter.stop(); } catch (Throwable t) {}					
 				}
 
 				if (log.isInfoLevelEnabled()) {
@@ -93,8 +92,7 @@ public class Startup {
 				}
 			}
 		});
-		Startup startup = new Startup();
-		Configuration configuration = startup.loadConfiguration();
+		Configuration configuration = loadConfiguration(baseDir, args);
 		if (configuration == null) {
 			return;
 		}
@@ -105,36 +103,57 @@ public class Startup {
 			}
 			return;
 		}
-		node = startup.createElasticNode(configuration);
-		if (node == null) {
+		this.node = createElasticNode(configuration);
+		if (this.node == null) {
 			return;
 		}
-		elasticClient = node.client();
-		etmConfiguration = new ElasticBackedEtmConfiguration(configuration.getCalculatedNodeName(), "processor", elasticClient);
-		persistenceEnvironment = new PersistenceEnvironmentElasticImpl(etmConfiguration, elasticClient);
-		persistenceEnvironment.createEnvironment();
-		processor = new AutoManagedTelemetryEventProcessor(etmConfiguration, persistenceEnvironment, elasticClient);
-		processor.start();
+		this.elasticClient = this.node.client();
+		this.etmConfiguration = new ElasticBackedEtmConfiguration(configuration.getCalculatedNodeName(), "processor", this.elasticClient);
+		this.persistenceEnvironment = new PersistenceEnvironmentElasticImpl(this.etmConfiguration, this.elasticClient);
+		this.persistenceEnvironment.createEnvironment();
+		this.processor = new AutoManagedTelemetryEventProcessor(this.etmConfiguration, this.persistenceEnvironment, this.elasticClient);
+		this.processor.start();
 		
 		MQEnvironment.hostname = configuration.getQueueManager().getHost();
 		MQEnvironment.port = configuration.getQueueManager().getPort();
 		MQEnvironment.channel = configuration.getQueueManager().getChannel();
 		
-		executorService = Executors.newFixedThreadPool(nrOfListeners);
+		this.executorService = Executors.newFixedThreadPool(nrOfListeners);
 		for (Destination destination : configuration.getQueueManager().getDestinations()) {
 			for (int i=0; i < destination.getNrOfListeners(); i++) {
-				executorService.submit(new DestinationReader(processor, configuration.getQueueManager(), destination));
+				this.executorService.submit(new DestinationReader(this.processor, configuration.getQueueManager(), destination));
 			}
 		}
-		metricReporter = Slf4jReporter.forRegistry(processor.getMetricRegistry())
+		this.metricReporter = Slf4jReporter.forRegistry(this.processor.getMetricRegistry())
 	       .convertRatesTo(TimeUnit.SECONDS)
 	       .convertDurationsTo(TimeUnit.MILLISECONDS)
 	       .build();
-		metricReporter.start(30, TimeUnit.SECONDS);
+		this.metricReporter.start(30, TimeUnit.SECONDS);
+		if (log.isInfoLevelEnabled()) {
+			log.logInfoMessage("ETM Processor started.");
+		}
 	}
 	
-	private Configuration loadConfiguration() {
-		File configFile = new File("config", "etm.yml");
+	private Configuration loadConfiguration(String baseDir, String[] args) {
+		File configFile = null;
+		if (args != null && args.length > 0) {
+			for (String argument : args) {
+				if (argument.startsWith("--config-file=")) {
+					configFile = new File(argument.substring(14));
+					break;
+				}
+			}
+		}
+		if (configFile == null) {
+			if (baseDir != null) {
+				configFile = new File(baseDir + File.separator + "etc", "etm.yml");
+			} else {
+				configFile = new File("etc", "etm.yml");
+			}
+		}
+		if (log.isInfoLevelEnabled()) {
+			log.logInfoMessage("Reading configuration from '" + configFile.getPath() + "'.");
+		}
 		try (FileReader reader = new FileReader(configFile)) {
 			YamlReader ymlReader = new YamlReader(reader);
 			ymlReader.getConfig().setClassTag("configuration", Configuration.class);
