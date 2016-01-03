@@ -24,7 +24,7 @@ public class AutoManagedTelemetryEventProcessor implements ConfigurationChangeLi
 	private final EtmConfiguration etmConfiguration;
 	private final PersistenceEnvironment persistenceEnvironment;
 	private final Client elasticClient;
-	private final  MetricRegistry metricRegistry;
+	private final MetricRegistry metricRegistry;
 	
 	public AutoManagedTelemetryEventProcessor(final EtmConfiguration etmConfiguration, final PersistenceEnvironment persistenceEnvironment, final Client elasticClient) {
 		this.etmConfiguration = etmConfiguration;
@@ -45,6 +45,10 @@ public class AutoManagedTelemetryEventProcessor implements ConfigurationChangeLi
 	
 	public void processTelemetryEvent(final TelemetryEvent telemetryEvent) {
 		this.processor.processTelemetryEvent(telemetryEvent);
+	}
+	
+	public void requestDocumentsFlush() {
+		this.processor.requestDocumentsFlush();
 	}
 	
 	public MetricRegistry getMetricRegistry() {

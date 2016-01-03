@@ -7,6 +7,7 @@ public class Configuration {
 	private String clusterName = "Enterprise Telemetry Monitor";
 	private String nodeName;
 	private String masterAddresses;
+	private int flushInterval = 30000;
 	
 	private QueueManager queueManager;
 	
@@ -32,6 +33,14 @@ public class Configuration {
 	
 	public void setMasterAddresses(String masterAddresses) {
 		this.masterAddresses = masterAddresses;
+	}
+	
+	public int getFlushInterval() {
+		return this.flushInterval;
+	}
+	
+	public void setFlushInterval(int flushInterval) {
+		this.flushInterval = flushInterval;
 	}
 	
 	public QueueManager getQueueManager() {

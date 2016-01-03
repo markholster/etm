@@ -34,6 +34,10 @@
             <outputDirectory>resources/elasticsearch/scripts</outputDirectory>
             <directory>../etm-processor/src/main/resources/config/scripts</directory>
         </fileSet>
+        <fileSet>
+            <outputDirectory>components/etm-processor-ibmmq</outputDirectory>
+            <directory>../etm-processor-ibmmq/target/appassembler/</directory>
+        </fileSet>
 	</fileSets>
 	<files>
         <file>

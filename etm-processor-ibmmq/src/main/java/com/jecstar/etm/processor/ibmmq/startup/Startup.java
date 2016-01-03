@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.elasticsearch.client.Client;
@@ -39,12 +40,23 @@ public class Startup {
 	private Slf4jReporter metricReporter;
 
 	private ExecutorService executorService;
+	private ScheduledExecutorService scheduledExecutorService;
 
-	// TODO document flushing!
 	public void launch(String baseDir, String[] args) {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
+				if (Startup.this.scheduledExecutorService != null) {
+					if (log.isInfoLevelEnabled()) {
+						log.logInfoMessage("Shutting scheduler executors...");
+					}
+					Startup.this.scheduledExecutorService.shutdown();
+					try {
+						Startup.this.scheduledExecutorService.awaitTermination(1, TimeUnit.MINUTES);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+				}				
 				if (Startup.this.executorService != null) {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Shutting down listeners...");
@@ -124,6 +136,15 @@ public class Startup {
 				this.executorService.submit(new DestinationReader(this.processor, configuration.getQueueManager(), destination));
 			}
 		}
+		if (configuration.getFlushInterval() > 0) {
+			this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
+			this.scheduledExecutorService.scheduleAtFixedRate(
+					new FlushRequestor(this.processor), 
+					configuration.getFlushInterval(), 
+					configuration.getFlushInterval(), 
+					TimeUnit.MILLISECONDS);
+		}
+		
 		this.metricReporter = Slf4jReporter.forRegistry(this.processor.getMetricRegistry())
 	       .convertRatesTo(TimeUnit.SECONDS)
 	       .convertDurationsTo(TimeUnit.MILLISECONDS)
