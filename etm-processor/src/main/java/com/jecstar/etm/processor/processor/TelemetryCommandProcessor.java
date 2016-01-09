@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
@@ -60,6 +61,11 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.offerTimer = this.metricRegistry.timer("event-processor-offering");
 		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
+		this.metricRegistry.register("ringbuffer-capacity", new Gauge<Long>() {
+			@Override
+			public Long getValue() {
+				return TelemetryCommandProcessor.this.ringBuffer.remainingCapacity();
+			}});
 	}
 	
 	public void hotRestart() {

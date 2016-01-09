@@ -39,6 +39,7 @@ public class Startup {
 	private static Client elasticClient;
 
 	public static void main(String[] args) {
+		addShutdownHook();
 		try {
 			final Configuration configuration = loadConfiguration();
 			if (configuration.isProcessorNecessary()) {
@@ -48,39 +49,6 @@ public class Startup {
 				 httpServer = new HttpServer(configuration, processor);
 				 httpServer.start();
 			}
-			Runtime.getRuntime().addShutdownHook(new Thread() {
-				@Override
-				public void run() {
-					if (httpServer != null) {
-						try {
-							httpServer.stop();
-						} catch (Throwable t) {
-							
-						}
-					}
-					if (processor != null) {
-						try {
-							processor.stopAll();
-						} catch (Throwable t) {
-							
-						}
-					}
-					if (elasticClient != null) {
-						try {
-							elasticClient.close();
-						} catch (Throwable t) {
-							
-						}
-					}
-					if (node != null) {
-						try {
-							node.close();
-						} catch (Throwable t) {
-							
-						}
-					}
-				}
-			});
 			if (log.isInfoLevelEnabled()) {
 				log.logInfoMessage("Enterprise Telemetry Monitor started.");
 			}
@@ -98,6 +66,26 @@ public class Startup {
 			}
 		} finally {
 		}
+	}
+
+	private static void addShutdownHook() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				if (httpServer != null) {
+					try { httpServer.stop(); } catch (Throwable t) {}
+				}
+				if (processor != null) {
+					try { processor.stopAll(); } catch (Throwable t) {}
+				}
+				if (elasticClient != null) {
+					try { elasticClient.close(); } catch (Throwable t) {}
+				}
+				if (node != null) {
+					try { node.close(); } catch (Throwable t) {}
+				}
+			}
+		});
 	}
 
 	private static void initializeProcessor(Configuration configuration) {
