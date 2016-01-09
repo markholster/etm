@@ -27,6 +27,7 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
+import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 
@@ -58,14 +59,14 @@ public class HttpServer {
 		this.shutdownHandler = Handlers.gracefulShutdown(root);
 		final ServletContainer container = ServletContainer.Factory.newInstance();
 		Builder builder = Undertow.builder();
-		if (this.configuration.getHttpPort() > 0) {
-			builder.addHttpListener(this.configuration.getHttpPort(), this.configuration.bindingAddress);
+		if (this.configuration.binding.getHttpPort() > 0) {
+			builder.addHttpListener(this.configuration.binding.getHttpPort(), this.configuration.binding.bindingAddress);
 			if (log.isInfoLevelEnabled()) {
-				log.logInfoMessage("Binding http listener to '" + this.configuration.bindingAddress + ":" + this.configuration.getHttpPort() + "'");
+				log.logInfoMessage("Binding http listener to '" + this.configuration.binding.bindingAddress + ":" + this.configuration.binding.getHttpPort() + "'");
 			}
 		}
-		if (this.configuration.getHttpsPort() > 0) {
-			if (this.configuration.sslKeystoreLocation == null) {
+		if (this.configuration.binding.getHttpsPort() > 0) {
+			if (this.configuration.binding.sslKeystoreLocation == null) {
 				if (log.isWarningLevelEnabled()) {
 					log.logWarningMessage("SSL keystore not provided. Https listener not started.");
 				}
@@ -73,9 +74,9 @@ public class HttpServer {
 				SSLContext sslContext;
 				try {
 					sslContext = createSslContext(this.configuration);
-					builder.addHttpsListener(this.configuration.getHttpsPort(), this.configuration.bindingAddress, sslContext);
+					builder.addHttpsListener(this.configuration.binding.getHttpsPort(), this.configuration.binding.bindingAddress, sslContext);
 					if (log.isInfoLevelEnabled()) {
-						log.logInfoMessage("Binding https listener to '" + this.configuration.bindingAddress + ":" + this.configuration.getHttpsPort() + "'");
+						log.logInfoMessage("Binding https listener to '" + this.configuration.binding.bindingAddress + ":" + this.configuration.binding.getHttpsPort() + "'");
 					}
 				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
 					if (log.isErrorLevelEnabled()) {
@@ -110,14 +111,14 @@ public class HttpServer {
 	}
 
 	private SSLContext createSslContext(Configuration configuration) throws KeyManagementException, NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException, UnrecoverableKeyException {
-		KeyStore keyStore = loadKeyStore(configuration.sslKeystoreLocation, configuration.sslKeystoreType, configuration.sslKeystorePassword);
-		KeyStore trustStore = loadKeyStore(configuration.sslTruststoreLocation, configuration.sslTruststoreType, configuration.sslTruststorePassword);
-		KeyManager[] keyManagers = buildKeyManagers(keyStore, configuration.sslKeystorePassword);
-		TrustManager[] trustManagers = buildTrustManagers(configuration.sslTruststoreLocation == null ? null : trustStore, configuration.sslTruststorePassword);
+		KeyStore keyStore = loadKeyStore(configuration.binding.sslKeystoreLocation, configuration.binding.sslKeystoreType, configuration.binding.sslKeystorePassword);
+		KeyStore trustStore = loadKeyStore(configuration.binding.sslTruststoreLocation, configuration.binding.sslTruststoreType, configuration.binding.sslTruststorePassword);
+		KeyManager[] keyManagers = buildKeyManagers(keyStore, configuration.binding.sslKeystorePassword);
+		TrustManager[] trustManagers = buildTrustManagers(configuration.binding.sslTruststoreLocation == null ? null : trustStore, configuration.binding.sslTruststorePassword);
 		if (keyManagers == null || trustManagers == null) {
 			return null;
 		}
-		SSLContext sslContext = SSLContext.getInstance(configuration.sslProtocol);
+		SSLContext sslContext = SSLContext.getInstance(configuration.binding.sslProtocol);
 		sslContext.init(keyManagers, trustManagers, null);
 		return sslContext;
 	}

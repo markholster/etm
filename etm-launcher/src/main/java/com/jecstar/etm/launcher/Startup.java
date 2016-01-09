@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -22,8 +21,7 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.launcher.converter.ConfigurationConverter;
-import com.jecstar.etm.launcher.converter.yaml.ConfigurationConverterYamlImpl;
+import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
@@ -34,8 +32,6 @@ public class Startup {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(Startup.class);
-
-	private static ConfigurationConverter<Map<String, Object>> configurationConverter = new ConfigurationConverterYamlImpl();
 
 	private static TelemetryCommandProcessor processor;
 	private static HttpServer httpServer;
@@ -118,23 +114,26 @@ public class Startup {
 		if (elasticClient != null) {
 			return;
 		}
-		if (configuration.connectAsElasticsearchNode) {
+		if (configuration.elasticSearch.connectAsNode) {
 			if (node == null) {
 				Builder settingsBuilder = Settings.settingsBuilder()
 					.put("cluster.name", configuration.clusterName)
 					.put("node.name", configuration.instanceName)
-					.put("path.home", configuration.nodeHomePath)
-					.put("path.data", configuration.nodeDataPath)
-					.put("path.logs", configuration.nodeLogPath)
+					.put("path.home", configuration.elasticSearch.nodeHomePath)
+					.put("path.data", configuration.elasticSearch.nodeDataPath)
+					.put("path.logs", configuration.elasticSearch.nodeLogPath)
 					.put("http.enabled", false);
-				if (!configuration.nodeMulticast) {
+				if (configuration.elasticSearch.transportPort > 0) {
+					settingsBuilder.put("transport.tcp.port", configuration.elasticSearch.transportPort);
+				}
+				if (!configuration.elasticSearch.nodeMulticast) {
 					settingsBuilder.put("discovery.zen.ping.multicast.enabled", false);
-					settingsBuilder.put("discovery.zen.ping.unicast.hosts", configuration.connectAddresses);
+					settingsBuilder.put("discovery.zen.ping.unicast.hosts", configuration.elasticSearch.connectAddresses);
 				}
 				node = new NodeBuilder()
 						.settings(settingsBuilder)
-						.client(!configuration.nodeData)
-						.data(configuration.nodeData)
+						.client(!configuration.elasticSearch.nodeData)
+						.data(configuration.elasticSearch.nodeData)
 						.clusterName(configuration.clusterName)
 						.node();
 			}
@@ -143,7 +142,7 @@ public class Startup {
 			TransportClient transportClient = TransportClient.builder().settings(Settings.settingsBuilder()
 					.put("cluster.name", configuration.clusterName)
 					.put("client.transport.sniff", true)).build();
-			String[] hosts = configuration.connectAddresses.split(",");
+			String[] hosts = configuration.elasticSearch.connectAddresses.split(",");
 			for (String host : hosts) {
 				int ix = host.lastIndexOf(":");
 				if (ix != -1) {
@@ -162,20 +161,18 @@ public class Startup {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private static Configuration loadConfiguration() throws FileNotFoundException, YamlException {
 		File configDir = new File("config");
 		if (!configDir.exists()) {
 			Configuration configuration = new Configuration();
 			return configuration;
 		}
-		File configFile = new File(configDir, "etm.yaml");
+		File configFile = new File(configDir, "etm.yml");
 		if (!configFile.exists() || !configFile.isFile() || !configFile.canRead()) {
 			Configuration configuration = new Configuration();
 			return configuration;
 		}
 		YamlReader reader = new YamlReader(new FileReader(configFile));
-		Map<String, Object> valueMap = (Map<String, Object>) reader.read();
-		return configurationConverter.convert(valueMap);
+		return reader.read(Configuration.class);
 	}
 }
