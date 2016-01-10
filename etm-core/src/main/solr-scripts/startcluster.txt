@@ -1,2 +1,0 @@
-./solr start -c -p 8983 -z localhost:2181/etm/dev/solr -s ../node1/solr
-./solr start -c -p 7574 -z localhost:2181/etm/dev/solr -s ../node2/solr

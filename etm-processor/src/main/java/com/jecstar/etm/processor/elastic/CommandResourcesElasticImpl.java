@@ -18,9 +18,9 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.CommandResources;
-import com.jecstar.etm.processor.processor.enhancing.TelemetryEventEnhancer;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.AbstractElasticTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.HttpTelemetryEventPersister;
@@ -36,8 +36,6 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	
 	@SuppressWarnings("rawtypes")
 	private Map<CommandType, TelemetryEventPersister> persisters = new HashMap<CommandType, TelemetryEventPersister>();
-	@SuppressWarnings("rawtypes")
-	private Map<CommandType, TelemetryEventEnhancer> enhancer = new HashMap<CommandType, TelemetryEventEnhancer>();
 	
 	private BulkProcessor bulkProcessor;
 
@@ -47,6 +45,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		this.bulkProcessorMetricLogger = new BulkProcessorMetricLogger(metricRegistry);
 		this.bulkProcessor = createBulkProcessor();
 		this.etmConfiguration.addConfigurationChangeListener(this);
+		
 		this.persisters.put(CommandType.HTTP_EVENT, new HttpTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
 		this.persisters.put(CommandType.LOG_EVENT, new LogTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
 		this.persisters.put(CommandType.MESSAGING_EVENT, new MessagingTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
@@ -60,11 +59,10 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <T> T getEnhancer(CommandType commandType) {
-		return (T) enhancer.get(commandType);
+	public void loadEndpointConfig(String endpoint, EndpointConfiguration endpointConfiguration) {
+		endpointConfiguration.initialize();
 	}
-
+	
 	@Override
 	public void close() {
 		this.etmConfiguration.removeConfigurationChangeListener(this);
@@ -114,5 +112,6 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		}
 		
 	}
+
 	
 }

@@ -1,5 +1,0 @@
-create /etm development_environment
-create /etm/dev enterprise_telemetry_monitor
-create /etm/dev/solr solr_znode
-
-./zkcli.sh -zkhost localhost:2181/etm/dev/solr -cmd upconfig -confdir /home/mark/programming/git/etm/etm-core/src/main/zookeeper-conf/ -confname default

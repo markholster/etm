@@ -5,11 +5,15 @@ import java.io.Closeable;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.processor.persisting.elastic.HttpTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.LogTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.MessagingTelemetryEventPersister;
+import com.jecstar.etm.processor.processor.persisting.elastic.SqlTelemetryEventPersister;
 import com.lmax.disruptor.EventHandler;
 
 public class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeable {
@@ -18,8 +22,11 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 	private final long numberOfConsumers;
 	private final Timer timer;
 	private final CommandResources commandResources;
-	private final MessagingTelemetryEventConverterJsonImpl messagingTelemetryEventConverter = new MessagingTelemetryEventConverterJsonImpl();
+	
+	private final HttpTelemetryEventConverterJsonImpl httpTelemetryEventConverter = new HttpTelemetryEventConverterJsonImpl();
 	private final LogTelemetryEventConverterJsonImpl logTelemetryEventConverter = new LogTelemetryEventConverterJsonImpl();
+	private final MessagingTelemetryEventConverterJsonImpl messagingTelemetryEventConverter = new MessagingTelemetryEventConverterJsonImpl();
+	private final SqlTelemetryEventConverterJsonImpl sqlTelemetryEventConverter = new SqlTelemetryEventConverterJsonImpl();
 
 	public PersistingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
 		this.ordinal = ordinal;
@@ -34,15 +41,15 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 			return;
 		}
 		switch (command.commandType) {
-		case MESSAGING_EVENT:
-			final MessagingTelemetryEventPersister messagingPersister = this.commandResources.getPersister(command.commandType);
-			final Context messaginTgimerContext = this.timer.time();
+		case HTTP_EVENT:	
+			final HttpTelemetryEventPersister httpPersister = this.commandResources.getPersister(command.commandType);
+			final Context httpTimerContext = this.timer.time();
 			try {
-				messagingPersister.persist(command.messagingTelemetryEvent, this.messagingTelemetryEventConverter);
+				httpPersister.persist(command.httpTelemetryEvent, this.httpTelemetryEventConverter);
 			} finally {
-				messaginTgimerContext.stop();
+				httpTimerContext.stop();
 			}
-			break;
+			break;			
 		case LOG_EVENT:	
 			final LogTelemetryEventPersister logPersister = this.commandResources.getPersister(command.commandType);
 			final Context logTimerContext = this.timer.time();
@@ -52,6 +59,24 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 				logTimerContext.stop();
 			}
 			break;			
+		case MESSAGING_EVENT:
+			final MessagingTelemetryEventPersister messagingPersister = this.commandResources.getPersister(command.commandType);
+			final Context messagingTimerContext = this.timer.time();
+			try {
+				messagingPersister.persist(command.messagingTelemetryEvent, this.messagingTelemetryEventConverter);
+			} finally {
+				messagingTimerContext.stop();
+			}
+			break;
+		case SQL_EVENT:
+			final SqlTelemetryEventPersister sqlPersister = this.commandResources.getPersister(command.commandType);
+			final Context sqlTimerContext = this.timer.time();
+			try {
+				sqlPersister.persist(command.sqlTelemetryEvent, this.sqlTelemetryEventConverter);
+			} finally {
+				sqlTimerContext.stop();
+			}
+			break;
 		default:
 			throw new IllegalArgumentException("'" + command.commandType.name() + "' not implemented.");
 		}
