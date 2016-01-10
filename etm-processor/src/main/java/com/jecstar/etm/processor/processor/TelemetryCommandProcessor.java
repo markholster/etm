@@ -12,7 +12,6 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.SqlTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.HttpTelemetryEvent;
 import com.jecstar.etm.core.domain.HttpTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.LogTelemetryEvent;
@@ -20,9 +19,12 @@ import com.jecstar.etm.core.domain.LogTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.core.domain.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.SqlTelemetryEvent;
+import com.jecstar.etm.core.domain.SqlTelemetryEventBuilder;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.metrics.GarbageCollectorMetricSet;
+import com.jecstar.etm.processor.metrics.MemoryUsageMetricSet;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryCommandProcessor implements ConfigurationChangeListener {
@@ -31,7 +33,6 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryCommandProcessor.class);
-
 	
 	private RingBuffer<TelemetryCommand> ringBuffer;
 	private boolean started = false;
@@ -58,14 +59,16 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.etmConfiguration = etmConfiguration;
 		this.metricReporter = this.persistenceEnvironment.createMetricReporter(etmConfiguration.getNodeName(), this.metricRegistry);
 		this.metricReporter.start(1, TimeUnit.MINUTES);
-		this.offerTimer = this.metricRegistry.timer("event-processor-offering");
+		this.offerTimer = this.metricRegistry.timer("event-processor.offering");
 		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
-		this.metricRegistry.register("ringbuffer-capacity", new Gauge<Long>() {
+		this.metricRegistry.register("event-processor.ringbuffer-capacity", new Gauge<Long>() {
 			@Override
 			public Long getValue() {
 				return TelemetryCommandProcessor.this.ringBuffer.remainingCapacity();
 			}});
+		this.metricRegistry.registerAll(new GarbageCollectorMetricSet());
+		this.metricRegistry.registerAll(new MemoryUsageMetricSet());
 	}
 	
 	public void hotRestart() {

@@ -3,7 +3,7 @@ package com.jecstar.etm.launcher.configuration;
 public class Elasticsearch {
 
 	// Determines the connection mode: Node or Client  
-	public boolean connectAsNode = true;
+	public boolean connectAsNode = false;
 	// Comma separated list of hosts to connect to.
 	public String connectAddresses = "127.0.0.1:9300";
 	

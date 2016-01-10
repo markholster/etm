@@ -42,7 +42,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		this.numberOfConsumers = numberOfConsumers;
 		this.commandResources = commandResources;
 		this.endpointConfiguration = new EndpointConfiguration();
-		this.timer = metricRegistry.timer("event-processor-enhancing");
+		this.timer = metricRegistry.timer("event-processor.enhancing");
 	}
 
 	@Override

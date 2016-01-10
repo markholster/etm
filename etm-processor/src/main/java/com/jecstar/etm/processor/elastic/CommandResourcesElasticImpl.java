@@ -93,7 +93,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		private Map<Long, Context> metricContext = new ConcurrentHashMap<Long, Context>();
 		
 		private BulkProcessorMetricLogger(final MetricRegistry metricRegistry) {
-			this.bulkTimer = metricRegistry.timer("event-processor-persisting-repository-bulk-update");
+			this.bulkTimer = metricRegistry.timer("event-processor.persisting-repository-bulk-update");
 		}
 		
 		@Override

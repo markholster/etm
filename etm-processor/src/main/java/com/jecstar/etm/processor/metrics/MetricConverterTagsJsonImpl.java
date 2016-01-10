@@ -14,17 +14,17 @@ public class MetricConverterTagsJsonImpl implements MetricConverterTags {
 	public String getNodeTag() {
 		return "node";
 	}
+	
+	@Override
+	public String getComponentTag() {
+		return "component";
+	}
 
 	@Override
 	public String getNameTag() {
 		return "name";
 	}
 
-	@Override
-	public String getValueTag() {
-		return "value";
-	}
-	
 	@Override
 	public String getCountTag() {
 		return "count";

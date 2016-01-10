@@ -11,10 +11,10 @@ public interface MetricConverterTags {
 	String getNodeTag();
 	
 	String getNameTag();
+	
+	String getComponentTag();
 
 	String getCountTag();
-
-	String getValueTag();
 
 	String getMinTag();
 
@@ -63,5 +63,6 @@ public interface MetricConverterTags {
 	String get99thPercentileDurationTag(TimeUnit durationUnit);
 
 	String get999thPercentileDurationTag(TimeUnit durationUnit);
+
 
 }

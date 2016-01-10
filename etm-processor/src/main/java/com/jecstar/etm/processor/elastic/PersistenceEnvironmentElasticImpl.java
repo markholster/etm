@@ -50,7 +50,7 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	
 	@Override
 	public ScheduledReporter createMetricReporter(final String nodeName, final MetricRegistry metricRegistry) {
-		return new MetricReporterElasticImpl(metricRegistry, nodeName, this.elasticClient);
+		return new MetricReporterElasticImpl(metricRegistry, nodeName, this.etmConfiguration.getComponent(), this.elasticClient);
 	}
 
 

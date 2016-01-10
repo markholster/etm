@@ -32,7 +32,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.commandResources = commandResources;
-		this.timer = metricRegistry.timer("event-processor-persisting");
+		this.timer = metricRegistry.timer("event-processor.persisting");
 	}
 
 	@Override
