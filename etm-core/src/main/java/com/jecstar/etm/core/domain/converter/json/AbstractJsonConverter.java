@@ -165,5 +165,19 @@ public abstract class AbstractJsonConverter {
 		}
 		return "\"" + escapeToJson(name) + "\": \"" + escapeToJson(value.toString()) + "\"";		
 	}
+	
+	
+	protected Object unescapeObjectFromJsonNameValuePair(String tag, Map<String, Object> valueMap) {
+		if (valueMap.containsKey(tag + "_as_number")) {
+			return valueMap.get(tag + "_as_number");
+		} else if (valueMap.containsKey(tag + "_as_boolean")) {
+			return valueMap.get(tag + "_as_boolean");
+		} else if (valueMap.containsKey(tag + "_as_date")) {
+			return new Date((long)valueMap.get(tag + "_as_date"));
+		} else if (valueMap.containsKey(tag)) {
+			return valueMap.get(tag);
+		}
+		return null;
+	}
 
 }

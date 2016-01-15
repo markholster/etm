@@ -29,6 +29,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		final StringBuilder sb = new StringBuilder();
 		boolean added = false;
 		sb.append("{");
+		added = addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getEndpointTag(), event.endpoint, sb, !added) || added;
@@ -124,11 +125,11 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		telemetryEvent.initialize();
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
-		getArray(this.tags.getCorrelationDataTag(), valueMap).forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
+		getArray(this.tags.getCorrelationDataTag(), valueMap).forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
 		telemetryEvent.endpoint = getString(this.tags.getEndpointTag(), valueMap);
-		getArray(this.tags.getExtractedDataTag(), valueMap).forEach(c -> telemetryEvent.extractedData.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
+		getArray(this.tags.getExtractedDataTag(), valueMap).forEach(c -> telemetryEvent.extractedData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
 		telemetryEvent.name = getString(this.tags.getNameTag(), valueMap);
-		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> telemetryEvent.metadata.put(c.get(this.tags.getMapKeyTag()).toString(), c.get(this.tags.getMapValueTag()).toString()));
+		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> telemetryEvent.metadata.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
 		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
 		telemetryEvent.payloadFormat = PayloadFormat.saveValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
 		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
