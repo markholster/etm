@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,5 +141,29 @@ public abstract class AbstractJsonConverter {
 		return value.replace("\"", "\\\"");
 	}
 
+	/**
+	 * Escape an object to a json name/value pair. The value is always
+	 * considered to be a String, but if the value happens to be a
+	 * <code>Number</code>, <code>Boolean</code> or <code>Date</code> a second
+	 * name value/pair is added to the response with the specific value.
+	 * 
+	 * @param name
+	 *            The name part of the name/value pair.
+	 * @param value
+	 *            The value part of the name/value pair.
+	 * @return The name/value escaped to json.
+	 */
+	protected String escapeObjectToJsonNameValuePair(String name, Object value) {
+		if (value == null) {
+			return "\"" + escapeToJson(name) + "\": " + "null";
+		} else if (value instanceof Number) {
+			return "\"" + escapeToJson(name) + "\": \"" + value.toString() + "\", \"" + escapeToJson(name) + "_as_number\": " + value.toString();
+		} else if (value instanceof Boolean) {
+			return "\"" + escapeToJson(name) + "\": \"" + value.toString() + "\", \"" + escapeToJson(name) + "_as_boolean\": " + value.toString();
+		} else if (value instanceof Date) {
+			return "\"" + escapeToJson(name) + "\": \"" + value.toString() + "\", \"" + escapeToJson(name) + "_as_date\": " + ((Date)value).getTime();
+		}
+		return "\"" + escapeToJson(name) + "\": \"" + escapeToJson(value.toString()) + "\"";		
+	}
 
 }

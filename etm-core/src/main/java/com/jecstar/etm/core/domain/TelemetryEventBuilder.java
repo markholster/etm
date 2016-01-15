@@ -34,19 +34,19 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder setCorrelationData(Map<String, String> correlationData) {
+	public Builder setCorrelationData(Map<String, Object> correlationData) {
 		this.event.correlationData = correlationData;
 		return (Builder) this;
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Builder addCorrelationData(Map<String, String> correlationData) {
+	public Builder addCorrelationData(Map<String, Object> correlationData) {
 		this.event.correlationData.putAll(correlationData);
 		return (Builder) this;		
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder addCorrelationData(String key, String value) {
+	public Builder addCorrelationData(String key, Object value) {
 		this.event.correlationData.put(key, value);
 		return (Builder) this;		
 	}
@@ -58,19 +58,19 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder setExtractedData(Map<String, String> extractedData) {
+	public Builder setExtractedData(Map<String, Object> extractedData) {
 		this.event.extractedData = extractedData;
 		return (Builder) this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder addExtractedData(Map<String, String> extractedData) {
+	public Builder addExtractedData(Map<String, Object> extractedData) {
 		this.event.extractedData.putAll(extractedData);
 		return (Builder) this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder addExtractedData(String key, String value) {
+	public Builder addExtractedData(String key, Object value) {
 		this.event.extractedData.put(key, value);
 		return (Builder) this;
 	}
@@ -82,19 +82,19 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder setMetadata(Map<String, String> metadata) {
+	public Builder setMetadata(Map<String, Object> metadata) {
 		this.event.metadata = metadata;
 		return (Builder) this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder addMetadata(Map<String, String> metadata) {
+	public Builder addMetadata(Map<String, Object> metadata) {
 		this.event.metadata.putAll(metadata);;
 		return (Builder) this;
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder addMetadata(String key, String value) {
+	public Builder addMetadata(String key, Object value) {
 		this.event.metadata.put(key, value);
 		return (Builder) this;
 	}

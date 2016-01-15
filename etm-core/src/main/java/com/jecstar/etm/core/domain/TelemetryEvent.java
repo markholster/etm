@@ -20,7 +20,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	/**
 	 * Data to be used for correlating event's that aren't correlated by the correlation id.
 	 */
-	public Map<String, String> correlationData = new HashMap<String, String>();
+	public Map<String, Object> correlationData = new HashMap<String, Object>();
 	
 	/**
 	 * The endpoint this event was send to, and received from.
@@ -30,12 +30,12 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	/**
 	 * Data to be used to query on.
 	 */
-	public Map<String, String> extractedData = new HashMap<String, String>();
+	public Map<String, Object> extractedData = new HashMap<String, Object>();
 	
 	/**
 	 * Metadata of the event. Not used by the application, but can be filled by the end user. 
 	 */
-	public Map<String, String> metadata = new HashMap<String, String>();
+	public Map<String, Object> metadata = new HashMap<String, Object>();
 	
 	/**
 	 * The name of the event.

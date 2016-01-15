@@ -54,7 +54,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 	
 	abstract boolean doConvert(Event event, StringBuilder buffer, boolean firstElement);
 	
-	protected boolean addMapElementToJsonBuffer(String elementName, Map<String, String> elementValues, StringBuilder buffer, boolean firstElement) {
+	protected boolean addMapElementToJsonBuffer(String elementName, Map<String, Object> elementValues, StringBuilder buffer, boolean firstElement) {
 		if (elementValues.size() < 1) {
 			return false;
 		}
@@ -63,7 +63,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		}
 		buffer.append("\"" + elementName + "\": [");
 		buffer.append(elementValues.entrySet().stream()
-				.map(c -> "{\"" + this.tags.getMapKeyTag() + "\": \"" + escapeToJson(c.getKey()) + "\", \"" + this.tags.getMapValueTag() + "\": \"" + escapeToJson(c.getValue()) + "\"}")
+				.map(c -> "{\"" + this.tags.getMapKeyTag() + "\": \"" + escapeToJson(c.getKey()) + "\", " +  escapeObjectToJsonNameValuePair(this.tags.getMapValueTag(), c.getValue()) + "}")
 				.sorted()
 				.collect(Collectors.joining(", ")));
 		buffer.append("]");
