@@ -25,7 +25,7 @@ public class HttpTelemetryEventConverterJsonImpl extends AbstractJsonTelemetryEv
 
 	@Override
 	void doConvert(HttpTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
-		telemetryEvent.httpEventType =  HttpEventType.saveValueOf(getString(getTags().getHttpEventTypeTag(), valueMap));
+		telemetryEvent.httpEventType =  HttpEventType.safeValueOf(getString(getTags().getHttpEventTypeTag(), valueMap));
 		telemetryEvent.readingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(getTags().getReadingEndpointHandlerTag(), valueMap)));
 	}
 

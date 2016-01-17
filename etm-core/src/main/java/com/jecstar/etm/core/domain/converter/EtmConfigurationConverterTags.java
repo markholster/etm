@@ -10,7 +10,9 @@ public interface EtmConfigurationConverterTags {
 
 	String getEventBufferSizeTag();
 
+	String getPersistingBulkCountTag();
 	String getPersistingBulkSizeTag();
+	String getPersistingBulkTimeTag();
 
 	String getShardsPerIndexTag();
 

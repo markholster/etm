@@ -12,6 +12,11 @@ import org.elasticsearch.action.index.IndexRequest;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 
+/**
+ * Base class for <code>TelemetryEvent</code> persisters that store their data in elasticsearch.
+ * 
+ * @author Mark Holster
+ */
 public abstract class AbstractElasticTelemetryEventPersister {
 	
 	private final EtmConfiguration etmConfiguration;
@@ -29,6 +34,16 @@ public abstract class AbstractElasticTelemetryEventPersister {
 		this.etmConfiguration = etmConfiguration;
 	}
 	
+	/**
+	 * Setter method that is used by the
+	 * <code>CommandResourcesElasticImpl</code> class when the configuration of
+	 * the <code>BulkProcessor</code> changes. Because the
+	 * <code>BulkProcessor</code> is immutable when started a completely new
+	 * instance should be "injected" when one of the configuration settings
+	 * changes. 
+	 * 
+	 * @param bulkProcessor The <code>BulkProcess</code> to use for bulk request.
+	 */
 	public void setBulkProcessor(BulkProcessor bulkProcessor) {
 		this.bulkProcessor = bulkProcessor;
 	}

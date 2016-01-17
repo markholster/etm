@@ -9,7 +9,7 @@ public enum PayloadFormat {
 	TEXT,
 	XML;
 	
-	public static PayloadFormat saveValueOf(String value) {
+	public static PayloadFormat safeValueOf(String value) {
 		if (value == null) {
 			return null;
 		}

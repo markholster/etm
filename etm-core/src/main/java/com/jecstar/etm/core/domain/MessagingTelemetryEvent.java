@@ -11,7 +11,7 @@ public class MessagingTelemetryEvent extends TelemetryEvent<MessagingTelemetryEv
 		
 		REQUEST, RESPONSE, FIRE_FORGET;
 		
-		public static MessagingEventType saveValueOf(String value) {
+		public static MessagingEventType safeValueOf(String value) {
 			if (value == null) {
 				return null;
 			}

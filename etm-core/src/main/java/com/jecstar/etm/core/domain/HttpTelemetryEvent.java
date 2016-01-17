@@ -7,7 +7,7 @@ public class HttpTelemetryEvent extends TelemetryEvent<HttpTelemetryEvent> {
 	public enum HttpEventType {
 		CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE, RESPONSE;
 		
-		public static HttpEventType saveValueOf(String value) {
+		public static HttpEventType safeValueOf(String value) {
 			if (value == null) {
 				return null;
 			}

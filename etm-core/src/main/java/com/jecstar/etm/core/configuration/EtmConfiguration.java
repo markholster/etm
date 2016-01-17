@@ -26,7 +26,7 @@ public class EtmConfiguration {
 	private int eventBufferSize = 4096;
 	
 	// Persisting configuration properties;
-	private int persistingBulkSize = 5120;
+	private int persistingBulkSize = 1024 * 1024 * 5;
 	private int persistingBulkCount = 1000;
 	private int persistingBulkTime = 30000;
 	

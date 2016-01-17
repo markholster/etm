@@ -7,7 +7,7 @@ public class SqlTelemetryEvent extends TelemetryEvent<SqlTelemetryEvent>{
 	public enum SqlEventType {
 		DELETE, INSERT, SELECT, UPDATE, RESULTSET;
 		
-		public static SqlEventType saveValueOf(String value) {
+		public static SqlEventType safeValueOf(String value) {
 			if (value == null) {
 				return null;
 			}

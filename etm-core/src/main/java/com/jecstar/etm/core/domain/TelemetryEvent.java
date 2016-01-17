@@ -53,7 +53,8 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	public PayloadFormat payloadFormat;
 	
 	/**
-	 * The ID of the transaction this event belongs to. Events with the same transactionId form and end-to-end chain in the applications landscape.
+	 * The ID of the transaction this event belongs to. Events with the same
+	 * transactionId form and end-to-end chain in the applications landscape.
 	 */
 	public String transactionId;
 	
@@ -61,7 +62,11 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	 * The handler that was writing the event.
 	 */
 	public EndpointHandler writingEndpointHandler = new EndpointHandler();
-	
+
+	/**
+	 * Initialize this <code>TelemetryEvent</code> with the default data. 
+	 * @return A fully initialized <code>TelemetryEvent</code>.
+	 */
 	public abstract T initialize();
 	
 	protected final void internalInitialize() {
@@ -77,6 +82,15 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.writingEndpointHandler.initialize();		
 	}
 	
+	/**
+	 * Initialize this <code>TelemetryEvent</code> with the data of another
+	 * <code>TelemetryEvent</code>.
+	 * 
+	 * @param copy
+	 *            The <code>TelemetryEvent</code> to copy the data from.
+	 * @return This <code>TelemetryEvent</code> initialized with the data of the
+	 *         given copy.
+	 */
 	public abstract T initialize(T copy);
 	
 	protected final void internalInitialize(TelemetryEvent<?> copy) {
@@ -96,6 +110,18 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
 	}
 	
+	/**
+	 * Gives the time that applies to this <code>TelemetryEvent</code>. The
+	 * value returned depends on several factors. When a writing
+	 * <code>EndpointHandler<code> is provided, and it has a handling time set, 
+	 * that value is returned. Otherwise by default the current time is returned. 
+	 * 
+	 * This method may however behave differently in subclasses. If a subclass 
+	 * has one or more reading <code>EndpointHandler</code>s the handling time 
+	 * of one of these handlers may be returned.
+	 * 
+	 * @return The event time.
+	 */
 	public final ZonedDateTime getEventTime() {
 		if (this.writingEndpointHandler.handlingTime != null) {
 			return this.writingEndpointHandler.handlingTime;

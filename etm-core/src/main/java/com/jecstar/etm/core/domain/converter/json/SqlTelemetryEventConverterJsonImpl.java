@@ -25,7 +25,7 @@ public class SqlTelemetryEventConverterJsonImpl extends AbstractJsonTelemetryEve
 
 	@Override
 	void doConvert(SqlTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
-		telemetryEvent.sqlEventType =  SqlEventType.saveValueOf(getString(getTags().getSqlEventTypeTag(), valueMap));
+		telemetryEvent.sqlEventType =  SqlEventType.safeValueOf(getString(getTags().getSqlEventTypeTag(), valueMap));
 		telemetryEvent.readingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(getTags().getReadingEndpointHandlerTag(), valueMap)));
 	}
 

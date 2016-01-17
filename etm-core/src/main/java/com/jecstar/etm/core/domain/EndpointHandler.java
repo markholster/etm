@@ -22,6 +22,7 @@ public class EndpointHandler {
 	
 	public EndpointHandler initialize() {
 		this.application.initialize();
+		this.location.initialize();
 		this.handlingTime = null;
 		return this;
 	}

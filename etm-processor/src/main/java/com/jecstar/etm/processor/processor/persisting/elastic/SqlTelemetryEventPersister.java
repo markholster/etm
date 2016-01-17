@@ -19,6 +19,7 @@ public class SqlTelemetryEventPersister extends AbstractElasticTelemetryEventPer
 	@Override
 	public void persist(SqlTelemetryEvent event, SqlTelemetryEventConverterJsonImpl converter) {
 		IndexRequest indexRequest = createIndexRequest(event.id).source(converter.convert(event));
+		// TODO create update event as this should be a request/reply aware persister 
 		bulkProcessor.add(indexRequest);
 	}
 

@@ -25,8 +25,18 @@ public class EtmConfigurationConverterTagsJsonImpl implements EtmConfigurationCo
 	}
 
 	@Override
+	public String getPersistingBulkCountTag() {
+		return "persisting_bulk_count";
+	}
+
+	@Override
 	public String getPersistingBulkSizeTag() {
 		return "persisting_bulk_size";
+	}
+
+	@Override
+	public String getPersistingBulkTimeTag() {
+		return "persisting_bulk_time";
 	}
 
 	@Override

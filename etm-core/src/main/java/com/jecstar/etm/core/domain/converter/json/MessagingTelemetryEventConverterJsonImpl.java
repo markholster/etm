@@ -33,7 +33,7 @@ public class MessagingTelemetryEventConverterJsonImpl extends AbstractJsonTeleme
 	@Override
 	void doConvert(MessagingTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
 		telemetryEvent.expiry = getZonedDateTime(getTags().getExpiryTag(), valueMap);
-		telemetryEvent.messagingEventType = MessagingEventType.saveValueOf(getString(getTags().getMessagingEventTypeTag(), valueMap));
+		telemetryEvent.messagingEventType = MessagingEventType.safeValueOf(getString(getTags().getMessagingEventTypeTag(), valueMap));
 		getArray(getTags().getReadingEndpointHandlersTag(), valueMap).forEach(c -> telemetryEvent.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
 	}
 
