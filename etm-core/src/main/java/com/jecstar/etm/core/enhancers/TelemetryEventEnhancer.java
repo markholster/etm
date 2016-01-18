@@ -12,6 +12,8 @@ import com.jecstar.etm.core.domain.TelemetryEvent;
  * @author Mark Holster
  */
 public interface TelemetryEventEnhancer<T extends TelemetryEvent<T>> {
+	
+	String getName();
 
 	/**
 	 * Enhance the <code>TelemetryEvent</code>.

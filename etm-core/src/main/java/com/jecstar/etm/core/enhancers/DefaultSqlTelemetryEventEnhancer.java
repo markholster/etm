@@ -9,6 +9,11 @@ import com.jecstar.etm.core.domain.SqlTelemetryEvent;
 public class DefaultSqlTelemetryEventEnhancer implements SqlTelemetryEventEnhancer {
 
 	@Override
+	public String getName() {
+		return "Default SQL Enhancer";
+	}
+	
+	@Override
 	public void enhance(final SqlTelemetryEvent event, final ZonedDateTime enhanceTime) {
 		if (event.id == null) {
 			event.id = UUID.randomUUID().toString();
@@ -20,4 +25,5 @@ public class DefaultSqlTelemetryEventEnhancer implements SqlTelemetryEventEnhanc
 			event.writingEndpointHandler.handlingTime = enhanceTime;
 		}
 	}
+
 }

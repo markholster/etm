@@ -12,6 +12,8 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.BusinessTelemetryEvent;
+import com.jecstar.etm.core.domain.BusinessTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.HttpTelemetryEvent;
 import com.jecstar.etm.core.domain.HttpTelemetryEventBuilder;
 import com.jecstar.etm.core.domain.LogTelemetryEvent;
@@ -108,11 +110,11 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}
 	}
 
-	public void processSqlTelemetryEvent(final SqlTelemetryEventBuilder builder) {
-		processSqlTelemetryEvent(builder.build());
+	public void processTelemetryEvent(final SqlTelemetryEventBuilder builder) {
+		processTelemetryEvent(builder.build());
 	}
 	
-	public void processSqlTelemetryEvent(final SqlTelemetryEvent event) {
+	public void processTelemetryEvent(final SqlTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
@@ -126,11 +128,11 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}
 	}
 	
-	public void processHttpTelemetryEvent(final HttpTelemetryEventBuilder builder) {
-		processHttpTelemetryEvent(builder.build());
+	public void processTelemetryEvent(final HttpTelemetryEventBuilder builder) {
+		processTelemetryEvent(builder.build());
 	}
 	
-	public void processHttpTelemetryEvent(final HttpTelemetryEvent event) {
+	public void processTelemetryEvent(final HttpTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
@@ -144,11 +146,11 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}
 	}
 	
-	public void processLogTelemetryEvent(final LogTelemetryEventBuilder builder) {
-		processLogTelemetryEvent(builder.build());
+	public void processTelemetryEvent(final LogTelemetryEventBuilder builder) {
+		processTelemetryEvent(builder.build());
 	}
 	
-	public void processLogTelemetryEvent(final LogTelemetryEvent event) {
+	public void processTelemetryEvent(final LogTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
@@ -162,11 +164,11 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}
 	}
 	
-	public void processMessagingTelemetryEvent(final MessagingTelemetryEventBuilder builder) {
-		processMessagingTelemetryEvent(builder.build());
+	public void processTelemetryEvent(final MessagingTelemetryEventBuilder builder) {
+		processTelemetryEvent(builder.build());
 	}
 	
-	public void processMessagingTelemetryEvent(final MessagingTelemetryEvent event) {
+	public void processTelemetryEvent(final MessagingTelemetryEvent event) {
 		preProcess();
 		final Context timerContext = this.offerTimer.time();
 		TelemetryCommand target = null;
@@ -179,6 +181,25 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 			timerContext.stop();
 		}
 	}
+	
+	public void processTelemetryEvent(final BusinessTelemetryEventBuilder builder) {
+		processTelemetryEvent(builder.build());
+	}
+	
+	public void processTelemetryEvent(final BusinessTelemetryEvent event) {
+		preProcess();
+		final Context timerContext = this.offerTimer.time();
+		TelemetryCommand target = null;
+		long sequence = this.ringBuffer.next();
+		try {
+			target = this.ringBuffer.get(sequence);
+			target.initialize(event);
+		} finally {
+			this.ringBuffer.publish(sequence);
+			timerContext.stop();
+		}
+	}
+	
 	public MetricRegistry getMetricRegistry() {
 	    return this.metricRegistry;
     }
@@ -197,10 +218,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (this.started && event.isAnyChanged(
 				EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
-				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT,
-				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_COUNT,
-				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE,
-				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_TIME)) {
+				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT)) {
 			// Configuration changed in such a way that the DisruptorEnvironment needs to be recreated/restarted.
 			try {
 				hotRestart();

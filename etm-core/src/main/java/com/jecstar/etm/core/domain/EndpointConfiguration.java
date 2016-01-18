@@ -3,6 +3,7 @@ package com.jecstar.etm.core.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jecstar.etm.core.enhancers.BusinessTelemetryEventEnhancer;
 import com.jecstar.etm.core.enhancers.HttpTelemetryEventEnhancer;
 import com.jecstar.etm.core.enhancers.LogTelemetryEventEnhancer;
 import com.jecstar.etm.core.enhancers.MessagingTelemetryEventEnhancer;
@@ -10,6 +11,7 @@ import com.jecstar.etm.core.enhancers.SqlTelemetryEventEnhancer;
 
 public class EndpointConfiguration {
 
+	public List<BusinessTelemetryEventEnhancer> businessEventEnhancers = new ArrayList<BusinessTelemetryEventEnhancer>();
 	public List<HttpTelemetryEventEnhancer> httpEventEnhancers = new ArrayList<HttpTelemetryEventEnhancer>();
 	public List<LogTelemetryEventEnhancer> logEventEnhancers = new ArrayList<LogTelemetryEventEnhancer>();
 	public List<MessagingTelemetryEventEnhancer> messagingEventEnhancers = new ArrayList<MessagingTelemetryEventEnhancer>();
@@ -19,6 +21,9 @@ public class EndpointConfiguration {
 	public long retrievalTimestamp;
 
 	public EndpointConfiguration initialize() {
+		if (this.businessEventEnhancers != null) {
+			this.businessEventEnhancers.clear();
+		}
 	    if (this.httpEventEnhancers != null) {
 	    	this.httpEventEnhancers.clear();
 	    }

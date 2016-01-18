@@ -3,18 +3,18 @@ package com.jecstar.etm.core.enhancers;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import com.jecstar.etm.core.domain.HttpTelemetryEvent;
+import com.jecstar.etm.core.domain.BusinessTelemetryEvent;
 import com.jecstar.etm.core.domain.PayloadFormat;
 
-public class DefaultHttpTelemetryEventEnhancer implements HttpTelemetryEventEnhancer {
-	
-	@Override
-	public String getName() {
-		return "Default HTTP Enhancer";
-	}
+public class DefaultBusinessTelemetryEventEnhancer implements BusinessTelemetryEventEnhancer {
 
 	@Override
-	public void enhance(final HttpTelemetryEvent event, final ZonedDateTime enhanceTime) {
+	public String getName() {
+		return "Default Business Enhancer";
+	}
+	
+	@Override
+	public void enhance(final BusinessTelemetryEvent event, final ZonedDateTime enhanceTime) {
 		if (event.id == null) {
 			event.id = UUID.randomUUID().toString();
 		}
@@ -36,17 +36,26 @@ public class DefaultHttpTelemetryEventEnhancer implements HttpTelemetryEventEnha
 	 */
 	private PayloadFormat detectPayloadFormat(String payload) {
 		if (payload == null) {
-			return PayloadFormat.HTML;
+			return PayloadFormat.TEXT;
 		}
 		String trimmed = payload.toLowerCase().trim();
 		if (trimmed.indexOf("<soap:envelope ") != -1) {
 			return PayloadFormat.SOAP;
 		} else if (trimmed.indexOf("<!doctype html") != -1) {
 			return PayloadFormat.HTML;
+		} else if (trimmed.startsWith("<?xml ")) {
+			return PayloadFormat.XML;
 		} else if (trimmed.startsWith("{") && payload.endsWith("}")) {
 			return PayloadFormat.JSON;
-		} 
-		return PayloadFormat.HTML;
+		} else if (trimmed.startsWith("select")
+				   || trimmed.startsWith("insert")
+				   || trimmed.startsWith("update")
+				   || trimmed.startsWith("delete")
+				   || trimmed.startsWith("drop")
+				   || trimmed.startsWith("create")) {
+			return PayloadFormat.SQL;
+		}
+		return PayloadFormat.TEXT;
 	}
 
 }

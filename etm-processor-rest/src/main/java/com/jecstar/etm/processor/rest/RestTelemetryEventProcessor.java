@@ -18,10 +18,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jecstar.etm.core.domain.BusinessTelemetryEvent;
 import com.jecstar.etm.core.domain.HttpTelemetryEvent;
 import com.jecstar.etm.core.domain.LogTelemetryEvent;
 import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.core.domain.SqlTelemetryEvent;
+import com.jecstar.etm.core.domain.converter.json.BusinessTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
@@ -44,11 +46,13 @@ public class RestTelemetryEventProcessor {
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	
+	private final BusinessTelemetryEventConverterJsonImpl businessConverter = new BusinessTelemetryEventConverterJsonImpl();
 	private final HttpTelemetryEventConverterJsonImpl httpConverter = new HttpTelemetryEventConverterJsonImpl();
 	private final LogTelemetryEventConverterJsonImpl logConverter = new LogTelemetryEventConverterJsonImpl();
 	private final MessagingTelemetryEventConverterJsonImpl messagingConverter = new MessagingTelemetryEventConverterJsonImpl();
 	private final SqlTelemetryEventConverterJsonImpl sqlConverter = new SqlTelemetryEventConverterJsonImpl();
 
+	private final BusinessTelemetryEvent businessTelemetryEvent = new BusinessTelemetryEvent(); 
 	private final HttpTelemetryEvent httpTelemetryEvent = new HttpTelemetryEvent(); 
 	private final LogTelemetryEvent logTelemetryEvent = new LogTelemetryEvent(); 
 	private final MessagingTelemetryEvent messagingTelemetryEvent = new MessagingTelemetryEvent(); 
@@ -139,21 +143,25 @@ public class RestTelemetryEventProcessor {
 	private void process(CommandType commandType, Map<String, Object> eventData) {
 	    switch (commandType) {
 	    // Initializing is done in the converters.
+	    case BUSINESS_EVENT:
+	    	this.businessConverter.convert(eventData, this.businessTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.businessTelemetryEvent);
+	    	break;
 	    case HTTP_EVENT:
 	    	this.httpConverter.convert(eventData, this.httpTelemetryEvent);
-	    	telemetryCommandProcessor.processHttpTelemetryEvent(this.httpTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEvent);
 	    	break;
 	    case LOG_EVENT:
 	    	this.logConverter.convert(eventData, this.logTelemetryEvent);
-	    	telemetryCommandProcessor.processLogTelemetryEvent(this.logTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.logTelemetryEvent);
 	    	break;
 	    case MESSAGING_EVENT:
 	    	this.messagingConverter.convert(eventData, this.messagingTelemetryEvent);
-	    	telemetryCommandProcessor.processMessagingTelemetryEvent(this.messagingTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEvent);
 	    	break;
 	    case SQL_EVENT:
 	    	this.sqlConverter.convert(eventData, this.sqlTelemetryEvent);
-	    	telemetryCommandProcessor.processSqlTelemetryEvent(this.sqlTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.sqlTelemetryEvent);
 	    	break;
 	    }		
 	}
@@ -161,21 +169,25 @@ public class RestTelemetryEventProcessor {
 	private void process(CommandType commandType, StringBuilder json) {
 	    switch (commandType) {
 	    // Initializing is done in the converters.
+	    case BUSINESS_EVENT:
+	    	this.businessConverter.convert(json.toString(), this.businessTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.businessTelemetryEvent);
+	    	break;
 	    case HTTP_EVENT:
 	    	this.httpConverter.convert(json.toString(), this.httpTelemetryEvent);
-	    	telemetryCommandProcessor.processHttpTelemetryEvent(this.httpTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEvent);
 	    	break;
 	    case LOG_EVENT:
 	    	this.logConverter.convert(json.toString(), this.logTelemetryEvent);
-	    	telemetryCommandProcessor.processLogTelemetryEvent(this.logTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.logTelemetryEvent);
 	    	break;
 	    case MESSAGING_EVENT:
 	    	this.messagingConverter.convert(json.toString(), this.messagingTelemetryEvent);
-	    	telemetryCommandProcessor.processMessagingTelemetryEvent(this.messagingTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEvent);
 	    	break;
 	    case SQL_EVENT:
 	    	this.sqlConverter.convert(json.toString(), this.sqlTelemetryEvent);
-	    	telemetryCommandProcessor.processSqlTelemetryEvent(this.sqlTelemetryEvent);
+	    	telemetryCommandProcessor.processTelemetryEvent(this.sqlTelemetryEvent);
 	    	break;
 	    }		
 	}

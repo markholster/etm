@@ -9,6 +9,11 @@ import com.jecstar.etm.core.domain.PayloadFormat;
 public class DefaultMessagingTelemetryEventEnhancer implements MessagingTelemetryEventEnhancer {
 
 	@Override
+	public String getName() {
+		return "Default Messaging Enhancer";
+	}
+	
+	@Override
 	public void enhance(final MessagingTelemetryEvent event, final ZonedDateTime enhanceTime) {
 		if (event.id == null) {
 			event.id = UUID.randomUUID().toString();

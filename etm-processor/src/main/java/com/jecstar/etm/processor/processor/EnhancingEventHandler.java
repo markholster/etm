@@ -6,11 +6,14 @@ import java.util.List;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.core.domain.BusinessTelemetryEvent;
 import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.core.domain.HttpTelemetryEvent;
 import com.jecstar.etm.core.domain.LogTelemetryEvent;
 import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.core.domain.SqlTelemetryEvent;
+import com.jecstar.etm.core.enhancers.BusinessTelemetryEventEnhancer;
+import com.jecstar.etm.core.enhancers.DefaultBusinessTelemetryEventEnhancer;
 import com.jecstar.etm.core.enhancers.DefaultHttpTelemetryEventEnhancer;
 import com.jecstar.etm.core.enhancers.DefaultLogTelemetryEventEnhancer;
 import com.jecstar.etm.core.enhancers.DefaultMessagingTelemetryEventEnhancer;
@@ -31,6 +34,8 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private final CommandResources commandResources;
 	
 	private final EndpointConfiguration endpointConfiguration;
+	
+	private final BusinessTelemetryEventEnhancer defaultBusinessTelemetryEventEnhancer = new DefaultBusinessTelemetryEventEnhancer();
 	private final LogTelemetryEventEnhancer defaultLogTelemetryEventEnhancer = new DefaultLogTelemetryEventEnhancer();
 	private final HttpTelemetryEventEnhancer defaultHttpTelemetryEventEnhancer = new DefaultHttpTelemetryEventEnhancer();
 	private final MessagingTelemetryEventEnhancer defaultMessagingTelemetryEventEnhancer = new DefaultMessagingTelemetryEventEnhancer();
@@ -51,6 +56,9 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			return;
 		}
 		switch (command.commandType) {
+		case BUSINESS_EVENT:
+			enhanceBusinessTelemetryEvent(command.businessTelemetryEvent);
+			break;
 		case HTTP_EVENT:
 			enhanceHttpTelemetryEvent(command.httpTelemetryEvent);
 			break;
@@ -68,6 +76,21 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		}
 	}
 
+	private void enhanceBusinessTelemetryEvent(BusinessTelemetryEvent event) {
+		final Context timerContext = this.timer.time();
+		try {
+			final ZonedDateTime now = ZonedDateTime.now();
+			this.commandResources.loadEndpointConfig(event.endpoint, this.endpointConfiguration);
+			if (this.endpointConfiguration.businessEventEnhancers != null) {
+				this.endpointConfiguration.businessEventEnhancers.forEach(c -> c.enhance(event, now));
+			} else {
+				this.defaultBusinessTelemetryEventEnhancer.enhance(event, now);
+			}
+		} finally {
+			timerContext.stop();
+		}	    
+	}
+	
 	private void enhanceHttpTelemetryEvent(HttpTelemetryEvent event) {
 		final Context timerContext = this.timer.time();
 		try {

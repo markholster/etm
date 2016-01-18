@@ -9,6 +9,11 @@ import com.jecstar.etm.core.domain.PayloadFormat;
 public class DefaultLogTelemetryEventEnhancer implements LogTelemetryEventEnhancer {
 
 	@Override
+	public String getName() {
+		return "Default Log Enhancer";
+	}
+	
+	@Override
 	public void enhance(final LogTelemetryEvent event, final ZonedDateTime enhanceTime) {
 		if (event.id == null) {
 			event.id = UUID.randomUUID().toString();
