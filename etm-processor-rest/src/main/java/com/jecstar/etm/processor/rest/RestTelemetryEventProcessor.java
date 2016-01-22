@@ -59,7 +59,7 @@ public class RestTelemetryEventProcessor {
 	private final SqlTelemetryEvent sqlTelemetryEvent = new SqlTelemetryEvent(); 
 	
 	public static void setProcessor(TelemetryCommandProcessor processor) {
-		telemetryCommandProcessor = processor;
+		RestTelemetryEventProcessor.telemetryCommandProcessor = processor;
 	}
 	
 	@POST

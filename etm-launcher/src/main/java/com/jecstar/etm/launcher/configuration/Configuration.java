@@ -11,11 +11,11 @@ public class Configuration {
 	public Elasticsearch elasticsearch = new Elasticsearch();
 	public Http http = new Http();
 
+	public boolean guiEnabled = true;
 	public boolean restProcessorEnabled = true;
-
 	
 	public boolean isHttpServerNecessary() {
-		return this.restProcessorEnabled;
+		return this.restProcessorEnabled || this.guiEnabled;
 	}
 	
 	public boolean isProcessorNecessary() {

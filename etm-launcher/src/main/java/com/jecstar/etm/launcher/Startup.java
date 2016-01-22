@@ -42,11 +42,14 @@ public class Startup {
 		addShutdownHook();
 		try {
 			final Configuration configuration = loadConfiguration();
+			if (configuration.isProcessorNecessary() || configuration.guiEnabled) {
+				initializeElasticsearchClient(configuration);
+			}
 			if (configuration.isProcessorNecessary()) {
 				initializeProcessor(configuration);
 			}
 			if (configuration.isHttpServerNecessary()) {
-				 httpServer = new HttpServer(configuration, processor);
+				 httpServer = new HttpServer(configuration, processor, elasticClient);
 				 httpServer.start();
 			}
 			if (log.isInfoLevelEnabled()) {
@@ -87,10 +90,9 @@ public class Startup {
 			}
 		});
 	}
-
+	
 	private static void initializeProcessor(Configuration configuration) {
 		if (processor == null) {
-			initializeElasticsearchClient(configuration);
 			ExecutorService executor = Executors.newCachedThreadPool();
 			processor = new TelemetryCommandProcessor();
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, "processor", elasticClient);

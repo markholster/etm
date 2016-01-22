@@ -28,7 +28,9 @@
                 <module>../etm-launcher</module>				
 <!-- 				
 				<module>../etm-processor-ws</module>
+-->				
 				<module>../etm-gui</module>
+<!-- 				
 				<module>../etm-scheduler-retention</module>
 				<module>../etm-documentation</module>
 				<module>../etm-distribution</module>
@@ -42,10 +44,6 @@
 			</activation>
 			<modules>
 				<module>../etm-core</module>
-<!-- 				
-				<module>../etm-jee-configurator-core</module>
-				<module>../etm-processor-jee-configurator</module>
- -->				
 				<module>../etm-processor</module>
 <!--				
 				<module>../etm-processor-mdb</module>
@@ -54,9 +52,9 @@
 				<module>../etm-launcher</module>
 <!-- 				
 				<module>../etm-processor-ws</module>
-				<module>../etm-gui-jee-configurator</module>
+-->				
 				<module>../etm-gui</module>
-				<module>../etm-scheduler-jee-configurator</module>
+<!-- 				
 				<module>../etm-scheduler-retention</module>
  -->
  				<module>../etm-license-generator</module>
@@ -119,6 +117,11 @@
 				<artifactId>etm-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+            <dependency>
+                <groupId>com.jecstar.etm</groupId>
+                <artifactId>etm-gui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 			<dependency>
 				<groupId>com.jecstar.etm</groupId>
 				<artifactId>etm-processor</artifactId>

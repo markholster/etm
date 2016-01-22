@@ -18,6 +18,10 @@
 		    <groupId>com.esotericsoftware.yamlbeans</groupId>
 		    <artifactId>yamlbeans</artifactId>
 		</dependency>                      	
+        <dependency>
+            <groupId>com.jecstar.etm</groupId>
+            <artifactId>etm-gui</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>com.jecstar.etm</groupId>
 			<artifactId>etm-processor-rest</artifactId>

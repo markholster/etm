@@ -22,11 +22,13 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.servlet.ServletException;
 
+import org.elasticsearch.client.Client;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
+import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
@@ -36,6 +38,7 @@ import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.ServletContainer;
@@ -53,7 +56,7 @@ public class HttpServer {
 	private GracefulShutdownHandler shutdownHandler;
 	private boolean started;
 
-	public HttpServer(Configuration configuration, TelemetryCommandProcessor processor) {
+	public HttpServer(Configuration configuration, TelemetryCommandProcessor processor, Client client) {
 		this.configuration = configuration;
 		final PathHandler root = Handlers.path();
 		this.shutdownHandler = Handlers.gracefulShutdown(root);
@@ -104,6 +107,28 @@ public class HttpServer {
 			} catch (ServletException e) {
 				if (log.isErrorLevelEnabled()) {
 					log.logErrorMessage("Error deploying rest processor", e);
+				}
+			}
+		}
+		if (this.configuration.guiEnabled) {
+			RestGuiApplication guiApplication = new RestGuiApplication(client);
+			ResteasyDeployment deployment = new ResteasyDeployment();
+			deployment.setApplication(guiApplication);
+			DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
+			di.setClassLoader(guiApplication.getClass().getClassLoader());
+			di.setContextPath("/gui");
+			di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
+			di.setDeploymentName("GUI - " + di.getContextPath());
+			DeploymentManager manager = container.addDeployment(di);
+			manager.deploy();
+			try {
+				root.addPrefixPath(di.getContextPath(), manager.start());
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
+				}
+			} catch (ServletException e) {
+				if (log.isErrorLevelEnabled()) {
+					log.logErrorMessage("Error deploying GUI", e);
 				}
 			}
 		}
