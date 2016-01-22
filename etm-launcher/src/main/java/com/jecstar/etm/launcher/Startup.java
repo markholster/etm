@@ -102,26 +102,26 @@ public class Startup {
 		if (elasticClient != null) {
 			return;
 		}
-		if (configuration.elasticSearch.connectAsNode) {
+		if (configuration.elasticsearch.connectAsNode) {
 			if (node == null) {
 				Builder settingsBuilder = Settings.settingsBuilder()
 					.put("cluster.name", configuration.clusterName)
 					.put("node.name", configuration.instanceName)
-					.put("path.home", configuration.elasticSearch.nodeHomePath)
-					.put("path.data", configuration.elasticSearch.nodeDataPath)
-					.put("path.logs", configuration.elasticSearch.nodeLogPath)
+					.put("path.home", configuration.elasticsearch.nodeHomePath)
+					.put("path.data", configuration.elasticsearch.nodeDataPath)
+					.put("path.logs", configuration.elasticsearch.nodeLogPath)
 					.put("http.enabled", false);
-				if (configuration.elasticSearch.transportPort > 0) {
-					settingsBuilder.put("transport.tcp.port", configuration.elasticSearch.transportPort);
+				if (configuration.getElasticsearchTransportPort() > 0) {
+					settingsBuilder.put("transport.tcp.port", configuration.getElasticsearchTransportPort());
 				}
-				if (!configuration.elasticSearch.nodeMulticast) {
+				if (!configuration.elasticsearch.nodeMulticast) {
 					settingsBuilder.put("discovery.zen.ping.multicast.enabled", false);
-					settingsBuilder.put("discovery.zen.ping.unicast.hosts", configuration.elasticSearch.connectAddresses);
+					settingsBuilder.put("discovery.zen.ping.unicast.hosts", configuration.elasticsearch.connectAddresses);
 				}
 				node = new NodeBuilder()
 						.settings(settingsBuilder)
-						.client(!configuration.elasticSearch.nodeData)
-						.data(configuration.elasticSearch.nodeData)
+						.client(!configuration.elasticsearch.nodeData)
+						.data(configuration.elasticsearch.nodeData)
 						.clusterName(configuration.clusterName)
 						.node();
 			}
@@ -130,7 +130,7 @@ public class Startup {
 			TransportClient transportClient = TransportClient.builder().settings(Settings.settingsBuilder()
 					.put("cluster.name", configuration.clusterName)
 					.put("client.transport.sniff", true)).build();
-			String[] hosts = configuration.elasticSearch.connectAddresses.split(",");
+			String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
 			for (String host : hosts) {
 				int ix = host.lastIndexOf(":");
 				if (ix != -1) {
