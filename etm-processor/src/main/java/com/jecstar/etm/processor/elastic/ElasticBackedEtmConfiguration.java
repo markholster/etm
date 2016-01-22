@@ -17,16 +17,14 @@ import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonI
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
 	private final String indexName = "etm_configuration";
-	private final String indexType = "node";
+	private final String nodeIndexType = "node";
+	private final String licenseIndexType = "license";
 	private final String defaultId = "default_configuration";
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	
 	private final long updateCheckInterval = 60 * 1000;
 	private long lastCheckedForUpdates;
-	private long defaultVersion = -1;
-	private long nodeVersion = -1;
-	
 	
 	public ElasticBackedEtmConfiguration(String nodeName, String component, final Client elasticClient) {
 		super(nodeName, component);
@@ -109,32 +107,32 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		if (!hasIndex) {
 			createDefault();
 		}
-		GetResponse defaultResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, this.defaultId).get();
+		GetResponse defaultResponse = this.elasticClient.prepareGet(this.indexName, this.nodeIndexType, this.defaultId).get();
 		if (!defaultResponse.isExists()) {
 			// Should not happen, but if somehow the default configuration is lost, but the index isn't we create the new default over here.
 			createDefault();
-			defaultResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, this.defaultId).get();
+			defaultResponse = this.elasticClient.prepareGet(this.indexName, this.nodeIndexType, this.defaultId).get();
 		}
-		GetResponse nodeResponse = this.elasticClient.prepareGet(this.indexName, this.indexType, getNodeName()).get();
+		GetResponse nodeResponse = this.elasticClient.prepareGet(this.indexName, this.nodeIndexType, getNodeName()).get();
+		GetResponse licenseResponse = this.elasticClient.prepareGet(this.indexName, this.licenseIndexType, this.defaultId).get();
 
 		String defaultContent = defaultResponse.getSourceAsString();
 		String nodeContent = null;
 
-		if (defaultResponse.getVersion() != this.defaultVersion ||
-				(nodeResponse.isExists() && nodeResponse.getVersion() != this.nodeVersion)) {
-			if (nodeResponse.isExists()) {
-				nodeContent = nodeResponse.getSourceAsString();
-				this.nodeVersion = nodeResponse.getVersion();
-			}
-			this.defaultVersion = defaultResponse.getVersion();
-			EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge", getComponent()); 
-			changed = this.mergeAndNotify(etmConfiguration);
+		if (nodeResponse.isExists()) {
+			nodeContent = nodeResponse.getSourceAsString();
 		}
+		EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge", getComponent());
+		if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty()) {
+			Object license = licenseResponse.getSourceAsMap().get(this.etmConfigurationConverter.getTags().getLicenseTag());
+			if (license != null) {
+				etmConfiguration.setLicenseKey(license.toString());
+			}
+		}
+		changed = this.mergeAndNotify(etmConfiguration);
 		this.lastCheckedForUpdates = System.currentTimeMillis();
 		return changed;
 	}
-	
-
 	
 	private void createDefault() {
 		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, this.indexName)
@@ -145,9 +143,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 					.put("number_of_replicas", 1))
 			.addMapping("_default_", createMapping())
 			.get();
-		this.elasticClient.prepareIndex(this.indexName, this.indexType, this.defaultId)
+		this.elasticClient.prepareIndex(this.indexName, this.nodeIndexType, this.defaultId)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
-			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent()))).get();
+			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", getComponent())))
+			.get();
 	}
 
 	private String createMapping() {
