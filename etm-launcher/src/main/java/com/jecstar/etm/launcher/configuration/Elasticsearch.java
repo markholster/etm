@@ -6,7 +6,6 @@ public class Elasticsearch {
 	public boolean connectAsNode = true;
 	// Comma separated list of hosts to connect to.
 	public String connectAddresses = "127.0.0.1:9300";
-	
 
 	// Configuration for elasticsearch node mode.
 	public int transportPort = 9300;

@@ -87,8 +87,7 @@ public class HttpServer {
 		}
 		this.server = builder.setHandler(root).build();
 		if (this.configuration.restProcessorEnabled) {
-			RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(
-					processor);
+			RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(processor);
 			ResteasyDeployment deployment = new ResteasyDeployment();
 			deployment.setApplication(processorApplication);
 			DeploymentInfo di = undertowRestDeployment(deployment, "/");
