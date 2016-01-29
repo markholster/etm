@@ -1,6 +1,4 @@
-package com.jecstar.etm.launcher;
-
-import static io.undertow.servlet.Servlets.servlet;
+package com.jecstar.etm.launcher.http;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,7 +10,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +20,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 import javax.servlet.ServletException;
 
 import org.elasticsearch.client.Client;
@@ -43,7 +39,6 @@ import io.undertow.Undertow.Builder;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
 import io.undertow.security.handlers.AuthenticationCallHandler;
-import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.security.handlers.AuthenticationMechanismsHandler;
 import io.undertow.security.handlers.SecurityInitialHandler;
 import io.undertow.security.idm.IdentityManager;
@@ -53,11 +48,14 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
+import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.LoginConfig;
+import io.undertow.servlet.api.SecurityConstraint;
 import io.undertow.servlet.api.ServletContainer;
 import io.undertow.servlet.api.ServletInfo;
+import io.undertow.servlet.api.WebResourceCollection;
 
 public class HttpServer {
 
@@ -103,22 +101,14 @@ public class HttpServer {
 				}
 			}
 		}
-        final Map<String, char[]> users = new HashMap<>(2);
+        final Map<String, char[]> users = new HashMap<>(1);
         users.put("mark", "test".toCharArray());
-        users.put("userTwo", "passwordTwo".toCharArray());
 
         final IdentityManager identityManager = new MapIdentityManager(users);
 		
 		this.server = builder.setHandler(addSecurity(root, identityManager)).build();
 		if (this.configuration.restProcessorEnabled) {
-			RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(processor);
-			ResteasyDeployment deployment = new ResteasyDeployment();
-			deployment.setApplication(processorApplication);
-			deployment.setSecurityEnabled(false);
-			DeploymentInfo di = undertowRestDeployment(deployment, "/");
-			di.setClassLoader(processorApplication.getClass().getClassLoader());
-			di.setContextPath("/rest/processor/");
-			di.setDeploymentName("Rest event processor - " + di.getContextPath());			
+			DeploymentInfo di = createProcessorDeploymentInfo(processor);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
@@ -133,18 +123,7 @@ public class HttpServer {
 			}
 		}
 		if (this.configuration.guiEnabled) {
-			RestGuiApplication guiApplication = new RestGuiApplication(client);
-			ResteasyDeployment deployment = new ResteasyDeployment();
-			deployment.setApplication(guiApplication);
-			deployment.setSecurityEnabled(true);
-			DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
-			di.setClassLoader(guiApplication.getClass().getClassLoader());
-			di.setContextPath("/gui");
-			// TODO extends ClassPathResourceManager and add security to it.
-			di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
-			di.setDeploymentName("GUI - " + di.getContextPath());
-			di.setIdentityManager(identityManager);
-			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
+			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
@@ -159,12 +138,62 @@ public class HttpServer {
 			}
 		}
 	}
+	
+	public void start() {
+		if (!this.started) {
+			this.server.start();
+			this.started = true;
+		}
+	}
+
+	public void stop() {
+		if (this.shutdownHandler != null) {
+			this.shutdownHandler.shutdown();
+			try {
+				this.shutdownHandler.awaitShutdown(30000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		if (this.server != null && this.started) {
+			this.server.stop();
+			this.started = false;
+		}
+	}
+
+	private DeploymentInfo createProcessorDeploymentInfo(TelemetryCommandProcessor processor) {
+		RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(processor);
+		ResteasyDeployment deployment = new ResteasyDeployment();
+		deployment.setApplication(processorApplication);
+		deployment.setSecurityEnabled(false);
+		DeploymentInfo di = undertowRestDeployment(deployment, "/");
+		di.setClassLoader(processorApplication.getClass().getClassLoader());
+		di.setContextPath("/rest/processor/");
+		di.setDeploymentName("Rest event processor - " + di.getContextPath());
+		return di;
+	}
+	
+	private DeploymentInfo createGuiDeploymentInfo(Client client, IdentityManager identityManager) {
+		RestGuiApplication guiApplication = new RestGuiApplication(client);
+		ResteasyDeployment deployment = new ResteasyDeployment();
+		deployment.setApplication(guiApplication);
+		deployment.setSecurityEnabled(true);
+		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
+		di.setClassLoader(guiApplication.getClass().getClassLoader());
+		di.setContextPath("/gui");
+		di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
+		di.setDeploymentName("GUI - " + di.getContextPath());
+		di.addSecurityConstraint(new SecurityConstraint().addRoleAllowed("searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*")));
+		di.addSecurityRoles("searcher");
+		di.setIdentityManager(identityManager);
+		di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
+		return di;
+	}
 
     private HttpHandler addSecurity(final HttpHandler toWrap, final IdentityManager identityManager) {
         HttpHandler handler = toWrap;
         handler = new AuthenticationCallHandler(handler);
-        // TODO replace AuthenticationConstraintHandler with a custom instance that checks for the path to enforce authentication or not.
-        handler = new AuthenticationConstraintHandler(handler);
+//      handler = new AuthenticationConstraintHandler(handler);
         final List<AuthenticationMechanism> mechanisms = new ArrayList<AuthenticationMechanism>(2);
         mechanisms.add(new CachedAuthenticatedSessionMechanism());
         mechanisms.add(new BasicAuthenticationMechanism("Enterprise Telemetry Monitor"));
@@ -210,29 +239,7 @@ public class HttpServer {
 		return trustManagerFactory.getTrustManagers();
 	}
 
-	public void start() {
-		if (!this.started) {
-			this.server.start();
-			this.started = true;
-		}
-	}
-
-	public void stop() {
-		if (this.shutdownHandler != null) {
-			this.shutdownHandler.shutdown();
-			try {
-				this.shutdownHandler.awaitShutdown(30000);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
-		if (this.server != null && this.started) {
-			this.server.stop();
-			this.started = false;
-		}
-	}
-
-	private static DeploymentInfo undertowRestDeployment(ResteasyDeployment deployment, String mapping) {
+	private DeploymentInfo undertowRestDeployment(ResteasyDeployment deployment, String mapping) {
 		if (mapping == null) {
 			mapping = "/";
 		}
@@ -247,7 +254,7 @@ public class HttpServer {
 		if (!mapping.equals("/*")) {
 			prefix = mapping.substring(0, mapping.length() - 2);
 		}
-		ServletInfo resteasyServlet = servlet("ResteasyServlet", HttpServletDispatcher.class).setAsyncSupported(true)
+		ServletInfo resteasyServlet = Servlets.servlet("ResteasyServlet", HttpServletDispatcher.class).setAsyncSupported(true)
 				.setLoadOnStartup(1).addMapping(mapping);
 		if (prefix != null) {
 			resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
@@ -255,22 +262,4 @@ public class HttpServer {
 		return new DeploymentInfo().addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
 				.addServlet(resteasyServlet);
 	}
-
-	private final class TrustAllTrustManager implements X509TrustManager {
-
-		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-		}
-
-		@Override
-		public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-		}
-
-		@Override
-		public X509Certificate[] getAcceptedIssuers() {
-			return new X509Certificate[0];
-		}
-
-	}
-
 }

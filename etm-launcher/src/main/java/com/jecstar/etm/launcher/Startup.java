@@ -22,6 +22,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.launcher.configuration.Configuration;
+import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;

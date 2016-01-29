@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher;
+package com.jecstar.etm.launcher.http;
 
 import java.security.Principal;
 import java.util.Arrays;
@@ -81,6 +81,7 @@ class MapIdentityManager implements IdentityManager {
                 public Set<String> getRoles() {
                 	Set<String> set = new HashSet<String>(1);
                 	set.add("tester");
+                	set.add("searcher");
                 	return set;
                 }
 
