@@ -20,8 +20,8 @@
 			<artifactId>etm-processor</artifactId>
 		</dependency>
         <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jaxrs</artifactId>
         </dependency>     
 	</dependencies>
 	<build>

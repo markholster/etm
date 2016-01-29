@@ -13,6 +13,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -36,11 +40,22 @@ import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
+import io.undertow.security.api.AuthenticationMechanism;
+import io.undertow.security.api.AuthenticationMode;
+import io.undertow.security.handlers.AuthenticationCallHandler;
+import io.undertow.security.handlers.AuthenticationConstraintHandler;
+import io.undertow.security.handlers.AuthenticationMechanismsHandler;
+import io.undertow.security.handlers.SecurityInitialHandler;
+import io.undertow.security.idm.IdentityManager;
+import io.undertow.security.impl.BasicAuthenticationMechanism;
+import io.undertow.security.impl.CachedAuthenticatedSessionMechanism;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.LoginConfig;
 import io.undertow.servlet.api.ServletContainer;
 import io.undertow.servlet.api.ServletInfo;
 
@@ -88,15 +103,22 @@ public class HttpServer {
 				}
 			}
 		}
-		this.server = builder.setHandler(root).build();
+        final Map<String, char[]> users = new HashMap<>(2);
+        users.put("mark", "test".toCharArray());
+        users.put("userTwo", "passwordTwo".toCharArray());
+
+        final IdentityManager identityManager = new MapIdentityManager(users);
+		
+		this.server = builder.setHandler(addSecurity(root, identityManager)).build();
 		if (this.configuration.restProcessorEnabled) {
 			RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(processor);
 			ResteasyDeployment deployment = new ResteasyDeployment();
 			deployment.setApplication(processorApplication);
+			deployment.setSecurityEnabled(false);
 			DeploymentInfo di = undertowRestDeployment(deployment, "/");
 			di.setClassLoader(processorApplication.getClass().getClassLoader());
 			di.setContextPath("/rest/processor/");
-			di.setDeploymentName("Rest event processor - " + di.getContextPath());
+			di.setDeploymentName("Rest event processor - " + di.getContextPath());			
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
@@ -114,11 +136,15 @@ public class HttpServer {
 			RestGuiApplication guiApplication = new RestGuiApplication(client);
 			ResteasyDeployment deployment = new ResteasyDeployment();
 			deployment.setApplication(guiApplication);
+			deployment.setSecurityEnabled(true);
 			DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
 			di.setClassLoader(guiApplication.getClass().getClassLoader());
 			di.setContextPath("/gui");
+			// TODO extends ClassPathResourceManager and add security to it.
 			di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
 			di.setDeploymentName("GUI - " + di.getContextPath());
+			di.setIdentityManager(identityManager);
+			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
@@ -133,6 +159,19 @@ public class HttpServer {
 			}
 		}
 	}
+
+    private HttpHandler addSecurity(final HttpHandler toWrap, final IdentityManager identityManager) {
+        HttpHandler handler = toWrap;
+        handler = new AuthenticationCallHandler(handler);
+        // TODO replace AuthenticationConstraintHandler with a custom instance that checks for the path to enforce authentication or not.
+        handler = new AuthenticationConstraintHandler(handler);
+        final List<AuthenticationMechanism> mechanisms = new ArrayList<AuthenticationMechanism>(2);
+        mechanisms.add(new CachedAuthenticatedSessionMechanism());
+        mechanisms.add(new BasicAuthenticationMechanism("Enterprise Telemetry Monitor"));
+        handler = new AuthenticationMechanismsHandler(handler, mechanisms);
+        handler = new SecurityInitialHandler(AuthenticationMode.CONSTRAINT_DRIVEN, identityManager, handler);
+        return handler;
+    }
 
 	private SSLContext createSslContext(Configuration configuration) throws KeyManagementException, NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException, UnrecoverableKeyException {
 		KeyStore keyStore = loadKeyStore(configuration.http.sslKeystoreLocation, configuration.http.sslKeystoreType, configuration.http.sslKeystorePassword);

@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -21,6 +22,7 @@ public class StatisticsService {
 	@GET
 	@Path("/test")
 	@Produces(MediaType.APPLICATION_JSON)
+	@RolesAllowed("tester")
 	public String lala() {
 		return "{\"status\": \"ok\"}";
 	}
