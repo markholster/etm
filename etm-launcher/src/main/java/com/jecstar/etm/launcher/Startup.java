@@ -42,7 +42,8 @@ public class Startup {
 	public static void main(String[] args) {
 		addShutdownHook();
 		try {
-			final Configuration configuration = loadConfiguration();
+			final File configDir = new File("config");
+			final Configuration configuration = loadConfiguration(configDir);
 			if (configuration.isProcessorNecessary() || configuration.guiEnabled) {
 				initializeElasticsearchClient(configuration);
 			}
@@ -50,7 +51,7 @@ public class Startup {
 				initializeProcessor(configuration);
 			}
 			if (configuration.isHttpServerNecessary()) {
-				 httpServer = new HttpServer(configuration, processor, elasticClient);
+				 httpServer = new HttpServer(configDir, configuration, processor, elasticClient);
 				 httpServer.start();
 			}
 			if (log.isInfoLevelEnabled()) {
@@ -152,8 +153,7 @@ public class Startup {
 		}
 	}
 
-	private static Configuration loadConfiguration() throws FileNotFoundException, YamlException {
-		File configDir = new File("config");
+	private static Configuration loadConfiguration(File configDir) throws FileNotFoundException, YamlException {
 		if (!configDir.exists()) {
 			Configuration configuration = new Configuration();
 			return configuration;
@@ -164,6 +164,7 @@ public class Startup {
 			return configuration;
 		}
 		YamlReader reader = new YamlReader(new FileReader(configFile));
+		reader.getConfig().setBeanProperties(false);
 		return reader.read(Configuration.class);
 	}
 }
