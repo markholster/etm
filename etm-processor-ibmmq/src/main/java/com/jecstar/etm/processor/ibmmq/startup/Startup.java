@@ -26,6 +26,7 @@ import com.jecstar.etm.processor.ibmmq.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.ibmmq.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.configuration.Configuration;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
+import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
 
 public class Startup {
@@ -126,14 +127,12 @@ public class Startup {
 		this.processor = new AutoManagedTelemetryEventProcessor(this.etmConfiguration, this.persistenceEnvironment, this.elasticClient);
 		this.processor.start();
 		
-		MQEnvironment.hostname = configuration.getQueueManager().getHost();
-		MQEnvironment.port = configuration.getQueueManager().getPort();
-		MQEnvironment.channel = configuration.getQueueManager().getChannel();
-		
 		this.executorService = Executors.newFixedThreadPool(nrOfListeners);
-		for (Destination destination : configuration.getQueueManager().getDestinations()) {
-			for (int i=0; i < destination.getNrOfListeners(); i++) {
-				this.executorService.submit(new DestinationReader(this.processor, configuration.getQueueManager(), destination));
+		for (QueueManager queueManager : configuration.getQueueManagers()) {
+			for (Destination destination : queueManager.getDestinations()) {
+				for (int i=0; i < destination.getNrOfListeners(); i++) {
+					this.executorService.submit(new DestinationReader(this.processor, queueManager, destination));
+				}
 			}
 		}
 		if (configuration.getFlushInterval() > 0) {

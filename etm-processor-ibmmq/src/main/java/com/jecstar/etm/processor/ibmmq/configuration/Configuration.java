@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.ibmmq.configuration;
 
 import java.net.InetAddress;
+import java.util.List;
 
 public class Configuration {
 
@@ -9,7 +10,7 @@ public class Configuration {
 	private String masterAddresses;
 	private int flushInterval = 30000;
 	
-	private QueueManager queueManager;
+	private List<QueueManager> queueManagers;
 	
 	public String getClusterName() {
 		return this.clusterName;
@@ -43,12 +44,12 @@ public class Configuration {
 		this.flushInterval = flushInterval;
 	}
 	
-	public QueueManager getQueueManager() {
-		return this.queueManager;
+	public List<QueueManager> getQueueManagers() {
+		return this.queueManagers;
 	}
 	
-	public void setQueueManager(QueueManager queueManager) {
-		this.queueManager = queueManager;
+	public void setQueueManagers(List<QueueManager> queueManagers) {
+		this.queueManagers = queueManagers;
 	}
 	
 	public String getCalculatedNodeName() {
@@ -60,13 +61,16 @@ public class Configuration {
 	}
 	
 	public int getTotalNumberOfListeners() {
-		if (this.queueManager == null) {
+		if (this.queueManagers == null) {
 			return 0;
 		}
-		if (this.queueManager.getDestinations() == null) {
-			return 0;
+		int total = 0;
+		for (QueueManager queueManager : this.queueManagers) {
+			if (queueManager.getDestinations() != null) {
+				total += queueManager.getDestinations().stream().mapToInt(d -> d.getNrOfListeners()).sum(); 
+			}
 		}
-		return this.queueManager.getDestinations().stream().mapToInt(d -> d.getNrOfListeners()).sum();
+		return total;
 	}
 	
 	private String getHostName() {

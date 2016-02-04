@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.ibmmq;
 
 import java.io.IOException;
+import java.util.Hashtable;
 
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
@@ -65,11 +66,11 @@ public class DestinationReader implements Runnable {
 				byte[] byteContent = new byte[message.getMessageLength()];
 				message.readFully(byteContent);
 				this.telemetryEvent.initialize();
-				if ("etmevent".equalsIgnoreCase(destination.getMessageTypes()) && this.etmEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
+				if ("etmevent".equalsIgnoreCase(this.destination.getMessageTypes()) && this.etmEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
 					this.processor.processTelemetryEvent(this.telemetryEvent);
-				} else if ("ïibevent".equalsIgnoreCase(destination.getMessageTypes()) && this.iibEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
+				} else if ("ïibevent".equalsIgnoreCase(this.destination.getMessageTypes()) && this.iibEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
 					this.processor.processTelemetryEvent(this.telemetryEvent);
-				} else if ("clone".equalsIgnoreCase(destination.getMessageTypes()) && this.clonedMessageHandler.handleMessage(this.telemetryEvent, byteContent)) {
+				} else if ("clone".equalsIgnoreCase(this.destination.getMessageTypes()) && this.clonedMessageHandler.handleMessage(this.telemetryEvent, byteContent)) {
 					this.clonedMessageHandler.handleHeader(this.telemetryEvent, message);
 					this.processor.processTelemetryEvent(this.telemetryEvent);
 				} else {
@@ -156,10 +157,16 @@ public class DestinationReader implements Runnable {
 			log.logDebugMessage("Connecting to queuemanager");
 		}
 		try {
+			Hashtable<String, Object> connectionProperties = new Hashtable<String, Object>();
+			connectionProperties.put(CMQC.HOST_NAME_PROPERTY, this.queueManager.getHost());
+			if (this.queueManager.getChannel() != null) {
+				connectionProperties.put(CMQC.CHANNEL_PROPERTY, this.queueManager.getChannel());
+			}
+			connectionProperties.put(CMQC.PORT_PROPERTY, this.queueManager.getPort());
 			this.mqQueueManager = new MQQueueManager(this.queueManager.getName());
 			this.mqQueue = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
 			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Connected to queuemanager");
+				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "'");
 			}
 		} catch (MQException e) {
 			if (log.isDebugLevelEnabled()) {
