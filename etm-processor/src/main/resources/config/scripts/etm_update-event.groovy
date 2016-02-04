@@ -1,7 +1,7 @@
 if (id) {ctx._source.id = id};
 if (application) {ctx._source.application = application};
 if (content) {ctx._source.content = content};
-if (content_size) {ctx._source.content_size = content_size};
+if (content_length) {ctx._source.content_length = content_length};
 if (correlation_id) {ctx._source.correlation_id = correlation_id};
 if (correlation_data) {if (ctx._source.correlation_data) {ctx._source.correlation_data += correlation_data} else {ctx._source.correlation_data = correlation_data}};
 if (creation_time) {ctx._source.creation_time = creation_time};
