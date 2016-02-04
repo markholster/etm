@@ -9,6 +9,7 @@ public class Configuration {
 	private String nodeName;
 	private String masterAddresses;
 	private int flushInterval = 30000;
+	private boolean logMetrics;
 	
 	private List<QueueManager> queueManagers;
 	
@@ -50,6 +51,14 @@ public class Configuration {
 	
 	public void setQueueManagers(List<QueueManager> queueManagers) {
 		this.queueManagers = queueManagers;
+	}
+	
+	public boolean isLogMetrics() {
+		return this.logMetrics;
+	}
+	
+	public void setLogMetrics(boolean logMetrics) {
+		this.logMetrics = logMetrics;
 	}
 	
 	public String getCalculatedNodeName() {

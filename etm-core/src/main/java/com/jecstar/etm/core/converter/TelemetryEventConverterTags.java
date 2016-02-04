@@ -10,6 +10,7 @@ public interface TelemetryEventConverterTags {
 	String getIdTag();
 	String getApplicationTag();
 	String getContentTag();
+	String getContentSizeTag();
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
 	String getCreationTimeTag();

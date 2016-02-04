@@ -17,7 +17,6 @@ import org.elasticsearch.node.NodeBuilder;
 
 import com.codahale.metrics.Slf4jReporter;
 import com.esotericsoftware.yamlbeans.YamlReader;
-import com.ibm.mq.MQEnvironment;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -49,7 +48,7 @@ public class Startup {
 			public void run() {
 				if (Startup.this.scheduledExecutorService != null) {
 					if (log.isInfoLevelEnabled()) {
-						log.logInfoMessage("Shutting scheduler executors...");
+						log.logInfoMessage("Shutting down scheduler executors...");
 					}
 					Startup.this.scheduledExecutorService.shutdown();
 					try {
@@ -144,11 +143,13 @@ public class Startup {
 					TimeUnit.MILLISECONDS);
 		}
 		
-		this.metricReporter = Slf4jReporter.forRegistry(this.processor.getMetricRegistry())
-	       .convertRatesTo(TimeUnit.SECONDS)
-	       .convertDurationsTo(TimeUnit.MILLISECONDS)
-	       .build();
-		this.metricReporter.start(30, TimeUnit.SECONDS);
+		if (configuration.isLogMetrics()) {
+			this.metricReporter = Slf4jReporter.forRegistry(this.processor.getMetricRegistry())
+		       .convertRatesTo(TimeUnit.SECONDS)
+		       .convertDurationsTo(TimeUnit.MILLISECONDS)
+		       .build();
+			this.metricReporter.start(1, TimeUnit.MINUTES);
+		}
 		if (log.isInfoLevelEnabled()) {
 			log.logInfoMessage("ETM Processor started.");
 		}

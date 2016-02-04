@@ -30,6 +30,11 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	}
 
 	@Override
+	public String getContentSizeTag() {
+		return "content_size";
+	}
+	
+	@Override
 	public String getEndpointTag() {
 		return "endpoint";
 	}
