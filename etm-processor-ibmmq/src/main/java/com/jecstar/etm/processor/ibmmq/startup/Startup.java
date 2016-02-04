@@ -61,7 +61,7 @@ public class Startup {
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Shutting down listeners...");
 					}
-					Startup.this.executorService.shutdown();
+					Startup.this.executorService.shutdownNow();
 					try {
 						Startup.this.executorService.awaitTermination(1, TimeUnit.MINUTES);
 					} catch (InterruptedException e) {
