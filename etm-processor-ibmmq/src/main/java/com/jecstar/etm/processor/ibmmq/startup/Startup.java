@@ -179,6 +179,7 @@ public class Startup {
 			YamlReader ymlReader = new YamlReader(reader);
 			ymlReader.getConfig().setClassTag("configuration", Configuration.class);
 			ymlReader.getConfig().setClassTag("destination", Destination.class);
+			ymlReader.getConfig().setClassTag("queueManager", QueueManager.class);
 			return (Configuration) ymlReader.read();
 		} catch (FileNotFoundException e) {
 			if (log.isDebugLevelEnabled()) {

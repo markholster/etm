@@ -4,7 +4,7 @@ import java.util.List;
 
 public class QueueManager {
 
-	private String name = "QM1";
+	private String name = "QMGR";
 	private String host = "127.0.0.1";
 	private int port = 1414;
 	private String channel;
