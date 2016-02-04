@@ -167,11 +167,11 @@ public class DestinationReader implements Runnable {
 			this.mqQueueManager = new MQQueueManager(this.queueManager.getName(), connectionProperties);
 			this.mqQueue = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
 			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "'");
+				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "' and queue '" + this.destination.getName() + "'");
 			}
 		} catch (MQException e) {
-			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Failed to connect to queuemanager", e);
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage("Failed to connect to queuemanager '" + this.queueManager.getName() + "' and/or queue '" + this.destination.getName() + "'" , e);
 			}
 		}
 	}
@@ -184,7 +184,9 @@ public class DestinationReader implements Runnable {
 			try {
 				this.mqQueue.close();
 			} catch (MQException e) {
-				e.printStackTrace();
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Unable to close queue", e);
+				}
 			}
 		}
 		if (this.mqQueueManager != null) {
