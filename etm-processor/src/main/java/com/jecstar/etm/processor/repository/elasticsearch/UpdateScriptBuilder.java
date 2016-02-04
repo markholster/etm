@@ -23,7 +23,7 @@ public class UpdateScriptBuilder {
 		addValueSetterToScript(parameters, tags.getIdTag(), event.id);
 		addValueSetterToScript(parameters, tags.getApplicationTag(), event.application);
 		addValueSetterToScript(parameters, tags.getContentTag(), event.content);
-		addValueSetterToScript(parameters, tags.getContentSizeTag(), event.content == null ? 0 : event.content.length());
+		addValueSetterToScript(parameters, tags.getContentLengthTag(), event.content == null ? 0 : event.content.length());
 		addValueSetterToScript(parameters, tags.getCorrelationIdTag(), event.correlationId);
 		addMapAppenderToScript(parameters, tags.getCorrelationDataTag(), event.correlationData, tags);
 		addValueSetterToScript(parameters, tags.getCreationTimeTag(), event.creationTime.getTime() == 0 ? null : event.creationTime.getTime());

@@ -24,6 +24,7 @@
 				<module>../etm-processor-jee-configurator</module>
 				<module>../etm-processor</module>
 				<module>../etm-processor-mdb</module>
+				<module>../etm-processor-ibmmq</module>
 				<module>../etm-processor-rest</module>
 				<module>../etm-processor-ws</module>
 				<module>../etm-gui-jee-configurator</module>

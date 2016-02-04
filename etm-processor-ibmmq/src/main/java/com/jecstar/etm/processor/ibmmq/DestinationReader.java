@@ -86,7 +86,7 @@ public class DestinationReader implements Runnable {
 					}
 				}
 				message.clearMessage();
-				if (++counter >= this.destination.getCommitSize()) {
+				if (++this.counter >= this.destination.getCommitSize()) {
 					commit();
 				}
 			} catch (MQException e) {
@@ -148,7 +148,7 @@ public class DestinationReader implements Runnable {
 				}
 			}
 		}
-		counter = 0;
+		this.counter = 0;
 		this.lastCommitTime = System.currentTimeMillis();		
 	}
 	
@@ -158,12 +158,13 @@ public class DestinationReader implements Runnable {
 		}
 		try {
 			Hashtable<String, Object> connectionProperties = new Hashtable<String, Object>();
+			connectionProperties.put(CMQC.TRANSPORT_PROPERTY, CMQC.TRANSPORT_MQSERIES_CLIENT);
 			connectionProperties.put(CMQC.HOST_NAME_PROPERTY, this.queueManager.getHost());
 			if (this.queueManager.getChannel() != null) {
 				connectionProperties.put(CMQC.CHANNEL_PROPERTY, this.queueManager.getChannel());
 			}
 			connectionProperties.put(CMQC.PORT_PROPERTY, this.queueManager.getPort());
-			this.mqQueueManager = new MQQueueManager(this.queueManager.getName());
+			this.mqQueueManager = new MQQueueManager(this.queueManager.getName(), connectionProperties);
 			this.mqQueue = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "'");
