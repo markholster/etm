@@ -33,6 +33,9 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.security.idm.IdentityManager;
+import io.undertow.security.impl.InMemorySingleSignOnManager;
+import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
+import io.undertow.security.impl.SingleSignOnManager;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
@@ -44,6 +47,7 @@ import io.undertow.servlet.api.SecurityConstraint;
 import io.undertow.servlet.api.ServletContainer;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.WebResourceCollection;
+import io.undertow.util.ImmediateAuthenticationMechanismFactory;
 
 public class HttpServer {
 
@@ -56,6 +60,7 @@ public class HttpServer {
 	private Undertow server;
 	private GracefulShutdownHandler shutdownHandler;
 	private boolean started;
+	private final SingleSignOnManager singleSignOnManager = new InMemorySingleSignOnManager();
 
 	public HttpServer(File configDir, Configuration configuration, TelemetryCommandProcessor processor, Client client) {;
 		this.configuration = configuration;
@@ -156,6 +161,8 @@ public class HttpServer {
 			di.addSecurityConstraint(new SecurityConstraint().addRoleAllowed("processor").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
 			di.addSecurityRoles("processor");
 			di.setIdentityManager(identityManager);
+			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
+			di.setLoginConfig(new LoginConfig("SSO","Enterprise Telemetry Monitor"));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
 		}
 		di.setClassLoader(processorApplication.getClass().getClassLoader());
@@ -177,6 +184,8 @@ public class HttpServer {
 			di.addSecurityRoles("searcher");
 			di.setIdentityManager(identityManager);
 			di.setDisableCachingForSecuredPages(false);
+			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
+			di.setLoginConfig(new LoginConfig("SSO","Enterprise Telemetry Monitor"));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
 		}
 		di.setClassLoader(guiApplication.getClass().getClassLoader());

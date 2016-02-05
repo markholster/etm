@@ -9,6 +9,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
+
 import io.undertow.security.idm.Account;
 import io.undertow.security.idm.Credential;
 import io.undertow.security.idm.IdentityManager;
@@ -16,6 +19,12 @@ import io.undertow.security.idm.PasswordCredential;
 import io.undertow.security.idm.X509CertificateCredential;
 
 public class PropertiesIdentityManager implements IdentityManager {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(PropertiesIdentityManager.class);
+
 
 	private final Properties users = new Properties();
 	private final Properties roles = new Properties();
@@ -38,8 +47,18 @@ public class PropertiesIdentityManager implements IdentityManager {
 	}
 
 	private void loadProperties(Properties properties, File file) {
-		if (!file.isFile() || !file.canRead()) {
+		if (!file.isFile()) {
 			properties.clear();
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage("Unable to read properties from '" + file.getPath() + "' because it isn't a file. Authentication of users may fail.");
+			}			
+			return;
+		}
+		if (!file.canRead()) {
+			properties.clear();
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage("Unable to read properties from '" + file.getPath() + "' because it cant't read the file. Authentication of users may fail.");
+			}			
 			return;
 		}
 		try (Reader reader = new FileReader(file)) {
@@ -48,7 +67,9 @@ public class PropertiesIdentityManager implements IdentityManager {
 				properties.load(reader);
 			}
 		} catch (IOException e) {
-			// TODO Error handling.
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage("Unable to read properties from '" + file.getPath() + "'. Authentication of users may fail.", e);
+			}
 		}
 	}
 

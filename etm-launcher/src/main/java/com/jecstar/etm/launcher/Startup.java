@@ -43,6 +43,9 @@ public class Startup {
 		addShutdownHook();
 		try {
 			CommandLineParameters commandLineParameters = new CommandLineParameters(args);
+			if (!commandLineParameters.isProceedNormalStartup()) {
+				return;
+			}
 			final File configDir = new File(commandLineParameters.getConfigDirectory());
 			final Configuration configuration = loadConfiguration(configDir);
 			if (configuration.isProcessorNecessary() || configuration.guiEnabled) {
