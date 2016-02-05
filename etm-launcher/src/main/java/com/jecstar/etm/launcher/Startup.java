@@ -42,7 +42,8 @@ public class Startup {
 	public static void main(String[] args) {
 		addShutdownHook();
 		try {
-			final File configDir = new File("config");
+			CommandLineParameters commandLineParameters = new CommandLineParameters(args);
+			final File configDir = new File(commandLineParameters.getConfigDirectory());
 			final Configuration configuration = loadConfiguration(configDir);
 			if (configuration.isProcessorNecessary() || configuration.guiEnabled) {
 				initializeElasticsearchClient(configuration);
@@ -69,7 +70,6 @@ public class Startup {
 			if (log.isFatalLevelEnabled()) {
 				log.logFatalMessage("Error launching Enterprise Telemetry Monitor", e);
 			}
-		} finally {
 		}
 	}
 
