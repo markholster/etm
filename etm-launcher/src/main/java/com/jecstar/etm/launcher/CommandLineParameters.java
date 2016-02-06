@@ -1,12 +1,26 @@
 package com.jecstar.etm.launcher;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlWriter;
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
+import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.BCrypt;
 
 public class CommandLineParameters {
 
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(Startup.class);
 	
 	private static final String PARAM_CONFIG_DIRECTORY = "--config-dir=";
 	private static final String PARAM_CREATE_PASSWORD = "--create-password=";
+	private static final String PARAM_DUMP_DEFAULT_CONFIG = "--dump-default-config";
 	
 	private String configDirectory = "config";
 
@@ -22,6 +36,20 @@ public class CommandLineParameters {
 			} else if (argument.startsWith(PARAM_CREATE_PASSWORD)) {
 				this.proceedNormalStartup = false;
 				System.out.println(BCrypt.hashpw(argument.substring(PARAM_CREATE_PASSWORD.length()), BCrypt.gensalt()));
+			} else if (argument.startsWith(PARAM_DUMP_DEFAULT_CONFIG)) {
+				this.proceedNormalStartup = false;
+				try (Writer writer = new OutputStreamWriter(System.out);){
+					YamlWriter yamlWriter = new YamlWriter(writer);
+					yamlWriter.getConfig().setBeanProperties(false);
+					yamlWriter.getConfig().writeConfig.setWriteDefaultValues(true);
+					
+					yamlWriter.write(new Configuration());
+					yamlWriter.close();
+				} catch (YamlException e) {
+					log.logErrorMessage("Unable to dump default configuration", e);
+				} catch (IOException e) {
+					log.logErrorMessage("Unable to dump default configuration", e);
+				}
 			}
 		}
 	}
