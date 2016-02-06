@@ -36,9 +36,11 @@ import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.InMemorySingleSignOnManager;
 import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
 import io.undertow.security.impl.SingleSignOnManager;
+import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
+import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -65,7 +67,7 @@ public class HttpServer {
 	public HttpServer(File configDir, Configuration configuration, TelemetryCommandProcessor processor, Client client) {;
 		this.configuration = configuration;
 		final PathHandler root = Handlers.path();
-		this.shutdownHandler = Handlers.gracefulShutdown(root);
+		this.shutdownHandler = Handlers.gracefulShutdown(Handlers.requestLimitingHandler(configuration.http.maxConcurrentRequests, configuration.http.maxQueuedRequests, root));
 		final ServletContainer container = ServletContainer.Factory.newInstance();
 		Builder builder = Undertow.builder();
 		if (this.configuration.getHttpPort() > 0) {
@@ -102,7 +104,8 @@ public class HttpServer {
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
-				root.addPrefixPath(di.getContextPath(), manager.start());
+				HttpHandler httpHandler = manager.start();
+				root.addPrefixPath(di.getContextPath(), new SessionAttachmentHandler(httpHandler, manager.getDeployment().getSessionManager(), manager.getDeployment().getServletContext().getSessionConfig()));
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Bound rest processor to '" + di.getContextPath() + "'.");
 				}
@@ -117,7 +120,8 @@ public class HttpServer {
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
-				root.addPrefixPath(di.getContextPath(), manager.start());
+				HttpHandler httpHandler = manager.start();
+				root.addPrefixPath(di.getContextPath(), new SessionAttachmentHandler(httpHandler, manager.getDeployment().getSessionManager(), manager.getDeployment().getServletContext().getSessionConfig()));
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
 				}
@@ -162,8 +166,7 @@ public class HttpServer {
 			di.addSecurityRoles("processor");
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
-			di.setLoginConfig(new LoginConfig("SSO","Enterprise Telemetry Monitor"));
-			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
+			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
 		}
 		di.setClassLoader(processorApplication.getClass().getClassLoader());
 		di.setContextPath("/rest/processor/");
@@ -183,10 +186,8 @@ public class HttpServer {
 			di.addSecurityConstraint(new SecurityConstraint().addRoleAllowed("searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/*")));
 			di.addSecurityRoles("searcher");
 			di.setIdentityManager(identityManager);
-			di.setDisableCachingForSecuredPages(false);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
-			di.setLoginConfig(new LoginConfig("SSO","Enterprise Telemetry Monitor"));
-			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
+			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
 		}
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
 		di.setContextPath("/gui");

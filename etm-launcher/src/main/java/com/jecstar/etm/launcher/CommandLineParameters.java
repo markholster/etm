@@ -6,20 +6,13 @@ import java.io.Writer;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlWriter;
-import com.jecstar.etm.core.logging.LogFactory;
-import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.BCrypt;
 
 public class CommandLineParameters {
 
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(Startup.class);
-	
 	private static final String PARAM_CONFIG_DIRECTORY = "--config-dir=";
-	private static final String PARAM_CREATE_PASSWORD = "--create-password=";
+	private static final String PARAM_CREATE_PASSWORD = "--create-passwordhash=";
 	private static final String PARAM_DUMP_DEFAULT_CONFIG = "--dump-default-config";
 	
 	private String configDirectory = "config";
@@ -46,9 +39,9 @@ public class CommandLineParameters {
 					yamlWriter.write(new Configuration());
 					yamlWriter.close();
 				} catch (YamlException e) {
-					log.logErrorMessage("Unable to dump default configuration", e);
+					e.printStackTrace();
 				} catch (IOException e) {
-					log.logErrorMessage("Unable to dump default configuration", e);
+					e.printStackTrace();
 				}
 			}
 		}
