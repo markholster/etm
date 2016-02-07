@@ -1,5 +1,6 @@
 package com.jecstar.etm.core.domain.converter.json;
 
+import java.util.List;
 import java.util.Map;
 
 import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
@@ -34,7 +35,10 @@ public class MessagingTelemetryEventConverterJsonImpl extends AbstractJsonTeleme
 	void doConvert(MessagingTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
 		telemetryEvent.expiry = getZonedDateTime(getTags().getExpiryTag(), valueMap);
 		telemetryEvent.messagingEventType = MessagingEventType.safeValueOf(getString(getTags().getMessagingEventTypeTag(), valueMap));
-		getArray(getTags().getReadingEndpointHandlersTag(), valueMap).forEach(c -> telemetryEvent.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
+		List<Map<String, Object>> endpointHandlers = getArray(getTags().getReadingEndpointHandlersTag(), valueMap);
+		if (endpointHandlers != null) {
+			endpointHandlers.forEach(c -> telemetryEvent.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
+		}
 	}
 
 }

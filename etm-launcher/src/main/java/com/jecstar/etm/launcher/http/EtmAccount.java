@@ -1,24 +1,25 @@
 package com.jecstar.etm.launcher.http;
 
-import java.security.Principal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.jecstar.etm.core.domain.EtmPrincipal;
 
 import io.undertow.security.idm.Account;
 
 public class EtmAccount implements Account {
 	
-	private final Principal principal;
+	private final EtmPrincipal principal;
 	private long lastUpdated;
 	private Set<String> roles = new HashSet<String>();
 	
-	EtmAccount(Principal principal) {
+	EtmAccount(EtmPrincipal principal) {
 		this.principal = principal;
 	}
 
 	@Override
-	public Principal getPrincipal() {
+	public EtmPrincipal getPrincipal() {
 		return this.principal;
 	}
 
@@ -29,7 +30,9 @@ public class EtmAccount implements Account {
 	
 	public void setRoles(Collection<String> roles) {
 		this.roles.clear();
-		this.roles.addAll(roles);
+		if (roles != null) {
+			this.roles.addAll(roles);
+		}
 		this.lastUpdated = System.currentTimeMillis();
 	}
 	

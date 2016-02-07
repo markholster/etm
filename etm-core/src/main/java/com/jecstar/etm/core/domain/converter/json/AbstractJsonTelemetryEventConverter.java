@@ -2,6 +2,7 @@ package com.jecstar.etm.core.domain.converter.json;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -125,11 +126,20 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		telemetryEvent.initialize();
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
-		getArray(this.tags.getCorrelationDataTag(), valueMap).forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		List<Map<String, Object>> eventMap = getArray(this.tags.getCorrelationDataTag(), valueMap);
+		if (eventMap != null) {
+			eventMap.forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		}
 		telemetryEvent.endpoint = getString(this.tags.getEndpointTag(), valueMap);
-		getArray(this.tags.getExtractedDataTag(), valueMap).forEach(c -> telemetryEvent.extractedData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		eventMap = getArray(this.tags.getExtractedDataTag(), valueMap);
+		if (eventMap != null) {
+			eventMap.forEach(c -> telemetryEvent.extractedData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		}
 		telemetryEvent.name = getString(this.tags.getNameTag(), valueMap);
-		getArray(this.tags.getMetadataTag(), valueMap).forEach(c -> telemetryEvent.metadata.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		eventMap = getArray(this.tags.getMetadataTag(), valueMap);
+		if (eventMap != null) {
+			eventMap.forEach(c -> telemetryEvent.metadata.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		}
 		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
 		telemetryEvent.payloadFormat = PayloadFormat.safeValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
 		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);

@@ -22,6 +22,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.launcher.configuration.Configuration;
+import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
@@ -52,7 +53,7 @@ public class Launcher {
 				initializeProcessor(configuration);
 			}
 			if (configuration.isHttpServerNecessary()) {
-				this.httpServer = new HttpServer(configDir, configuration, this.processor, this.elasticClient);
+				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, this.processor, this.elasticClient);
 				this.httpServer.start();
 			}
 			if (log.isInfoLevelEnabled()) {

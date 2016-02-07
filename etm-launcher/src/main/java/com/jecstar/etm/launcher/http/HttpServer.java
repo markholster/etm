@@ -64,7 +64,7 @@ public class HttpServer {
 	private boolean started;
 	private final SingleSignOnManager singleSignOnManager = new InMemorySingleSignOnManager();
 
-	public HttpServer(File configDir, Configuration configuration, TelemetryCommandProcessor processor, Client client) {;
+	public HttpServer(final IdentityManager identityManager, Configuration configuration, TelemetryCommandProcessor processor, Client client) {;
 		this.configuration = configuration;
 		final PathHandler root = Handlers.path();
 		this.shutdownHandler = Handlers.gracefulShutdown(Handlers.requestLimitingHandler(configuration.http.maxConcurrentRequests, configuration.http.maxQueuedRequests, root));
@@ -96,7 +96,6 @@ public class HttpServer {
 				}
 			}
 		}
-        final IdentityManager identityManager = new PropertiesIdentityManager(configDir);
 		
 		this.server = builder.setHandler(root).build();
 		if (this.configuration.restProcessorEnabled) {
@@ -162,8 +161,8 @@ public class HttpServer {
 		DeploymentInfo di = undertowRestDeployment(deployment, "/");
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
-			di.addSecurityConstraint(new SecurityConstraint().addRoleAllowed("processor").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
-			di.addSecurityRoles("processor");
+			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin", "processor").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
+			di.addSecurityRoles("admin", "processor");
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
@@ -183,8 +182,8 @@ public class HttpServer {
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			// TODO add the uri of all rest interfaces to the appropriated roles.
-			di.addSecurityConstraint(new SecurityConstraint().addRoleAllowed("searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/*")));
-			di.addSecurityRoles("searcher");
+			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/*")));
+			di.addSecurityRoles("admin", "searcher");
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));

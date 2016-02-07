@@ -6,11 +6,13 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.core.EtmException;
@@ -37,11 +39,11 @@ public abstract class AbstractJsonConverter {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected List<Map<String, Object>> getArray(String tag, Map<String, Object> valueMap) {
+	protected <T extends Collection<?>> T getArray(String tag, Map<String, Object> valueMap) {
 		if (valueMap.containsKey(tag)) {
-			return (List<Map<String, Object>>) valueMap.get(tag);
+			return (T) valueMap.get(tag);
 		}
-		return Collections.emptyList();
+		return null;
 	}
 	
 	protected String getString(String tag, Map<String, Object> valueMap) {
@@ -135,7 +137,22 @@ public abstract class AbstractJsonConverter {
 		buffer.append("\"" + escapeToJson(elementName) + "\": \"" + elementValue.getHostAddress() + "\"");
 		return true;
 	}
-
+	
+	protected boolean addSetElementToJsonBuffer(String elementName, Set<String> elementValues, StringBuilder buffer, boolean firstElement) {
+		if (elementValues.size() < 1) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("\"" + elementName + "\": [");
+		buffer.append(elementValues.stream()
+				.map(c -> "\"" + escapeToJson(c) + "\"")
+				.sorted()
+				.collect(Collectors.joining(", ")));
+		buffer.append("]");
+		return true;
+	}
 	
 	protected String escapeToJson(String value) {
 		return value.replace("\"", "\\\"");

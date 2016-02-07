@@ -9,10 +9,14 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.EtmPrincipal;
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
+import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
+import com.jecstar.etm.launcher.http.BCrypt;
 import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.metrics.MetricConverterTags;
 import com.jecstar.etm.processor.metrics.MetricConverterTagsJsonImpl;
@@ -22,16 +26,16 @@ public class ElasticsearchIndextemplateCreator {
 	private final TelemetryEventConverterTags eventTags = new TelemetryEventConverterTagsJsonImpl();
 	private final MetricConverterTags metricTags = new MetricConverterTagsJsonImpl();
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+	private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
 
 	public void createTemplates(Client elasticClient) {
-		final EtmConfiguration defaultConfiguration = new EtmConfiguration(null, null);
 		try {
 			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_event")
 				.setCreate(true)
 				.setTemplate("etm_event_*")
 				.setSettings(Settings.settingsBuilder()
-					.put("number_of_shards", defaultConfiguration.getShardsPerIndex())
-					.put("number_of_replicas", defaultConfiguration.getReplicasPerIndex()))
+					.put("number_of_shards", 5)
+					.put("number_of_replicas", 0))
 				.addMapping("_default_", createEventMapping("_default_")).addAlias(new Alias("etm_event_all"))
 				.get();
 		} catch (IndexTemplateAlreadyExistsException e) {}
@@ -41,8 +45,8 @@ public class ElasticsearchIndextemplateCreator {
 				.setCreate(true)
 				.setTemplate("etm_metrics_*")
 				.setSettings(Settings.settingsBuilder()
-					.put("number_of_shards", defaultConfiguration.getShardsPerIndex())
-					.put("number_of_replicas", defaultConfiguration.getReplicasPerIndex()))
+					.put("number_of_shards", 1)
+					.put("number_of_replicas", 0))
 				.addMapping("_default_", createMetricsMapping())
 				.get();
 		} catch (IndexTemplateAlreadyExistsException e) {}
@@ -53,25 +57,12 @@ public class ElasticsearchIndextemplateCreator {
 				.setTemplate(ElasticBackedEtmConfiguration.INDEX_NAME)
 				.setSettings(Settings.settingsBuilder()
 					.put("number_of_shards", 1)
-					.put("number_of_replicas", 1))
+					.put("number_of_replicas", 0))
 				.addMapping("_default_", createEtmConfigurationMapping())
 				.get();
 			insertDefaultEtmConfiguration(elasticClient);
+			insertAdminUser(elasticClient);
 		} catch (IndexTemplateAlreadyExistsException e) {}
-		
-		try {
-			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME)
-				.setCreate(true)
-				.setTemplate(ElasticBackedEtmConfiguration.INDEX_NAME)
-				.setSettings(Settings.settingsBuilder()
-					.put("number_of_shards", 1)
-					.put("number_of_replicas", 1))
-				.addMapping("_default_", createEtmConfigurationMapping())
-				.get();
-			insertDefaultEtmConfiguration(elasticClient);
-		} catch (IndexTemplateAlreadyExistsException e) {}
-		
-		// TODO store the users in an index and create an template for it. If the template is create also add a startup user.
 	}
 	
 	private String createEventMapping(String type) {
@@ -100,6 +91,14 @@ public class ElasticsearchIndextemplateCreator {
 			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", null)))
 			.get();
 	}
-
+	
+	private void insertAdminUser(Client elasticClient) {
+		EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
+		adminUser.addRole("admin");
+		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, "user", adminUser.getId())
+			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.setSource(this.etmPrincipalConverter.convert(adminUser))
+			.get();	
+	}
 
 }
