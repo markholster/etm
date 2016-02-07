@@ -11,9 +11,9 @@ import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonI
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
-	public static final String indexName = "etm_configuration";
-	public static final String defaultId = "default_configuration";
-	public static final String nodeIndexType = "node";
+	public static final String INDEX_NAME = "etm_configuration";
+	public static final String DEFAULT_ID = "default_configuration";
+	public static final String NODE_INDEX_TYPE = "node";
 	private final String licenseIndexType = "license";
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
@@ -98,9 +98,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
 			return changed;
 		}
-		GetResponse defaultResponse = this.elasticClient.prepareGet(indexName, nodeIndexType, defaultId).get();
-		GetResponse nodeResponse = this.elasticClient.prepareGet(indexName, nodeIndexType, getNodeName()).get();
-		GetResponse licenseResponse = this.elasticClient.prepareGet(indexName, this.licenseIndexType, defaultId).get();
+		GetResponse defaultResponse = this.elasticClient.prepareGet(INDEX_NAME, NODE_INDEX_TYPE, DEFAULT_ID).get();
+		GetResponse nodeResponse = this.elasticClient.prepareGet(INDEX_NAME, NODE_INDEX_TYPE, getNodeName()).get();
+		GetResponse licenseResponse = this.elasticClient.prepareGet(INDEX_NAME, this.licenseIndexType, DEFAULT_ID).get();
 
 		String defaultContent = defaultResponse.getSourceAsString();
 		String nodeContent = null;

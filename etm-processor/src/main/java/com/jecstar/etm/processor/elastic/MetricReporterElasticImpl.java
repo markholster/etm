@@ -243,7 +243,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 	 * @return The name of the index.
 	 */
 	public String getElasticIndexName(Instant instant) {
-		return "etm_stats_" + this.dateTimeFormatter.format(instant);		
+		return "etm_metrics_" + this.dateTimeFormatter.format(instant);		
 	}
 	
 }

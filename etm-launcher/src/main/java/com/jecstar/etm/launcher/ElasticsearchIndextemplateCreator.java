@@ -37,20 +37,20 @@ public class ElasticsearchIndextemplateCreator {
 		} catch (IndexTemplateAlreadyExistsException e) {}
 		
 		try {
-			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_stats")
+			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_metrics")
 				.setCreate(true)
-				.setTemplate("etm_stats_*")
+				.setTemplate("etm_metrics_*")
 				.setSettings(Settings.settingsBuilder()
 					.put("number_of_shards", defaultConfiguration.getShardsPerIndex())
 					.put("number_of_replicas", defaultConfiguration.getReplicasPerIndex()))
-				.addMapping("_default_", createStatsMapping())
+				.addMapping("_default_", createMetricsMapping())
 				.get();
 		} catch (IndexTemplateAlreadyExistsException e) {}
 		
 		try {
-			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticBackedEtmConfiguration.indexName)
+			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME)
 				.setCreate(true)
-				.setTemplate(ElasticBackedEtmConfiguration.indexName)
+				.setTemplate(ElasticBackedEtmConfiguration.INDEX_NAME)
 				.setSettings(Settings.settingsBuilder()
 					.put("number_of_shards", 1)
 					.put("number_of_replicas", 1))
@@ -58,6 +58,20 @@ public class ElasticsearchIndextemplateCreator {
 				.get();
 			insertDefaultEtmConfiguration(elasticClient);
 		} catch (IndexTemplateAlreadyExistsException e) {}
+		
+		try {
+			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME)
+				.setCreate(true)
+				.setTemplate(ElasticBackedEtmConfiguration.INDEX_NAME)
+				.setSettings(Settings.settingsBuilder()
+					.put("number_of_shards", 1)
+					.put("number_of_replicas", 1))
+				.addMapping("_default_", createEtmConfigurationMapping())
+				.get();
+			insertDefaultEtmConfiguration(elasticClient);
+		} catch (IndexTemplateAlreadyExistsException e) {}
+		
+		// TODO store the users in an index and create an template for it. If the template is create also add a startup user.
 	}
 	
 	private String createEventMapping(String type) {
@@ -70,7 +84,7 @@ public class ElasticsearchIndextemplateCreator {
 				+ "]}";
 	}
 	
-	private String createStatsMapping() {
+	private String createMetricsMapping() {
 		return "{\"dynamic_templates\": ["
 				+ "{ \"" + this.metricTags.getTimestampTag() + "\": { \"match\": \"" + this.metricTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
 				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}";	
@@ -81,7 +95,7 @@ public class ElasticsearchIndextemplateCreator {
 	}
 
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
-		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.indexName, ElasticBackedEtmConfiguration.nodeIndexType, ElasticBackedEtmConfiguration.defaultId)
+		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, ElasticBackedEtmConfiguration.NODE_INDEX_TYPE, ElasticBackedEtmConfiguration.DEFAULT_ID)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
 			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", null)))
 			.get();
