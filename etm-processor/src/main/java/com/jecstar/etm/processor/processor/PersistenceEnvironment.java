@@ -11,6 +11,4 @@ public interface PersistenceEnvironment extends Closeable {
 	
 	ScheduledReporter createMetricReporter(String nodeName, MetricRegistry metricRegistry);
 	
-	void createEnvironment();
-	
 }

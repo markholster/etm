@@ -151,8 +151,10 @@ public class Launcher {
 			}
 			this.elasticClient = transportClient;
 		}
+		new ElasticsearchIndextemplateCreator().createTemplates(this.elasticClient);
 	}
 
+	
 	private Configuration loadConfiguration(File configDir) throws FileNotFoundException, YamlException {
 		if (!configDir.exists()) {
 			Configuration configuration = new Configuration();
