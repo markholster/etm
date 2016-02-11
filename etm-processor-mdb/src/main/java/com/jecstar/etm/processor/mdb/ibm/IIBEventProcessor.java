@@ -149,7 +149,7 @@ public class IIBEventProcessor implements MessageListener {
 				DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decoded));
 				MQMD mqmd = new MQMD(inputData);
 				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_Format", mqmd.getFormat(), telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, telemetryEvent.metadata);
 				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), telemetryEvent.metadata);
 				putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), telemetryEvent.metadata);
 				putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), telemetryEvent.metadata);
