@@ -29,6 +29,7 @@ import com.ibm.mq.headers.MQRFH2;
 import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.TelemetryEventType;
+import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.ibmmq.event.ApplicationData.ComplexContent;
@@ -42,13 +43,14 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(IIBEventHandler.class);
 
+	private final EtmConfiguration etmConfiguration;
+	
 	private final StringBuilder byteArrayBuilder = new StringBuilder();
-
 	private final Unmarshaller unmarshaller;
-
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 	
-	public IIBEventHandler() {
+	public IIBEventHandler(EtmConfiguration etmConfiguration) {
+		this.etmConfiguration = etmConfiguration;
 		this.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		try {
 			JAXBContext jaxbContext = JAXBContext.newInstance(Event.class);
@@ -91,7 +93,7 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 			telemetryEvent.endpoint = event.getEventPointData().getMessageFlowData().getNode().getDetail();
 		} else if ("ComIbmMQOutputNode".equals(event.getEventPointData().getMessageFlowData().getNode().getNodeType())) {
 			mqBitstream = true;
-			// TODO, filteren op input terminal? Events op de in terminal van de
+			// TODO, filteren op output terminal? Events op de in terminal van de
 			// MqOutputNode hebben nog geen msg id.
 			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
 				if (!("DestinationData".equals(complexContent.getElementName())
@@ -107,6 +109,9 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 		} else if (event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmWS") || 
 				event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmHTTP")) {
 			httpBitstream = true;
+		}
+		if (customAchmeaFiltering(telemetryEvent)) {
+			return false;
 		}
 		if (event.getBitstreamData() != null && event.getBitstreamData().getBitstream() != null) {
 			if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
@@ -224,6 +229,17 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 				log.logDebugMessage("Unable to close reader.", e);
 			}
 		}
+	}
+	
+	private boolean customAchmeaFiltering(TelemetryEvent telemetryEvent) {
+		String companyName = this.etmConfiguration.getLicense().getOwner();
+		if (!companyName.startsWith("Achmea")) {
+			return false;
+		}
+		if ("ESB.MSG.ESL".equals(telemetryEvent.endpoint) || "ESB.DTG.STA".equals(telemetryEvent.endpoint)) {
+			return true;
+		}
+		return false;
 	}
 
 	private void putNonNullDataInMap(String key, String value, Map<String, String> map) {

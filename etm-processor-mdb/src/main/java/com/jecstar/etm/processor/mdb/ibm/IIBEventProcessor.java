@@ -47,7 +47,7 @@ public class IIBEventProcessor implements MessageListener {
 
 	@ProcessorConfiguration
 	@Inject
-	private EtmConfiguration configration;
+	private EtmConfiguration configuration;
 
 	@Inject
 	@ProcessorConfiguration
@@ -131,8 +131,7 @@ public class IIBEventProcessor implements MessageListener {
 
 	private boolean copyIbmEventToTelemetryEvent(Event event, TelemetryEvent telemetryEvent) {
 		telemetryEvent.endpoint = event.eventPointData.messageFlowData.node.detail;
-		if ("ESB.MSG.ESL".equals(telemetryEvent.endpoint) || "ESB.DTG.STA".equals(telemetryEvent.endpoint)) {
-			// TODO achmea maatwerk. Configuratie hier uitlezen.
+		if (customAchmeaFiltering(telemetryEvent)) {
 			return false;
 		}
 		putNonNullDataInMap("IIB_Node", event.eventPointData.messageFlowData.broker.name, telemetryEvent.metadata);
@@ -197,6 +196,17 @@ public class IIBEventProcessor implements MessageListener {
 				}
 				return false;
 			}
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean customAchmeaFiltering(TelemetryEvent telemetryEvent) {
+		String companyName = this.configuration.getLicense().getOwner();
+		if (!companyName.startsWith("Achmea")) {
+			return false;
+		}
+		if ("ESB.MSG.ESL".equals(telemetryEvent.endpoint) || "ESB.DTG.STA".equals(telemetryEvent.endpoint)) {
 			return true;
 		}
 		return false;

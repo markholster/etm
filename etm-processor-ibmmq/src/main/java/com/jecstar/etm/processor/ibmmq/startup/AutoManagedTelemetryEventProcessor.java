@@ -54,6 +54,10 @@ public class AutoManagedTelemetryEventProcessor implements ConfigurationChangeLi
 	public MetricRegistry getMetricRegistry() {
 		return this.metricRegistry;
 	}
+	
+	public EtmConfiguration getEtmConfiguration() {
+		return this.etmConfiguration;
+	}
 
 	@Override
 	public void configurationChanged(ConfigurationChangedEvent event) {

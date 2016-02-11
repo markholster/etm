@@ -48,7 +48,7 @@ public class DestinationReader implements Runnable {
 		this.queueManager = queueManager;
 		this.destination = destination;
 		this.etmEventHandler = new XmlTelemetryEventHandler();
-		this.iibEventHandler = new IIBEventHandler();
+		this.iibEventHandler = new IIBEventHandler(processor.getEtmConfiguration());
 		this.clonedMessageHandler = new ClonedMessageHandler();
 	}
 	@Override
