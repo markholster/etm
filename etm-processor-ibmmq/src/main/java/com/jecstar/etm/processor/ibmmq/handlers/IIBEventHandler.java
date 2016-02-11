@@ -6,7 +6,11 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Map;
+import java.util.TimeZone;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -41,8 +45,11 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 	private final StringBuilder byteArrayBuilder = new StringBuilder();
 
 	private final Unmarshaller unmarshaller;
+
+	private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 	
 	public IIBEventHandler() {
+		this.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		try {
 			JAXBContext jaxbContext = JAXBContext.newInstance(Event.class);
 			this.unmarshaller = jaxbContext.createUnmarshaller();
@@ -104,8 +111,7 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 		if (event.getBitstreamData() != null && event.getBitstreamData().getBitstream() != null) {
 			if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
 				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage(
-							"Bitstream encoding type '" + event.getBitstreamData().getBitstream().getEncoding().hashCode()
+					log.logWarningMessage("Bitstream encoding type '" + event.getBitstreamData().getBitstream().getEncoding().hashCode()
 									+ "' not supported. Use '" + EncodingType.BASE_64_BINARY.name() + "' instead.");
 				}
 				return false;
@@ -128,6 +134,11 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 					log.logWarningMessage("Failed to parse Ibm Event bitstream.", e);
 				}
 				return false;
+			} catch (ParseException e) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Failed to parse Ibm Event bitstream.", e);
+				}
+				return false;
 			}
 			return true;
 		}
@@ -135,7 +146,7 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 	}
 
 	private void parseBitstreamAsMqMessage(byte[] decodedBitstream, TelemetryEvent telemetryEvent)
-			throws MQDataException, IOException {
+			throws MQDataException, IOException, ParseException {
 		try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
 
 			MQMD mqmd = new MQMD(inputData);
@@ -145,8 +156,8 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 			putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), telemetryEvent.metadata);
 			putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), telemetryEvent.metadata);
 			putNonNullDataInMap("MQMD_Priority", "" + mqmd.getPriority(), telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr(), telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ(), telemetryEvent.metadata);
+			putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr() != null ? mqmd.getReplyToQMgr().trim() : null, telemetryEvent.metadata);
+			putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ() != null ? mqmd.getReplyToQ().trim() : null, telemetryEvent.metadata);
 			putNonNullDataInMap("MQMD_BackoutCount", "" + mqmd.getBackoutCount(), telemetryEvent.metadata);
 			if (mqmd.getFormat().equals(MQConstants.MQFMT_RF_HEADER_2)) {
 				new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
@@ -161,9 +172,9 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 			if (mqmd.getCorrelId() != null && mqmd.getCorrelId().length > 0) {
 				telemetryEvent.correlationId = byteArrayToString(mqmd.getCorrelId());
 			}
-			telemetryEvent.creationTime.setTime(mqmd.getPutDateTime());
+			telemetryEvent.creationTime.setTime(this.dateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime());
 			if (CMQC.MQEI_UNLIMITED != mqmd.getExpiry()) {
-				telemetryEvent.expiryTime.setTime(mqmd.getPutDateTime() + (mqmd.getExpiry() * 100));
+				telemetryEvent.expiryTime.setTime(telemetryEvent.creationTime.getTime() + (mqmd.getExpiry() * 100));
 			}
 			int ibmMsgType = mqmd.getMsgType();
 			if (ibmMsgType == CMQC.MQMT_REQUEST) {
