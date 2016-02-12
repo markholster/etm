@@ -2,6 +2,9 @@ package com.jecstar.etm.launcher;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.indices.alias.Alias;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesAction;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequestBuilder;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.client.Client;
@@ -30,38 +33,47 @@ public class ElasticsearchIndextemplateCreator {
 
 	public void createTemplates(Client elasticClient) {
 		try {
-			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_event")
-				.setCreate(true)
-				.setTemplate("etm_event_*")
-				.setSettings(Settings.settingsBuilder()
-					.put("number_of_shards", 5)
-					.put("number_of_replicas", 0))
-				.addMapping("_default_", createEventMapping("_default_")).addAlias(new Alias("etm_event_all"))
-				.get();
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(elasticClient, GetIndexTemplatesAction.INSTANCE, "etm_event").get();
+			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+				new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_event")
+					.setCreate(true)
+					.setTemplate("etm_event_*")
+					.setSettings(Settings.settingsBuilder()
+						.put("number_of_shards", 5)
+						.put("number_of_replicas", 0))
+					.addMapping("_default_", createEventMapping("_default_")).addAlias(new Alias("etm_event_all"))
+					.get();
+			}
 		} catch (IndexTemplateAlreadyExistsException e) {}
 		
 		try {
-			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_metrics")
-				.setCreate(true)
-				.setTemplate("etm_metrics_*")
-				.setSettings(Settings.settingsBuilder()
-					.put("number_of_shards", 1)
-					.put("number_of_replicas", 0))
-				.addMapping("_default_", createMetricsMapping())
-				.get();
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(elasticClient, GetIndexTemplatesAction.INSTANCE, "etm_metrics").get();
+			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+				new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_metrics")
+					.setCreate(true)
+					.setTemplate("etm_metrics_*")
+					.setSettings(Settings.settingsBuilder()
+						.put("number_of_shards", 1)
+						.put("number_of_replicas", 0))
+					.addMapping("_default_", createMetricsMapping())
+					.get();
+			}
 		} catch (IndexTemplateAlreadyExistsException e) {}
 		
 		try {
-			new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME)
-				.setCreate(true)
-				.setTemplate(ElasticBackedEtmConfiguration.INDEX_NAME)
-				.setSettings(Settings.settingsBuilder()
-					.put("number_of_shards", 1)
-					.put("number_of_replicas", 0))
-				.addMapping("_default_", createEtmConfigurationMapping())
-				.get();
-			insertDefaultEtmConfiguration(elasticClient);
-			insertAdminUser(elasticClient);
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME).get();
+			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+				new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME)
+					.setCreate(true)
+					.setTemplate(ElasticBackedEtmConfiguration.INDEX_NAME)
+					.setSettings(Settings.settingsBuilder()
+						.put("number_of_shards", 1)
+						.put("number_of_replicas", 0))
+					.addMapping("_default_", createEtmConfigurationMapping())
+					.get();
+				insertDefaultEtmConfiguration(elasticClient);
+				insertAdminUser(elasticClient);
+			}
 		} catch (IndexTemplateAlreadyExistsException e) {}
 	}
 	
