@@ -13,6 +13,8 @@ import com.jecstar.etm.core.domain.LogTelemetryEventBuilder;
 
 public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
+	private static final long serialVersionUID = 3661857038951845151L;
+	
 	private static final String LEVEL_TRACE = "TRACE";
 	private static final String LEVEL_DEBUG = "DEBUG";
 	private static final String LEVEL_INFO = "INFO";
@@ -20,11 +22,15 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	private static final String LEVEL_ERROR = "ERROR";
 	
 	private final static String FQCN = EtmLogger.class.getName();
+	private final EtmLogForwarder logForwarder;
 	private final String applicationName;
 	private final String applicationVersion;
 	private final String applicationInstance;
+	private final String loggerName;
 
-	public EtmLogger(String applicationName, String applicationVersion, String applicationInstance) {
+	public EtmLogger(EtmLogForwarder logForwarder, String loggerName, String applicationName, String applicationVersion, String applicationInstance) {
+		this.logForwarder = logForwarder;
+		this.loggerName = loggerName;
 		this.applicationName = applicationName;
 		this.applicationVersion = applicationVersion;
 		this.applicationInstance = applicationInstance;
@@ -33,7 +39,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	@Override
 	public boolean isTraceEnabled() {
 		// TODO determine level enabling.
-		return false;
+		return true;
 	}
 
 	@Override
@@ -82,7 +88,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	@Override
 	public boolean isDebugEnabled() {
 		// TODO determine level enabling.
-		return false;
+		return true;
 	}
 
 	@Override
@@ -131,7 +137,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	@Override
 	public boolean isInfoEnabled() {
 		// TODO determine level enabling.
-		return false;
+		return true;
 	}
 
 	@Override
@@ -180,7 +186,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	@Override
 	public boolean isWarnEnabled() {
 		// TODO determine level enabling.
-		return false;
+		return true;
 	}
 
 	@Override
@@ -229,7 +235,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	@Override
 	public boolean isErrorEnabled() {
 		// TODO determine level enabling.
-		return false;
+		return true;
 	}
 
 	@Override
@@ -318,11 +324,13 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	private void log(String callerFQCN, String logLevel, String payload, Throwable throwable) {
 		LogLocation logLocation = new LogLocation(new Throwable(), callerFQCN);
 		LogTelemetryEvent logTelemetryEvent = new LogTelemetryEventBuilder()
+			.setName(this.loggerName)
 		    .setLogLevel(logLevel)
 			.setPayload(payload)
 			.setWritingEndpointHandler(ZonedDateTime.now(), this.applicationName, this.applicationVersion, this.applicationInstance, null)
 			.setEndpoint(logLocation.fullInfo)
 			.build();
+		this.logForwarder.forwardLog(logTelemetryEvent);
 		
 	}
 	
