@@ -20,16 +20,17 @@
 			</activation>
 			<modules>
 				<module>../etm-core</module>
+				<module>../etm-gui</module>
+                <module>../etm-launcher</module>				
 				<module>../etm-processor</module>
+				<module>../etm-processor-rest</module>
+				<module>../etm-slf4j</module>
 <!-- 				
 				<module>../etm-processor-mdb</module>
  -->				
-				<module>../etm-processor-rest</module>
-                <module>../etm-launcher</module>				
 <!-- 				
 				<module>../etm-processor-ws</module>
 -->				
-				<module>../etm-gui</module>
 <!-- 				
 				<module>../etm-scheduler-retention</module>
 				<module>../etm-documentation</module>
@@ -44,20 +45,21 @@
 			</activation>
 			<modules>
 				<module>../etm-core</module>
+				<module>../etm-gui</module>
+				<module>../etm-launcher</module>
+ 				<module>../etm-license-generator</module>
 				<module>../etm-processor</module>
+				<module>../etm-processor-rest</module>
+				<module>../etm-slf4j</module>
 <!--				
 				<module>../etm-processor-mdb</module>
 -->				
-				<module>../etm-processor-rest</module>
-				<module>../etm-launcher</module>
 <!-- 				
 				<module>../etm-processor-ws</module>
 -->				
-				<module>../etm-gui</module>
 <!-- 				
 				<module>../etm-scheduler-retention</module>
  -->
- 				<module>../etm-license-generator</module>
 			</modules>
 		</profile>
 	</profiles>
