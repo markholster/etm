@@ -135,6 +135,7 @@ public class DestinationReader implements Runnable {
 				this.stop = true;
 			}
 		}
+		commit();
 		disconnect();
 	}
 	
