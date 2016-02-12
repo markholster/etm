@@ -47,6 +47,7 @@ public interface TelemetryEventConverterTags {
 	
 	// Log event attributes
 	String getLogLevelTag();
+	String getStackTraceTag();
 	
 	// Http event attributes
 	String getHttpEventTypeTag();

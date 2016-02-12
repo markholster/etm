@@ -163,6 +163,11 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	public String getLogLevelTag() {
 		return "log_level";
 	}
+	
+	@Override
+	public String getStackTraceTag() {
+		return "stack_trace";
+	}
 
 	@Override
 	public String getHttpEventTypeTag() {

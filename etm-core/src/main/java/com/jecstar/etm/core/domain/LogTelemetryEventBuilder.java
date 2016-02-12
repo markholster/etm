@@ -10,5 +10,10 @@ public class LogTelemetryEventBuilder extends TelemetryEventBuilder<LogTelemetry
 		this.event.logLevel = logLevel;
 		return this;
 	}
+	
+	public LogTelemetryEventBuilder setStackTrace(String stackTrace) {
+		this.event.stackTrace = stackTrace;
+		return this;
+	}
 
 }

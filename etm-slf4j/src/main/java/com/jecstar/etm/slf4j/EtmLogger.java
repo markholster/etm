@@ -1,5 +1,9 @@
 package com.jecstar.etm.slf4j;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.time.ZonedDateTime;
 
 import org.slf4j.Marker;
@@ -82,7 +86,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 		if (!isTraceEnabled()) {
 			return;
 		}
-        log(FQCN, LEVEL_TRACE, msg, null);
+        log(FQCN, LEVEL_TRACE, msg, t);
 	}
 
 	@Override
@@ -323,10 +327,19 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	
 	private void log(String callerFQCN, String logLevel, String payload, Throwable throwable) {
 		LogLocation logLocation = new LogLocation(new Throwable(), callerFQCN);
+		String stackTrace = null;
+		if (throwable != null) {
+			try (Writer errors = new StringWriter(); PrintWriter pw = new PrintWriter(errors)) {
+				throwable.printStackTrace(pw);
+				stackTrace = errors.toString();
+			} catch (IOException e) {}
+			
+		}
 		LogTelemetryEvent logTelemetryEvent = new LogTelemetryEventBuilder()
 			.setName(this.loggerName)
 		    .setLogLevel(logLevel)
 			.setPayload(payload)
+			.setStackTrace(stackTrace)
 			.setWritingEndpointHandler(ZonedDateTime.now(), this.applicationName, this.applicationVersion, this.applicationInstance, null)
 			.setEndpoint(logLocation.fullInfo)
 			.build();

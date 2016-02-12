@@ -25,12 +25,13 @@ public class EtmLogForwarder {
 	private static final List<String> endpointUrls = new ArrayList<String>();
 	private static int interval;
 	private static int max_requests_per_batch;
+	private static int nr_of_workers = 1;
 
 	private int urlIndex = 0;
 
 	private final Queue<String> eventQueue = new ConcurrentLinkedQueue<String>();
 	private final TelemetryEventConverter<String, LogTelemetryEvent> converter = new LogTelemetryEventConverterJsonImpl();
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, new DaemonThreadFactory());
+	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(nr_of_workers, new DaemonThreadFactory());
 
 	static {
 		endpointUrls.add("http://127.0.0.1:8080/rest/processor/event/_bulk");
@@ -41,8 +42,10 @@ public class EtmLogForwarder {
 	private static final EtmLogForwarder INSTANCE = new EtmLogForwarder();
 
 	private EtmLogForwarder() {
-		this.scheduler.scheduleAtFixedRate(new QueueDrainer(), interval, interval, TimeUnit.MILLISECONDS);
-		Runtime.getRuntime().addShutdownHook(new Thread(new ForwarderCloser()));
+		for (int i=0; i < nr_of_workers; i++) { 
+			this.scheduler.scheduleAtFixedRate(new QueueDrainer(), interval / 2, interval, TimeUnit.MILLISECONDS);
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread(new ForwarderCloser(), "ETM-Log-Forwarder-Shutdown-Hook"));
 	}
 
 	public static EtmLogForwarder getInstance() {
@@ -60,11 +63,6 @@ public class EtmLogForwarder {
 		@Override
 		public void run() {
 			EtmLogForwarder.this.scheduler.shutdown();
-			try {
-				EtmLogForwarder.this.scheduler.awaitTermination(10, TimeUnit.SECONDS);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
 			super.run();
 		}
 	}
@@ -81,23 +79,19 @@ public class EtmLogForwarder {
 					EtmLogForwarder.this.eventQueue.clear();
 					return;
 				}
-				String element = null;
-				// Although the queue size is an estimation we don't want to
-				// drain forever. This might happen if a log message is added
-				// between the last drain (in the inner loop) and the next test
-				// in the outer loop.
+				String element = EtmLogForwarder.this.eventQueue.poll();
 				drain:
-				while ((element = EtmLogForwarder.this.eventQueue.poll()) != null) {
+				while (element != null) {
 					this.content.setLength(0);
 					this.content.append("[");
 					int batchIx = 0;
-					while (batchIx <= EtmLogForwarder.max_requests_per_batch && element != null) {
+					while (batchIx < EtmLogForwarder.max_requests_per_batch && element != null) {
 						if (batchIx != 0) {
 							this.content.append(",");
 						}
 						this.content.append("{\"type\": \"log\", \"data\": " + element + "}");
-						element = EtmLogForwarder.this.eventQueue.poll();
 						batchIx++;
+						element = EtmLogForwarder.this.eventQueue.poll();
 					}
 					this.content.append("]");
 					int startIx = EtmLogForwarder.this.urlIndex;
@@ -112,9 +106,6 @@ public class EtmLogForwarder {
 						}
 					}
 					increaseUrlIndex();
-					if (element == null) {
-						break drain;
-					}
 				}
 			} catch (Throwable t) {
 				System.out.println("Failed to drain logger queue: " + t.getMessage());
@@ -178,8 +169,10 @@ public class EtmLogForwarder {
 	}
 
 	private class DaemonThreadFactory implements ThreadFactory {
+		int nr = 0;
 		public Thread newThread(Runnable r) {
 			Thread t = new Thread(r);
+			t.setName("ETM-Log-Forwarder-" + this.nr++);
 			t.setDaemon(true);
 			return t;
 		}

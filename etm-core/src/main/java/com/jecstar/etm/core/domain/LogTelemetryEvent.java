@@ -3,11 +3,13 @@ package com.jecstar.etm.core.domain;
 public class LogTelemetryEvent extends TelemetryEvent<LogTelemetryEvent> {
 	
 	public String logLevel;
+	public String stackTrace;
 
 	@Override
 	public LogTelemetryEvent initialize() {
 		super.internalInitialize();
-		logLevel = null;
+		this.logLevel = null;
+		this.stackTrace = null;
 		return this;
 	}
 
@@ -15,6 +17,7 @@ public class LogTelemetryEvent extends TelemetryEvent<LogTelemetryEvent> {
 	public LogTelemetryEvent initialize(LogTelemetryEvent copy) {
 		super.internalInitialize(copy);
 		this.logLevel = copy.logLevel;
+		this.stackTrace = copy.stackTrace;
 		return this;
 	}
 

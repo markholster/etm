@@ -76,6 +76,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.endpoint = null;
 		this.extractedData.clear();
 		this.metadata.clear();
+		this.name = null;
 		this.payload = null;
 		this.payloadFormat = null;
 		this.transactionId = null;
@@ -104,6 +105,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.endpoint = copy.endpoint;
 		this.extractedData.putAll(copy.extractedData);
 		this.metadata.putAll(copy.metadata);
+		this.name = copy.name;
 		this.payload = copy.payload;
 		this.payloadFormat = copy.payloadFormat;
 		this.transactionId = copy.transactionId;
