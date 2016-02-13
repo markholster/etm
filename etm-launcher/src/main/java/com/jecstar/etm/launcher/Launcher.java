@@ -1,8 +1,5 @@
 package com.jecstar.etm.launcher;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
@@ -16,8 +13,6 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlReader;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -27,6 +22,7 @@ import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
+import com.jecstar.etm.slf4j.InternalEtmLogForwarder;
 
 public class Launcher {
 
@@ -41,33 +37,22 @@ public class Launcher {
 	private Client elasticClient;
 
 	
-	public void launch(CommandLineParameters commandLineParameters) {
+	public void launch(CommandLineParameters commandLineParameters, Configuration configuration) {
 		addShutdownHooks();
 		try {
-			final File configDir = new File(commandLineParameters.getConfigDirectory());
-			final Configuration configuration = loadConfiguration(configDir);
-			if (configuration.isProcessorNecessary() || configuration.guiEnabled) {
-				initializeElasticsearchClient(configuration);
-			}
-			if (configuration.isProcessorNecessary()) {
-				initializeProcessor(configuration);
-			}
+			initializeElasticsearchClient(configuration);
+			initializeProcessor(configuration);
+			InternalEtmLogForwarder.processor = processor;
 			if (configuration.isHttpServerNecessary()) {
+				System.setProperty("org.jboss.logging.provider", "slf4j");
 				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, this.processor, this.elasticClient);
 				this.httpServer.start();
 			}
 			if (log.isInfoLevelEnabled()) {
 				log.logInfoMessage("Enterprise Telemetry Monitor started.");
 			}
-		} catch (FileNotFoundException e) {
-			if (log.isFatalLevelEnabled()) {
-				log.logFatalMessage("Error reading configuration file", e);
-			}
-		} catch (YamlException e) {
-			if (log.isFatalLevelEnabled()) {
-				log.logFatalMessage("Error parsing configuration file", e);
-			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			if (log.isFatalLevelEnabled()) {
 				log.logFatalMessage("Error launching Enterprise Telemetry Monitor", e);
 			}
@@ -78,6 +63,9 @@ public class Launcher {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
+				}
 				if (Launcher.this.httpServer != null) {
 					try { Launcher.this.httpServer.stop(); } catch (Throwable t) {}
 				}
@@ -153,21 +141,5 @@ public class Launcher {
 			this.elasticClient = transportClient;
 		}
 		new ElasticsearchIndextemplateCreator().createTemplates(this.elasticClient);
-	}
-
-	
-	private Configuration loadConfiguration(File configDir) throws FileNotFoundException, YamlException {
-		if (!configDir.exists()) {
-			Configuration configuration = new Configuration();
-			return configuration;
-		}
-		File configFile = new File(configDir, "etm.yml");
-		if (!configFile.exists() || !configFile.isFile() || !configFile.canRead()) {
-			Configuration configuration = new Configuration();
-			return configuration;
-		}
-		YamlReader reader = new YamlReader(new FileReader(configFile));
-		reader.getConfig().setBeanProperties(false);
-		return reader.read(Configuration.class);
 	}
 }

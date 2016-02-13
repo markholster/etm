@@ -1,7 +1,8 @@
 package com.jecstar.etm.slf4j;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 /**
  * Interface for the configuration of the Enterprise Telemetry Monitor slf4j
@@ -67,7 +68,7 @@ public interface Configuration {
 	 * 
 	 * @return The loggers and their log levels.
 	 */
-	Map<String, String> getLoggers();
+	TreeMap<String, String> getLoggers();
 
 	/**
 	 * Gives the name of the application that fires the log events. This
@@ -100,5 +101,31 @@ public interface Configuration {
 	 * @return The principal name.
 	 */
 	String getPrincipalName();
+	
+	/**
+	 * Gives the log level of a given logger name.
+	 * 
+	 * @param loggerName The name of the logger.
+	 * 
+	 * @return The log level.
+	 */
+	default String getLogLevel(String loggerName) {
+		if (loggerName == null) {
+			return getRootLogLevel();
+		}
+		String specificLevel = getLoggers().get(loggerName);
+		if (specificLevel != null) {
+			return specificLevel;
+		}
+		int ix = loggerName.lastIndexOf(".");
+		if (ix == -1) {
+			return getRootLogLevel();
+		}
+		Entry<String, String> entry = getLoggers().floorEntry(loggerName.substring(0, ix));
+		if (entry != null) {
+			return entry.getValue();
+		}
+		return getRootLogLevel();
+	}
 
 }

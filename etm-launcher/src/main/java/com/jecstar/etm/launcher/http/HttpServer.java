@@ -252,6 +252,7 @@ public class HttpServer {
 		if (prefix != null) {
 			resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
 		}
+		resteasyServlet.addInitParam("resteasy.logger.type", "SLF4J");
 		return new DeploymentInfo().addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
 				.addServlet(resteasyServlet);
 	}

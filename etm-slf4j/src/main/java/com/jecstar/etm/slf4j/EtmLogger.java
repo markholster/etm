@@ -27,23 +27,18 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	
 	private final static String FQCN = EtmLogger.class.getName();
 	private final EtmLogForwarder logForwarder;
-	private final String applicationName;
-	private final String applicationVersion;
-	private final String applicationInstance;
-	private final String loggerName;
+	private final Configuration configuration;
 
-	public EtmLogger(EtmLogForwarder logForwarder, String loggerName, String applicationName, String applicationVersion, String applicationInstance) {
+	public EtmLogger(EtmLogForwarder logForwarder, String loggerName, Configuration configuration) {
+		this.name = loggerName;
 		this.logForwarder = logForwarder;
-		this.loggerName = loggerName;
-		this.applicationName = applicationName;
-		this.applicationVersion = applicationVersion;
-		this.applicationInstance = applicationInstance;
+		this.configuration = configuration;
 	}
 	
 	@Override
 	public boolean isTraceEnabled() {
-		// TODO determine level enabling.
-		return true;
+		String logLevel = this.configuration.getLogLevel(getName());
+		return LocationAwareLogger.TRACE_INT >= determineLevelAsInteger(logLevel);
 	}
 
 	@Override
@@ -91,8 +86,8 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isDebugEnabled() {
-		// TODO determine level enabling.
-		return true;
+		String logLevel = this.configuration.getLogLevel(getName());
+		return LocationAwareLogger.DEBUG_INT >= determineLevelAsInteger(logLevel);
 	}
 
 	@Override
@@ -140,8 +135,8 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isInfoEnabled() {
-		// TODO determine level enabling.
-		return true;
+		String logLevel = this.configuration.getLogLevel(getName());
+		return LocationAwareLogger.INFO_INT >= determineLevelAsInteger(logLevel);
 	}
 
 	@Override
@@ -189,8 +184,8 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isWarnEnabled() {
-		// TODO determine level enabling.
-		return true;
+		String logLevel = this.configuration.getLogLevel(getName());
+		return LocationAwareLogger.WARN_INT >= determineLevelAsInteger(logLevel);
 	}
 
 	@Override
@@ -238,8 +233,8 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isErrorEnabled() {
-		// TODO determine level enabling.
-		return true;
+		String logLevel = this.configuration.getLogLevel(getName());
+		return LocationAwareLogger.ERROR_INT >= determineLevelAsInteger(logLevel);
 	}
 
 	@Override
@@ -325,6 +320,24 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
         log(fqcn, logLevel, message, t);
 	}
 	
+	
+
+	private int determineLevelAsInteger(String logLevel) {
+		if (LEVEL_TRACE.equals(logLevel)) {
+			return LocationAwareLogger.TRACE_INT;
+		} else if (LEVEL_DEBUG.equals(logLevel)) {
+			return LocationAwareLogger.DEBUG_INT;
+		} else if (LEVEL_INFO.equals(logLevel)) {
+			return LocationAwareLogger.INFO_INT;
+		} else if (LEVEL_WARNING.equals(logLevel)) {
+			return LocationAwareLogger.WARN_INT;
+		} else if (LEVEL_ERROR.equals(logLevel)) {
+			return LocationAwareLogger.ERROR_INT;
+		}
+		return Integer.MAX_VALUE;
+	}
+
+	
 	private void log(String callerFQCN, String logLevel, String payload, Throwable throwable) {
 		LogLocation logLocation = new LogLocation(new Throwable(), callerFQCN);
 		String stackTrace = null;
@@ -336,11 +349,15 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 			
 		}
 		LogTelemetryEvent logTelemetryEvent = new LogTelemetryEventBuilder()
-			.setName(this.loggerName)
+			.setName(getName())
 		    .setLogLevel(logLevel)
 			.setPayload(payload)
 			.setStackTrace(stackTrace)
-			.setWritingEndpointHandler(ZonedDateTime.now(), this.applicationName, this.applicationVersion, this.applicationInstance, null)
+			.setWritingEndpointHandler(ZonedDateTime.now(), 
+					this.configuration.getApplicationName(), 
+					this.configuration.getApplicationVersion(), 
+					this.configuration.getApplicationInstance(), 
+					this.configuration.getPrincipalName())
 			.setEndpoint(logLocation.fullInfo)
 			.build();
 		this.logForwarder.forwardLog(logTelemetryEvent);

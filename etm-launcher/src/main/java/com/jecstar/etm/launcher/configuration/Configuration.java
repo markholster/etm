@@ -19,10 +19,6 @@ public class Configuration {
 		return this.restProcessorEnabled || this.guiEnabled;
 	}
 	
-	public boolean isProcessorNecessary() {
-		return this.restProcessorEnabled;
-	}
-	
 	public int getHttpPort() {
 		if (this.http.httpPort > 0) {
 			return this.http.httpPort + this.bindingPortOffset; 

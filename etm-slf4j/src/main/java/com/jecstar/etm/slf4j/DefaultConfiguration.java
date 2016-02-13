@@ -1,14 +1,13 @@
 package com.jecstar.etm.slf4j;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.TreeMap;
 
 public class DefaultConfiguration implements Configuration {
 
 	private List<String> endpointUrls = new ArrayList<String>();
-	private Map<String, String> loggers = new HashMap<String, String>();
+	private TreeMap<String, String> loggers = new TreeMap<String, String>();
 	
 	public DefaultConfiguration() {
 	}
@@ -39,7 +38,7 @@ public class DefaultConfiguration implements Configuration {
 	}
 
 	@Override
-	public Map<String, String> getLoggers() {
+	public TreeMap<String, String> getLoggers() {
 		return this.loggers;
 	}
 
