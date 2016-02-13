@@ -13,9 +13,9 @@ public class EtmLoggerFactory implements ILoggerFactory {
 
 	// TODO logger configuration.
 	
-	public EtmLoggerFactory(EtmLogForwarder logForwarder) {
+	public EtmLoggerFactory() {
 		this.loggerMap = new ConcurrentHashMap<String, Logger>();
-		this.logForwarder = logForwarder;
+		this.logForwarder = EtmLogForwarder.getInstance();
 	}
 	
 	@Override

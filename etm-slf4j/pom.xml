@@ -17,6 +17,16 @@
         <dependency>
             <groupId>com.jecstar.etm</groupId>
             <artifactId>etm-core</artifactId>
+            <exclusions>
+              <exclusion> 
+                <groupId>com.jayway.jsonpath</groupId>
+                <artifactId>json-path</artifactId>
+              </exclusion>
+              <exclusion> 
+                <groupId>net.sf.saxon</groupId>
+                <artifactId>Saxon-HE</artifactId>
+              </exclusion>
+            </exclusions>            
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

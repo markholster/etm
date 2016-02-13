@@ -1,10 +1,12 @@
-package com.jecstar.etm.slf4j;
+package org.slf4j.impl;
 
 import org.slf4j.ILoggerFactory;
 import org.slf4j.spi.LoggerFactoryBinder;
 
-public class StaticLoggerBinder implements LoggerFactoryBinder {
+import com.jecstar.etm.slf4j.EtmLoggerFactory;
 
+public class StaticLoggerBinder implements LoggerFactoryBinder {
+	
     /**
      * The unique instance of this class.
      * 
@@ -36,7 +38,7 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
     private final ILoggerFactory loggerFactory;
 
     private StaticLoggerBinder() {
-        loggerFactory = new EtmLoggerFactory(EtmLogForwarder.getInstance());
+        loggerFactory = new EtmLoggerFactory();
     }
 
     public ILoggerFactory getLoggerFactory() {

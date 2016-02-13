@@ -10,6 +10,7 @@ public class Configuration {
 	
 	public Elasticsearch elasticsearch = new Elasticsearch();
 	public Http http = new Http();
+	public Logging logging = new Logging();
 
 	public boolean guiEnabled = true;
 	public boolean restProcessorEnabled = true;

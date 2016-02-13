@@ -1,4 +1,4 @@
-package com.jecstar.etm.slf4j;
+package org.slf4j.impl;
 
 import org.slf4j.IMarkerFactory;
 import org.slf4j.helpers.BasicMarkerFactory;

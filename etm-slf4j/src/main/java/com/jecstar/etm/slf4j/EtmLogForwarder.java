@@ -7,8 +7,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
@@ -22,28 +20,52 @@ import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJson
 
 public class EtmLogForwarder {
 
-	private static final List<String> endpointUrls = new ArrayList<String>();
-	private static int interval;
-	private static int max_requests_per_batch;
-	private static int nr_of_workers = 1;
+	private static Configuration configuration;
+	
+	static {
+		try {
+			@SuppressWarnings("unchecked")
+			Class<Configuration> clazz = (Class<Configuration>) Class.forName("com.jecstar.etm.slf4j.ConfigurationImpl");
+			configuration = clazz.newInstance();
+		} catch (Throwable t) {}
+		if (configuration == null) {
+			String className = System.getProperty("etm.slf4j.configuration");
+			if (className != null) {
+				try {
+					@SuppressWarnings("unchecked")
+					Class<Configuration> clazz = (Class<Configuration>) Class.forName(className);
+					configuration = clazz.newInstance();
+				} catch (Throwable t) {}				
+			}
+		}
+		if (configuration == null) {
+			System.out.println("No etm-slf4j configuration found. Make sure "
+					+ "class \"com.jecstar.etm.slf4j.ConfigurationImpl\" is "
+					+ "available on the classpath and is implementing the "
+					+ "\"com.jecstar.etm.slf4j.Configuration\" interface. "
+					+ "Also make sure the class has a public default no-arg "
+					+ "constructor. Another option is to provide the system "
+					+ "property \"etm.slf4j.configuration\" with a classname "
+					+ "that is implementing \"com.jecstar.etm.slf4j.Configuration\". "
+					+ "Falling back to defaut configuration which does not log anything!");
+		}
+		if (configuration == null) {
+			configuration = new DefaultConfiguration();
+		}
+	}
 
 	private int urlIndex = 0;
 
 	private final Queue<String> eventQueue = new ConcurrentLinkedQueue<String>();
 	private final TelemetryEventConverter<String, LogTelemetryEvent> converter = new LogTelemetryEventConverterJsonImpl();
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(nr_of_workers, new DaemonThreadFactory());
+	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(configuration.getNumberOfWorkers(), new DaemonThreadFactory());
 
-	static {
-		endpointUrls.add("http://127.0.0.1:8080/rest/processor/event/_bulk");
-		interval = 5000;
-		max_requests_per_batch = 1000;
-	}
 
 	private static final EtmLogForwarder INSTANCE = new EtmLogForwarder();
 
 	private EtmLogForwarder() {
-		for (int i=0; i < nr_of_workers; i++) { 
-			this.scheduler.scheduleAtFixedRate(new QueueDrainer(), interval / 2, interval, TimeUnit.MILLISECONDS);
+		for (int i=0; i < configuration.getNumberOfWorkers(); i++) { 
+			this.scheduler.scheduleAtFixedRate(new QueueDrainer(), configuration.getPushInterval() / 2, configuration.getPushInterval(), TimeUnit.MILLISECONDS);
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread(new ForwarderCloser(), "ETM-Log-Forwarder-Shutdown-Hook"));
 	}
@@ -74,7 +96,7 @@ public class EtmLogForwarder {
 		@Override
 		public void run() {
 			try {
-				if (endpointUrls.size() == 0) {
+				if (configuration.getEndpointUrls().size() == 0) {
 					System.out.println("No ETM endpoints configured. Log messages will be dropped!");
 					EtmLogForwarder.this.eventQueue.clear();
 					return;
@@ -85,7 +107,7 @@ public class EtmLogForwarder {
 					this.content.setLength(0);
 					this.content.append("[");
 					int batchIx = 0;
-					while (batchIx < EtmLogForwarder.max_requests_per_batch && element != null) {
+					while (batchIx < configuration.getMaxRequestsPerBatch() && element != null) {
 						if (batchIx != 0) {
 							this.content.append(",");
 						}
@@ -115,7 +137,7 @@ public class EtmLogForwarder {
 
 		private void increaseUrlIndex() {
 			EtmLogForwarder.this.urlIndex++;
-			if (EtmLogForwarder.this.urlIndex >= endpointUrls.size()) {
+			if (EtmLogForwarder.this.urlIndex >= configuration.getEndpointUrls().size()) {
 				EtmLogForwarder.this.urlIndex = 0;
 			}
 		}
@@ -125,7 +147,7 @@ public class EtmLogForwarder {
 			DataOutputStream stream = null;
 			BufferedReader in = null;
 			try {
-				URL url = new URL(endpointUrls.get(urlIndex));
+				URL url = new URL(configuration.getEndpointUrls().get(urlIndex));
 				con = (HttpURLConnection) url.openConnection();
 				con.setConnectTimeout(1000);
 				con.setRequestMethod("POST");
