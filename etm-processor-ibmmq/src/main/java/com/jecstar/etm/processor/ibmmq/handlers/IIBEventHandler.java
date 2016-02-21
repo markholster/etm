@@ -6,9 +6,11 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -17,7 +19,6 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
-import org.elasticsearch.common.Base64;
 import org.w3c.dom.NodeList;
 
 import com.ibm.mq.constants.CMQC;
@@ -33,8 +34,10 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.ibmmq.event.ApplicationData.ComplexContent;
+import com.jecstar.etm.processor.ibmmq.event.ApplicationData.SimpleContent;
 import com.jecstar.etm.processor.ibmmq.event.EncodingType;
 import com.jecstar.etm.processor.ibmmq.event.Event;
+import com.jecstar.etm.processor.ibmmq.event.SimpleContentDataType;
 
 public class IIBEventHandler implements MessageHandler<byte[]> {
 
@@ -79,6 +82,21 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 	}
 
 	private boolean copyIbmEventToTelemetryEvent(Event event, TelemetryEvent telemetryEvent) {
+		int encoding = -1;
+		int ccsid = -1;
+		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
+			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
+				if ("Encoding".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
+					encoding = Integer.valueOf(simpleContent.getValue());
+				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
+					ccsid = Integer.valueOf(simpleContent.getValue());
+				} 
+			}
+		}		
+		putNonNullDataInMap("IIB_LocalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId(), telemetryEvent.correlationData);
+		putNonNullDataInMap("IIB_ParentTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getParentTransactionId(), telemetryEvent.correlationData);
+		putNonNullDataInMap("IIB_GlobalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getGlobalTransactionId(), telemetryEvent.correlationData);
+		
 		putNonNullDataInMap("IIB_Node", event.getEventPointData().getMessageFlowData().getBroker().getName(), telemetryEvent.metadata);
 		putNonNullDataInMap("IIB_Server", event.getEventPointData().getMessageFlowData().getExecutionGroup().getName(), telemetryEvent.metadata);
 		putNonNullDataInMap("IIB_MessageFlow", event.getEventPointData().getMessageFlowData().getMessageFlow().getName(), telemetryEvent.metadata);
@@ -100,10 +118,20 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 						|| "WrittenDestination".equals(complexContent.getElementName()))) {
 					continue;
 				}
-				NodeList queueNames = complexContent.getAny().getElementsByTagName("queueName");
-				if (queueNames.getLength() > 0) {
-					telemetryEvent.endpoint = queueNames.item(0).getTextContent();
-					break;
+				NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");
+				if (nodeList.getLength() > 0) {
+					telemetryEvent.endpoint = nodeList.item(0).getTextContent();
+				}
+				nodeList = complexContent.getAny().getElementsByTagName("msgId");
+				if (nodeList.getLength() > 0) {
+					telemetryEvent.id = nodeList.item(0).getTextContent();
+				}
+				nodeList = complexContent.getAny().getElementsByTagName("correlId");
+				if (nodeList.getLength() > 0) {
+					String correlId = nodeList.item(0).getTextContent();
+					if (correlId.replaceAll("0", "").trim().length() != 0) {
+						telemetryEvent.correlationId = correlId;
+					}
 				}
 			}
 		} else if (event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmWS") || 
@@ -123,11 +151,11 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 			}
 			byte[] decoded = null;
 			try {
-				decoded = Base64.decode(event.getBitstreamData().getBitstream().getValue());
+				decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
 				if (mqBitstream) {
-					parseBitstreamAsMqMessage(decoded, telemetryEvent);
+					parseBitstreamAsMqMessage(decoded, telemetryEvent, encoding, ccsid);
 				} else if (httpBitstream) {
-					parseBitstreamAsHttpMessage(decoded, telemetryEvent);
+					parseBitstreamAsHttpMessage(decoded, telemetryEvent, encoding, ccsid);
 				}
 			} catch (IOException e) {
 				if (log.isWarningLevelEnabled()) {
@@ -150,50 +178,67 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 		return false;
 	}
 
-	private void parseBitstreamAsMqMessage(byte[] decodedBitstream, TelemetryEvent telemetryEvent)
+	private void parseBitstreamAsMqMessage(byte[] decodedBitstream, TelemetryEvent telemetryEvent, int encoding, int ccsid)
 			throws MQDataException, IOException, ParseException {
-		try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
-
-			MQMD mqmd = new MQMD(inputData);
-			putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_Priority", "" + mqmd.getPriority(), telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr() != null ? mqmd.getReplyToQMgr().trim() : null, telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ() != null ? mqmd.getReplyToQ().trim() : null, telemetryEvent.metadata);
-			putNonNullDataInMap("MQMD_BackoutCount", "" + mqmd.getBackoutCount(), telemetryEvent.metadata);
-			if (mqmd.getFormat().equals(MQConstants.MQFMT_RF_HEADER_2)) {
-				new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
-				// TODO Do something with RFH2 header?
+		if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
+			try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
+				MQMD mqmd = null;
+				if (encoding != -1 && ccsid != -1) {
+					mqmd = new MQMD(inputData, encoding, ccsid);
+				} else {
+					mqmd = new MQMD(inputData);
+				}
+				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_Priority", "" + mqmd.getPriority(), telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr() != null ? mqmd.getReplyToQMgr().trim() : null, telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ() != null ? mqmd.getReplyToQ().trim() : null, telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_BackoutCount", "" + mqmd.getBackoutCount(), telemetryEvent.metadata);
+				if (mqmd.getFormat().equals(MQConstants.MQFMT_RF_HEADER_2)) {
+					new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
+					// TODO Do something with RFH2 header?
+				}
+				String codepage = CCSID.getCodepage(mqmd.getCodedCharSetId());
+				byte[] remaining = new byte[inputData.available()];
+				inputData.readFully(remaining);
+	
+				telemetryEvent.content = new String(remaining, codepage);
+				telemetryEvent.id = byteArrayToString(mqmd.getMsgId());
+				if (mqmd.getCorrelId() != null && mqmd.getCorrelId().length > 0) {
+					telemetryEvent.correlationId = byteArrayToString(mqmd.getCorrelId());
+				}
+				telemetryEvent.creationTime.setTime(this.dateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime());
+				if (CMQC.MQEI_UNLIMITED != mqmd.getExpiry()) {
+					telemetryEvent.expiryTime.setTime(telemetryEvent.creationTime.getTime() + (mqmd.getExpiry() * 100));
+				}
+				int ibmMsgType = mqmd.getMsgType();
+				if (ibmMsgType == CMQC.MQMT_REQUEST) {
+					telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
+				} else if (ibmMsgType == CMQC.MQMT_REPLY) {
+					telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
+				} else if (ibmMsgType == CMQC.MQMT_DATAGRAM) {
+					telemetryEvent.type = TelemetryEventType.MESSAGE_DATAGRAM;
+				}
 			}
-			String codepage = CCSID.getCodepage(mqmd.getCodedCharSetId());
-			byte[] remaining = new byte[inputData.available()];
-			inputData.readFully(remaining);
-
-			telemetryEvent.content = new String(remaining, codepage);
-			telemetryEvent.id = byteArrayToString(mqmd.getMsgId());
-			if (mqmd.getCorrelId() != null && mqmd.getCorrelId().length > 0) {
-				telemetryEvent.correlationId = byteArrayToString(mqmd.getCorrelId());
+		} else {
+			if (ccsid != -1) {
+				String codepage = CCSID.getCodepage(ccsid);
+				telemetryEvent.content = new String(decodedBitstream, codepage);
+			} else {
+				telemetryEvent.content = new String(decodedBitstream);
 			}
-			telemetryEvent.creationTime.setTime(this.dateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime());
-			if (CMQC.MQEI_UNLIMITED != mqmd.getExpiry()) {
-				telemetryEvent.expiryTime.setTime(telemetryEvent.creationTime.getTime() + (mqmd.getExpiry() * 100));
-			}
-			int ibmMsgType = mqmd.getMsgType();
-			if (ibmMsgType == CMQC.MQMT_REQUEST) {
-				telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
-			} else if (ibmMsgType == CMQC.MQMT_REPLY) {
-				telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
-			} else if (ibmMsgType == CMQC.MQMT_DATAGRAM) {
-				telemetryEvent.type = TelemetryEventType.MESSAGE_DATAGRAM;
-			}
-		} 
+		}
 	}
 
-	private void parseBitstreamAsHttpMessage(byte[] decoded, TelemetryEvent telemetryEvent) {
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(decoded)))) {
+	private void parseBitstreamAsHttpMessage(byte[] decoded, TelemetryEvent telemetryEvent, int encoding, int ccsid) throws UnsupportedEncodingException {
+		String codepage = null;
+		if (ccsid != -1) {
+			codepage = CCSID.getCodepage(ccsid);
+		}
+		try (BufferedReader reader = new BufferedReader(codepage == null ? new InputStreamReader(new ByteArrayInputStream(decoded)) : new InputStreamReader(new ByteArrayInputStream(decoded), codepage))) {
 			String line = reader.readLine();
 			if (line != null) {
 				// First line is always the method + url + protocol version;

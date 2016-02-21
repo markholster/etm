@@ -1,12 +1,16 @@
 package com.jecstar.etm.processor.mdb.ibm;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -20,7 +24,9 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import org.elasticsearch.common.Base64;
+
+import org.w3c.dom.NodeList;
+
 import com.ibm.mq.constants.CMQC;
 import com.ibm.mq.constants.MQConstants;
 import com.ibm.mq.headers.CCSID;
@@ -34,6 +40,8 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.jee.configurator.core.ProcessorConfiguration;
+import com.jecstar.etm.processor.mdb.ibm.ApplicationData.ComplexContent;
+import com.jecstar.etm.processor.mdb.ibm.ApplicationData.SimpleContent;
 import com.jecstar.etm.processor.processor.TelemetryEventProcessor;
 
 public class IIBEventProcessor implements MessageListener {
@@ -44,7 +52,7 @@ public class IIBEventProcessor implements MessageListener {
 	 * 
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(IIBEventProcessor.class);
-
+	
 	@ProcessorConfiguration
 	@Inject
 	private EtmConfiguration configuration;
@@ -128,25 +136,114 @@ public class IIBEventProcessor implements MessageListener {
 			}
 		}
 	}
-
+	
 	private boolean copyIbmEventToTelemetryEvent(Event event, TelemetryEvent telemetryEvent) {
-		telemetryEvent.endpoint = event.eventPointData.messageFlowData.node.detail;
+		int encoding = -1;
+		int ccsid = -1;
+		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
+			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
+				if ("Encoding".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
+					encoding = Integer.valueOf(simpleContent.getValue());
+				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
+					ccsid = Integer.valueOf(simpleContent.getValue());
+				} 
+			}
+		}		
+		putNonNullDataInMap("IIB_LocalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId(), telemetryEvent.correlationData);
+		putNonNullDataInMap("IIB_ParentTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getParentTransactionId(), telemetryEvent.correlationData);
+		putNonNullDataInMap("IIB_GlobalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getGlobalTransactionId(), telemetryEvent.correlationData);
+	
+		putNonNullDataInMap("IIB_Node", event.getEventPointData().getMessageFlowData().getBroker().getName(), telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_Server", event.getEventPointData().getMessageFlowData().getExecutionGroup().getName(), telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlow", event.getEventPointData().getMessageFlowData().getMessageFlow().getName(), telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlowNode", event.getEventPointData().getMessageFlowData().getNode().getNodeLabel(), telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlowNodeTerminal", event.getEventPointData().getMessageFlowData().getNode().getTerminal(), telemetryEvent.metadata);
+		putNonNullDataInMap("IIB_MessageFlowNodeType", event.getEventPointData().getMessageFlowData().getNode().getNodeType(), telemetryEvent.metadata);
+		boolean mqBitstream = false;
+		boolean httpBitstream = false;
+		// See https://www-01.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/as36001_.htm for node types.
+		if ("ComIbmMQInputNode".equals(event.getEventPointData().getMessageFlowData().getNode().getNodeType())) {
+			mqBitstream = true;
+			telemetryEvent.endpoint = event.getEventPointData().getMessageFlowData().getNode().getDetail();
+		} else if ("ComIbmMQOutputNode".equals(event.getEventPointData().getMessageFlowData().getNode().getNodeType())) {
+			mqBitstream = true;
+			// TODO, filteren op output terminal? Events op de in terminal van de
+			// MqOutputNode hebben nog geen msg id.
+			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
+				if (!("DestinationData".equals(complexContent.getElementName())
+						|| "WrittenDestination".equals(complexContent.getElementName()))) {
+					continue;
+				}
+				NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");
+				if (nodeList.getLength() > 0) {
+					telemetryEvent.endpoint = nodeList.item(0).getTextContent();
+				}
+				nodeList = complexContent.getAny().getElementsByTagName("msgId");
+				if (nodeList.getLength() > 0) {
+					telemetryEvent.id = nodeList.item(0).getTextContent();
+				}
+				nodeList = complexContent.getAny().getElementsByTagName("correlId");
+				if (nodeList.getLength() > 0) {
+					String correlId = nodeList.item(0).getTextContent();
+					if (correlId.replaceAll("0", "").trim().length() != 0) {
+						telemetryEvent.correlationId = correlId;
+					}
+				}
+			}
+		} else if (event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmWS") || 
+				event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmHTTP")) {
+			httpBitstream = true;
+		}
 		if (customAchmeaFiltering(telemetryEvent)) {
 			return false;
 		}
-		putNonNullDataInMap("IIB_Node", event.eventPointData.messageFlowData.broker.name, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_Server", event.eventPointData.messageFlowData.executionGroup.name, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_MessageFlow", event.eventPointData.messageFlowData.messageFlow.name, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_MessageFlowNode", event.eventPointData.messageFlowData.node.nodeLabel, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_MessageFlowNodeTerminal", event.eventPointData.messageFlowData.node.terminal, telemetryEvent.metadata);
-		putNonNullDataInMap("IIB_MessageFlowNodeType", event.eventPointData.messageFlowData.node.nodeType, telemetryEvent.metadata);
-		if (event.bitstreamData != null && event.bitstreamData.bitstream != null 
-				&& EncodingType.BASE_64_BINARY.equals(event.bitstreamData.bitstream.getEncoding())) {
+		if (event.getBitstreamData() != null && event.getBitstreamData().getBitstream() != null) {
+			if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Bitstream encoding type '" + event.getBitstreamData().getBitstream().getEncoding().hashCode()
+									+ "' not supported. Use '" + EncodingType.BASE_64_BINARY.name() + "' instead.");
+				}
+				return false;
+			}
 			byte[] decoded = null;
 			try {
-				decoded = Base64.decode(event.bitstreamData.bitstream.value);
-				DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decoded));
-				MQMD mqmd = new MQMD(inputData);
+				decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
+				if (mqBitstream) {
+					parseBitstreamAsMqMessage(decoded, telemetryEvent, encoding, ccsid);
+				} else if (httpBitstream) {
+					parseBitstreamAsHttpMessage(decoded, telemetryEvent, encoding, ccsid);
+				}
+			} catch (IOException e) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Failed to decode Ibm Event bitstream.", e);
+				}
+				return false;
+			} catch (MQDataException e) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Failed to parse Ibm Event bitstream.", e);
+				}
+				return false;
+			} catch (ParseException e) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Failed to parse Ibm Event bitstream.", e);
+				}
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	private void parseBitstreamAsMqMessage(byte[] decodedBitstream, TelemetryEvent telemetryEvent, int encoding, int ccsid)
+			throws MQDataException, IOException, ParseException {
+		if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
+			try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
+				MQMD mqmd = null;
+				if (encoding != -1 && ccsid != -1) {
+					mqmd = new MQMD(inputData, encoding, ccsid);
+				} else {
+					mqmd = new MQMD(inputData);
+				}
 				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), telemetryEvent.metadata);
 				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, telemetryEvent.metadata);
 				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), telemetryEvent.metadata);
@@ -163,6 +260,7 @@ public class IIBEventProcessor implements MessageListener {
 				String codepage = CCSID.getCodepage(mqmd.getCodedCharSetId());
 				byte[] remaining = new byte[inputData.available()];
 				inputData.readFully(remaining);
+	
 				telemetryEvent.content = new String(remaining, codepage);
 				telemetryEvent.id = byteArrayToString(mqmd.getMsgId());
 				if (mqmd.getCorrelId() != null && mqmd.getCorrelId().length > 0) {
@@ -173,34 +271,67 @@ public class IIBEventProcessor implements MessageListener {
 					telemetryEvent.expiryTime.setTime(telemetryEvent.creationTime.getTime() + (mqmd.getExpiry() * 100));
 				}
 				int ibmMsgType = mqmd.getMsgType();
-				if (ibmMsgType == 1) {
+				if (ibmMsgType == CMQC.MQMT_REQUEST) {
 					telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
-				} else if (ibmMsgType == 2) {
+				} else if (ibmMsgType == CMQC.MQMT_REPLY) {
 					telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
-				} else if (ibmMsgType == 8) {
+				} else if (ibmMsgType == CMQC.MQMT_DATAGRAM) {
 					telemetryEvent.type = TelemetryEventType.MESSAGE_DATAGRAM;
 				}
-			} catch (IOException e) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Failed to decode Ibm Event bitstream.", e);
-				}
-				return false;
-			} catch (MQDataException e) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Failed to parse Ibm Event bitstream.", e);
-				}
-				return false;
-			} catch (ParseException e) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Failed to decode Ibm Event bitstream.", e);
-				}
-				return false;
 			}
-			return true;
+		} else {
+			if (ccsid != -1) {
+				String codepage = CCSID.getCodepage(ccsid);
+				telemetryEvent.content = new String(decodedBitstream, codepage);
+			} else {
+				telemetryEvent.content = new String(decodedBitstream);
+			}
 		}
-		return false;
 	}
-	
+
+	private void parseBitstreamAsHttpMessage(byte[] decoded, TelemetryEvent telemetryEvent, int encoding, int ccsid) throws UnsupportedEncodingException {
+		String codepage = null;
+		if (ccsid != -1) {
+			codepage = CCSID.getCodepage(ccsid);
+		}
+		try (BufferedReader reader = new BufferedReader(codepage == null ? new InputStreamReader(new ByteArrayInputStream(decoded)) : new InputStreamReader(new ByteArrayInputStream(decoded), codepage))) {
+			String line = reader.readLine();
+			if (line != null) {
+				// First line is always the method + url + protocol version;
+				String[] split = line.split(" ");
+				if (split.length >= 2) {
+					telemetryEvent.endpoint = split[1];
+				}
+			}
+			line = reader.readLine();
+			boolean inHeaders = true;
+			while (line != null) {
+				if (line.trim().length() == 0 && inHeaders) {
+					inHeaders = false;
+					line = reader.readLine();
+					continue;
+				}
+				if (inHeaders) {
+					int ix = line.indexOf(":");
+					if (ix != -1) {
+						telemetryEvent.metadata.put(line.substring(0, ix).trim(), line.substring(ix + 1).trim());
+					}
+				} else {
+					if (telemetryEvent.content != null) {
+						telemetryEvent.content += "\r\n" + line;
+					} else {
+						telemetryEvent.content = line;
+					}
+				}
+				line = reader.readLine();
+			}
+		} catch (IOException e) {
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Unable to close reader.", e);
+			}
+		}
+	}
+
 	private boolean customAchmeaFiltering(TelemetryEvent telemetryEvent) {
 		String companyName = this.configuration.getLicense().getOwner();
 		if (!companyName.startsWith("Achmea")) {
