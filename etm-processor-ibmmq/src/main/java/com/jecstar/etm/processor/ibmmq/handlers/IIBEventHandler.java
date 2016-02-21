@@ -113,24 +113,26 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 			mqBitstream = true;
 			// TODO, filteren op output terminal? Events op de in terminal van de
 			// MqOutputNode hebben nog geen msg id.
-			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
-				if (!("DestinationData".equals(complexContent.getElementName())
-						|| "WrittenDestination".equals(complexContent.getElementName()))) {
-					continue;
-				}
-				NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");
-				if (nodeList.getLength() > 0) {
-					telemetryEvent.endpoint = nodeList.item(0).getTextContent();
-				}
-				nodeList = complexContent.getAny().getElementsByTagName("msgId");
-				if (nodeList.getLength() > 0) {
-					telemetryEvent.id = nodeList.item(0).getTextContent();
-				}
-				nodeList = complexContent.getAny().getElementsByTagName("correlId");
-				if (nodeList.getLength() > 0) {
-					String correlId = nodeList.item(0).getTextContent();
-					if (correlId.replaceAll("0", "").trim().length() != 0) {
-						telemetryEvent.correlationId = correlId;
+			if (event.getApplicationData() != null && event.getApplicationData().getComplexContent() != null) {
+				for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
+					if (!("DestinationData".equals(complexContent.getElementName())
+							|| "WrittenDestination".equals(complexContent.getElementName()))) {
+						continue;
+					}
+					NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");
+					if (nodeList.getLength() > 0) {
+						telemetryEvent.endpoint = nodeList.item(0).getTextContent();
+					}
+					nodeList = complexContent.getAny().getElementsByTagName("msgId");
+					if (nodeList.getLength() > 0) {
+						telemetryEvent.id = nodeList.item(0).getTextContent();
+					}
+					nodeList = complexContent.getAny().getElementsByTagName("correlId");
+					if (nodeList.getLength() > 0) {
+						String correlId = nodeList.item(0).getTextContent();
+						if (correlId.replaceAll("0", "").trim().length() != 0) {
+							telemetryEvent.correlationId = correlId;
+						}
 					}
 				}
 			}
