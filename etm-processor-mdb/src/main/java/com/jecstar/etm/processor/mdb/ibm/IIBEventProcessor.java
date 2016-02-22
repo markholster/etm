@@ -67,11 +67,11 @@ public class IIBEventProcessor implements MessageListener {
 
 	private final StringBuilder byteArrayBuilder = new StringBuilder();
 	
-	private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+	private final DateFormat mqDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 
 	@PostConstruct
 	private void initialize() {
-		this.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		this.mqDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		try {
 			JAXBContext jaxbContext = JAXBContext.newInstance(Event.class);
 			this.unmarshaller = jaxbContext.createUnmarshaller();
@@ -149,6 +149,7 @@ public class IIBEventProcessor implements MessageListener {
 				} 
 			}
 		}		
+		telemetryEvent.creationTime.setTime(event.getEventPointData().getEventData().getEventSequence().getCreationTime().toGregorianCalendar().getTimeInMillis());
 		putNonNullDataInMap("IIB_LocalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId(), telemetryEvent.correlationData);
 		putNonNullDataInMap("IIB_ParentTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getParentTransactionId(), telemetryEvent.correlationData);
 		putNonNullDataInMap("IIB_GlobalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getGlobalTransactionId(), telemetryEvent.correlationData);
@@ -264,13 +265,19 @@ public class IIBEventProcessor implements MessageListener {
 				inputData.readFully(remaining);
 	
 				telemetryEvent.content = new String(remaining, codepage);
-				telemetryEvent.id = byteArrayToString(mqmd.getMsgId());
-				if (mqmd.getCorrelId() != null && mqmd.getCorrelId().length > 0) {
-					telemetryEvent.correlationId = byteArrayToString(mqmd.getCorrelId());
+				if (telemetryEvent.id == null) {
+					// Event can be set earlier in case of ComIbmMQOutputNode, in that case we have to skip the set because it may fail.
+					telemetryEvent.id = byteArrayToString(mqmd.getMsgId());
 				}
-				telemetryEvent.creationTime.setTime(this.dateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime());
+				if (telemetryEvent.correlationId == null) {
+					// Event can be set earlier in case of ComIbmMQOutputNode, in that case we have to skip the set because it may fail. s
+					if (mqmd.getCorrelId() != null && mqmd.getCorrelId().length > 0) {
+						telemetryEvent.correlationId = byteArrayToString(mqmd.getCorrelId());
+					}
+				}
 				if (CMQC.MQEI_UNLIMITED != mqmd.getExpiry()) {
-					telemetryEvent.expiryTime.setTime(telemetryEvent.creationTime.getTime() + (mqmd.getExpiry() * 100));
+					long expiryTime = this.mqDateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime() + (mqmd.getExpiry() * 100);
+					telemetryEvent.expiryTime.setTime(expiryTime);
 				}
 				int ibmMsgType = mqmd.getMsgType();
 				if (ibmMsgType == CMQC.MQMT_REQUEST) {
