@@ -323,7 +323,7 @@ public class IIBEventProcessor implements MessageListener {
 				if (inHeaders) {
 					int ix = line.indexOf(":");
 					if (ix != -1) {
-						telemetryEvent.metadata.put(line.substring(0, ix).trim(), line.substring(ix + 1).trim());
+						telemetryEvent.metadata.put("http_" + line.substring(0, ix).trim(), line.substring(ix + 1).trim());
 					}
 				} else {
 					if (telemetryEvent.content != null) {

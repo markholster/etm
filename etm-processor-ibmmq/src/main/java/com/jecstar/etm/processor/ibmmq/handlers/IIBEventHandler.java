@@ -140,6 +140,7 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 		} else if (event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmWS") || 
 				event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmHTTP")) {
 			httpBitstream = true;
+			
 		}
 		if (customAchmeaFiltering(telemetryEvent)) {
 			return false;
@@ -267,7 +268,7 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 				if (inHeaders) {
 					int ix = line.indexOf(":");
 					if (ix != -1) {
-						telemetryEvent.metadata.put(line.substring(0, ix).trim(), line.substring(ix + 1).trim());
+						telemetryEvent.metadata.put("http_" + line.substring(0, ix).trim(), line.substring(ix + 1).trim());
 					}
 				} else {
 					if (telemetryEvent.content != null) {
