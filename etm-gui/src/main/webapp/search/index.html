@@ -69,6 +69,7 @@
 				</div>
 				<div class="panel panel-default">
 					<div class="panel-body">
+					    <div class="pull-right">Download</div>
 						<div id="result_overview" class="text-center"></div>
 						<div class="table-responsive">
 							<table id="result_table"
@@ -89,7 +90,7 @@
 						</div>
 					</div>
 					<div class="panel-footer">
-					   <div class="text-center"><a id="show_more_lnk" href="#">Show more</a></div>   
+					   <div class="text-center"><a id="show_more_lnk" href="#" style="display: none;">Show more</a></div>   
 					</div>
 				</div>
 			</div>
@@ -191,6 +192,7 @@ $(function () {
             if (!data) {
                 return;
             }
+            $('#show_more_lnk').show();
             var overView = 'Found <span id="result_count_found">' + data.numFound + '</span> events in ' + data.queryTime + 'ms.';
             if (data.start < data.end) {
                 overView = overView + ' Showing events ' + (data.start + 1) + ' to <span id="end_range">'+ (data.end + 1) +'</span>.'; 
@@ -281,6 +283,7 @@ $(function () {
 	
 	var showMore = function() {
             loading = true;
+            $('#show_more_lnk').hide();
             $('#ajax_loader').show();
             $.ajax('../rest/query?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + currentStart + '&rows=' + rowCount + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder), { dataType: "json", cache: false, success: function (data) {
                $("#ajax_loader").hide();
