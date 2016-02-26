@@ -78,6 +78,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void addEvent(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException {
 		GetResponse getResponse = this.elasticClient.prepareGet(indexName, indexType, eventId).get();
 		if (!getResponse.isExists()) {
@@ -98,6 +99,17 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		writeStringValue("endpoint", getStringValue(this.tags.getEndpointTag(), valueMap), generator);
 		writeDateValue("expiryTime", getDateValue(this.tags.getExpiryTimeTag(), valueMap), generator);
 		writeStringValue("id", eventId, generator);
+		List<Map<String, Object>> metadata = (List<Map<String, Object>>) valueMap.get(this.tags.getMetadataTag());
+		if (metadata != null && metadata.size() > 0) {
+			generator.writeArrayFieldStart("metadata");
+			for (Map<String, Object> metadataEntry : metadata) {
+				generator.writeStartObject();
+				writeStringValue("key", getStringValue(this.tags.getMapKeyTag(), metadataEntry), generator);
+				writeStringValue("value", getStringValue(this.tags.getMapValueTag(), metadataEntry), generator);
+				generator.writeEndObject();
+			}
+			generator.writeEndArray();
+		}
 		writeStringValue("name", getStringValue(this.tags.getNameTag(), valueMap), generator);
 		writeLongValue("responsetime", getLongValue(this.tags.getResponsetimeTag(), valueMap), generator);
 		writeStringValue("transactionId", getStringValue(this.tags.getTransactionIdTag(), valueMap), generator);

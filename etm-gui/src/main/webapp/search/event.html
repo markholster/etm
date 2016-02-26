@@ -19,7 +19,7 @@
 				<div class="panel-heading clearfix">
 					<div id="panel_title" class="panel-title pull-left"></div>
 					<div class="pull-right">
-						<a id="back_lnk" href="#">New query</a>
+						<a id="back_lnk" href="#">Back to query</a>
 					</div>
 				</div>
 				<div class="panel-body">
@@ -74,6 +74,27 @@
                                   <p id="event_correlationId" class="form-control-static" style="padding-bottom: 0px;"></p>
                                 </div>
                               </div>
+                              <div id="event_metadata_panel" class="panel panel-default" style="display: none;">
+			                    <div class="panel-heading clearfix">
+			                        <div class="pull-left"><a id="event_metadata_toggle" href="#">Metadata</a></div>
+			                    </div>
+			                    <div id="event_panel_collapse" class="panel-collapse collapse">
+	                                <div class="panel-body">
+				                        <div class="table-responsive">
+				                            <table id="event_metadata_table" class="table table-condensed table-striped table-hover">
+				                                <thead>
+				                                    <tr>
+				                                        <th>Name</th>
+				                                        <th>Value</th>
+				                                    </tr>
+				                                </thead>
+				                                <tbody>
+				                                </tbody>
+				                            </table>
+				                        </div>
+			                        </div>
+		                        </div>
+   	                          </div>                              
                               <div class="form-group">  
                                 <div class="col-sm-12">
                                   <pre id="event_content"></pre>
@@ -124,6 +145,27 @@
                                   <p id="event_correlation_correlationId" class="form-control-static" style="padding-bottom: 0px;"></p>
                                 </div>
                               </div>
+                              <div id="event_correlation_metadata_panel" class="panel panel-default" style="display: none;">
+                                <div class="panel-heading clearfix">
+                                    <div class="pull-left"><a id="event_correlation_metadata_toggle" href="#">Metadata</a></div>
+                                </div>
+                                <div id="event_correlation_panel_collapse" class="panel-collapse collapse">
+                                    <div class="panel-body">
+                                        <div class="table-responsive">
+                                            <table id="event_correlation_metadata_table" class="table table-condensed table-striped table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Value</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                              </div>                              
                               <div class="form-group">  
                                 <div class="col-sm-12">
                                   <pre id="event_correlation_content"></pre>
@@ -161,6 +203,10 @@ $(function () {
         str = str.toString();
 	    return str.length < max ? padNumber("0" + str, max) : str;
 	};
+	
+	var escapeToHtml = function(value) {
+        return $('<div/>').text(value).html();
+    };
 	    
     var formatDate = function(date) {
         return padNumber(date.getFullYear() + '-' + padNumber((date.getMonth() + 1), 2) + '-' + date.getDate(), 2) + ' ' + padNumber(date.getHours(), 2) + ':' + padNumber(date.getMinutes(), 2) + ":" + padNumber(date.getSeconds(), 2) + '.' + padNumber(date.getMilliseconds(), 3);
@@ -201,6 +247,15 @@ $(function () {
         $('#' + prefix + '_tab #' + prefix + '_id').text(data.id);
         $('#' + prefix + '_tab #' + prefix + '_correlationId').text(data.correlationId);
         $('#' + prefix + '_tab #' + prefix + '_content').text(data.content);
+        if (data.metadata != undefined) {
+            $.each(data.metadata, function(metadata_ix, metadata) {
+                var rowContent = '<tr><td>' + escapeToHtml(metadata.key) + '</td><td>' + escapeToHtml(metadata.value) + '</td></tr>';
+                $(rowContent).appendTo($('#' + prefix + '_metadata_table > tbody'));
+            });
+            $('#' + prefix + '_metadata_panel').show();
+        } else {
+            $('#' + prefix + '_metadata_panel').hide();
+        }
         if (data.content != undefined && data.content.indexOf('<') === 0) {
             var formattedHtml = prettyPrintOne($('#' + prefix + '_tab #' + prefix + '_content').html());
             $('#' + prefix + '_tab #' + prefix + '_content').html(formattedHtml);
@@ -211,6 +266,7 @@ $(function () {
 		  e.preventDefault();
 		  $(this).tab('show');
 	});
+	
 
 	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 		var target = $(e.target).attr("href") // activated tab
@@ -220,6 +276,16 @@ $(function () {
 			}
 		}
 	});
+	
+	$('#event_metadata_toggle').click(function (e) {
+	   e.preventDefault();
+	   $('#event_panel_collapse').collapse("toggle");
+	});
+
+    $('#event_correlation_metadata_toggle').click(function (e) {
+       e.preventDefault();
+       $('#event_correlation_panel_collapse').collapse("toggle");
+    });
 	
 	var eventId = getUrlParameter('id');
 	var indexName = getUrlParameter('index');
