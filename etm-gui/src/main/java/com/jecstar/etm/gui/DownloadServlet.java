@@ -80,8 +80,10 @@ public class DownloadServlet extends HttpServlet {
 		resp.getWriter().write("\"id\""
 				+ ",\"correlation id\""
 				+ ",\"creation time\""
+				+ ",\"expiry time\""
 				+ ",\"name\""
 				+ ",\"application\""
+				+ ",\"transaction name\""
 				+ ",\"endpoint\""
 				+ ",\"response time\""
 				+ ",\"content\"\r\n");
@@ -90,8 +92,10 @@ public class DownloadServlet extends HttpServlet {
 			resp.getWriter().write("\"" + hit.getId()+ "\""
 					+ ",\"" + getStringValue(this.tags.getCorrelationIdTag(), valueMap) + "\""
 					+ ",\"" + getDateValue(this.tags.getCreationTimeTag(), valueMap) + "\""
+					+ ",\"" + getDateValue(this.tags.getExpiryTimeTag(), valueMap) + "\""
 					+ ",\"" + getStringValue(this.tags.getNameTag(), valueMap) + "\""
 					+ ",\"" + getStringValue(this.tags.getApplicationTag(), valueMap) + "\""
+					+ ",\"" + getStringValue(this.tags.getTransactionNameTag(), valueMap) + "\""
 					+ ",\"" + getStringValue(this.tags.getEndpointTag(), valueMap) + "\""
 					+ ",\"" + getStringValue(this.tags.getResponsetimeTag(), valueMap) + "\""
 					+ ",\"" + getStringValue(this.tags.getContentTag(), valueMap)+ "\"\r\n");
