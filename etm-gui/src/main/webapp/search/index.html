@@ -69,7 +69,7 @@
 				</div>
 				<div class="panel panel-default">
 					<div class="panel-body">
-					    <div class="pull-right">Download</div>
+					    <div class="pull-right"><a id="download_link" href="#" style="display: none;">Download</a></div>
 						<div id="result_overview" class="text-center"></div>
 						<div class="table-responsive">
 							<table id="result_table"
@@ -141,6 +141,7 @@ if ( !Date.prototype.toISOString ) {
            
 $(function () {
     var currentStart = 0;
+    var initialStart = currentStart;
     var rowCount = 25;
     var sortOrder = 'asc';
     var sortField = '';
@@ -192,10 +193,12 @@ $(function () {
             if (!data) {
                 return;
             }
-            $('#show_more_lnk').show();
             var overView = 'Found <span id="result_count_found">' + data.numFound + '</span> events in ' + data.queryTime + 'ms.';
             if (data.start < data.end) {
                 overView = overView + ' Showing events ' + (data.start + 1) + ' to <span id="end_range">'+ (data.end + 1) +'</span>.'; 
+                $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=' + encodeURIComponent(data.end + 1 - initialStart) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
+                $('#download_link').show();
+                $('#show_more_lnk').show();
             }
             $('#result_overview').html('<p>' + overView + '</p>');
             $.each(data.events, function(index, event) {
@@ -223,6 +226,7 @@ $(function () {
         } else {
             $('#search_input').parent().removeClass('has-error');
             currentStart = 0;
+            initialStart = currentStart;
             executeQuery(currentStart, rowCount, sortField, sortOrder, true);
         }
     };
@@ -264,6 +268,7 @@ $(function () {
 	if (!$.isEmptyObject(queryString)) {
 		$('#search_input').val(queryString);
 		currentStart = parseInt(getUrlParameter('start', 0));
+		initialStart = currentStart;
 		rowCount = parseInt(getUrlParameter('max', 25)); 
 		sortField = getUrlParameter('sortField');
 		sortOrder = getUrlParameter('sortOrder', 'asc');
@@ -295,6 +300,7 @@ $(function () {
                });
                currentStart += data.numReturned;
                $('#end_range').text(currentStart);
+               $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=' + encodeURIComponent(currentStart - initialStart) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
                $('#result_count_found').text(data.numFound);
                loading = false;
             }});

@@ -52,7 +52,7 @@ public class DownloadServlet extends HttpServlet {
 			startIx = Integer.valueOf(start);
 		}
 		if (rows != null && rows.trim().length() > 0) {
-			nrOfRows = Integer.valueOf(start);
+			nrOfRows = Integer.valueOf(rows);
 			if (nrOfRows > 500) {
 				nrOfRows = 500;
 			}
@@ -75,10 +75,26 @@ public class DownloadServlet extends HttpServlet {
 		}
 		SearchResponse searchResponse = searchRequest.get();
 		resp.setContentType("text/csv");
-		resp.getWriter().write("\"id\",\"correlation id\",\"creation time\",\"content\"\r\n");
+		resp.setHeader("Content-Disposition", "inline; filename=\"result.csv\""); 
+		resp.setCharacterEncoding(System.getProperty("file.encoding"));
+		resp.getWriter().write("\"id\""
+				+ ",\"correlation id\""
+				+ ",\"creation time\""
+				+ ",\"name\""
+				+ ",\"application\""
+				+ ",\"endpoint\""
+				+ ",\"response time\""
+				+ ",\"content\"\r\n");
 		for (SearchHit hit : searchResponse.getHits()) {
 			Map<String, Object> valueMap = hit.getSource();
-			resp.getWriter().write("\"" + hit.getId()+ "\",\"" + getStringValue(this.tags.getCorrelationIdTag(), valueMap) + "\",\"" + getDateValue(this.tags.getCreationTimeTag(), valueMap) + "\",\"" + getStringValue(this.tags.getContentTag(), valueMap)+ "\"\r\n");
+			resp.getWriter().write("\"" + hit.getId()+ "\""
+					+ ",\"" + getStringValue(this.tags.getCorrelationIdTag(), valueMap) + "\""
+					+ ",\"" + getDateValue(this.tags.getCreationTimeTag(), valueMap) + "\""
+					+ ",\"" + getStringValue(this.tags.getNameTag(), valueMap) + "\""
+					+ ",\"" + getStringValue(this.tags.getApplicationTag(), valueMap) + "\""
+					+ ",\"" + getStringValue(this.tags.getEndpointTag(), valueMap) + "\""
+					+ ",\"" + getStringValue(this.tags.getResponsetimeTag(), valueMap) + "\""
+					+ ",\"" + getStringValue(this.tags.getContentTag(), valueMap)+ "\"\r\n");
 		}
 		resp.flushBuffer();
 	}
