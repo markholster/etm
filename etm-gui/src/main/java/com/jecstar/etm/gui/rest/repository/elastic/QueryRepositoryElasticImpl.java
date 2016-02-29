@@ -101,6 +101,13 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		writeStringValue("id", eventId, generator);
 		List<Map<String, Object>> metadata = (List<Map<String, Object>>) valueMap.get(this.tags.getMetadataTag());
 		if (metadata != null && metadata.size() > 0) {
+			metadata.sort(new Comparator<Map<String, Object>>() {
+				@Override
+				public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+					return ((String) o1.get(QueryRepositoryElasticImpl.this.tags.getMapKeyTag()))
+							.compareTo((String) o2.get(QueryRepositoryElasticImpl.this.tags.getMapKeyTag()));
+				}
+			});
 			generator.writeArrayFieldStart("metadata");
 			for (Map<String, Object> metadataEntry : metadata) {
 				generator.writeStartObject();

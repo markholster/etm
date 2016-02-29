@@ -78,7 +78,7 @@
 			                    <div class="panel-heading clearfix">
 			                        <div class="pull-left"><a id="event_metadata_toggle" href="#">Metadata</a></div>
 			                    </div>
-			                    <div id="event_panel_collapse" class="panel-collapse collapse">
+			                    <div id="event_panel_collapse" class="panel-collapse collapse in">
 	                                <div class="panel-body">
 				                        <div class="table-responsive">
 				                            <table id="event_metadata_table" class="table table-condensed table-striped table-hover">
@@ -149,7 +149,7 @@
                                 <div class="panel-heading clearfix">
                                     <div class="pull-left"><a id="event_correlation_metadata_toggle" href="#">Metadata</a></div>
                                 </div>
-                                <div id="event_correlation_panel_collapse" class="panel-collapse collapse">
+                                <div id="event_correlation_panel_collapse" class="panel-collapse collapse in">
                                     <div class="panel-body">
                                         <div class="table-responsive">
                                             <table id="event_correlation_metadata_table" class="table table-condensed table-striped table-hover">
@@ -266,7 +266,6 @@ $(function () {
 		  e.preventDefault();
 		  $(this).tab('show');
 	});
-	
 
 	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 		var target = $(e.target).attr("href") // activated tab
@@ -277,11 +276,13 @@ $(function () {
 		}
 	});
 	
+	$('#event_panel_collapse').collapse();
 	$('#event_metadata_toggle').click(function (e) {
 	   e.preventDefault();
 	   $('#event_panel_collapse').collapse("toggle");
 	});
 
+    $('#event_correlation_panel_collapse').collapse();
     $('#event_correlation_metadata_toggle').click(function (e) {
        e.preventDefault();
        $('#event_correlation_panel_collapse').collapse("toggle");

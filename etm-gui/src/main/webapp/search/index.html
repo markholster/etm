@@ -79,7 +79,6 @@
 										<th><a href="#" id="sort_name">Name</a></th>
 										<th><a href="#" id="sort_application">Application</a></th>
 										<th><a href="#" id="sort_endpoint">Endpoint</a></th>
-										<th><a href="#" id="sort_id">Id</a></th>
 										<th><a href="#" id="sort_creation_time">Creation time</a></th>
 									</tr>
 								</thead>
@@ -174,7 +173,7 @@ $(function () {
         var application = $.isEmptyObject(event.application) ? '' : event.application;
         var endpoint = $.isEmptyObject(event.endpoint) ? '' : event.endpoint;
         var eventName = $.isEmptyObject(event.name) ? '?' : event.name; 
-        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&index=' + encodeURIComponent(event.indexName) + '&type=' + encodeURIComponent(event.indexType) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder) + '">' + escapeToHtml(eventName) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(endpoint) + '</div></td><td><div style="display: none;">' + escapeToHtml(event.id) + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
+        var rowContent = '<tr><td><div style="display: none;"><a href="event.html?id=' + encodeURIComponent(event.id) + '&index=' + encodeURIComponent(event.indexName) + '&type=' + encodeURIComponent(event.indexType) + '&queryString=' + encodeURIComponent($('#search_input').val()) + '&start='+ encodeURIComponent(start) + '&max='+ encodeURIComponent(max) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder) + '">' + escapeToHtml(eventName) + '</a></div></td><td><div style="display: none;">' + escapeToHtml(application) + '</div></td><td><div style="display: none;">' + escapeToHtml(endpoint) + '</div></td><td><div style="display: none;">' + formatDate(new Date(event.creationTime)) + '</div></td></tr>';  
         $(rowContent).appendTo($('#result_table > tbody'));
         if (animate) {
             $('#result_table > tbody > :last-child > td > div').slideDown(500);
@@ -195,7 +194,7 @@ $(function () {
             var overView = 'Found <span id="result_count_found">' + data.numFound + '</span> events in ' + data.queryTime + 'ms.';
             if (data.start < data.end) {
                 overView = overView + ' Showing events ' + (data.start + 1) + ' to <span id="end_range">'+ (data.end + 1) +'</span>.'; 
-                $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=' + encodeURIComponent(data.end + 1 - initialStart) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
+                $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=500&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
                 $('#download_link').show();
                 $('#show_more_lnk').show();
             }
@@ -299,8 +298,11 @@ $(function () {
                });
                currentStart += data.numReturned;
                $('#end_range').text(currentStart);
-               $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=' + encodeURIComponent(currentStart - initialStart) + '&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
+               $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=500&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
                $('#result_count_found').text(data.numFound);
+               if (data.start < data.end) {
+                   $('#show_more_lnk').show();
+               }
                loading = false;
             }});
 	};
@@ -308,7 +310,6 @@ $(function () {
     setSortListener('sort_name','name');
     setSortListener('sort_application','application');
     setSortListener('sort_endpoint','endpoint');
-    setSortListener('sort_id','id');
 	setSortListener('sort_creation_time','creation_time');
 	
 });
