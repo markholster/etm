@@ -140,10 +140,13 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 		} else if (event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmWS") || 
 				event.getEventPointData().getMessageFlowData().getNode().getNodeType().startsWith("ComIbmHTTP")) {
 			httpBitstream = true;
-			
 		}
 		if (customAchmeaFiltering(telemetryEvent)) {
 			return false;
+		}
+		NodeType nodeType = NodeType.nullSafeValueOf(event.getEventPointData().getMessageFlowData().getNode().getNodeType());
+		if (nodeType != null && nodeType.getEventType() != null && telemetryEvent.type == null) {
+			telemetryEvent.type = nodeType.getEventType();
 		}
 		if (event.getBitstreamData() != null && event.getBitstreamData().getBitstream() != null) {
 			if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
