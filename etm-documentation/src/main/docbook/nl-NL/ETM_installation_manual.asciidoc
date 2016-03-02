@@ -392,6 +392,44 @@ Als u ETM wilt laten lezen vanaf verschillende queue's moet in de ejb-jar.xml he
 een unieke waarde krijgen. Als laatste moet in jboss-ejb3.xml het element "<mdb:resource-adapter-binding>" gedupliceerd worden, en moet de naam van de ejb worden aangepast in de
 zojuist gekozen nieuwe naam van de ejb.
 
+==== Uitlezen van WMB/IIB Monitoring Events
+ETM is in staat monitoring events die verzonden worden vanuit WebSphere Message Broker (kortweg WMB) of Ibm Integration Bus (kortweg IIB) uit te lezen en te verwerken. Dit heeft 
+als voordeel dat er een exacte kopie van het originele bericht dat door WMB/IIB is verzonden opgeslagen wordt in ETM. Ook de verschillende http of mqmd headers worden bij de events
+in ETM zichtbaar. Als laatste is ETM automatische correlatie tussen berichten vast te stellen, en kan precies bepaald worden uit welke flow het bericht is verstuurd.
+
+Voor het uitlezen van WMB/IIB monitoring events zijn extra aanpassingen nodig aan de MDB. Unzip wederom etm-processor-mdb-{etm_version}.war naar een gewenste lokatie en hernoem 
+daarna het bestand WEB-INF\jboss-deployment-structure-example.xml naar WEB-INF\jboss-deployment-structure.xml. Indien u ervoor gekozen heeft de IBM MQ Resource Adapter niet de naam
+wmq.jmsra.rar te geven dan moet de inhoud van het bestand jboss-deployment-structure.xml hierop aangepast worden. Zorg ervoor dat de regel
+[source,xml]
+----
+<module name="deployment.wmq.jmsra.rar" />
+----
+
+zodanig wordt aangepast dat het stuk tekst "wmq.jmsra.rar" wordt vervangen door de naam die u gekozen heeft voor de resource adapter. Open vervolgens het bestand WEB-INF\ejb-jar.xml
+en vervang de regel(s) 
+[source,xml]
+----
+<ejb-class>com.jecstar.etm.processor.mdb.JMSTelemetryEventProcessor</ejb-class>
+----
+
+naar 
+[source,xml]
+----
+<ejb-class>com.jecstar.etm.processor.mdb.ibm.IIBEventProcessor</ejb-class>
+----
+
+Zip vervolgens de directory structuur opnieuw naar etm-processor-mdb-{etm_version}.war en deploy dit bestand hierna. Wees er zeker van dat op de queue die geconfigureerd staat bij
+de MDB enkel WMB/IIB Monitoring Events binnenkomen. Alle overige berichten zullen genegeerd worden.
+
+De Monitoring Events moeten aan bepaalde voorwaarden voldoen om door ETM verwerkt te kunnen worden.
+
+* De volledige bitstream van het bericht moet als base64Binary encoded string worden toegevoegd aan het Monitoring Event.
+* Er moet een veld met de naam Encoding aanwezig zijn in de event payload. De waarde van dit veld moet een integer bevatten die correspondeert met de encodig van de bitstream.
+* Er moet een veld met de naam CodedCharSetId aanwezig zijn in de event payload. De waarde van dit veld moet een integer bevatten die correspondeert met de CCSID van de bitstream.
+
+Ook is het aan te raden om de Unit Of Work van de monitoring op "independent" of "none" te zetten. Op die manier worden ook berichten die voor een rollback in de WMB/IIB flow 
+zorgen toch gelogd in ETM.
+
 === ETM web service processor
 Om events aan ETM toe te voegen via een web service dient u de component etm-processor-ws-{etm_version}.war te deployen in Wildfly. Na het deployen is de wsdl van de 
 web service beschikbaar op http://localhost:8080/etm/processor/ws/processorservice?wsdl
