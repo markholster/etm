@@ -105,10 +105,10 @@ public class QueryService {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        this.queryRepository.addEvent(id, index, type, generator);
+	        boolean success = this.queryRepository.addEvent(id, index, type, generator);
 	        generator.writeEndObject();
 	        generator.close();
-	        return writer.toString();
+	        return success ? writer.toString() : null;
 		} catch (Exception e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error retrieving event data with id '" + id + "'.", e);
@@ -127,10 +127,10 @@ public class QueryService {
 	        StringWriter writer = new StringWriter();
 	        JsonGenerator generator = this.jsonFactory.createGenerator(writer);
 	        generator.writeStartObject();
-	        this.queryRepository.addEventOverview(id, index, type, generator);
+	        boolean success = this.queryRepository.addEventOverview(id, index, type, generator);
 	        generator.writeEndObject();
 	        generator.close();
-	        return writer.toString();
+	        return success ? writer.toString() : null;
 		} catch (Exception e) {
         	if (log.isErrorLevelEnabled()) {
         		log.logErrorMessage("Error retrieving event overview data for event with id '" + id + "'.", e);

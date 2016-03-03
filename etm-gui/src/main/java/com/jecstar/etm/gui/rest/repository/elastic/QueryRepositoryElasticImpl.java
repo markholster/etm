@@ -79,10 +79,10 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void addEvent(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException {
+	public boolean addEvent(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException {
 		GetResponse getResponse = this.elasticClient.prepareGet(indexName, indexType, eventId).get();
 		if (!getResponse.isExists()) {
-			return;
+			return false;
 		}
 		Map<String, Object> valueMap = getResponse.getSourceAsMap();
 		writeStringValue("application", getStringValue(this.tags.getApplicationTag(), valueMap), generator);
@@ -122,6 +122,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		writeStringValue("transactionId", getStringValue(this.tags.getTransactionIdTag(), valueMap), generator);
 		writeStringValue("transactionName", getStringValue(this.tags.getTransactionNameTag(), valueMap), generator);
 		writeStringValue("type", getStringValue(this.tags.getTypeTag(), valueMap), generator);
+		return true;
 	}
 	
 	private String formatXml(String unformattedXml) {
@@ -139,10 +140,13 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 		return unformattedXml;
 	}
 
-	public void addEventOverview(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException {
+	public boolean addEventOverview(String eventId, String indexName, String indexType, JsonGenerator generator) throws JsonGenerationException, IOException {
 		String rootEventId = findRootEventId(eventId, new ArrayList<String>());
 		OverviewEvent tree = new OverviewEvent();
 		findChildren(rootEventId, tree, new ArrayList<OverviewEvent>());
+		if (tree.children.isEmpty()) {
+			return false;
+		}
 		OverviewEvent root = tree.children.get(0);
 		sortTelemetryEventTree(root);
 		calculateResponseTimes(root);
@@ -200,6 +204,7 @@ public class QueryRepositoryElasticImpl implements QueryRepository {
 
 		}
 		generator.writeEndArray();
+		return true;
 	}
 
 	private void sortTelemetryEventTree(OverviewEvent overviewEvent) {
