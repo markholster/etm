@@ -13,20 +13,12 @@ public class HttpTelemetryEventConverterJsonImpl extends AbstractJsonTelemetryEv
 		if (event.httpEventType != null) {
 			added = addStringElementToJsonBuffer(getTags().getHttpEventTypeTag(), event.httpEventType.name(), buffer, !added) || added;
 		}
-		if (event.readingEndpointHandler.isSet()) {
-			if (added) {
-				buffer.append(", ");
-			}
-			buffer.append("\"" + getTags().getReadingEndpointHandlerTag() + "\": ");
-			added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandler, buffer, true, getTags()) || added;
-		}
 		return added;
 	}
 
 	@Override
 	void doConvert(HttpTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
 		telemetryEvent.httpEventType =  HttpEventType.safeValueOf(getString(getTags().getHttpEventTypeTag(), valueMap));
-		telemetryEvent.readingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(getTags().getReadingEndpointHandlerTag(), valueMap)));
 	}
 
 }

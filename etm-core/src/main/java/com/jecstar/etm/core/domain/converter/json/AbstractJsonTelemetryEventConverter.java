@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.jecstar.etm.core.domain.Application;
+import com.jecstar.etm.core.domain.Endpoint;
 import com.jecstar.etm.core.domain.EndpointHandler;
 import com.jecstar.etm.core.domain.Location;
 import com.jecstar.etm.core.domain.PayloadFormat;
@@ -33,7 +34,18 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		added = addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
-		added = addStringElementToJsonBuffer(this.tags.getEndpointTag(), event.endpoint, sb, !added) || added;
+		if (event.endpoints.size() != 0) {
+			if (added) {
+				sb.append(", ");
+			}
+			sb.append("\"" + getTags().getEndpointsTag() + "\": [");
+			boolean endpointAdded = false;
+			for (int i = 0; i < event.endpoints.size(); i++) {
+				endpointAdded = addEndpointToJsonBuffer(event.endpoints.get(i), sb, i == 0 ? true : !endpointAdded, getTags()) || endpointAdded;
+			}
+			sb.append("]");			
+			added = endpointAdded || added;
+		}
 		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), event.metadata, sb, !added) || added;
@@ -42,13 +54,6 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 			added = addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), sb, !added) || added;
 		}
 		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), event.transactionId, sb, !added) || added;
-		if (event.writingEndpointHandler.isSet()) {
-			if (added) {
-				sb.append(", ");
-			}
-			sb.append("\"" + this.tags.getWritingEndpointHandlerTag() + "\": ");
-			added = addEndpointHandlerToJsonBuffer(event.writingEndpointHandler, sb, true, this.tags) || added;
-		}
 		added = doConvert(event, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
@@ -71,8 +76,48 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		buffer.append("]");
 		return true;
 	}
+	
+	private boolean addEndpointToJsonBuffer(Endpoint endpoint, StringBuilder buffer, boolean firstElement, TelemetryEventConverterTags tags) {
+		boolean readingEndpointHandlerSet = false;
+		for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
+			if (handler.isSet()) {
+				readingEndpointHandlerSet = true;
+				break;
+			}
+		}
+		if (endpoint.name == null && !endpoint.writingEndpointHandler.isSet() && !readingEndpointHandlerSet) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append("{");
+		boolean added = false;
+		added = addStringElementToJsonBuffer(tags.getEndpointNameTag(), endpoint.name, buffer, true);
+		if (readingEndpointHandlerSet) {
+			if (added) {
+				buffer.append(", ");
+			}
+			buffer.append("\"" + getTags().getReadingEndpointHandlersTag() + "\": [");
+			added = false;
+			for (int i = 0; i < endpoint.readingEndpointHandlers.size(); i++) {
+				added = addEndpointHandlerToJsonBuffer(endpoint.readingEndpointHandlers.get(i), buffer, i == 0 ? true : !added, getTags()) || added;
+			}
+			buffer.append("]");
+			added = true;
+		}
+		if (endpoint.writingEndpointHandler.isSet()) {
+			if (added) {
+				buffer.append(", ");
+			}
+			buffer.append("\"" + this.tags.getWritingEndpointHandlerTag() + "\": ");
+			added = addEndpointHandlerToJsonBuffer(endpoint.writingEndpointHandler, buffer, true, this.tags) || added;
+		}
+		buffer.append("}");
+		return added;
+	}
 
-	protected boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventConverterTags tags) {
+	private boolean addEndpointHandlerToJsonBuffer(EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventConverterTags tags) {
 		if (!endpointHandler.isSet()) {
 			return false;
 		}
@@ -130,7 +175,19 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		if (eventMap != null) {
 			eventMap.forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
 		}
-		telemetryEvent.endpoint = getString(this.tags.getEndpointTag(), valueMap);
+		eventMap = getArray(this.tags.getEndpointsTag(), valueMap);
+		if (eventMap != null) {
+			for (Map<String, Object> endpointMap : eventMap) {
+				Endpoint endpoint = new Endpoint();
+				endpoint.name = getString(this.tags.getEndpointNameTag(), endpointMap);
+				List<Map<String, Object>> endpointHandlers = getArray(getTags().getReadingEndpointHandlersTag(), endpointMap);
+				if (endpointHandlers != null) {
+					endpointHandlers.forEach(c -> endpoint.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
+				}
+				endpoint.writingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(this.tags.getWritingEndpointHandlerTag(), endpointMap)));
+				telemetryEvent.endpoints.add(endpoint);
+			}
+		}
 		eventMap = getArray(this.tags.getExtractedDataTag(), valueMap);
 		if (eventMap != null) {
 			eventMap.forEach(c -> telemetryEvent.extractedData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
@@ -143,13 +200,12 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
 		telemetryEvent.payloadFormat = PayloadFormat.safeValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
 		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
-		telemetryEvent.writingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(this.tags.getWritingEndpointHandlerTag(), valueMap)));
 		doConvert(telemetryEvent, valueMap);		
 	}
 
 	abstract void doConvert(Event telemetryEvent, Map<String, Object> valueMap);
 
-	protected EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
+	private EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
 		if (valueMap.isEmpty()) {
 			return null;
 		}

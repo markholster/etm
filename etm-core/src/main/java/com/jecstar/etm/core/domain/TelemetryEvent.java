@@ -1,7 +1,9 @@
 package com.jecstar.etm.core.domain;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -23,9 +25,9 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	public Map<String, Object> correlationData = new HashMap<String, Object>();
 	
 	/**
-	 * The endpoint this event was send to, and received from.
+	 * The endpoints this event was send to, and received from.
 	 */
-	public String endpoint;
+	public List<Endpoint> endpoints = new ArrayList<Endpoint>();
 	
 	/**
 	 * Data to be used to query on.
@@ -57,11 +59,6 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	 * transactionId form and end-to-end chain in the applications landscape.
 	 */
 	public String transactionId;
-	
-	/**
-	 * The handler that was writing the event.
-	 */
-	public EndpointHandler writingEndpointHandler = new EndpointHandler();
 
 	/**
 	 * Initialize this <code>TelemetryEvent</code> with the default data. 
@@ -73,14 +70,13 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.id = null;
 		this.correlationId = null;
 		this.correlationData.clear();
-		this.endpoint = null;
+		this.endpoints.clear();
 		this.extractedData.clear();
 		this.metadata.clear();
 		this.name = null;
 		this.payload = null;
 		this.payloadFormat = null;
 		this.transactionId = null;
-		this.writingEndpointHandler.initialize();		
 	}
 	
 	/**
@@ -102,36 +98,36 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.id = copy.id;
 		this.correlationId = copy.correlationId;
 		this.correlationData.putAll(copy.correlationData);
-		this.endpoint = copy.endpoint;
+		this.endpoints.clear();
+		for (Endpoint endpoint : copy.endpoints) {
+			Endpoint copyEndpoint = new Endpoint();
+			copyEndpoint.initialize(endpoint);
+			this.endpoints.add(copyEndpoint);
+		}
 		this.extractedData.putAll(copy.extractedData);
 		this.metadata.putAll(copy.metadata);
 		this.name = copy.name;
 		this.payload = copy.payload;
 		this.payloadFormat = copy.payloadFormat;
 		this.transactionId = copy.transactionId;
-		this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
 	}
 	
 	/**
 	 * Gives the time that applies to this <code>TelemetryEvent</code>. The
-	 * value returned depends on several factors. When a writing
-	 * <code>EndpointHandler<code> is provided, and it has a handling time set, 
-	 * that value is returned. Otherwise by default the current time is returned. 
-	 * 
-	 * This method may however behave differently in subclasses. If a subclass 
-	 * has one or more reading <code>EndpointHandler</code>s the handling time 
-	 * of one of these handlers may be returned.
+	 * value returned depends on several factors. All <code>Endpoint</code>s are
+	 * searched for their earliest handling time. If non of the
+	 * <code>Endpoint</code>s has a handling time, the current time is returned.
 	 * 
 	 * @return The event time.
 	 */
 	public final ZonedDateTime getEventTime() {
-		if (this.writingEndpointHandler.handlingTime != null) {
-			return this.writingEndpointHandler.handlingTime;
+		ZonedDateTime earliest = null;
+		for (Endpoint endpoint : this.endpoints) {
+			ZonedDateTime earliestHandlingTime = endpoint.getEarliestHandlingTime();
+			if (earliest == null || (earliestHandlingTime != null && earliestHandlingTime.isBefore(earliest))) {
+				earliest = earliestHandlingTime;
+			}
 		}
-		return getInternalEventTime();
-	}
-
-	protected ZonedDateTime getInternalEventTime() {
-		return ZonedDateTime.now();
+		return earliest != null ? earliest : ZonedDateTime.now();
 	}
 }

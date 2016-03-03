@@ -1,7 +1,5 @@
 package com.jecstar.etm.core.domain;
 
-import java.time.ZonedDateTime;
-
 public class SqlTelemetryEvent extends TelemetryEvent<SqlTelemetryEvent>{
 
 	public enum SqlEventType {
@@ -24,15 +22,9 @@ public class SqlTelemetryEvent extends TelemetryEvent<SqlTelemetryEvent>{
 	 */
 	public SqlEventType sqlEventType;
 
-	/**
-	 * The handler that was reading the event.
-	 */
-	public EndpointHandler readingEndpointHandler = new EndpointHandler();
-	
 	@Override
 	public SqlTelemetryEvent initialize() {
 		this.sqlEventType = null;
-		this.readingEndpointHandler.initialize();
 		return this;
 	}
 
@@ -40,15 +32,6 @@ public class SqlTelemetryEvent extends TelemetryEvent<SqlTelemetryEvent>{
 	public SqlTelemetryEvent initialize(SqlTelemetryEvent copy) {
 		super.internalInitialize(copy);
 		this.sqlEventType = copy.sqlEventType;
-		this.readingEndpointHandler.initialize(copy.readingEndpointHandler);
 		return this;
-	}
-	
-	@Override
-	protected ZonedDateTime getInternalEventTime() {
-		if (this.readingEndpointHandler.handlingTime != null) {
-			return this.readingEndpointHandler.handlingTime;
-		}
-		return super.getInternalEventTime();
 	}
 }

@@ -10,7 +10,6 @@ public interface TelemetryEventConverterTags {
 	String getIdTag();
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
-	String getEndpointTag();
 	String getExtractedDataTag();
 	String getNameTag();
 	String getMetadataTag();
@@ -25,6 +24,10 @@ public interface TelemetryEventConverterTags {
 	String getReadingEndpointHandlersTag();
 	String getWritingEndpointHandlerTag();
 	
+	// Endpoint attributes;
+	String getEndpointsTag();
+	String getEndpointNameTag();
+
 	// EndpointHandler attributes
 	String getEndpointHandlerHandlingTimeTag();
 	String getEndpointHandlerApplicationTag();

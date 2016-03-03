@@ -353,12 +353,12 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 		    .setLogLevel(logLevel)
 			.setPayload(payload)
 			.setStackTrace(stackTrace)
-			.setWritingEndpointHandler(ZonedDateTime.now(), 
+			.addWritingEndpointHandler(logLocation.fullInfo, 
+					ZonedDateTime.now(), 
 					this.configuration.getApplicationName(), 
 					this.configuration.getApplicationVersion(), 
 					this.configuration.getApplicationInstance(), 
 					this.configuration.getPrincipalName())
-			.setEndpoint(logLocation.fullInfo)
 			.build();
 		this.logForwarder.forwardLog(logTelemetryEvent);
 		

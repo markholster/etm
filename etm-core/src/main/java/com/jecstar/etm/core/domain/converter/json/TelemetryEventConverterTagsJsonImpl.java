@@ -30,10 +30,15 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	}
 
 	@Override
-	public String getEndpointTag() {
-		return "endpoint";
+	public String getEndpointsTag() {
+		return "endpoints";
 	}
 
+	@Override
+	public String getEndpointNameTag() {
+		return "name";
+	}
+	
 	@Override
 	public String getExpiryTag() {
 		return "expiry";

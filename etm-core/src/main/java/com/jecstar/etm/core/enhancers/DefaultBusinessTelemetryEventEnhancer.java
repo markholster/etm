@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import com.jecstar.etm.core.domain.BusinessTelemetryEvent;
+import com.jecstar.etm.core.domain.Endpoint;
 import com.jecstar.etm.core.domain.PayloadFormat;
 
 public class DefaultBusinessTelemetryEventEnhancer implements BusinessTelemetryEventEnhancer {
@@ -21,8 +22,16 @@ public class DefaultBusinessTelemetryEventEnhancer implements BusinessTelemetryE
 		if (event.payloadFormat == null) {
 			event.payloadFormat = detectPayloadFormat(event.payload);
 		}
-		if (event.writingEndpointHandler.handlingTime == null) {
-			event.writingEndpointHandler.handlingTime = enhanceTime;
+		if (event.endpoints.size() == 0) {
+			Endpoint endpoint = new Endpoint();
+			endpoint.writingEndpointHandler.handlingTime = enhanceTime;
+			event.endpoints.add(endpoint);
+		} else {
+			event.endpoints.forEach(c -> {
+				if (c.writingEndpointHandler.handlingTime == null) {
+					c.writingEndpointHandler.handlingTime = enhanceTime;
+				}
+			});
 		}
 	}
 	

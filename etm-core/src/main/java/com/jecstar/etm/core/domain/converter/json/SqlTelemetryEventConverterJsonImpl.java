@@ -13,20 +13,12 @@ public class SqlTelemetryEventConverterJsonImpl extends AbstractJsonTelemetryEve
 		if (event.sqlEventType != null) {
 			added = addStringElementToJsonBuffer(getTags().getSqlEventTypeTag(), event.sqlEventType.name(), buffer, !added) || added;
 		}
-		if (event.readingEndpointHandler.isSet()) {
-			if (added) {
-				buffer.append(", ");
-			}
-			buffer.append("\"" + getTags().getReadingEndpointHandlerTag() + "\": ");
-			added = addEndpointHandlerToJsonBuffer(event.readingEndpointHandler, buffer, true, getTags()) || added;
-		}
 		return added;
 	}
 
 	@Override
 	void doConvert(SqlTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
 		telemetryEvent.sqlEventType =  SqlEventType.safeValueOf(getString(getTags().getSqlEventTypeTag(), valueMap));
-		telemetryEvent.readingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(getTags().getReadingEndpointHandlerTag(), valueMap)));
 	}
 
 }

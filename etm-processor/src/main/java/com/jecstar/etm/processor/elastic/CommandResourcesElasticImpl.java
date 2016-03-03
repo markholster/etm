@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.elastic;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,6 +19,7 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.Endpoint;
 import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.CommandResources;
@@ -61,7 +63,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	}
 
 	@Override
-	public void loadEndpointConfig(String endpoint, EndpointConfiguration endpointConfiguration) {
+	public void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration) {
 		endpointConfiguration.initialize();
 	}
 	

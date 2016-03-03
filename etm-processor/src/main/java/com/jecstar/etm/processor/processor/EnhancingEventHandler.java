@@ -80,7 +80,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		final Context timerContext = this.timer.time();
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoint, this.endpointConfiguration);
+			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
 			if (this.endpointConfiguration.businessEventEnhancers != null && this.endpointConfiguration.businessEventEnhancers.size() > 0) {
 				this.endpointConfiguration.businessEventEnhancers.forEach(c -> c.enhance(event, now));
 			} else {
@@ -95,7 +95,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		final Context timerContext = this.timer.time();
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoint, this.endpointConfiguration);
+			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
 			if (this.endpointConfiguration.httpEventEnhancers != null && this.endpointConfiguration.httpEventEnhancers.size() > 0) {
 				this.endpointConfiguration.httpEventEnhancers.forEach(c -> c.enhance(event, now));
 			} else {
@@ -110,7 +110,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		final Context timerContext = this.timer.time();
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoint, this.endpointConfiguration);
+			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
 			if (this.endpointConfiguration.logEventEnhancers != null && this.endpointConfiguration.logEventEnhancers.size() > 0) {
 				this.endpointConfiguration.logEventEnhancers.forEach(c -> c.enhance(event, now));
 			} else {
@@ -125,7 +125,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		final Context timerContext = this.timer.time();
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoint, this.endpointConfiguration);
+			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
 			if (this.endpointConfiguration.messagingEventEnhancers != null && this.endpointConfiguration.messagingEventEnhancers.size() > 0) {
 				this.endpointConfiguration.messagingEventEnhancers.forEach(c -> c.enhance(event, now));
 			} else {
@@ -140,7 +140,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		final Context timerContext = this.timer.time();
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoint, this.endpointConfiguration);
+			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
 			if (this.endpointConfiguration.sqlEventEnhancers != null && this.endpointConfiguration.sqlEventEnhancers.size() > 0) {
 				this.endpointConfiguration.sqlEventEnhancers.forEach(c -> c.enhance(event, now));
 			} else {
