@@ -358,13 +358,13 @@ public class IIBEventProcessor implements MessageListener {
 
 	private void putNonNullDataInMap(String key, String value, Map<String, String> map) {
 		if (value != null && value.trim().length() > 0) {
-			map.put(key, value);
+			map.put(key, value.trim());
 		}
 	}
 	
 	private void putNonNullDataInMap(String key, byte[] value, Map<String, String> map) {
 		if (value != null && value.length > 0) {
-			map.put(key, byteArrayToString(value));
+			putNonNullDataInMap(key, byteArrayToString(value), map);
 		}
 	}
 
