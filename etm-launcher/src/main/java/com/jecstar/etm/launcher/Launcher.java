@@ -2,7 +2,6 @@ package com.jecstar.etm.launcher;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.elasticsearch.client.Client;
@@ -84,10 +83,9 @@ public class Launcher {
 	
 	private void initializeProcessor(Configuration configuration) {
 		if (this.processor == null) {
-			ExecutorService executor = Executors.newCachedThreadPool();
 			this.processor = new TelemetryCommandProcessor();
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, "processor", this.elasticClient);
-			this.processor.start(executor, new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
+			this.processor.start(Executors.defaultThreadFactory(), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
 		}
 	}
 	

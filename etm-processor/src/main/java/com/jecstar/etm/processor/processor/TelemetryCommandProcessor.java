@@ -1,7 +1,7 @@
 package com.jecstar.etm.processor.processor;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Gauge;
@@ -39,7 +39,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	private RingBuffer<TelemetryCommand> ringBuffer;
 	private boolean started = false;
 	
-	private ExecutorService executorService;
+	private ThreadFactory threadFactory;
 	private EtmConfiguration etmConfiguration;
 	private DisruptorEnvironment disruptorEnvironment;
 	private PersistenceEnvironment persistenceEnvironment;
@@ -51,18 +51,18 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.metricRegistry = new MetricRegistry();
 	}
 
-	public void start(final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final EtmConfiguration etmConfiguration) {
+	public void start(final ThreadFactory threadFactory, final PersistenceEnvironment persistenceEnvironment, final EtmConfiguration etmConfiguration) {
 		if (this.started) {
 			throw new IllegalStateException();
 		}
 		this.started = true;
-		this.executorService = executorService;
+		this.threadFactory = threadFactory;
 		this.persistenceEnvironment = persistenceEnvironment;
 		this.etmConfiguration = etmConfiguration;
 		this.metricReporter = this.persistenceEnvironment.createMetricReporter(etmConfiguration.getNodeName(), this.metricRegistry);
 		this.metricReporter.start(1, TimeUnit.MINUTES);
 		this.offerTimer = this.metricRegistry.timer("event-processor.offering");
-		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, executorService, this.persistenceEnvironment, this.metricRegistry);
+		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, this.threadFactory, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
 		this.metricRegistry.register("event-processor.ringbuffer-capacity", new Gauge<Long>() {
 			@Override
@@ -77,7 +77,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.executorService, this.persistenceEnvironment, this.metricRegistry);
+		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.threadFactory, this.persistenceEnvironment, this.metricRegistry);
 		RingBuffer<TelemetryCommand> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
 		
@@ -98,7 +98,6 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}		
-		this.executorService.shutdown();
 		this.disruptorEnvironment.shutdown();
 		this.metricReporter.stop();
 		try {

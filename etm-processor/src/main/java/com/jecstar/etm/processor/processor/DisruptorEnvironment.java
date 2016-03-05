@@ -1,6 +1,6 @@
 package com.jecstar.etm.processor.processor;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -15,9 +15,9 @@ public class DisruptorEnvironment {
 	private final Disruptor<TelemetryCommand> disruptor;
 	private final PersistingEventHandler[] persistingEventHandlers;
 
-	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ExecutorService executorService, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
-		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), executorService, ProducerType.MULTI, new SleepingWaitStrategy());
-		this.disruptor.handleExceptionsWith(new TelemetryCommandExceptionHandler());
+	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ThreadFactory threadFactory, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
+		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), threadFactory, ProducerType.MULTI, new SleepingWaitStrategy());
+		this.disruptor.setDefaultExceptionHandler(new TelemetryCommandExceptionHandler());
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
 		for (int i = 0; i < enhancingHandlerCount; i++) {
