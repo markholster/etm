@@ -28,11 +28,11 @@ public class EtmConfiguration {
 	// Persisting configuration properties;
 	private int persistingBulkSize = 1024 * 1024 * 5;
 	private int persistingBulkCount = 1000;
-	private int persistingBulkTime = 30000;
+	private int persistingBulkTime = 5000;
 	
 	
 	private int shardsPerIndex = 5;
-	private int replicasPerIndex = 1;
+	private int replicasPerIndex = 0;
 	private WriteConsistency writeConsistency = WriteConsistency.QUORUM;
 	
 	// Data configuration properties;
