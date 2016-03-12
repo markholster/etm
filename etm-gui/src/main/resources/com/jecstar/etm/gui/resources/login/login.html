@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Enterprise Telemetry Monitor - Login</title>
+    <link rel="stylesheet" href="../styles/bootstrap-4.0.0_alpha2.min.css">
+  </head>
+  <body>
+    <div class="container" style="margin-top:0.5em;">
+        <div class="jumbotron">
+            <h4>ETM requires you to login. Please fill in your username and password below.</h4>
+            <form id="loginForm" method="post" action="j_security_check">            
+                <fieldset class="form-group">
+                   <label for="j_username" class="control-label">Username</label>
+                   <input type="text" id="j_username" name="j_username" class="form-control" required="required" autocomplete="off" /> 
+                </fieldset>            
+                <fieldset class="form-group">
+                   <label for="j_password" class="control-label">Password</label>
+                   <input type="password" id="j_password" name="j_password" class="form-control" required="required" autocomplete="off" /> 
+                </fieldset>
+                <input type="submit" class="btn btn-primary" value="Login" />
+            </form>
+        </div>
+    </div>
+
+    <script src="../scripts/jquery-2.1.4.min.js"></script>
+    <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
+  </body>
+</html>

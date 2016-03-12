@@ -47,11 +47,16 @@ public class Launcher {
 				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, this.processor, this.elasticClient);
 				this.httpServer.start();
 			}
+			if (!commandLineParameters.isQuiet()) {
+				System.out.println("Enterprise Telemetry Monitor started.");
+			}
 			if (log.isInfoLevelEnabled()) {
 				log.logInfoMessage("Enterprise Telemetry Monitor started.");
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (!commandLineParameters.isQuiet()) {
+				e.printStackTrace();
+			}
 			if (log.isFatalLevelEnabled()) {
 				log.logFatalMessage("Error launching Enterprise Telemetry Monitor", e);
 			}

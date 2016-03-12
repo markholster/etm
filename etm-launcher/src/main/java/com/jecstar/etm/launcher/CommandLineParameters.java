@@ -14,9 +14,11 @@ public class CommandLineParameters {
 	private static final String PARAM_CONFIG_DIRECTORY = "--config-dir=";
 	private static final String PARAM_CREATE_PASSWORD = "--create-passwordhash=";
 	private static final String PARAM_DUMP_DEFAULT_CONFIG = "--dump-default-config";
+	private static final String PARAM_QUIET = "--quiet";
 	
 	private String configDirectory = "config";
 
+	private boolean quiet = false;
 	private boolean proceedNormalStartup = true;
 	
 	public CommandLineParameters(String[] arguments) {
@@ -29,6 +31,8 @@ public class CommandLineParameters {
 			} else if (argument.startsWith(PARAM_CREATE_PASSWORD)) {
 				this.proceedNormalStartup = false;
 				System.out.println(BCrypt.hashpw(argument.substring(PARAM_CREATE_PASSWORD.length()), BCrypt.gensalt()));
+			} else if (argument.startsWith(PARAM_QUIET)) {
+				this.quiet = true;
 			} else if (argument.startsWith(PARAM_DUMP_DEFAULT_CONFIG)) {
 				this.proceedNormalStartup = false;
 				try (Writer writer = new OutputStreamWriter(System.out);){
@@ -49,6 +53,10 @@ public class CommandLineParameters {
 	
 	public boolean isProceedNormalStartup() {
 		return this.proceedNormalStartup;
+	}
+	
+	public boolean isQuiet() {
+		return this.quiet;
 	}
 	
 	public String getConfigDirectory() {

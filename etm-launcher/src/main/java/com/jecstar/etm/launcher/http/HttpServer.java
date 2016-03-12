@@ -186,7 +186,7 @@ public class HttpServer {
 			di.addSecurityRoles("admin", "searcher");
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
-			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
+			di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		}
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
 		di.setContextPath("/gui");
