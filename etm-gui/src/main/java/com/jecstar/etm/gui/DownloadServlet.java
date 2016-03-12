@@ -38,6 +38,9 @@ public class DownloadServlet extends HttpServlet {
 	
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	
+	private final String csvSeparator = ";";
+	private final int charsPerCell = (2^15)-1; 
+	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String queryString = req.getParameter("queryString");
@@ -78,27 +81,35 @@ public class DownloadServlet extends HttpServlet {
 		resp.setHeader("Content-Disposition", "inline; filename=\"result.csv\""); 
 		resp.setCharacterEncoding(System.getProperty("file.encoding"));
 		resp.getWriter().write("\"id\""
-				+ ",\"correlation id\""
-				+ ",\"creation time\""
-				+ ",\"expiry time\""
-				+ ",\"name\""
-				+ ",\"application\""
-				+ ",\"transaction name\""
-				+ ",\"endpoint\""
-				+ ",\"response time\""
-				+ ",\"content\"\r\n");
+				+ this.csvSeparator + "\"correlation id\""
+				+ this.csvSeparator + "\"creation time\""
+				+ this.csvSeparator + "\"expiry time\""
+				+ this.csvSeparator + "\"name\""
+				+ this.csvSeparator + "\"application\""
+				+ this.csvSeparator + "\"transaction name\""
+				+ this.csvSeparator + "\"endpoint\""
+				+ this.csvSeparator + "\"response time\""
+				+ this.csvSeparator + "\"content\"\r\n");
 		for (SearchHit hit : searchResponse.getHits()) {
 			Map<String, Object> valueMap = hit.getSource();
 			resp.getWriter().write("\"" + hit.getId()+ "\""
-					+ ",\"" + getStringValue(this.tags.getCorrelationIdTag(), valueMap) + "\""
-					+ ",\"" + getDateValue(this.tags.getCreationTimeTag(), valueMap) + "\""
-					+ ",\"" + getDateValue(this.tags.getExpiryTimeTag(), valueMap) + "\""
-					+ ",\"" + getStringValue(this.tags.getNameTag(), valueMap) + "\""
-					+ ",\"" + getStringValue(this.tags.getApplicationTag(), valueMap) + "\""
-					+ ",\"" + getStringValue(this.tags.getTransactionNameTag(), valueMap) + "\""
-					+ ",\"" + getStringValue(this.tags.getEndpointTag(), valueMap) + "\""
-					+ ",\"" + getStringValue(this.tags.getResponsetimeTag(), valueMap) + "\""
-					+ ",\"" + getStringValue(this.tags.getContentTag(), valueMap)+ "\"\r\n");
+					+ this.csvSeparator + "\"" + getStringValue(this.tags.getCorrelationIdTag(), valueMap) + "\""
+					+ this.csvSeparator + "\"" + getDateValue(this.tags.getCreationTimeTag(), valueMap) + "\""
+					+ this.csvSeparator + "\"" + getDateValue(this.tags.getExpiryTimeTag(), valueMap) + "\""
+					+ this.csvSeparator + "\"" + getStringValue(this.tags.getNameTag(), valueMap) + "\""
+					+ this.csvSeparator + "\"" + getStringValue(this.tags.getApplicationTag(), valueMap) + "\""
+					+ this.csvSeparator + "\"" + getStringValue(this.tags.getTransactionNameTag(), valueMap) + "\""
+					+ this.csvSeparator + "\"" + getStringValue(this.tags.getEndpointTag(), valueMap) + "\""
+					+ this.csvSeparator + "\"" + getStringValue(this.tags.getResponsetimeTag(), valueMap) + "\"");
+			String content = getStringValue(this.tags.getContentTag(), valueMap);
+			for (int i=0; i < content.length(); i += this.charsPerCell) {
+				if (i + this.charsPerCell > content.length()) {
+					resp.getWriter().write(this.csvSeparator + "\"" + content.substring(i) + "\"");
+				} else {
+					resp.getWriter().write(this.csvSeparator + "\"" + content.substring(i, i + this.charsPerCell) + "\"");
+				}
+			}
+			resp.getWriter().write("\r\n");
 		}
 		resp.flushBuffer();
 	}
