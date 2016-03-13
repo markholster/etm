@@ -17,9 +17,11 @@
     position: absolute; 
     left: 15em;
     width: 0;
-    height: 100%;
+    height: 100%; /** fallback for browsers that won't support calc() **/
+    height: calc(100% - 3.4em);
     margin-left: -15em;
     overflow-y: auto;
+    overflow-x: hidden;
     background: #000;
     -webkit-transition: all 0.5s ease;
     -moz-transition: all 0.5s ease;
@@ -76,7 +78,7 @@
     text-decoration: none;
     color: #fff;
     background: rgba(255,255,255,0.2);
-    border-left: red 0.12em solid;
+    border-left: red 0.15em solid;
 }
 
 .sidebar-nav li a:active,
