@@ -39,7 +39,7 @@ public class DownloadServlet extends HttpServlet {
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	
 	private final String csvSeparator = ";";
-	private final int charsPerCell = 32767; 
+	private final int charsPerCell = 30000; 
 	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
