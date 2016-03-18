@@ -29,16 +29,16 @@
     <div id="sidebar-wrapper">
       <ul class="sidebar-nav nav-pills nav-stacked" id="menu">
         <li class="nav-item">
-          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-dashboard fa-stack-1x "></i></span> Dashboard</a>
+          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-dashboard fa-stack-1x"></i></span> Dashboard</a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-search fa-stack-1x "></i></span> Search</a>
+          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-search fa-stack-1x"></i></span> Search</a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-user fa-stack-1x "></i></span>User preferences</a>
+          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-user fa-stack-1x"></i></span>User preferences</a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x "></i></span>Settings</a>
+          <a href="#" class="nav-link"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span>Settings</a>
         </li>
       </ul>
     </div>
@@ -49,14 +49,14 @@
         <div class="row">
 <div class="row">
   <div class="col-sm-9">
-    <div class="card card-block" style="height: 20em;">
-      <h5 class="card-title">Een grafiek</h5>
+    <div class="card card-block" style="height: 19em;">
+      <h5 class="card-title">Een grafiek<i class="fa fa-times pull-right"></i><i class="fa fa-pencil-square-o pull-right"></i></h5>
       <svg id="chart1" class="card-img" style="display: block;" ></svg>
     </div>
   </div>
   <div class="col-sm-3">
-    <div class="card card-block" style="height: 20em;">
-      <h5 class="card-title">Een donut</h5>
+    <div class="card card-block" style="height: 19em;">
+      <h5 class="card-title">Een donut<i class="fa fa-times pull-right"></i><i class="fa fa-pencil-square-o pull-right"></i></h5>
         <svg id="chart2" class="card-img" style="display: block;"></svg>
     </div>
   </div>
@@ -64,19 +64,19 @@
 <div class="row">
   <div class="col-sm-6">
     <div class="card card-block" style="height: 19em;">
-      <h5 class="card-title">Een barchart</h5>
+      <h5 class="card-title">Een barchart<i class="fa fa-times pull-right"></i><i class="fa fa-pencil-square-o pull-right"></i></h5>
       <svg id="chart3" class="card-img" style="display: block;" ></svg>
     </div>
   </div>
   <div class="col-sm-3">
     <div class="card card-block" style="height: 19em;">
-      <h5 class="card-title">Success rate</h5>
+      <h5 class="card-title">Success rate<i class="fa fa-times pull-right"></i><i class="fa fa-pencil-square-o pull-right"></i></h5>
         <svg id="chart4" class="card-img" style="display: block;"></svg>
     </div>
   </div>
   <div class="col-sm-3">
     <div class="card card-block" style="height: 19em;">
-      <h5 class="card-title">Een donut</h5>
+      <h5 class="card-title">Een donut<i class="fa fa-times pull-right"></i><i class="fa fa-pencil-square-o pull-right"></i></h5>
         <svg id="chart5" class="card-img" style="display: block;"></svg>
     </div>
   </div>
@@ -148,7 +148,7 @@ function stream_index(d, i) {
         chart1.pie.labelsOutside(true).donut(true);
         d3.select("#chart2")
             .datum(testdata)
-            .transition().duration(1200)
+            .transition().duration(1500)
             .call(chart1);
         nv.utils.windowResize(chart1.update);
         return chart1;
@@ -190,7 +190,7 @@ function stream_index(d, i) {
         chart.legend.vers('furious');
         d3.select('#chart1')
             .datum(histcatexplong)
-            .transition().duration(1000)
+            .transition().duration(1500)
             .call(chart);
         nv.utils.windowResize(chart.update);
         return chart;
@@ -238,6 +238,7 @@ function stream_index(d, i) {
         });
         d3.select('#chart3')
             .datum(negative_test_data)
+            .transition().duration(1500)
             .call(chart);
         nv.utils.windowResize(chart.update);
         chart.dispatch.on('stateChange', function(e) {
@@ -272,7 +273,7 @@ function stream_index(d, i) {
             chart.title("0%");
             d3.select("#chart4")
             .datum(testdata1)
-            .transition().duration(1200)
+            .transition().duration(1500)
             .call(chart);
             // update chart data values randomly
             setInterval(function () {
@@ -318,7 +319,7 @@ function stream_index(d, i) {
             .id('donut2'); // allow custom CSS for this one svg
             d3.select("#chart5")
             .datum(testdata2)
-            .transition().duration(1200)
+            .transition().duration(1500)
             .call(chart);
              nv.utils.windowResize(chart.update);
             return chart;
