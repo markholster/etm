@@ -4,7 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
 
 import com.jecstar.etm.core.domain.Application;
 import com.jecstar.etm.core.domain.Endpoint;
@@ -68,12 +68,15 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + elementName + "\": [");
-		buffer.append(elementValues.entrySet().stream()
-				.map(c -> "{\"" + this.tags.getMapKeyTag() + "\": \"" + escapeToJson(c.getKey()) + "\", " +  escapeObjectToJsonNameValuePair(this.tags.getMapValueTag(), c.getValue()) + "}")
-				.sorted()
-				.collect(Collectors.joining(", ")));
-		buffer.append("]");
+		buffer.append("\"" + elementName + "\": {");
+		firstElement = true;
+		for (Entry<String, Object> entry : elementValues.entrySet()) {
+			if (!firstElement) {
+				buffer.append(escapeObjectToJsonNameValuePair(entry.getKey(), entry.getValue()));
+			}
+			firstElement = false;
+		}
+		buffer.append("}");
 		return true;
 	}
 	
@@ -171,13 +174,13 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		telemetryEvent.initialize();
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
-		List<Map<String, Object>> eventMap = getArray(this.tags.getCorrelationDataTag(), valueMap);
-		if (eventMap != null) {
-			eventMap.forEach(c -> telemetryEvent.correlationData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		Map<String, Object> eventMap = getObject(this.tags.getCorrelationDataTag(), valueMap);
+		if (eventMap != null && !eventMap.isEmpty()) {
+			telemetryEvent.correlationData.putAll(eventMap);
 		}
-		eventMap = getArray(this.tags.getEndpointsTag(), valueMap);
+		List<Map<String, Object>> endpoints = getArray(this.tags.getEndpointsTag(), valueMap);
 		if (eventMap != null) {
-			for (Map<String, Object> endpointMap : eventMap) {
+			for (Map<String, Object> endpointMap : endpoints) {
 				Endpoint endpoint = new Endpoint();
 				endpoint.name = getString(this.tags.getEndpointNameTag(), endpointMap);
 				List<Map<String, Object>> endpointHandlers = getArray(getTags().getReadingEndpointHandlersTag(), endpointMap);
@@ -188,14 +191,14 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 				telemetryEvent.endpoints.add(endpoint);
 			}
 		}
-		eventMap = getArray(this.tags.getExtractedDataTag(), valueMap);
-		if (eventMap != null) {
-			eventMap.forEach(c -> telemetryEvent.extractedData.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		eventMap = getObject(this.tags.getExtractedDataTag(), valueMap);
+		if (eventMap != null && !eventMap.isEmpty()) {
+			telemetryEvent.extractedData.putAll(eventMap);
 		}
 		telemetryEvent.name = getString(this.tags.getNameTag(), valueMap);
-		eventMap = getArray(this.tags.getMetadataTag(), valueMap);
-		if (eventMap != null) {
-			eventMap.forEach(c -> telemetryEvent.metadata.put(c.get(this.tags.getMapKeyTag()).toString(), unescapeObjectFromJsonNameValuePair(this.tags.getMapValueTag(), c)));
+		eventMap = getObject(this.tags.getMetadataTag(), valueMap);
+		if (eventMap != null && !eventMap.isEmpty()) {
+			telemetryEvent.metadata.putAll(eventMap);
 		}
 		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
 		telemetryEvent.payloadFormat = PayloadFormat.safeValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
