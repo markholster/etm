@@ -1,0 +1,3 @@
+dependencies {
+    compile project(":etm-processor"), dep_resteasyJaxrs
+}

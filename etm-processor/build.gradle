@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":etm-core"), dep_metricsCore, dep_disruptor, dep_groovyAll, dep_elasticsearch
+    testCompile dep_junit
+}

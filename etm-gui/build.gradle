@@ -1,0 +1,3 @@
+dependencies {
+    compile project(":etm-core"), dep_elasticsearch, dep_resteasyJaxrs
+}

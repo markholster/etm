@@ -1,0 +1,7 @@
+dependencies {
+    compile dep_slf4jApi
+    compile(project(":etm-core")) {
+        exclude module: "json-path"
+        exclude module: "Saxon-HE"
+    }
+}

@@ -1,7 +1,7 @@
 /.classpath
 /.project
 /.settings
-/target
 /bin
 /data/
 /config/
+/build/

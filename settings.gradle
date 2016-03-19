@@ -1,0 +1,1 @@
+include 'etm-core', 'etm-processor', 'etm-processor-rest', 'etm-gui', 'etm-slf4j', 'etm-launcher', 'etm-license-generator'

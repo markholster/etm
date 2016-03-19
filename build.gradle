@@ -1,0 +1,35 @@
+def version_jackson = "2.7.2"
+def version_undertow = "1.3.18.Final"
+
+ext {
+    dep_disruptor = "com.lmax:disruptor:3.3.4"
+    dep_elasticsearch = "org.elasticsearch:elasticsearch:2.2.1"
+    dep_groovyAll = "org.codehaus.groovy:groovy-all:2.4.6:indy"
+    dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:" + version_jackson
+    dep_jsonPath = "com.jayway.jsonpath:json-path:2.2.0"
+    dep_junit = "junit:junit:4.12"
+    dep_metricsCore = "io.dropwizard.metrics:metrics-core:3.1.2"
+    dep_resteasyJaxrs = "org.jboss.resteasy:resteasy-jaxrs:3.0.16.Final"
+    dep_slf4jApi = "org.slf4j:slf4j-api:1.7.18"
+    dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-3"
+    dep_undertowCore = "io.undertow:undertow-core:" + version_undertow
+    dep_undertowServlet = "io.undertow:undertow-servlet:" + version_undertow
+    dep_yamlbeans = "com.esotericsoftware.yamlbeans:yamlbeans:1.09"
+}
+
+allprojects {
+    apply plugin: "eclipse"
+    apply plugin: "java"
+
+    version = "2.0.0-SNAPSHOT"
+    
+    repositories {
+        mavenCentral()
+    };
+
+    jar {
+        manifest {
+            attributes("Implementation-Version": version)
+        }
+    }
+}
