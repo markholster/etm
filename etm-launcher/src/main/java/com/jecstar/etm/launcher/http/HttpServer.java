@@ -96,7 +96,6 @@ public class HttpServer {
 				}
 			}
 		}
-		
 		this.server = builder.setHandler(root).build();
 		if (this.configuration.restProcessorEnabled) {
 			DeploymentInfo di = createProcessorDeploymentInfo(processor, null);
@@ -178,6 +177,7 @@ public class HttpServer {
 		ResteasyDeployment deployment = new ResteasyDeployment();
 		deployment.setApplication(guiApplication);
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
+		di.addWelcomePage("index.html");
 		// TODO, even nadenken of dit uberhaupt zonder inloggen kan...
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
