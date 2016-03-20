@@ -38,9 +38,6 @@
     width: 100%;  
     overflow-x: hidden; 
 }
-.xyz{
-    min-width: 21.6em;
-}
 #wrapper.toggled #page-content-wrapper {
     position: relative;
     margin-right: 0em; 
