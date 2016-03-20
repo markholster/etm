@@ -55,7 +55,7 @@ public class ElasticsearchIndextemplateCreator {
 					.setSettings(Settings.settingsBuilder()
 						.put("number_of_shards", 1)
 						.put("number_of_replicas", 0))
-					.addMapping("_default_", createMetricsMapping())
+					.addMapping("_default_", createMetricsMapping("_default_"))
 					.get();
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {}
@@ -69,7 +69,7 @@ public class ElasticsearchIndextemplateCreator {
 					.setSettings(Settings.settingsBuilder()
 						.put("number_of_shards", 1)
 						.put("number_of_replicas", 0))
-					.addMapping("_default_", createEtmConfigurationMapping())
+					.addMapping("_default_", createEtmConfigurationMapping("_default_"))
 					.get();
 				insertDefaultEtmConfiguration(elasticClient);
 				insertAdminUser(elasticClient);
@@ -77,24 +77,28 @@ public class ElasticsearchIndextemplateCreator {
 		} catch (IndexTemplateAlreadyExistsException e) {}
 	}
 	
-	private String createEventMapping(String type) {
+	private String createEventMapping(String name) {
 		// TODO moet dit misschien met een path_match i.p.v. een match? 
-		return "{\"dynamic_templates\": ["
+		return "{ \"" + name + "\": " 
+				+ "{\"dynamic_templates\": ["
 				+ "{ \"" + this.eventTags.getPayloadTag() + "\": { \"match\": \"" + this.eventTags.getPayloadTag() + "\", \"mapping\": {\"index\": \"analyzed\"}}}"
 				+ ", { \"" + this.eventTags.getEndpointHandlerLocationTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerLocationTag() + "\", \"mapping\": {\"type\": \"geo_point\"}}}"
 				+ ", { \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
 				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}"
-				+ "]}";
+				+ "]}"
+				+ "}";
 	}
 	
-	private String createMetricsMapping() {
-		return "{\"dynamic_templates\": ["
+	private String createMetricsMapping(String name) {
+		return "{ \"" + name + "\": " 
+				+ "{\"dynamic_templates\": ["
 				+ "{ \"" + this.metricTags.getTimestampTag() + "\": { \"match\": \"" + this.metricTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}";	
+				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}"
+				+ "}";	
 	}
 	
-	private String createEtmConfigurationMapping() {
-		return "{\"dynamic_templates\": [{ \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}";	
+	private String createEtmConfigurationMapping(String name) {
+		return "{ \"" + name + "\": {\"dynamic_templates\": [{ \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}}";	
 	}
 
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
