@@ -158,16 +158,16 @@ public class HttpServer {
 		ResteasyDeployment deployment = new ResteasyDeployment();
 		deployment.setApplication(processorApplication);
 		DeploymentInfo di = undertowRestDeployment(deployment, "/");
+		di.setContextPath("/rest/processor/");
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin", "processor").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
 			di.addSecurityRoles("admin", "processor");
 			di.setIdentityManager(identityManager);
-			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
+			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
 		}
 		di.setClassLoader(processorApplication.getClass().getClassLoader());
-		di.setContextPath("/rest/processor/");
 		di.setDeploymentName("Rest event processor - " + di.getContextPath());
 		return di;
 	}
@@ -178,18 +178,19 @@ public class HttpServer {
 		deployment.setApplication(guiApplication);
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
 		di.addWelcomePage("index.html");
+		di.setContextPath("/gui");
 		// TODO, even nadenken of dit uberhaupt zonder inloggen kan...
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			// TODO add the uri of all rest interfaces to the appropriated roles.
 			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/*")));
-			di.addSecurityRoles("admin", "searcher");
+			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","controller").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/*")));
+			di.addSecurityRoles("admin", "searcher", "controller");
 			di.setIdentityManager(identityManager);
-			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager)));
+			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
 			di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		}
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
-		di.setContextPath("/gui");
 		di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
 		di.setDeploymentName("GUI - " + di.getContextPath());
 		return di;
