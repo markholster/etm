@@ -98,7 +98,7 @@ public class Launcher {
 	private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration) {
 		if (this.processor == null) {
 			this.processor = new TelemetryCommandProcessor(metricRegistry);
-			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, "processor", this.elasticClient);
+			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
 			this.processor.start(Executors.defaultThreadFactory(), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
 		}
 	}

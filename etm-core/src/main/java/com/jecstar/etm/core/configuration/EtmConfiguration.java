@@ -43,13 +43,10 @@ public class EtmConfiguration {
 
 	private License license;
 
-	private String component;
-	
 	private List<ConfigurationChangeListener> changeListeners = new ArrayList<ConfigurationChangeListener>();
 
-	public EtmConfiguration(String nodeName, String component) {
+	public EtmConfiguration(String nodeName) {
 		this.nodeName = nodeName;
-		this.component = component;
 	}
 
 	// Etm license configuration
@@ -177,10 +174,6 @@ public class EtmConfiguration {
 
 	public String getNodeName() {
 		return this.nodeName;
-	}
-	
-	public String getComponent() {
-		return this.component;
 	}
 	
 	public void addConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {

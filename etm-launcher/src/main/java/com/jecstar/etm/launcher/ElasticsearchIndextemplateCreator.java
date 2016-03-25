@@ -102,7 +102,7 @@ public class ElasticsearchIndextemplateCreator {
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
 		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, ElasticBackedEtmConfiguration.NODE_INDEX_TYPE, ElasticBackedEtmConfiguration.DEFAULT_ID)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
-			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default", null)))
+			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default")))
 			.get();
 	}
 	

@@ -47,10 +47,10 @@ public class EtmConfigurationConverterJsonImpl extends AbstractJsonConverter imp
 	}
 	
 	@Override
-	public EtmConfiguration convert(String nodeJsonContent, String defaultJsonContent, String nodeName, String component) {
+	public EtmConfiguration convert(String nodeJsonContent, String defaultJsonContent, String nodeName) {
 		Map<String, Object> nodeMap = nodeJsonContent == null ? null : toMap(nodeJsonContent);
 		Map<String, Object> defaultMap = toMap(defaultJsonContent);
-		EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName, component);
+		EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName);
 		etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingHandlerCount(getIntValue(this.tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setEventBufferSize(getIntValue(this.tags.getEventBufferSizeTag(), defaultMap, nodeMap));

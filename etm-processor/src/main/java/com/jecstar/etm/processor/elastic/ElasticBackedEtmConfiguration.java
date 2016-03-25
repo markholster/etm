@@ -21,8 +21,8 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	private final long updateCheckInterval = 60 * 1000;
 	private long lastCheckedForUpdates;
 	
-	public ElasticBackedEtmConfiguration(String nodeName, String component, final Client elasticClient) {
-		super(nodeName, component);
+	public ElasticBackedEtmConfiguration(String nodeName, final Client elasticClient) {
+		super(nodeName);
 		this.elasticClient = elasticClient;
 		reloadConfigurationWhenNecessary();
 	}
@@ -108,7 +108,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		if (nodeResponse.isExists()) {
 			nodeContent = nodeResponse.getSourceAsString();
 		}
-		EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge", getComponent());
+		EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge");
 		if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty()) {
 			Object license = licenseResponse.getSourceAsMap().get(this.etmConfigurationConverter.getTags().getLicenseTag());
 			if (license != null) {
