@@ -24,7 +24,7 @@ public class TelemetryCommandExceptionHandler implements ExceptionHandler<Teleme
 		for (CommandType commandType : CommandType.values()) {
 			this.counters.put(commandType, metricRegistry.counter("event-processor.failures." + commandType.toStringType() + "_events"));
 		}
-		this.totalCounter = metricRegistry.counter("event-processor.failures");
+		this.totalCounter = metricRegistry.counter("event-processor.failures.total");
 	}
 	
 	@Override

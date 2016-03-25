@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.metrics;
+package com.jecstar.etm.launcher;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -82,72 +82,72 @@ public class MetricConverterTagsJsonImpl implements MetricConverterTags {
 
 	@Override
 	public String getMeanRateTag(RateType rateType, TimeUnit rateUnit) {
-		return "mean_rate_" + rateType.name().toLowerCase() + "_per_" + calculateRateUnit(rateUnit);
+		return "mean-rate-" + rateType.name().toLowerCase() + "-per-" + calculateRateUnit(rateUnit);
 	}
 	
 	@Override
 	public String getOneMinuteRateTag(RateType rateType, TimeUnit rateUnit) {
-		return "1_minute_rate_" + rateType.name().toLowerCase() + "_per_" + calculateRateUnit(rateUnit);
+		return "1-minute-rate-" + rateType.name().toLowerCase() + "-per-" + calculateRateUnit(rateUnit);
 	}
 	
 	@Override
 	public String getFiveMinuteRateTag(RateType rateType, TimeUnit rateUnit) {
-		return "5_minute_rate_" + rateType.name().toLowerCase() + "_per_" + calculateRateUnit(rateUnit);
+		return "5-minute-rate-" + rateType.name().toLowerCase() + "-per-" + calculateRateUnit(rateUnit);
 	}
 	
 	@Override
 	public String getFifteenMinuteRateTag(RateType rateType, TimeUnit rateUnit) {
-		return "15_minute_rate_" + rateType.name().toLowerCase() + "_per_" + calculateRateUnit(rateUnit);
+		return "15-minute-rate-" + rateType.name().toLowerCase() + "-per-" + calculateRateUnit(rateUnit);
 	}
 
 	@Override
 	public String getMinDurationTag(TimeUnit durationUnit) {
-		return getMinTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return getMinTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 	
 	@Override
 	public String getMaxDurationTag(TimeUnit durationUnit) {
-		return getMaxTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return getMaxTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String getMeanDurationTag(TimeUnit durationUnit) {
-		return getMeanTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return getMeanTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String getStandardDeviationDurationTag(TimeUnit durationUnit) {
-		return getStandardDeviationTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return getStandardDeviationTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String getMedianDurationTag(TimeUnit durationUnit) {
-		return getMedianTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return getMedianTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String get75thPercentileDurationTag(TimeUnit durationUnit) {
-		return get75thPercentileTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return get75thPercentileTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String get95thPercentileDurationTag(TimeUnit durationUnit) {
-		return get95thPercentileTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return get95thPercentileTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String get98thPercentileDurationTag(TimeUnit durationUnit) {
-		return get98thPercentileTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return get98thPercentileTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String get99thPercentileDurationTag(TimeUnit durationUnit) {
-		return get99thPercentileTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return get99thPercentileTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 
 	@Override
 	public String get999thPercentileDurationTag(TimeUnit durationUnit) {
-		return get999thPercentileTag() + "_in_" + calculateDurationUnit(durationUnit);
+		return get999thPercentileTag() + "-in-" + calculateDurationUnit(durationUnit);
 	}
 	
 	private String calculateDurationUnit(TimeUnit unit) {

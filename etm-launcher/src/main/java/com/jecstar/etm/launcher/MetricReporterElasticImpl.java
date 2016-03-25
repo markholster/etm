@@ -29,9 +29,7 @@ import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.processor.metrics.MetricConverterTags;
-import com.jecstar.etm.processor.metrics.MetricConverterTags.RateType;
-import com.jecstar.etm.processor.metrics.MetricConverterTagsJsonImpl;
+import com.jecstar.etm.launcher.MetricConverterTags.RateType;
 
 public class MetricReporterElasticImpl extends ScheduledReporter {
 	

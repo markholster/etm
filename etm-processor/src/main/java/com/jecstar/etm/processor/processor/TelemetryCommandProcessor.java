@@ -25,6 +25,7 @@ import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.metrics.GarbageCollectorMetricSet;
 import com.jecstar.etm.processor.metrics.MemoryUsageMetricSet;
+import com.jecstar.etm.processor.metrics.OperatingSystemMetricSet;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryCommandProcessor implements ConfigurationChangeListener {
@@ -66,6 +67,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 			}});
 		this.metricRegistry.registerAll(new GarbageCollectorMetricSet());
 		this.metricRegistry.registerAll(new MemoryUsageMetricSet());
+		this.metricRegistry.registerAll(new OperatingSystemMetricSet());
 	}
 	
 	public void hotRestart() {
