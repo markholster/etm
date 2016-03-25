@@ -1,8 +1,14 @@
 package com.jecstar.etm.processor.processor;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.lmax.disruptor.ExceptionHandler;
 
 public class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryCommand> {
@@ -11,9 +17,20 @@ public class TelemetryCommandExceptionHandler implements ExceptionHandler<Teleme
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryCommandExceptionHandler.class);
+	private final Map<CommandType, Counter> counters = new HashMap<CommandType, Counter>();
+	private final Counter totalCounter;
 
+	public TelemetryCommandExceptionHandler(final MetricRegistry metricRegistry) {
+		for (CommandType commandType : CommandType.values()) {
+			this.counters.put(commandType, metricRegistry.counter("event-processor.failures." + commandType.toStringType() + "_events"));
+		}
+		this.totalCounter = metricRegistry.counter("event-processor.failures");
+	}
+	
 	@Override
 	public void handleEventException(Throwable t, long sequence, TelemetryCommand command) {
+		this.counters.get(command.commandType).inc();
+		this.totalCounter.inc();
 		switch (command.commandType) {
 		case SQL_EVENT:
 			if (log.isErrorLevelEnabled()) {

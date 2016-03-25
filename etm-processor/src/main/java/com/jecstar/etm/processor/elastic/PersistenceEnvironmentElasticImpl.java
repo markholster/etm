@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.elasticsearch.client.Client;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -36,11 +35,6 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 			}
 		}
 		return this.commandResources;
-	}
-	
-	@Override
-	public ScheduledReporter createMetricReporter(final String nodeName, final MetricRegistry metricRegistry) {
-		return new MetricReporterElasticImpl(metricRegistry, nodeName, this.etmConfiguration.getComponent(), this.elasticClient);
 	}
 	
 	@Override

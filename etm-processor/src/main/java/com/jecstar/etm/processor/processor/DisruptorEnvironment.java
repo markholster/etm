@@ -17,7 +17,7 @@ public class DisruptorEnvironment {
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ThreadFactory threadFactory, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
 		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), threadFactory, ProducerType.MULTI, new SleepingWaitStrategy());
-		this.disruptor.setDefaultExceptionHandler(new TelemetryCommandExceptionHandler());
+		this.disruptor.setDefaultExceptionHandler(new TelemetryCommandExceptionHandler(metricRegistry));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
 		for (int i = 0; i < enhancingHandlerCount; i++) {

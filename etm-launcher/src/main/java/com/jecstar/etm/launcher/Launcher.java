@@ -3,6 +3,7 @@ package com.jecstar.etm.launcher;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
@@ -12,6 +13,8 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
@@ -34,13 +37,16 @@ public class Launcher {
 	private HttpServer httpServer;
 	private Node node;
 	private Client elasticClient;
+	private ScheduledReporter metricReporter;
 
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration) {
 		addShutdownHooks();
 		try {
 			initializeElasticsearchClient(configuration);
-			initializeProcessor(configuration);
+			MetricRegistry metricRegistry = new MetricRegistry();
+			initializeMetricReporter(metricRegistry, configuration);
+			initializeProcessor(metricRegistry, configuration);
 			InternalEtmLogForwarder.processor = processor;
 			if (configuration.isHttpServerNecessary()) {
 				System.setProperty("org.jboss.logging.provider", "slf4j");
@@ -76,6 +82,9 @@ public class Launcher {
 				if (Launcher.this.processor != null) {
 					try { Launcher.this.processor.stopAll(); } catch (Throwable t) {}
 				}
+				if (Launcher.this.metricReporter != null) {
+					try { Launcher.this.metricReporter.close(); } catch (Throwable t) {}
+				}
 				if (Launcher.this.elasticClient != null) {
 					try { Launcher.this.elasticClient.close(); } catch (Throwable t) {}
 				}
@@ -86,9 +95,9 @@ public class Launcher {
 		});
 	}
 	
-	private void initializeProcessor(Configuration configuration) {
+	private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration) {
 		if (this.processor == null) {
-			this.processor = new TelemetryCommandProcessor();
+			this.processor = new TelemetryCommandProcessor(metricRegistry);
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, "processor", this.elasticClient);
 			this.processor.start(Executors.defaultThreadFactory(), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
 		}
@@ -144,5 +153,11 @@ public class Launcher {
 			this.elasticClient = transportClient;
 		}
 		new ElasticsearchIndextemplateCreator().createTemplates(this.elasticClient);
+	}
+	
+	private void initializeMetricReporter(MetricRegistry metricRegistry, Configuration configuration) {
+		this.metricReporter = new MetricReporterElasticImpl(metricRegistry, configuration.instanceName, this.elasticClient);
+		this.metricReporter.start(1, TimeUnit.MINUTES);
+
 	}
 }

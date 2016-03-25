@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.elastic;
+package com.jecstar.etm.launcher;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -44,7 +44,6 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 	private static final TimeUnit durationUnit = TimeUnit.MILLISECONDS;
 	private final Client elasticClient;
 	private final String nodeName;
-	private final String componentType;
 	
 	private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
@@ -54,11 +53,10 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 	private final MetricConverterTags tags = new MetricConverterTagsJsonImpl();
 
-	public MetricReporterElasticImpl(MetricRegistry registry, String nodeName, String componentType, Client elasticClient) {
-		super(registry, componentType + "@" + nodeName, MetricFilter.ALL, rateUnit, durationUnit);
+	public MetricReporterElasticImpl(MetricRegistry registry, String nodeName, Client elasticClient) {
+		super(registry, nodeName, MetricFilter.ALL, rateUnit, durationUnit);
 		this.elasticClient = elasticClient;
 		this.nodeName = nodeName;
-		this.componentType = componentType;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -88,7 +86,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 		
 		try (StringWriter sw = new StringWriter()){
 			objectMapper.writeValue(sw, root);
-	        this.elasticClient.prepareIndex(getElasticIndexName(now), this.componentType, "" + now.toEpochMilli())
+	        this.elasticClient.prepareIndex(getElasticIndexName(now), this.nodeName, "" + now.toEpochMilli())
         	.setConsistencyLevel(WriteConsistencyLevel.ONE)
         	.setSource(sw.toString()).get();
 		} catch (IOException e) {
@@ -230,7 +228,6 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 		Map<String, Object> nodeMap = new LinkedHashMap<String, Object>();
 		root.put(this.tags.getNodeTag(), nodeMap);
 		nodeMap.put(this.tags.getNameTag(), this.nodeName);
-		nodeMap.put(this.tags.getComponentTag(), this.componentType);
 	}
 
 	/**
