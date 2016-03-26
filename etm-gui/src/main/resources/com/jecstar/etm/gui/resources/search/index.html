@@ -90,7 +90,7 @@
           <h4 class="modal-title" id="template-overwrite-modal-label">Name already exists</h4>
         </div>
         <div class="modal-body">
-          A template with the given name already exists. Do you want to overwrite that template?
+          A template with the name '<i id="overwrite-template-name"></i>' already exists. Do you want to overwrite that template?
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
@@ -156,6 +156,7 @@
             return $(this).text() === template.name;
         }).toArray();
         if (current.length != 0) {
+            $('#overwrite-template-name').text(template.name);
             $('#modal-template-overwrite').modal();
         } else {
             storeTemplate(template, false);
@@ -185,7 +186,7 @@
                 return;
             }
             $.each(data.searchtemplates, function(index, template){
-                $('#list-template-links').append('<li><a href="#" onclick="setValueFromTemplate(\'' + template.query + '\');">' + template.name + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name + '\');"/></li>');
+                $('#list-template-links').append('<li><a href="#" onclick="setValueFromTemplate(\'' + template.query + '\');">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
             });
         }
     });
@@ -208,7 +209,7 @@
                         return $(this).text() === template.name;
                     }).attr('onclick', 'setValueFromTemplate(\'' + template.query + '\')');
                 } else {
-                    $('#list-template-links').append('<li><a href="#" onclick="setValueFromTemplate(\'' + template.query + '\')">' + template.name + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name+ '\');"/></li>');
+                    $('#list-template-links').append('<li><a href="#" onclick="setValueFromTemplate(\'' + template.query + '\')">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
                 }
             }
         });
@@ -217,6 +218,10 @@
     function askRemoveTemplate(templateName) {
         $('#remove-template-name').text(templateName);
         $('#modal-template-remove').modal();
+    }
+    
+    function escapeToHtml(stringToEscape) {
+        return $("<div></div>").text(stringToEscape).html();
     }
     
   </script>
