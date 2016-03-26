@@ -20,7 +20,6 @@ import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonI
 import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.launcher.http.BCrypt;
-import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 
 public class ElasticsearchIndextemplateCreator {
 	

@@ -22,6 +22,7 @@ import org.elasticsearch.client.Client;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
+import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
@@ -64,7 +65,7 @@ public class HttpServer {
 	private boolean started;
 	private final SingleSignOnManager singleSignOnManager = new InMemorySingleSignOnManager();
 
-	public HttpServer(final IdentityManager identityManager, Configuration configuration, TelemetryCommandProcessor processor, Client client) {;
+	public HttpServer(final IdentityManager identityManager, Configuration configuration, EtmConfiguration etmConfiguration, TelemetryCommandProcessor processor, Client client) {;
 		this.configuration = configuration;
 		final PathHandler root = Handlers.path();
 		this.shutdownHandler = Handlers.gracefulShutdown(Handlers.requestLimitingHandler(configuration.http.maxConcurrentRequests, configuration.http.maxQueuedRequests, root));
@@ -114,7 +115,7 @@ public class HttpServer {
 			}
 		}
 		if (this.configuration.guiEnabled) {
-			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager);
+			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
@@ -172,8 +173,8 @@ public class HttpServer {
 		return di;
 	}
 	
-	private DeploymentInfo createGuiDeploymentInfo(Client client, IdentityManager identityManager) {
-		RestGuiApplication guiApplication = new RestGuiApplication(client);
+	private DeploymentInfo createGuiDeploymentInfo(Client client, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
+		RestGuiApplication guiApplication = new RestGuiApplication(client, etmConfiguration);
 		ResteasyDeployment deployment = new ResteasyDeployment();
 		deployment.setApplication(guiApplication);
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
@@ -183,8 +184,8 @@ public class HttpServer {
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			// TODO add the uri of all rest interfaces to the appropriated roles.
-			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/*")));
-			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","controller").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/*")));
+			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
+			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","controller").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
 			di.addSecurityRoles("admin", "searcher", "controller");
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));

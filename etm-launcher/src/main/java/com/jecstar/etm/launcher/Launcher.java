@@ -21,7 +21,6 @@ import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
-import com.jecstar.etm.processor.elastic.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.slf4j.InternalEtmLogForwarder;
@@ -44,13 +43,14 @@ public class Launcher {
 		addShutdownHooks();
 		try {
 			initializeElasticsearchClient(configuration);
+			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
-			initializeProcessor(metricRegistry, configuration);
+			initializeProcessor(metricRegistry, configuration, etmConfiguration);
 			InternalEtmLogForwarder.processor = processor;
 			if (configuration.isHttpServerNecessary()) {
 				System.setProperty("org.jboss.logging.provider", "slf4j");
-				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, this.processor, this.elasticClient);
+				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, etmConfiguration, this.processor, this.elasticClient);
 				this.httpServer.start();
 			}
 			if (!commandLineParameters.isQuiet()) {
@@ -95,10 +95,9 @@ public class Launcher {
 		});
 	}
 	
-	private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration) {
+	private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration, EtmConfiguration etmConfiguration) {
 		if (this.processor == null) {
 			this.processor = new TelemetryCommandProcessor(metricRegistry);
-			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
 			this.processor.start(Executors.defaultThreadFactory(), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
 		}
 	}

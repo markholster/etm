@@ -7,16 +7,19 @@ import javax.ws.rs.core.Application;
 
 import org.elasticsearch.client.Client;
 
+import com.jecstar.etm.core.configuration.EtmConfiguration;
+
 public class RestGuiApplication extends Application {
 
-	public RestGuiApplication(Client client) {
-		StatisticsService.setClient(client);
+	public RestGuiApplication(Client client, EtmConfiguration etmConfiguration) {
+		SearchService.initialize(client, etmConfiguration);
 	}
+
 
 	@Override
 	public Set<Class<?>> getClasses() {
 		HashSet<Class<?>> classes = new HashSet<Class<?>>();
-		classes.add(StatisticsService.class);
+		classes.add(SearchService.class);
 		return classes;
 	}
 }

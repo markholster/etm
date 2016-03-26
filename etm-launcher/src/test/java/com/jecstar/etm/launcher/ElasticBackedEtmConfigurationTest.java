@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.elastic;
+package com.jecstar.etm.launcher;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 
 /**
  * Test class for the <code>ElasticBackedEtmConfiguration</code> class.

@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.elastic;
+package com.jecstar.etm.launcher;
 
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
