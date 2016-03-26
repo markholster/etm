@@ -50,7 +50,7 @@
              <div class="card card-block">
                <h5 class="card-title">Search</h5>
                <div class="card-text">
-                 <p>Please enter your search string in</p>
+                 <p>Please enter your search string</p>
                  <div class="input-group">
                    <input id="query-string" type="text" class="form-control danger" placeholder="Search for..." autofocus>
                    <span class="input-group-btn">
@@ -63,7 +63,9 @@
            <div class="col-sm-3">
              <div class="card card-block">
                <h5 class="card-title">Templates</h5>
-               <div id="search_templates" class="card-text"></div>
+               <div id="search_templates" class="card-text">
+                <ul id="list-template-links"></ul>
+               </div>
                <div class="input-group input-group-sm">
                  <input id="template-name" type="text" class="form-control" placeholder="Template name..." disabled="disabled">
                  <span class="input-group-btn">
@@ -76,8 +78,28 @@
       </div>
     </div>
     <!-- /#page-content-wrapper -->
-
   </div>
+  
+  <div class="modal fade" id="modal-template-overwrite" tabindex="-1" role="dialog" aria-labelledby="template-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="template-modal-label">Name already exists</h4>
+        </div>
+        <div class="modal-body">
+          A template with the given name already exists. Do you want to overwrite that template?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button id="btn-overwrite-template" type="button" class="btn btn-primary">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/jquery-2.1.4.min.js"></script>
   <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
@@ -103,6 +125,71 @@
             $('#btn-save-template').removeAttr("disabled");
         }
     });
+
+    // Bind the click action to the save template button.    
+    $('#btn-save-template').click(function() {
+        var template = { 
+            name: $('#template-name').val(),
+            query: $('#query-string').val()
+        };
+        var current = $('#list-template-links > li > a').filter(function() {
+            return $(this).text() === template.name;
+        }).toArray();
+        if (current.length != 0) {
+            $('#modal-template-overwrite').modal();
+        } else {
+            storeTemplate(template, false);
+        }
+    });
+
+    $('#btn-overwrite-template').click(function() {
+        $('#modal-template-overwrite').modal('hide')
+        var template = { 
+            name: $('#template-name').val(),
+            query: $('#query-string').val()
+        };
+        storeTemplate(template, true);
+    });
+    
+    // Load the stores search templates.
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/search/templates',
+        success: function(data) {
+            if (!data || !data.searchtemplates) {
+                return;
+            }
+            $.each(data.searchtemplates, function(index, template){
+                $('#list-template-links').append('<li><a href="#" onclick="setValueFromTemplate(\'' + template.query + '\');">' + template.name + '</a></li>');
+            });
+        }
+    });
+    
+    function setValueFromTemplate(value) {
+        $('#query-string').val(value);
+        $('#query-string').trigger('input');
+    }
+    
+    function storeTemplate(template, isOverwrite) {
+        $.ajax({
+            type: 'PUT',
+            contentType: 'application/json',
+            url: '../rest/search/templates/' + encodeURIComponent($('#template-name').val()),
+            data: JSON.stringify(template),
+            success: function() {
+                $('#template-name').val('');
+                if (isOverwrite) {
+                    $('#list-template-links > li > a').filter(function() {
+                        return $(this).text() === template.name;
+                    }).attr('onclick', 'setValueFromTemplate(\'' + template.query + '\')');
+                } else {
+                    $('#list-template-links').append('<li><a href="#" onclick="setValueFromTemplate(\'' + template.query + '\')">' + template.name + '</a></li>');
+                }
+            }
+        });
+    }
+    
   </script>
   
 </body>

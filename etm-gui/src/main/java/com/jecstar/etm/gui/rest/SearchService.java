@@ -3,7 +3,6 @@ package com.jecstar.etm.gui.rest;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -39,9 +38,8 @@ public class SearchService extends AbstractJsonConverter {
 	}
 	
 	@GET
-	@Path("/searchtemplates")
+	@Path("/templates")
 	@Produces(MediaType.APPLICATION_JSON)
-	@RolesAllowed("searcher")
 	public String getSearchTemplates() {
 		GetResponse getResponse = SearchService.client.prepareGet("etm_configuration", "user", ((EtmPrincipal)this.securityContext.getUserPrincipal()).getId())
 				.setFetchSource("searchtemplates", null)
@@ -53,9 +51,8 @@ public class SearchService extends AbstractJsonConverter {
 	}
 	
 	@PUT
-	@Path("/searchtemplates/{templateName}")
+	@Path("/templates/{templateName}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@RolesAllowed("searcher")
 	public String setSearchTemplates(@PathParam("templateName") String templateName, String json) {
 		Map<String, Object> requestValues = toMap(json); 
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
