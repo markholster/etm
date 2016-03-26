@@ -51,23 +51,25 @@
                <h5 class="card-title">Search</h5>
                <div class="card-text">
                  <p>Please enter your search string in</p>
-                 <form>
-                   <div class="input-group">
-                     <input id="queryString" type="text" class="form-control" placeholder="Search for...">
-                     <span class="input-group-btn">
-                       <button class="btn btn-primary" type="button">Search</button>
-                     </span>
-                     <input type="hidden" id="attribute-id">
-                     <p id="attribute-description"></p>
-                   </div>
-                 </form>
+                 <div class="input-group">
+                   <input id="query-string" type="text" class="form-control danger" placeholder="Search for..." autofocus>
+                   <span class="input-group-btn">
+                     <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">Search</button>
+                   </span>
+                 </div>
                </div>
              </div>
            </div>
            <div class="col-sm-3">
              <div class="card card-block">
                <h5 class="card-title">Templates</h5>
-               <div class="card-text"></div>
+               <div id="search_templates" class="card-text"></div>
+               <div class="input-group input-group-sm">
+                 <input id="template-name" type="text" class="form-control" placeholder="Template name..." disabled="disabled">
+                 <span class="input-group-btn">
+                   <button id="btn-save-template"class="btn btn-primary" type="button" disabled="disabled">Save</button>
+                 </span>
+               </div>
              </div>
            </div>
          </div>
@@ -80,6 +82,28 @@
   <script src="../scripts/jquery-2.1.4.min.js"></script>
   <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
   <script src="../scripts/sidebar_menu.js"></script>
+  
+  <script>
+    // Disable or enable the search button, template name inputfield and save button if the query field contains data.
+    $('#query-string').on('input', function(){
+        if (!$(this).val()) {
+            $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
+        } else {
+            $('#btn-search, #template-name').removeAttr("disabled");
+            if ($('#template-name').val()) {
+                $('#btn-save-template').removeAttr("disabled");
+            }
+        }
+    });
+    
+    $('#template-name').on('input', function(){
+        if (!$(this).val()) {
+            $('#btn-save-template').attr('disabled', 'disabled');
+        } else {
+            $('#btn-save-template').removeAttr("disabled");
+        }
+    });
+  </script>
   
 </body>
 </html>

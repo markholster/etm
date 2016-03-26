@@ -57,9 +57,12 @@ public class SearchService extends AbstractJsonConverter {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@RolesAllowed("searcher")
 	public String setSearchTemplates(@PathParam("templateName") String templateName, String json) {
+		Map<String, Object> requestValues = toMap(json); 
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		Map<String, Object> template = new HashMap<String, Object>();
 		template.put("name", templateName);
+		template.put("query", requestValues.get("query"));
+		
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", ((EtmPrincipal)this.securityContext.getUserPrincipal()).getId())
 				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguraton.getWriteConsistency().name()))
