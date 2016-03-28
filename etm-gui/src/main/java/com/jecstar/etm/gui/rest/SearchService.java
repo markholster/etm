@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -53,7 +54,8 @@ public class SearchService extends AbstractJsonConverter {
 	@PUT
 	@Path("/templates/{templateName}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String setSearchTemplates(@PathParam("templateName") String templateName, String json) {
+	@Produces(MediaType.APPLICATION_JSON)
+	public String addSearchTemplate(@PathParam("templateName") String templateName, String json) {
 		Map<String, Object> requestValues = toMap(json); 
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		Map<String, Object> template = new HashMap<String, Object>();
@@ -69,5 +71,18 @@ public class SearchService extends AbstractJsonConverter {
 		return "{ \"status\": \"success\" }";
 	}
 
+	@DELETE
+	@Path("/templates/{templateName}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String removeSearchTemplate(@PathParam("templateName") String templateName) {
+		Map<String, Object> scriptParams = new HashMap<String, Object>();
+		scriptParams.put("name", templateName);
+		SearchService.client.prepareUpdate("etm_configuration", "user", ((EtmPrincipal)this.securityContext.getUserPrincipal()).getId())
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguraton.getWriteConsistency().name()))
+			.setScript(new Script("etm_remove-searchtemplate", ScriptType.FILE, "groovy", scriptParams))
+			.setRetryOnConflict(3)
+			.get();
+		return "{ \"status\": \"success\" }";
+	}
 
 }
