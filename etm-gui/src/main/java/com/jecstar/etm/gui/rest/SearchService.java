@@ -115,6 +115,7 @@ public class SearchService extends AbstractJsonConverter {
 				if ("_default_".equals(mappingMetadataCursor.key)) {
 					continue;
 				}
+				// TODO check op meegegeven type.
 				MappingMetaData mappingMetaData = mappingMetadataCursor.value;
 				try {
 					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
