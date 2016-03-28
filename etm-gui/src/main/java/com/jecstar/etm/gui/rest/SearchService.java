@@ -1,7 +1,14 @@
 package com.jecstar.etm.gui.rest;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -15,11 +22,17 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
+import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
+import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.EtmPrincipal;
 import com.jecstar.etm.core.domain.converter.json.AbstractJsonConverter;
@@ -83,6 +96,68 @@ public class SearchService extends AbstractJsonConverter {
 			.setRetryOnConflict(3)
 			.get();
 		return "{ \"status\": \"success\" }";
+	}
+	
+	@GET
+	@Path("/keywords")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getKeywords() {
+		StringBuilder result = new StringBuilder();
+		List<String> names = new ArrayList<String>();
+		GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(SearchService.client, GetMappingsAction.INSTANCE, "etm_event_all").get();
+		ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
+		Iterator<ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>>> mappingsIterator = mappings.iterator();
+		while (mappingsIterator.hasNext()) {
+			ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor = mappingsIterator.next();
+			Iterator<ObjectObjectCursor<String, MappingMetaData>> mappingMetaDataIterator = mappingsCursor.value.iterator();
+			while (mappingMetaDataIterator.hasNext()) {
+				ObjectObjectCursor<String, MappingMetaData> mappingMetadataCursor = mappingMetaDataIterator.next();
+				if ("_default_".equals(mappingMetadataCursor.key)) {
+					continue;
+				}
+				MappingMetaData mappingMetaData = mappingMetadataCursor.value;
+				try {
+					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
+					addProperties(names, "", valueMap);
+				} catch (IOException e) {
+					// TODO logging.
+				}
+			}
+			
+		}
+		Collections.sort(names);
+		names.add("_exists_");
+		names.add("_missing_");
+		result.append("{ \"keywords\":[");
+		result.append(names.stream().map(n -> "\"" + escapeToJson(n)+ "\"").collect(Collectors.joining(", ")));
+		result.append("]}");
+		return result.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	private void addProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
+		valueMap = getObject("properties", valueMap);
+		if (valueMap == null) {
+			return;
+		}
+		for (Entry<String, Object> entry : valueMap.entrySet()) {
+			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
+			String name = determineName(prefix, entry.getKey());
+			if (entryValues.containsKey("properties")) {
+				addProperties(names, name, getObject("properties", getObject("properties", entryValues)));
+			} else {
+				if (!names.contains(name)) {
+					names.add(name);
+				}
+			}
+		}
+	}
+	
+	private String determineName(String prefix, String name) {
+		if (prefix.length() == 0) {
+			return name;
+		}
+		return prefix + "." + name;
 	}
 
 }

@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="../styles/bootstrap-4.0.0_alpha2.min.css">
 <link rel="stylesheet" href="../styles/sidebar_menu.css">
 <link rel="stylesheet" href="../styles/font-awesome-4.5.0.min.css">
+<link rel="stylesheet" href="../styles/jquery-ui-1.11.4.min.css">
+<link rel="stylesheet" href="../styles/autocomplete.css">
 </head>
 <body>
   <nav class="navbar navbar-full navbar-light bg-primary">
@@ -52,7 +54,7 @@
                <div class="card-text">
                  <p>Please enter your search string</p>
                  <div class="input-group">
-                   <input id="query-string" type="text" class="form-control danger" placeholder="Search for..." autofocus>
+                   <input id="query-string" type="text" class="form-control" placeholder="Search for..." autofocus autocomplete="off">
                    <span class="input-group-btn">
                      <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">Search</button>
                    </span>
@@ -122,10 +124,15 @@
   
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/jquery-2.1.4.min.js"></script>
+  <script src="../scripts/jquery-ui-1.11.4.min.js"></script>
   <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
   <script src="../scripts/sidebar_menu.js"></script>
   
   <script>
+    var queryFields = [];
+    var queryOperators = ['AND', 'AND NOT', 'OR'];
+    var queryForFields = ['_exists_', '_missing_'];
+  
     // Disable or enable the search button, template name inputfield and save button if the query field contains data.
     $('#query-string').on('input', function(){
         if (!$(this).val()) {
@@ -135,6 +142,48 @@
             if ($('#template-name').val()) {
                 $('#btn-save-template').removeAttr("disabled");
             }
+        }
+    }).bind('keydown', function( event ) {
+        if ( event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active ) {
+            event.preventDefault();
+        } else if ( event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
+            if ($(this).val() === '') {
+                $(this).autocomplete( "search", "" );
+            }
+        } 
+    }).autocomplete({
+        minLength: 0,
+        source: function( request, response ) {
+          // delegate back to autocomplete, but extract the last term
+          var term = extractAutocompleteTerm(request.term);
+          if (term !== null) {
+            response( $.ui.autocomplete.filter(queryFields, term) );
+          }
+        },
+        focus: function() {
+          // prevent value inserted on focus
+          return false;
+        },
+        select: function( event, ui ) {
+          var lastTerm = extractAutocompleteTerm(this.value.trim());
+          var queryEndsWithSpace = this.value.endsWith(' ');
+          var ix = this.value.lastIndexOf(lastTerm);
+          if (queryEndsWithSpace) {
+            this.value += ui.item.value;
+            if (!isQueryForFieldTerm(lastTerm)) {
+                this.value += ':';
+            }
+          } else if (-1 != ix) {
+            this.value = this.value.substring(0, ix);
+            var secondLastTerm = extractAutocompleteTerm(this.value.trim());
+            this.value += ui.item.value;
+            // Check if the second last term is a queryForField term. In that case the selected value should not be appended with a ":"
+            if (!isQueryForFieldTerm(secondLastTerm)) {
+                this.value += ':';
+            }
+          }
+          this.value += ' ';
+          return false;
         }
     });
     
@@ -202,6 +251,21 @@
         }
     });
     
+    // Load the query keywords
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/search/keywords',
+        success: function(data) {
+            if (!data || !data.keywords) {
+                return;
+            }
+            $.each(data.keywords, function(index, keyword){
+                queryFields.push(keyword);
+            });
+        }
+    });
+    
     function setValuesFromTemplate(value) {
         $('#query-string').val(value);
         $('#query-string').trigger('input');
@@ -235,6 +299,51 @@
         return $("<div></div>").text(stringToEscape).html();
     }
     
+    function extractAutocompleteTerm(query) {
+        if (!query) {
+            return '';
+        } 
+        var terms = query.match(/AND\sNOT|AND|OR|[^\s"]+|"([^"]*)"/g);
+        if (!terms) {
+            return query;
+        }
+        if (terms.length == 1) {
+            if (isQueryForFieldTerm(terms[0]) && query.endsWith(' ')) {
+                return '';
+            }
+            return query;
+        } else {
+            var lastTerm = terms[terms.length - 1];
+            var secondLastTerm = terms[terms.length - 2].trim();
+            if (isQueryForFieldTerm(secondLastTerm) && !query.endsWith(' ')) {
+                return lastTerm;
+            }
+            if (isQueryForFieldTerm(lastTerm) && query.endsWith(' ')) {
+                return '';
+            }
+            if (secondLastTerm.endsWith(':')) {
+                return null;
+            }
+            if (queryOperators.indexOf(secondLastTerm) != -1) {
+                return lastTerm;
+            }
+            if (queryOperators.indexOf(lastTerm) != -1 && query.endsWith(' ')) {
+                return '';
+            }
+        }
+        return null;
+    }
+    
+    function isQueryForFieldTerm(term) {
+        if (!term) {
+            return false;
+        }  
+        var termToQuery = term.trim();
+        if (termToQuery.endsWith(':')) {
+            termToQuery = termToQuery.substring(0, termToQuery.length - 1);
+        }
+        return queryForFields.indexOf(termToQuery) != -1;
+    }
   </script>
   
 </body>
