@@ -144,7 +144,7 @@ public class SearchService extends AbstractJsonConverter {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
 			String name = determineName(prefix, entry.getKey());
 			if (entryValues.containsKey("properties")) {
-				addProperties(names, name, getObject("properties", getObject("properties", entryValues)));
+				addProperties(names, name, entryValues);
 			} else {
 				if (!names.contains(name)) {
 					names.add(name);
