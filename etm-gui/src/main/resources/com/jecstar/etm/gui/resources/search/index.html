@@ -150,6 +150,8 @@
             if ($(this).val() === '') {
                 $(this).autocomplete( "search", "" );
             }
+        } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
+            executeQuery(createQuery());
         } 
     }).autocomplete({
         minLength: 0,
@@ -189,6 +191,10 @@
         }
     });
     
+    $('#btn-search').click(function() {
+        executeQuery(createQuery());
+    });
+    
     $('#template-name').on('input', function(){
         if (!$(this).val()) {
             $('#btn-save-template').attr('disabled', 'disabled');
@@ -197,7 +203,6 @@
         }
     });
 
-    // Bind the click action to the save template button.    
     $('#btn-save-template').click(function() {
         var template = { 
             name: $('#template-name').val(),
@@ -267,6 +272,30 @@
             });
         }
     });
+    
+    function createQuery() {
+        if (!$('#query-string').val()) {
+            return null;
+        }
+        var query = { 
+            query: $('#query-string').val()
+        };
+        return query;
+    }
+    
+    function executeQuery(queryParameters) {
+        if (!queryParameters) {
+            return;
+        }
+        $.ajax({
+            type: 'POST',
+            contentType: 'application/json',
+            url: '../rest/search/query',
+            data: JSON.stringify(queryParameters),
+            success: function() {
+            }
+        });    
+    }
     
     function setValuesFromTemplate(value) {
         $('#query-string').val(value);

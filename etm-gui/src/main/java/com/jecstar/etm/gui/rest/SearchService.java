@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -26,9 +27,11 @@ import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
@@ -73,7 +76,7 @@ public class SearchService extends AbstractJsonConverter {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		Map<String, Object> template = new HashMap<String, Object>();
 		template.put("name", templateName);
-		template.put("query", requestValues.get("query"));
+		template.put("query", getString("query", requestValues));
 		
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", ((EtmPrincipal)this.securityContext.getUserPrincipal()).getId())
@@ -134,6 +137,34 @@ public class SearchService extends AbstractJsonConverter {
 		result.append("]}");
 		return result.toString();
 	}
+	
+	@POST
+	@Path("/query")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String executeQuery(String json) {
+		Map<String, Object> requestValues = toMap(json);
+		String query = getString("query", requestValues);
+		long startTime = System.currentTimeMillis();
+		SearchResponse response = client.prepareSearch("etm_event_all")
+			.setQuery(new QueryStringQueryBuilder(query)
+					.allowLeadingWildcard(true)
+					.analyzeWildcard(true)
+					.defaultField("payload")
+					.locale(((EtmPrincipal)this.securityContext.getUserPrincipal()).getLocale())
+					.lowercaseExpandedTerms(false)
+					.timeZone(((EtmPrincipal)this.securityContext.getUserPrincipal()).getTimeZone().getID()))
+			.get();
+		long endTime = System.currentTimeMillis();
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		result.append("\"status\": \"success\"");
+		result.append(",\"query-time\": " + (endTime - startTime));
+		result.append(",\"hits\": " + response.getHits().getTotalHits());
+		result.append("}");
+		return result.toString();
+	}
+	
 
 	@SuppressWarnings("unchecked")
 	private void addProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
