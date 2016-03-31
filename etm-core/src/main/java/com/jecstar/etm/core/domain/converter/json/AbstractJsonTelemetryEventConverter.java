@@ -72,8 +72,9 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		firstElement = true;
 		for (Entry<String, Object> entry : elementValues.entrySet()) {
 			if (!firstElement) {
-				buffer.append(escapeObjectToJsonNameValuePair(entry.getKey(), entry.getValue()));
+				buffer.append(", ");
 			}
+			buffer.append(escapeObjectToJsonNameValuePair(entry.getKey(), entry.getValue()));
 			firstElement = false;
 		}
 		buffer.append("}");
