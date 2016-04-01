@@ -10,9 +10,15 @@ public class EtmPrincipalConverterTagsJsonImpl implements EtmPrincipalConverterT
 	}
 	
 	@Override
+	public String getFilterQueryTag() {
+		return "filter_query";
+	}
+	
+	@Override
 	public String getLocaleTag() {
 		return "locale";
 	}
+
 	
 	@Override
 	public String getNameTag() {

@@ -18,15 +18,14 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.SecurityContext;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
@@ -34,20 +33,17 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.search.sort.SortOrder;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.EtmPrincipal;
-import com.jecstar.etm.core.domain.converter.json.AbstractJsonConverter;
 
 @Path("/search")
-public class SearchService extends AbstractJsonConverter {
+public class SearchService extends AbstractJsonService {
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguraton;
-	
-    @Context
-    private SecurityContext securityContext;
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.client = client;
@@ -79,7 +75,7 @@ public class SearchService extends AbstractJsonConverter {
 		template.put("query", getString("query", requestValues));
 		
 		scriptParams.put("template", template);
-		SearchService.client.prepareUpdate("etm_configuration", "user", ((EtmPrincipal)this.securityContext.getUserPrincipal()).getId())
+		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
 				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguraton.getWriteConsistency().name()))
 				.setScript(new Script("etm_update-searchtemplate", ScriptType.FILE, "groovy", scriptParams))
 				.setRetryOnConflict(3)
@@ -93,7 +89,7 @@ public class SearchService extends AbstractJsonConverter {
 	public String removeSearchTemplate(@PathParam("templateName") String templateName) {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		scriptParams.put("name", templateName);
-		SearchService.client.prepareUpdate("etm_configuration", "user", ((EtmPrincipal)this.securityContext.getUserPrincipal()).getId())
+		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguraton.getWriteConsistency().name()))
 			.setScript(new Script("etm_remove-searchtemplate", ScriptType.FILE, "groovy", scriptParams))
 			.setRetryOnConflict(3)
@@ -143,28 +139,43 @@ public class SearchService extends AbstractJsonConverter {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String executeQuery(String json) {
-		Map<String, Object> requestValues = toMap(json);
-		String query = getString("query", requestValues);
 		long startTime = System.currentTimeMillis();
-		SearchResponse response = client.prepareSearch("etm_event_all")
-			.setQuery(new QueryStringQueryBuilder(query)
-					.allowLeadingWildcard(true)
-					.analyzeWildcard(true)
-					.defaultField("payload")
-					.locale(((EtmPrincipal)this.securityContext.getUserPrincipal()).getLocale())
-					.lowercaseExpandedTerms(false)
-					.timeZone(((EtmPrincipal)this.securityContext.getUserPrincipal()).getTimeZone().getID()))
-			.get();
-		long endTime = System.currentTimeMillis();
+		Map<String, Object> requestValues = toMap(json);
+		String queryString = getString("query", requestValues);
+		Integer startIndex = getInteger("start-ix", requestValues, new Integer(0));
+		Integer maxResults = getInteger("max-results", requestValues, new Integer(50));
+		if (maxResults > 500) {
+			maxResults = 50;
+		}
+		String sortField = getString("sort-field", requestValues);
+		String sortOrder = getString("sort-order", requestValues);
+		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
+		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(queryString)
+			.allowLeadingWildcard(true)
+			.analyzeWildcard(true)
+			.defaultField("payload")
+			.locale(etmPrincipal.getLocale())
+			.lowercaseExpandedTerms(false)
+			.timeZone(etmPrincipal.getTimeZone().getID());
+		SearchRequestBuilder requestBuilder = client.prepareSearch("etm_event_all")
+			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
+			.setFrom(startIndex)
+			.setSize(maxResults);
+		if (sortField != null) {
+			requestBuilder.addSort(sortField, "desc".equals(sortOrder) ? SortOrder.DESC : SortOrder.ASC);
+		}
+		
+		
+		SearchResponse response = requestBuilder.get();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"status\": \"success\"");
-		result.append(",\"query-time\": " + (endTime - startTime));
 		result.append(",\"hits\": " + response.getHits().getTotalHits());
+		long endTime = System.currentTimeMillis();
+		result.append(",\"query-time\": " + (endTime - startTime));
 		result.append("}");
 		return result.toString();
 	}
-	
 
 	@SuppressWarnings("unchecked")
 	private void addProperties(List<String> names, String prefix, Map<String, Object> valueMap) {

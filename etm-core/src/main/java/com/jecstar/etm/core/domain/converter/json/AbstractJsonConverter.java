@@ -55,10 +55,14 @@ public abstract class AbstractJsonConverter {
 	}
 	
 	protected Integer getInteger(String tag, Map<String, Object> valueMap) {
+		return getInteger(tag, valueMap, null);
+	}
+	
+	protected Integer getInteger(String tag, Map<String, Object> valueMap, Integer defaultValue) {
 		if (valueMap.containsKey(tag)) {
 			return ((Number)valueMap.get(tag)).intValue();
 		}
-		return null;
+		return defaultValue;
 	}
 	
 	protected Double getDouble(String tag, Map<String, Object> valueMap) {

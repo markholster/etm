@@ -17,6 +17,7 @@ public class EtmPrincipal implements Principal {
 	private Locale locale = Locale.getDefault();
 	private Set<String> roles = new HashSet<String>();
 	private TimeZone timeZone = TimeZone.getDefault();
+	private String filterQuery = null;
 
 
 	public EtmPrincipal(String id, String passwordHash) {
@@ -81,5 +82,13 @@ public class EtmPrincipal implements Principal {
 			return;
 		}
 		this.roles.addAll(roles);
+	}
+	
+	public String getFilterQuery() {
+		return this.filterQuery;
+	}
+	
+	public void setFilterQuery(String filterQuery) {
+		this.filterQuery = filterQuery;
 	}
 }

@@ -19,6 +19,7 @@ public class EtmPrincipalConverterJsonImpl extends AbstractJsonConverter impleme
 		boolean added = false;
 		sb.append("{");
 		added = addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag(), sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
@@ -33,6 +34,7 @@ public class EtmPrincipalConverterJsonImpl extends AbstractJsonConverter impleme
 		Map<String, Object> valueMap = toMap(jsonContent);
 		EtmPrincipal principal = new EtmPrincipal(getString(this.tags.getIdTag(), valueMap),getString(this.tags.getPasswordHashTag(), valueMap));
 		principal.setName(getString(this.tags.getNameTag(), valueMap));
+		principal.setFilterQuery(getString(this.tags.getFilterQueryTag(), valueMap));
 		String value = getString(this.tags.getLocaleTag(), valueMap);
 		if (value != null) {
 			principal.setLocale(Locale.forLanguageTag(value));
