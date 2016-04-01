@@ -152,7 +152,8 @@
             }
         } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
             executeQuery(createQuery());
-        } 
+        }
+    // TODO! Autocomplete on mobile devices. 
     }).autocomplete({
         minLength: 0,
         source: function( request, response ) {
