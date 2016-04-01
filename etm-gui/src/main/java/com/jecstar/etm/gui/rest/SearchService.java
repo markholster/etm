@@ -2,12 +2,12 @@ package com.jecstar.etm.gui.rest;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
@@ -73,6 +73,7 @@ public class SearchService extends AbstractJsonService {
 		Map<String, Object> template = new HashMap<String, Object>();
 		template.put("name", templateName);
 		template.put("query", getString("query", requestValues));
+		template.put("types", getArray("types", requestValues));
 		
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
@@ -102,7 +103,7 @@ public class SearchService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getKeywords() {
 		StringBuilder result = new StringBuilder();
-		List<String> names = new ArrayList<String>();
+		Map<String, List<String>> names = new HashMap<String, List<String>>();
 		GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(SearchService.client, GetMappingsAction.INSTANCE, "etm_event_all").get();
 		ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
 		Iterator<ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>>> mappingsIterator = mappings.iterator();
@@ -114,22 +115,34 @@ public class SearchService extends AbstractJsonService {
 				if ("_default_".equals(mappingMetadataCursor.key)) {
 					continue;
 				}
-				// TODO check op meegegeven type.
 				MappingMetaData mappingMetaData = mappingMetadataCursor.value;
+				List<String> values = new ArrayList<String>();
+				values.add("_exists_");
+				values.add("_missing_");
 				try {
 					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
-					addProperties(names, "", valueMap);
+					addProperties(values, "", valueMap);
+					names.put(mappingMetadataCursor.key, values);
 				} catch (IOException e) {
 					// TODO logging.
 				}
 			}
 			
 		}
-		Collections.sort(names);
-		names.add("_exists_");
-		names.add("_missing_");
 		result.append("{ \"keywords\":[");
-		result.append(names.stream().map(n -> "\"" + escapeToJson(n)+ "\"").collect(Collectors.joining(", ")));
+		Set<Entry<String, List<String>>> entries = names.entrySet();
+		if (entries != null) {
+			boolean first = true;
+			for (Entry<String, List<String>> entry : entries) {
+				if (!first) {
+					result.append(", ");
+				}
+				result.append("{");
+				result.append("\"type\": \"" + escapeToJson(entry.getKey()) + "\",");
+				result.append("\"names\": [" + entry.getValue().stream().map(n -> "\"" + escapeToJson(n)+ "\"").collect(Collectors.joining(", ")) + "]");
+				result.append("}");
+			}
+		}
 		result.append("]}");
 		return result.toString();
 	}
@@ -149,6 +162,7 @@ public class SearchService extends AbstractJsonService {
 		}
 		String sortField = getString("sort-field", requestValues);
 		String sortOrder = getString("sort-order", requestValues);
+		List<String> types = getArray("types", requestValues);
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
 		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(queryString)
 			.allowLeadingWildcard(true)
@@ -164,8 +178,9 @@ public class SearchService extends AbstractJsonService {
 		if (sortField != null) {
 			requestBuilder.addSort(sortField, "desc".equals(sortOrder) ? SortOrder.DESC : SortOrder.ASC);
 		}
-		
-		
+		if (types != null && !types.isEmpty()) {
+			requestBuilder.setTypes(types.stream().toArray(size -> new String[size]));
+		}
 		SearchResponse response = requestBuilder.get();
 		StringBuilder result = new StringBuilder();
 		result.append("{");

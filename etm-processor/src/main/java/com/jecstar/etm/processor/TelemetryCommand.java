@@ -37,7 +37,7 @@ public class TelemetryCommand {
 			} else if (SQL_EVENT.toStringType().equalsIgnoreCase(type)) {
 				return SQL_EVENT;
 			}
-			return null;
+			throw new IllegalArgumentException("'" + type + "' is an invalid CommandType");
 		}
 	}
 

@@ -52,7 +52,22 @@
              <div class="card card-block">
                <h5 class="card-title">Search</h5>
                <div class="card-text">
-                 <p>Please enter your search string</p>
+                 <p>Please select the event types you want to search for, and fill in a search term in the search bar.</p>
+                 <label class="checkbox-inline">
+                   <input type="checkbox" id="check-type-business" value="business" checked="checked"> Business
+                 </label>
+                 <label class="checkbox-inline">
+                   <input type="checkbox" id="check-type-http" value="http" checked="checked"> Http
+                 </label>
+                 <label class="checkbox-inline">
+                   <input type="checkbox" id="check-type-log" value="log" checked="checked"> Log
+                 </label>                 
+                 <label class="checkbox-inline">
+                   <input type="checkbox" id="check-type-messaging" value="messaging" checked="checked"> Messaging
+                 </label>                 
+                 <label class="checkbox-inline">
+                   <input type="checkbox" id="check-type-sql" value="sql" checked="checked"> SQL
+                 </label>                 
                  <div class="input-group">
                    <input id="query-string" type="text" class="form-control" placeholder="Search for..." autofocus autocomplete="off">
                    <span class="input-group-btn">
@@ -123,27 +138,21 @@
   </div>
   
   <!-- jQuery first, then Bootstrap JS. -->
-  <script src="../scripts/jquery-2.1.4.min.js"></script>
+  <script src="../scripts/jquery-2.2.2.min.js"></script>
   <script src="../scripts/jquery-ui-1.11.4.min.js"></script>
   <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
   <script src="../scripts/sidebar_menu.js"></script>
   
   <script>
-    var queryFields = [];
+    var queryKeywords = null;
     var queryOperators = ['AND', 'AND NOT', 'OR'];
     var queryForFields = ['_exists_', '_missing_'];
   
+    $('[id^=check-type-]').on('change', enableOrDisableSearchButton);
+    
     // Disable or enable the search button, template name inputfield and save button if the query field contains data.
-    $('#query-string').on('input', function(){
-        if (!$(this).val()) {
-            $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
-        } else {
-            $('#btn-search, #template-name').removeAttr("disabled");
-            if ($('#template-name').val()) {
-                $('#btn-save-template').removeAttr("disabled");
-            }
-        }
-    }).bind('keydown', function( event ) {
+    $('#query-string').on('input', enableOrDisableSearchButton)
+    .bind('keydown', function( event ) {
         if ( event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active ) {
             event.preventDefault();
         } else if ( event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
@@ -162,12 +171,12 @@
             return;
           }
           if ("fieldTermValue" === query.queryType) {
-            var suggestions = $.grep( queryFields, function( n, i ) {
+            var fieldSuggestions = $.grep(getCurrentKeywords(), function( n, i ) {
                 return queryForFields.indexOf(n) == -1;
             });
-            response($.ui.autocomplete.filter(suggestions, query.queryTerm));
+            response($.ui.autocomplete.filter(fieldSuggestions, query.queryTerm));
           } else if ("field" === query.queryType) {
-            response($.ui.autocomplete.filter(queryFields, query.queryTerm));
+            response($.ui.autocomplete.filter(getCurrentKeywords(), query.queryTerm));
           }
         },
         focus: function() {
@@ -207,7 +216,8 @@
     $('#btn-save-template').click(function() {
         var template = { 
             name: $('#template-name').val(),
-            query: $('#query-string').val()
+            query: $('#query-string').val(),
+            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get() 
         };
         var current = $('#list-template-links > li > a').filter(function() {
             return $(this).text() === template.name;
@@ -224,7 +234,8 @@
         $('#modal-template-overwrite').modal('hide');
         var template = { 
             name: $('#template-name').val(),
-            query: $('#query-string').val()
+            query: $('#query-string').val(),
+            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get()
         };
         storeTemplate(template, true);
     });
@@ -254,7 +265,7 @@
                 return;
             }
             $.each(data.searchtemplates, function(index, template){
-                $('#list-template-links').append('<li><a href="#" onclick="setValuesFromTemplate(\'' + template.query + '\');">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
+                $('#list-template-links').append('<li><a href="#" onclick="setValuesFromTemplate(\'' + JSON.stringify(template).replace(/"/g, '&quot;') + '\');">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
             });
         }
     });
@@ -268,18 +279,43 @@
             if (!data || !data.keywords) {
                 return;
             }
-            $.each(data.keywords, function(index, keyword){
-                queryFields.push(keyword);
-            });
+            queryKeywords = data.keywords;
         }
     });
     
+    function getCurrentKeywords() {
+        if (!queryKeywords || $('[id^=check-type-]:checked').size() == 0) {
+            return null;
+        }
+        var selectedTypes = $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get();
+        var keywordGroups = $(queryKeywords).filter(function (index, keywordGroup) {
+            return selectedTypes.indexOf(keywordGroup.type) != -1;
+        })
+        var values = [];
+        $.each(keywordGroups, function(index, keywordGroup) {
+            $.merge(values, keywordGroup.names);    
+        })
+        return $.uniqueSort($(values));
+    }
+    
+    function enableOrDisableSearchButton() {
+        if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
+            $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
+        } else {
+            $('#btn-search, #template-name').removeAttr("disabled");
+            if ($('#template-name').val()) {
+                $('#btn-save-template').removeAttr("disabled");
+            }
+        }
+    }
+    
     function createQuery() {
-        if (!$('#query-string').val()) {
+        if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
             return null;
         }
         var query = { 
-            query: $('#query-string').val()
+            query: $('#query-string').val(),
+            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get()
         };
         return query;
     }
@@ -299,7 +335,12 @@
     }
     
     function setValuesFromTemplate(value) {
-        $('#query-string').val(value);
+        var template = JSON.parse(value);
+        $('[id^=check-type-]').prop('checked', false);
+        $.each(template.types, function(index, type){
+            $('#check-type-' + type).prop('checked', true);    
+        });
+        $('#query-string').val(template.query);
         $('#query-string').trigger('input');
     }
     
@@ -314,9 +355,9 @@
                 if (isOverwrite) {
                     $('#list-template-links > li > a').filter(function() {
                         return $(this).text() === template.name;
-                    }).attr('onclick', 'setValueFromTemplate(\'' + template.query + '\')');
+                    }).attr('onclick', 'setValuesFromTemplate(\'' + JSON.stringify(template) + '\')');
                 } else {
-                    $('#list-template-links').append('<li><a href="#" onclick="setValuesFromTemplate(\'' + template.query + '\')">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
+                    $('#list-template-links').append('<li><a href="#" onclick="setValuesFromTemplate(\'' + JSON.stringify(template).replace(/"/g, '&quot;') + '\')">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
                 }
             }
         });
