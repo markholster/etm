@@ -148,7 +148,14 @@
     var queryOperators = ['AND', 'AND NOT', 'OR'];
     var queryForFields = ['_exists_', '_missing_'];
   
-    $('[id^=check-type-]').on('change', enableOrDisableSearchButton);
+    $('[id^=check-type-]').on('change', function() {
+        enableOrDisableSearchButton();
+        if ($('[id^=check-type-]:checked').size() == 0) {
+            $('#query-string').attr('disabled', 'disabled');
+        } else {
+            $('#query-string').removeAttr('disabled');
+        }
+    });
     
     // Disable or enable the search button, template name inputfield and save button if the query field contains data.
     $('#query-string').on('input', enableOrDisableSearchButton)
@@ -209,7 +216,7 @@
         if (!$(this).val()) {
             $('#btn-save-template').attr('disabled', 'disabled');
         } else {
-            $('#btn-save-template').removeAttr("disabled");
+            $('#btn-save-template').removeAttr('disabled');
         }
     });
 
@@ -350,7 +357,8 @@
             $('#check-type-' + type).prop('checked', true);    
         });
         $('#query-string').val(template.query);
-        $('#query-string').trigger('input');
+        $('#template-name').val(template.name);
+        $('#query-string').removeAttr('disabled').trigger('input');
     }
     
     function storeTemplate(template, isOverwrite) {
