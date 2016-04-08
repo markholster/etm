@@ -265,7 +265,17 @@
                 return;
             }
             $.each(data.searchtemplates, function(index, template){
-                $('#list-template-links').append('<li><a href="#" onclick="setValuesFromTemplate(\'' + JSON.stringify(template).replace(/"/g, '&quot;') + '\');">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
+                $('#list-template-links').append(
+                    $('<li>').append(
+                        $('<a href="#">').click(function() {
+                           setValuesFromTemplate(template)
+                        }).text(template.name)
+                    ,
+                        $('<a href="#" class="fa fa-times pull-right" style="color: #a94442;">').click(function() {
+                           askRemoveTemplate(template)
+                        })
+                    )
+                );
             });
         }
     });
@@ -334,8 +344,7 @@
         });    
     }
     
-    function setValuesFromTemplate(value) {
-        var template = JSON.parse(value);
+    function setValuesFromTemplate(template) {
         $('[id^=check-type-]').prop('checked', false);
         $.each(template.types, function(index, type){
             $('#check-type-' + type).prop('checked', true);    
@@ -355,16 +364,28 @@
                 if (isOverwrite) {
                     $('#list-template-links > li > a').filter(function() {
                         return $(this).text() === template.name;
-                    }).attr('onclick', 'setValuesFromTemplate(\'' + JSON.stringify(template) + '\')');
+                    }).unbind('click').click(function() {
+                        setValuesFromTemplate(template)
+                    });
                 } else {
-                    $('#list-template-links').append('<li><a href="#" onclick="setValuesFromTemplate(\'' + JSON.stringify(template).replace(/"/g, '&quot;') + '\')">' + escapeToHtml(template.name) + '</a><a href="#" class="fa fa-times pull-right" style="color: #a94442;" onclick="askRemoveTemplate(\'' + template.name.replace(new RegExp('\'', 'g'), '\\\'') + '\');"/></li>');
+                    $('#list-template-links').append(
+                        $('<li>').append(
+                            $('<a href="#">').click(function() {
+                               setValuesFromTemplate(template)
+                            }).text(template.name)
+                        ,
+                            $('<a href="#" class="fa fa-times pull-right" style="color: #a94442;">').click(function() {
+                               askRemoveTemplate(template)
+                            })
+                        )
+                    );
                 }
             }
         });
     }
     
-    function askRemoveTemplate(templateName) {
-        $('#remove-template-name').text(templateName);
+    function askRemoveTemplate(template) {
+        $('#remove-template-name').text(template.name);
         $('#modal-template-remove').modal();
     }
     
