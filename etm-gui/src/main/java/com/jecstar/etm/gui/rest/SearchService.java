@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest;
 
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,17 +34,23 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.EtmPrincipal;
+import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
 
 @Path("/search")
 public class SearchService extends AbstractJsonService {
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguraton;
+	
+	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.client = client;
@@ -160,9 +167,17 @@ public class SearchService extends AbstractJsonService {
 		if (maxResults > 500) {
 			maxResults = 50;
 		}
-		String sortField = getString("sort-field", requestValues);
-		String sortOrder = getString("sort-order", requestValues);
+		String sortField = getString("sort_field", requestValues);
+		String sortOrder = getString("sort_order", requestValues);
 		List<String> types = getArray("types", requestValues);
+		List<String> fields = getArray("fields", requestValues);
+		if (fields == null) {
+			fields = new ArrayList<String>(1);
+		}
+		if (fields.isEmpty()) {
+			fields.add(this.tags.getNameTag());
+			fields.add(this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag());
+		}
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
 		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(queryString)
 			.allowLeadingWildcard(true)
@@ -173,24 +188,52 @@ public class SearchService extends AbstractJsonService {
 			.timeZone(etmPrincipal.getTimeZone().getID());
 		SearchRequestBuilder requestBuilder = client.prepareSearch("etm_event_all")
 			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
+			.setFetchSource(fields.toArray(new String[fields.size()]), null)
 			.setFrom(startIndex)
 			.setSize(maxResults);
 		if (sortField != null) {
 			requestBuilder.addSort(sortField, "desc".equals(sortOrder) ? SortOrder.DESC : SortOrder.ASC);
 		}
 		if (types != null && !types.isEmpty()) {
-			requestBuilder.setTypes(types.stream().toArray(size -> new String[size]));
+			requestBuilder.setTypes(types.toArray(new String[types.size()]));
 		}
+		NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
 		SearchResponse response = requestBuilder.get();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"status\": \"success\"");
 		result.append(",\"hits\": " + response.getHits().getTotalHits());
-		long endTime = System.currentTimeMillis();
-		result.append(",\"query-time\": " + (endTime - startTime));
+		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
+		result.append(",\"results\": [");
+		addSearchHits(result, response.getHits());
+		result.append("]");
+		long queryTime = System.currentTimeMillis() - startTime;
+		result.append(",\"query_time\": " + queryTime);
+		result.append(",\"query_time_as_string\": \"" + numberFormat.format(queryTime) + "\"");
 		result.append("}");
 		return result.toString();
 	}
+
+	private void addSearchHits(StringBuilder result, SearchHits hits) {
+		boolean first = true;
+		for (SearchHit searchHit : hits.getHits()) {
+			if (first) {
+				result.append("{");
+				first = false;
+			} else {
+				result.append(", {");
+			}
+			boolean added = false;
+			added = addStringElementToJsonBuffer("type", searchHit.getType() , result, !added) || added;
+			added = addStringElementToJsonBuffer("id", searchHit.getId() , result, !added) || added;
+			added = addStringElementToJsonBuffer("index", searchHit.getIndex() , result, !added) || added;
+			result.append(", \"source\": ");
+			result.append(searchHit.getSourceAsString());
+			result.append("}");
+		}
+	}
+	
+	
 
 	@SuppressWarnings("unchecked")
 	private void addProperties(List<String> names, String prefix, Map<String, Object> valueMap) {

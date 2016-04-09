@@ -101,7 +101,7 @@
     margin:0;
 }
 
-@media(min-width:34em) {
+@media(min-width:48em) {
     #wrapper {
         padding-left: 15em;
     }

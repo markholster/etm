@@ -23,10 +23,10 @@
         <div class="spinner_line spinner_line_3"></div>
         <div class="spinner_line spinner_line_4"></div>
       </div>
-      <button type="button" class="navbar-toggler hidden-sm-up" data-toggle="collapse" id="menu-toggle">
+      <button type="button" class="navbar-toggler hidden-md-up" data-toggle="collapse" id="menu-toggle">
         <span class="fa fa-bars" aria-hidden="true"></span>
       </button>
-      <button type="button" class="navbar-toggler hidden-xs-down" data-toggle="collapse" id="menu-toggle-2">
+      <button type="button" class="navbar-toggler hidden-sm-down" data-toggle="collapse" id="menu-toggle-2">
         <span class="fa fa-bars" aria-hidden="true"></span>
       </button>
     </div>
@@ -60,11 +60,11 @@
     <div id="page-content-wrapper">
       <div class="container-fluid">
          <div class="row">
-           <div class="col-sm-3 col-sm-push-9">
+           <div class="col-md-3 col-md-push-9">
              <div class="card card-block">
                <h5 class="card-title">Templates</h5>
                <div id="search_templates" class="card-text">
-                <ul id="list-template-links"></ul>
+                <ul id="list-template-links" style="padding-left: 1em;"></ul>
                </div>
                <div class="input-group input-group-sm">
                  <input id="template-name" type="text" class="form-control" placeholder="Template name..." disabled="disabled">
@@ -75,7 +75,7 @@
              </div>
            </div>
            
-           <div class="col-sm-9 col-sm-pull-3">
+           <div class="col-md-9 col-md-pull-3">
              <div class="row">
                <div class="card card-block">
                  <h5 class="card-title">Search</h5>
@@ -107,7 +107,7 @@
              </div>
              <div class="row" id="result_block" style="display: none">
                <div class="card card-block">
-                 <h5 class="card-title">Search results</h5>
+                 <div class="card-title"><h5 style="float:left;">Search results</h5><p id="search-stats" style="float:right;"></p></div>
                  <div id="result_card" class="card-text">
                  </div>
                </div>
@@ -359,7 +359,8 @@
         }
         var query = { 
             query: $('#query-string').val(),
-            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get()
+            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
+            fields: null
         };
         return query;
     }
@@ -374,8 +375,12 @@
             contentType: 'application/json',
             url: '../rest/search/query',
             data: JSON.stringify(queryParameters),
-            success: function() {
-                
+            success: function(data) {
+                if (data.hits === 0) {
+                    $('#result_card').empty();
+                    $('#result_card').append($('<p>').text('No results found'));
+                }
+                $('#search-stats').text(data.hits_as_string + ' hits found in ' + data.query_time_as_string + 'ms.');
             }
         });    
     }
