@@ -173,8 +173,18 @@
     var queryForFields = ['_exists_', '_missing_'];
     var tableLayout = {
         fields: [
-            { name: 'Name', field: 'name', valueParam: 'name'},
-            { name: 'Time', field: 'endpoints.writing_endpoint_handler.handling_time', valueParam: 'endpoints[0].writing_endpoint_handler.handling_time'}
+            { name: 'Time', 
+              field: 'endpoints.writing_endpoint_handler.handling_time', 
+              getValue: function(source) {return new Date(source.endpoints[0].writing_endpoint_handler.handling_time).toISOString();}
+            },
+            { name: 'Name', 
+              field: 'endpoints.name', 
+              getValue: function(source) {return source.endpoints[0].name.substring(source.endpoints[0].name.indexOf('(') + 1, source.endpoints[0].name.length - 1);}
+            },
+            { name: 'payload', 
+              field: 'payload', 
+              getValue: function(source) {return source.payload.length > 50 ? source.payload.substring(0,50) : source.payload;}
+            }
         ],
         getFieldNames: function () {
             return this.fields.map(function(item, index) {
@@ -422,7 +432,7 @@
                                 $(body).append(function () {
                                     var tr = $('<tr>');
                                     $(tableLayout.fields).each(function (index, tableColumn) {
-                                        $(tr).append($('<td style="padding: 0.1rem">').text(searchResult.source[tableColumn.valueParam]))       
+                                        $(tr).append($('<td style="padding: 0.1rem">').text(tableColumn.getValue(searchResult.source)))       
                                     });    
                                     return $(tr);
                                 })
