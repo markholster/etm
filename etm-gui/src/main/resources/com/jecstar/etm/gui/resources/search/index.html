@@ -173,19 +173,18 @@
     var queryForFields = ['_exists_', '_missing_'];
     var tableLayout = {
         fields: [
-            { name: 'Time', 
-              field: 'endpoints.writing_endpoint_handler.handling_time', 
-              getValue: function(source) {return new Date(source.endpoints[0].writing_endpoint_handler.handling_time).toISOString();}
-            },
-            { name: 'Name', 
-              field: 'endpoints.name', 
-              getValue: function(source) {return source.endpoints[0].name.substring(source.endpoints[0].name.indexOf('(') + 1, source.endpoints[0].name.length - 1);}
-            },
-            { name: 'payload', 
-              field: 'payload', 
-              getValue: function(source) {return source.payload.length > 50 ? source.payload.substring(0,50) : source.payload;}
+            { name: 'Loglines', 
+              field: '*', 
+              getValue: function(source) {
+                var result = new Date(source.endpoints[0].writing_endpoint_handler.handling_time).toISOString();
+                result += '(' + source.endpoints[0].name.substring(source.endpoints[0].name.indexOf('(') + 1, source.endpoints[0].name.length);
+                result += ' : ' + source.payload;
+                return result;
+              }
             }
         ],
+        sort_field: 'endpoints.writing_endpoint_handler.handling_time',
+        sort_order: 'desc',
         getFieldNames: function () {
             return this.fields.map(function(item, index) {
                 return item.name;
@@ -393,7 +392,9 @@
         var query = { 
             query: $('#query-string').val(),
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
-            fields: tableLayout.getFieldTypes()
+            fields: tableLayout.getFieldTypes(),
+            sort_field: tableLayout.sort_field,
+            sort_order: tableLayout.sort_order
         };
         return query;
     }

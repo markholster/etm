@@ -19,7 +19,6 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.ServletException;
 
 import org.elasticsearch.client.Client;
-import org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
@@ -180,7 +179,6 @@ public class HttpServer {
 		ResteasyDeployment deployment = new ResteasyDeployment();
 		deployment.setApplication(guiApplication);
 		deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());
-		deployment.getProviderClasses().add(ResteasyJackson2Provider.class.getName());
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
 		di.addWelcomePage("index.html");
 		di.setContextPath("/gui");
