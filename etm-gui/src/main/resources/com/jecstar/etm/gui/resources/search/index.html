@@ -175,7 +175,6 @@
     }).ajaxStop(function () {
         $('#spinner').fadeOut(500);
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        alert(jqXHR.responseText);
         $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
         $("#errorBox").show('fast');
     });
