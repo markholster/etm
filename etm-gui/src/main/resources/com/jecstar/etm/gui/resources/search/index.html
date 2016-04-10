@@ -171,6 +171,7 @@
     var queryOperators = ['AND', 'AND NOT', 'OR'];
     var queryForFields = ['_exists_', '_missing_'];
     $(document).ajaxStart(function () {
+        $("#errorBox").hide('fast');
         $('#spinner').fadeIn(250);
     }).ajaxStop(function () {
         $('#spinner').fadeOut(500);

@@ -1,6 +1,9 @@
 package com.jecstar.etm.gui.rest;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -18,7 +21,7 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 			EtmException etmException = (EtmException) ex;
 			switch(etmException.getErrorCode()) {
 				case EtmException.WRAPPED_EXCEPTION:
-					errorMessage.setMessage(ex.getCause().getMessage());
+					errorMessage.setMessage(getRootCauseMessage(ex));
 					break;
 				case EtmException.INVALID_LICENSE_KEY_EXCEPTION:
 					errorMessage.setMessage("Invalid license key");
@@ -50,9 +53,24 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 			errorMessage.setCode(etmException.getErrorCode());
 		} else {
 			errorMessage.setCode(EtmException.WRAPPED_EXCEPTION);
-			errorMessage.setMessage(ex.getMessage());
+			errorMessage.setMessage(getRootCauseMessage(ex));
 		}
 		return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity(errorMessage).type(MediaType.APPLICATION_JSON).build();
 	}
+
+	private String getRootCauseMessage(Throwable ex) {
+		List<Throwable> stack = new ArrayList<Throwable>();
+		return getRootCauseMessage(ex, stack);
+	}
+
+	private String getRootCauseMessage(Throwable ex, List<Throwable> stack) {
+		stack.add(ex);
+		if (ex.getCause() != null && !stack.contains(ex.getCause())) {
+			return getRootCauseMessage(ex.getCause(), stack);
+		}
+		return ex.getMessage();
+	}
+	
+	
 
 }
