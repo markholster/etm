@@ -162,8 +162,8 @@ public class SearchService extends AbstractJsonService {
 		long startTime = System.currentTimeMillis();
 		Map<String, Object> requestValues = toMap(json);
 		String queryString = getString("query", requestValues);
-		Integer startIndex = getInteger("start-ix", requestValues, new Integer(0));
-		Integer maxResults = getInteger("max-results", requestValues, new Integer(50));
+		Integer startIndex = getInteger("start_ix", requestValues, new Integer(0));
+		Integer maxResults = getInteger("max_results", requestValues, new Integer(50));
 		if (maxResults > 500) {
 			maxResults = 50;
 		}

@@ -109,6 +109,7 @@
              <div class="row" id="result_block" style="display: none">
                <div class="card card-block">
                  <div class="card-title"><h5 style="float:left;">Search results</h5><p id="search-stats" style="float:right;"></p></div>
+                 <br />
                  <div id="result_card" class="card-text">
                  </div>
                </div>
@@ -170,6 +171,23 @@
     var queryKeywords = null;
     var queryOperators = ['AND', 'AND NOT', 'OR'];
     var queryForFields = ['_exists_', '_missing_'];
+    var tableLayout = {
+        fields: [
+            { name: 'Name', field: 'name', valueParam: 'name'},
+            { name: 'Time', field: 'endpoints.writing_endpoint_handler.handling_time', valueParam: 'endpoints[0].writing_endpoint_handler.handling_time'}
+        ],
+        getFieldNames: function () {
+            return this.fields.map(function(item, index) {
+                return item.name;
+            })
+        },
+        getFieldTypes: function () {
+            return this.fields.map(function(item, index) {
+                return item.field;
+            })
+        }
+    }
+    
     $(document).ajaxStart(function () {
         $("#errorBox").hide('fast');
         $('#spinner').fadeIn(250);
@@ -365,7 +383,7 @@
         var query = { 
             query: $('#query-string').val(),
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
-            fields: null
+            fields: tableLayout.getFieldTypes()
         };
         return query;
     }
@@ -381,11 +399,38 @@
             url: '../rest/search/query',
             data: JSON.stringify(queryParameters),
             success: function(data) {
-                if (data.hits === 0) {
-                    $('#result_card').empty();
-                    $('#result_card').append($('<p>').text('No results found'));
-                }
                 $('#search-stats').text(data.hits_as_string + ' hits found in ' + data.query_time_as_string + 'ms.');
+                $('#result_card').empty();
+                if (data.hits === 0) {
+                    $('#result_card').append($('<p>').text('No results found'));
+                } else {
+                    var resultTable = $('<table>');
+                    $(resultTable)
+                        .addClass('table table-hover table-sm')
+                        .append($('<thead>')
+                            .append(function () {
+                                var tr = $('<tr>');
+                                $(tableLayout.fields).each(function (index, tableColumn) {
+                                    $(tr).append($('<th style="padding: 0.1rem">').text(tableColumn.name))       
+                                });    
+                                return $(tr);
+                            })
+                        )
+                        .append(function() {
+                            var body = $('<tbody>')
+                            $(data.results).each(function (index, searchResult) {
+                                $(body).append(function () {
+                                    var tr = $('<tr>');
+                                    $(tableLayout.fields).each(function (index, tableColumn) {
+                                        $(tr).append($('<td style="padding: 0.1rem">').text(searchResult.source[tableColumn.valueParam]))       
+                                    });    
+                                    return $(tr);
+                                })
+                            });
+                            return $(body);
+                        })
+                    $('#result_card').append($(resultTable));    
+                }
             }
         });    
     }
