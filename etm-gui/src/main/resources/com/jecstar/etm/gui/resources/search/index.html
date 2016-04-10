@@ -81,6 +81,7 @@
                  <h5 class="card-title">Search</h5>
                  <div class="card-text">
                    <p>Please select the event types you want to search for, and fill in a search term in the search bar.</p>
+                   <div id="errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
                    <label class="checkbox-inline">
                      <input type="checkbox" id="check-type-business" value="business" checked="checked"> Business
                    </label>
@@ -173,6 +174,10 @@
         $('#spinner').fadeIn(250);
     }).ajaxStop(function () {
         $('#spinner').fadeOut(500);
+    }).ajaxError(function(event, jqXHR, settings, thrownError) {
+        alert(jqXHR.responseText);
+        $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+        $("#errorBox").show('fast');
     });
   
     $('[id^=check-type-]').on('change', function() {

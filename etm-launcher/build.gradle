@@ -1,4 +1,4 @@
 dependencies {
-    compile project(":etm-gui"), project(":etm-processor-rest"), project(":etm-slf4j"), dep_resteasyJaxrs, dep_undertowCore, dep_undertowServlet, dep_yamlbeans
+    compile project(":etm-gui"), project(":etm-processor-rest"), project(":etm-slf4j"), dep_resteasyJaxrs, dep_resteasyJacksonProvider, dep_undertowCore, dep_undertowServlet, dep_yamlbeans
     testCompile dep_junit
 }
