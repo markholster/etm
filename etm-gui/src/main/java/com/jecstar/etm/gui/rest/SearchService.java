@@ -172,11 +172,11 @@ public class SearchService extends AbstractJsonService {
 		List<String> types = getArray("types", requestValues);
 		List<String> fields = getArray("fields", requestValues);
 		if (fields == null) {
-			fields = new ArrayList<String>(1);
+			fields = new ArrayList<String>(2);
 		}
 		if (fields.isEmpty()) {
-			fields.add(this.tags.getNameTag());
 			fields.add(this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag());
+			fields.add(this.tags.getNameTag());
 		}
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
 		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(queryString)

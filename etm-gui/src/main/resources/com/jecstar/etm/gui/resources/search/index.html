@@ -108,7 +108,7 @@
              </div>
              <div class="row" id="result_block" style="display: none">
                <div class="card card-block">
-                 <div class="card-title"><h5 style="float:left;">Search results</h5><p id="search-stats" style="float:right;"></p></div>
+                 <div class="card-title"><h5 style="float:left;">Search results</h5><p id="search-stats" style="float:left;"></p><a href="#" class="fa fa-pencil-square-o pull-right"></a></div>
                  <br />
                  <div id="result_card" class="card-text">
                  </div>
@@ -161,6 +161,26 @@
     </div>
   </div>
   
+  <div class="modal fade" id="modal-table-settings" tabindex="-1" role="dialog" aria-labelledby="table-settings-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
+        </div>
+        <div class="modal-body">
+          These are the table settings.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button id="btn-apply-table-settings" type="button" class="btn btn-primary">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/jquery-2.2.2.min.js"></script>
   <script src="../scripts/jquery-ui-1.11.4.min.js"></script>
@@ -171,17 +191,11 @@
     var queryKeywords = null;
     var queryOperators = ['AND', 'AND NOT', 'OR'];
     var queryForFields = ['_exists_', '_missing_'];
+    
     var tableLayout = {
         fields: [
-            { name: 'Loglines', 
-              field: '*', 
-              getValue: function(source) {
-                var result = new Date(source.endpoints[0].writing_endpoint_handler.handling_time).toISOString();
-                result += '(' + source.endpoints[0].name.substring(source.endpoints[0].name.indexOf('(') + 1, source.endpoints[0].name.length);
-                result += ' : ' + source.payload;
-                return result;
-              }
-            }
+            {name: 'Timestamp', field: 'endpoints.writing_endpoint_handler.handling_time', format: 'isodate', array: 'lowest' }, 
+            {name: 'Name', field: 'name', format: 'plain', array: 'first'}
         ],
         sort_field: 'endpoints.writing_endpoint_handler.handling_time',
         sort_order: 'desc',
@@ -194,7 +208,59 @@
             return this.fields.map(function(item, index) {
                 return item.field;
             })
-        }
+        },
+        getValueFromSource: function(source, tableColumn) {
+            var fieldParts = tableColumn.field.split("\.");
+            var values = [];
+            tableLayout.retrieveValuesFromSource(source, fieldParts, values);
+            if (values.length == 0) {
+                return ''
+            } else if (values.length == 1) {
+                return tableLayout.formatValue(values[0], tableColumn);
+            }
+            if ('first' === (tableColumn.array)) {
+                return tableLayout.formatValue(values[0], tableColumn);
+            } else if ('last' === (tableColumn.array)) {
+                return tableLayout.formatValue(values[values.length -1], tableColumn);
+            } else if ('lowest' === (tableColumn.array)) {
+                return tableLayout.formatValue(values.sort()[0], tableColumn);
+            } else if ('highest' === (tableColumn.array)) {
+                return tableLayout.formatValue(values.sort()[values.length -1], tableColumn);
+            } 
+            return tableLayout.formatValue(values[0], tableColumn);
+        },
+        retrieveValuesFromSource: function(source, fields, values) {
+            var currentObject = source;
+            $(fields).each(function (index, fieldName) {
+                var container = currentObject[fieldName];
+                if (container) {
+                    if (tableLayout.isArray(container)) {
+                        $(container).each(function (i,v){
+                            tableLayout.retrieveValuesFromSource(v, fields.slice(index + 1), values);
+                        });
+                    } else {
+                        currentObject = container;
+                        if (index + 1 == fields.length) {
+                            values.push(container);
+                        }
+                    }
+                } else {
+                    return true;
+                }
+            });
+        },
+        formatValue: function(value, tableColumn) {
+            if ('plain' === (tableColumn.format)) {
+                return value;
+            } else if ('isodate' === (tableColumn.format)) {
+                return new Date(value).toISOString();
+            }
+            return value;
+        },
+        isArray: function(fieldToTest) {
+            return Object.prototype.toString.call(fieldToTest) === '[object Array]';
+        },
+        
     }
     
     $(document).ajaxStart(function () {
@@ -283,7 +349,7 @@
         var template = { 
             name: $('#template-name').val(),
             query: $('#query-string').val(),
-            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get() 
+            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get()
         };
         var current = $('#list-template-links > li > a').filter(function() {
             return $(this).text() === template.name;
@@ -410,12 +476,12 @@
             url: '../rest/search/query',
             data: JSON.stringify(queryParameters),
             success: function(data) {
-                $('#search-stats').text(data.hits_as_string + ' hits found in ' + data.query_time_as_string + 'ms.');
+                $('#search-stats').text(':  ' + data.hits_as_string + ' hits found in ' + data.query_time_as_string + 'ms.');
                 $('#result_card').empty();
                 if (data.hits === 0) {
                     $('#result_card').append($('<p>').text('No results found'));
                 } else {
-                    var resultTable = $('<table>');
+                    var resultTable = $('<table>')
                     $(resultTable)
                         .addClass('table table-hover table-sm')
                         .append($('<thead>')
@@ -432,8 +498,8 @@
                             $(data.results).each(function (index, searchResult) {
                                 $(body).append(function () {
                                     var tr = $('<tr>');
-                                    $(tableLayout.fields).each(function (index, tableColumn) {
-                                        $(tr).append($('<td style="padding: 0.1rem">').text(tableColumn.getValue(searchResult.source)))       
+                                    $(tableLayout.fields).each(function (index, field) {
+                                        $(tr).append($('<td style="padding: 0.1rem">').text(tableLayout.getValueFromSource(searchResult.source, field)))       
                                     });    
                                     return $(tr);
                                 })
@@ -541,6 +607,7 @@
         }
         return queryForFields.indexOf(termToQuery) != -1;
     }
+    
   </script>
   
 </body>
