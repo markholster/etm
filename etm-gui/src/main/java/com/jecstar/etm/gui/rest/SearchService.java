@@ -81,6 +81,9 @@ public class SearchService extends AbstractJsonService {
 		template.put("name", templateName);
 		template.put("query", getString("query", requestValues));
 		template.put("types", getArray("types", requestValues));
+		template.put("fields", getArray("fields", requestValues));
+		template.put("sort_field", getString("sort_field", requestValues));
+		template.put("sort_order", getString("sort_order", requestValues));
 		
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
@@ -191,7 +194,7 @@ public class SearchService extends AbstractJsonService {
 			.setFetchSource(fields.toArray(new String[fields.size()]), null)
 			.setFrom(startIndex)
 			.setSize(maxResults);
-		if (sortField != null) {
+		if (sortField != null && sortField.trim().length() > 0) {
 			requestBuilder.addSort(sortField, "desc".equals(sortOrder) ? SortOrder.DESC : SortOrder.ASC);
 		}
 		if (types != null && !types.isEmpty()) {

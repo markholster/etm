@@ -108,7 +108,7 @@
              </div>
              <div class="row" id="result_block" style="display: none">
                <div class="card card-block">
-                 <div class="card-title"><h5 style="float:left;">Search results</h5><p id="search-stats" style="float:left;"></p><a href="#" class="fa fa-pencil-square-o pull-right"></a></div>
+                 <div class="card-title"><h5 style="float:left;">Search results</h5><p id="search-stats" style="float:left;"></p><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right"></a></div>
                  <br />
                  <div id="result_card" class="card-text">
                  </div>
@@ -162,7 +162,7 @@
   </div>
   
   <div class="modal fade" id="modal-table-settings" tabindex="-1" role="dialog" aria-labelledby="table-settings-modal-label" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -171,7 +171,17 @@
           <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
         </div>
         <div class="modal-body">
-          These are the table settings.
+            <fieldset class="form-group">
+                <label for="table-sort-field">Sort field</label>
+                <input id="table-sort-field" type="text" class="form-control" />
+            </fieldset>
+            <fieldset class="form-group">
+                <label for="table-sort-order">Sort order</label>
+                <select id="table-sort-order" class="form-control" >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+            </fieldset>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -292,13 +302,24 @@
         } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
             executeQuery(createQuery());
         }
-    }).autocompleteFields();
+    }).autocompleteFieldQuery();
+    
+    $('#table-sort-field').bind('keydown', function( event ) {
+        if ( event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active ) {
+            event.preventDefault();
+        } else if ( event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
+            if ($(this).val() === '') {
+                $(this).autocomplete( "search", "" );
+            }
+        }
+    }).autocompleteFieldQuery({mode: 'field'});
+    
     
     $('#btn-search').click(function() {
         executeQuery(createQuery());
     });
     
-    $('#template-name').on('input', function(){
+    $('#template-name').on('input', function() {
         if (!$(this).val()) {
             $('#btn-save-template').attr('disabled', 'disabled');
         } else {
@@ -307,11 +328,7 @@
     });
 
     $('#btn-save-template').click(function() {
-        var template = { 
-            name: $('#template-name').val(),
-            query: $('#query-string').val(),
-            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get()
-        };
+        var template = createTemplate();
         var current = $('#list-template-links > li > a').filter(function() {
             return $(this).text() === template.name;
         }).toArray();
@@ -325,12 +342,7 @@
 
     $('#btn-overwrite-template').click(function() {
         $('#modal-template-overwrite').modal('hide');
-        var template = { 
-            name: $('#template-name').val(),
-            query: $('#query-string').val(),
-            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get()
-        };
-        storeTemplate(template, true);
+        storeTemplate(createTemplate(), true);
     });
     
     $('#btn-remove-template').click(function() {
@@ -346,6 +358,28 @@
                     }).parent().remove();
             }
         });        
+    });
+    
+    $('#link-edit-table').click(function () {
+        $('#table-sort-field').val(tableLayout.sort_field);
+        $('#table-sort-order').val(tableLayout.sort_order);
+        $('#modal-table-settings').modal();
+    });
+    
+    $('#btn-apply-table-settings').click(function () {
+        var changed = false;
+        if (tableLayout.sort_field !== $('#table-sort-field').val()) {
+            changed = true;
+            tableLayout.sort_field = $('#table-sort-field').val();
+        }
+        if (tableLayout.sort_order !== $('#table-sort-order').val()) {
+            changed = true;
+            tableLayout.sort_order = $('#table-sort-order').val();
+        }
+        if (changed) {
+            executeQuery(createQuery());    
+        }
+        $('#modal-table-settings').modal('hide');
     });
     
     // Load the stores search templates.
@@ -452,7 +486,22 @@
         });
         $('#query-string').val(template.query);
         $('#template-name').val(template.name);
+        tableLayout.fields = template.fields;
+        tableLayout.sort_field = template.sort_field;
+        tableLayout.sort_order = template.sort_order;
         $('#query-string').removeAttr('disabled').trigger('input');
+    }
+    
+    function createTemplate() {
+        var template = { 
+            name: $('#template-name').val(),
+            query: $('#query-string').val(),
+            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
+            fields: tableLayout.fields,
+            sort_field: tableLayout.sort_field,
+            sort_order: tableLayout.sort_order            
+        };
+        return template;
     }
     
     function storeTemplate(template, isOverwrite) {

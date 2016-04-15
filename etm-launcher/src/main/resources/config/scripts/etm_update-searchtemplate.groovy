@@ -4,6 +4,9 @@ if (template) {
         if (current_template) {
             current_template.query = template.query;
             current_template.types = template.types;
+            current_template.fields = template.fields;
+            current_template.sort_field = template.sort_field;
+            current_template.sort_order = template.sort_order;
         } else {
             ctx._source.searchtemplates += template;
         }

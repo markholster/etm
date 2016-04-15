@@ -1,6 +1,6 @@
 (function ($) {
 	// TODO! Autocomplete on mobile devices.
-	$.fn.autocompleteFields = function(options) {
+	$.fn.autocompleteFieldQuery = function(options) {
 	 
 	    var queryKeywords = null;
 	    var queryOperators = ['AND', 'AND NOT', 'OR'];
@@ -8,7 +8,8 @@
 		
         var settings = $.extend({
             index: 'etm_event_all',
-            keywordSelector: '[id^=check-type-]:checked'
+            keywordGroupSelector: '[id^=check-type-]:checked',
+            mode: 'query'
         }, options );
         
         // Load the query keywords
@@ -26,10 +27,10 @@
 
         
         function getCurrentKeywords() {
-            if (!queryKeywords || $(settings.keywordSelector).size() == 0) {
+            if (!queryKeywords || $(settings.keywordGroupSelector).size() == 0) {
                 return null;
             }
-            var selectedTypes = $(settings.keywordSelector).map(function(){ return $(this).val(); }).get();
+            var selectedTypes = $(settings.keywordGroupSelector).map(function(){ return $(this).val(); }).get();
             var keywordGroups = $(queryKeywords).filter(function (index, keywordGroup) {
                 return selectedTypes.indexOf(keywordGroup.type) != -1;
             })
@@ -37,6 +38,14 @@
             $.each(keywordGroups, function(index, keywordGroup) {
                 $.merge(values, keywordGroup.names);    
             })
+            if ('field' === settings.mode) {
+            	$.each(queryForFields, function(index, fieldName) {
+                       var ix = $.inArray(fieldName, values);
+                       if (ix >= 0) {
+                    	   values.splice(ix,1);
+                       }
+                })
+            }
             return $.uniqueSort($(values));
         }
         
@@ -44,6 +53,9 @@
             if (!query) {
                 return { "queryTerm": '', "queryType": "field"};
             } 
+            if ('field' === settings.mode) {
+            	return { "queryTerm": query, "queryType": "field"};
+            }
             var terms = query.match(/AND\sNOT|AND|OR|[^\s"]+|"([^"]*)"/g);
             if (!terms) {
                 return { "queryTerm": query, "queryType": "field"};
@@ -85,7 +97,6 @@
             }
             return queryForFields.indexOf(termToQuery) != -1;
         }
-
 		
 	    return this.each(function() {
 	    	$(this).autocomplete({
@@ -118,15 +129,15 @@
 	                    this.value = this.value.substring(0, ix) + ui.item.value;
 	                }
 	              }
-	              if ("field" === query.queryType) {
-	                this.value += ':'
+	              if ('query' === settings.mode) {
+		              if ("field" === query.queryType) {
+		                this.value += ':'
+		              }
+		              this.value += ' '
 	              }
-	              this.value += ' '
 	              return false;
 	            }
 	        })
-	    	
-	        // Do something to each element here.
 	    });
 	 
 	};
