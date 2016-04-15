@@ -2,36 +2,25 @@
 	// TODO! Autocomplete on mobile devices.
 	$.fn.autocompleteFieldQuery = function(options) {
 	 
-	    var queryKeywords = null;
 	    var queryOperators = ['AND', 'AND NOT', 'OR'];
 	    var queryForFields = ['_exists_', '_missing_'];
 		
         var settings = $.extend({
             index: 'etm_event_all',
             keywordGroupSelector: '[id^=check-type-]:checked',
-            mode: 'query'
+            mode: 'query',
+            queryKeywords : null	
         }, options );
         
-        // Load the query keywords
-        $.ajax({
-            type: 'GET',
-            contentType: 'application/json',
-            url: encodeURI('../rest/search/keywords/' + settings.index),
-            success: function(data) {
-                if (!data || !data.keywords) {
-                    return;
-                }
-                queryKeywords = data.keywords;
-            }
-        });
+        // TODO optimize this. It should be possible to provide the keywords via the options object.
 
         
         function getCurrentKeywords() {
-            if (!queryKeywords || $(settings.keywordGroupSelector).size() == 0) {
+            if (!settings.queryKeywords || $(settings.keywordGroupSelector).size() == 0) {
                 return null;
             }
             var selectedTypes = $(settings.keywordGroupSelector).map(function(){ return $(this).val(); }).get();
-            var keywordGroups = $(queryKeywords).filter(function (index, keywordGroup) {
+            var keywordGroups = $(settings.queryKeywords).filter(function (index, keywordGroup) {
                 return selectedTypes.indexOf(keywordGroup.type) != -1;
             })
             var values = [];

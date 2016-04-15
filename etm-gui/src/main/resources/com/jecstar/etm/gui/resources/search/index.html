@@ -171,17 +171,22 @@
           <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
         </div>
         <div class="modal-body">
-            <fieldset class="form-group">
-                <label for="table-sort-field">Sort field</label>
-                <input id="table-sort-field" type="text" class="form-control" />
-            </fieldset>
-            <fieldset class="form-group">
-                <label for="table-sort-order">Sort order</label>
-                <select id="table-sort-order" class="form-control" >
+            <div class="form-group">
+                <label for="table-settings-sort-field">Sort field</label>
+                <input id="table-settings-sort-field" type="text" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="table-settings-sort-order">Sort order</label>
+                <select id="table-settings-sort-order" class="form-control" >
                   <option value="asc">Ascending</option>
                   <option value="desc">Descending</option>
                 </select>
-            </fieldset>
+            </div>
+            <div class="card card-block">
+                <div class="card-title"><h5>Columns</h5></div>
+                <div id="table-settings-columns">
+                </div>
+            </div>    
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -199,6 +204,19 @@
   <script src="../scripts/autocomplete_fields.js"></script>
   
   <script>
+    var queryKeywords = null;
+    $.ajax({
+        type: 'GET',
+        async: false,
+        contentType: 'application/json',
+        url: '../rest/search/keywords/etm_event_all',
+        success: function(data) {
+            if (!data || !data.keywords) {
+                return;
+            }
+            queryKeywords = data.keywords;
+        }
+    });
     
     var tableLayout = {
         fields: [
@@ -212,7 +230,7 @@
                 return item.name;
             })
         },
-        getFieldTypes: function () {
+        getInternalFieldNames: function () {
             return this.fields.map(function(item, index) {
                 return item.field;
             })
@@ -302,17 +320,19 @@
         } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
             executeQuery(createQuery());
         }
-    }).autocompleteFieldQuery();
+    }).autocompleteFieldQuery({queryKeywords: queryKeywords});
     
-    $('#table-sort-field').bind('keydown', function( event ) {
-        if ( event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active ) {
+    $('#table-settings-sort-field').bind('keydown', function( event ) {
+        if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
             event.preventDefault();
         } else if ( event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
             if ($(this).val() === '') {
                 $(this).autocomplete( "search", "" );
             }
+        } else if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+            event.stopPropagation();
         }
-    }).autocompleteFieldQuery({mode: 'field'});
+    }).autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'});
     
     
     $('#btn-search').click(function() {
@@ -346,7 +366,6 @@
     });
     
     $('#btn-remove-template').click(function() {
-        $('#modal-template-remove').modal('hide');
         var templateName = $('#remove-template-name').text();
         $.ajax({
             type: 'DELETE',
@@ -358,23 +377,50 @@
                     }).parent().remove();
             }
         });        
+        $('#modal-template-remove').modal('hide');
     });
     
     $('#link-edit-table').click(function () {
-        $('#table-sort-field').val(tableLayout.sort_field);
-        $('#table-sort-order').val(tableLayout.sort_order);
+        $('#table-settings-sort-field').val(tableLayout.sort_field);
+        $('#table-settings-sort-order').val(tableLayout.sort_order);
+        $('#table-settings-columns').empty();
+        $(tableLayout.fields).each(function(index, column) {
+            $('#table-settings-columns').append(
+                $('<div>').addClass('form-inline').attr('style', 'margin: 5px;').append(
+                    $('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name').val(column.name),
+                    '&nbsp;',
+                    $('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Field').val(column.field)
+                        .bind('keydown', function( event ) {
+                             if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                                 event.stopPropagation();
+                             }
+                         })
+                        .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'}),
+                    '&nbsp;',
+                    $('<select>').addClass('form-control form-control-sm')
+                        .append($('<option>').attr('value', 'plain').text('Plain'))
+                        .append($('<option>').attr('value', 'isodate').text('ISO Date')).val(column.format),
+                    '&nbsp;',    
+                    $('<select>').addClass('form-control form-control-sm')
+                        .append($('<option>').attr('value', 'lowest').text('Lowest'))
+                        .append($('<option>').attr('value', 'highest').text('Highest'))
+                        .append($('<option>').attr('value', 'first').text('First'))
+                        .append($('<option>').attr('value', 'last').text('Last')).val(column.array)
+                )
+            )
+        }); 
         $('#modal-table-settings').modal();
     });
     
     $('#btn-apply-table-settings').click(function () {
         var changed = false;
-        if (tableLayout.sort_field !== $('#table-sort-field').val()) {
+        if (tableLayout.sort_field !== $('#table-settings-sort-field').val()) {
             changed = true;
-            tableLayout.sort_field = $('#table-sort-field').val();
+            tableLayout.sort_field = $('#table-settings-sort-field').val();
         }
-        if (tableLayout.sort_order !== $('#table-sort-order').val()) {
+        if (tableLayout.sort_order !== $('#table-settings-sort-order').val()) {
             changed = true;
-            tableLayout.sort_order = $('#table-sort-order').val();
+            tableLayout.sort_order = $('#table-settings-sort-order').val();
         }
         if (changed) {
             executeQuery(createQuery());    
@@ -425,7 +471,7 @@
         var query = { 
             query: $('#query-string').val(),
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
-            fields: tableLayout.getFieldTypes(),
+            fields: tableLayout.getInternalFieldNames(),
             sort_field: tableLayout.sort_field,
             sort_order: tableLayout.sort_order
         };
