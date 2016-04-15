@@ -186,11 +186,9 @@
   <script src="../scripts/jquery-ui-1.11.4.min.js"></script>
   <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
   <script src="../scripts/sidebar_menu.js"></script>
+  <script src="../scripts/autocomplete_fields.js"></script>
   
   <script>
-    var queryKeywords = null;
-    var queryOperators = ['AND', 'AND NOT', 'OR'];
-    var queryForFields = ['_exists_', '_missing_'];
     
     var tableLayout = {
         fields: [
@@ -294,44 +292,7 @@
         } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
             executeQuery(createQuery());
         }
-    // TODO! Autocomplete on mobile devices. 
-    }).autocomplete({
-        minLength: 0,
-        source: function( request, response ) {
-          var query = extractAutocompleteTerm(request.term);
-          if (query.queryTerm === null) {
-            return;
-          }
-          if ("fieldTermValue" === query.queryType) {
-            var fieldSuggestions = $.grep(getCurrentKeywords(), function( n, i ) {
-                return queryForFields.indexOf(n) == -1;
-            });
-            response($.ui.autocomplete.filter(fieldSuggestions, query.queryTerm));
-          } else if ("field" === query.queryType) {
-            response($.ui.autocomplete.filter(getCurrentKeywords(), query.queryTerm));
-          }
-        },
-        focus: function() {
-          // prevent value inserted on focus
-          return false;
-        },
-        select: function( event, ui ) {
-          var query = extractAutocompleteTerm(this.value);
-          if ('' === query.queryTerm) {
-            this.value += ui.item.value;
-          } else {
-            var ix = this.value.lastIndexOf(query.queryTerm);
-            if (ix != -1) {
-                this.value = this.value.substring(0, ix) + ui.item.value;
-            }
-          }
-          if ("field" === query.queryType) {
-            this.value += ':'
-          }
-          this.value += ' '
-          return false;
-        }
-    });
+    }).autocompleteFields();
     
     $('#btn-search').click(function() {
         executeQuery(createQuery());
@@ -411,34 +372,6 @@
             });
         }
     });
-    
-    // Load the query keywords
-    $.ajax({
-        type: 'GET',
-        contentType: 'application/json',
-        url: '../rest/search/keywords',
-        success: function(data) {
-            if (!data || !data.keywords) {
-                return;
-            }
-            queryKeywords = data.keywords;
-        }
-    });
-    
-    function getCurrentKeywords() {
-        if (!queryKeywords || $('[id^=check-type-]:checked').size() == 0) {
-            return null;
-        }
-        var selectedTypes = $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get();
-        var keywordGroups = $(queryKeywords).filter(function (index, keywordGroup) {
-            return selectedTypes.indexOf(keywordGroup.type) != -1;
-        })
-        var values = [];
-        $.each(keywordGroups, function(index, keywordGroup) {
-            $.merge(values, keywordGroup.names);    
-        })
-        return $.uniqueSort($(values));
-    }
     
     function enableOrDisableSearchButton() {
         if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
@@ -562,51 +495,7 @@
         return $("<div></div>").text(stringToEscape).html();
     }
     
-    function extractAutocompleteTerm(query) {
-        if (!query) {
-            return { "queryTerm": '', "queryType": "field"};
-        } 
-        var terms = query.match(/AND\sNOT|AND|OR|[^\s"]+|"([^"]*)"/g);
-        if (!terms) {
-            return { "queryTerm": query, "queryType": "field"};
-        }
-        if (terms.length == 1) {
-            if (isQueryForFieldTerm(terms[0]) && query.endsWith(' ')) {
-                return { "queryTerm": '', "queryType": "fieldTermValue"};
-            }
-            return { "queryTerm": query, "queryType": "field"};
-        } else {
-            var lastTerm = terms[terms.length - 1];
-            var secondLastTerm = terms[terms.length - 2].trim();
-            if (isQueryForFieldTerm(secondLastTerm) && !query.endsWith(' ')) {
-                return { "queryTerm": lastTerm, "queryType": "fieldTermValue"};
-            }
-            if (isQueryForFieldTerm(lastTerm) && query.endsWith(' ')) {
-                return { "queryTerm": '', "queryType": "fieldTermValue"};
-            }
-            if (secondLastTerm.endsWith(':')) {
-                return { "queryTerm": null};
-            }
-            if (queryOperators.indexOf(secondLastTerm) != -1) {
-                return { "queryTerm": lastTerm, "queryType": "field"};
-            }
-            if (queryOperators.indexOf(lastTerm) != -1 && query.endsWith(' ')) {
-                return { "queryTerm": '', "queryType": "field"};
-            }
-        }
-        return { "queryTerm": null};
-    }
-    
-    function isQueryForFieldTerm(term) {
-        if (!term) {
-            return false;
-        }  
-        var termToQuery = term.trim();
-        if (termToQuery.endsWith(':')) {
-            termToQuery = termToQuery.substring(0, termToQuery.length - 1);
-        }
-        return queryForFields.indexOf(termToQuery) != -1;
-    }
+
     
   </script>
   

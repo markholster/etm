@@ -106,12 +106,12 @@ public class SearchService extends AbstractJsonService {
 	}
 	
 	@GET
-	@Path("/keywords")
+	@Path("/keywords/{indexName}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getKeywords() {
+	public String getKeywords(@PathParam("indexName") String indexName) {
 		StringBuilder result = new StringBuilder();
 		Map<String, List<String>> names = new HashMap<String, List<String>>();
-		GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(SearchService.client, GetMappingsAction.INSTANCE, "etm_event_all").get();
+		GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(SearchService.client, GetMappingsAction.INSTANCE, indexName).get();
 		ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
 		Iterator<ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>>> mappingsIterator = mappings.iterator();
 		while (mappingsIterator.hasNext()) {
