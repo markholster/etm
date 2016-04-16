@@ -39,10 +39,7 @@ public class EndpointHandler {
 	}
 	
 	public boolean isSet() {
-		if (this.handlingTime == null) {
-			return false;
-		}
-		return this.application.isSet() || this.location.isSet();
+		return this.handlingTime != null || this.location.isSet() || this.application.isSet() || this.location.isSet();
 	}
 	
 }

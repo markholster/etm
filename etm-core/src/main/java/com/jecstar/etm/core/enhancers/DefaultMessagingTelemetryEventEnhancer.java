@@ -27,11 +27,16 @@ public class DefaultMessagingTelemetryEventEnhancer implements MessagingTelemetr
 			endpoint.writingEndpointHandler.handlingTime = enhanceTime;
 			event.endpoints.add(endpoint);
 		} else {
-			event.endpoints.forEach(c -> {
-				if (c.writingEndpointHandler.handlingTime == null) {
-					c.writingEndpointHandler.handlingTime = enhanceTime;
-				}
-			});
+			for (Endpoint endpoint : event.endpoints) {
+				if (endpoint.writingEndpointHandler.handlingTime == null) {
+					ZonedDateTime earliestReadTime = endpoint.getEarliestReadTime();
+					if (earliestReadTime != null && earliestReadTime.isBefore(enhanceTime)) {
+						endpoint.writingEndpointHandler.handlingTime = earliestReadTime;
+					} else {
+						endpoint.writingEndpointHandler.handlingTime = enhanceTime;
+					}
+				}				
+			}
 		}
 	}
 	

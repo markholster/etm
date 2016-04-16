@@ -44,13 +44,17 @@ public class Endpoint {
 		if (this.writingEndpointHandler.handlingTime != null) {
 			return this.writingEndpointHandler.handlingTime;
 		}
+		return getEarliestReadTime();
+	}
+	
+	public ZonedDateTime getEarliestReadTime() {
 		ZonedDateTime earliest = null;
 		for (EndpointHandler endpointHandler : this.readingEndpointHandlers) {
 			if (earliest == null || (endpointHandler.handlingTime != null && endpointHandler.handlingTime.isBefore(earliest))) {
 				earliest = endpointHandler.handlingTime;
 			}
 		}
-		return earliest;
+		return earliest;		
 	}
 	
 	public boolean equals(Object obj) {
