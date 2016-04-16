@@ -199,6 +199,8 @@
   <script src="../scripts/jquery-2.2.2.min.js"></script>
   <script src="../scripts/jquery-ui-1.11.4.min.js"></script>
   <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
+  <script src="../scripts/moment-2.12.0.min.js"></script>
+  <script src="../scripts/moment-timezone-with-data-2010-2020.min.js"></script>
   <script src="../scripts/sidebar_menu.js"></script>
   <script src="../scripts/autocomplete_fields.js"></script>
   
@@ -234,25 +236,25 @@
                 return item.field;
             })
         },
-        getValueFromSource: function(source, tableColumn) {
+        getValueFromSource: function(source, tableColumn, timeZone) {
             var fieldParts = tableColumn.field.split("\.");
             var values = [];
             tableLayout.retrieveValuesFromSource(source, fieldParts, values);
             if (values.length == 0) {
                 return ''
             } else if (values.length == 1) {
-                return tableLayout.formatValue(values[0], tableColumn);
+                return tableLayout.formatValue(values[0], tableColumn, timeZone);
             }
             if ('first' === (tableColumn.array)) {
-                return tableLayout.formatValue(values[0], tableColumn);
+                return tableLayout.formatValue(values[0], tableColumn, timeZone);
             } else if ('last' === (tableColumn.array)) {
-                return tableLayout.formatValue(values[values.length -1], tableColumn);
+                return tableLayout.formatValue(values[values.length -1], tableColumn, timeZone);
             } else if ('lowest' === (tableColumn.array)) {
-                return tableLayout.formatValue(values.sort()[0], tableColumn);
+                return tableLayout.formatValue(values.sort()[0], tableColumn, timeZone);
             } else if ('highest' === (tableColumn.array)) {
-                return tableLayout.formatValue(values.sort()[values.length -1], tableColumn);
+                return tableLayout.formatValue(values.sort()[values.length -1], tableColumn, timeZone);
             } 
-            return tableLayout.formatValue(values[0], tableColumn);
+            return tableLayout.formatValue(values[0], tableColumn, timeZone);
         },
         retrieveValuesFromSource: function(source, fields, values) {
             var currentObject = source;
@@ -274,11 +276,21 @@
                 }
             });
         },
-        formatValue: function(value, tableColumn) {
+        formatValue: function(value, tableColumn, timeZone) {
             if ('plain' === (tableColumn.format)) {
                 return value;
-            } else if ('isodate' === (tableColumn.format)) {
-                return new Date(value).toISOString();
+            } else if ('isoutcdate' === tableColumn.format) {
+                if (value) {
+                    return new Date(value).toISOString();
+                } else {
+                    return ''; 
+                }
+            } else if ('isodate' === tableColumn.format) {
+                if (value) {
+                    return moment.tz(value, timeZone).format();
+                } else {
+                    return ''; 
+                }
             }
             return value;
         },
@@ -398,7 +410,8 @@
                     '&nbsp;',
                     $('<select>').addClass('form-control form-control-sm')
                         .append($('<option>').attr('value', 'plain').text('Plain'))
-                        .append($('<option>').attr('value', 'isodate').text('ISO Date')).val(column.format),
+                        .append($('<option>').attr('value', 'isodate').text('ISO Date'))
+                        .append($('<option>').attr('value', 'isoutcdate').text('ISO UTC Date')).val(column.format),
                     '&nbsp;',    
                     $('<select>').addClass('form-control form-control-sm')
                         .append($('<option>').attr('value', 'lowest').text('Lowest'))
@@ -511,7 +524,7 @@
                                 $(body).append(function () {
                                     var tr = $('<tr>');
                                     $(tableLayout.fields).each(function (index, field) {
-                                        $(tr).append($('<td style="padding: 0.1rem">').text(tableLayout.getValueFromSource(searchResult.source, field)))       
+                                        $(tr).append($('<td style="padding: 0.1rem">').text(tableLayout.getValueFromSource(searchResult.source, field, data.timeZone)))       
                                     });    
                                     return $(tr);
                                 })

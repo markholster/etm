@@ -207,6 +207,7 @@ public class SearchService extends AbstractJsonService {
 		result.append("\"status\": \"success\"");
 		result.append(",\"hits\": " + response.getHits().getTotalHits());
 		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
+		result.append(",\"timeZone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"results\": [");
 		addSearchHits(result, response.getHits());
 		result.append("]");
