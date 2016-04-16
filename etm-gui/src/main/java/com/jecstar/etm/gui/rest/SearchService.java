@@ -132,7 +132,16 @@ public class SearchService extends AbstractJsonService {
 				try {
 					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
 					addProperties(values, "", valueMap);
-					names.put(mappingMetadataCursor.key, values);
+					if (names.containsKey(mappingMetadataCursor.key)) {
+						List<String> currentValues = names.get(mappingMetadataCursor.key);
+						for (String value : values) {
+							if (!currentValues.contains(value)) {
+								currentValues.add(value);
+							}
+						}
+					} else {
+						names.put(mappingMetadataCursor.key, values);
+					}
 				} catch (IOException e) {
 					// TODO logging.
 				}
