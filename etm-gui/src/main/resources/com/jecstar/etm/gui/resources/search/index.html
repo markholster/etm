@@ -416,37 +416,69 @@
         $('#table-settings-columns').append(
             $('<div>').addClass('row').append(
                 $('<div>').addClass('col-sm-2 font-weight-bold').text('Name'),    
-                $('<div>').addClass('col-sm-4 font-weight-bold').text('Field'),    
+                $('<div>').addClass('col-sm-3 font-weight-bold').text('Field'),    
                 $('<div>').addClass('col-sm-2 font-weight-bold').text('Format'),    
-                $('<div>').addClass('col-sm-3 font-weight-bold').text('Multipick'),
-                $('<div>').addClass('col-sm-1 font-weight-bold').text('Link')
+                $('<div>').addClass('col-sm-2 font-weight-bold').text('Multiselect'),
+                $('<div>').addClass('col-sm-1 font-weight-bold').text('Link'),
+                $('<div>').addClass('col-sm-2 font-weight-bold').text('Action')
             )
         );
         $(tableLayout.fields).each(function(index, column) {
-            $('#table-settings-columns').append(
-                $('<div>').addClass('row').attr('style', 'margin-top: 5px;').append(
-                    $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name').val(column.name)),
-                    $('<div>').addClass('col-sm-4').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Field').val(column.field)
-                        .bind('keydown', function( event ) {
-                             if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                                 event.stopPropagation();
-                             }
-                         })
-                        .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'})),
-                    $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
-                        .append($('<option>').attr('value', 'plain').text('Plain'))
-                        .append($('<option>').attr('value', 'isodate').text('ISO Date'))
-                        .append($('<option>').attr('value', 'isoutcdate').text('ISO UTC Date')).val(column.format)),
-                    $('<div>').addClass('col-sm-3').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
-                        .append($('<option>').attr('value', 'lowest').text('Lowest'))
-                        .append($('<option>').attr('value', 'highest').text('Highest'))
-                        .append($('<option>').attr('value', 'first').text('First'))
-                        .append($('<option>').attr('value', 'last').text('Last')).val(column.array)),
-                    $('<div>').addClass('col-sm-1').append($('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm').prop('checked', column.link))
-                )
+            $('#table-settings-columns').append(function () {
+                    var row = $('<div>').addClass('row').attr('style', 'margin-top: 5px;');
+                    $(row).append(
+                        $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name').val(column.name)),
+                        $('<div>').addClass('col-sm-3').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Field').val(column.field)
+                            .bind('keydown', function( event ) {
+                                 if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                                     event.stopPropagation();
+                                 }
+                             })
+                            .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'})),
+                        $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
+                            .append($('<option>').attr('value', 'plain').text('Plain'))
+                            .append($('<option>').attr('value', 'isodate').text('ISO Date'))
+                            .append($('<option>').attr('value', 'isoutcdate').text('ISO UTC Date')).val(column.format)),
+                        $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
+                            .append($('<option>').attr('value', 'lowest').text('Lowest'))
+                            .append($('<option>').attr('value', 'highest').text('Highest'))
+                            .append($('<option>').attr('value', 'first').text('First'))
+                            .append($('<option>').attr('value', 'last').text('Last')).val(column.array)),
+                        $('<div>').addClass('col-sm-1').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm').prop('checked', column.link))
+                    );
+                    var actionDiv = $('<div>').addClass('col-sm-2').append(
+                        $('<div>').addClass('row actionRow').append(
+                            $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up')),
+                            $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down')),
+                            $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger'))
+                        )
+                    );
+                    $(row).append($(actionDiv)); 
+                    return row;
+                }
             )
-        }); 
+        });
+        updateActions(); 
         $('#modal-table-settings').modal();
+        
+        function updateActions() {
+            $('#table-settings-columns .actionRow').each(function (index, row) {
+                if ($(tableLayout.fields).length > 1) {
+                    if (index == 0) {
+                        $(row).find('.fa-arrow-up').hide();
+                    } else {
+                        $(row).find('.fa-arrow-up').show();
+                    }
+                    if (index >= $(tableLayout.fields).length -1) {
+                        $(row).find('.fa-arrow-down').hide();
+                    } else {
+                        $(row).find('.fa-arrow-down').show();
+                    }
+                } else {
+                    $(row).find('.fa-arrow-*').hide();
+                }
+            });
+        }
     });
     
     $('#btn-apply-table-settings').click(function () {
@@ -529,7 +561,7 @@
             url: '../rest/search/query',
             data: JSON.stringify(queryParameters),
             success: function(data) {
-                $('#search-stats').text(':  ' + data.hits_as_string + ' hits found in ' + data.query_time_as_string + 'ms.');
+                $('#search-stats').text(':  Found ' + data.hits_as_string + ' results in ' + data.query_time_as_string + 'ms.');
                 $('#result_card').empty();
                 if (data.hits === 0) {
                     $('#result_card').append($('<p>').text('No results found'));
@@ -645,9 +677,8 @@
                         $('<li>').append(
                             $('<a href="#">').click(function() {
                                setValuesFromTemplate(template)
-                            }).text(template.name)
-                        ,
-                            $('<a href="#" class="fa fa-times pull-right" style="color: #a94442;">').click(function() {
+                            }).text(template.name),
+                            $('<a href="#" class="fa fa-times pull-right text-danger">').click(function() {
                                askRemoveTemplate(template)
                             })
                         )
