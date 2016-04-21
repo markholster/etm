@@ -10,6 +10,30 @@
 <link rel="stylesheet" href="../styles/jquery-ui-1.11.4.min.css">
 <link rel="stylesheet" href="../styles/autocomplete.css">
 <link rel="stylesheet" href="../styles/spinner.css">
+<style type="text/css">
+.headerSortAsc, .headerSortDesc {
+    border-bottom-color: #777 !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+}
+.headerSortAsc::after, .headerSortDesc::after {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    content: "";
+    display: inline-block;
+    height: 0;
+    margin-bottom: 2px;
+    margin-left: 5px;
+    margin-right: -10px;
+    width: 0;
+}
+.headerSortDesc::after {
+    border-top: 4px solid;
+}
+.headerSortAsc::after {
+    border-bottom: 4px solid;
+}
+</style>
 </head>
 <body>
    <div class="device-xs hidden-xs-down"></div>
@@ -209,8 +233,8 @@
     
     var tableLayout = {
         fields: [
-            {name: 'Timestamp', field: 'endpoints.writing_endpoint_handler.handling_time', format: 'isodate', array: 'lowest' }, 
-            {name: 'Name', field: 'name', format: 'plain', array: 'first'}
+            {name: 'Timestamp', field: 'endpoints.writing_endpoint_handler.handling_time', format: 'isodate', array: 'lowest', link: true }, 
+            {name: 'Name', field: 'name', format: 'plain', array: 'first', link: false}
         ],
         sort_field: 'endpoints.writing_endpoint_handler.handling_time',
         sort_order: 'desc',
@@ -227,22 +251,28 @@
         getValueFromSource: function(source, tableColumn, timeZone) {
             var fieldParts = tableColumn.field.split("\.");
             var values = [];
+            var result = '';
             tableLayout.retrieveValuesFromSource(source, fieldParts, values);
             if (values.length == 0) {
-                return ''
+                result = ''
             } else if (values.length == 1) {
-                return tableLayout.formatValue(values[0], tableColumn, timeZone);
+                result = tableLayout.formatValue(values[0], tableColumn, timeZone);
             }
             if ('first' === (tableColumn.array)) {
-                return tableLayout.formatValue(values[0], tableColumn, timeZone);
+                result = tableLayout.formatValue(values[0], tableColumn, timeZone);
             } else if ('last' === (tableColumn.array)) {
-                return tableLayout.formatValue(values[values.length -1], tableColumn, timeZone);
+                result = tableLayout.formatValue(values[values.length -1], tableColumn, timeZone);
             } else if ('lowest' === (tableColumn.array)) {
-                return tableLayout.formatValue(values.sort()[0], tableColumn, timeZone);
+                result = tableLayout.formatValue(values.sort()[0], tableColumn, timeZone);
             } else if ('highest' === (tableColumn.array)) {
-                return tableLayout.formatValue(values.sort()[values.length -1], tableColumn, timeZone);
-            } 
-            return tableLayout.formatValue(values[0], tableColumn, timeZone);
+                result = tableLayout.formatValue(values.sort()[values.length -1], tableColumn, timeZone);
+            } else {
+                result = tableLayout.formatValue(values[0], tableColumn, timeZone);
+            }
+            if (result.trim().length == 0 && tableColumn.link) {
+                result = '?';
+            }
+            return result;
         },
         retrieveValuesFromSource: function(source, fields, values) {
             var currentObject = source;
@@ -383,29 +413,36 @@
         $('#table-settings-sort-field').val(tableLayout.sort_field);
         $('#table-settings-sort-order').val(tableLayout.sort_order);
         $('#table-settings-columns').empty();
+        $('#table-settings-columns').append(
+            $('<div>').addClass('row').append(
+                $('<div>').addClass('col-sm-2 font-weight-bold').text('Name'),    
+                $('<div>').addClass('col-sm-4 font-weight-bold').text('Field'),    
+                $('<div>').addClass('col-sm-2 font-weight-bold').text('Format'),    
+                $('<div>').addClass('col-sm-3 font-weight-bold').text('Multipick'),
+                $('<div>').addClass('col-sm-1 font-weight-bold').text('Link')
+            )
+        );
         $(tableLayout.fields).each(function(index, column) {
             $('#table-settings-columns').append(
-                $('<div>').addClass('form-inline').attr('style', 'margin: 5px;').append(
-                    $('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name').val(column.name),
-                    '&nbsp;',
-                    $('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Field').val(column.field)
+                $('<div>').addClass('row').attr('style', 'margin-top: 5px;').append(
+                    $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name').val(column.name)),
+                    $('<div>').addClass('col-sm-4').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Field').val(column.field)
                         .bind('keydown', function( event ) {
                              if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
                                  event.stopPropagation();
                              }
                          })
-                        .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'}),
-                    '&nbsp;',
-                    $('<select>').addClass('form-control form-control-sm')
+                        .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'})),
+                    $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
                         .append($('<option>').attr('value', 'plain').text('Plain'))
                         .append($('<option>').attr('value', 'isodate').text('ISO Date'))
-                        .append($('<option>').attr('value', 'isoutcdate').text('ISO UTC Date')).val(column.format),
-                    '&nbsp;',    
-                    $('<select>').addClass('form-control form-control-sm')
+                        .append($('<option>').attr('value', 'isoutcdate').text('ISO UTC Date')).val(column.format)),
+                    $('<div>').addClass('col-sm-3').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
                         .append($('<option>').attr('value', 'lowest').text('Lowest'))
                         .append($('<option>').attr('value', 'highest').text('Highest'))
                         .append($('<option>').attr('value', 'first').text('First'))
-                        .append($('<option>').attr('value', 'last').text('Last')).val(column.array)
+                        .append($('<option>').attr('value', 'last').text('Last')).val(column.array)),
+                    $('<div>').addClass('col-sm-1').append($('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm').prop('checked', column.link))
                 )
             )
         }); 
@@ -442,9 +479,8 @@
                     $('<li>').append(
                         $('<a href="#">').click(function() {
                            setValuesFromTemplate(template)
-                        }).text(template.name)
-                    ,
-                        $('<a href="#" class="fa fa-times pull-right" style="color: #a94442;">').click(function() {
+                        }).text(template.name),
+                        $('<a href="#" class="fa fa-times pull-right text-danger">').click(function() {
                            askRemoveTemplate(template)
                         })
                     )
@@ -505,7 +541,19 @@
                             .append(function () {
                                 var tr = $('<tr>');
                                 $(tableLayout.fields).each(function (index, tableColumn) {
-                                    $(tr).append($('<th style="padding: 0.1rem">').text(tableColumn.name))       
+                                    var th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name)
+                                    if (tableColumn.field === tableLayout.sort_field) {
+                                        if ('asc' === tableLayout.sort_order) {
+                                            $(th).addClass('headerSortAsc')
+                                        } else {
+                                            $(th).addClass('headerSortDesc')
+                                        }
+                                    }
+                                    $(th).click(function (event) {
+                                        event.preventDefault();
+                                        sortResultTable(tableColumn.field);
+                                    });
+                                    $(tr).append($(th))
                                 });    
                                 return $(tr);
                             })
@@ -516,7 +564,15 @@
                                 $(body).append(function () {
                                     var tr = $('<tr>');
                                     $(tableLayout.fields).each(function (index, field) {
-                                        $(tr).append($('<td style="padding: 0.1rem">').text(tableLayout.getValueFromSource(searchResult.source, field, data.timeZone)))       
+                                        var td = $('<td style="padding: 0.1rem">');
+                                        if (field.link) {
+                                            $(td).append(
+                                                $('<a>').attr('href', '#').text(tableLayout.getValueFromSource(searchResult.source, field, data.timeZone))
+                                            )    
+                                        } else {
+                                            $(td).text(tableLayout.getValueFromSource(searchResult.source, field, data.timeZone))
+                                        }
+                                        $(tr).append($(td));
                                     });    
                                     return $(tr);
                                 })
@@ -530,6 +586,19 @@
                 }
             }
         });    
+    }
+    
+    function sortResultTable(fieldName) {
+        if (tableLayout.sort_field === fieldName) {
+            if (tableLayout.sort_order === 'asc') {
+                tableLayout.sort_order = 'desc';
+            } else {
+                tableLayout.sort_order = 'asc'
+            }
+        } else {
+            tableLayout.sort_field = fieldName;
+        }
+        executeQuery(createQuery());
     }
     
     function setValuesFromTemplate(template) {
