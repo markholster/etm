@@ -12,7 +12,11 @@
 <link rel="stylesheet" href="../styles/spinner.css">
 </head>
 <body>
-  <nav class="navbar navbar-full navbar-dark" style="background-color: #777;">
+   <div class="device-xs hidden-xs-down"></div>
+   <div class="device-sm hidden-sm-down"></div>
+   <div class="device-md hidden-md-down"></div>
+   <div class="device-lg hidden-lg-down"></div>   
+   <nav class="navbar navbar-full navbar-dark" style="background-color: #777;">
      <div class="navbar-header">
         <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#exCollapsingNavbar2">
           &#9776;
@@ -37,13 +41,11 @@
           </li>
         </ul>
       </div>
-      <div class="nav">
-        <div id="spinner" class="pull-right" style="display: none;">
-          <div class="spinner_line"></div>
-          <div class="spinner_line spinner_line_2"></div>
-          <div class="spinner_line spinner_line_3"></div>
-          <div class="spinner_line spinner_line_4"></div>
-        </div>
+      <div id="spinner" class="pull-right" style="display: none;">
+        <div class="spinner_line"></div>
+        <div class="spinner_line spinner_line_2"></div>
+        <div class="spinner_line spinner_line_3"></div>
+        <div class="spinner_line spinner_line_4"></div>
       </div>
     </div>
   </nav>
@@ -67,7 +69,7 @@
        
        <div class="col-md-9 col-md-pull-3">
          <div class="row">
-           <div class="card card-block">
+           <div id="search-card" class="card card-block">
              <h5 class="card-title">Search</h5>
              <div class="card-text">
                <p>Please select the event types you want to search for, and fill in a search term in the search bar.</p>
@@ -97,7 +99,7 @@
            </div>
          </div>
          <div class="row" id="result_block" style="display: none">
-           <div class="card card-block">
+           <div id="search-result-card" class="card card-block">
              <h5 class="card-title">Search results<small id="search-stats"></small><small style="font-size: 100%;"><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right"></a></small></h5>
              <div id="result_card" class="card-text">
              </div>
@@ -451,6 +453,10 @@
         }
     });
     
+    function isBreakpointVisible(alias) {
+        return !$('.device-' + alias).is(':visible');
+    }
+    
     function enableOrDisableSearchButton() {
         if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
             $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
@@ -517,7 +523,10 @@
                             });
                             return $(body);
                         })
-                    $('#result_card').append($(resultTable));    
+                    $('#result_card').append($(resultTable));
+                    if (isBreakpointVisible('xs')) {
+                        $('html,body').animate({scrollTop: $('#search-card').offset().top},'slow');
+                    }
                 }
             }
         });    
