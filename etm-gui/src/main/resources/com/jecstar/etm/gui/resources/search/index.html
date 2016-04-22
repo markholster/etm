@@ -36,10 +36,6 @@
 </style>
 </head>
 <body>
-   <div class="device-xs hidden-xs-down"></div>
-   <div class="device-sm hidden-sm-down"></div>
-   <div class="device-md hidden-md-down"></div>
-   <div class="device-lg hidden-lg-down"></div>   
    <nav class="navbar navbar-full navbar-dark" style="background-color: #777;">
      <div class="navbar-header">
         <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#exCollapsingNavbar2">
@@ -96,7 +92,21 @@
            <div id="search-card" class="card card-block">
              <h5 class="card-title">Search</h5>
              <div class="card-text">
-               <p>Please select the event types you want to search for, and fill in a search term in the search bar.</p>
+               <p>
+                   Please enter your search string in the field below and press the
+                   'Search' button. Specific fields can be searched in the format
+                   <mark>fieldname:&lt;value&gt;</mark>
+                   . For example, if you want to search for all event generated from
+                   application "My Application" the search string will be
+                   <mark>endpoints.writing_endpoint_handler.application.name:"My application"</mark>
+                   . Multiple field can be combined by using the
+                   <mark>AND</mark>
+                   or
+                   <mark>OR</mark>
+                   operator. Range values can be used by applying the format
+                   <mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
+                   to the field value.
+               </p>
                <div id="errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
                <label class="checkbox-inline">
                  <input type="checkbox" id="check-type-business" value="business" checked="checked"> Business
@@ -394,7 +404,8 @@
         storeTemplate(createTemplate(), true);
     });
     
-    $('#btn-remove-template').click(function() {
+    $('#btn-remove-template').click(function(event) {
+        event.preventDefault();
         var templateName = $('#remove-template-name').text();
         $.ajax({
             type: 'DELETE',
@@ -409,7 +420,8 @@
         $('#modal-template-remove').modal('hide');
     });
     
-    $('#link-edit-table').click(function () {
+    $('#link-edit-table').click(function (event) {
+        event.preventDefault();
         $('#table-settings-sort-field').val(tableLayout.sort_field);
         $('#table-settings-sort-order').val(tableLayout.sort_order);
         $('#table-settings-columns').empty();
@@ -515,10 +527,12 @@
             $.each(data.searchtemplates, function(index, template){
                 $('#list-template-links').append(
                     $('<li>').append(
-                        $('<a href="#">').click(function() {
+                        $('<a href="#">').click(function(event) {
+                           event.preventDefault();
                            setValuesFromTemplate(template)
                         }).text(template.name),
-                        $('<a href="#" class="fa fa-times pull-right text-danger">').click(function() {
+                        $('<a href="#" class="fa fa-times pull-right text-danger">').click(function(event) {
+                           event.preventDefault();
                            askRemoveTemplate(template)
                         })
                     )
@@ -527,8 +541,14 @@
         }
     });
     
-    function isBreakpointVisible(alias) {
-        return !$('.device-' + alias).is(':visible');
+    function isSearchInView(elem) {
+        var $elem = elem;
+        var $window = $(window);
+        var docViewTop = $window.scrollTop();
+        var docViewBottom = docViewTop + $window.height();
+        var elemTop = $elem.offset().top;
+        var elemBottom = elemTop + $elem.height();
+        return docViewBottom > elemTop;
     }
     
     function enableOrDisableSearchButton() {
@@ -618,7 +638,7 @@
                             return $(body);
                         })
                     $('#result_card').append($(resultTable));
-                    if (isBreakpointVisible('xs')) {
+                    if (!isSearchInView($('#result_card'))) {
                         $('html,body').animate({scrollTop: $('#search-card').offset().top},'slow');
                     }
                 }
@@ -675,16 +695,19 @@
                 if (isOverwrite) {
                     $('#list-template-links > li > a').filter(function() {
                         return $(this).text() === template.name;
-                    }).unbind('click').click(function() {
+                    }).unbind('click').click(function(event) {
+                        event.preventDefault();
                         setValuesFromTemplate(template)
                     });
                 } else {
                     $('#list-template-links').append(
                         $('<li>').append(
-                            $('<a href="#">').click(function() {
+                            $('<a href="#">').click(function(event) {
+                               event.preventDefault();
                                setValuesFromTemplate(template)
                             }).text(template.name),
-                            $('<a href="#" class="fa fa-times pull-right text-danger">').click(function() {
+                            $('<a href="#" class="fa fa-times pull-right text-danger">').click(function(event) {
+                               event.preventDefault();
                                askRemoveTemplate(template)
                             })
                         )
