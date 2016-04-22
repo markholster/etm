@@ -13,6 +13,7 @@ import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.domain.EtmPrincipal;
+import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
@@ -107,7 +108,7 @@ public class ElasticsearchIndextemplateCreator {
 	
 	private void insertAdminUser(Client elasticClient) {
 		EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
-		adminUser.addRole("admin");
+		adminUser.addRole(PrincipalRole.ADMIN);
 		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, "user", adminUser.getId())
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
 			.setSource(this.etmPrincipalConverter.convert(adminUser))

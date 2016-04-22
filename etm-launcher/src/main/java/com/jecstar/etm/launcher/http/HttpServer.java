@@ -23,6 +23,7 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
@@ -163,8 +164,10 @@ public class HttpServer {
 		di.setContextPath("/rest/processor/");
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
-			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin", "processor").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
-			di.addSecurityRoles("admin", "processor");
+			di.addSecurityConstraint(new SecurityConstraint()
+					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.PROCESSOR.getRoleName())
+					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
+			di.addSecurityRoles(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.PROCESSOR.getRoleName());
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
@@ -182,13 +185,19 @@ public class HttpServer {
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
 		di.addWelcomePage("index.html");
 		di.setContextPath("/gui");
-		// TODO, even nadenken of dit uberhaupt zonder inloggen kan...
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			// TODO add the uri of all rest interfaces to the appropriated roles.
-			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","searcher").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
-			di.addSecurityConstraint(new SecurityConstraint().addRolesAllowed("admin","controller").addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
-			di.addSecurityRoles("admin", "searcher", "controller");
+			di.addSecurityConstraint(new SecurityConstraint()
+						.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.SEARCHER.getRoleName(), PrincipalRole.CONTROLLER.getRoleName())
+						.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
+			di.addSecurityConstraint(new SecurityConstraint()
+					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.SEARCHER.getRoleName())
+					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
+			di.addSecurityConstraint(new SecurityConstraint()
+					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.CONTROLLER.getRoleName())
+					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
+			di.addSecurityRoles(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.SEARCHER.getRoleName(), PrincipalRole.CONTROLLER.getRoleName());
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
 			di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));

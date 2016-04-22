@@ -10,12 +10,26 @@ import java.util.TimeZone;
 
 public class EtmPrincipal implements Principal {
 	
+	public enum PrincipalRole { 
+		ADMIN("admin"), SEARCHER("searcher"), CONTROLLER("controller"), PROCESSOR("processor");
+		
+		private final String roleName;
+		
+		private PrincipalRole(String roleName) {
+			this.roleName = roleName;
+		}
+		
+		public String getRoleName() {
+			return this.roleName;
+		}
+	}
+	
 	private final String id;
 	private final String passwordHash;
 	
 	private String name = null;
 	private Locale locale = Locale.getDefault();
-	private Set<String> roles = new HashSet<String>();
+	private Set<PrincipalRole> roles = new HashSet<PrincipalRole>();
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
 
@@ -67,21 +81,23 @@ public class EtmPrincipal implements Principal {
 		this.timeZone = timeZone;
 	}
 	
-	public Set<String> getRoles() {
+	public Set<PrincipalRole> getRoles() {
 		return Collections.unmodifiableSet(this.roles);
 	}
 	
-	public void addRole(String role) {
-		if (role != null) {
+	public void addRole(PrincipalRole role) {
+		if (role != null && !this.roles.contains(role)) {
 			this.roles.add(role);
 		}
 	}
 	
-	public void addRoles(Collection<String> roles) {
+	public void addRoles(Collection<PrincipalRole> roles) {
 		if (roles == null) {
 			return;
 		}
-		this.roles.addAll(roles);
+		for (PrincipalRole role : roles) {
+			addRole(role);
+		}
 	}
 	
 	public String getFilterQuery() {

@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-<link rel="stylesheet" href="../styles/bootstrap-4.0.0_alpha2.min.css">
-<link rel="stylesheet" href="../styles/font-awesome-4.5.0.min.css">
-<link rel="stylesheet" href="../styles/jquery-ui-1.11.4.min.css">
+<title>Jecstar - Enterprise Telemetry Monitor</title>
+
+<link rel="stylesheet" href="../styles/bootstrap.min.css">
+<link rel="stylesheet" href="../styles/font-awesome.min.css">
+<link rel="stylesheet" href="../styles/jquery-ui.min.css">
 <link rel="stylesheet" href="../styles/autocomplete.css">
 <link rel="stylesheet" href="../styles/spinner.css">
 <style type="text/css">
@@ -54,7 +56,7 @@
             <a class="nav-link" href="../dashboard/"><span class="fa fa-dashboard fa-lg hidden-sm-down">&nbsp;</span>Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#"><span class="fa fa-user fa-lg hidden-sm-down">&nbsp;</span>Preferences</a>
+            <a class="nav-link" href="../preferences/"><span class="fa fa-user fa-lg hidden-sm-down">&nbsp;</span>Preferences</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#"><span class="fa fa-wrench fa-lg hidden-sm-down">&nbsp;</span>Settings</a>
@@ -219,14 +221,24 @@
   </div>
   
   <!-- jQuery first, then Bootstrap JS. -->
-  <script src="../scripts/jquery-2.2.2.min.js"></script>
-  <script src="../scripts/jquery-ui-1.11.4.min.js"></script>
-  <script src="../scripts/bootstrap-4.0.0_alpha2.min.js"></script>
-  <script src="../scripts/moment-2.12.0.min.js"></script>
+  <script src="../scripts/jquery.min.js"></script>
+  <script src="../scripts/jquery-ui.min.js"></script>
+  <script src="../scripts/bootstrap.min.js"></script>
+  <script src="../scripts/moment.min.js"></script>
   <script src="../scripts/moment-timezone-with-data-2010-2020.min.js"></script>
   <script src="../scripts/autocomplete_fields.js"></script>
   
   <script>
+    $(document).ajaxStart(function () {
+        $("#errorBox").hide('fast');
+        $('#spinner').fadeIn(250);
+    }).ajaxStop(function () {
+        $('#spinner').fadeOut(500);
+    }).ajaxError(function(event, jqXHR, settings, thrownError) {
+        $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
+        $("#errorBox").show('fast');
+    });
+
     var queryKeywords = null;
     $.ajax({
         type: 'GET',
@@ -327,17 +339,6 @@
         },
         
     }
-    
-    $(document).ajaxStart(function () {
-        $("#errorBox").hide('fast');
-        $('#spinner').fadeIn(250);
-    }).ajaxStop(function () {
-        $('#spinner').fadeOut(500);
-    }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
-        $("#errorBox").show('fast');
-    });
-  
     $('[id^=check-type-]').on('change', function() {
         enableOrDisableSearchButton();
         if ($('[id^=check-type-]:checked').size() == 0) {

@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import com.jecstar.etm.core.domain.EtmPrincipal;
+import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.core.domain.converter.EtmPrincipalConverterTags;
 
@@ -23,7 +25,7 @@ public class EtmPrincipalConverterJsonImpl extends AbstractJsonConverter impleme
 		added = addStringElementToJsonBuffer(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag(), sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
-		added = addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles(), sb, !added) || added;
+		added = addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles().stream().map(c -> c.getRoleName()).collect(Collectors.toSet()), sb, !added) || added;
 		added = addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
@@ -44,7 +46,8 @@ public class EtmPrincipalConverterJsonImpl extends AbstractJsonConverter impleme
 			principal.setTimeZone(TimeZone.getTimeZone(value));
 		}
 		List<String> roles = getArray(this.tags.getRolesTag(), valueMap);
-		principal.addRoles(roles);
+		
+		principal.addRoles(roles.stream().map(c -> PrincipalRole.valueOf(c.toUpperCase())).collect(Collectors.toSet()));
 		return principal;
 	}
 

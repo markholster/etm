@@ -13,6 +13,7 @@ public class RestGuiApplication extends Application {
 
 	public RestGuiApplication(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.initialize(client, etmConfiguration);
+		UserService.initialize(client);
 	}
 
 
@@ -20,6 +21,7 @@ public class RestGuiApplication extends Application {
 	public Set<Class<?>> getClasses() {
 		HashSet<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(SearchService.class);
+		classes.add(UserService.class);
 		return classes;
 	}
 }
