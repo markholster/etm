@@ -661,55 +661,43 @@
             url: '../rest/search/query',
             data: JSON.stringify(queryParameters),
             success: function(data) {
-                $('#search-stats').text(':  Found ' + data.hits_as_string + ' results in ' + data.query_time_as_string + 'ms.');
+                $('#search-stats').text(':  Found ' + data.hits_as_string + ' results in ' + data.query_time_as_string + 'ms. Showing results ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
                 $('#result_card').empty();
                 if (data.hits === 0) {
                     $('#result_card').append($('<p>').text('No results found'));
                 } else {
-                    var resultTable = $('<table>')
+                    var resultTable = $('<table id="search_result_table">')
                     $(resultTable)
                         .addClass('table table-hover table-sm')
                         .append($('<thead>')
                             .append(function () {
-                                var tr = $('<tr>');
+                                var $tr = $('<tr>');
                                 $(tableLayout.fields).each(function (index, tableColumn) {
-                                    var th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name)
+                                    var $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name)
                                     if (tableColumn.field === tableLayout.sort_field) {
                                         if ('asc' === tableLayout.sort_order) {
-                                            $(th).addClass('headerSortAsc')
+                                            $th.addClass('headerSortAsc')
                                         } else {
-                                            $(th).addClass('headerSortDesc')
+                                            $th.addClass('headerSortDesc')
                                         }
                                     }
-                                    $(th).click(function (event) {
+                                    $th.click(function (event) {
                                         event.preventDefault();
                                         sortResultTable(tableColumn.field);
                                     });
-                                    $(tr).append($(th))
+                                    $tr.append($th)
                                 });    
-                                return $(tr);
+                                return $tr;
                             })
                         )
                         .append(function() {
-                            var body = $('<tbody>')
+                            var $body = $('<tbody>')
                             $(data.results).each(function (index, searchResult) {
-                                $(body).append(function () {
-                                    var tr = $('<tr>');
-                                    $(tableLayout.fields).each(function (index, field) {
-                                        var td = $('<td style="padding: 0.1rem">');
-                                        if (field.link) {
-                                            $(td).append(
-                                                $('<a>').attr('href', '#').text(tableLayout.getValueFromSource(searchResult.source, field, data.timeZone))
-                                            )    
-                                        } else {
-                                            $(td).text(tableLayout.getValueFromSource(searchResult.source, field, data.timeZone))
-                                        }
-                                        $(tr).append($(td));
-                                    });    
-                                    return $(tr);
+                                $body.append(function () {
+                                    return createResultTableRow(searchResult, data.timeZone);
                                 })
                             });
-                            return $(body);
+                            return $body;
                         })
                     $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
                     if (!isSearchInView($('#result_card'))) {
@@ -718,6 +706,22 @@
                 }
             }
         });    
+    }
+    
+    function createResultTableRow(searchResult, timeZone) {
+        var $tr = $('<tr>');
+        $(tableLayout.fields).each(function (index, field) {
+            var $td = $('<td style="padding: 0.1rem">');
+            if (field.link) {
+                $td.append(
+                    $('<a>').attr('href', '#').text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
+                )    
+            } else {
+                $td.text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
+            }
+            $tr.append($td);
+        });    
+        return $tr;
     }
     
     function sortResultTable(fieldName) {
