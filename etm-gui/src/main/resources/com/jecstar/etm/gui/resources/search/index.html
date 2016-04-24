@@ -259,7 +259,7 @@
     
     var tableLayout = {
         fields: [
-            {name: 'Timestamp', field: 'endpoints.writing_endpoint_handler.handling_time', format: 'isodate', array: 'lowest', link: true }, 
+            {name: 'Timestamp', field: 'endpoints.writing_endpoint_handler.handling_time', format: 'isotimestamp', array: 'lowest', link: true }, 
             {name: 'Name', field: 'name', format: 'plain', array: 'first', link: false}
         ],
         results_per_page: 50,
@@ -325,15 +325,15 @@
         formatValue: function(value, tableColumn, timeZone) {
             if ('plain' === (tableColumn.format)) {
                 return value;
-            } else if ('isoutcdate' === tableColumn.format) {
+            } else if ('isoutctimestamp' === tableColumn.format) {
                 if (value) {
-                    return new Date(value).toISOString();
+                    return moment.tz(value, 'UTC').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
                 } else {
                     return ''; 
                 }
-            } else if ('isodate' === tableColumn.format) {
+            } else if ('isotimestamp' === tableColumn.format) {
                 if (value) {
-                    return moment.tz(value, timeZone).format();
+                    return moment.tz(value, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
                 } else {
                     return ''; 
                 }
@@ -487,8 +487,8 @@
                     .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'})),
                 $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
                     .append($('<option>').attr('value', 'plain').text('Plain'))
-                    .append($('<option>').attr('value', 'isodate').text('ISO Date'))
-                    .append($('<option>').attr('value', 'isoutcdate').text('ISO UTC Date'))),
+                    .append($('<option>').attr('value', 'isotimestamp').text('ISO Timestamp'))
+                    .append($('<option>').attr('value', 'isoutctimestamp').text('ISO UTC Timestamp'))),
                 $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
                     .append($('<option>').attr('value', 'lowest').text('Lowest'))
                     .append($('<option>').attr('value', 'highest').text('Highest'))
