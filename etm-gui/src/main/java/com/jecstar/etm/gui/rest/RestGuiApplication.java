@@ -13,7 +13,7 @@ public class RestGuiApplication extends Application {
 
 	public RestGuiApplication(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.initialize(client, etmConfiguration);
-		UserService.initialize(client);
+		UserService.initialize(client, etmConfiguration);
 	}
 
 

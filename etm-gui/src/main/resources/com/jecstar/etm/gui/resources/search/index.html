@@ -239,8 +239,7 @@
     }).ajaxStop(function () {
         $('#spinner').fadeOut(200);
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
-        $("#errorBox").show('fast');
+        $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
     });
 
     var queryKeywords = null;

@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher.http;
+package com.jecstar.etm.core.util;
 
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;

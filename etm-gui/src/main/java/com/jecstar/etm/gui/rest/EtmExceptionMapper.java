@@ -47,6 +47,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.INVALID_EXPRESSION_PARSER_TYPE:
 					errorMessage.setMessage("Invalid expression parser type");
 					break;
+				case EtmException.INVALID_PASSWORD:
+					errorMessage.setMessage("Invalid password");
+					break;
 				default:
 					break;
 			}

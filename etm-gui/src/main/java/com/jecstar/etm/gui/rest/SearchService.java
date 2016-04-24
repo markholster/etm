@@ -48,13 +48,13 @@ import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJso
 public class SearchService extends AbstractJsonService {
 
 	private static Client client;
-	private static EtmConfiguration etmConfiguraton;
+	private static EtmConfiguration etmConfiguration;
 	
 	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.client = client;
-		SearchService.etmConfiguraton = etmConfiguration;
+		SearchService.etmConfiguration = etmConfiguration;
 	}
 	
 	@GET
@@ -88,7 +88,7 @@ public class SearchService extends AbstractJsonService {
 		
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguraton.getWriteConsistency().name()))
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 				.setScript(new Script("etm_update-searchtemplate", ScriptType.FILE, "groovy", scriptParams))
 				.setRetryOnConflict(3)
 				.get();
@@ -102,7 +102,7 @@ public class SearchService extends AbstractJsonService {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		scriptParams.put("name", templateName);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguraton.getWriteConsistency().name()))
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setScript(new Script("etm_remove-searchtemplate", ScriptType.FILE, "groovy", scriptParams))
 			.setRetryOnConflict(3)
 			.get();

@@ -49,10 +49,11 @@
   </nav>
   
   <div class="container" style="margin-top: 1em;">
-    <div id="search-card" class="card card-block">
+    <div class="card card-block">
       <h5 class="card-title">Preferences</h5>
       <div class="card-text">
-        <div id="errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+        <div id="settings_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+        <div id="settings_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
         <div class="row">
           <div class="form-group col-sm-6">
             <label for="input-user-id">User id</label>
@@ -73,8 +74,34 @@
             <select id="input-time-zone" class="form-control"></select>
           </div>        
         </div>
+        <div class="modal-footer">
+          <button id="btn-apply-preferences" type="button" class="btn btn-primary">Apply</button>
+        </div>
       </div>
-    </div>  
+    </div>
+    
+    <div class="card card-block">
+      <h5 class="card-title">Change password</h5>
+      <div class="card-text">
+        <div id="password_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+        <div id="password_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+        <div class="form-group">
+          <label for="input-current-password">Current password</label>
+          <input id="input-current-password" type="password" class="form-control" required="required" />
+        </div>
+        <div class="form-group">
+          <label for="input-new-password1">New password</label>
+          <input id="input-new-password1" type="password" class="form-control" required="required" />
+        </div>        
+        <div class="form-group">
+          <label for="input-new-password2">Retype password</label>
+          <input id="input-new-password2" type="password" class="form-control" required="required" />
+        </div>
+        <div class="modal-footer">
+          <button id="btn-apply-password" type="button" class="btn btn-primary">Apply</button>
+        </div>
+      </div>
+    </div>      
   </div>
   
   
@@ -86,14 +113,11 @@
   <script src="../scripts/moment-timezone-with-data-2010-2020.min.js"></script>
   <script>
     $(document).ajaxStart(function () {
-        $("#errorBox").hide('fast');
+        $("#settings_errorBox").hide('fast');
+        $("#password_errorBox").hide('fast');
         $('#spinner').fadeIn(100);
     }).ajaxStop(function () {
         $('#spinner').fadeOut(200);
-    }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        alert(thrownError)
-        $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
-        $("#errorBox").show('fast');
     });
     
     $.when($.ajax({
@@ -138,7 +162,86 @@
                 $('#input-time-zone').val(data.time_zone);
             }
         })
+        
+        
+        $('#btn-apply-preferences').click(function (event) {
+            event.preventDefault();
+            $.ajax({
+                type: 'PUT',
+                url: '../rest/user/settings',
+                data: JSON.stringify(createUserSettings()),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(jqXHR) {
+                    $('#settings_infoBox').text('Preferences saved').show('fast').delay(5000).hide('fast');
+                },
+                error: function(jqXHR) {
+                    $("#settings_errorBox").text('Error saving preferences: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                }
+             });
+        });
     });
+
+
+    $('#btn-apply-password').click(function (event) {
+        event.preventDefault();
+        var hasError = false;
+        $('input[required="required"]').each(function (index, element) {
+            if (!$(element).val()) {
+                $(element).parent().addClass('has-danger');
+                hasError = true;    
+            } else {
+                $(element).parent().removeClass('has-danger');
+            }
+        })
+        
+        if (hasError) {
+            $("#password_errorBox").text('Please fill out the required fields').show('fast');
+            return;
+        }
+
+        var $current = $('#input-current-password').val();
+        var $new1 = $('#input-new-password1').val();
+        var $new2 = $('#input-new-password2').val();
+        
+        if ($new1 !== $new2) {
+            $('#input-new-password1').parent().addClass('has-danger');
+            $('#input-new-password2').parent().addClass('has-danger');
+            $("#password_errorBox").text('The new password didn\'t match the retyped password').show('fast');
+            return;
+        }
+        
+        var json = {
+            current_password: $current,
+            new_password: $new1
+        }
+        $.ajax({
+            type: 'PUT',
+            url: '../rest/user/password',
+            data: JSON.stringify(json),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(jqXHR) {
+                $('#password_infoBox').text('Password changed').show('fast').delay(5000).hide('fast');
+                $('#input-current-password').val('');
+                $('#input-new-password1').val('');
+                $('#input-new-password2').val('');
+            },
+            error: function(jqXHR) {
+                $("#password_errorBox").text('Error saving password: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+            }
+         });
+    });
+
+    
+    function createUserSettings() {
+        var userSettings = {
+            name: $('#input-user-name').val(),
+            locale: $('#input-locale').val(),
+            time_zone: $('#input-time-zone').val() 
+        }
+        return userSettings;
+    }
   </script>
   
 </body>

@@ -10,6 +10,7 @@ import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
+import com.jecstar.etm.core.util.BCrypt;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 
 import io.undertow.security.idm.Account;
