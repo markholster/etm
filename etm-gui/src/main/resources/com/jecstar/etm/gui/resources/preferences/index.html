@@ -87,9 +87,9 @@
   <script>
     $(document).ajaxStart(function () {
         $("#errorBox").hide('fast');
-        $('#spinner').fadeIn(250);
+        $('#spinner').fadeIn(100);
     }).ajaxStop(function () {
-        $('#spinner').fadeOut(500);
+        $('#spinner').fadeOut(200);
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
         alert(thrownError)
         $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');

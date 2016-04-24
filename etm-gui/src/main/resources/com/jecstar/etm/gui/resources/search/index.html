@@ -206,6 +206,10 @@
                   <option value="desc">Descending</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label for="table-settings-results-per-page">Results per page</label>
+                <input id="table-settings-results-per-page" type="number" min="1" step="1" max="500" class="form-control" />
+            </div>
             <div class="card card-block">
                 <div class="card-title"><h5>Columns</h5></div>
                 <div id="table-settings-columns">
@@ -231,9 +235,9 @@
   <script>
     $(document).ajaxStart(function () {
         $("#errorBox").hide('fast');
-        $('#spinner').fadeIn(250);
+        $('#spinner').fadeIn(100);
     }).ajaxStop(function () {
-        $('#spinner').fadeOut(500);
+        $('#spinner').fadeOut(200);
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
         $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')');
         $("#errorBox").show('fast');
@@ -258,6 +262,7 @@
             {name: 'Timestamp', field: 'endpoints.writing_endpoint_handler.handling_time', format: 'isodate', array: 'lowest', link: true }, 
             {name: 'Name', field: 'name', format: 'plain', array: 'first', link: false}
         ],
+        results_per_page: 50,
         sort_field: 'endpoints.writing_endpoint_handler.handling_time',
         sort_order: 'desc',
         getFieldNames: function () {
@@ -425,6 +430,7 @@
         event.preventDefault();
         $('#table-settings-sort-field').val(tableLayout.sort_field);
         $('#table-settings-sort-order').val(tableLayout.sort_order);
+        $('#table-settings-results-per-page').val(tableLayout.results_per_page);
         $('#table-settings-columns').empty();
         $('#table-settings-columns').append(
             $('<div>').addClass('row').append(
@@ -542,9 +548,13 @@
             changed = true;
             tableLayout.sort_field = $('#table-settings-sort-field').val();
         }
-        if (tableLayout.sort_order !== $('#table-settings-sort-order').val()) {
+        if (tableLayout.sort_field !== $('#table-settings-sort-field').val()) {
             changed = true;
-            tableLayout.sort_order = $('#table-settings-sort-order').val();
+            tableLayout.sort_field = $('#table-settings-sort-field').val();
+        }
+        if ($.isNumeric($('#table-settings-results-per-page').val()) && tableLayout.results_per_page !== parseInt($('#table-settings-results-per-page').val())) {
+            changed = true;
+            tableLayout.results_per_page = parseInt($('#table-settings-results-per-page').val());
         }
         var fields = [];
         $('#table-settings-columns .fieldConfigurationRow').each(function (rowIndex, row) {
@@ -632,6 +642,8 @@
             query: $('#query-string').val(),
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
             fields: tableLayout.getInternalFieldNames(),
+            start_ix: 0,
+            max_results: tableLayout.results_per_page,
             sort_field: tableLayout.sort_field,
             sort_order: tableLayout.sort_order
         };
@@ -729,6 +741,7 @@
         $('#query-string').val(template.query);
         $('#template-name').val(template.name);
         tableLayout.fields = template.fields;
+        tableLayout.results_per_page = template.results_per_page;
         tableLayout.sort_field = template.sort_field;
         tableLayout.sort_order = template.sort_order;
         $('#query-string').removeAttr('disabled').trigger('input');
@@ -740,6 +753,7 @@
             query: $('#query-string').val(),
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
             fields: tableLayout.fields,
+            results_per_page: tableLayout.results_per_page,
             sort_field: tableLayout.sort_field,
             sort_order: tableLayout.sort_order            
         };

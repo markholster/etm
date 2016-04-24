@@ -82,6 +82,7 @@ public class SearchService extends AbstractJsonService {
 		template.put("query", getString("query", requestValues));
 		template.put("types", getArray("types", requestValues));
 		template.put("fields", getArray("fields", requestValues));
+		template.put("results_per_page", getInteger("results_per_page", requestValues, 50));
 		template.put("sort_field", getString("sort_field", requestValues));
 		template.put("sort_order", getString("sort_order", requestValues));
 		
