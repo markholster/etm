@@ -220,6 +220,7 @@ public class SearchService extends AbstractJsonService {
 		result.append(",\"timeZone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"start_ix\": " + startIndex);
 		result.append(",\"end_ix\": " + (startIndex + response.getHits().hits().length - 1));
+		result.append(",\"has_more_results\": " + (startIndex + response.getHits().hits().length < response.getHits().getTotalHits() - 1));
 		result.append(",\"timeZone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"results\": [");
 		addSearchHits(result, response.getHits());
