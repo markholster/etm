@@ -466,7 +466,7 @@
                     var $body = $('#search_result_table > tbody')
                     $(data.results).each(function (index, searchResult) {
                         $body.append(function () {
-                            return createResultTableRow(searchResult, data.timeZone);
+                            return createResultTableRow(searchResult, data.time_zone);
                         })
                     });
                     if (!data.has_more_results) {
