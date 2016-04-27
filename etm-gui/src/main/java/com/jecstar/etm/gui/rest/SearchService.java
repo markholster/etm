@@ -217,11 +217,11 @@ public class SearchService extends AbstractJsonService {
 		result.append("\"status\": \"success\"");
 		result.append(",\"hits\": " + response.getHits().getTotalHits());
 		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
-		result.append(",\"timeZone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
+		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"start_ix\": " + startIndex);
 		result.append(",\"end_ix\": " + (startIndex + response.getHits().hits().length - 1));
 		result.append(",\"has_more_results\": " + (startIndex + response.getHits().hits().length < response.getHits().getTotalHits() - 1));
-		result.append(",\"timeZone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
+		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"results\": [");
 		addSearchHits(result, response.getHits());
 		result.append("]");
@@ -245,6 +245,7 @@ public class SearchService extends AbstractJsonService {
 		addStringElementToJsonBuffer("index", getResponse.getIndex() , result, true);
 		addStringElementToJsonBuffer("type", getResponse.getType() , result, false);
 		addStringElementToJsonBuffer("id", getResponse.getId() , result, false);
+		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, false);
 		result.append(", \"source\": " + getResponse.getSourceAsString());
 		result.append("}");
 		return result.toString();
