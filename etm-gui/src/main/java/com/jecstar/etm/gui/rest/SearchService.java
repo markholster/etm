@@ -231,6 +231,24 @@ public class SearchService extends AbstractJsonService {
 		result.append("}");
 		return result.toString();
 	}
+	
+	@GET
+	@Path("/event/{index}/{type}/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEvent(@PathParam("index") String index, @PathParam("type") String type, @PathParam("id") String id) {
+		GetResponse getResponse = SearchService.client.prepareGet(index, type, id).get();
+		if (getResponse.isSourceEmpty()) {
+			return "{}";
+		}
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		addStringElementToJsonBuffer("index", getResponse.getIndex() , result, true);
+		addStringElementToJsonBuffer("type", getResponse.getType() , result, false);
+		addStringElementToJsonBuffer("id", getResponse.getId() , result, false);
+		result.append(", \"source\": " + getResponse.getSourceAsString());
+		result.append("}");
+		return result.toString();
+	}
 
 	private void addSearchHits(StringBuilder result, SearchHits hits) {
 		boolean first = true;
@@ -241,17 +259,13 @@ public class SearchService extends AbstractJsonService {
 			} else {
 				result.append(", {");
 			}
-			boolean added = false;
-			added = addStringElementToJsonBuffer("type", searchHit.getType() , result, !added) || added;
-			added = addStringElementToJsonBuffer("id", searchHit.getId() , result, !added) || added;
-			added = addStringElementToJsonBuffer("index", searchHit.getIndex() , result, !added) || added;
-			result.append(", \"source\": ");
-			result.append(searchHit.getSourceAsString());
+			addStringElementToJsonBuffer("type", searchHit.getType() , result, true);
+			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
+			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, false);
+			result.append(", \"source\": " + searchHit.getSourceAsString());
 			result.append("}");
 		}
 	}
-	
-	
 
 	@SuppressWarnings("unchecked")
 	private void addProperties(List<String> names, String prefix, Map<String, Object> valueMap) {

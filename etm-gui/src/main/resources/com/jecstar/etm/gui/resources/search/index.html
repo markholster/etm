@@ -109,7 +109,7 @@
                    <mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
                    to the field value.
                </p>
-               <div id="errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+               <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
                <label class="checkbox-inline">
                  <input type="checkbox" id="check-type-business" value="business" checked="checked"> Business
                </label>
@@ -143,6 +143,98 @@
          </div>
        </div>
      </div>
+  </div>
+  
+  <div id="event-container" class="container-fluid" style="margin-top: 1em; display: none;">
+    <div class="row">
+      <div class="col-md-9">
+       <div class="card card-block">
+         <h5 id="event-card-title" class="card-title"></h5>
+         <div class="card-text">
+           <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+
+             <div role="tabpanel" class="bd-example bd-example-tabs">
+               <ul role="tablist" id="event-tabs" class="nav nav-tabs">
+                 <li class="nav-item">
+                   <a id="event-tab-header" aria-expanded="true" aria-controls="event" role="tab" href="#event-tab" data-toggle="tab" class="nav-link active">Event</a>
+                 </li>
+               </ul>
+               <div id="tabcontents" class="tab-content">
+                 <div aria-labelledby="event-tab-header" id="event-tab" class="tab-pane fade active in" role="tabpanel" aria-expanded="true">
+                   <div class="form-horizontal">
+                     <div class="form-group">
+                       <label class="col-sm-2 font-weight-bold">Id</label>
+                       <div class="col-sm-4">
+                         <p id="event_id" class="form-control-static" style="padding-bottom: 0px;"></p>
+                       </div>
+                       <label class="col-sm-2 font-weight-bold">Name</label>
+                       <div class="col-sm-4">
+                         <p id="event_name" class="form-control-static" style="padding-bottom: 0px;"></p>
+                       </div>
+                     </div>
+                     <div class="form-group">
+                       <label class="col-sm-2 font-weight-bold">Correlation id</label>
+                       <div class="col-sm-4">
+                         <p id="event_correlation_id" class="form-control-static" style="padding-bottom: 0px;"></p>
+                       </div>
+                       <label class="col-sm-2 font-weight-bold">Payload format</label>
+                       <div class="col-sm-4">
+                         <p id="event_payload_format" class="form-control-static" style="padding-bottom: 0px;"></p>
+                       </div>
+                     </div>
+                     <div class="form-group">  
+                       <label class="col-sm-2 font-weight-bold">Transaction id</label>
+                       <div class="col-sm-4">
+                         <p id="event_transaction_id" class="form-control-static" style="padding-bottom: 0px;"></p>
+                       </div>
+                       <label class="col-sm-2 font-weight-bold">Write time</label>
+                       <div class="col-sm-4">
+                         <p id="event_write_time" class="form-control-static" style="padding-bottom: 0px;"></p>
+                       </div>
+                     </div>
+                     
+                     <div class="form-group"> 
+                     <div id="event_metadata_panel" class="panel panel-default" style="display: none;">
+                       <div class="panel-heading clearfix">
+                           <div class="pull-left"><a id="event_metadata_toggle" href="#">Metadata</a></div>
+                       </div>
+                       <div id="event_metadata_panel_collapse" class="panel-collapse collapse in">
+                           <div class="panel-body">
+                               <div class="table-responsive">
+                                   <table id="event_metadata_table" class="table table-sm table-striped table-hover">
+                                       <thead>
+                                           <tr>
+                                               <th style="padding: 0.1rem">Name</th>
+                                               <th style="padding: 0.1rem">Value</th>
+                                           </tr>
+                                       </thead>
+                                       <tbody>
+                                       </tbody>
+                                   </table>
+                               </div>
+                           </div>
+                       </div>
+                     </div>                     
+                     </div>
+                     
+                     <div class="form-group">  
+                       <div class="col-sm-12">
+                         <pre id="event_content"></pre>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+         </div>
+         <div class="text-xs-center">
+            <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
+         </div>
+       </div>
+      </div>
+      <div class="col-md-3">
+      </div>
+    </div>
   </div>
   
   <div class="modal fade" id="modal-template-overwrite" tabindex="-1" role="dialog" aria-labelledby="template-overwrite-modal-label" aria-hidden="true">
@@ -224,6 +316,8 @@
     </div>
   </div>
   
+  
+  
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/jquery.min.js"></script>
   <script src="../scripts/jquery-ui.min.js"></script>
@@ -232,12 +326,12 @@
   <script src="../scripts/moment-timezone-with-data-2010-2020.min.js"></script>
   <script>
     $(document).ajaxStart(function () {
-        $("#errorBox").hide('fast');
+        $('.errorBox').hide('fast');
         $('#spinner').fadeIn(100);
     }).ajaxStop(function () {
         $('#spinner').fadeOut(200);
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        $("#errorBox").text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+        $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
     });
     var queryKeywords = null;
     $.ajax({
@@ -252,13 +346,16 @@
             queryKeywords = data.keywords;
         }
     });
+    
+    function escapeToHtml(stringToEscape) {
+        return $("<div></div>").text(stringToEscape).html();
+    }
   </script>
   <script src="../scripts/autocomplete_fields.js"></script>
   <script src="../scripts/searchresults-layout.js"></script>
+  <script src="../scripts/event-details.js"></script>
   
   <script>
-
-    
     $('[id^=check-type-]').on('change', function() {
         enableOrDisableSearchButton();
         if ($('[id^=check-type-]:checked').size() == 0) {
@@ -285,8 +382,6 @@
     $('#btn-search').click(function() {
         executeQuery(createQuery());
     });
-    
-    
     
     function isSearchInView(elem) {
         var $elem = elem;
@@ -422,7 +517,13 @@
             var $td = $('<td style="padding: 0.1rem">');
             if (field.link) {
                 $td.append(
-                    $('<a>').attr('href', '#').attr('name', searchResult.id).text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
+                    $('<a>')
+                        .attr('href', '#')
+                        .attr('id', searchResult.id)
+                        .text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
+                        .click(function (event) {
+                            showEvent(searchResult.id, searchResult.type, searchResult.index);
+                        })
                 )    
             } else {
                 $td.text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
@@ -446,10 +547,7 @@
         executeQuery(createQuery());
     }
     
-    
-    function escapeToHtml(stringToEscape) {
-        return $("<div></div>").text(stringToEscape).html();
-    }
+    showEvent('6487503724222-99998', 'log', 'etm_event_2016-04-22');    
   </script>
   <script src="../scripts/search-templates.js"></script>
   
