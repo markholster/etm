@@ -43,6 +43,10 @@ function addContent(data) {
 			$eventTab.append(createDetailRow('Log level', data.source.log_level, '', ''));
 		}
 		
+		if (data.source.endpoints != undefined) {
+			$eventTab.append(createEndpointsMap(data.source.endpoints));
+		}
+		
         if (data.source.metadata != undefined) {
         	$eventTab.append(createDetailMap('metadata', data.source.metadata));
         }
@@ -51,12 +55,20 @@ function addContent(data) {
         }
         
         $eventTab.append(
-        		$('<div>').addClass('form-group').append(
+        		$('<div>').addClass('row').append(
         				$('<div>').addClass('col-sm-12').append(
-        						$('<pre>').text(data.source.payload)
+        						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.payload)
         				)
         		)
         );
+        
+        if ('log' === data.type && data.source.stack_trace != undefined) {
+    		$('<div>').addClass('row').append(
+    				$('<div>').addClass('col-sm-12').append(
+    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.stack_trace)
+    				)
+    		);        	
+        }
 	}
 }
 
@@ -73,7 +85,7 @@ function createDetailRow(name1, value1, name2, value2) {
 function createDetailMap(name, valueMap) {
 	$detailMap = $('<div>').addClass('panel panel-default').append(
 			$('<div>').addClass('panel-heading clearfix').append(
-					$('<div>').addClass('pull-left').append($('<a>').attr('href', '#').text(capitalize(name)).click(function (event) {
+					$('<div>').addClass('pull-left').append($('<a>').addClass('font-weight-bold').attr('href', '#').text(capitalize(name)).click(function (event) {
 						event.preventDefault();
 						$('#event_' + name + '_panel_collapse').collapse('toggle');
 					}))
@@ -103,6 +115,24 @@ function createDetailMap(name, valueMap) {
 			)
 	);
 	return $detailMap;
+}
+
+function createEndpointsMap(endpoints) {
+	$endpointsMap = $('<div>').addClass('panel panel-default').append(
+			$('<div>').addClass('panel-heading clearfix').append(
+					$('<div>').addClass('pull-left').append($('<a>').addClass('font-weight-bold').attr('href', '#').text('Endpoints').click(function (event) {
+						event.preventDefault();
+						$('#endpoints_panel_collapse').collapse('toggle');
+					}))
+			),
+			$('<div>').attr('id', 'endpoints_panel_collapse').addClass('panel-collapse collapse in').append(
+					$('<div>').addClass('panel-body').append(
+							$('<p>').text('Endpoint panel')
+					)
+			)
+	);
+	return $endpointsMap;
+	
 }
 
 function capitalize(text) {
