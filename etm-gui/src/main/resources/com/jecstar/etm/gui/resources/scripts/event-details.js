@@ -18,57 +18,91 @@ function showEvent(id, type, index) {
 		.click(function(event) {
 			event.preventDefault();
 			$('#event-container').hide();
-			$('#search-container').show('fast');
-		    $('html,body').animate({scrollTop: scrollTo},'fast');
+			$('#search-container').show();
+			$('html,body').animate({scrollTop: scrollTo},'fast');
     });
-	$('#event-container').show('fast');
+	$('#event-container').show();
 	
 }
 
 function addContent(data) {
 	$('#event-card-title').text('Event ' + data.id);
 	$('#event-tab-header').text(capitalize(data.type));
+	$eventTab = $('#event-tab');
+	$eventTab.empty();
 	if (data.source) {
 		if (data.source.name) {
 			$('#event-card-title').text('Event ' + data.source.name);
 		}
-		$('#event_id').text(data.id);
-		$('#event_name').text(data.source.name);
-		$('#event_correlation_id').text(data.source.correlation_id);
-		$('#event_transaction_id').text(data.source.transaction_id);
-		$('#event_payload_format').text(capitalize(data.source.payload_format));
-		$('#event_content').text(data.source.payload);
+		$eventTab.append(createDetailRow('Id', data.id, 'Name', data.source.name));
+		$eventTab.append(createDetailRow('Correlation id', data.source.correlation_id, 'Payload format', data.source.payload_format));
 		var writing_times = $(data.source.endpoints).map(function () {return this.writing_endpoint_handler.handling_time}).get();
-		$('#event_write_time').text(moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+		$eventTab.append(createDetailRow('Transaction id', data.source.transaction_id, 'Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')));
 		
+		if ('log' === data.type) {
+			$eventTab.append(createDetailRow('Log level', data.source.log_level, '', ''));
+		}
 		
-		$('#event_metadata_table > tbody').empty();
-		$('#event_extracted_data_table > tbody').empty();
         if (data.source.metadata != undefined) {
-            $.each(data.source.metadata, function(key, value) {
-            	if (key.endsWith('_as_number') || key.endsWith('_as_boolean') || key.endsWith('_as_date')) {
-            		return true;
-            	}
-                var rowContent = '<tr><td style="padding: 0.1rem">' + escapeToHtml(key) + '</td><td style="padding: 0.1rem">' + escapeToHtml(value) + '</td></tr>';
-                $(rowContent).appendTo($('#event_metadata_table > tbody'));
-            });
-            $('#event_metadata_panel').show();
-        } else {
-            $('#event_metadata_panel').hide();
+        	$eventTab.append(createDetailMap('metadata', data.source.metadata));
         }
         if (data.source.extracted_data != undefined) {
-        	$.each(data.source.extracted_data, function(key, value) {
-        		if (key.endsWith('_as_number') || key.endsWith('_as_boolean') || key.endsWith('_as_date')) {
-        			return true;
-        		}
-        		var rowContent = '<tr><td style="padding: 0.1rem">' + escapeToHtml(key) + '</td><td style="padding: 0.1rem">' + escapeToHtml(value) + '</td></tr>';
-        		$(rowContent).appendTo($('#event_extracted_data_table > tbody'));
-        	});
-        	$('#event_extracted_data_panel').show();
-        } else {
-        	$('#event_extracted_data_panel').hide();
+        	$eventTab.append(createDetailMap('extracts', data.source.extracted_data));
         }
+        
+        $eventTab.append(
+        		$('<div>').addClass('form-group').append(
+        				$('<div>').addClass('col-sm-12').append(
+        						$('<pre>').text(data.source.payload)
+        				)
+        		)
+        );
 	}
+}
+
+function createDetailRow(name1, value1, name2, value2) {
+	return $('<div>').addClass('row')
+		.append(
+		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold').text(name1)),
+		    $('<div>').addClass('col-md-4').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value1)),
+		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold').text(name2)),
+		    $('<div>').addClass('col-md-4').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value2))		    	
+		);
+}
+
+function createDetailMap(name, valueMap) {
+	$detailMap = $('<div>').addClass('panel panel-default').append(
+			$('<div>').addClass('panel-heading clearfix').append(
+					$('<div>').addClass('pull-left').append($('<a>').attr('href', '#').text(capitalize(name)).click(function (event) {
+						event.preventDefault();
+						$('#event_' + name + '_panel_collapse').collapse('toggle');
+					}))
+			),
+			$('<div>').attr('id', 'event_' + name + '_panel_collapse').addClass('panel-collapse collapse').append(
+					$('<div>').addClass('panel-body').append(
+							$('<div>').addClass('table-responsive').append(
+									$('<table>').addClass('table table-sm table-striped table-hover').append(
+											$('<thead>').append($('<tr>').append($('<th>').attr('style', 'padding: 0.1rem;').text('Name')).append($('<th>').attr('style', 'padding: 0.1rem;').text('Value')))
+									).append(function () {
+										$tbody = $('<tbody>');
+							            $.each(valueMap, function(key, value) {
+							            	if (key.endsWith('_as_number') || key.endsWith('_as_boolean') || key.endsWith('_as_date')) {
+							            		return true;
+							            	}
+							            	$tbody.append(
+							            			$('<tr>').append(
+							            					$('<td>').attr('style', 'padding: 0.1rem;').text(key),
+							            					$('<td>').attr('style', 'padding: 0.1rem;').text(value)
+							            			)
+							            	);
+							            });
+										return $tbody;
+									})
+							)
+					)
+			)
+	);
+	return $detailMap;
 }
 
 function capitalize(text) {
@@ -77,16 +111,4 @@ function capitalize(text) {
 	}
 	return text.charAt(0).toUpperCase() + text.toLowerCase().slice(1);
 }
-
-$('#event_metadata_panel_collapse').collapse();
-$('#event_metadata_toggle').click(function (e) {
-   e.preventDefault();
-   $('#event_metadata_panel_collapse').collapse("toggle");
-});
-
-$('#event_extracted_data_panel_collapse').collapse();
-$('#event_extracted_data_toggle').click(function (e) {
-   e.preventDefault();
-   $('#event_extracted_data_panel_collapse').collapse("toggle");
-});
 
