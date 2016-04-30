@@ -53,7 +53,6 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		if (event.payloadFormat != null) {
 			added = addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), sb, !added) || added;
 		}
-		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), event.transactionId, sb, !added) || added;
 		added = doConvert(event, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
@@ -133,6 +132,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		if (endpointHandler.handlingTime != null) {
 			added = addLongElementToJsonBuffer(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime.toInstant().toEpochMilli(), buffer, true);
 		}
+		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), endpointHandler.transactionId, buffer, !added) || added;
 		Application application = endpointHandler.application;
 		if (application.isSet()) {
 			if (added) {
@@ -203,7 +203,6 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		}
 		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
 		telemetryEvent.payloadFormat = PayloadFormat.safeValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
-		telemetryEvent.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
 		doConvert(telemetryEvent, valueMap);		
 	}
 
@@ -229,6 +228,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 			endpointHandler.application.version = getString(this.tags.getApplicationVersionTag(), applicationValueMap);
 		}
 		endpointHandler.handlingTime = getZonedDateTime(this.tags.getEndpointHandlerHandlingTimeTag(), valueMap);
+		endpointHandler.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
 		Map<String, Object> locationValueMap = getObject(this.tags.getEndpointHandlerLocationTag(), valueMap);
 		if (locationValueMap != null) {
 			endpointHandler.location.latitude = getDouble(this.tags.getLatitudeTag(), locationValueMap);

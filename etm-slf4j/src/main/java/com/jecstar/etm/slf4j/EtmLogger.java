@@ -12,6 +12,9 @@ import org.slf4j.helpers.MarkerIgnoringBase;
 import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.spi.LocationAwareLogger;
 
+import com.jecstar.etm.core.domain.ApplicationBuilder;
+import com.jecstar.etm.core.domain.EndpointBuilder;
+import com.jecstar.etm.core.domain.EndpointHandlerBuilder;
 import com.jecstar.etm.core.domain.LogTelemetryEvent;
 import com.jecstar.etm.core.domain.LogTelemetryEventBuilder;
 
@@ -353,12 +356,15 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 		    .setLogLevel(logLevel)
 			.setPayload(payload)
 			.setStackTrace(stackTrace)
-			.addWritingEndpointHandler(logLocation.fullInfo, 
-					ZonedDateTime.now(), 
-					this.configuration.getApplicationName(), 
-					this.configuration.getApplicationVersion(), 
-					this.configuration.getApplicationInstance(), 
-					this.configuration.getPrincipalName())
+			.addOrMergeEndpoint(new EndpointBuilder().setName(logLocation.fullInfo)
+					.setWritingEndpointHandler(new EndpointHandlerBuilder()
+							.setHandlingTime(ZonedDateTime.now())
+							.setApplication(new ApplicationBuilder()
+									.setName(this.configuration.getApplicationName())
+									.setVersion(this.configuration.getApplicationVersion())
+									.setInstance(this.configuration.getApplicationInstance())
+									.setPrincipal(this.configuration.getPrincipalName())
+									)))
 			.build();
 		this.logForwarder.forwardLog(logTelemetryEvent);
 		

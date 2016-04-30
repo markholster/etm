@@ -1,7 +1,5 @@
 package com.jecstar.etm.core.domain;
 
-import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Map;
 
 public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>, Builder extends TelemetryEventBuilder<Event, Builder>> {
@@ -71,36 +69,8 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 		return (Builder) this;
 	}
 	
-	public Builder addOrMergeEndpoint(String endpointName, EndpointHandler writingEndpointHandler, EndpointHandler... readingEndpointHandlers) {
-		Endpoint endpoint = new Endpoint();
-		endpoint.name = endpointName;
-		endpoint.writingEndpointHandler.initialize(writingEndpointHandler);
-		endpoint.readingEndpointHandlers.addAll(Arrays.asList(readingEndpointHandlers));
-		return addOrMergeEndpoint(endpoint);
-	}
-	
-	public Builder addWritingEndpointHandler(String endpointName, ZonedDateTime handlingTime, String applicationName, String applicationVersion, String applicationInstance, String principal) {
-		Endpoint endpoint = new Endpoint();
-		endpoint.name = endpointName;
-		endpoint.writingEndpointHandler.handlingTime = handlingTime;
-		endpoint.writingEndpointHandler.application.name = applicationName;
-		endpoint.writingEndpointHandler.application.version = applicationVersion;
-		endpoint.writingEndpointHandler.application.instance = applicationInstance;
-		endpoint.writingEndpointHandler.application.principal = principal;
-		return addOrMergeEndpoint(endpoint);
-	}
-	
-	public Builder addReadingEndpointHandler(String endpointName, ZonedDateTime handlingTime, String applicationName, String applicationVersion, String applicationInstance, String principal) {
-		Endpoint endpoint = new Endpoint();
-		endpoint.name = endpointName;
-		EndpointHandler handler = new EndpointHandler();
-		handler.handlingTime = handlingTime;
-		handler.application.name = applicationName;
-		handler.application.version = applicationVersion;
-		handler.application.instance = applicationInstance;
-		handler.application.principal = principal;
-		endpoint.readingEndpointHandlers.add(handler);
-		return addOrMergeEndpoint(endpoint);
+	public Builder addOrMergeEndpoint(EndpointBuilder endpointBuilder) {
+		return addOrMergeEndpoint(endpointBuilder.build());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -154,12 +124,6 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 	@SuppressWarnings("unchecked")
 	public Builder setPayloadFormat(PayloadFormat payloadFormat) {
 		this.event.payloadFormat = payloadFormat;
-		return (Builder) this;
-	}
-
-	@SuppressWarnings("unchecked")
-	public Builder setTransactionId(String transactionId) {
-		this.event.transactionId = transactionId;
 		return (Builder) this;
 	}
 }

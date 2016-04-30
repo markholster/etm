@@ -19,11 +19,18 @@ public class EndpointHandler {
 	 */
 	public ZonedDateTime handlingTime;
 	
+	/**
+	 * The ID of the transaction this event belongs to. Events with the same
+	 * transactionId form and end-to-end chain within the application.
+	 */
+	public String transactionId;
+	
 	
 	public EndpointHandler initialize() {
 		this.application.initialize();
 		this.location.initialize();
 		this.handlingTime = null;
+		this.transactionId = null;
 		return this;
 	}
 	
@@ -35,11 +42,12 @@ public class EndpointHandler {
 		this.application.initialize(copy.application);
 		this.location.initialize(copy.location);
 		this.handlingTime = copy.handlingTime;
+		this.transactionId = copy.transactionId;
 		return this;
 	}
 	
 	public boolean isSet() {
-		return this.handlingTime != null || this.location.isSet() || this.application.isSet() || this.location.isSet();
+		return this.handlingTime != null || this.transactionId != null || this.location.isSet() || this.application.isSet() || this.location.isSet();
 	}
 	
 }

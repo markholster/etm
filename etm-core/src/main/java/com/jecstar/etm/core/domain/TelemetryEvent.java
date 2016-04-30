@@ -55,12 +55,6 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	public PayloadFormat payloadFormat;
 	
 	/**
-	 * The ID of the transaction this event belongs to. Events with the same
-	 * transactionId form and end-to-end chain in the applications landscape.
-	 */
-	public String transactionId;
-
-	/**
 	 * Initialize this <code>TelemetryEvent</code> with the default data. 
 	 * @return A fully initialized <code>TelemetryEvent</code>.
 	 */
@@ -76,7 +70,6 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.name = null;
 		this.payload = null;
 		this.payloadFormat = null;
-		this.transactionId = null;
 	}
 	
 	/**
@@ -109,7 +102,6 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.name = copy.name;
 		this.payload = copy.payload;
 		this.payloadFormat = copy.payloadFormat;
-		this.transactionId = copy.transactionId;
 	}
 	
 	/**
