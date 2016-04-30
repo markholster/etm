@@ -142,16 +142,11 @@ function createEndpointsTab(endpoints) {
 		return ep1.writing_endpoint_handler.handling_time - ep2.writing_endpoint_handler.handling_time;
 	});
 	
-	var rows = 0;
 	var nodesData = [];
 	var edgesData = [];
-	var rowIx = 0;
+	var rowIx = -1;
 	$.each(endpoints, function (index, endpoint) {
-		rows++;
-		if (endpoint.reading_endpoint_handlers && endpoint.reading_endpoint_handlers.length > 1) {
-			rows += endpoint.reading_endpoint_handlers.length - 1;
-		}
-		
+		rowIx++;
 		var endpointId = rowIx + '-1';
 		if (endpoint.writing_endpoint_handler.application) {
 			var name = endpoint.writing_endpoint_handler.application.name ? endpoint.writing_endpoint_handler.application.name : '?';
@@ -181,28 +176,31 @@ function createEndpointsTab(endpoints) {
 				col: 1
 			}
 		});
-		$.each(endpoint.reading_endpoint_handlers, function (repIx, rep) {
-			if (repIx !== 0) {
-				rowIx++;
-			}
-			var name = rep.application.name ? rep.application.name : '?';
-			nodesData.push({
-				data: {
-					id: rowIx + '-2',
-					name: name,
-					shape: 'roundrectangle',
-					width: 'label',
-					color: '#ffffff',
-					background_color: '#777',
-					row: rowIx,
-					col: 2
-				}
+		if (endpoint.reading_endpoint_handlers) {
+			endpoint.reading_endpoint_handlers.sort(function (han1, han2) {
+				return han1.handling_time - han2.handling_time;
 			});
-			edgesData.push({ data: { source: endpointId, target: rowIx + '-2' } });
-		});
+			$.each(endpoint.reading_endpoint_handlers, function (repIx, rep) {
+				if (repIx !== 0) {
+					rowIx++;
+				}
+				var name = rep.application.name ? rep.application.name : '?';
+				nodesData.push({
+					data: {
+						id: rowIx + '-2',
+						name: name,
+						shape: 'roundrectangle',
+						width: 'label',
+						color: '#ffffff',
+						background_color: '#777',
+						row: rowIx,
+						col: 2
+					}
+				});
+				edgesData.push({ data: { source: endpointId, target: rowIx + '-2' } });
+			});
+		}
 	}); 
-	
-	
 	
 	$('#tabcontents').append(
 			$('<div>').attr('id', 'endpoint-tab')
@@ -215,7 +213,7 @@ function createEndpointsTab(endpoints) {
 								$('<div>').addClass('col-sm-12').append($('<p>').text('Click on a node to view more details'))
 						),
 						$('<div>').addClass('row').append(
-								$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + rows * 4 + 'em; width: 100%;')
+								$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + (rowIx + 1) * 4 + 'em; width: 100%;')
 						)		
 				) 
 	);
@@ -250,12 +248,21 @@ function createEndpointsTab(endpoints) {
 				  },
 				  layout: {
 					  name: 'grid',
-					  cols: 3, 
+					  condense: false,
+					  cols: 3,
+					  rows: rowIx + 1,
 					  position: function( node ){
 						  return {row: node.data('row'), col: node.data('col')} 
 					  }
 				  }
 				});
+			cy.on('tap', function(event) {
+				  var evtTarget = event.cyTarget;
+				  if( evtTarget !== cy ){
+					  // TODO add info on click.
+					  alert(evtTarget.data('col'));
+				  }
+			});
 		}
 	});
 }
