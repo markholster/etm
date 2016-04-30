@@ -1,6 +1,8 @@
 function showEvent(id, type, index) {
 	var scrollTo =  $(window).scrollTop();
 	$('#search-container').hide();
+	$eventTab = $('#event-tab');
+	$eventTab.empty();	
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -29,22 +31,77 @@ function addContent(data) {
 	$('#event-card-title').text('Event ' + data.id);
 	$('#event-tab-header').text(capitalize(data.type));
 	$eventTab = $('#event-tab');
-	$eventTab.empty();
 	if (data.source) {
 		if (data.source.name) {
 			$('#event-card-title').text('Event ' + data.source.name);
 		}
 		$eventTab.append(createDetailRow('Id', data.id, 'Name', data.source.name));
 		$eventTab.append(createDetailRow('Correlation id', data.source.correlation_id, 'Payload format', data.source.payload_format));
-		var writing_times = $(data.source.endpoints).map(function () {return this.writing_endpoint_handler.handling_time}).get();
+		$endpoints = $(data.source.endpoints);
+		var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
 		if ('log' === data.type) {
 			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), 'Log level', data.source.log_level));
 		} else {
 			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')));
 		}
 		
-		if (data.source.endpoints != undefined) {
-			$eventTab.append(createEndpointsMap(data.source.endpoints));
+		if ($endpoints != undefined) {
+			$eventTab.append(createEndpointsMap($endpoints));
+			$(function() {
+			cytoscape({
+				  container: document.querySelector('#endpoint_content'),
+				    
+				  zoomingEnabled: false,
+				  panningEnabled: true,
+				  boxSelectionEnabled: false,
+				  autoungrabify: true, 
+				  
+				  style: cytoscape.stylesheet()
+				    .selector('node')
+				      .css({
+				        'content': 'data(name)',
+				        'shape': 'data(shape)',
+				        'width': 'data(width)',
+				        'text-valign': 'center',
+				        'color': 'data(color)',
+				        'background-color': 'data(background_color)'
+				      })
+				    .selector('edge')
+				      .css({
+				    	'width': 5,
+				        'target-arrow-shape': 'triangle'
+				      }),				  
+				  elements: {
+				    nodes: [
+				      { data: { id: 'app1', name: 'Enterprise Telemetry Monitor', shape: 'roundrectangle', width: 215, color: '#ffffff', background_color: '#777' } },
+				      { data: { id: 'endpoint1', name: 'QUEUE.IN', shape: 'roundrectangle', width: 85, color: '#ffffff', background_color: '#8FBC8F' } },
+				      { data: { id: 'app2', name: 'App 2', shape: 'roundrectangle', width: 80, color: '#ffffff', background_color: '#777' } },
+				      { data: { id: 'app3', name: 'App 3', shape: 'roundrectangle', width: 80, color: '#ffffff', background_color: '#777' } }
+				    ],
+				    edges: [
+				      { data: { source: 'app1', target: 'endpoint1' } },
+				      { data: { source: 'endpoint1', target: 'app2' } },
+				      { data: { source: 'endpoint1', target: 'app3' } }
+				    ]
+				  },
+				  layout: {
+					  name: 'grid',
+					  cols: 3, 
+					  position: function( node ){
+						  if ('app1' === node.data('id')) {
+							  return {row: 0, col: 0}
+						  } else if ('endpoint1' === node.data('id')) {
+							  return {row: 0, col: 1}
+						  } else if ('app2' === node.data('id')) {
+							  return {row: 0, col: 2}
+						  } else if ('app3' === node.data('id')) {
+							  return {row: 1, col: 2}
+						  }
+					  },
+					  padding: 10
+				  }
+				});
+			});
 		}
 		
         if (data.source.metadata != undefined) {
@@ -126,9 +183,7 @@ function createEndpointsMap(endpoints) {
 					}))
 			),
 			$('<div>').attr('id', 'endpoints_panel_collapse').addClass('panel-collapse collapse in').append(
-					$('<div>').addClass('panel-body').append(
-							$('<p>').text('Endpoint panel')
-					)
+					$('<div>').attr('id', 'endpoint_content').addClass('panel-body').attr('style', 'height: 6rem;')
 			)
 	);
 	return $endpointsMap;
