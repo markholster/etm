@@ -103,6 +103,7 @@ function storeTemplate(template, isOverwrite) {
         data: JSON.stringify(template),
         success: function() {
             $('#template-name').val('');
+            $('#btn-save-template').attr('disabled', 'disabled');
             if (isOverwrite) {
                 $('#list-template-links > li > a').filter(function() {
                     return $(this).text() === template.name;

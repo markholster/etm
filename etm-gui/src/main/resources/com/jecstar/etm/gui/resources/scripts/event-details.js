@@ -37,10 +37,10 @@ function addContent(data) {
 		$eventTab.append(createDetailRow('Id', data.id, 'Name', data.source.name));
 		$eventTab.append(createDetailRow('Correlation id', data.source.correlation_id, 'Payload format', data.source.payload_format));
 		var writing_times = $(data.source.endpoints).map(function () {return this.writing_endpoint_handler.handling_time}).get();
-		$eventTab.append(createDetailRow('Transaction id', data.source.transaction_id, 'Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')));
-		
 		if ('log' === data.type) {
-			$eventTab.append(createDetailRow('Log level', data.source.log_level, '', ''));
+			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), 'Log level', data.source.log_level));
+		} else {
+			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')));
 		}
 		
 		if (data.source.endpoints != undefined) {
