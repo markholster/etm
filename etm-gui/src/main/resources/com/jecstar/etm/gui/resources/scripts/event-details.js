@@ -3,6 +3,10 @@ function showEvent(id, type, index) {
 	$('#search-container').hide();
 	$eventTab = $('#event-tab');
 	$eventTab.empty();	
+	$eventTab.tab('show');
+	$('#event-tab-header').addClass('active').attr('area-expanded', 'true');
+	$('#endpoint-tab-header').remove();
+	$('#endpoint-tab').remove();
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -46,62 +50,7 @@ function addContent(data) {
 		}
 		
 		if ($endpoints != undefined) {
-			$eventTab.append(createEndpointsMap($endpoints));
-			$(function() {
-			cytoscape({
-				  container: document.querySelector('#endpoint_content'),
-				    
-				  zoomingEnabled: false,
-				  panningEnabled: true,
-				  boxSelectionEnabled: false,
-				  autoungrabify: true, 
-				  
-				  style: cytoscape.stylesheet()
-				    .selector('node')
-				      .css({
-				        'content': 'data(name)',
-				        'shape': 'data(shape)',
-				        'width': 'data(width)',
-				        'text-valign': 'center',
-				        'color': 'data(color)',
-				        'background-color': 'data(background_color)'
-				      })
-				    .selector('edge')
-				      .css({
-				    	'width': 5,
-				        'target-arrow-shape': 'triangle'
-				      }),				  
-				  elements: {
-				    nodes: [
-				      { data: { id: 'app1', name: 'Enterprise Telemetry Monitor', shape: 'roundrectangle', width: 215, color: '#ffffff', background_color: '#777' } },
-				      { data: { id: 'endpoint1', name: 'QUEUE.IN', shape: 'roundrectangle', width: 85, color: '#ffffff', background_color: '#8FBC8F' } },
-				      { data: { id: 'app2', name: 'App 2', shape: 'roundrectangle', width: 80, color: '#ffffff', background_color: '#777' } },
-				      { data: { id: 'app3', name: 'App 3', shape: 'roundrectangle', width: 80, color: '#ffffff', background_color: '#777' } }
-				    ],
-				    edges: [
-				      { data: { source: 'app1', target: 'endpoint1' } },
-				      { data: { source: 'endpoint1', target: 'app2' } },
-				      { data: { source: 'endpoint1', target: 'app3' } }
-				    ]
-				  },
-				  layout: {
-					  name: 'grid',
-					  cols: 3, 
-					  position: function( node ){
-						  if ('app1' === node.data('id')) {
-							  return {row: 0, col: 0}
-						  } else if ('endpoint1' === node.data('id')) {
-							  return {row: 0, col: 1}
-						  } else if ('app2' === node.data('id')) {
-							  return {row: 0, col: 2}
-						  } else if ('app3' === node.data('id')) {
-							  return {row: 1, col: 2}
-						  }
-					  },
-					  padding: 10
-				  }
-				});
-			});
+			createEndpointsTab($endpoints);
 		}
 		
         if (data.source.metadata != undefined) {
@@ -174,20 +123,141 @@ function createDetailMap(name, valueMap) {
 	return $detailMap;
 }
 
-function createEndpointsMap(endpoints) {
-	$endpointsMap = $('<div>').addClass('panel panel-default').append(
-			$('<div>').addClass('panel-heading clearfix').append(
-					$('<div>').addClass('pull-left').append($('<a>').addClass('font-weight-bold').attr('href', '#').text('Endpoints').click(function (event) {
-						event.preventDefault();
-						$('#endpoints_panel_collapse').collapse('toggle');
-					}))
-			),
-			$('<div>').attr('id', 'endpoints_panel_collapse').addClass('panel-collapse collapse in').append(
-					$('<div>').attr('id', 'endpoint_content').addClass('panel-body').attr('style', 'height: 6rem;')
+
+function createEndpointsTab(endpoints) {
+	$('#event-tabs').append(
+			$('<li>').addClass('nav-item').append(
+					$('<a>').attr('id', 'endpoint-tab-header')
+						.attr('aria-expanded', 'false')
+						.attr('role', 'tab')
+						.attr('data-toggle', 'tab')
+						.attr('href', '#endpoint-tab')
+						.addClass('nav-link')
+						.text('Endpoints')
 			)
 	);
-	return $endpointsMap;
+
+	// Sort endpoints on writing time
+	endpoints.sort(function (ep1, ep2) {
+		return ep1.writing_endpoint_handler.handling_time - ep2.writing_endpoint_handler.handling_time;
+	});
 	
+	var rows = 0;
+	var nodesData = [];
+	var edgesData = [];
+	var rowIx = 0;
+	$.each(endpoints, function (index, endpoint) {
+		rows++;
+		if (endpoint.reading_endpoint_handlers && endpoint.reading_endpoint_handlers.length > 1) {
+			rows += endpoint.reading_endpoint_handlers.length - 1;
+		}
+		
+		var endpointId = rowIx + '-1';
+		if (endpoint.writing_endpoint_handler.application) {
+			var name = endpoint.writing_endpoint_handler.application.name ? endpoint.writing_endpoint_handler.application.name : '?';
+			nodesData.push({
+				data: {
+					id: rowIx + '-0',
+					name: name,
+					shape: 'roundrectangle',
+					width: 'label',
+					color: '#ffffff',
+					background_color: '#777',
+					row: rowIx,
+					col: 0
+				}
+			});
+			edgesData.push({ data: { source: rowIx + '-0', target: endpointId } });
+		}
+		nodesData.push({
+			data: {
+				id: endpointId,
+				name: endpoint.name,
+				shape: 'roundrectangle',
+				width: 'label',
+				color: '#ffffff',
+				background_color: '#8fbc8f',
+				row: rowIx,
+				col: 1
+			}
+		});
+		$.each(endpoint.reading_endpoint_handlers, function (repIx, rep) {
+			if (repIx !== 0) {
+				rowIx++;
+			}
+			var name = rep.application.name ? rep.application.name : '?';
+			nodesData.push({
+				data: {
+					id: rowIx + '-2',
+					name: name,
+					shape: 'roundrectangle',
+					width: 'label',
+					color: '#ffffff',
+					background_color: '#777',
+					row: rowIx,
+					col: 2
+				}
+			});
+			edgesData.push({ data: { source: endpointId, target: rowIx + '-2' } });
+		});
+	}); 
+	
+	
+	
+	$('#tabcontents').append(
+			$('<div>').attr('id', 'endpoint-tab')
+				.attr('aria-labelledby', 'endpoint-tab-header')
+				.attr('role', 'tabpanel')
+				.attr('aria-expanded', 'false')
+				.addClass('tab-pane fade')
+				.append(
+						$('<div>').addClass('row').append(
+								$('<div>').addClass('col-sm-12').append($('<p>').text('Click on a node to view more details'))
+						),
+						$('<div>').addClass('row').append(
+								$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + rows * 4 + 'em; width: 100%;')
+						)		
+				) 
+	);
+	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+		var target = $(e.target).attr("href") // activated tab
+		if (target == '#endpoint-tab' && !$('#endpoint-overview > div > canvas').length) {
+			var cy = cytoscape({
+				  container: document.querySelector('#endpoint-overview'),
+				  zoomingEnabled: false,
+				  panningEnabled: true,
+				  boxSelectionEnabled: false,
+				  autoungrabify: true, 
+				  
+				  style: cytoscape.stylesheet()
+				    .selector('node')
+				      .css({
+				        'content': 'data(name)',
+				        'shape': 'data(shape)',
+				        'width': 'data(width)',
+				        'text-valign': 'center',
+				        'color': 'data(color)',
+				        'background-color': 'data(background_color)'
+				      })
+				    .selector('edge')
+				      .css({
+				    	'width': 5,
+				        'target-arrow-shape': 'triangle'
+				      }),				  
+				  elements: {
+				    nodes: nodesData,
+				    edges: edgesData
+				  },
+				  layout: {
+					  name: 'grid',
+					  cols: 3, 
+					  position: function( node ){
+						  return {row: node.data('row'), col: node.data('col')} 
+					  }
+				  }
+				});
+		}
+	});
 }
 
 function capitalize(text) {
