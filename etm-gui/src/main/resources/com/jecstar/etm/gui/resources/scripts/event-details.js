@@ -1,3 +1,5 @@
+var cyEndpoints; 
+
 function showEvent(id, type, index) {
 	var scrollTo =  $(window).scrollTop();
 	$('#search-container').hide();
@@ -7,6 +9,9 @@ function showEvent(id, type, index) {
 	$('#event-tab-header').addClass('active').attr('area-expanded', 'true');
 	$('#endpoint-tab-header').remove();
 	$('#endpoint-tab').remove();
+	if (cyEndpoints) {
+		cyEndpoints.destroy();
+	}
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -50,7 +55,7 @@ function addContent(data) {
 		}
 		
 		if ($endpoints != undefined) {
-			createEndpointsTab($endpoints);
+			createEndpointsTab($endpoints, data.time_zone);
 		}
 		
         if (data.source.metadata != undefined) {
@@ -82,9 +87,9 @@ function createDetailRow(name1, value1, name2, value2) {
 	return $('<div>').addClass('row')
 		.append(
 		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold').text(name1)),
-		    $('<div>').addClass('col-md-4').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value1)),
+		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value1)),
 		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold').text(name2)),
-		    $('<div>').addClass('col-md-4').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value2))		    	
+		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value2))		    	
 		);
 }
 
@@ -124,7 +129,7 @@ function createDetailMap(name, valueMap) {
 }
 
 
-function createEndpointsTab(endpoints) {
+function createEndpointsTab(endpoints, timeZone) {
 	$('#event-tabs').append(
 			$('<li>').addClass('nav-item').append(
 					$('<a>').attr('id', 'endpoint-tab-header')
@@ -159,7 +164,9 @@ function createEndpointsTab(endpoints) {
 					color: '#ffffff',
 					background_color: '#777',
 					row: rowIx,
-					col: 0
+					col: 0,
+					writing_endpoint_handler: endpoint.writing_endpoint_handler,
+					time_zone: timeZone
 				}
 			});
 			edgesData.push({ data: { source: rowIx + '-0', target: endpointId } });
@@ -173,7 +180,9 @@ function createEndpointsTab(endpoints) {
 				color: '#ffffff',
 				background_color: '#8fbc8f',
 				row: rowIx,
-				col: 1
+				col: 1,
+				endpoint: endpoint,
+				time_zone: timeZone
 			}
 		});
 		if (endpoint.reading_endpoint_handlers) {
@@ -194,7 +203,9 @@ function createEndpointsTab(endpoints) {
 						color: '#ffffff',
 						background_color: '#777',
 						row: rowIx,
-						col: 2
+						col: 2,
+						reading_endpoint_handler: rep,
+						time_zone: timeZone
 					}
 				});
 				edgesData.push({ data: { source: endpointId, target: rowIx + '-2' } });
@@ -209,18 +220,22 @@ function createEndpointsTab(endpoints) {
 				.attr('aria-expanded', 'false')
 				.addClass('tab-pane fade')
 				.append(
-						$('<div>').addClass('row').append(
-								$('<div>').addClass('col-sm-12').append($('<p>').text('Click on a node to view more details'))
+						$('<div>').attr('id', 'endpoint-node-detail').append(
+								$('<div>').addClass('row').append(
+										$('<div>').addClass('col-sm-12').append(
+												$('<p>').addClass('text-xs-center').text('Click on a node to view more details')
+										)		
+								)		
 						),
 						$('<div>').addClass('row').append(
-								$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + (rowIx + 1) * 4 + 'em; width: 100%;')
-						)		
+								$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + (rowIx + 1) * 3 + 'em; width: 100%;')
+						)
 				) 
 	);
 	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 		var target = $(e.target).attr("href") // activated tab
 		if (target == '#endpoint-tab' && !$('#endpoint-overview > div > canvas').length) {
-			var cy = cytoscape({
+			cyEndpoints = cytoscape({
 				  container: document.querySelector('#endpoint-overview'),
 				  zoomingEnabled: false,
 				  panningEnabled: true,
@@ -239,7 +254,7 @@ function createEndpointsTab(endpoints) {
 				      })
 				    .selector('edge')
 				      .css({
-				    	'width': 5,
+				    	'width': 2,
 				        'target-arrow-shape': 'triangle'
 				      }),				  
 				  elements: {
@@ -256,15 +271,87 @@ function createEndpointsTab(endpoints) {
 					  }
 				  }
 				});
-			cy.on('tap', function(event) {
+			cyEndpoints.on('tap', function(event) {
 				  var evtTarget = event.cyTarget;
-				  if( evtTarget !== cy ){
-					  // TODO add info on click.
-					  alert(evtTarget.data('col'));
+				  if( evtTarget !== cyEndpoints ){
+					  if (evtTarget.data('writing_endpoint_handler')) {
+						  displayWritingEndpointHandler(cyEndpoints, evtTarget.data('writing_endpoint_handler'), evtTarget.data('time_zone'));
+					  } else if (evtTarget.data('endpoint')) {
+						  displayEndpoint(cyEndpoints, evtTarget.data('endpoint'), evtTarget.data('time_zone'));
+					  } else if (evtTarget.data('reading_endpoint_handler')) {
+						  displayReadingEndpointHandler(cyEndpoints, evtTarget.data('reading_endpoint_handler'), evtTarget.data('time_zone'));
+					  }
 				  }
 			});
 		}
 	});
+}
+
+function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
+	var $div = $('#endpoint-node-detail').empty();
+	var eh = formatEndpointHandler(endpoint_handler, timeZone);
+	$div.append(createDetailRow('Write time', eh.handling_time, 'Transaction id', eh.transaction_id));
+	$div.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
+	$div.append(createDetailRow('Application version', eh.application_version, 'Application version', eh.application_instance));
+	$div.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host_address));
+	$div.append('<br>');
+	cyEndpoints.resize();
+}
+
+function displayEndpoint(cyEndpoints, endpoint, timeZone) {
+	var $div = $('#endpoint-node-detail').empty();
+	$div.append(createDetailRow('Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), 'Endpoint name', endpoint.name));
+	$div.append('<br>');
+	cyEndpoints.resize();
+}
+
+function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
+	var $div = $('#endpoint-node-detail').empty();
+	var eh = formatEndpointHandler(endpoint_handler, timeZone);
+	$div.append(createDetailRow('Read time', eh.handling_time, 'Transaction id', eh.transaction_id));
+	$div.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
+	$div.append(createDetailRow('Application version', eh.application_version, 'Application version', eh.application_instance));
+	$div.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host_address));
+	$div.append('<br>');
+	cyEndpoints.resize();
+}
+
+function formatEndpointHandler(endpoint_handler, timeZone) {
+	var flat = {
+		handling_time: undefined,
+		transaction_id: endpoint_handler.transaction_id,
+		application_name: undefined,
+		application_version: undefined,
+		application_instance: undefined,
+		application_principal: undefined,
+		application_host_address: undefined,
+		location: undefined,
+	};
+	if (endpoint_handler.handling_time) {
+		flat.handling_time = moment.tz(endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+	}
+	if (endpoint_handler.application) {
+		flat.application_name = endpoint_handler.application.name; 
+		flat.application_version = endpoint_handler.application.version; 
+		flat.application_instance = endpoint_handler.application.instance; 
+		flat.application_principal = endpoint_handler.application.principal; 
+		flat.application_host_address = endpoint_handler.application.host_address; 
+	}
+	if (endpoint_handler.location) {
+		flat.location = convertDDToDMS(endpoint_handler.location.lat, false) + ' ' + convertDDToDMS(endpoint_handler.location.lon, true); 
+	}
+	
+	function convertDDToDMS(D, lng){
+	    var dms =  {
+	        dir : D<0?lng?'W':'S':lng?'E':'N',
+	        deg : 0|(D<0?D=-D:D),
+	        min : 0|D%1*60,
+	        sec :(0|D*60%1*6000)/100
+	    };
+	    return dms.deg + '°' + dms.min + '\'' + dms.sec + '" ' + dms.dir
+	}
+	
+	return flat;
 }
 
 function capitalize(text) {
