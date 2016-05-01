@@ -24,7 +24,7 @@ function showEvent(id, type, index) {
 	    }
 	});
 	
-	$('#btn-back-to-results')
+	$('#btn-back-to-results, #link-back-to-results')
 		.unbind('click')
 		.click(function(event) {
 			event.preventDefault();
@@ -69,11 +69,13 @@ function addContent(data) {
         );
         
         if ('log' === data.type && data.source.stack_trace != undefined) {
-    		$('<div>').addClass('row').append(
-    				$('<div>').addClass('col-sm-12').append(
-    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.stack_trace)
-    				)
-    		);        	
+        	$eventTab.append(
+	    		$('<div>').addClass('row').append(
+	    				$('<div>').addClass('col-sm-12').append(
+	    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.stack_trace)
+	    				)
+	    		)
+    		);
         }
         
 		

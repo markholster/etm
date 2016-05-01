@@ -180,7 +180,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 			telemetryEvent.correlationData.putAll(eventMap);
 		}
 		List<Map<String, Object>> endpoints = getArray(this.tags.getEndpointsTag(), valueMap);
-		if (eventMap != null) {
+		if (endpoints != null) {
 			for (Map<String, Object> endpointMap : endpoints) {
 				Endpoint endpoint = new Endpoint();
 				endpoint.name = getString(this.tags.getEndpointNameTag(), endpointMap);
