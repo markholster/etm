@@ -53,12 +53,7 @@ function addContent(data) {
 		} else {
 			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')));
 		}
-		
-		if ($endpoints != undefined) {
-			createEndpointsTab($endpoints, data.time_zone);
-		}
-		
-        if (data.source.metadata != undefined) {
+		if (data.source.metadata != undefined) {
         	$eventTab.append(createDetailMap('metadata', data.source.metadata));
         }
         if (data.source.extracted_data != undefined) {
@@ -80,16 +75,22 @@ function addContent(data) {
     				)
     		);        	
         }
+        
+		
+		if ($endpoints != undefined) {
+			createEndpointsTab($endpoints, data.time_zone);
+		}
+
 	}
 }
 
 function createDetailRow(name1, value1, name2, value2) {
 	return $('<div>').addClass('row')
 		.append(
-		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold').text(name1)),
-		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value1)),
-		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold').text(name2)),
-		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').attr('style', 'padding-bottom: 0px;').text(value2))		    	
+		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name1)),
+		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value1)),
+		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name2)),
+		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value2))		    	
 		);
 }
 
@@ -288,32 +289,44 @@ function createEndpointsTab(endpoints, timeZone) {
 }
 
 function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
-	var $div = $('#endpoint-node-detail').empty();
-	var eh = formatEndpointHandler(endpoint_handler, timeZone);
-	$div.append(createDetailRow('Write time', eh.handling_time, 'Transaction id', eh.transaction_id));
-	$div.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
-	$div.append(createDetailRow('Application version', eh.application_version, 'Application version', eh.application_instance));
-	$div.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host_address));
-	$div.append('<br>');
-	cyEndpoints.resize();
+	$('#endpoint-node-detail').fadeOut('fast', function () {
+		$this = $(this).empty();
+		var eh = formatEndpointHandler(endpoint_handler, timeZone);
+		$this.append(createDetailRow('Write time', eh.handling_time, 'Transaction id', eh.transaction_id));
+		$this.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
+		$this.append(createDetailRow('Application version', eh.application_version, 'Application instance', eh.application_instance));
+		$this.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host));
+		$this.append('<br>');
+		$this.fadeIn('fast', function () {
+			cyEndpoints.resize();
+		});
+	});
 }
 
 function displayEndpoint(cyEndpoints, endpoint, timeZone) {
-	var $div = $('#endpoint-node-detail').empty();
-	$div.append(createDetailRow('Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), 'Endpoint name', endpoint.name));
-	$div.append('<br>');
-	cyEndpoints.resize();
+	$('#endpoint-node-detail').fadeOut('fast', function () {
+		$this = $(this).empty();
+		$this.append(createDetailRow('Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), 'Endpoint name', endpoint.name));
+		$this.append('<br>');
+		$this.hide().fadeIn('fast', function () {
+			cyEndpoints.resize();
+		});
+	});
 }
 
 function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
-	var $div = $('#endpoint-node-detail').empty();
-	var eh = formatEndpointHandler(endpoint_handler, timeZone);
-	$div.append(createDetailRow('Read time', eh.handling_time, 'Transaction id', eh.transaction_id));
-	$div.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
-	$div.append(createDetailRow('Application version', eh.application_version, 'Application version', eh.application_instance));
-	$div.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host_address));
-	$div.append('<br>');
-	cyEndpoints.resize();
+	$('#endpoint-node-detail').fadeOut('fast', function () {
+		$this = $(this).empty();
+		var eh = formatEndpointHandler(endpoint_handler, timeZone);
+		$this.append(createDetailRow('Read time', eh.handling_time, 'Transaction id', eh.transaction_id));
+		$this.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
+		$this.append(createDetailRow('Application version', eh.application_version, 'Application version', eh.application_instance));
+		$this.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host));
+		$this.append('<br>');
+		$this.hide().fadeIn('fast', function () {
+			cyEndpoints.resize();
+		});
+	});
 }
 
 function formatEndpointHandler(endpoint_handler, timeZone) {
@@ -324,7 +337,7 @@ function formatEndpointHandler(endpoint_handler, timeZone) {
 		application_version: undefined,
 		application_instance: undefined,
 		application_principal: undefined,
-		application_host_address: undefined,
+		application_host: undefined,
 		location: undefined,
 	};
 	if (endpoint_handler.handling_time) {
@@ -334,8 +347,15 @@ function formatEndpointHandler(endpoint_handler, timeZone) {
 		flat.application_name = endpoint_handler.application.name; 
 		flat.application_version = endpoint_handler.application.version; 
 		flat.application_instance = endpoint_handler.application.instance; 
-		flat.application_principal = endpoint_handler.application.principal; 
-		flat.application_host_address = endpoint_handler.application.host_address; 
+		flat.application_principal = endpoint_handler.application.principal;
+		if (endpoint_handler.application.host_name) {
+			flat.application_host = endpoint_handler.application.host_name;
+			if (endpoint_handler.application.host_address && endpoint_handler.application.host_address !== endpoint_handler.application.host_name) {
+				flat.application_host += ' (' + endpoint_handler.application.host_address + ')'
+			}
+		} else {
+			flat.application_host = endpoint_handler.application.host_address;
+		}
 	}
 	if (endpoint_handler.location) {
 		flat.location = convertDDToDMS(endpoint_handler.location.lat, false) + ' ' + convertDDToDMS(endpoint_handler.location.lon, true); 

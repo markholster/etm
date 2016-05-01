@@ -364,6 +364,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 									.setVersion(this.configuration.getApplicationVersion())
 									.setInstance(this.configuration.getApplicationInstance())
 									.setPrincipal(this.configuration.getPrincipalName())
+									.setHostAddress(this.configuration.getHostAddress())
 									)))
 			.build();
 		this.logForwarder.forwardLog(logTelemetryEvent);

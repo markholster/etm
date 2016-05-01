@@ -132,14 +132,16 @@ public abstract class AbstractJsonConverter {
 		return true;
 	}
 	
-	protected boolean addInetAddressElementToJsonBuffer(String elementName, InetAddress elementValue, StringBuilder buffer, boolean firstElement) {
+	protected boolean addInetAddressElementToJsonBuffer(String hostAddressTag, String hostNameTag, InetAddress elementValue, StringBuilder buffer, boolean firstElement) {
 		if (elementValue == null) {
 			return false;
 		}
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": \"" + elementValue.getHostAddress() + "\"");
+		buffer.append("\"" + escapeToJson(hostAddressTag) + "\": \"" + escapeToJson(elementValue.getHostAddress()) + "\"");
+		// TODO documenteer dat de getHostName heel duurt is als er geen gebruikt wordt gemaakt van een meegegeven hostname.
+		buffer.append(", \"" + escapeToJson(hostNameTag) + "\": \"" + escapeToJson(elementValue.getHostName()) + "\"");
 		return true;
 	}
 	

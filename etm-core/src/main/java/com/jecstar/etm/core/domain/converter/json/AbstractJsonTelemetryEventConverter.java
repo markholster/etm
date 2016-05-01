@@ -132,7 +132,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		if (endpointHandler.handlingTime != null) {
 			added = addLongElementToJsonBuffer(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime.toInstant().toEpochMilli(), buffer, true);
 		}
-		added = addStringElementToJsonBuffer(this.tags.getTransactionIdTag(), endpointHandler.transactionId, buffer, !added) || added;
+		added = addStringElementToJsonBuffer(this.tags.getEndpointHandlerTransactionIdTag(), endpointHandler.transactionId, buffer, !added) || added;
 		Application application = endpointHandler.application;
 		if (application.isSet()) {
 			if (added) {
@@ -140,7 +140,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 			}
 			buffer.append("\"" + tags.getEndpointHandlerApplicationTag() + "\" : {");
 			added = addStringElementToJsonBuffer(tags.getApplicationNameTag(), application.name, buffer, true);
-			added = addInetAddressElementToJsonBuffer(tags.getApplicationHostAddressTag(), application.hostAddress, buffer, !added) || added;
+			added = addInetAddressElementToJsonBuffer(tags.getApplicationHostAddressTag(), tags.getApplicationHostNameTag(), application.hostAddress, buffer, !added) || added;
 			added = addStringElementToJsonBuffer(tags.getApplicationInstanceTag(), application.instance, buffer, !added) || added;
 			added = addStringElementToJsonBuffer(tags.getApplicationVersionTag(), application.version, buffer, !added) || added;
 			added = addStringElementToJsonBuffer(tags.getApplicationPrincipalTag(), application.principal, buffer, !added) || added;
@@ -216,9 +216,29 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 		Map<String, Object> applicationValueMap = getObject(this.tags.getEndpointHandlerApplicationTag(), valueMap);
 		if (!applicationValueMap.isEmpty()) {
 			String stringHostAddress = getString(this.tags.getApplicationHostAddressTag(), applicationValueMap);
+			String hostName = getString(this.tags.getApplicationHostNameTag(), applicationValueMap);
 			if (stringHostAddress != null) {
+				byte[] address = null;
 				try {
-					endpointHandler.application.hostAddress = InetAddress.getByName(stringHostAddress);
+					address = InetAddress.getByName(stringHostAddress).getAddress();
+				} catch (UnknownHostException e) {
+				}
+				if (address != null) {
+					if (hostName != null) {
+						try {
+							endpointHandler.application.hostAddress = InetAddress.getByAddress(hostName, address);
+						} catch (UnknownHostException e) {
+						}
+					} else {
+						try {
+							endpointHandler.application.hostAddress = InetAddress.getByAddress(address);
+						} catch (UnknownHostException e) {
+						}
+					}
+				}
+			} else if (hostName != null) {
+				try {
+					endpointHandler.application.hostAddress = InetAddress.getByName(hostName);
 				} catch (UnknownHostException e) {
 				}
 			}
@@ -228,7 +248,7 @@ public abstract class AbstractJsonTelemetryEventConverter<Event extends Telemetr
 			endpointHandler.application.version = getString(this.tags.getApplicationVersionTag(), applicationValueMap);
 		}
 		endpointHandler.handlingTime = getZonedDateTime(this.tags.getEndpointHandlerHandlingTimeTag(), valueMap);
-		endpointHandler.transactionId = getString(this.tags.getTransactionIdTag(), valueMap);
+		endpointHandler.transactionId = getString(this.tags.getEndpointHandlerTransactionIdTag(), valueMap);
 		Map<String, Object> locationValueMap = getObject(this.tags.getEndpointHandlerLocationTag(), valueMap);
 		if (locationValueMap != null) {
 			endpointHandler.location.latitude = getDouble(this.tags.getLatitudeTag(), locationValueMap);

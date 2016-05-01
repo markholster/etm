@@ -14,7 +14,6 @@ public interface TelemetryEventConverterTags {
 	String getPayloadFormatTag();
 	String getResponseTimeTag();
 	String getResponseHandlingTimeTag();
-	String getTransactionIdTag();
 	String getTransportTag();
 	String getReadingEndpointHandlerTag();
 	String getReadingEndpointHandlersTag();
@@ -26,11 +25,12 @@ public interface TelemetryEventConverterTags {
 
 	// EndpointHandler attributes
 	String getEndpointHandlerHandlingTimeTag();
+	String getEndpointHandlerTransactionIdTag();	
 	String getEndpointHandlerApplicationTag();
-	
 	// Application attributes
 	String getApplicationNameTag();
 	String getApplicationHostAddressTag();
+	String getApplicationHostNameTag();
 	String getApplicationInstanceTag();
 	String getApplicationVersionTag();
 	String getApplicationPrincipalTag();

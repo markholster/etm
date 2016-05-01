@@ -29,8 +29,8 @@ public class ApplicationBuilder {
 		return this;
 	}
 	
-	public ApplicationBuilder setPrincipal(String instance) {
-		this.application.instance = instance;
+	public ApplicationBuilder setPrincipal(String principal) {
+		this.application.principal = principal;
 		return this;
 	}
 	

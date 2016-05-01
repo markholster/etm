@@ -1,5 +1,6 @@
 package com.jecstar.etm.slf4j;
 
+import java.net.InetAddress;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -101,6 +102,17 @@ public interface Configuration {
 	 * @return The principal name.
 	 */
 	String getPrincipalName();
+
+	/**
+	 * Gives the host address of the application that fires the event. This
+	 * property will be visible in ETM, but may be <code>null</code>. For
+	 * performance reasons it's best to instantiate the <code>InetAddres</code>
+	 * with the {@link java.net.InetAddress#getByAddress(String, byte[])}
+	 * method. This prevents an expensive dns lookup.
+	 * 
+	 * @return The host address.
+	 */
+	InetAddress getHostAddress();
 	
 	/**
 	 * Gives the log level of a given logger name.

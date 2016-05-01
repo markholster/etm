@@ -1,5 +1,6 @@
 package com.jecstar.etm.slf4j;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -59,6 +60,11 @@ public class DefaultConfiguration implements Configuration {
 
 	@Override
 	public String getPrincipalName() {
+		return null;
+	}
+
+	@Override
+	public InetAddress getHostAddress() {
 		return null;
 	}
 

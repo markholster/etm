@@ -1,5 +1,6 @@
 package com.jecstar.etm.slf4j;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -16,6 +17,7 @@ public class ConfigurationImpl implements Configuration {
 	public static String applicationVersion = null;
 	public static String applicationInstance = null;
 	public static String principalName = System.getProperty("user.name");
+	public static InetAddress hostAddress = null;
 	
 	@Override
 	public List<String> getEndpointUrls() {
@@ -65,6 +67,11 @@ public class ConfigurationImpl implements Configuration {
 	@Override
 	public String getPrincipalName() {
 		return principalName;
+	}
+
+	@Override
+	public InetAddress getHostAddress() {
+		return hostAddress;
 	}
 
 }

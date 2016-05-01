@@ -3,6 +3,8 @@ package com.jecstar.etm.launcher;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
@@ -21,6 +23,7 @@ public class Startup {
 			ConfigurationImpl.loggers.putAll(configuration.logging.loggers);
 			ConfigurationImpl.rootLogLevel = configuration.logging.rootLogger;
 			ConfigurationImpl.applicationInstance = configuration.instanceName;
+			ConfigurationImpl.hostAddress = InetAddress.getByName(configuration.bindingAddress);
 			// TODO set the application version.		
 			new Launcher().launch(commandLineParameters, configuration);
 		} catch (FileNotFoundException e) {
@@ -28,6 +31,9 @@ public class Startup {
 			return;
 		} catch (YamlException e) {
 			System.err.println("Error reading configuration file.");
+			return;
+		} catch (UnknownHostException e) {
+			System.err.println("Invalid binding address.");
 			return;
 		}
 	}		

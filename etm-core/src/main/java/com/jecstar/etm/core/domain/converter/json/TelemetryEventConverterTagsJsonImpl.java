@@ -85,11 +85,6 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	}
 	
 	@Override
-	public String getTransactionIdTag() {
-		return "transaction_id";
-	}
-	
-	@Override
 	public String getTransportTag() {
 		return "transport";
 	}
@@ -102,6 +97,11 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	@Override
 	public String getEndpointHandlerHandlingTimeTag() {
 		return "handling_time";
+	}
+	
+	@Override
+	public String getEndpointHandlerTransactionIdTag() {
+		return "transaction_id";
 	}
 
 	@Override
@@ -117,6 +117,11 @@ public class TelemetryEventConverterTagsJsonImpl implements TelemetryEventConver
 	@Override
 	public String getApplicationHostAddressTag() {
 		return "host_address";
+	}
+	
+	@Override
+	public String getApplicationHostNameTag() {
+		return "host_name";
 	}
 
 	@Override

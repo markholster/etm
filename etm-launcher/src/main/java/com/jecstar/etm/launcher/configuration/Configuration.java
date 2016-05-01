@@ -5,7 +5,7 @@ public class Configuration {
 	public String clusterName = "Enterprise Telemetry Monitor";
 	public String instanceName = "Node_1";
 	
-	public String bindingAddress = "0.0.0.0";
+	public String bindingAddress = "127.0.0.1";
 	public int bindingPortOffset = 0;
 	
 	public Elasticsearch elasticsearch = new Elasticsearch();
