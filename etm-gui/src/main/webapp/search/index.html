@@ -192,10 +192,12 @@ $(function () {
                 return;
             }
             var overView = 'Found <span id="result_count_found">' + data.numFound + '</span> events in ' + data.queryTime + 'ms.';
-            if (data.start < data.end) {
+            if (data.numFound > 0) {
                 overView = overView + ' Showing events ' + (data.start + 1) + ' to <span id="end_range">'+ (data.end + 1) +'</span>.'; 
                 $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=500&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
                 $('#download_link').show();
+            }
+            if (data.end < (data.numFound - 1)) {
                 $('#show_more_lnk').show();
             }
             $('#result_overview').html('<p>' + overView + '</p>');
@@ -300,7 +302,7 @@ $(function () {
                $('#end_range').text(currentStart);
                $('#download_link').attr('href', './download?queryString=' + encodeURIComponent($('#search_input').val()) + '&start=' + encodeURIComponent(initialStart) + '&rows=500&sortField=' + encodeURIComponent(sortField) + '&sortOrder=' + encodeURIComponent(sortOrder));
                $('#result_count_found').text(data.numFound);
-               if (data.start < data.end) {
+               if (data.end < (data.numFound - 1)) {
                    $('#show_more_lnk').show();
                }
                loading = false;
