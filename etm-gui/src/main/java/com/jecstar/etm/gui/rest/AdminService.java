@@ -486,6 +486,8 @@ public class AdminService {
 							return Integer.compare(o1.id, o2.id);
 						}});
 	        		generator.writeStringField("name", indexStatus.indexName);
+	        		generator.writeNumberField("doc_count", indexStatus.docCount);
+	        		generator.writeNumberField("size_in_bytes", indexStatus.sizeInBytes);
 	        		generator.writeArrayFieldStart("shards");
 	        		for (ShardStatus shardStatus : indexStatus.shardStatuses) {
 	        			generator.writeStartObject();

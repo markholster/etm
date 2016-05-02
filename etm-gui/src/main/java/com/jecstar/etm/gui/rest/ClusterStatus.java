@@ -35,6 +35,8 @@ public class ClusterStatus {
 	public class IndexStatus {
 		public String indexName;
 		public List<ShardStatus> shardStatuses = new ArrayList<ShardStatus>();
+		public long docCount;
+		public long sizeInBytes;
 	}
 	
 	public class ShardStatus {

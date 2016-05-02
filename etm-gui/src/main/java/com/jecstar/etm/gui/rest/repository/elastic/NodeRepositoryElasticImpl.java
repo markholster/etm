@@ -18,6 +18,10 @@ import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateAction;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequestBuilder;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateResponse;
+import org.elasticsearch.action.admin.indices.stats.IndexStats;
+import org.elasticsearch.action.admin.indices.stats.IndicesStatsAction;
+import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequestBuilder;
+import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.routing.RoutingNodes;
@@ -31,6 +35,7 @@ import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.core.converter.EtmConfigurationConverterTags;
 import com.jecstar.etm.core.converter.json.EtmConfigurationConverterTagsJsonImpl;
 import com.jecstar.etm.gui.rest.ClusterStatus;
+import com.jecstar.etm.gui.rest.ClusterStatus.IndexStatus;
 import com.jecstar.etm.gui.rest.ClusterStatus.ShardStatus;
 import com.jecstar.etm.gui.rest.Node;
 import com.jecstar.etm.gui.rest.NodeStatus;
@@ -150,6 +155,12 @@ public class NodeRepositoryElasticImpl implements NodeRepository {
 		List<ShardRouting> shards = routingNodes.shards(isEtmIndex());
 		addShardToClusterStatus(clusterStatus, shards, stateResponse, isEtmIndex());
 		addShardToClusterStatus(clusterStatus, routingNodes.unassigned(), stateResponse, isEtmIndex());
+		for (IndexStatus indexStatus : clusterStatus.indexStatuses) {
+			IndicesStatsResponse indicesStatsResponse = new IndicesStatsRequestBuilder(this.elasticClient, IndicesStatsAction.INSTANCE).setStore(true).setDocs(true).setIndices(indexStatus.indexName).get();
+			IndexStats indexStats = indicesStatsResponse.getIndex(indexStatus.indexName);
+			indexStatus.docCount =  indexStats.getPrimaries().docs.getCount();
+			indexStatus.sizeInBytes = indexStats.getPrimaries().store.getSizeInBytes();
+		}
 		return clusterStatus;
 	}
 	

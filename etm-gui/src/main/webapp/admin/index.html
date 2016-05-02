@@ -439,7 +439,7 @@ $(function () {
 	                   if (index != 0) {
 	                       $('#shard_status').append($('<br />'));
 	                   }
-	                   $('#shard_status').append($('<fieldset />').append($('<legend />').text('Index ' + dbIndex.name)));
+	                   $('#shard_status').append($('<fieldset />').append($('<legend />').text('Index ' + dbIndex.name + ' - ' + dbIndex.doc_count + ' documents with a total of ' + dbIndex.size_in_bytes + ' bytes.')));
 	                   if (dbIndex.shards) {
 	                       var tbody = $('<tbody />')
 	                       $.each(dbIndex.shards, function(shardIx, shard) {
