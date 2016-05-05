@@ -431,24 +431,22 @@ Ook is het aan te raden om de Unit Of Work van de monitoring op "independent" of
 zorgen toch gelogd in ETM.
 
 === ETM IBM MQ processor
-Naast het gebruik van een MDB processor voor het uitlezen van events die op een queue geplaatst zijn, is er de mogelijkheid om een stand-alone processor te gebruiken. Deze processor
-is enkel geschikt voor het uitlezen van een IBM MQ queue. Deze processor maakt rechtstreeks gebruik van de MQ api's en biedt daardoor een set aan opties die niet via een MDB
-processor beschikbaar is. Denk hierbij bijvoorbeeld aan het uitlezen van gesegmenteerde berichten.
+Naast het gebruik van een MDB processor voor het uitlezen van events die op een queue geplaatst zijn, is er de mogelijkheid om een stand-alone processor te gebruiken. Deze is enkel 
+geschikt voor gebruik in combinatie met IBM MQ queue en maakt rechtstreeks gebruik van de MQ api's. Hierdoor zijn meerdere opties toegangkelijk die niet via een MDB processor 
+beschikbaar zijn, zoals het uitlezen van gesegmenteerde berichten.
 
-De ETM IBM MQ processor is te vinden in de directory <ETM_UNZIP_DIR>/components/etm-processor-ibmmq. Deze directory kan verplaats worden naar elke gewenste locatie. De configuratie
-van de processor is terug te vinden in de <ETM_UNZIP_DIR>/components/etm-processor-ibmmq/etc. Het bestand etm.yml is het primaire configuratie bestand. In dit bestand moeten uw
-MQ connectie parameters geplaatst worden. Het bestand is voorzien van commentaar regels per in te richten optie. De default instellingen voldoen in veel gevallen, wat betekend
-dat enkel de MQ Queue Managers en MQ Queue's die uitgelezen moeten worden in de configuratie opgevoerd hoeven te worden.
+De ETM IBM MQ processor is te vinden in de directory <ETM_UNZIP_DIR>/components/etm-processor-ibmmq en te verplaatsen naar elke willekeurige locatie. De configuratie
+van de processor is terug te vinden in de <ETM_UNZIP_DIR>/components/etm-processor-ibmmq/etc. Het bestand etm.yml is het primaire configuratie bestand. In dit bestand plaatst u uw
+MQ connectie parameters. Het bestand is voorzien van commentaarregels per in te richten optie. 
 
-Door licentie technische redenen is het voor Jecstar niet toegestaan de MQ libraries mee te leveren met ETM. Voordat u de ETM IBM MQ processor kunt starten is het noodzakelijk de
-Java MQ libraries te plaatsen in de <ETM_UNZIP_DIR>/components/etm-processor-ibmmq/lib directory. Het volstaat om het bestand 'com.ibm.mq.allclient.jar' te copieren naar deze lib
-directory.
+Door licentie technische redenen is het voor Jecstar Innovation niet toegestaan de MQ libraries mee te leveren met ETM. Voordat u de ETM IBM MQ processor kunt starten is het noodzakelijk 
+de Java MQ libraries te plaatsen in de <ETM_UNZIP_DIR>/components/etm-processor-ibmmq/lib directory. Het volstaat om het bestand 'com.ibm.mq.allclient.jar' te kopieren naar 
+deze lib directory.
 
-Nadat de configuratie is aangepast en de Java MQ libraries zijn geplaatst kan de ETM IBM MQ processor gestart worden. Afhankelijk van uw operating system zijn er scripts te vinden 
-in de directory <ETM_UNZIP_DIR>/components/etm-processor-ibmmq/bin. Op een unix omgeving zal de ETM IBM MQ processor geen output geven op de console, maar enkel loggen naar de log
-files die terug te vinden zijn in de directory <ETM_UNZIP_DIR>/components/etm-processor-ibmmq/logs. Om fouten op te sporen kan dit een lastige situatie zijn. ETM IBM MQ processor kan
-daarom gestart worden in de 'console' modus waardoor alle output ook naar de console gelogd wordt. Deze modus kan gestart worden door het start script uit te voeren met de parameter
-'console'.
+Nadat de configuratie is aangepast en de Java MQ libraries zijn geplaatst kan de ETM IBM MQ processor gestart worden. De start scripts zijn te vinden in de directory 
+<ETM_UNZIP_DIR>/components/etm-processor-ibmmq/bin. Op een unix omgeving zal de ETM IBM MQ processor geen output geven op de console, maar enkel loggen naar de log
+files die terug te vinden zijn in de directory <ETM_UNZIP_DIR>/components/etm-processor-ibmmq/logs. Indien u fouten wilt opsporen kan ETM IBM MQ processor gestart worden in 
+de 'console' modus waardoor alle output ook naar de console gelogd wordt. Deze modus kan gestart worden door het start script uit te voeren met de parameter 'console'.
   
 === ETM web service processor
 Om events aan ETM toe te voegen via een web service dient u de component etm-processor-ws-{etm_version}.war te deployen in Wildfly. Na het deployen is de wsdl van de 
