@@ -79,7 +79,7 @@ function addContent(data) {
         }
         
 		
-		if ($endpoints != undefined) {
+		if ($endpoints != undefined && $endpoints.length > 0) {
 			createEndpointsTab($endpoints, data.time_zone);
 		}
 
@@ -177,7 +177,7 @@ function createEndpointsTab(endpoints, timeZone) {
 		nodesData.push({
 			data: {
 				id: endpointId,
-				name: endpoint.name,
+				name: endpoint.name ? endpoint.name : '?',
 				shape: 'roundrectangle',
 				width: 'label',
 				color: '#ffffff',

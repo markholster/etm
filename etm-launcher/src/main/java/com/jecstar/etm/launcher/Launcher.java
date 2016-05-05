@@ -7,11 +7,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.netty.NettyUtils;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
@@ -34,13 +35,13 @@ public class Launcher {
 
 	private TelemetryCommandProcessor processor;
 	private HttpServer httpServer;
-	private Node node;
 	private Client elasticClient;
 	private ScheduledReporter metricReporter;
 
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration) {
 		addShutdownHooks();
+		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
 		try {
 			initializeElasticsearchClient(configuration);
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
@@ -88,9 +89,6 @@ public class Launcher {
 				if (Launcher.this.elasticClient != null) {
 					try { Launcher.this.elasticClient.close(); } catch (Throwable t) {}
 				}
-				if (Launcher.this.node != null) {
-					try { Launcher.this.node.close(); } catch (Throwable t) {}
-				}
 			}
 		});
 	}
@@ -106,51 +104,25 @@ public class Launcher {
 		if (this.elasticClient != null) {
 			return;
 		}
-		if (configuration.elasticsearch.connectAsNode) {
-			if (this.node == null) {
-				Builder settingsBuilder = Settings.settingsBuilder()
-					.put("cluster.name", configuration.clusterName)
-					.put("node.name", configuration.instanceName)
-					.put("path.home", configuration.elasticsearch.nodeHomePath)
-					.put("path.data", configuration.elasticsearch.nodeDataPath)
-					.put("path.logs", configuration.elasticsearch.nodeLogPath)
-					.put("http.enabled", false);
-				if (configuration.getElasticsearchTransportPort() > 0) {
-					settingsBuilder.put("transport.tcp.port", configuration.getElasticsearchTransportPort());
-				}
-				if (!configuration.elasticsearch.nodeMulticast) {
-					settingsBuilder.put("discovery.zen.ping.multicast.enabled", false);
-					settingsBuilder.put("discovery.zen.ping.unicast.hosts", configuration.elasticsearch.connectAddresses);
-				}
-				this.node = new NodeBuilder()
-						.settings(settingsBuilder)
-						.client(!configuration.elasticsearch.nodeData)
-						.data(configuration.elasticsearch.nodeData)
-						.clusterName(configuration.clusterName)
-						.node();
-			}
-			this.elasticClient = node.client();
-		} else {
-			TransportClient transportClient = TransportClient.builder().settings(Settings.settingsBuilder()
-					.put("cluster.name", configuration.clusterName)
-					.put("client.transport.sniff", true)).build();
-			String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
-			for (String host : hosts) {
-				int ix = host.lastIndexOf(":");
-				if (ix != -1) {
-					try {
-						InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
-						int port = Integer.parseInt(host.substring(ix + 1));
-						transportClient.addTransportAddress(new InetSocketTransportAddress(inetAddress, port));
-					} catch (UnknownHostException e) {
-						if (log.isWarningLevelEnabled()) {
-							log.logWarningMessage("Unable to connect to '" + host + "'", e);
-						}
+		TransportClient transportClient = TransportClient.builder().settings(Settings.builder()
+				.put("cluster.name", configuration.clusterName)
+				.put("client.transport.sniff", true)).build();
+		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
+		for (String host : hosts) {
+			int ix = host.lastIndexOf(":");
+			if (ix != -1) {
+				try {
+					InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
+					int port = Integer.parseInt(host.substring(ix + 1));
+					transportClient.addTransportAddress(new InetSocketTransportAddress(inetAddress, port));
+				} catch (UnknownHostException e) {
+					if (log.isWarningLevelEnabled()) {
+						log.logWarningMessage("Unable to connect to '" + host + "'", e);
 					}
 				}
 			}
-			this.elasticClient = transportClient;
 		}
+		this.elasticClient = transportClient;
 		new ElasticsearchIndextemplateCreator().createTemplates(this.elasticClient);
 	}
 	

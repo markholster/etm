@@ -32,11 +32,4 @@ public class Configuration {
 		}
 		return this.http.httpsPort;
 	}
-	
-	public int getElasticsearchTransportPort() {
-		if (this.elasticsearch.transportPort > 0) {
-			return this.elasticsearch.transportPort + this.bindingPortOffset;
-		}
-		return this.elasticsearch.transportPort;
-	}
 }
