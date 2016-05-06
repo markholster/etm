@@ -5,7 +5,6 @@ import java.net.InetAddress;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -78,13 +77,9 @@ public abstract class AbstractJsonConverter {
 			return null;
 		}
 		try {
-			return ZonedDateTime.parse(stringDate);
-		} catch (DateTimeParseException dtpe) {
-			try {
-				return ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(stringDate)), ZoneOffset.UTC);
-			} catch (NumberFormatException nfe) {
-				return null;
-			}
+			return ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(stringDate)), ZoneOffset.UTC);
+		} catch (NumberFormatException nfe) {
+			return null;
 		}
 	}
 
