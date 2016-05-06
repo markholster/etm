@@ -47,7 +47,7 @@ public class UserService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getUserSettings() {
 		GetResponse getResponse = UserService.client.prepareGet("etm_configuration", "user", getEtmPrincipal().getId())
-				.setFetchSource(null, new String[] {"searchtemplates", "password_hash"})
+				.setFetchSource(null, new String[] {"searchtemplates"})
 				.get();
 		if (getResponse.isSourceEmpty()) {
 			return "{}";
