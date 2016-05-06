@@ -266,6 +266,13 @@
         $('#spinner').fadeOut(200);
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
         $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+    }).ajaxComplete(function(event, jqXHR, settings) {
+        var contentType = jqXHR.getResponseHeader("Content-Type");
+        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+            // assume that our login has expired - reload our current page
+            window.location.reload();
+            return;
+        }          
     });
     var queryKeywords = null;
     $.ajax({

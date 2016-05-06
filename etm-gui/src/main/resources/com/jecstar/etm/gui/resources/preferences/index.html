@@ -52,7 +52,7 @@
     <div class="card card-block">
       <h5 class="card-title">Preferences</h5>
       <div class="card-text">
-        <div id="settings_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+        <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="settings_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
         <div class="row">
           <div class="form-group col-sm-6">
@@ -83,7 +83,7 @@
     <div class="card card-block">
       <h5 class="card-title">Change password</h5>
       <div class="card-text">
-        <div id="password_errorBox" class="alert alert-danger" style="display: none;" role="alert"></div>
+        <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="password_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
         <div class="form-group">
           <label for="input-current-password">Current password</label>
@@ -118,6 +118,15 @@
         $('#spinner').fadeIn(100);
     }).ajaxStop(function () {
         $('#spinner').fadeOut(200);
+    }).ajaxError(function(event, jqXHR, settings, thrownError) {
+        $('.errorBox').text('Error executing action: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+    }).ajaxComplete(function(event, jqXHR, settings) {
+        var contentType = jqXHR.getResponseHeader("Content-Type");
+        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+            // assume that our login has expired - reload our current page
+            window.location.reload();
+            return;
+        }          
     });
     
     $.when($.ajax({
@@ -174,9 +183,6 @@
                 dataType: 'json',
                 success: function(jqXHR) {
                     $('#settings_infoBox').text('Preferences saved').show('fast').delay(5000).hide('fast');
-                },
-                error: function(jqXHR) {
-                    $("#settings_errorBox").text('Error saving preferences: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
                 }
              });
         });
@@ -226,9 +232,6 @@
                 $('#input-current-password').val('');
                 $('#input-new-password1').val('');
                 $('#input-new-password2').val('');
-            },
-            error: function(jqXHR) {
-                $("#password_errorBox").text('Error saving password: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
             }
          });
     });
