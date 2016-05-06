@@ -1,6 +1,10 @@
 package com.jecstar.etm.launcher;
 
+import java.io.IOException;
+
 import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptAction;
+import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesAction;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequestBuilder;
@@ -9,6 +13,7 @@ import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateActio
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
@@ -42,8 +47,21 @@ public class ElasticsearchIndextemplateCreator {
 						.put("index.translog.durability", "async"))
 					.addMapping("_default_", createEventMapping("_default_")).addAlias(new Alias("etm_event_all"))
 					.get();
+				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
+					.setScriptLang("painless")
+					.setId("etm_update-searchtemplate")
+					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateSearchTemplateScript()).endObject().bytes())
+					.get();
+				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
+					.setScriptLang("painless")
+					.setId("etm_remove-searchtemplate")
+					.setSource(JsonXContent.contentBuilder().startObject().field("script", createRemoveSearchTemplateScript()).endObject().bytes())
+					.get();					
 			}
-		} catch (IndexTemplateAlreadyExistsException e) {}
+		} catch (IndexTemplateAlreadyExistsException e) {
+		} catch (IOException e) {
+			// TODO putting templates failed.
+		}
 		
 		try {
 			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(elasticClient, GetIndexTemplatesAction.INSTANCE, "etm_metrics").get();
@@ -75,7 +93,7 @@ public class ElasticsearchIndextemplateCreator {
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {}
 	}
-	
+
 	private String createEventMapping(String name) {
 		// TODO moet dit misschien met een path_match i.p.v. een match? 
 		return "{ \"" + name + "\": " 
@@ -115,5 +133,45 @@ public class ElasticsearchIndextemplateCreator {
 			.setSource(this.etmPrincipalConverter.convert(adminUser))
 			.get();	
 	}
+	
+	private String createUpdateSearchTemplateScript() {
+		return "if (input.template != null) {" + 
+				"    if (input.ctx._source.searchtemplates != null) {" +
+				"        boolean found = false;" +
+				"        for (int i=0; i < input.ctx._source.searchtemplates.size(); i++) {" + 
+				"            if (input.ctx._source.searchtemplates[i].name.equals(input.template.name)) {" + 
+				"                input.ctx._source.searchtemplates[i].query = input.template.query;" + 
+				"                input.ctx._source.searchtemplates[i].types = input.template.types;" + 
+				"                input.ctx._source.searchtemplates[i].fields = input.template.fields;" + 
+				"                input.ctx._source.searchtemplates[i].results_per_page = input.template.results_per_page;" + 
+				"                input.ctx._source.searchtemplates[i].sort_field = input.template.sort_field;" + 
+				"                input.ctx._source.searchtemplates[i].sort_order = input.template.sort_order;" +
+				"                found = true;" + 
+				"             }" +
+				"        }" + 
+				"        if (!found) {" +
+				"            input.ctx._source.searchtemplates.add(input.template);" +
+				"        }" +
+				"    } else {" + 
+				"        input.ctx._source.searchtemplates = new ArrayList<Object>();" +
+				"        input.ctx._source.searchtemplates.add(input.template);" +
+				"    }" + 
+				"}";
+	}
+	
+	private String createRemoveSearchTemplateScript() {
+		return "if (input.name != null) {" + 
+				"    if (input.ctx._source.searchtemplates != null) {" +
+				"		 Iterator it = input.ctx._source.searchtemplates.iterator();" +
+				"        while (it.hasNext()) {" +
+				"            def item = it.next();" +	
+				"            if (item.name.equals(input.name)) {" +	
+				"                it.remove();" +	
+				"            }" +	
+				"        }" + 	
+				"    }" + 
+				"}";
+	}
+
 
 }

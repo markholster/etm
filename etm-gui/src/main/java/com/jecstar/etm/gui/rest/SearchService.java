@@ -89,7 +89,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
 				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-				.setScript(new Script("etm_update-searchtemplate", ScriptType.FILE, "groovy", scriptParams))
+				.setScript(new Script("etm_update-searchtemplate", ScriptType.STORED, "painless", scriptParams))
 				.setRetryOnConflict(3)
 				.get();
 		return "{ \"status\": \"success\" }";
@@ -103,7 +103,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("name", templateName);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-			.setScript(new Script("etm_remove-searchtemplate", ScriptType.FILE, "groovy", scriptParams))
+			.setScript(new Script("etm_remove-searchtemplate", ScriptType.STORED, "painless", scriptParams))
 			.setRetryOnConflict(3)
 			.get();
 		return "{ \"status\": \"success\" }";
