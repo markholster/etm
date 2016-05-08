@@ -4,7 +4,7 @@ masterAddresses: 127.0.0.1:9300
 # Name of the node. Defaults to the hostname of the machine running on.
 #nodeName: 
 # The interval in milliseconds between each flush requests. Defaults to 30000, which means every 30 seconds is a flush of 
-the documents to the database requested.
+# the documents to the database requested.
 #flushInterval: 
 queueManagers: 
 - !queueManager
