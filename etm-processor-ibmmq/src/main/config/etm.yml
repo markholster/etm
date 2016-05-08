@@ -11,7 +11,7 @@ queueManagers:
 # The name of the queuemanager to connect to.
    name: QMGR
 # The channel used to connect to the queue manager  
-#   channel: 
+   channel: SYSTEM.DEF.SVRCONN
 # The host of the queuemanager. This can be an ip address, or the host name of the server the queuemanager is running on.
    host: 127.0.0.1
 # The port the queuemanager is listening on.   
