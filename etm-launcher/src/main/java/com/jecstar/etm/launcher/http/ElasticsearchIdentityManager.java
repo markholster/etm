@@ -5,12 +5,12 @@ import java.security.cert.X509Certificate;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
+import com.jecstar.etm.core.domain.EtmPrincipal;
 import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.core.logging.LogFactory;
 import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.core.util.BCrypt;
-import com.jecstar.etm.domain.EtmPrincipal;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 
 import io.undertow.security.idm.Account;

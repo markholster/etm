@@ -1,4 +1,6 @@
-package com.jecstar.etm.domain;
+package com.jecstar.etm.domain.builders;
+
+import com.jecstar.etm.domain.Location;
 
 public class LocationBuilder {
 

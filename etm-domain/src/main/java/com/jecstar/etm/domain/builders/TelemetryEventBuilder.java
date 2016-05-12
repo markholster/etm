@@ -1,6 +1,11 @@
-package com.jecstar.etm.domain;
+package com.jecstar.etm.domain.builders;
 
 import java.util.Map;
+
+import com.jecstar.etm.domain.Endpoint;
+import com.jecstar.etm.domain.EndpointHandler;
+import com.jecstar.etm.domain.PayloadFormat;
+import com.jecstar.etm.domain.TelemetryEvent;
 
 public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>, Builder extends TelemetryEventBuilder<Event, Builder>> {
 	

@@ -1,5 +1,6 @@
-package com.jecstar.etm.domain;
+package com.jecstar.etm.domain.builders;
 
+import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 
 public class HttpTelemetryEventBuilder extends TelemetryEventBuilder<HttpTelemetryEvent, HttpTelemetryEventBuilder> {

@@ -1,4 +1,4 @@
-package com.jecstar.etm.domain;
+package com.jecstar.etm.core.domain;
 
 import java.security.Principal;
 import java.util.Collection;

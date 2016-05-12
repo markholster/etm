@@ -12,11 +12,11 @@ import org.slf4j.helpers.MarkerIgnoringBase;
 import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.spi.LocationAwareLogger;
 
-import com.jecstar.etm.domain.ApplicationBuilder;
-import com.jecstar.etm.domain.EndpointBuilder;
-import com.jecstar.etm.domain.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.LogTelemetryEventBuilder;
+import com.jecstar.etm.domain.builders.ApplicationBuilder;
+import com.jecstar.etm.domain.builders.EndpointBuilder;
+import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
 
 public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 

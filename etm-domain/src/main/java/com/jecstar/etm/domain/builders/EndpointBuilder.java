@@ -1,4 +1,7 @@
-package com.jecstar.etm.domain;
+package com.jecstar.etm.domain.builders;
+
+import com.jecstar.etm.domain.Endpoint;
+import com.jecstar.etm.domain.EndpointHandler;
 
 public class EndpointBuilder {
 

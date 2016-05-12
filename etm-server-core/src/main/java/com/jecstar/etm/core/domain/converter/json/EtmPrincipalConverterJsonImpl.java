@@ -6,10 +6,10 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
+import com.jecstar.etm.core.domain.EtmPrincipal;
+import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.core.domain.converter.EtmPrincipalConverterTags;
-import com.jecstar.etm.domain.EtmPrincipal;
-import com.jecstar.etm.domain.EtmPrincipal.PrincipalRole;
 
 public class EtmPrincipalConverterJsonImpl extends AbstractJsonConverter implements EtmPrincipalConverter<String> {
 

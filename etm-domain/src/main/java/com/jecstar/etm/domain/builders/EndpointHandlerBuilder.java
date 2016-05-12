@@ -1,6 +1,10 @@
-package com.jecstar.etm.domain;
+package com.jecstar.etm.domain.builders;
 
 import java.time.ZonedDateTime;
+
+import com.jecstar.etm.domain.Application;
+import com.jecstar.etm.domain.EndpointHandler;
+import com.jecstar.etm.domain.Location;
 
 public class EndpointHandlerBuilder {
 

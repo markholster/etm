@@ -1,5 +1,6 @@
-package com.jecstar.etm.domain;
+package com.jecstar.etm.domain.builders;
 
+import com.jecstar.etm.domain.SqlTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
 
 public class SqlTelemetryEventBuilder extends TelemetryEventBuilder<SqlTelemetryEvent, SqlTelemetryEventBuilder> {

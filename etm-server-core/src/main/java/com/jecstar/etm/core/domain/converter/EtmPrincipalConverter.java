@@ -1,6 +1,6 @@
 package com.jecstar.etm.core.domain.converter;
 
-import com.jecstar.etm.domain.EtmPrincipal;
+import com.jecstar.etm.core.domain.EtmPrincipal;
 
 public interface EtmPrincipalConverter<T> {
 
