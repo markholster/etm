@@ -39,7 +39,7 @@ public class UserService extends AbstractJsonService {
 	}
 	
 	public UserService() {
-		this.timezoneResponse = "{\"time_zones\": [" + Arrays.stream(TimeZone.getAvailableIDs()).map(tz -> "\"" + escapeToJson(tz) + "\"").collect(Collectors.joining(",")) + "]}";
+		this.timezoneResponse = "{\"time_zones\": [" + Arrays.stream(TimeZone.getAvailableIDs()).map(tz -> escapeToJson(tz, true)).collect(Collectors.joining(",")) + "]}";
 	}
 	
 	@GET
@@ -120,7 +120,7 @@ public class UserService extends AbstractJsonService {
 			@Override
 			public int compare(Locale o1, Locale o2) {
 				return o1.getDisplayName(requestedLocale).compareTo(o2.getDisplayName(requestedLocale));
-			}}).map(l -> "{\"name\": \"" + escapeToJson(l.getDisplayName(requestedLocale)) + "\", \"value\": \"" +l.toLanguageTag() + "\"}")
+			}}).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
 				.collect(Collectors.joining(",")) + "]}";
 	}
 	

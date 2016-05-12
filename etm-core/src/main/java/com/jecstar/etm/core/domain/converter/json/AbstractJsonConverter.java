@@ -13,11 +13,29 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.core.EtmException;
 
 public abstract class AbstractJsonConverter {
+	
+	private static final char[] HEX_CHARS = new char[] {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+	private static final int NO_ESCAPE = 0;
+	private static final int STANDARD_ESCAPE = -1;
+    private static final int[] ESCAPE_TABLE;
+    static {
+        int[] table = new int[128];
+        for (int i = 0; i < 32; ++i) {
+            table[i] = STANDARD_ESCAPE;
+        }
+        table['"'] = '"';
+        table['\\'] = '\\';
+        table[0x08] = 'b';
+        table[0x09] = 't';
+        table[0x0C] = 'f';
+        table[0x0A] = 'n';
+        table[0x0D] = 'r';
+        ESCAPE_TABLE = table;
+    }	
 	
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	
@@ -90,7 +108,7 @@ public abstract class AbstractJsonConverter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": \"" + escapeToJson(elementValue) + "\"");
+		buffer.append(escapeToJson(elementName, true) + ": " + escapeToJson(elementValue, true));
 		return true;
 	}
 
@@ -101,7 +119,7 @@ public abstract class AbstractJsonConverter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
+		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
 		return true;
 	}
 	
@@ -112,7 +130,7 @@ public abstract class AbstractJsonConverter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
+		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
 		return true;
 	}
 	
@@ -123,7 +141,7 @@ public abstract class AbstractJsonConverter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + escapeToJson(elementName) + "\": " + elementValue);
+		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
 		return true;
 	}
 	
@@ -134,9 +152,9 @@ public abstract class AbstractJsonConverter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + escapeToJson(hostAddressTag) + "\": \"" + escapeToJson(elementValue.getHostAddress()) + "\"");
-		// TODO documenteer dat de getHostName heel duurt is als er geen gebruikt wordt gemaakt van een meegegeven hostname.
-		buffer.append(", \"" + escapeToJson(hostNameTag) + "\": \"" + escapeToJson(elementValue.getHostName()) + "\"");
+		buffer.append(escapeToJson(hostAddressTag, true) + ": " + escapeToJson(elementValue.getHostAddress(), true));
+		// TODO documenteer dat de getHostName heel lang duurt is als er geen gebruikt wordt gemaakt van een meegegeven hostname.
+		buffer.append(", " + escapeToJson(hostNameTag, true) + ": " + escapeToJson(elementValue.getHostName(), true));
 		return true;
 	}
 	
@@ -147,33 +165,77 @@ public abstract class AbstractJsonConverter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + elementName + "\": [");
+		buffer.append(escapeToJson(elementName, true) + ": [");
 		buffer.append(elementValues.stream()
-				.map(c -> "\"" + escapeToJson(c) + "\"")
+				.map(c -> escapeToJson(c, true))
 				.sorted()
 				.collect(Collectors.joining(", ")));
 		buffer.append("]");
 		return true;
 	}
 	
-	protected String escapeToJson(String value) {
-	    try {
-	    	String newValue = this.objectMapper.writeValueAsString(value);
-			return newValue.substring(1, newValue.length() - 1);
-		} catch (JsonProcessingException e) {
-			// Try to make the best of it. Unicodes outside of the range 32-0x7f should actually be escaped as well.
-			return value
-					.replace("\"", "\\\"")
-					.replace("\\", "\\\\")
-					.replace("/", "\\/")
-					.replace("\b", "\\b")
-	    			.replace("\n", "\\n")
-					.replace("\t", "\\t")
-					.replace("\f", "\\f")
-					.replace("\r", "\\r");		
+	protected String escapeToJson(String value, boolean quote) {
+		int maxLength = value.length() * 6;
+		if (quote) {
+			maxLength += 2;
 		}
+		char[] outputBuffer = new char[maxLength];
+        final int escLen = ESCAPE_TABLE.length;
+        int outputPointer = 0;
+        if (quote) {
+        	outputBuffer[outputPointer++] = '"';
+        }
+        conversion_loop:
+        for (int i=0; i < value.length(); i++) {
+            escape_loop:
+            while (true) {
+                char c = value.charAt(i);
+                if (c < escLen && ESCAPE_TABLE[c] != NO_ESCAPE) {
+                    break escape_loop;
+                }
+                outputBuffer[outputPointer++] = c;
+                if (++i >= value.length()) {
+                    break conversion_loop;
+                }
+            }
+            char c = value.charAt(i);
+            outputPointer = appendCharacterEscape(outputBuffer, outputPointer, c, ESCAPE_TABLE[c]);
+        }		
+        if (quote) {
+        	outputBuffer[outputPointer++] = '"';
+        }
+        char[] result = new char[outputPointer];
+        System.arraycopy(outputBuffer, 0, result, 0, outputPointer);
+        return new String(result);
 	}
 
+	private int appendCharacterEscape(char[] outputBuffer, int outputPointer, char ch, int escCode) {
+        if (escCode > NO_ESCAPE) {
+    		outputBuffer[outputPointer++] = '\\';
+    		outputBuffer[outputPointer++] = (char) escCode;
+            return outputPointer;
+        }
+	    if (escCode == STANDARD_ESCAPE) {
+            outputBuffer[outputPointer++] = '\\';
+            outputBuffer[outputPointer++] = 'u';
+            // We know it's a control char, so only the last 2 chars are non-0
+            if (ch > 0xFF) { // beyond 8 bytes
+                int hi = (ch >> 8) & 0xFF;
+                outputBuffer[outputPointer++] = HEX_CHARS[hi >> 4];
+                outputBuffer[outputPointer++] = HEX_CHARS[hi & 0xF];
+                ch &= 0xFF;
+            } else {
+            	outputBuffer[outputPointer++] = '0';
+            	outputBuffer[outputPointer++] = '0';
+            }
+            outputBuffer[outputPointer++] = HEX_CHARS[ch >> 4];
+            outputBuffer[outputPointer++] = HEX_CHARS[ch & 0xF];
+            return outputPointer;
+        }
+	    outputBuffer[outputPointer++] = (char) escCode;
+	    return outputPointer;
+    }
+	
 	/**
 	 * Escape an object to a json name/value pair. The value is always
 	 * considered to be a String, but if the value happens to be a
@@ -188,15 +250,15 @@ public abstract class AbstractJsonConverter {
 	 */
 	protected String escapeObjectToJsonNameValuePair(String name, Object value) {
 		if (value == null) {
-			return "\"" + escapeToJson(name) + "\": " + "null";
+			return escapeToJson(name, true) + ": " + "null";
 		} else if (value instanceof Number) {
-			return "\"" + escapeToJson(name) + "\": \"" + value.toString() + "\", \"" + escapeToJson(name) + "_as_number\": " + value.toString();
+			return escapeToJson(name, true) + ": \"" + value.toString() + "\", " + escapeToJson(name + "_as_number", true) + ": " + value.toString();
 		} else if (value instanceof Boolean) {
-			return "\"" + escapeToJson(name) + "\": \"" + value.toString() + "\", \"" + escapeToJson(name) + "_as_boolean\": " + value.toString();
+			return escapeToJson(name, true) + ": \"" + value.toString() + "\", " + escapeToJson(name + "_as_boolean", true) + ": " + value.toString();
 		} else if (value instanceof Date) {
-			return "\"" + escapeToJson(name) + "\": \"" + value.toString() + "\", \"" + escapeToJson(name) + "_as_date\": " + ((Date)value).getTime();
+			return escapeToJson(name, true) + ": \"" + value.toString() + "\", " + escapeToJson(name + "_as_date", true) + ": " + ((Date)value).getTime();
 		}
-		return "\"" + escapeToJson(name) + "\": \"" + escapeToJson(value.toString()) + "\"";		
+		return escapeToJson(name, true) + ": " + escapeToJson(value.toString(), true);		
 	}
 	
 	

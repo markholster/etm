@@ -158,8 +158,8 @@ public class SearchService extends AbstractJsonService {
 					result.append(", ");
 				}
 				result.append("{");
-				result.append("\"type\": \"" + escapeToJson(entry.getKey()) + "\",");
-				result.append("\"names\": [" + entry.getValue().stream().map(n -> "\"" + escapeToJson(n)+ "\"").collect(Collectors.joining(", ")) + "]");
+				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
+				result.append("\"names\": [" + entry.getValue().stream().map(n -> escapeToJson(n, true)).collect(Collectors.joining(", ")) + "]");
 				result.append("}");
 			}
 		}
