@@ -17,8 +17,6 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.EtmPrincipal;
-import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
@@ -26,6 +24,8 @@ import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonI
 import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
 import com.jecstar.etm.core.util.BCrypt;
+import com.jecstar.etm.domain.EtmPrincipal;
+import com.jecstar.etm.domain.EtmPrincipal.PrincipalRole;
 
 public class ElasticsearchIndextemplateCreator {
 	

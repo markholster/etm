@@ -1,6 +1,6 @@
 package com.jecstar.etm.slf4j;
 
-import com.jecstar.etm.core.domain.LogTelemetryEvent;
+import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
 public class InternalEtmLogForwarder implements EtmLogForwarder {

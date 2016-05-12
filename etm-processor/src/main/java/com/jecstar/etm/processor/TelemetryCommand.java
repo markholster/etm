@@ -1,10 +1,10 @@
 package com.jecstar.etm.processor;
 
-import com.jecstar.etm.core.domain.BusinessTelemetryEvent;
-import com.jecstar.etm.core.domain.HttpTelemetryEvent;
-import com.jecstar.etm.core.domain.LogTelemetryEvent;
-import com.jecstar.etm.core.domain.MessagingTelemetryEvent;
-import com.jecstar.etm.core.domain.SqlTelemetryEvent;
+import com.jecstar.etm.domain.BusinessTelemetryEvent;
+import com.jecstar.etm.domain.HttpTelemetryEvent;
+import com.jecstar.etm.domain.LogTelemetryEvent;
+import com.jecstar.etm.domain.MessagingTelemetryEvent;
+import com.jecstar.etm.domain.SqlTelemetryEvent;
 
 public class TelemetryCommand {
 

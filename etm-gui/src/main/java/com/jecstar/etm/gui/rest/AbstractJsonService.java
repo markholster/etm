@@ -7,8 +7,8 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
-import com.jecstar.etm.core.domain.EtmPrincipal;
 import com.jecstar.etm.core.domain.converter.json.AbstractJsonConverter;
+import com.jecstar.etm.domain.EtmPrincipal;
 
 public class AbstractJsonService extends AbstractJsonConverter {
 

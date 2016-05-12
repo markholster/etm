@@ -1,8 +1,0 @@
-dependencies {
-    compile dep_jacksonDatabind, dep_saxonHE, dep_slf4jApi
-    compile(dep_jsonPath) {
-        exclude module: "json-smart"
-        exclude module: "gson"
-    }
-    testCompile dep_junit
-}

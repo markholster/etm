@@ -4,8 +4,8 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.SqlTelemetryEvent;
 import com.jecstar.etm.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.domain.SqlTelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
 

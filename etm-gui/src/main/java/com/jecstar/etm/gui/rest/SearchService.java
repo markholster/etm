@@ -40,9 +40,9 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.EtmPrincipal;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
+import com.jecstar.etm.domain.EtmPrincipal;
 
 @Path("/search")
 public class SearchService extends AbstractJsonService {

@@ -1,3 +1,3 @@
 dependencies {
-    compile project(":etm-core"), dep_metricsCore, dep_disruptor, dep_groovyAll, dep_elasticsearch
+    compile project(":etm-server-core"), dep_metricsCore, dep_disruptor, dep_groovyAll, dep_elasticsearch
 }

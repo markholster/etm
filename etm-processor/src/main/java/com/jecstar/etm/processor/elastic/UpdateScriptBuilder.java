@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.jecstar.etm.core.domain.EndpointHandler;
-import com.jecstar.etm.core.domain.TelemetryEvent;
 import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
+import com.jecstar.etm.domain.EndpointHandler;
+import com.jecstar.etm.domain.TelemetryEvent;
 
 /**
  * Class capable of building the update map that can be provided to the scripts.
