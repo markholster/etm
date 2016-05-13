@@ -119,10 +119,10 @@ public class RemoteEtmLogForwarder implements EtmLogForwarder {
 				con = (HttpURLConnection) url.openConnection();
 				con.setConnectTimeout(1000);
 				con.setRequestMethod("POST");
-				con.setRequestProperty("Content-Type", "application/json; charset=" + Charset.defaultCharset().name());
+				con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 				con.setDoOutput(true);
 				stream = new DataOutputStream(con.getOutputStream());
-				stream.writeBytes(content.toString());
+				stream.write(content.toString().getBytes(Charset.forName("utf-8")));
 				stream.flush();
 				stream.close();
 
