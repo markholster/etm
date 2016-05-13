@@ -61,8 +61,22 @@ public class SearchService extends AbstractJsonService {
 	@Path("/templates")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSearchTemplates() {
-		GetResponse getResponse = SearchService.client.prepareGet("etm_configuration", "user", ((EtmPrincipal)this.securityContext.getUserPrincipal()).getId())
-				.setFetchSource("searchtemplates", null)
+		GetResponse getResponse = SearchService.client.prepareGet("etm_configuration", "user", getEtmPrincipal().getId())
+				.setFetchSource("search_templates", null)
+				.get();
+		if (getResponse.isSourceEmpty()) {
+			return "{}";
+		}
+		return getResponse.getSourceAsString();
+	}
+	
+	@GET
+	@Path("/recent_queries")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getRecentQueries() {
+		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		GetResponse getResponse = SearchService.client.prepareGet("etm_configuration", "user", etmPrincipal.getId())
+				.setFetchSource("recent_queries", null)
 				.get();
 		if (getResponse.isSourceEmpty()) {
 			return "{}";
@@ -89,7 +103,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
 				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-				.setScript(new Script("etm_update-searchtemplate", ScriptType.STORED, "painless", scriptParams))
+				.setScript(new Script("etm_update-search-template", ScriptType.STORED, "painless", scriptParams))
 				.setRetryOnConflict(3)
 				.get();
 		return "{ \"status\": \"success\" }";
@@ -103,7 +117,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("name", templateName);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-			.setScript(new Script("etm_remove-searchtemplate", ScriptType.STORED, "painless", scriptParams))
+			.setScript(new Script("etm_remove-search-template", ScriptType.STORED, "painless", scriptParams))
 			.setRetryOnConflict(3)
 			.get();
 		return "{ \"status\": \"success\" }";
@@ -173,6 +187,7 @@ public class SearchService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String executeQuery(String json) {
 		long startTime = System.currentTimeMillis();
+		int history_size = 5;
 		Map<String, Object> requestValues = toMap(json);
 		String queryString = getString("query", requestValues);
 		Integer startIndex = getInteger("start_ix", requestValues, new Integer(0));
@@ -184,6 +199,7 @@ public class SearchService extends AbstractJsonService {
 		String sortOrder = getString("sort_order", requestValues);
 		List<String> types = getArray("types", requestValues);
 		List<String> fields = getArray("fields", requestValues);
+		List<Map<String, Object>> fieldsLayout = getArray("fieldsLayout", requestValues);
 		if (fields == null) {
 			fields = new ArrayList<String>(2);
 		}
@@ -215,6 +231,7 @@ public class SearchService extends AbstractJsonService {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"status\": \"success\"");
+		result.append(",\"history_size\": " + history_size);
 		result.append(",\"hits\": " + response.getHits().getTotalHits());
 		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
@@ -229,9 +246,34 @@ public class SearchService extends AbstractJsonService {
 		result.append(",\"query_time\": " + queryTime);
 		result.append(",\"query_time_as_string\": \"" + numberFormat.format(queryTime) + "\"");
 		result.append("}");
+		
+		if (startIndex == 0) {
+			writeRecentQuery(startTime, queryString, startIndex, maxResults, sortField, sortOrder, types, fieldsLayout, etmPrincipal, history_size);
+		}
 		return result.toString();
 	}
 	
+	private void writeRecentQuery(long timestamp, String queryString, Integer startIndex, Integer maxResults,
+			String sortField, String sortOrder, List<String> types, List<Map<String, Object>> fieldsLayout, EtmPrincipal etmPrincipal, int history_size) {
+		Map<String, Object> scriptParams = new HashMap<String, Object>();
+		Map<String, Object> query = new HashMap<String, Object>();
+		query.put("timestamp", timestamp);
+		query.put("query", queryString);
+		query.put("types", types);
+		query.put("fields", fieldsLayout);
+		query.put("results_per_page", maxResults);
+		query.put("sort_field", sortField);
+		query.put("sort_order", sortOrder);
+		
+		scriptParams.put("query", query);
+		scriptParams.put("history_size", history_size);
+		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setScript(new Script("etm_update-recent-queries", ScriptType.STORED, "painless", scriptParams))
+				.setRetryOnConflict(3)
+				.execute();
+	}
+
 	@GET
 	@Path("/event/{index}/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)

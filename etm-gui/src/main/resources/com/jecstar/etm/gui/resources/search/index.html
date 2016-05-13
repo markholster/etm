@@ -97,7 +97,7 @@
            <div class="card card-block rowContentMargins">
              <h5 class="card-title">Recent queries</h5>
              <div class="card-text">
-               <ul id="list-recent-queries-links" style="padding-left: 1em;"></ul>
+               <ol id="list-recent-queries-links" style="padding-left: 1em;"></ol>
              </div>
            </div>
          </div>           
@@ -311,6 +311,7 @@
   <script src="../scripts/autocomplete_fields.js"></script>
   <script src="../scripts/searchresults-layout.js"></script>
   <script src="../scripts/event-details.js"></script>
+  <script src="../scripts/search-templates.js"></script>
   
   <script>
     $('[id^=check-type-]').on('change', function() {
@@ -372,7 +373,8 @@
             start_ix: tableLayout.current_ix,
             max_results: tableLayout.results_per_page,
             sort_field: tableLayout.sort_field,
-            sort_order: tableLayout.sort_order
+            sort_order: tableLayout.sort_order,
+            fieldsLayout: tableLayout.fields
         };
         return query;
     }
@@ -463,6 +465,16 @@
                             $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
                         }
                     }
+                    // Update recent queries
+                    var query = {
+                        types: queryParameters.types,
+                        query: queryParameters.query,
+                        fields: queryParameters.fieldsLayout,
+                        results_per_page: queryParameters.max_results,
+                        sort_field: queryParameters.sort_field,
+                        sort_order: queryParameters.sort_order                                     
+                    }
+                    updateHistory(query, data.history_size);
                 }
             }
         });    
@@ -504,7 +516,6 @@
         executeQuery(createQuery());
     }
   </script>
-  <script src="../scripts/search-templates.js"></script>
   
 </body>
 </html>

@@ -20,7 +20,7 @@ public class AbstractJsonService extends JsonConverter {
     	return (EtmPrincipal)this.securityContext.getUserPrincipal();
     }
     
-    protected QueryBuilder getEtmPrincipalFilterQuery() {
+    protected QueryStringQueryBuilder getEtmPrincipalFilterQuery() {
     	String filterQuery = getEtmPrincipal().getFilterQuery();
     	if (filterQuery == null) {
     		return null;
@@ -33,8 +33,8 @@ public class AbstractJsonService extends JsonConverter {
 				.timeZone(getEtmPrincipal().getTimeZone().getID());
     }
     
-    protected QueryBuilder addEtmPrincipalFilterQuery(QueryBuilder queryBuilder) {
-    	QueryBuilder etmPrincipalFilterQuery = getEtmPrincipalFilterQuery();
+    protected QueryBuilder<?> addEtmPrincipalFilterQuery(QueryBuilder<?> queryBuilder) {
+    	QueryStringQueryBuilder etmPrincipalFilterQuery = getEtmPrincipalFilterQuery();
     	if (etmPrincipalFilterQuery == null) {
     		return queryBuilder;
     	}

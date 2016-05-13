@@ -49,14 +49,19 @@ public class ElasticsearchIndextemplateCreator {
 					.get();
 				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
 					.setScriptLang("painless")
-					.setId("etm_update-searchtemplate")
+					.setId("etm_update-search-template")
 					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateSearchTemplateScript()).endObject().bytes())
 					.get();
 				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
 					.setScriptLang("painless")
-					.setId("etm_remove-searchtemplate")
+					.setId("etm_remove-search-template")
 					.setSource(JsonXContent.contentBuilder().startObject().field("script", createRemoveSearchTemplateScript()).endObject().bytes())
-					.get();					
+					.get();
+				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
+					.setScriptLang("painless")
+					.setId("etm_update-recent-queries")
+					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateRecentQueriesScript()).endObject().bytes())
+					.get();
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {
 		} catch (IOException e) {
@@ -136,33 +141,33 @@ public class ElasticsearchIndextemplateCreator {
 	
 	private String createUpdateSearchTemplateScript() {
 		return "if (input.template != null) {" + 
-				"    if (input.ctx._source.searchtemplates != null) {" +
+				"    if (input.ctx._source.search_templates != null) {" +
 				"        boolean found = false;" +
 				"        for (int i=0; i < input.ctx._source.searchtemplates.size(); i++) {" + 
-				"            if (input.ctx._source.searchtemplates[i].name.equals(input.template.name)) {" + 
-				"                input.ctx._source.searchtemplates[i].query = input.template.query;" + 
-				"                input.ctx._source.searchtemplates[i].types = input.template.types;" + 
-				"                input.ctx._source.searchtemplates[i].fields = input.template.fields;" + 
-				"                input.ctx._source.searchtemplates[i].results_per_page = input.template.results_per_page;" + 
-				"                input.ctx._source.searchtemplates[i].sort_field = input.template.sort_field;" + 
-				"                input.ctx._source.searchtemplates[i].sort_order = input.template.sort_order;" +
+				"            if (input.ctx._source.search_templates[i].name.equals(input.template.name)) {" + 
+				"                input.ctx._source.search_templates[i].query = input.template.query;" + 
+				"                input.ctx._source.search_templates[i].types = input.template.types;" + 
+				"                input.ctx._source.search_templates[i].fields = input.template.fields;" + 
+				"                input.ctx._source.search_templates[i].results_per_page = input.template.results_per_page;" + 
+				"                input.ctx._source.search_templates[i].sort_field = input.template.sort_field;" + 
+				"                input.ctx._source.search_templates[i].sort_order = input.template.sort_order;" +
 				"                found = true;" + 
 				"             }" +
 				"        }" + 
 				"        if (!found) {" +
-				"            input.ctx._source.searchtemplates.add(input.template);" +
+				"            input.ctx._source.search_templates.add(input.template);" +
 				"        }" +
 				"    } else {" + 
-				"        input.ctx._source.searchtemplates = new ArrayList<Object>();" +
-				"        input.ctx._source.searchtemplates.add(input.template);" +
+				"        input.ctx._source.search_templates = new ArrayList<Object>();" +
+				"        input.ctx._source.search_templates.add(input.template);" +
 				"    }" + 
 				"}";
 	}
 	
 	private String createRemoveSearchTemplateScript() {
 		return "if (input.name != null) {" + 
-				"    if (input.ctx._source.searchtemplates != null) {" +
-				"		 Iterator it = input.ctx._source.searchtemplates.iterator();" +
+				"    if (input.ctx._source.searcht_emplates != null) {" +
+				"		 Iterator it = input.ctx._source.search_templates.iterator();" +
 				"        while (it.hasNext()) {" +
 				"            def item = it.next();" +	
 				"            if (item.name.equals(input.name)) {" +	
@@ -171,6 +176,25 @@ public class ElasticsearchIndextemplateCreator {
 				"        }" + 	
 				"    }" + 
 				"}";
+	}
+	
+	private String createUpdateRecentQueriesScript() {
+		return "if (input.query != null) {" + 
+				"    if (input.ctx._source.recent_queries != null) {" +
+				"        for (int i=0; i < input.ctx._source.recent_queries.size(); i++) {" + 
+				"            if (input.ctx._source.recent_queries[i].query.equals(input.query.query)) {" +
+				"                input.ctx._source.recent_queries.remove(i);" +
+				"            }" +
+				"        }" + 
+				"        input.ctx._source.recent_queries.add(input.query);" +
+				"        if (input.ctx._source.recent_queries.size() > input.history_size) {" +
+				"            input.ctx._source.recent_queries.remove(0);" +
+				"        }" +
+				"    } else {" + 
+				"        input.ctx._source.recent_queries = new ArrayList<Object>();" +
+				"        input.ctx._source.recent_queries.add(input.query);" +
+				"    }" + 
+				"}";		
 	}
 
 
