@@ -143,7 +143,7 @@ public class ElasticsearchIndextemplateCreator {
 		return "if (input.template != null) {" + 
 				"    if (input.ctx._source.search_templates != null) {" +
 				"        boolean found = false;" +
-				"        for (int i=0; i < input.ctx._source.searchtemplates.size(); i++) {" + 
+				"        for (int i=0; i < input.ctx._source.search_templates.size(); i++) {" + 
 				"            if (input.ctx._source.search_templates[i].name.equals(input.template.name)) {" + 
 				"                input.ctx._source.search_templates[i].query = input.template.query;" + 
 				"                input.ctx._source.search_templates[i].types = input.template.types;" + 
