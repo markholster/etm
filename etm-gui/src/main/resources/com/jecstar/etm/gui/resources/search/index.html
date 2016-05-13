@@ -35,6 +35,9 @@
 .headerSortAsc::after {
     border-bottom: 4px solid;
 }
+.rowContentMargins {
+    margin: 0.9375rem 0.9375rem 0rem 0.9375rem;
+}
 </style>
 </head>
 <body>
@@ -72,26 +75,37 @@
     </div>
   </nav>
   
-  <div id="search-container" class="container-fluid" style="margin-left: 1em; margin-top: 1em;">
+  <div id="search-container" class="container-fluid">
      <div class="row">
        <div class="col-md-3 col-md-push-9">
-         <div class="card card-block">
-           <h5 class="card-title">Search templates</h5>
-           <div id="search_templates" class="card-text">
-            <ul id="list-template-links" style="padding-left: 1em;"></ul>
-           </div>
-           <div class="input-group input-group-sm">
-             <input id="template-name" type="text" class="form-control" placeholder="Template name..." disabled="disabled">
-             <span class="input-group-btn">
-               <button id="btn-save-template"class="btn btn-primary" type="button" disabled="disabled">Save</button>
-             </span>
+         <div class="row">   
+           <div class="card card-block rowContentMargins">
+             <h5 class="card-title">Search templates</h5>
+             <div class="card-text">
+              <ul id="list-template-links" style="padding-left: 1em;"></ul>
+             </div>
+             <div class="input-group input-group-sm">
+               <input id="template-name" type="text" class="form-control" placeholder="Template name..." disabled="disabled">
+               <span class="input-group-btn">
+                 <button id="btn-save-template"class="btn btn-primary" type="button" disabled="disabled">Save</button>
+               </span>
+             </div>
            </div>
          </div>
+
+         <div class="row">   
+           <div class="card card-block rowContentMargins">
+             <h5 class="card-title">Recent queries</h5>
+             <div class="card-text">
+               <ul id="list-recent-queries-links" style="padding-left: 1em;"></ul>
+             </div>
+           </div>
+         </div>           
        </div>
        
        <div class="col-md-9 col-md-pull-3">
          <div class="row">
-           <div id="search-card" class="card card-block">
+           <div id="search-card" class="card card-block rowContentMargins">
              <h5 class="card-title">Search</h5>
              <div class="card-text">
                <p>
@@ -134,8 +148,8 @@
              </div>
            </div>
          </div>
-         <div class="row" id="result_block" style="display: none">
-           <div id="search-result-card" class="card card-block">
+         <div class="row" id="result_block" style="display: none;">
+           <div id="search-result-card" class="card card-block rowContentMargins">
              <h5 class="card-title">Search results<small id="search-stats"></small><small style="font-size: 100%;"><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right"></a></small></h5>
              <div id="result_card" class="card-text">
              </div>
@@ -145,29 +159,31 @@
      </div>
   </div>
   
-  <div id="event-container" class="container-fluid" style="margin-top: 1em; display: none;">
-    <div class="card card-block">
-      <h5 class="card-title"><span id="event-card-title">Event</span><small><a id="link-back-to-results" href="#" class="pull-right">Back</a></small></h5>
-      <div class="card-text">
-        <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-  
-        <div role="tabpanel" class="bd-example bd-example-tabs">
-          <ul role="tablist" id="event-tabs" class="nav nav-tabs">
-            <li class="nav-item">
-              <a id="event-tab-header" aria-expanded="true" role="tab" href="#event-tab" data-toggle="tab" class="nav-link active">Event</a>
-            </li>
-          </ul>
-          <div id="tabcontents" class="tab-content">
-            <div id="event-tab" aria-labelledby="event-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade active in">
+  <div id="event-container" class="container-fluid" style="display: none;">
+    <div class="row">
+      <div class="card card-block rowContentMargins">
+        <h5 class="card-title"><span id="event-card-title">Event</span><small><a id="link-back-to-results" href="#" class="pull-right">Back</a></small></h5>
+        <div class="card-text">
+          <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+    
+          <div role="tabpanel" class="bd-example bd-example-tabs">
+            <ul role="tablist" id="event-tabs" class="nav nav-tabs">
+              <li class="nav-item">
+                <a id="event-tab-header" aria-expanded="true" role="tab" href="#event-tab" data-toggle="tab" class="nav-link active">Event</a>
+              </li>
+            </ul>
+            <div id="tabcontents" class="tab-content">
+              <div id="event-tab" aria-labelledby="event-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade active in">
+              </div>
             </div>
           </div>
         </div>
+        <hr />
+        <div class="text-xs-center">
+          <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
+        </div>
       </div>
-      <hr />
-      <div class="text-xs-center">
-        <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
-      </div>
-    </div>
+    </div> 
   </div>
   
   <div class="modal fade" id="modal-template-overwrite" tabindex="-1" role="dialog" aria-labelledby="template-overwrite-modal-label" aria-hidden="true">
