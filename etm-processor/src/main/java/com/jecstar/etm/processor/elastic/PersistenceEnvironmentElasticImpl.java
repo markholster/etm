@@ -5,11 +5,11 @@ import java.io.IOException;
 import org.elasticsearch.client.Client;
 
 import com.codahale.metrics.MetricRegistry;
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.logging.LogFactory;
-import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.processor.CommandResources;
 import com.jecstar.etm.processor.processor.PersistenceEnvironment;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment {
 	

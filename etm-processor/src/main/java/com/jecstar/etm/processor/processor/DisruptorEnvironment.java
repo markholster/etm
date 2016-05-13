@@ -3,8 +3,8 @@ package com.jecstar.etm.processor.processor;
 import java.util.concurrent.ThreadFactory;
 
 import com.codahale.metrics.MetricRegistry;
-import com.jecstar.etm.core.configuration.EtmConfiguration;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;

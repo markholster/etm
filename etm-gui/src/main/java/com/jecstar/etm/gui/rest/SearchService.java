@@ -39,10 +39,10 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.EtmPrincipal;
-import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
-import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
+import com.jecstar.etm.domain.writers.TelemetryEventTags;
+import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
 @Path("/search")
 public class SearchService extends AbstractJsonService {
@@ -50,7 +50,7 @@ public class SearchService extends AbstractJsonService {
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	
-	private final TelemetryEventConverterTags tags = new TelemetryEventConverterTagsJsonImpl();
+	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.client = client;

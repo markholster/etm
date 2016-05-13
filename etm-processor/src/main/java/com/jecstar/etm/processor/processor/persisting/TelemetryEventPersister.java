@@ -1,10 +1,10 @@
 package com.jecstar.etm.processor.processor.persisting;
 
-import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
 import com.jecstar.etm.domain.TelemetryEvent;
+import com.jecstar.etm.domain.writers.TelemetryEventWriter;
 
-public interface TelemetryEventPersister<Event extends TelemetryEvent<Event>, Converter extends TelemetryEventConverter<String, Event>> {
+public interface TelemetryEventPersister<Event extends TelemetryEvent<Event>, Writer extends TelemetryEventWriter<String, Event>> {
 
-	void persist(Event event, Converter converter);
+	void persist(Event event, Writer writer);
 
 }

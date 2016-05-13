@@ -14,9 +14,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import com.jecstar.etm.core.domain.converter.TelemetryEventConverter;
-import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.domain.LogTelemetryEvent;
+import com.jecstar.etm.domain.writers.TelemetryEventWriter;
+import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
 
 public class RemoteEtmLogForwarder implements EtmLogForwarder {
 
@@ -25,7 +25,7 @@ public class RemoteEtmLogForwarder implements EtmLogForwarder {
 	private int urlIndex = 0;
 
 	private final Queue<String> eventQueue = new ConcurrentLinkedQueue<String>();
-	private final TelemetryEventConverter<String, LogTelemetryEvent> converter = new LogTelemetryEventConverterJsonImpl();
+	private final TelemetryEventWriter<String, LogTelemetryEvent> writer = new LogTelemetryEventWriterJsonImpl();
 	private ScheduledExecutorService scheduler;
 
 	private static final RemoteEtmLogForwarder INSTANCE = new RemoteEtmLogForwarder();
@@ -44,7 +44,7 @@ public class RemoteEtmLogForwarder implements EtmLogForwarder {
 
 	public void forwardLog(LogTelemetryEvent event) {
 		if (event != null) {
-			this.eventQueue.offer(this.converter.convert(event));
+			this.eventQueue.offer(this.writer.write(event));
 		}
 	}
 	

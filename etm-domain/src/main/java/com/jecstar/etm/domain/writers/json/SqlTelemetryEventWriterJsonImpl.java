@@ -1,0 +1,21 @@
+package com.jecstar.etm.domain.writers.json;
+
+import com.jecstar.etm.domain.SqlTelemetryEvent;
+
+public class SqlTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventWriter<SqlTelemetryEvent>{
+
+	@Override
+	boolean doWrite(SqlTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+		boolean added = !firstElement;
+		if (event.sqlEventType != null) {
+			added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getSqlEventTypeTag(), event.sqlEventType.name(), buffer, !added) || added;
+		}
+		return added;
+	}
+//
+//	@Override
+//	void doConvert(SqlTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
+//		telemetryEvent.sqlEventType =  SqlEventType.safeValueOf(getString(getTags().getSqlEventTypeTag(), valueMap));
+//	}
+
+}

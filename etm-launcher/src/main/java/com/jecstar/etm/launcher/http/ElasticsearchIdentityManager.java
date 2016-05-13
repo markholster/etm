@@ -5,13 +5,13 @@ import java.security.cert.X509Certificate;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.core.domain.EtmPrincipal;
-import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
-import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
-import com.jecstar.etm.core.logging.LogFactory;
-import com.jecstar.etm.core.logging.LogWrapper;
-import com.jecstar.etm.core.util.BCrypt;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
+import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
+import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.util.BCrypt;
 
 import io.undertow.security.idm.Account;
 import io.undertow.security.idm.Credential;
@@ -44,7 +44,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				}
 				return null;
 			}
-			EtmPrincipal principal = this.etmPrincipalConverter.convert(getResponse.getSourceAsString());
+			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
 			etmAccount = new EtmAccount(principal);
 			etmAccount.setRoles(principal.getRoles());
 		}
@@ -61,7 +61,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			return null;
 		}
 		if (credential instanceof PasswordCredential) {
-			EtmPrincipal principal = this.etmPrincipalConverter.convert(getResponse.getSourceAsString());
+			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
 			boolean valid = BCrypt.checkpw(new String(((PasswordCredential) credential).getPassword()), principal.getPasswordHash());
 			if (!valid) {
 				if (log.isDebugLevelEnabled()) {
@@ -84,7 +84,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			if (!getResponse.isExists()) {
 				return null;
 			}
-			EtmPrincipal principal = this.etmPrincipalConverter.convert(getResponse.getSourceAsString());
+			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
 			boolean valid = BCrypt.checkpw(certificate.getIssuerX500Principal().getName(), principal.getPasswordHash());
 			if (!valid) {
 				if (log.isDebugLevelEnabled()) {

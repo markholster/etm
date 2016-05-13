@@ -9,7 +9,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import com.jecstar.etm.core.EtmException;
+import com.jecstar.etm.server.core.EtmException;
 
 @Provider
 public class EtmExceptionMapper implements ExceptionMapper<Throwable> {

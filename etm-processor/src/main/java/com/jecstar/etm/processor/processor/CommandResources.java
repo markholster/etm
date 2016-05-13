@@ -4,8 +4,8 @@ import java.io.Closeable;
 import java.util.List;
 
 import com.jecstar.etm.domain.Endpoint;
-import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
+import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 
 public interface CommandResources extends Closeable {
 

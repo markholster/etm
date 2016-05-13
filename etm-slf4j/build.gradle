@@ -1,3 +1,3 @@
 dependencies {
-    compile project(":etm-domain"), project(":etm-server-core"), dep_slf4jApi
+    compile project(":etm-domain"), dep_slf4jApi
 }

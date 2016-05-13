@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.jecstar.etm.core.domain.EtmPrincipal;
-import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
 
 import io.undertow.security.idm.Account;
 

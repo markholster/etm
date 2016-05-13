@@ -3,11 +3,11 @@ package com.jecstar.etm.launcher;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.configuration.License;
-import com.jecstar.etm.core.configuration.WriteConsistency;
-import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
-import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.configuration.License;
+import com.jecstar.etm.server.core.configuration.WriteConsistency;
+import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
@@ -108,7 +108,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		if (nodeResponse.isExists()) {
 			nodeContent = nodeResponse.getSourceAsString();
 		}
-		EtmConfiguration etmConfiguration = this.etmConfigurationConverter.convert(nodeContent, defaultContent, "temp-for-reload-merge");
+		EtmConfiguration etmConfiguration = this.etmConfigurationConverter.read(nodeContent, defaultContent, "temp-for-reload-merge");
 		if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty()) {
 			Object license = licenseResponse.getSourceAsMap().get(this.etmConfigurationConverter.getTags().getLicenseTag());
 			if (license != null) {

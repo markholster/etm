@@ -7,7 +7,7 @@ import javax.ws.rs.core.Application;
 
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 public class RestGuiApplication extends Application {
 

@@ -7,10 +7,10 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
-import com.jecstar.etm.core.domain.EtmPrincipal;
-import com.jecstar.etm.core.domain.converter.json.AbstractJsonConverter;
+import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
-public class AbstractJsonService extends AbstractJsonConverter {
+public class AbstractJsonService extends JsonConverter {
 
     @Context
     protected SecurityContext securityContext;

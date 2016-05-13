@@ -10,7 +10,7 @@ import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 
-import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 /**
  * Base class for <code>TelemetryEvent</code> persisters that store their data in elasticsearch.

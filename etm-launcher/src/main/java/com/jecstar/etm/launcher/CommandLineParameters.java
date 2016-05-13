@@ -6,8 +6,8 @@ import java.io.Writer;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlWriter;
-import com.jecstar.etm.core.util.BCrypt;
 import com.jecstar.etm.launcher.configuration.Configuration;
+import com.jecstar.etm.server.core.util.BCrypt;
 
 public class CommandLineParameters {
 

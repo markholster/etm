@@ -4,6 +4,8 @@ package com.jecstar.etm.core.parsers;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.jecstar.etm.server.core.parsers.JsonPathExpressionParser;
+
 /**
  * Test class for the <code>JsonPathExpressionParser</code> class.
  * 

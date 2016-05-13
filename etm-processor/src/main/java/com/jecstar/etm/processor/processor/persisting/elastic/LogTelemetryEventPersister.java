@@ -3,22 +3,22 @@ package com.jecstar.etm.processor.processor.persisting.elastic;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.domain.LogTelemetryEvent;
+import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 public class LogTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
-		implements TelemetryEventPersister<LogTelemetryEvent, LogTelemetryEventConverterJsonImpl> {
+		implements TelemetryEventPersister<LogTelemetryEvent, LogTelemetryEventWriterJsonImpl> {
 
 	public LogTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
 		super(bulkProcessor, etmConfiguration);
 	}
 
 	@Override
-	public void persist(LogTelemetryEvent event, LogTelemetryEventConverterJsonImpl converter) {
-		IndexRequest indexRequest = createIndexRequest(event.id).source(converter.convert(event));
+	public void persist(LogTelemetryEvent event, LogTelemetryEventWriterJsonImpl writer) {
+		IndexRequest indexRequest = createIndexRequest(event.id).source(writer.write(event));
 		bulkProcessor.add(indexRequest);
 	}
 

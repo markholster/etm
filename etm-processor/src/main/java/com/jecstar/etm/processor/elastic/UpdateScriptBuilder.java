@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.TelemetryEvent;
+import com.jecstar.etm.domain.writers.TelemetryEventTags;
 
 /**
  * Class capable of building the update map that can be provided to the scripts.
@@ -21,7 +21,7 @@ public class UpdateScriptBuilder {
 	UpdateScriptBuilder() {
 	}
 
-	Map<String, Object> createUpdateParameterMap(TelemetryEvent event, TelemetryEventConverterTags tags) {
+	Map<String, Object> createUpdateParameterMap(TelemetryEvent event, TelemetryEventTags tags) {
 //		this.parameters.clear();
 //		addValueSetterToScript(tags.getCorrelationIdTag(), event.correlationId);
 //		addMapAppenderToScript(tags.getCorrelationDataTag(), event.correlationData);
@@ -54,7 +54,7 @@ public class UpdateScriptBuilder {
 		return new HashMap<String, Object>(this.parameters);
 	}
 	
-	Map<String, Object> createRequestUpdateScriptFromResponse(EndpointHandler endpointHandler, TelemetryEventConverterTags tags) {
+	Map<String, Object> createRequestUpdateScriptFromResponse(EndpointHandler endpointHandler, TelemetryEventTags tags) {
 		this.parameters.clear();
 		this.parameters.put(tags.getResponseHandlingTimeTag(), endpointHandler.handlingTime.toInstant().toEpochMilli());
 		return new HashMap<String, Object>(this.parameters);
@@ -83,7 +83,7 @@ public class UpdateScriptBuilder {
 	}
 
 	
-	private Map<String, Object> createEndpointHandlerMap(EndpointHandler endpointHandler, TelemetryEventConverterTags tags) {
+	private Map<String, Object> createEndpointHandlerMap(EndpointHandler endpointHandler, TelemetryEventTags tags) {
 		Map<String, Object> endpointHandlerMap = new HashMap<String, Object>();
 		if (endpointHandler.handlingTime != null) {
 			endpointHandlerMap.put(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime.toInstant().toEpochMilli());

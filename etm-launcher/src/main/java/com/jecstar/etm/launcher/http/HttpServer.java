@@ -22,15 +22,15 @@ import org.elasticsearch.client.Client;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
-import com.jecstar.etm.core.logging.LogFactory;
-import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import io.undertow.Handlers;
 import io.undertow.Undertow;

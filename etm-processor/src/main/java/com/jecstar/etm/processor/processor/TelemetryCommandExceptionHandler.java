@@ -5,10 +5,10 @@ import java.util.Map;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.jecstar.etm.core.logging.LogFactory;
-import com.jecstar.etm.core.logging.LogWrapper;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.lmax.disruptor.ExceptionHandler;
 
 public class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryCommand> {

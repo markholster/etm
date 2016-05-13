@@ -16,10 +16,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.core.configuration.ConfigurationChangeListener;
-import com.jecstar.etm.core.configuration.ConfigurationChangedEvent;
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.EndpointConfiguration;
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.CommandResources;
@@ -30,6 +26,10 @@ import com.jecstar.etm.processor.processor.persisting.elastic.HttpTelemetryEvent
 import com.jecstar.etm.processor.processor.persisting.elastic.LogTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.MessagingTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.SqlTelemetryEventPersister;
+import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
+import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 
 public class CommandResourcesElasticImpl implements CommandResources, ConfigurationChangeListener {
 

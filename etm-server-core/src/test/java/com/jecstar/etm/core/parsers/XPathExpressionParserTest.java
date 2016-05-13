@@ -6,6 +6,8 @@ import java.lang.reflect.Field;
 
 import org.junit.Test;
 
+import com.jecstar.etm.server.core.parsers.XPathExpressionParser;
+
 import net.sf.saxon.om.NamePool;
 
 public class XPathExpressionParserTest {

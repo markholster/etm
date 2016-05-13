@@ -5,6 +5,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.jecstar.etm.server.core.util.ObjectUtils;
+
 /**
  * Test class for the <code>ObjectUtils</code> class.
  * 

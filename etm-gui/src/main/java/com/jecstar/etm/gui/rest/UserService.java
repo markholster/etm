@@ -19,11 +19,11 @@ import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.core.EtmException;
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.converter.EtmPrincipalConverterTags;
-import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterTagsJsonImpl;
-import com.jecstar.etm.core.util.BCrypt;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
+import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalTagsJsonImpl;
+import com.jecstar.etm.server.core.util.BCrypt;
 
 @Path("/user")
 public class UserService extends AbstractJsonService {
@@ -31,7 +31,7 @@ public class UserService extends AbstractJsonService {
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	private final String timezoneResponse;
-	private final EtmPrincipalConverterTags tags = new EtmPrincipalConverterTagsJsonImpl();
+	private final EtmPrincipalTags tags = new EtmPrincipalTagsJsonImpl();
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		UserService.client = client;

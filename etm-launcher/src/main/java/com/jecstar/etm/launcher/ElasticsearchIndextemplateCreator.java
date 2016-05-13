@@ -16,20 +16,20 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
-import com.jecstar.etm.core.configuration.EtmConfiguration;
-import com.jecstar.etm.core.domain.EtmPrincipal;
-import com.jecstar.etm.core.domain.EtmPrincipal.PrincipalRole;
-import com.jecstar.etm.core.domain.converter.EtmConfigurationConverter;
-import com.jecstar.etm.core.domain.converter.EtmPrincipalConverter;
-import com.jecstar.etm.core.domain.converter.TelemetryEventConverterTags;
-import com.jecstar.etm.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
-import com.jecstar.etm.core.domain.converter.json.TelemetryEventConverterTagsJsonImpl;
-import com.jecstar.etm.core.util.BCrypt;
+import com.jecstar.etm.domain.writers.TelemetryEventTags;
+import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
+import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.util.BCrypt;
 
 public class ElasticsearchIndextemplateCreator {
 	
-	private final TelemetryEventConverterTags eventTags = new TelemetryEventConverterTagsJsonImpl();
+	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	private final MetricConverterTags metricTags = new MetricConverterTagsJsonImpl();
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
@@ -121,7 +121,7 @@ public class ElasticsearchIndextemplateCreator {
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
 		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, ElasticBackedEtmConfiguration.NODE_INDEX_TYPE, ElasticBackedEtmConfiguration.DEFAULT_ID)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
-			.setSource(this.etmConfigurationConverter.convert(null, new EtmConfiguration("temp-for-creating-default")))
+			.setSource(this.etmConfigurationConverter.write(null, new EtmConfiguration("temp-for-creating-default")))
 			.get();
 	}
 	
@@ -130,7 +130,7 @@ public class ElasticsearchIndextemplateCreator {
 		adminUser.addRole(PrincipalRole.ADMIN);
 		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, "user", adminUser.getId())
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
-			.setSource(this.etmPrincipalConverter.convert(adminUser))
+			.setSource(this.etmPrincipalConverter.write(adminUser))
 			.get();	
 	}
 	
