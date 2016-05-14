@@ -1,0 +1,26 @@
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/it/java'
+        }
+        resources {
+            srcDir 'src/it/resources'
+        }
+    }
+}
+
+dependencies {
+    integrationTestCompile dep_junit, dep_seleniumJava, dep_htmlunitDriver
+}
+
+eclipse {
+    classpath {
+        plusConfigurations += [ configurations.integrationTestCompile ]
+    }
+}
+
+
+task integrationTest(type: Test) {
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+}

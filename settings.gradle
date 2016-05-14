@@ -4,5 +4,6 @@ include 'etm-domain',
         'etm-processor-rest', 
         'etm-gui', 
         'etm-slf4j', 
-        'etm-launcher', 
+        'etm-launcher',
+        'etm-integration-tests' 
         'etm-license-generator'

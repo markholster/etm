@@ -7,6 +7,7 @@ ext {
     dep_disruptor = "com.lmax:disruptor:3.3.4"
     dep_elasticsearch = "org.elasticsearch:elasticsearch:5.0.0-alpha2"
     dep_groovyAll = "org.codehaus.groovy:groovy-all:2.4.6:indy"
+    dep_htmlunitDriver = "org.seleniumhq.selenium:selenium-java:2.53.0"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:" + version_jackson
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.2.0"
     dep_junit = "junit:junit:4.12"
@@ -14,8 +15,9 @@ ext {
     dep_resteasyJaxrs = "org.jboss.resteasy:resteasy-jaxrs:" + version_resteasy
     dep_resteasyJacksonProvider = "org.jboss.resteasy:resteasy-jackson2-provider:" + version_resteasy
     dep_log4jOverSlf4j = "org.slf4j:log4j-over-slf4j:" + version_slf4j
-    dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-3"
+    dep_seleniumJava = "org.seleniumhq.selenium:htmlunit-driver:2.20"
+    dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_undertowCore = "io.undertow:undertow-core:" + version_undertow
     dep_undertowServlet = "io.undertow:undertow-servlet:" + version_undertow
     dep_yamlbeans = "com.esotericsoftware.yamlbeans:yamlbeans:1.09"
