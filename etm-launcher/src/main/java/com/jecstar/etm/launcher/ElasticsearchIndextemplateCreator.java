@@ -166,7 +166,7 @@ public class ElasticsearchIndextemplateCreator {
 	
 	private String createRemoveSearchTemplateScript() {
 		return "if (input.name != null) {" + 
-				"    if (input.ctx._source.searcht_emplates != null) {" +
+				"    if (input.ctx._source.search_templates != null) {" +
 				"		 Iterator it = input.ctx._source.search_templates.iterator();" +
 				"        while (it.hasNext()) {" +
 				"            def item = it.next();" +	
