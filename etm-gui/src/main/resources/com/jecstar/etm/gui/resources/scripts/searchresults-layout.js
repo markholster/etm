@@ -113,6 +113,7 @@ $('#link-edit-table').click(function (event) {
             $('<div>').addClass('col-sm-1 font-weight-bold').text('Link'),
             $('<div>').addClass('col-sm-2 font-weight-bold')
                 .append($('<a href="#">').text('Add row')
+                	.attr('id', 'link-add-result-row')	
                     .click(function (event) {
                         event.preventDefault(); 
                         $('#table-settings-columns').append(createRow());

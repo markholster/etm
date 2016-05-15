@@ -122,7 +122,7 @@ function setValuesFromHistory(query) {
 }
 
 function updateHistory(query, max_size) {
-	$('#list-recent-queries-links > li > a[title="' + query.query + '"]').parent().remove();
+	$('#list-recent-queries-links > li > a[title="' + query.query.replace(/(")/g, "\\$1" ) + '"]').parent().remove();
     $('#list-recent-queries-links').prepend(
             $('<li>').append(
                 $('<a href="#">')

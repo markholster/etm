@@ -2,6 +2,7 @@ package com.jecstar.etm.launcher.gui;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -43,15 +44,8 @@ public class SearchTemplateTest extends AbstractIntegrationTest{
 	    
 	    // Execute the query and wait for the result table. This table is created with Javascript, so not present before the query is executed.
 	    this.driver.findElement(By.id("btn-search")).click();
-	    new WebDriverWait(this.driver, 10).until(new ExpectedCondition<Boolean>() {
-            public Boolean apply(WebDriver d) {
-            	try {
-            		d.findElement(By.id("search_result_table"));
-            		return true;
-            	} catch (NoSuchElementException e) {}
-            	return false;
-            }
-        });
+	    assertNotNull("Result table not shown", this.driver.findElement(By.id("search_result_table")));
+	    waitForShow("search_result_table");
 	    
 	    // Fill the name of the search template.
 	    this.driver.findElement(By.id("template-name")).sendKeys(templateName);
