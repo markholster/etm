@@ -71,12 +71,12 @@ public class SearchService extends AbstractJsonService {
 	}
 	
 	@GET
-	@Path("/recent_queries")
+	@Path("/query_history")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getRecentQueries() {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		GetResponse getResponse = SearchService.client.prepareGet("etm_configuration", "user", etmPrincipal.getId())
-				.setFetchSource("recent_queries", null)
+				.setFetchSource("query_history", null)
 				.get();
 		if (getResponse.isSourceEmpty()) {
 			return "{}";
@@ -248,12 +248,12 @@ public class SearchService extends AbstractJsonService {
 		result.append("}");
 		
 		if (startIndex == 0) {
-			writeRecentQuery(startTime, queryString, startIndex, maxResults, sortField, sortOrder, types, fieldsLayout, etmPrincipal, history_size);
+			writeQueryHistory(startTime, queryString, startIndex, maxResults, sortField, sortOrder, types, fieldsLayout, etmPrincipal, history_size);
 		}
 		return result.toString();
 	}
 	
-	private void writeRecentQuery(long timestamp, String queryString, Integer startIndex, Integer maxResults,
+	private void writeQueryHistory(long timestamp, String queryString, Integer startIndex, Integer maxResults,
 			String sortField, String sortOrder, List<String> types, List<Map<String, Object>> fieldsLayout, EtmPrincipal etmPrincipal, int history_size) {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		Map<String, Object> query = new HashMap<String, Object>();
@@ -269,7 +269,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("history_size", history_size);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
 				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-				.setScript(new Script("etm_update-recent-queries", ScriptType.STORED, "painless", scriptParams))
+				.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
 				.setRetryOnConflict(3)
 				.execute();
 	}

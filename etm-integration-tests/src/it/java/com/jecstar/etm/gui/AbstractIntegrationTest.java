@@ -1,6 +1,7 @@
-package com.jecstar.etm.launcher.gui;
+package com.jecstar.etm.gui;
 
 import java.io.File;
+import java.util.function.Predicate;
 
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +20,7 @@ public abstract class AbstractIntegrationTest {
 	@Before
 	public void setup() {
 //		this.driver = new HtmlUnitDriver(true);
+//		this.driver = new ChromeDriver();
 		File profileDir = new File("profiles/firefox");
 		FirefoxProfile profile = new FirefoxProfile(profileDir);
 		this.driver = new FirefoxDriver(profile);
@@ -40,26 +42,20 @@ public abstract class AbstractIntegrationTest {
 	    } catch (NoSuchElementException e) {}
 	}
 	
-	protected void waitForShow(String elementId) {
+	protected void waitFor(Predicate<WebDriver> predicate) {
 	    new WebDriverWait(this.driver, 10).until(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver d) {
-            	try {
-            		return d.findElement(By.id(elementId)).isDisplayed();
-            	} catch (NoSuchElementException e) {}
-            	return false;
+            	return predicate.test(d);
             }
         });
 	}
 	
+	protected void waitForShow(String elementId) {
+		waitFor(d -> d.findElement(By.id(elementId)).isDisplayed());
+	}
+	
 	protected void waitForHide(String elementId) {
-	    new WebDriverWait(this.driver, 10).until(new ExpectedCondition<Boolean>() {
-            public Boolean apply(WebDriver d) {
-            	try {
-            		return !d.findElement(By.id(elementId)).isDisplayed();
-            	} catch (NoSuchElementException e) {}
-            	return true;
-            }
-        });
+		waitFor(d -> !d.findElement(By.id(elementId)).isDisplayed());
 	}
 
 }

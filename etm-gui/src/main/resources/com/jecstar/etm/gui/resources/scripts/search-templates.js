@@ -70,21 +70,21 @@ $.ajax({
 $.ajax({
     type: 'GET',
     contentType: 'application/json',
-    url: '../rest/search/recent_queries',
+    url: '../rest/search/query_history',
     success: function(data) {
-        if (!data || !data.recent_queries) {
+        if (!data || !data.query_history) {
             return;
         }
-        data.recent_queries.reverse();
-        $.each(data.recent_queries, function(index, query){
-            $('#list-recent-queries-links').append(
+        data.query_history.reverse();
+        $.each(data.query_history, function(index, query){
+            $('#list-query-history-links').append(
                 $('<li>').append(
                     $('<a href="#">')
                     .click(function(event) {
                        event.preventDefault();
                        setValuesFromHistory(query)
                     })
-                    .text(query.query.length > 40 ? query.query.substring(0, 40) : query.query)
+                    .text(query.query.length > 40 ? query.query.substring(0, 40) + '...' : query.query)
                     .attr('title', query.query)
                 )
             );
@@ -122,8 +122,8 @@ function setValuesFromHistory(query) {
 }
 
 function updateHistory(query, max_size) {
-	$('#list-recent-queries-links > li > a[title="' + query.query.replace(/(")/g, "\\$1" ) + '"]').parent().remove();
-    $('#list-recent-queries-links').prepend(
+	$('#list-query-history-links > li > a[title="' + query.query.replace(/(")/g, "\\$1" ) + '"]').parent().remove();
+    $('#list-query-history-links').prepend(
             $('<li>').append(
                 $('<a href="#">')
                 .click(function(event) {

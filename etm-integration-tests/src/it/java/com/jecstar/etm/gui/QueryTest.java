@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher.gui;
+package com.jecstar.etm.gui;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -7,6 +7,11 @@ import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
+/**
+ * Class testing the search functionality of ETM.
+ * 
+ * @author Mark Holster
+ */
 public class QueryTest extends AbstractIntegrationTest {
 	
 	@Test
@@ -29,16 +34,18 @@ public class QueryTest extends AbstractIntegrationTest {
 	    this.driver.findElement(By.id("btn-search")).click();
 	    waitForShow("search_result_table");
 
-	    // First check if the "Recent queries" list is updated with our query. It should be the first link
-	    WebElement recentLink = this.driver.findElement(By.id("list-recent-queries-links")).findElement(By.xpath("./*[1]/*[1]"));
-	    assertEquals(query, recentLink.getAttribute("title"));
+	    // First check if the "Query history" list is updated with our query. It should be the first link
+	    waitFor(d -> {
+	    	WebElement historyLink = d.findElement(By.id("list-query-history-links")).findElement(By.xpath("./*[1]/*[1]"));
+	    	return historyLink != null && historyLink.getAttribute("title").equals(query);
+	    });
+	    
 	    
 	    // Now, lets sort on the name.
 	    WebElement nameColumn = this.driver.findElement(By.id("search_result_table")).findElement(By.xpath("./thead/tr/th[text()='" + nameColumnName + "']"));
 	    nameColumn.click();
 	    // Select the header that is sorted.
-	    WebElement sortHeader = this.driver.findElement(By.id("search_result_table")).findElement(By.xpath("./thead/tr/th[@class='headerSortDesc']"));
-	    assertEquals(nameColumnName, sortHeader.getText());
+	    waitFor(d -> d.findElement(By.id("search_result_table")).findElement(By.xpath("./thead/tr/th[@class='headerSortDesc' and text()='" + nameColumnName + "']")) != null);
 	    
 	    // Extend the search table with another column.
 	    // By default there should be 2 columns in the result table.

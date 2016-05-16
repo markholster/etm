@@ -1,17 +1,13 @@
-package com.jecstar.etm.launcher.gui;
+package com.jecstar.etm.gui;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 /**
  * Class testing the usage of the search templates in the GUI.
@@ -44,7 +40,6 @@ public class SearchTemplateTest extends AbstractIntegrationTest{
 	    
 	    // Execute the query and wait for the result table. This table is created with Javascript, so not present before the query is executed.
 	    this.driver.findElement(By.id("btn-search")).click();
-	    assertNotNull("Result table not shown", this.driver.findElement(By.id("search_result_table")));
 	    waitForShow("search_result_table");
 	    
 	    // Fill the name of the search template.
@@ -53,15 +48,7 @@ public class SearchTemplateTest extends AbstractIntegrationTest{
 	    assertTrue("Template save button is enabled when template name is not provided", this.driver.findElement(By.id("btn-save-template")).isEnabled());
 	    // Save the template and make sure the template is available afterwards.
 	    this.driver.findElement(By.id("btn-save-template")).click();
-	    new WebDriverWait(this.driver, 10).until(new ExpectedCondition<Boolean>() {
-            public Boolean apply(WebDriver d) {
-            	try {
-            		d.findElement(By.id("list-template-links")).findElement(By.xpath("./li/a[text()='" + templateName + "']"));
-            		return true;
-            	} catch (NoSuchElementException e) {}
-            	return false;
-            }
-        });
+	    waitFor(d -> d.findElement(By.id("list-template-links")).findElement(By.xpath("./li/a[text()='" + templateName + "']")) != null);
 	    
 	    // Now let's check the template is working. First we need to change the query field contents
 	    this.driver.findElement(By.id("query-string")).sendKeys("This value should be changed with the value of the template");

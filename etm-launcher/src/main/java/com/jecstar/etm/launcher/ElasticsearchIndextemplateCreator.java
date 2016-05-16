@@ -59,8 +59,8 @@ public class ElasticsearchIndextemplateCreator {
 					.get();
 				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
 					.setScriptLang("painless")
-					.setId("etm_update-recent-queries")
-					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateRecentQueriesScript()).endObject().bytes())
+					.setId("etm_update-query-history")
+					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateQueryHistoryScript()).endObject().bytes())
 					.get();
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {
@@ -178,21 +178,22 @@ public class ElasticsearchIndextemplateCreator {
 				"}";
 	}
 	
-	private String createUpdateRecentQueriesScript() {
+	private String createUpdateQueryHistoryScript() {
 		return "if (input.query != null) {" + 
-				"    if (input.ctx._source.recent_queries != null) {" +
-				"        for (int i=0; i < input.ctx._source.recent_queries.size(); i++) {" + 
-				"            if (input.ctx._source.recent_queries[i].query.equals(input.query.query)) {" +
-				"                input.ctx._source.recent_queries.remove(i);" +
+				"    if (input.ctx._source.query_history != null) {" +
+				"        for (int i=0; i < input.ctx._source.query_history.size(); i++) {" + 
+				"            if (input.ctx._source.query_history[i].query.equals(input.query.query)) {" +
+				"                input.ctx._source.query_history.remove(i);" +
 				"            }" +
 				"        }" + 
-				"        input.ctx._source.recent_queries.add(input.query);" +
-				"        if (input.ctx._source.recent_queries.size() > input.history_size) {" +
-				"            input.ctx._source.recent_queries.remove(0);" +
+				"        input.ctx._source.query_history.add(input.query);" +
+				"        int removeCount = input.ctx._source.query_history.size() - input.history_size;" +
+				"        for (int i=0; i < removeCount; i++) {" +
+				"            input.ctx._source.query_history.remove(0);" +
 				"        }" +
 				"    } else {" + 
-				"        input.ctx._source.recent_queries = new ArrayList<Object>();" +
-				"        input.ctx._source.recent_queries.add(input.query);" +
+				"        input.ctx._source.query_history = new ArrayList<Object>();" +
+				"        input.ctx._source.query_history.add(input.query);" +
 				"    }" + 
 				"}";		
 	}
