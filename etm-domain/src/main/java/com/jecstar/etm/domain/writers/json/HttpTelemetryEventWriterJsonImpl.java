@@ -13,9 +13,4 @@ public class HttpTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEvent
 		return added;
 	}
 
-//	@Override
-//	void doConvert(HttpTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
-//		telemetryEvent.httpEventType =  HttpEventType.safeValueOf(getString(getTags().getHttpEventTypeTag(), valueMap));
-//	}
-
 }

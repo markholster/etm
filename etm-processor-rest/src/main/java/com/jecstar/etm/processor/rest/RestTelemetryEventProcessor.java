@@ -2,8 +2,6 @@ package com.jecstar.etm.processor.rest;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,19 +64,15 @@ public class RestTelemetryEventProcessor {
 	@Path("/{eventType}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+	@SuppressWarnings("unchecked")
 	public String addSpecificEvent(@PathParam("eventType") String eventType, InputStream data) {
 		CommandType commandType = TelemetryCommand.CommandType.valueOfStringType(eventType);
 		if (commandType == null) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
-		try (Reader reader = new InputStreamReader(data)) {
-			final char[] buffer = new char[4096];
-		    final StringBuilder out = new StringBuilder();
-		    int bytesRead = 0;
-		    while ((bytesRead = reader.read(buffer, 0, buffer.length)) != -1) {
-		    	out.append(buffer, 0, bytesRead);
-		    }
-		    process(commandType, out);
+		try {
+			Map<String, Object> event = this.objectMapper.readValue(data, HashMap.class);
+		    process(commandType, event);
 			return "{ \"status\": \"acknowledged\" }";
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {
@@ -161,32 +155,6 @@ public class RestTelemetryEventProcessor {
 	    	break;
 	    case SQL_EVENT:
 	    	this.sqlConverter.read(eventData, this.sqlTelemetryEvent);
-	    	telemetryCommandProcessor.processTelemetryEvent(this.sqlTelemetryEvent);
-	    	break;
-	    }		
-	}
-	
-	private void process(CommandType commandType, StringBuilder json) {
-	    switch (commandType) {
-	    // Initializing is done in the converters.
-	    case BUSINESS_EVENT:
-	    	this.businessConverter.read(json.toString(), this.businessTelemetryEvent);
-	    	telemetryCommandProcessor.processTelemetryEvent(this.businessTelemetryEvent);
-	    	break;
-	    case HTTP_EVENT:
-	    	this.httpConverter.read(json.toString(), this.httpTelemetryEvent);
-	    	telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEvent);
-	    	break;
-	    case LOG_EVENT:
-	    	this.logConverter.read(json.toString(), this.logTelemetryEvent);
-	    	telemetryCommandProcessor.processTelemetryEvent(this.logTelemetryEvent);
-	    	break;
-	    case MESSAGING_EVENT:
-	    	this.messagingConverter.read(json.toString(), this.messagingTelemetryEvent);
-	    	telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEvent);
-	    	break;
-	    case SQL_EVENT:
-	    	this.sqlConverter.read(json.toString(), this.sqlTelemetryEvent);
 	    	telemetryCommandProcessor.processTelemetryEvent(this.sqlTelemetryEvent);
 	    	break;
 	    }		

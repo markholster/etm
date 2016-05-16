@@ -12,10 +12,5 @@ public class SqlTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventW
 		}
 		return added;
 	}
-//
-//	@Override
-//	void doConvert(SqlTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
-//		telemetryEvent.sqlEventType =  SqlEventType.safeValueOf(getString(getTags().getSqlEventTypeTag(), valueMap));
-//	}
 
 }

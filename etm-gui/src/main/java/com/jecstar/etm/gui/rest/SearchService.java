@@ -171,6 +171,7 @@ public class SearchService extends AbstractJsonService {
 				if (!first) {
 					result.append(", ");
 				}
+				first = false;
 				result.append("{");
 				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
 				result.append("\"names\": [" + entry.getValue().stream().map(n -> escapeToJson(n, true)).collect(Collectors.joining(", ")) + "]");

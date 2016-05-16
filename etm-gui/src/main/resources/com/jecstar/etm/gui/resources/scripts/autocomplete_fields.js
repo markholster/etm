@@ -35,7 +35,7 @@
                        }
                 })
             }
-            return $.uniqueSort($(values));
+            return $.uniqueSort(values.sort());
         }
         
         function extractAutocompleteTerm(query) {

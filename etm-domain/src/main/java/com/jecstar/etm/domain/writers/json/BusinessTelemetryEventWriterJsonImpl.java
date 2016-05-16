@@ -9,8 +9,4 @@ public class BusinessTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryE
 		return firstElement;
 	}
 
-//	@Override
-//	void doConvert(BusinessTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
-//	}
-
 }

@@ -53,10 +53,10 @@ function addContent(data) {
 		} else {
 			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')));
 		}
-		if (data.source.metadata != undefined) {
+		if ("undefined" != typeof data.source.metadata) {
         	$eventTab.append(createDetailMap('metadata', data.source.metadata));
         }
-        if (data.source.extracted_data != undefined) {
+        if ("undefined" != typeof data.source.extracted_data) {
         	$eventTab.append(createDetailMap('extracts', data.source.extracted_data));
         }
         
@@ -68,7 +68,7 @@ function addContent(data) {
         		)
         );
         
-        if ('log' === data.type && data.source.stack_trace != undefined) {
+        if ('log' === data.type && "undefined" != typeof data.source.stack_trace) {
         	$eventTab.append(
 	    		$('<div>').addClass('row').append(
 	    				$('<div>').addClass('col-sm-12').append(
@@ -79,7 +79,7 @@ function addContent(data) {
         }
         
 		
-		if ($endpoints != undefined && $endpoints.length > 0) {
+		if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 			createEndpointsTab($endpoints, data.time_zone);
 		}
 
@@ -322,7 +322,7 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		$this.append(createDetailRow('Read time', eh.handling_time, 'Transaction id', eh.transaction_id));
 		$this.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
-		$this.append(createDetailRow('Application version', eh.application_version, 'Application version', eh.application_instance));
+		$this.append(createDetailRow('Application version', eh.application_version, 'Application instance', eh.application_instance));
 		$this.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host));
 		$this.append('<br>');
 		$this.hide().fadeIn('fast', function () {

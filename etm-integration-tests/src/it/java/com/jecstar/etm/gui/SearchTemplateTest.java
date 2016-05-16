@@ -14,7 +14,7 @@ import org.openqa.selenium.NoSuchElementException;
  * 
  * @author Mark Holster
  */
-public class SearchTemplateTest extends AbstractIntegrationTest{
+public class SearchTemplateTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testTemplateManagement() {
@@ -23,7 +23,7 @@ public class SearchTemplateTest extends AbstractIntegrationTest{
 		final String updatedTemplateQuery = "This is a test";
 		
 		// Go to the search page
-		getSecurePage("http://127.0.0.1:8080/gui/search/index.html");
+		getSecurePage(this.httpHost + "/gui/search/index.html");
 		
 	    // Check if certain fields are disabled.
 	    assertFalse("Search button is enabled when search string is not provided", this.driver.findElement(By.id("btn-search")).isEnabled());

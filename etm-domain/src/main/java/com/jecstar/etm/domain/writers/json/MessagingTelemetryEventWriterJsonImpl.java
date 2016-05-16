@@ -15,11 +15,5 @@ public class MessagingTelemetryEventWriterJsonImpl extends AbstractJsonTelemetry
 		}
 		return added;
 	}
-//
-//	@Override
-//	void doConvert(MessagingTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
-//		telemetryEvent.expiry = getZonedDateTime(getTags().getExpiryTag(), valueMap);
-//		telemetryEvent.messagingEventType = MessagingEventType.safeValueOf(getString(getTags().getMessagingEventTypeTag(), valueMap));
-//	}
 
 }

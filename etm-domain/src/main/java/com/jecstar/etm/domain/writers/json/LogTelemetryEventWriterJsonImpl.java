@@ -12,10 +12,4 @@ public class LogTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventW
 		return added;
 	}
 
-//	@Override
-//	void doConvert(LogTelemetryEvent telemetryEvent, Map<String, Object> valueMap) {
-//		telemetryEvent.logLevel = getString(getTags().getLogLevelTag(), valueMap);
-//		telemetryEvent.stackTrace = getString(getTags().getStackTraceTag(), valueMap);
-//	}
-
 }

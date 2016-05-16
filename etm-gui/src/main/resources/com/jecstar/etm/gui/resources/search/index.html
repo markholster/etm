@@ -282,7 +282,11 @@
     }).ajaxStop(function () {
         $('#spinner').fadeOut(200);
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+        if ("undefined" != typeof jqXHR.responseJSON) {
+            $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+        } else {
+            $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+        }
     }).ajaxComplete(function(event, jqXHR, settings) {
         var contentType = jqXHR.getResponseHeader("Content-Type");
         if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {

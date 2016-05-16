@@ -21,7 +21,7 @@ public class QueryTest extends AbstractIntegrationTest {
 		final String newColumnName = "New column";
 		final String newColumnField = "log_level";
 		
-		getSecurePage("http://127.0.0.1:8080/gui/search/index.html");
+		getSecurePage(this.httpHost + "/gui/search/index.html");
 		
 		// Only search for log events.
 	    this.driver.findElement(By.id("check-type-business")).click();
