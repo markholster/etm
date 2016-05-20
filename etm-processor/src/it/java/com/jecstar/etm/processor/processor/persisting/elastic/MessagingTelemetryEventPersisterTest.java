@@ -1,0 +1,103 @@
+package com.jecstar.etm.processor.processor.persisting.elastic;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetResponse;
+import org.junit.Test;
+
+import com.jecstar.etm.domain.Endpoint;
+import com.jecstar.etm.domain.EndpointHandler;
+import com.jecstar.etm.domain.MessagingTelemetryEvent;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+import com.jecstar.etm.domain.PayloadFormat;
+import com.jecstar.etm.domain.builders.ApplicationBuilder;
+import com.jecstar.etm.domain.builders.EndpointBuilder;
+import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.processor.AbstractIntegrationTest;
+import com.jecstar.etm.server.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
+
+public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTest {
+
+	private final MessagingTelemetryEventConverterJsonImpl messagingEventConverter = new MessagingTelemetryEventConverterJsonImpl();
+	
+	protected BulkProcessor.Listener createBuilkListener() {
+		return new BulkProcessor.Listener() {
+
+			@Override
+			public void beforeBulk(long executionId, BulkRequest request) {
+			}
+
+			@Override
+			public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+				if (response.hasFailures()) {
+					fail(response.buildFailureMessage());
+				}
+			}
+
+			@Override
+			public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+				fail(failure.getMessage());
+			}
+		};
+	}
+	
+	@Test
+	public void testMergingOfReadingAndWritingEvents() {
+		final String eventId = UUID.randomUUID().toString();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		
+		final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now())
+				.setApplication(new ApplicationBuilder()
+						.setName("Writing app")
+				).build();
+		
+		final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+				.setApplication(new ApplicationBuilder()
+						.setName("Reading app")
+				).build();
+		
+		
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+			.setId(eventId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+						.setName("TEST.QUEUE")
+						.setWritingEndpointHandler(writingEndpointHandler)
+					);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		
+		builder.initialize()
+			.setId(eventId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+						.setName("TEST.QUEUE")
+						.addReadingEndpointHandler(readingEndpointHandler)
+					);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		
+		GetResponse getResponse = this.client.prepareGet(persister.getElasticIndexName(), "messaging", eventId).get();
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertEquals(eventId, readEvent.id);
+		assertEquals(1, readEvent.endpoints.size());
+		Endpoint endpoint = readEvent.endpoints.get(0);
+		assertEquals("TEST.QUEUE", endpoint.name);
+		assertEquals("Writing app", endpoint.writingEndpointHandler.application.name);
+		assertEquals(1, endpoint.readingEndpointHandlers.size());
+		assertEquals("Reading app", endpoint.readingEndpointHandlers.get(0).application.name);
+	}
+	
+}

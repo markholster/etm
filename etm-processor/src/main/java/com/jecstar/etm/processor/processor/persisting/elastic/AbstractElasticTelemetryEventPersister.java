@@ -9,6 +9,7 @@ import java.time.temporal.ChronoField;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
@@ -57,6 +58,12 @@ public abstract class AbstractElasticTelemetryEventPersister {
     protected IndexRequest createIndexRequest(String id) {
     	return new IndexRequest(getElasticIndexName(), getElasticTypeName(), id)
     			.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()));
-    }	
+    }
+    
+    protected UpdateRequest createUpdateRequest(String id) {
+    	return new UpdateRequest(getElasticIndexName(), getElasticTypeName(), id)
+    			.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()));
+    	
+    }
 
 }
