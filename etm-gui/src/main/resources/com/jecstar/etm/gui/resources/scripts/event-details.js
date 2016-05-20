@@ -44,73 +44,78 @@ function addContent(data) {
 		if (data.source.name) {
 			$('#event-card-title').text(data.source.name);
 		}
-		appendToContainerInRow($eventTab, 'Id', data.id);
-		appendToContainerInRow($eventTab, 'Name', data.source.name);
-		appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
-		appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
-		$endpoints = $(data.source.endpoints);
-		var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
-		appendToContainerInRow($eventTab, 'Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
-		if ('log' === data.type) {
-			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
-		} else if ('http' === data.type) {
-			if (data.source.http_type) {
-				// http type known, determine request or response.
-				if ('RESPONSE' === data.source.http_type) {
-					$('#event-tab-header').text('Http response');
-				} else {
-					$('#event-tab-header').text('Http request');
-				}
-			}
-			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
-			if ('RESPONSE' !== data.source.http_type) {
-				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
-			}
-		} else if ('messaging' === data.type) {
-			if (data.source.messaging_type) {
-				// messaging type known, determine request or response.
-				if ('RESPONSE' === data.source.messaging_type) {
-					$('#event-tab-header').text('Response message');
-				} else if ('REQUEST' === data.source.messaging_type) {
-					$('#event-tab-header').text('Request message');
-				} else {
-					$('#event-tab-header').text('Fire-forget message');
-				}
-			}
-			appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
-			appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
-		} else if ('sql' === data.type) {
-		}
-		if ("undefined" != typeof data.source.metadata) {
-        	$eventTab.append(createDetailMap('metadata', data.source.metadata));
-        }
-        if ("undefined" != typeof data.source.extracted_data) {
-        	$eventTab.append(createDetailMap('extracts', data.source.extracted_data));
-        }
-        $eventTab.append(
-        		$('<div>').addClass('row').append(
-        				$('<div>').addClass('col-sm-12').append(
-        						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.payload)
-        				)
-        		)
-        );
-        
-        if ('log' === data.type && "undefined" != typeof data.source.stack_trace) {
-        	$eventTab.append(
-	    		$('<div>').addClass('row').append(
-	    				$('<div>').addClass('col-sm-12').append(
-	    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.stack_trace)
-	    				)
-	    		)
-    		);
-        }
-        
-		
+		writeEventDataToTab($eventTab, data);
+		var $endpoints = $(data.source.endpoints);
 		if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 			createEndpointsTab($endpoints, data.time_zone);
 		}
 
 	}
+}
+
+function writeEventDataToTab(tab, data) {
+	$eventTab = $(tab);
+	appendToContainerInRow($eventTab, 'Id', data.id);
+	appendToContainerInRow($eventTab, 'Name', data.source.name);
+	appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
+	appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
+	var $endpoints = $(data.source.endpoints);
+	var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
+	appendToContainerInRow($eventTab, 'Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+	if ('log' === data.type) {
+		appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
+	} else if ('http' === data.type) {
+		if (data.source.http_type) {
+			// http type known, determine request or response.
+			if ('RESPONSE' === data.source.http_type) {
+				$('#event-tab-header').text('Http response');
+			} else {
+				$('#event-tab-header').text('Http request');
+			}
+		}
+		appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
+		if ('RESPONSE' !== data.source.http_type) {
+			appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+		}
+	} else if ('messaging' === data.type) {
+		if (data.source.messaging_type) {
+			// messaging type known, determine request or response.
+			if ('RESPONSE' === data.source.messaging_type) {
+				$('#event-tab-header').text('Response message');
+			} else if ('REQUEST' === data.source.messaging_type) {
+				$('#event-tab-header').text('Request message');
+			} else {
+				$('#event-tab-header').text('Fire-forget message');
+			}
+		}
+		appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
+		appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+	} else if ('sql' === data.type) {
+	}
+	if ("undefined" != typeof data.source.metadata) {
+    	$eventTab.append(createDetailMap('metadata', data.source.metadata));
+    }
+    if ("undefined" != typeof data.source.extracted_data) {
+    	$eventTab.append(createDetailMap('extracts', data.source.extracted_data));
+    }
+    $eventTab.append(
+    		$('<div>').addClass('row').append(
+    				$('<div>').addClass('col-sm-12').append(
+    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.payload)
+    				)
+    		)
+    );
+    
+    if ('log' === data.type && "undefined" != typeof data.source.stack_trace) {
+    	$eventTab.append(
+    		$('<div>').addClass('row').append(
+    				$('<div>').addClass('col-sm-12').append(
+    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.stack_trace)
+    				)
+    		)
+		);
+    }
+	
 }
 
 function appendToContainerInRow(container, name, value) {
