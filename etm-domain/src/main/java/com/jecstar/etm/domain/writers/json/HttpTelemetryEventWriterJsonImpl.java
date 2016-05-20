@@ -7,6 +7,9 @@ public class HttpTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEvent
 	@Override
 	boolean doWrite(HttpTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
 		boolean added = !firstElement;
+		if (event.expiry != null) {
+			added = this.jsonWriter.addLongElementToJsonBuffer(getTags().getExpiryTag(), event.expiry.toInstant().toEpochMilli(), buffer, !added) || added;
+		}
 		if (event.httpEventType != null) {
 			added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getHttpEventTypeTag(), event.httpEventType.name(), buffer, !added) || added;
 		}
