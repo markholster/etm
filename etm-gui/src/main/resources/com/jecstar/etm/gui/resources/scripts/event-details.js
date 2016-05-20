@@ -42,16 +42,44 @@ function addContent(data) {
 	$eventTab = $('#event-tab');
 	if (data.source) {
 		if (data.source.name) {
-			$('#event-card-title').text('Event ' + data.source.name);
+			$('#event-card-title').text(data.source.name);
 		}
-		$eventTab.append(createDetailRow('Id', data.id, 'Name', data.source.name));
-		$eventTab.append(createDetailRow('Correlation id', data.source.correlation_id, 'Payload format', data.source.payload_format));
+		appendToContainerInRow($eventTab, 'Id', data.id);
+		appendToContainerInRow($eventTab, 'Name', data.source.name);
+		appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
+		appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
 		$endpoints = $(data.source.endpoints);
 		var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
+		appendToContainerInRow($eventTab, 'Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		if ('log' === data.type) {
-			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), 'Log level', data.source.log_level));
-		} else {
-			$eventTab.append(createDetailRow('Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')));
+			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
+		} else if ('http' === data.type) {
+			if (data.source.http_type) {
+				// http type known, determine request or response.
+				if ('RESPONSE' === data.source.http_type) {
+					$('#event-tab-header').text('Http response');
+				} else {
+					$('#event-tab-header').text('Http request');
+				}
+			}
+			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
+			if ('RESPONSE' !== data.source.http_type) {
+				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			}
+		} else if ('messaging' === data.type) {
+			if (data.source.messaging_type) {
+				// messaging type known, determine request or response.
+				if ('RESPONSE' === data.source.messaging_type) {
+					$('#event-tab-header').text('Response message');
+				} else if ('REQUEST' === data.source.messaging_type) {
+					$('#event-tab-header').text('Request message');
+				} else {
+					$('#event-tab-header').text('Fire-forget message');
+				}
+			}
+			appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
+			appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+		} else if ('sql' === data.type) {
 		}
 		if ("undefined" != typeof data.source.metadata) {
         	$eventTab.append(createDetailMap('metadata', data.source.metadata));
@@ -59,7 +87,6 @@ function addContent(data) {
         if ("undefined" != typeof data.source.extracted_data) {
         	$eventTab.append(createDetailMap('extracts', data.source.extracted_data));
         }
-        
         $eventTab.append(
         		$('<div>').addClass('row').append(
         				$('<div>').addClass('col-sm-12').append(
@@ -86,14 +113,23 @@ function addContent(data) {
 	}
 }
 
-function createDetailRow(name1, value1, name2, value2) {
-	return $('<div>').addClass('row')
-		.append(
-		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name1)),
-		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value1)),
-		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name2)),
-		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value2))		    	
-		);
+function appendToContainerInRow(container, name, value) {
+	var $container = $(container);
+	var $row = $container.children(":last-child");
+	if ($container.children().length !== 0 || $row.children().length === 2) {
+		$row.append(
+		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
+		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value))
+		)
+	} else {
+		$container.append(
+				$('<div>').addClass('row')
+					.append(
+					    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
+					    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value))
+				)
+		)
+	}
 }
 
 function createDetailMap(name, valueMap) {
@@ -294,10 +330,14 @@ function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 	$('#endpoint-node-detail').fadeOut('fast', function () {
 		$this = $(this).empty();
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
-		$this.append(createDetailRow('Write time', eh.handling_time, 'Transaction id', eh.transaction_id));
-		$this.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
-		$this.append(createDetailRow('Application version', eh.application_version, 'Application instance', eh.application_instance));
-		$this.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host));
+		appendToContainerInRow($this, 'Write time', eh.handling_time);
+		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
+		appendToContainerInRow($this, 'Location', eh.location);
+		appendToContainerInRow($this, 'Application name', eh.application_name);
+		appendToContainerInRow($this, 'Application version', eh.application_version);
+		appendToContainerInRow($this, 'Application instance', eh.application_instance);
+		appendToContainerInRow($this, 'Application user', eh.application_principal);
+		appendToContainerInRow($this, 'Application address', eh.application_host);
 		$this.append('<br>');
 		$this.fadeIn('fast', function () {
 			cyEndpoints.resize();
@@ -308,7 +348,8 @@ function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 function displayEndpoint(cyEndpoints, endpoint, timeZone) {
 	$('#endpoint-node-detail').fadeOut('fast', function () {
 		$this = $(this).empty();
-		$this.append(createDetailRow('Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'), 'Endpoint name', endpoint.name));
+		appendToContainerInRow($this, 'Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+		appendToContainerInRow($this, 'Endpoint name', endpoint.name);
 		$this.append('<br>');
 		$this.hide().fadeIn('fast', function () {
 			cyEndpoints.resize();
@@ -320,10 +361,14 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 	$('#endpoint-node-detail').fadeOut('fast', function () {
 		$this = $(this).empty();
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
-		$this.append(createDetailRow('Read time', eh.handling_time, 'Transaction id', eh.transaction_id));
-		$this.append(createDetailRow('Location', eh.location, 'Application name', eh.application_name));
-		$this.append(createDetailRow('Application version', eh.application_version, 'Application instance', eh.application_instance));
-		$this.append(createDetailRow('Application user', eh.application_principal, 'Application address', eh.application_host));
+		appendToContainerInRow($this, 'Read time', eh.handling_time);
+		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
+		appendToContainerInRow($this, 'Location', eh.location);
+		appendToContainerInRow($this, 'Application name', eh.application_name);
+		appendToContainerInRow($this, 'Application version', eh.application_version);
+		appendToContainerInRow($this, 'Application instance', eh.application_instance);
+		appendToContainerInRow($this, 'Application user', eh.application_principal);
+		appendToContainerInRow($this, 'Application address', eh.application_host);
 		$this.append('<br>');
 		$this.hide().fadeIn('fast', function () {
 			cyEndpoints.resize();
