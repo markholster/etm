@@ -33,7 +33,9 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
 					.upsert(indexRequest));
 		if (MessagingEventType.RESPONSE.equals(event.messagingEventType) && event.correlationId != null) {
 			bulkProcessor.add(createUpdateRequest(event.correlationId)
-					.script(new Script("etm_update-request-with-response", ScriptType.STORED, "painless", parameters)));
+					.script(new Script("etm_update-request-with-response", ScriptType.STORED, "painless", parameters))
+					.upsert("{}")
+					.scriptedUpsert(true));
 		}
 	}
 

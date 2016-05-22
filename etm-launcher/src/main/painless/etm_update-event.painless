@@ -1,3 +1,4 @@
+// TODO merge event if only correlations is set. In that case the response is written before the request.
 if (input.source.endpoints != null) {
     // Merge endpoints
     for (int sourceEndpointIx=0; sourceEndpointIx < input.source.endpoints.size(); sourceEndpointIx++) {

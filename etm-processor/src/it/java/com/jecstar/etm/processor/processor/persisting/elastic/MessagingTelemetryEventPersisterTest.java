@@ -133,26 +133,26 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 				).build();
 		
 		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
-		.setId(eventId)
-		.setPayload("Test case " + this.getClass().getName())
-		.setPayloadFormat(PayloadFormat.TEXT)
-		.setMessagingEventType(MessagingEventType.REQUEST)
-		.addOrMergeEndpoint(new EndpointBuilder()
-				.setName("TEST.QUEUE")
-				.addReadingEndpointHandler(readingEndpointHandler)
-				);
+			.setId(eventId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("TEST.QUEUE")
+					.addReadingEndpointHandler(readingEndpointHandler)
+					);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
 		
 		builder.initialize()
-		.setId(eventId)
-		.setPayload("Test case " + this.getClass().getName())
-		.setPayloadFormat(PayloadFormat.TEXT)
-		.setMessagingEventType(MessagingEventType.REQUEST)
-		.addOrMergeEndpoint(new EndpointBuilder()
-				.setName("TEST.QUEUE")
-				.setWritingEndpointHandler(writingEndpointHandler)
-				);
+			.setId(eventId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("TEST.QUEUE")
+					.setWritingEndpointHandler(writingEndpointHandler)
+					);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
 		
@@ -187,28 +187,28 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 				).build();
 		
 		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
-		.setId(eventId)
-		.setPayload("Test case " + this.getClass().getName())
-		.setPayloadFormat(PayloadFormat.TEXT)
-		.setMessagingEventType(MessagingEventType.REQUEST)
-		.addOrMergeEndpoint(new EndpointBuilder()
-				.setName("TEST.QUEUE")
-				.setWritingEndpointHandler(writingEndpointHandler)
-				.addReadingEndpointHandler(readingEndpointHandler)
-				);
+			.setId(eventId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("TEST.QUEUE")
+					.setWritingEndpointHandler(writingEndpointHandler)
+					.addReadingEndpointHandler(readingEndpointHandler)
+					);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
 
 		builder.initialize()
-				.setId(eventId)
-				.setPayload("Test case " + this.getClass().getName())
-				.setPayloadFormat(PayloadFormat.TEXT)
-				.setMessagingEventType(MessagingEventType.REQUEST)
-				.addOrMergeEndpoint(new EndpointBuilder()
-						.setName("ANOTHER.TEST.QUEUE")
-						.setWritingEndpointHandler(writingEndpointHandler)
-						.addReadingEndpointHandler(readingEndpointHandler)
-						);
+			.setId(eventId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("ANOTHER.TEST.QUEUE")
+					.setWritingEndpointHandler(writingEndpointHandler)
+					.addReadingEndpointHandler(readingEndpointHandler)
+					);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
 		
@@ -243,31 +243,96 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 				);
 		
 		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
-		.setId(requestId)
-		.setPayload("Test case " + this.getClass().getName())
-		.setPayloadFormat(PayloadFormat.TEXT)
-		.setMessagingEventType(MessagingEventType.REQUEST)
-		.addOrMergeEndpoint(new EndpointBuilder()
-				.setName("REQUEST.QUEUE")
-				.setWritingEndpointHandler(requestingEndpointHandler)
-				.addReadingEndpointHandler(respondingEndpointHandler)
-				);
+			.setId(requestId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("REQUEST.QUEUE")
+					.setWritingEndpointHandler(requestingEndpointHandler)
+					.addReadingEndpointHandler(respondingEndpointHandler)
+					);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
 		
 		builder.initialize()
-		.setId(responseId)
-		.setPayload("Test case " + this.getClass().getName())
-		.setPayloadFormat(PayloadFormat.TEXT)
-		.setMessagingEventType(MessagingEventType.RESPONSE)
-		.setCorrelationId(requestId)
-		.addOrMergeEndpoint(new EndpointBuilder()
-				.setName("RESPONSE.QUEUE")
-				.setWritingEndpointHandler(respondingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(2)))
-				.addReadingEndpointHandler(requestingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(3)))
-				);
+			.setId(responseId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.RESPONSE)
+			.setCorrelationId(requestId)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("RESPONSE.QUEUE")
+					.setWritingEndpointHandler(respondingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(2)))
+					.addReadingEndpointHandler(requestingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(3)))
+					);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		waitFor(persister.getElasticIndexName(), "messaging", responseId, 1L);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
+
+		Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+		assertEquals(1, ((List<String>)sourceAsMap.get("correlations")).size());
+		assertEquals(responseId, ((List<String>)sourceAsMap.get("correlations")).get(0));
+		
+		assertEquals(1, ((List<Map<String, Object>>)sourceAsMap.get("endpoints")).size());
+		Map<String, Object> endpointMap = ((List<Map<String, Object>>)sourceAsMap.get("endpoints")).get(0);
+		Map<String, Object> readingEndpointHandler = ((List<Map<String, Object>>)endpointMap.get("reading_endpoint_handlers")).get(0);
+		assertEquals(1000, readingEndpointHandler.get("response_time"));
+		Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpointMap.get("writing_endpoint_handler");
+		assertEquals(3000, writingEndpointHandler.get("response_time"));
+	}
+	
+	/**
+	 * Test if the response data (correlation id, response time etc) is merged in the request when the response is added after the request.  
+	 * 
+	 * @throws InterruptedException 
+	 */
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testMergingOfRequestAfterResponse() throws InterruptedException {
+		final String requestId = UUID.randomUUID().toString();
+		final String responseId = UUID.randomUUID().toString();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		
+		final ZonedDateTime timeStamp = ZonedDateTime.now();
+		final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(timeStamp)
+				.setApplication(new ApplicationBuilder()
+						.setName("Requesting App")
+				);
+		
+		final EndpointHandlerBuilder respondingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(timeStamp.plusSeconds(1))
+				.setApplication(new ApplicationBuilder()
+						.setName("Responding App")
+				);
+		
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+			.setId(responseId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.RESPONSE)
+			.setCorrelationId(requestId)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("RESPONSE.QUEUE")
+					.setWritingEndpointHandler(respondingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(2)))
+					.addReadingEndpointHandler(requestingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(3)))
+					);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", responseId, 1L);
+		
+		builder.initialize()
+			.setId(requestId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("REQUEST.QUEUE")
+					.setWritingEndpointHandler(requestingEndpointHandler)
+					.addReadingEndpointHandler(respondingEndpointHandler)
+					);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		System.out.println(requestId);
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
 
 		Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
