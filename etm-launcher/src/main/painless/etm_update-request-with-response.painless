@@ -1,0 +1,69 @@
+// Add the ID as a correlation.
+if (input.ctx._source.correlations == null) {
+	input.ctx._source.correlations = new ArrayList<String>();
+}
+if (!input.ctx._source.correlations.contains(input.source.id)) {
+	input.ctx._source.correlations.add(input.source.id);
+}
+// Merge the response times back in the endpoints.
+if (input.source.endpoints != null) {
+	for (int i=0; i < input.source.endpoints.size(); i++) {
+        if (input.source.endpoints[i].writing_endpoint_handler != null && 
+        	input.source.endpoints[i].writing_endpoint_handler.application != null && 
+        	input.source.endpoints[i].writing_endpoint_handler.application.name != null) {
+        	
+        	String writerAppName = input.source.endpoints[i].writing_endpoint_handler.application.name;
+        	long writerHandlingTime = input.source.endpoints[i].writing_endpoint_handler.handling_time;
+        	// The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.
+        	boolean readerFound = false;
+        	if (input.ctx._source.endpoints != null) {
+        		for (int endpointIx=0; endpointIx < input.ctx._source.endpoints.size(); endpointIx++) {
+        			if (input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers == null) {
+        				continue;
+        			}
+        			for (int j=0; j < input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers.size(); j++) {
+        				if (input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application != null &&
+        				    input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application.name != null &&
+        				    input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application.name.equals(writerAppName)) {
+        				    
+        					readerFound = true;
+							input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].response_time = writerHandlingTime - input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].handling_time; 
+        				}
+        			} 
+        		}  
+        	}
+        	if (!readerFound) {
+        		// Write the writer in a temp field.
+				int TODO = 0;
+        	}
+        }
+        if (input.source.endpoints[i].reading_endpoint_handlers != null) {
+        	for (int j=0; j < input.source.endpoints[i].reading_endpoint_handlers.size(); j++) {
+        		if (input.source.endpoints[i].reading_endpoint_handlers[j].application != null && 
+        			input.source.endpoints[i].reading_endpoint_handlers[j].application.name != null) {
+        			
+		        	String readerAppName = input.source.endpoints[i].reading_endpoint_handlers[j].application.name;
+		        	long readerHandlingTime = input.source.endpoints[i].reading_endpoint_handlers[j].handling_time;
+        			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.
+        			boolean writerFound = false;
+        			if (input.ctx._source.endpoints != null) {
+        				for (int endpointIx=0; endpointIx < input.ctx._source.endpoints.size(); endpointIx++) {
+		        			if (input.ctx._source.endpoints[endpointIx].writing_endpoint_handler != null && 
+		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application != null &&
+		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application.name != null &&
+		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application.name.equals(readerAppName)) {
+		        			
+		        				writerFound = true;
+		        				input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.response_time = readerHandlingTime - input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.handling_time;
+		        			}
+        				}
+        			}
+		        	if (!writerFound) {
+		        		// Write the reader in a temp field.
+						int TODO = 0;
+		        	}
+        		}
+        	}
+        }
+	}
+}

@@ -63,10 +63,15 @@ public class ElasticsearchIndextemplateCreator {
 					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateQueryHistoryScript()).endObject().bytes())
 					.get();
 				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
-				.setScriptLang("painless")
-				.setId("etm_update-event")
-				.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateEventScript()).endObject().bytes())
-				.get();
+					.setScriptLang("painless")
+					.setId("etm_update-event")
+					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateEventScript()).endObject().bytes())
+					.get();
+				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
+					.setScriptLang("painless")
+					.setId("etm_update-request-with-response")
+					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateRequestWithResponseScript()).endObject().bytes())
+					.get();
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {
 		} catch (IOException e) {
@@ -208,7 +213,7 @@ public class ElasticsearchIndextemplateCreator {
 				"    // Merge endpoints\n" + 
 				"    for (int sourceEndpointIx=0; sourceEndpointIx < input.source.endpoints.size(); sourceEndpointIx++) {\n" + 
 				"        int targetEndpointIx = -1;\n" + 
-				"        // Try to find if an endpoint with a given name is already present.\n" + 
+				"        // Try to find if an endpoint with a given name is present.\n" + 
 				"        if (input.ctx._source.endpoints != null) {\n" + 
 				"            for (int i=0; i < input.ctx._source.endpoints.size(); i++) { \n" + 
 				"                if (input.ctx._source.endpoints[i].name.equals(input.source.endpoints[sourceEndpointIx].name)) {\n" + 
@@ -232,7 +237,7 @@ public class ElasticsearchIndextemplateCreator {
 				"                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler = input.source.endpoints[sourceEndpointIx].writing_endpoint_handler; \n" + 
 				"            } \n" + 
 				"            if (input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers != null) {\n" + 
-				"                // Add reading endpoint hendlers to target.\n" + 
+				"                // Add reading endpoint handlers to target.\n" + 
 				"                if (input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers == null) {\n" + 
 				"                    input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers = new ArrayList<Object>();\n" + 
 				"                }\n" + 
@@ -243,6 +248,78 @@ public class ElasticsearchIndextemplateCreator {
 				"        }\n" + 
 				"    }\n" + 
 				" }";		
+	}
+	
+	private String createUpdateRequestWithResponseScript() {
+		return "// Add the ID as a correlation.\n" + 
+				"if (input.ctx._source.correlations == null) {\n" + 
+				"	input.ctx._source.correlations = new ArrayList<String>();\n" + 
+				"}\n" + 
+				"if (!input.ctx._source.correlations.contains(input.source.id)) {\n" + 
+				"	input.ctx._source.correlations.add(input.source.id);\n" + 
+				"}\n" + 
+				"// Merge the response times back in the endpoints.\n" + 
+				"if (input.source.endpoints != null) {\n" + 
+				"	for (int i=0; i < input.source.endpoints.size(); i++) {\n" + 
+				"        if (input.source.endpoints[i].writing_endpoint_handler != null && \n" + 
+				"        	input.source.endpoints[i].writing_endpoint_handler.application != null && \n" + 
+				"        	input.source.endpoints[i].writing_endpoint_handler.application.name != null) {\n" + 
+				"        	\n" + 
+				"        	String writerAppName = input.source.endpoints[i].writing_endpoint_handler.application.name;\n" + 
+				"        	long writerHandlingTime = input.source.endpoints[i].writing_endpoint_handler.handling_time;\n" + 
+				"        	// The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.\n" + 
+				"        	boolean readerFound = false;\n" + 
+				"        	if (input.ctx._source.endpoints != null) {\n" + 
+				"        		for (int endpointIx=0; endpointIx < input.ctx._source.endpoints.size(); endpointIx++) {\n" + 
+				"        			if (input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers == null) {\n" + 
+				"        				continue;\n" + 
+				"        			}\n" + 
+				"        			for (int j=0; j < input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers.size(); j++) {\n" + 
+				"        				if (input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application != null &&\n" + 
+				"        				    input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application.name != null &&\n" + 
+				"        				    input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application.name.equals(writerAppName)) {\n" + 
+				"        				    \n" + 
+				"        					readerFound = true;\n" + 
+				"							input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].response_time = writerHandlingTime - input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].handling_time; \n" + 
+				"        				}\n" + 
+				"        			} \n" + 
+				"        		}  \n" + 
+				"        	}\n" + 
+				"        	if (!readerFound) {\n" + 
+				"        		// Write the writer in a temp field.\n" + 
+				"				int TODO = 0;\n" + 
+				"        	}\n" + 
+				"        }\n" + 
+				"        if (input.source.endpoints[i].reading_endpoint_handlers != null) {\n" + 
+				"        	for (int j=0; j < input.source.endpoints[i].reading_endpoint_handlers.size(); j++) {\n" + 
+				"        		if (input.source.endpoints[i].reading_endpoint_handlers[j].application != null && \n" + 
+				"        			input.source.endpoints[i].reading_endpoint_handlers[j].application.name != null) {\n" + 
+				"        			\n" + 
+				"		        	String readerAppName = input.source.endpoints[i].reading_endpoint_handlers[j].application.name;\n" + 
+				"		        	long readerHandlingTime = input.source.endpoints[i].reading_endpoint_handlers[j].handling_time;\n" + 
+				"        			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.\n" + 
+				"        			boolean writerFound = false;\n" + 
+				"        			if (input.ctx._source.endpoints != null) {\n" + 
+				"        				for (int endpointIx=0; endpointIx < input.ctx._source.endpoints.size(); endpointIx++) {\n" + 
+				"		        			if (input.ctx._source.endpoints[endpointIx].writing_endpoint_handler != null && \n" + 
+				"		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application != null &&\n" + 
+				"		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application.name != null &&\n" + 
+				"		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application.name.equals(readerAppName)) {\n" + 
+				"		        			\n" + 
+				"		        				writerFound = true;\n" + 
+				"		        				input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.response_time = readerHandlingTime - input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.handling_time;\n" + 
+				"		        			}\n" + 
+				"        				}\n" + 
+				"        			}\n" + 
+				"		        	if (!writerFound) {\n" + 
+				"		        		// Write the reader in a temp field.\n" + 
+				"						int TODO = 0;\n" + 
+				"		        	}\n" + 
+				"        		}\n" + 
+				"        	}\n" + 
+				"        }\n" + 
+				"	}\n" + 
+				"}";
 	}
 
 
