@@ -2,7 +2,7 @@ if (input.source.endpoints != null) {
     // Merge endpoints
     for (int sourceEndpointIx=0; sourceEndpointIx < input.source.endpoints.size(); sourceEndpointIx++) {
         int targetEndpointIx = -1;
-        // Try to find if an endpoint with a given name is already present.
+        // Try to find if an endpoint with a given name is present.
         if (input.ctx._source.endpoints != null) {
             for (int i=0; i < input.ctx._source.endpoints.size(); i++) { 
                 if (input.ctx._source.endpoints[i].name.equals(input.source.endpoints[sourceEndpointIx].name)) {
@@ -26,7 +26,7 @@ if (input.source.endpoints != null) {
                 input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler = input.source.endpoints[sourceEndpointIx].writing_endpoint_handler; 
             } 
             if (input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers != null) {
-                // Add reading endpoint hendlers to target.
+                // Add reading endpoint handlers to target.
                 if (input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers == null) {
                     input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers = new ArrayList<Object>();
                 }
