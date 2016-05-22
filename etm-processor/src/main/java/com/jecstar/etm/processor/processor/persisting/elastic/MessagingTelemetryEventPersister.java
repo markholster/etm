@@ -26,15 +26,14 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
 	public void persist(MessagingTelemetryEvent event, MessagingTelemetryEventWriterJsonImpl writer) {
 		IndexRequest indexRequest = createIndexRequest(event.id)
 				.source(writer.write(event));
-		Map<String, Object> sourceAsMap = indexRequest.sourceAsMap();
 		Map<String, Object> parameters =  new HashMap<>();
-		parameters.put("source", sourceAsMap);
+		parameters.put("source", indexRequest.sourceAsMap());
 		bulkProcessor.add(createUpdateRequest(event.id)
 					.script(new Script("etm_update-event", ScriptType.STORED, "painless", parameters))
 					.upsert(indexRequest));
 		if (MessagingEventType.RESPONSE.equals(event.messagingEventType) && event.correlationId != null) {
-			bulkProcessor.add(createUpdateRequest(event.id)
-					.script(new Script("etm_update-request-with-response", ScriptType.STORED, "painless", sourceAsMap)));
+			bulkProcessor.add(createUpdateRequest(event.correlationId)
+					.script(new Script("etm_update-request-with-response", ScriptType.STORED, "painless", parameters)));
 		}
 	}
 
