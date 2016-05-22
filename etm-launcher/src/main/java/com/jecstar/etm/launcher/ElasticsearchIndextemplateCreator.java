@@ -62,6 +62,11 @@ public class ElasticsearchIndextemplateCreator {
 					.setId("etm_update-query-history")
 					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateQueryHistoryScript()).endObject().bytes())
 					.get();
+				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
+				.setScriptLang("painless")
+				.setId("etm_update-event")
+				.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateEventScript()).endObject().bytes())
+				.get();
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {
 		} catch (IOException e) {
@@ -140,7 +145,7 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateSearchTemplateScript() {
-		return "if (input.template != null) {" + 
+		return  "if (input.template != null) {" + 
 				"    if (input.ctx._source.search_templates != null) {" +
 				"        boolean found = false;" +
 				"        for (int i=0; i < input.ctx._source.search_templates.size(); i++) {" + 
@@ -165,7 +170,7 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createRemoveSearchTemplateScript() {
-		return "if (input.name != null) {" + 
+		return  "if (input.name != null) {" + 
 				"    if (input.ctx._source.search_templates != null) {" +
 				"		 Iterator it = input.ctx._source.search_templates.iterator();" +
 				"        while (it.hasNext()) {" +
@@ -179,7 +184,7 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateQueryHistoryScript() {
-		return "if (input.query != null) {" + 
+		return  "if (input.query != null) {" + 
 				"    if (input.ctx._source.query_history != null) {" +
 				"        for (int i=0; i < input.ctx._source.query_history.size(); i++) {" + 
 				"            if (input.ctx._source.query_history[i].query.equals(input.query.query)) {" +
@@ -196,6 +201,48 @@ public class ElasticsearchIndextemplateCreator {
 				"        input.ctx._source.query_history.add(input.query);" +
 				"    }" + 
 				"}";		
+	}
+	
+	private String createUpdateEventScript() {
+		return "if (input.source.endpoints != null) {\n" + 
+				"    // Merge endpoints\n" + 
+				"    for (int sourceEndpointIx=0; sourceEndpointIx < input.source.endpoints.size(); sourceEndpointIx++) {\n" + 
+				"        int targetEndpointIx = -1;\n" + 
+				"        // Try to find if an endpoint with a given name is already present.\n" + 
+				"        if (input.ctx._source.endpoints != null) {\n" + 
+				"            for (int i=0; i < input.ctx._source.endpoints.size(); i++) { \n" + 
+				"                if (input.ctx._source.endpoints[i].name.equals(input.source.endpoints[sourceEndpointIx].name)) {\n" + 
+				"                    targetEndpointIx = i;\n" + 
+				"                    break;\n" + 
+				"                }\n" + 
+				"            }\n" + 
+				"        }\n" + 
+				"        if (targetEndpointIx == -1) {\n" + 
+				"            // This endpoint was not present.\n" + 
+				"            if (input.ctx._source.endpoints == null) {\n" + 
+				"                input.ctx._source.endpoints = new ArrayList<Object>();            \n" + 
+				"            }\n" + 
+				"            input.ctx._source.endpoints.add(input.source.endpoints[sourceEndpointIx]);\n" + 
+				"        } else {\n" + 
+				"            // Endpoint was present. Set writing handler to target if target has no writing handler currently.\n" + 
+				"            if (input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler == null || (\n" + 
+				"                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.transactionId == null &&\n" + 
+				"                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.location == null &&\n" + 
+				"                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.application == null)) {\n" + 
+				"                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler = input.source.endpoints[sourceEndpointIx].writing_endpoint_handler; \n" + 
+				"            } \n" + 
+				"            if (input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers != null) {\n" + 
+				"                // Add reading endpoint hendlers to target.\n" + 
+				"                if (input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers == null) {\n" + 
+				"                    input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers = new ArrayList<Object>();\n" + 
+				"                }\n" + 
+				"                for (int i=0; i < input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers.size(); i++) {\n" + 
+				"                    input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers.add(input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers[i]);\n" + 
+				"                }\n" + 
+				"            }\n" + 
+				"        }\n" + 
+				"    }\n" + 
+				" }";		
 	}
 
 

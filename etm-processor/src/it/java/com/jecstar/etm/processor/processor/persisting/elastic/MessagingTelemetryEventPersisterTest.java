@@ -49,8 +49,11 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		};
 	}
 	
+	/**
+	 * Test the merging reading event handlers and writing event handlers when the writer is added after the reader. 
+	 */
 	@Test
-	public void testMergingOfReadingAndWritingEvents() {
+	public void testMergingOfWriterAfterReader() throws InterruptedException {
 		final String eventId = UUID.randomUUID().toString();
 		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 		
@@ -77,6 +80,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 						.setWritingEndpointHandler(writingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
 		
 		builder.initialize()
 			.setId(eventId)
@@ -88,8 +92,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 						.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
 		
-		GetResponse getResponse = this.client.prepareGet(persister.getElasticIndexName(), "messaging", eventId).get();
 		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
 		assertEquals(eventId, readEvent.id);
 		assertEquals(1, readEvent.endpoints.size());
@@ -98,6 +102,111 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		assertEquals("Writing app", endpoint.writingEndpointHandler.application.name);
 		assertEquals(1, endpoint.readingEndpointHandlers.size());
 		assertEquals("Reading app", endpoint.readingEndpointHandlers.get(0).application.name);
+	}
+	
+	/**
+	 * Test the merging reading event handlers and writing event handlers when the reader is added after the writer. 
+	 */
+	@Test
+	public void testMergingOfReaderAfterWriter() throws InterruptedException {
+		final String eventId = UUID.randomUUID().toString();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		
+		final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now())
+				.setApplication(new ApplicationBuilder()
+						.setName("Writing app")
+				).build();
+		
+		final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+				.setApplication(new ApplicationBuilder()
+						.setName("Reading app")
+				).build();
+		
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+		.setId(eventId)
+		.setPayload("Test case " + this.getClass().getName())
+		.setPayloadFormat(PayloadFormat.TEXT)
+		.setMessagingEventType(MessagingEventType.REQUEST)
+		.addOrMergeEndpoint(new EndpointBuilder()
+				.setName("TEST.QUEUE")
+				.addReadingEndpointHandler(readingEndpointHandler)
+				);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
+		
+		builder.initialize()
+		.setId(eventId)
+		.setPayload("Test case " + this.getClass().getName())
+		.setPayloadFormat(PayloadFormat.TEXT)
+		.setMessagingEventType(MessagingEventType.REQUEST)
+		.addOrMergeEndpoint(new EndpointBuilder()
+				.setName("TEST.QUEUE")
+				.setWritingEndpointHandler(writingEndpointHandler)
+				);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
+		
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertEquals(eventId, readEvent.id);
+		assertEquals(1, readEvent.endpoints.size());
+		Endpoint endpoint = readEvent.endpoints.get(0);
+		assertEquals("TEST.QUEUE", endpoint.name);
+		assertEquals("Writing app", endpoint.writingEndpointHandler.application.name);
+		assertEquals(1, endpoint.readingEndpointHandlers.size());
+		assertEquals("Reading app", endpoint.readingEndpointHandlers.get(0).application.name);
+	}
+	
+	/**
+	 * Test the merging of endpoints. 
+	 */
+	@Test
+	public void testMergingOfEndpoints() throws InterruptedException {
+		final String eventId = UUID.randomUUID().toString();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		
+		final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now())
+				.setApplication(new ApplicationBuilder()
+						.setName("Writing app")
+				).build();
+		
+		final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+				.setApplication(new ApplicationBuilder()
+						.setName("Reading app")
+				).build();
+		
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+		.setId(eventId)
+		.setPayload("Test case " + this.getClass().getName())
+		.setPayloadFormat(PayloadFormat.TEXT)
+		.setMessagingEventType(MessagingEventType.REQUEST)
+		.addOrMergeEndpoint(new EndpointBuilder()
+				.setName("TEST.QUEUE")
+				.setWritingEndpointHandler(writingEndpointHandler)
+				.addReadingEndpointHandler(readingEndpointHandler)
+				);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
+
+		builder.initialize()
+				.setId(eventId)
+				.setPayload("Test case " + this.getClass().getName())
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setMessagingEventType(MessagingEventType.REQUEST)
+				.addOrMergeEndpoint(new EndpointBuilder()
+						.setName("ANOTHER.TEST.QUEUE")
+						.setWritingEndpointHandler(writingEndpointHandler)
+						.addReadingEndpointHandler(readingEndpointHandler)
+						);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
+		
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertEquals(eventId, readEvent.id);
+		assertEquals(2, readEvent.endpoints.size());
 	}
 	
 }

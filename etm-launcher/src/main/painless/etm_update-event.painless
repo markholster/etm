@@ -1,0 +1,39 @@
+if (input.source.endpoints != null) {
+    // Merge endpoints
+    for (int sourceEndpointIx=0; sourceEndpointIx < input.source.endpoints.size(); sourceEndpointIx++) {
+        int targetEndpointIx = -1;
+        // Try to find if an endpoint with a given name is already present.
+        if (input.ctx._source.endpoints != null) {
+            for (int i=0; i < input.ctx._source.endpoints.size(); i++) { 
+                if (input.ctx._source.endpoints[i].name.equals(input.source.endpoints[sourceEndpointIx].name)) {
+                    targetEndpointIx = i;
+                    break;
+                }
+            }
+        }
+        if (targetEndpointIx == -1) {
+            // This endpoint was not present.
+            if (input.ctx._source.endpoints == null) {
+                input.ctx._source.endpoints = new ArrayList<Object>();            
+            }
+            input.ctx._source.endpoints.add(input.source.endpoints[sourceEndpointIx]);
+        } else {
+            // Endpoint was present. Set writing handler to target if target has no writing handler currently.
+            if (input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler == null || (
+                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.transactionId == null &&
+                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.location == null &&
+                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.application == null)) {
+                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler = input.source.endpoints[sourceEndpointIx].writing_endpoint_handler; 
+            } 
+            if (input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers != null) {
+                // Add reading endpoint hendlers to target.
+                if (input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers == null) {
+                    input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers = new ArrayList<Object>();
+                }
+                for (int i=0; i < input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers.size(); i++) {
+                    input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers.add(input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers[i]);
+                }
+            }
+        }
+    }
+ }

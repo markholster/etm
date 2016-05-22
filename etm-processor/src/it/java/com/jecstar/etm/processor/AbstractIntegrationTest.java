@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -13,6 +14,13 @@ import org.junit.Before;
 
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
+/**
+ * Super class for all integration tests. This class requires a running
+ * Elasticsearch instance on localhost:9300. ETM templates and scripts should be
+ * configured on that instance as well.
+ * 
+ * @author Mark Holster
+ */
 public abstract class AbstractIntegrationTest {
 
 	protected final EtmConfiguration etmConfiguration = new EtmConfiguration("integration-test");
@@ -39,6 +47,28 @@ public abstract class AbstractIntegrationTest {
 		if (this.bulkProcessor != null) {
 			this.bulkProcessor.close();
 		}
-		
+	}
+	
+	protected GetResponse waitFor(String index, String type, String id) throws InterruptedException {
+		return waitFor(index, type, id, null);
+	}
+	
+	protected GetResponse waitFor(String index, String type, String id, Long version) throws InterruptedException {
+		long startTime = System.currentTimeMillis();
+		do {
+			GetResponse getResponse = this.client.prepareGet(index, type, id).get();
+			if (getResponse.isExists()) {
+				if (version == null || getResponse.getVersion() == version.longValue()) {
+					return getResponse;
+				}
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new InterruptedException();
+			}
+		} while (System.currentTimeMillis() - startTime < 10_000);
+		throw new NoSuchEventException(index, type, id, version);
 	}
 }

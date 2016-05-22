@@ -1,5 +1,6 @@
 package com.jecstar.etm.processor.processor.persisting.elastic;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -26,8 +27,10 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
 		IndexRequest indexRequest = createIndexRequest(event.id)
 				.source(writer.write(event));
 		Map<String, Object> sourceAsMap = indexRequest.sourceAsMap();
+		Map<String, Object> parameters =  new HashMap<>();
+		parameters.put("source", sourceAsMap);
 		bulkProcessor.add(createUpdateRequest(event.id)
-					.script(new Script("etm_update-event", ScriptType.STORED, "painless", sourceAsMap))
+					.script(new Script("etm_update-event", ScriptType.STORED, "painless", parameters))
 					.upsert(indexRequest));
 		if (MessagingEventType.RESPONSE.equals(event.messagingEventType) && event.correlationId != null) {
 			bulkProcessor.add(createUpdateRequest(event.id)
