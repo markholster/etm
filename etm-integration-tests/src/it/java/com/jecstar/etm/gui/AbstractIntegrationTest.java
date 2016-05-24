@@ -30,6 +30,9 @@ public abstract class AbstractIntegrationTest {
 //		this.driver = new HtmlUnitDriver(true);
 //		this.driver = new ChromeDriver();
 		File profileDir = new File("profiles/firefox");
+		if (!profileDir.exists()) {
+			profileDir.mkdirs();
+		}
 		FirefoxProfile profile = new FirefoxProfile(profileDir);
 		this.driver = new FirefoxDriver(profile);
 	}
