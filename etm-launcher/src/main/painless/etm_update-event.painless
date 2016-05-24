@@ -37,4 +37,18 @@ if (input.source.endpoints != null) {
             }
         }
     }
+    // Recalculate latencies
+    for (int i=0; i < input.ctx._source.endpoints.size(); i++) {
+    	if (input.ctx._source.endpoints[i].writing_endpoint_handler != null &&
+    	    input.ctx._source.endpoints[i].writing_endpoint_handler.handling_time != null) {
+    	    long writeTime = input.ctx._source.endpoints[i].writing_endpoint_handler.handling_time;
+    	    if (input.ctx._source.endpoints[i].reading_endpoint_handlers != null) {
+    	    	for (int j=0; j < input.ctx._source.endpoints[i].reading_endpoint_handlers.size(); j++) {
+    	    		if (input.ctx._source.endpoints[i].reading_endpoint_handlers[j].handling_time != null) {
+    	    			input.ctx._source.endpoints[i].reading_endpoint_handlers[j].latency = input.ctx._source.endpoints[i].reading_endpoint_handlers[j].handling_time - writeTime;
+    	    		}
+    	    	}
+    	    }
+    	}
+    }
  }

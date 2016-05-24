@@ -21,6 +21,10 @@ public class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> ex
 		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
 		Map<String, Object> eventMap = getObject(this.tags.getCorrelationDataTag(), valueMap);
+		List<String> correlations = getArray(this.tags.getCorrelationsTag(), valueMap);
+		if (correlations != null && !correlations.isEmpty()) {
+			telemetryEvent.correlations.addAll(correlations);
+		}
 		if (eventMap != null && !eventMap.isEmpty()) {
 			telemetryEvent.correlationData.putAll(eventMap);
 		}
@@ -90,6 +94,8 @@ public class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> ex
 			endpointHandler.application.version = getString(this.tags.getApplicationVersionTag(), applicationValueMap);
 		}
 		endpointHandler.handlingTime = getZonedDateTime(this.tags.getEndpointHandlerHandlingTimeTag(), valueMap);
+		endpointHandler.latency = getLong(this.tags.getEndpointHandlerLatencyTag(), valueMap);
+		endpointHandler.responseTime = getLong(this.tags.getEndpointHandlerResponseTimeTag(), valueMap);
 		endpointHandler.transactionId = getString(this.tags.getEndpointHandlerTransactionIdTag(), valueMap);
 		Map<String, Object> locationValueMap = getObject(this.tags.getEndpointHandlerLocationTag(), valueMap);
 		if (locationValueMap != null) {

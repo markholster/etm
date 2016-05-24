@@ -6,14 +6,13 @@ public interface TelemetryEventTags {
 	String getIdTag();
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
+	String getCorrelationsTag();
 	String getExtractedDataTag();
 	String getNameTag();
 	String getMetadataTag();
 	String getPackagingTag();
 	String getPayloadTag();
 	String getPayloadFormatTag();
-	String getResponseTimeTag();
-	String getResponseHandlingTimeTag();
 	String getTransportTag();
 	String getReadingEndpointHandlerTag();
 	String getReadingEndpointHandlersTag();
@@ -25,6 +24,8 @@ public interface TelemetryEventTags {
 
 	// EndpointHandler attributes
 	String getEndpointHandlerHandlingTimeTag();
+	String getEndpointHandlerLatencyTag();
+	String getEndpointHandlerResponseTimeTag();
 	String getEndpointHandlerTransactionIdTag();	
 	String getEndpointHandlerApplicationTag();
 	// Application attributes

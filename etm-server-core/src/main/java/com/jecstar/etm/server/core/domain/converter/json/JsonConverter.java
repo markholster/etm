@@ -60,6 +60,17 @@ public class JsonConverter extends JsonWriter {
 		}
 		return defaultValue;
 	}
+
+	public Long getLong(String tag, Map<String, Object> valueMap) {
+		return getLong(tag, valueMap, null);
+	}
+
+	public Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
+		if (valueMap.containsKey(tag)) {
+			return ((Number)valueMap.get(tag)).longValue();
+		}
+		return defaultValue;
+	}
 	
 	public Double getDouble(String tag, Map<String, Object> valueMap) {
 		if (valueMap.containsKey(tag)) {

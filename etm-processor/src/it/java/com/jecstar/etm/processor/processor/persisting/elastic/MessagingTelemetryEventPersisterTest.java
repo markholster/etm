@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -222,7 +220,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 	 * 
 	 * @throws InterruptedException 
 	 */
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testMergingOfResponseAfterRequest() throws InterruptedException {
 		final String requestId = UUID.randomUUID().toString();
@@ -270,24 +267,21 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		waitFor(persister.getElasticIndexName(), "messaging", responseId, 1L);
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
 
-		Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-		assertEquals(1, ((List<String>)sourceAsMap.get("correlations")).size());
-		assertEquals(responseId, ((List<String>)sourceAsMap.get("correlations")).get(0));
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertEquals(1, event.correlations.size());
+		assertEquals(responseId, event.correlations.get(0));
 		
-		assertEquals(1, ((List<Map<String, Object>>)sourceAsMap.get("endpoints")).size());
-		Map<String, Object> endpointMap = ((List<Map<String, Object>>)sourceAsMap.get("endpoints")).get(0);
-		Map<String, Object> readingEndpointHandler = ((List<Map<String, Object>>)endpointMap.get("reading_endpoint_handlers")).get(0);
-		assertEquals(1000, readingEndpointHandler.get("response_time"));
-		Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpointMap.get("writing_endpoint_handler");
-		assertEquals(3000, writingEndpointHandler.get("response_time"));
-	}
+		assertEquals(1, event.endpoints.size());
+		Endpoint endpoint = event.endpoints.get(0);
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).responseTime.longValue());
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).latency.longValue());
+		assertEquals(3000, endpoint.writingEndpointHandler.responseTime.longValue());	}
 	
 	/**
 	 * Test if the response data (correlation id, response time etc) is merged in the request when the response is added after the request.  
 	 * 
 	 * @throws InterruptedException 
 	 */
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testMergingOfRequestAfterResponse() throws InterruptedException {
 		final String requestId = UUID.randomUUID().toString();
@@ -328,23 +322,21 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setMessagingEventType(MessagingEventType.REQUEST)
 			.addOrMergeEndpoint(new EndpointBuilder()
 					.setName("REQUEST.QUEUE")
-					.setWritingEndpointHandler(requestingEndpointHandler)
-					.addReadingEndpointHandler(respondingEndpointHandler)
+					.setWritingEndpointHandler(requestingEndpointHandler.setHandlingTime(timeStamp))
+					.addReadingEndpointHandler(respondingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(1)))
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		System.out.println(requestId);
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
 
-		Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-		assertEquals(1, ((List<String>)sourceAsMap.get("correlations")).size());
-		assertEquals(responseId, ((List<String>)sourceAsMap.get("correlations")).get(0));
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertEquals(1, event.correlations.size());
+		assertEquals(responseId, event.correlations.get(0));
 		
-		assertEquals(1, ((List<Map<String, Object>>)sourceAsMap.get("endpoints")).size());
-		Map<String, Object> endpointMap = ((List<Map<String, Object>>)sourceAsMap.get("endpoints")).get(0);
-		Map<String, Object> readingEndpointHandler = ((List<Map<String, Object>>)endpointMap.get("reading_endpoint_handlers")).get(0);
-		assertEquals(1000, readingEndpointHandler.get("response_time"));
-		Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpointMap.get("writing_endpoint_handler");
-		assertEquals(3000, writingEndpointHandler.get("response_time"));
+		assertEquals(1, event.endpoints.size());
+		Endpoint endpoint = event.endpoints.get(0);
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).responseTime.longValue());
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).latency.longValue());
+		assertEquals(3000, endpoint.writingEndpointHandler.responseTime.longValue());
 	}
 	
 }

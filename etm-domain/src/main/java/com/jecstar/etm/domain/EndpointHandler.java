@@ -24,13 +24,33 @@ public class EndpointHandler {
 	 * transactionId form and end-to-end chain within the application.
 	 */
 	public String transactionId;
+
+	//READ ONLY FIELDS
+	/**
+	 * The time between the write and read of the event. This value is only
+	 * filled when this <code>EndpointHandler</code> is a reading endpoint
+	 * handler on an <code>Endpoint</code>. Calculation of this value is done in
+	 * the persister, or in the elastic update script and will only be filled
+	 * here when the event is read from the database.
+	 */
+	public Long latency;
 	
+	/**
+	 * The time between the handling time of a request and response. This value
+	 * is only filled when the event is a request (for example a messaging
+	 * request). The value is calculated by the elastic update script and will
+	 * only be filled here when the event is read from the database.
+	 */
+	public Long responseTime;
 	
 	public EndpointHandler initialize() {
 		this.application.initialize();
 		this.location.initialize();
 		this.handlingTime = null;
 		this.transactionId = null;
+		// Initialize read only fields.
+		this.latency = null;
+		this.responseTime = null;
 		return this;
 	}
 	
@@ -43,6 +63,9 @@ public class EndpointHandler {
 		this.location.initialize(copy.location);
 		this.handlingTime = copy.handlingTime;
 		this.transactionId = copy.transactionId;
+		// Initialize read only fields.
+		this.latency = copy.latency;
+		this.responseTime = copy.responseTime;
 		return this;
 	}
 	

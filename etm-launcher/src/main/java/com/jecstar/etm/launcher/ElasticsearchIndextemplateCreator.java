@@ -247,6 +247,20 @@ public class ElasticsearchIndextemplateCreator {
 				"            }\n" + 
 				"        }\n" + 
 				"    }\n" + 
+				"    // Recalculate latencies\n" + 
+				"    for (int i=0; i < input.ctx._source.endpoints.size(); i++) {\n" + 
+				"    	if (input.ctx._source.endpoints[i].writing_endpoint_handler != null &&\n" + 
+				"    	    input.ctx._source.endpoints[i].writing_endpoint_handler.handling_time != null) {\n" + 
+				"    	    long writeTime = input.ctx._source.endpoints[i].writing_endpoint_handler.handling_time;\n" + 
+				"    	    if (input.ctx._source.endpoints[i].reading_endpoint_handlers != null) {\n" + 
+				"    	    	for (int j=0; j < input.ctx._source.endpoints[i].reading_endpoint_handlers.size(); j++) {\n" + 
+				"    	    		if (input.ctx._source.endpoints[i].reading_endpoint_handlers[j].handling_time != null) {\n" + 
+				"    	    			input.ctx._source.endpoints[i].reading_endpoint_handlers[j].latency = input.ctx._source.endpoints[i].reading_endpoint_handlers[j].handling_time - writeTime;\n" + 
+				"    	    		}\n" + 
+				"    	    	}\n" + 
+				"    	    }\n" + 
+				"    	}\n" + 
+				"    }\n" + 
 				" }";		
 	}
 	

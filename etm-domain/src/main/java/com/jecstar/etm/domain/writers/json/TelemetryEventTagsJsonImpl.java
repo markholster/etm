@@ -18,6 +18,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	public String getCorrelationDataTag() {
 		return "correlation_data";
 	}
+	
+	@Override
+	public String getCorrelationsTag() {
+		return "correlations";
+	}
 
 	@Override
 	public String getEndpointsTag() {
@@ -63,16 +68,6 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	public String getPayloadFormatTag() {
 		return "payload_format";
 	}
-
-	@Override
-	public String getResponseTimeTag() {
-		return "response_time";
-	}
-	
-	@Override
-	public String getResponseHandlingTimeTag() {
-		return "response_handling_time";
-	}
 	
 	@Override
 	public String getReadingEndpointHandlerTag() {
@@ -97,6 +92,16 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	@Override
 	public String getEndpointHandlerHandlingTimeTag() {
 		return "handling_time";
+	}
+	
+	@Override
+	public String getEndpointHandlerLatencyTag() {
+		return "latency";
+	}
+	
+	@Override
+	public String getEndpointHandlerResponseTimeTag() {
+		return "response_time";
 	}
 	
 	@Override

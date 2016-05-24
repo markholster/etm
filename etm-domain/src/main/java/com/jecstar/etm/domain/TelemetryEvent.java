@@ -18,26 +18,26 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	 * The ID of the event this event is correlated to. This is mainly used match a response to a certain request.
 	 */
 	public String correlationId;
-
+	
 	/**
 	 * Data to be used for correlating event's that aren't correlated by the correlation id.
 	 */
-	public Map<String, Object> correlationData = new HashMap<String, Object>();
+	public Map<String, Object> correlationData = new HashMap<>();
 	
 	/**
 	 * The endpoints this event was send to, and received from.
 	 */
-	public List<Endpoint> endpoints = new ArrayList<Endpoint>();
+	public List<Endpoint> endpoints = new ArrayList<>();
 	
 	/**
 	 * Data to be used to query on.
 	 */
-	public Map<String, Object> extractedData = new HashMap<String, Object>();
+	public Map<String, Object> extractedData = new HashMap<>();
 	
 	/**
 	 * Metadata of the event. Not used by the application, but can be filled by the end user. 
 	 */
-	public Map<String, Object> metadata = new HashMap<String, Object>();
+	public Map<String, Object> metadata = new HashMap<>();
 	
 	/**
 	 * The name of the event.
@@ -53,6 +53,14 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	 * The format of the payload. Generally speaking, this is a description of the {@link #payload}.
 	 */
 	public PayloadFormat payloadFormat;
+
+	
+	// READ ONLY FIELDS
+	/**
+	 * A list with event id's that correlate to this event. This is a read only
+	 * field and will only be filled when the even is read from the database.
+	 */
+	public List<String> correlations = new ArrayList<>();
 	
 	/**
 	 * Initialize this <code>TelemetryEvent</code> with the default data. 
@@ -70,6 +78,8 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.name = null;
 		this.payload = null;
 		this.payloadFormat = null;
+		// Initialize read only fields.
+		this.correlations.clear();
 	}
 	
 	/**
@@ -102,6 +112,8 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 		this.name = copy.name;
 		this.payload = copy.payload;
 		this.payloadFormat = copy.payloadFormat;
+		// Initialize read only fields.
+		this.correlations.addAll(copy.correlations);
 	}
 	
 	/**
