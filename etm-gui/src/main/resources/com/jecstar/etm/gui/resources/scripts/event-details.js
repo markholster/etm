@@ -367,6 +367,7 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		$this = $(this).empty();
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Read time', eh.handling_time);
+		appendToContainerInRow($this, 'Latency', eh.latency);
 		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
 		appendToContainerInRow($this, 'Location', eh.location);
 		appendToContainerInRow($this, 'Application name', eh.application_name);
@@ -384,6 +385,7 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 function formatEndpointHandler(endpoint_handler, timeZone) {
 	var flat = {
 		handling_time: undefined,
+		latency: endpoint_handler.latency,
 		transaction_id: endpoint_handler.transaction_id,
 		application_name: undefined,
 		application_version: undefined,
