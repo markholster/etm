@@ -1,12 +1,19 @@
 // TODO merge event if only correlations is set. In that case the response is written before the request.
-if (input.source.endpoints != null) {
+Map inputSource = (Map)input.get("source");
+List inputEndpoints = (List)inputSource.get("endpoints");
+
+Map targetSource = (Map)((Map)input.get("ctx")).get("_source");
+List targetEndpoints = (List)targetSource.get("endpoints");
+
+if (inputEndpoints != null) {
     // Merge endpoints
-    for (int sourceEndpointIx=0; sourceEndpointIx < input.source.endpoints.size(); sourceEndpointIx++) {
+    for (int sourceEndpointIx=0; sourceEndpointIx < inputEndpoints.size(); sourceEndpointIx++) {
         int targetEndpointIx = -1;
+        Map inputEndpoint = (Map)inputEndpoints.get(sourceEndpointIx);
         // Try to find if an endpoint with a given name is present.
-        if (input.ctx._source.endpoints != null) {
-            for (int i=0; i < input.ctx._source.endpoints.size(); i++) { 
-                if (input.ctx._source.endpoints[i].name.equals(input.source.endpoints[sourceEndpointIx].name)) {
+        if (targetEndpoints != null) {
+            for (int i=0; i < targetEndpoints.size(); i++) { 
+            	if ( ((String)((Map)targetEndpoints.get(i)).get("name")).equals(((String)inputEndpoint.get("name"))) ) {
                     targetEndpointIx = i;
                     break;
                 }
@@ -14,38 +21,49 @@ if (input.source.endpoints != null) {
         }
         if (targetEndpointIx == -1) {
             // This endpoint was not present.
-            if (input.ctx._source.endpoints == null) {
-                input.ctx._source.endpoints = new ArrayList<Object>();            
+            if (targetEndpoints == null) {
+            	targetEndpoints = new ArrayList<Object>();
+                targetSource.put("endpoints", targetEndpoints);
             }
-            input.ctx._source.endpoints.add(input.source.endpoints[sourceEndpointIx]);
+            targetEndpoints.add(inputEndpoint);
         } else {
+        	Map targetEndpoint = (Map)targetEndpoints.get(targetEndpointIx);
+        	Map targetWritingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
+        	Map inputWritingEndpointHandler = (Map)inputEndpoint.get("writing_endpoint_handler");
             // Endpoint was present. Set writing handler to target if target has no writing handler currently.
-            if (input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler == null || (
-                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.transactionId == null &&
-                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.location == null &&
-                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler.application == null)) {
-                input.ctx._source.endpoints[targetEndpointIx].writing_endpoint_handler = input.source.endpoints[sourceEndpointIx].writing_endpoint_handler; 
-            } 
-            if (input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers != null) {
+            if ((targetWritingEndpointHandler == null ||
+            	 targetWritingEndpointHandler.get("transactionId") == null ||
+            	 targetWritingEndpointHandler.get("location") == null ||
+            	 targetWritingEndpointHandler.get("application") == null
+            	) && inputWritingEndpointHandler != null) { 
+            	targetEndpoint.put("writing_endpoint_handler", inputWritingEndpointHandler);
+            }
+            List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers"); 
+            if (inputReadingEndpointHandlers != null) {
                 // Add reading endpoint handlers to target.
-                if (input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers == null) {
-                    input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers = new ArrayList<Object>();
+                List targetReadingEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
+                if (targetReadingEndpointHandlers == null) {
+                	targetReadingEndpointHandlers = new ArrayList<Object>();
+                    targetEndpoint.put("reading_endpoint_handlers", targetReadingEndpointHandlers);
                 }
-                for (int i=0; i < input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers.size(); i++) {
-                    input.ctx._source.endpoints[targetEndpointIx].reading_endpoint_handlers.add(input.source.endpoints[sourceEndpointIx].reading_endpoint_handlers[i]);
+                for (int i=0; i < inputReadingEndpointHandlers.size(); i++) {
+                    targetReadingEndpointHandlers.add(inputReadingEndpointHandlers.get(i));
                 }
             }
         }
     }
     // Recalculate latencies
-    for (int i=0; i < input.ctx._source.endpoints.size(); i++) {
-    	if (input.ctx._source.endpoints[i].writing_endpoint_handler != null &&
-    	    input.ctx._source.endpoints[i].writing_endpoint_handler.handling_time != null) {
-    	    long writeTime = input.ctx._source.endpoints[i].writing_endpoint_handler.handling_time;
-    	    if (input.ctx._source.endpoints[i].reading_endpoint_handlers != null) {
-    	    	for (int j=0; j < input.ctx._source.endpoints[i].reading_endpoint_handlers.size(); j++) {
-    	    		if (input.ctx._source.endpoints[i].reading_endpoint_handlers[j].handling_time != null) {
-    	    			input.ctx._source.endpoints[i].reading_endpoint_handlers[j].latency = input.ctx._source.endpoints[i].reading_endpoint_handlers[j].handling_time - writeTime;
+    for (int i=0; i < targetEndpoints.size(); i++) {
+    	Map targetWritingEndpointHandler = (Map)((Map)targetEndpoints.get(i)).get("writing_endpoint_handler");
+    	if (targetWritingEndpointHandler != null &&
+    	    targetWritingEndpointHandler.get("handling_time") != null) {
+    	    long writeTime = (long)targetWritingEndpointHandler.get("handling_time");
+    	    List readingEndpointHandlers = (List)((Map)targetEndpoints.get(i)).get("reading_endpoint_handlers");
+    	    if (readingEndpointHandlers != null) {
+    	    	for (int j=0; j < readingEndpointHandlers.size(); j++) {
+    	    		Map readingEndpointHandler = readingEndpointHandlers.get(j);
+    	    		if (readingEndpointHandler.get("handling_time") != null) {
+    	    			readingEndpointHandler.put("latency",  ((long)readingEndpointHandler.get("handling_time")) - writeTime);
     	    		}
     	    	}
     	    }
