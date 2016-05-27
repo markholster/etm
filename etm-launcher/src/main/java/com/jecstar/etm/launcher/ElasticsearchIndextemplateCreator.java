@@ -284,36 +284,47 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateRequestWithResponseScript() {
-		return "// Add the ID as a correlation.\n" + 
-				"if (input.ctx._source.correlations == null) {\n" + 
-				"	input.ctx._source.correlations = new ArrayList<String>();\n" + 
+		return "Map inputSource = (Map)input.get(\"source\");\n" + 
+				"Map targetSource = (Map)((Map)input.get(\"ctx\")).get(\"_source\");\n" + 
+				"\n" + 
+				"List correlations = (List)targetSource.get(\"correlations\");\n" + 
+				"// Add the ID as a correlation.\n" + 
+				"if (correlations == null) {\n" + 
+				"	correlations = new ArrayList<String>();\n" + 
+				"	targetSource.put(\"correlations\", correlations);\n" + 
 				"}\n" + 
-				"if (!input.ctx._source.correlations.contains(input.source.id)) {\n" + 
-				"	input.ctx._source.correlations.add(input.source.id);\n" + 
+				"if (!correlations.contains(inputSource.get(\"id\"))) {\n" + 
+				"	correlations.add(inputSource.get(\"id\"));\n" + 
 				"}\n" + 
 				"// Merge the response times back in the endpoints.\n" + 
-				"if (input.source.endpoints != null) {\n" + 
-				"	for (int i=0; i < input.source.endpoints.size(); i++) {\n" + 
-				"        if (input.source.endpoints[i].writing_endpoint_handler != null && \n" + 
-				"        	input.source.endpoints[i].writing_endpoint_handler.application != null && \n" + 
-				"        	input.source.endpoints[i].writing_endpoint_handler.application.name != null) {\n" + 
+				"List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" + 
+				"List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" + 
+				"if (inputEndpoints != null) {\n" + 
+				"	for (int i=0; i < inputEndpoints.size(); i++) {\n" + 
+				"		Map inputEndpoint = (Map)inputEndpoints.get(i);\n" + 
+				"		Map inputWritingEndpointHandler = (Map)inputEndpoint.get(\"writing_endpoint_handler\");\n" + 
+				"        if (inputWritingEndpointHandler != null && \n" + 
+				"        	inputWritingEndpointHandler.get(\"application\") != null && \n" + 
+				"        	((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" + 
 				"        	\n" + 
-				"        	String writerAppName = input.source.endpoints[i].writing_endpoint_handler.application.name;\n" + 
-				"        	long writerHandlingTime = input.source.endpoints[i].writing_endpoint_handler.handling_time;\n" + 
+				"        	String writerAppName = (String)((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\");\n" + 
+				"        	long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" + 
 				"        	// The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.\n" + 
 				"        	boolean readerFound = false;\n" + 
-				"        	if (input.ctx._source.endpoints != null) {\n" + 
-				"        		for (int endpointIx=0; endpointIx < input.ctx._source.endpoints.size(); endpointIx++) {\n" + 
-				"        			if (input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers == null) {\n" + 
+				"        	if (targetEndpoints != null) {\n" + 
+				"        		for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {\n" + 
+				"        			Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);\n" + 
+				"        			List targetReadingEndpointHandlers = (List)targetEndpoint.get(\"reading_endpoint_handlers\");\n" + 
+				"        			if (targetReadingEndpointHandlers == null) {\n" + 
 				"        				continue;\n" + 
 				"        			}\n" + 
-				"        			for (int j=0; j < input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers.size(); j++) {\n" + 
-				"        				if (input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application != null &&\n" + 
-				"        				    input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application.name != null &&\n" + 
-				"        				    input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].application.name.equals(writerAppName)) {\n" + 
-				"        				    \n" + 
+				"        			for (int j=0; j < targetReadingEndpointHandlers.size(); j++) {\n" + 
+				"        				Map targetReadingEndpointHandler = (Map)targetReadingEndpointHandlers.get(i);\n" + 
+				"        				if (targetReadingEndpointHandler.get(\"application\") != null &&\n" + 
+				"        					((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\") != null &&\n" + 
+				"        					((String)((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\")).equals(writerAppName)) {\n" + 
 				"        					readerFound = true;\n" + 
-				"							input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].response_time = writerHandlingTime - input.ctx._source.endpoints[endpointIx].reading_endpoint_handlers[j].handling_time; \n" + 
+				"        					targetReadingEndpointHandler.put(\"response_time\", (writerHandlingTime - (long)targetReadingEndpointHandler.get(\"handling_time\")));\n" + 
 				"        				}\n" + 
 				"        			} \n" + 
 				"        		}  \n" + 
@@ -323,24 +334,28 @@ public class ElasticsearchIndextemplateCreator {
 				"				int TODO = 0;\n" + 
 				"        	}\n" + 
 				"        }\n" + 
-				"        if (input.source.endpoints[i].reading_endpoint_handlers != null) {\n" + 
-				"        	for (int j=0; j < input.source.endpoints[i].reading_endpoint_handlers.size(); j++) {\n" + 
-				"        		if (input.source.endpoints[i].reading_endpoint_handlers[j].application != null && \n" + 
-				"        			input.source.endpoints[i].reading_endpoint_handlers[j].application.name != null) {\n" + 
+				"        List inputReadingEndpointHandlers = (List)inputEndpoint.get(\"reading_endpoint_handlers\");\n" + 
+				"        if (inputReadingEndpointHandlers != null) {\n" + 
+				"        	for (int j=0; j < inputReadingEndpointHandlers.size(); j++) {\n" + 
+				"        		Map inputReadingEndpointHandler = (Map)inputReadingEndpointHandlers.get(j);\n" + 
+				"        		if (inputReadingEndpointHandler.get(\"application\") != null && \n" + 
+				"        			((Map)inputReadingEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" + 
 				"        			\n" + 
-				"		        	String readerAppName = input.source.endpoints[i].reading_endpoint_handlers[j].application.name;\n" + 
-				"		        	long readerHandlingTime = input.source.endpoints[i].reading_endpoint_handlers[j].handling_time;\n" + 
+				"		        	String readerAppName = (String)((Map)inputReadingEndpointHandler.get(\"application\")).get(\"name\");\n" + 
+				"		        	long readerHandlingTime = (long)inputReadingEndpointHandler.get(\"handling_time\");\n" + 
 				"        			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.\n" + 
 				"        			boolean writerFound = false;\n" + 
-				"        			if (input.ctx._source.endpoints != null) {\n" + 
-				"        				for (int endpointIx=0; endpointIx < input.ctx._source.endpoints.size(); endpointIx++) {\n" + 
-				"		        			if (input.ctx._source.endpoints[endpointIx].writing_endpoint_handler != null && \n" + 
-				"		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application != null &&\n" + 
-				"		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application.name != null &&\n" + 
-				"		        			    input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.application.name.equals(readerAppName)) {\n" + 
+				"        			if (targetEndpoints != null) {\n" + 
+				"        				for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {\n" + 
+				"        					Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);\n" + 
+				"        					Map targetWritingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
+				"		        			if (targetWritingEndpointHandler != null && \n" + 
+				"		        				targetWritingEndpointHandler.get(\"application\") != null && \n" + 
+				"		        				((Map)targetWritingEndpointHandler.get(\"application\")).get(\"name\") != null && \n" + 
+				"		        				((String)((Map)targetWritingEndpointHandler.get(\"application\")).get(\"name\")).equals(readerAppName)) {\n" + 
 				"		        			\n" + 
 				"		        				writerFound = true;\n" + 
-				"		        				input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.response_time = readerHandlingTime - input.ctx._source.endpoints[endpointIx].writing_endpoint_handler.handling_time;\n" + 
+				"		        				targetWritingEndpointHandler.put(\"response_time\", (readerHandlingTime - (long)targetWritingEndpointHandler.get(\"handling_time\")));\n" + 
 				"		        			}\n" + 
 				"        				}\n" + 
 				"        			}\n" + 
