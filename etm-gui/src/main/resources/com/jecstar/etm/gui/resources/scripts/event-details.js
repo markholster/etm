@@ -3,12 +3,12 @@ var cyEndpoints;
 function showEvent(id, type, index) {
 	var scrollTo =  $(window).scrollTop();
 	$('#search-container').hide();
+	$('#event-tabs').children().slice(1).remove();
+	$('#tabcontents').children().slice(1).remove();
 	$eventTab = $('#event-tab');
 	$eventTab.empty();	
 	$eventTab.tab('show');
 	$('#event-tab-header').addClass('active').attr('area-expanded', 'true');
-	$('#endpoint-tab-header').remove();
-	$('#endpoint-tab').remove();
 	if (cyEndpoints) {
 		cyEndpoints.destroy();
 	}
@@ -20,6 +20,9 @@ function showEvent(id, type, index) {
 	        if (!data) {
 	            return;
 	        }
+	        data._id = id;
+	        data._type = type;
+	        data._index = index; 
 	        addContent(data);
 	    }
 	});
@@ -44,7 +47,7 @@ function addContent(data) {
 		if (data.source.name) {
 			$('#event-card-title').text(data.source.name);
 		}
-		writeEventDataToTab($eventTab, data);
+		writeEventDataToTab($eventTab, $('#event-tab-header'), data, false);
 		var $endpoints = $(data.source.endpoints);
 		if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 			createEndpointsTab($endpoints, data.time_zone);
@@ -53,24 +56,25 @@ function addContent(data) {
 	}
 }
 
-function writeEventDataToTab(tab, data) {
+function writeEventDataToTab(tab, tabHeader, data, correlated) {
 	$eventTab = $(tab);
+	$tabHeader = $(tabHeader);
 	appendToContainerInRow($eventTab, 'Id', data.id);
 	appendToContainerInRow($eventTab, 'Name', data.source.name);
 	appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
 	appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
 	var $endpoints = $(data.source.endpoints);
 	var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
-	appendToContainerInRow($eventTab, 'Write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+	appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 	if ('log' === data.type) {
 		appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
 	} else if ('http' === data.type) {
 		if (data.source.http_type) {
 			// http type known, determine request or response.
 			if ('RESPONSE' === data.source.http_type) {
-				$('#event-tab-header').text('Http response');
+				$tabHeader.text('Http response');
 			} else {
-				$('#event-tab-header').text('Http request');
+				$tabHeader.text('Http request');
 			}
 		}
 		appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
@@ -81,11 +85,19 @@ function writeEventDataToTab(tab, data) {
 		if (data.source.messaging_type) {
 			// messaging type known, determine request or response.
 			if ('RESPONSE' === data.source.messaging_type) {
-				$('#event-tab-header').text('Response message');
+				$tabHeader.text('Response message');
+				if (data.source.correlation_id && !correlated) {
+					addCorrelationTab(data._index, data._type, data.source.correlation_id, 'request-tab', 'Request message');
+				}
 			} else if ('REQUEST' === data.source.messaging_type) {
-				$('#event-tab-header').text('Request message');
+				$tabHeader.text('Request message');
+				if (data.source.correlations && !correlated) {
+					$.each(data.source.correlations, function (index, correlation_id) {
+						addCorrelationTab(data._index, data._type, correlation_id, 'response-tab' + index, 'Response message');
+					});
+				}
 			} else {
-				$('#event-tab-header').text('Fire-forget message');
+				$tabHeader.text('Fire-forget message');
 			}
 		}
 		appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
@@ -116,6 +128,38 @@ function writeEventDataToTab(tab, data) {
 		);
     }
 	
+}
+
+function addCorrelationTab(index, type, id, tabType, tabName) {
+	$('#event-tabs').append(
+		$('<li>').addClass('nav-item').append(
+			$('<a>').attr('id',  tabType + '-header')
+				.attr('aria-expanded', 'false')
+				.attr('role', 'tab')
+				.attr('data-toggle', 'tab')
+				.attr('href', '#' + tabType)
+				.addClass('nav-link')
+				.text(tabName)
+		)
+	);
+	$('#tabcontents').append(
+		$('<div>').attr('id', tabType)
+			.attr('aria-labelledby', tabType + '-header')
+			.attr('role', 'tabpanel')
+			.attr('aria-expanded', 'false')
+			.addClass('tab-pane fade')
+	);
+	$.ajax({
+	    type: 'GET',
+	    contentType: 'application/json',
+	    url: '../rest/search/event/' + encodeURIComponent(index) + '/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
+	    success: function(correlation_data) {
+	        if (!correlation_data) {
+	            return;
+	        }
+	        writeEventDataToTab($('#' + tabType), $('#' + tabType + '-header'), correlation_data, true);
+	    }
+	});
 }
 
 function appendToContainerInRow(container, name, value) {
@@ -336,6 +380,7 @@ function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		$this = $(this).empty();
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Write time', eh.handling_time);
+		appendToContainerInRow($this, 'Response time', eh.response_time);
 		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
 		appendToContainerInRow($this, 'Location', eh.location);
 		appendToContainerInRow($this, 'Application name', eh.application_name);
@@ -368,6 +413,7 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Read time', eh.handling_time);
 		appendToContainerInRow($this, 'Latency', eh.latency);
+		appendToContainerInRow($this, 'Response time', eh.response_time);
 		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
 		appendToContainerInRow($this, 'Location', eh.location);
 		appendToContainerInRow($this, 'Application name', eh.application_name);
@@ -386,6 +432,7 @@ function formatEndpointHandler(endpoint_handler, timeZone) {
 	var flat = {
 		handling_time: undefined,
 		latency: endpoint_handler.latency,
+		response_time: endpoint_handler.response_time,
 		transaction_id: endpoint_handler.transaction_id,
 		application_name: undefined,
 		application_version: undefined,
