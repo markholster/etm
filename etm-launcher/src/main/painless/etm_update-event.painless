@@ -1,11 +1,25 @@
-// TODO merge event if only correlations is set. In that case the response is written before the request.
 Map inputSource = (Map)input.get("source");
-List inputEndpoints = (List)inputSource.get("endpoints");
-
 Map targetSource = (Map)((Map)input.get("ctx")).get("_source");
-List targetEndpoints = (List)targetSource.get("endpoints");
+Map tempForCorrelations = (Map)targetSource.get("temp_for_correlations");
+boolean correlatedBeforeInserted = false;
+if (targetSource.get("payload") == null &&
+    targetSource.get("correlations") != null) {
+    // The correlation to this event is stored before the event itself is stored. Merge the entire event.
+    correlatedBeforeInserted = true;
+    List correlations = (List)targetSource.get("correlations");
+    
+    targetSource = inputSource;
+    targetSource.put("correlations", correlations);
+    if (tempForCorrelations != null) {
+	    targetSource.put("temp_for_correlations", tempForCorrelations);
+    }
+    ((Map)input.get("ctx")).put("_source", targetSource);
+}
 
-if (inputEndpoints != null) {
+// Merge the endpoints.
+List inputEndpoints = (List)inputSource.get("endpoints");
+List targetEndpoints = (List)targetSource.get("endpoints");
+if (inputEndpoints != null && !correlatedBeforeInserted) {
     // Merge endpoints
     for (int sourceEndpointIx=0; sourceEndpointIx < inputEndpoints.size(); sourceEndpointIx++) {
         int targetEndpointIx = -1;
@@ -52,7 +66,10 @@ if (inputEndpoints != null) {
             }
         }
     }
-    // Recalculate latencies
+ }
+ 
+// Recalculate latencies
+if (targetEndpoints != null) {
     for (int i=0; i < targetEndpoints.size(); i++) {
     	Map targetWritingEndpointHandler = (Map)((Map)targetEndpoints.get(i)).get("writing_endpoint_handler");
     	if (targetWritingEndpointHandler != null &&
@@ -69,4 +86,61 @@ if (inputEndpoints != null) {
     	    }
     	}
     }
- }
+}
+// Check for response times to be updated
+if (tempForCorrelations != null) {
+	List dataForReaders = (List)tempForCorrelations.get("data_for_readers");
+	if (dataForReaders != null && targetEndpoints != null) {
+		Iterator<Object> it = dataForReaders.iterator();
+		while (it.hasNext()) {
+			Map dataForReader = (Map)it.next();
+			String appName = (String)dataForReader.get("name");
+			for (int j=0; j < targetEndpoints.size(); j++) {
+				Map targetEndpoint = (Map)targetEndpoints.get(j);
+				if (targetEndpoint.get("reading_endpoint_handlers") != null) {
+					List readerEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
+					for (int k=0; k < readerEndpointHandlers.size(); k++) {
+						Map readingEndpointHandler = (Map)readerEndpointHandlers.get(k);
+						if (readingEndpointHandler.get("application") != null &&
+						    ((Map)readingEndpointHandler.get("application")).get("name") != null &&  
+						    ((String)((Map)readingEndpointHandler.get("application")).get("name")).equals(appName)) {
+						    
+						    readingEndpointHandler.put("response_time", ((long)dataForReader.get("handling_time") - (long)readingEndpointHandler.get("handling_time")));
+						    it.remove();
+						}
+					}
+				}
+			}
+		}
+		if (dataForReaders.isEmpty()) {
+			tempForCorrelations.remove("data_for_readers");
+		}
+	}
+	List dataForWriters = (List)tempForCorrelations.get("data_for_writers");
+	if (dataForWriters != null && targetEndpoints != null) {
+		Iterator<Object> it = dataForWriters.iterator();
+		while (it.hasNext()) {
+			Map dataForWriter = (Map)it.next();
+			String appName = (String)dataForWriter.get("name");
+			for (int j=0; j < targetEndpoints.size(); j++) {
+				Map targetEndpoint = (Map)targetEndpoints.get(j);
+				Map writingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
+				if (writingEndpointHandler != null &&
+					writingEndpointHandler.get("application") != null &&
+					((Map)writingEndpointHandler.get("application")).get("name") != null &&  
+					((String)((Map)writingEndpointHandler.get("application")).get("name")).equals(appName)) {
+					
+					writingEndpointHandler.put("response_time", ((long)dataForWriter.get("handling_time") - (long)writingEndpointHandler.get("handling_time")));
+					it.remove();
+				}
+			}			
+		}
+		if (dataForWriters.isEmpty()) {
+			tempForCorrelations.remove("data_for_writers");
+		}
+	}
+	
+	if (tempForCorrelations.isEmpty()) {
+		targetSource.remove("temp_for_correlations");
+	}
+}

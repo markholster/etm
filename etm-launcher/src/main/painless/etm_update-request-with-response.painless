@@ -44,8 +44,20 @@ if (inputEndpoints != null) {
         		}  
         	}
         	if (!readerFound) {
-        		// Write the writer in a temp field.
-				int TODO = 0;
+        		Map tempCorrelation = (Map)targetSource.get("temp_for_correlations");
+        		if (tempCorrelation == null) {
+					tempCorrelation = new HashMap<String, Object>();
+					targetSource.put("temp_for_correlations", tempCorrelation);
+        		}
+        		List dataForReaders = tempCorrelation.get("data_for_readers");
+        		if (dataForReaders == null) {
+        			dataForReaders = new ArrayList<Object>();
+        			tempCorrelation.put("data_for_readers", dataForReaders);
+				}        			
+    			Map reader = new HashMap<String, Object>();
+    			reader.put("name", writerAppName);
+    			reader.put("handling_time", writerHandlingTime);
+    			dataForReaders.add(reader);
         	}
         }
         List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers");
@@ -74,8 +86,20 @@ if (inputEndpoints != null) {
         				}
         			}
 		        	if (!writerFound) {
-		        		// Write the reader in a temp field.
-						int TODO = 0;
+		        		Map tempCorrelation = (Map)targetSource.get("temp_for_correlations");
+		        		if (tempCorrelation == null) {
+							tempCorrelation = new HashMap<String, Object>();
+							targetSource.put("temp_for_correlations", tempCorrelation);
+		        		}
+		        		List dataForWriters = tempCorrelation.get("data_for_writers");
+		        		if (dataForWriters == null) {
+		        			dataForWriters = new ArrayList<Object>();
+		        			tempCorrelation.put("data_for_writers", dataForWriters);
+						}        			
+		    			Map writer = new HashMap<String, Object>();
+		    			writer.put("name", readerAppName);
+		    			writer.put("handling_time", readerHandlingTime);
+		    			dataForWriters.add(writer);
 		        	}
         		}
         	}

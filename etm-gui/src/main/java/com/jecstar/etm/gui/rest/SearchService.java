@@ -317,6 +317,8 @@ public class SearchService extends AbstractJsonService {
 		if (valueMap == null) {
 			return;
 		}
+		// Remove temp fields that are used for correlating events.
+		valueMap.remove("temp_for_correlations");
 		for (Entry<String, Object> entry : valueMap.entrySet()) {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
 			String name = determineName(prefix, entry.getKey());

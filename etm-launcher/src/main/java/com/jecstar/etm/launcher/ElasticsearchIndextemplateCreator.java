@@ -209,14 +209,28 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateEventScript() {
-		return "// TODO merge event if only correlations is set. In that case the response is written before the request.\n" + 
-				"Map inputSource = (Map)input.get(\"source\");\n" + 
-				"List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" + 
-				"\n" + 
+		return "Map inputSource = (Map)input.get(\"source\");\n" + 
 				"Map targetSource = (Map)((Map)input.get(\"ctx\")).get(\"_source\");\n" + 
-				"List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" + 
+				"Map tempForCorrelations = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
+				"boolean correlatedBeforeInserted = false;\n" + 
+				"if (targetSource.get(\"payload\") == null &&\n" + 
+				"    targetSource.get(\"correlations\") != null) {\n" + 
+				"    // The correlation to this event is stored before the event itself is stored. Merge the entire event.\n" + 
+				"    correlatedBeforeInserted = true;\n" + 
+				"    List correlations = (List)targetSource.get(\"correlations\");\n" + 
+				"    \n" + 
+				"    targetSource = inputSource;\n" + 
+				"    targetSource.put(\"correlations\", correlations);\n" + 
+				"    if (tempForCorrelations != null) {\n" + 
+				"	    targetSource.put(\"temp_for_correlations\", tempForCorrelations);\n" + 
+				"    }\n" + 
+				"    ((Map)input.get(\"ctx\")).put(\"_source\", targetSource);\n" + 
+				"}\n" + 
 				"\n" + 
-				"if (inputEndpoints != null) {\n" + 
+				"// Merge the endpoints.\n" + 
+				"List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" + 
+				"List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" + 
+				"if (inputEndpoints != null && !correlatedBeforeInserted) {\n" + 
 				"    // Merge endpoints\n" + 
 				"    for (int sourceEndpointIx=0; sourceEndpointIx < inputEndpoints.size(); sourceEndpointIx++) {\n" + 
 				"        int targetEndpointIx = -1;\n" + 
@@ -263,7 +277,10 @@ public class ElasticsearchIndextemplateCreator {
 				"            }\n" + 
 				"        }\n" + 
 				"    }\n" + 
-				"    // Recalculate latencies\n" + 
+				" }\n" + 
+				" \n" + 
+				"// Recalculate latencies\n" + 
+				"if (targetEndpoints != null) {\n" + 
 				"    for (int i=0; i < targetEndpoints.size(); i++) {\n" + 
 				"    	Map targetWritingEndpointHandler = (Map)((Map)targetEndpoints.get(i)).get(\"writing_endpoint_handler\");\n" + 
 				"    	if (targetWritingEndpointHandler != null &&\n" + 
@@ -280,7 +297,64 @@ public class ElasticsearchIndextemplateCreator {
 				"    	    }\n" + 
 				"    	}\n" + 
 				"    }\n" + 
-				" }";		
+				"}\n" + 
+				"// Check for response times to be updated\n" + 
+				"if (tempForCorrelations != null) {\n" + 
+				"	List dataForReaders = (List)tempForCorrelations.get(\"data_for_readers\");\n" + 
+				"	if (dataForReaders != null && targetEndpoints != null) {\n" + 
+				"		Iterator<Object> it = dataForReaders.iterator();\n" + 
+				"		while (it.hasNext()) {\n" + 
+				"			Map dataForReader = (Map)it.next();\n" + 
+				"			String appName = (String)dataForReader.get(\"name\");\n" + 
+				"			for (int j=0; j < targetEndpoints.size(); j++) {\n" + 
+				"				Map targetEndpoint = (Map)targetEndpoints.get(j);\n" + 
+				"				if (targetEndpoint.get(\"reading_endpoint_handlers\") != null) {\n" + 
+				"					List readerEndpointHandlers = (List)targetEndpoint.get(\"reading_endpoint_handlers\");\n" + 
+				"					for (int k=0; k < readerEndpointHandlers.size(); k++) {\n" + 
+				"						Map readingEndpointHandler = (Map)readerEndpointHandlers.get(k);\n" + 
+				"						if (readingEndpointHandler.get(\"application\") != null &&\n" + 
+				"						    ((Map)readingEndpointHandler.get(\"application\")).get(\"name\") != null &&  \n" + 
+				"						    ((String)((Map)readingEndpointHandler.get(\"application\")).get(\"name\")).equals(appName)) {\n" + 
+				"						    \n" + 
+				"						    readingEndpointHandler.put(\"response_time\", ((long)dataForReader.get(\"handling_time\") - (long)readingEndpointHandler.get(\"handling_time\")));\n" + 
+				"						    it.remove();\n" + 
+				"						}\n" + 
+				"					}\n" + 
+				"				}\n" + 
+				"			}\n" + 
+				"		}\n" + 
+				"		if (dataForReaders.isEmpty()) {\n" + 
+				"			tempForCorrelations.remove(\"data_for_readers\");\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	List dataForWriters = (List)tempForCorrelations.get(\"data_for_writers\");\n" + 
+				"	if (dataForWriters != null && targetEndpoints != null) {\n" + 
+				"		Iterator<Object> it = dataForWriters.iterator();\n" + 
+				"		while (it.hasNext()) {\n" + 
+				"			Map dataForWriter = (Map)it.next();\n" + 
+				"			String appName = (String)dataForWriter.get(\"name\");\n" + 
+				"			for (int j=0; j < targetEndpoints.size(); j++) {\n" + 
+				"				Map targetEndpoint = (Map)targetEndpoints.get(j);\n" + 
+				"				Map writingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
+				"				if (writingEndpointHandler != null &&\n" + 
+				"					writingEndpointHandler.get(\"application\") != null &&\n" + 
+				"					((Map)writingEndpointHandler.get(\"application\")).get(\"name\") != null &&  \n" + 
+				"					((String)((Map)writingEndpointHandler.get(\"application\")).get(\"name\")).equals(appName)) {\n" + 
+				"					\n" + 
+				"					writingEndpointHandler.put(\"response_time\", ((long)dataForWriter.get(\"handling_time\") - (long)writingEndpointHandler.get(\"handling_time\")));\n" + 
+				"					it.remove();\n" + 
+				"				}\n" + 
+				"			}			\n" + 
+				"		}\n" + 
+				"		if (dataForWriters.isEmpty()) {\n" + 
+				"			tempForCorrelations.remove(\"data_for_writers\");\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	\n" + 
+				"	if (tempForCorrelations.isEmpty()) {\n" + 
+				"		targetSource.remove(\"temp_for_correlations\");\n" + 
+				"	}\n" + 
+				"}";		
 	}
 	
 	private String createUpdateRequestWithResponseScript() {
@@ -330,8 +404,20 @@ public class ElasticsearchIndextemplateCreator {
 				"        		}  \n" + 
 				"        	}\n" + 
 				"        	if (!readerFound) {\n" + 
-				"        		// Write the writer in a temp field.\n" + 
-				"				int TODO = 0;\n" + 
+				"        		Map tempCorrelation = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
+				"        		if (tempCorrelation == null) {\n" + 
+				"					tempCorrelation = new HashMap<String, Object>();\n" + 
+				"					targetSource.put(\"temp_for_correlations\", tempCorrelation);\n" + 
+				"        		}\n" + 
+				"        		List dataForReaders = tempCorrelation.get(\"data_for_readers\");\n" + 
+				"        		if (dataForReaders == null) {\n" + 
+				"        			dataForReaders = new ArrayList<Object>();\n" + 
+				"        			tempCorrelation.put(\"data_for_readers\", dataForReaders);\n" + 
+				"				}        			\n" + 
+				"    			Map reader = new HashMap<String, Object>();\n" + 
+				"    			reader.put(\"name\", writerAppName);\n" + 
+				"    			reader.put(\"handling_time\", writerHandlingTime);\n" + 
+				"    			dataForReaders.add(reader);\n" + 
 				"        	}\n" + 
 				"        }\n" + 
 				"        List inputReadingEndpointHandlers = (List)inputEndpoint.get(\"reading_endpoint_handlers\");\n" + 
@@ -360,8 +446,20 @@ public class ElasticsearchIndextemplateCreator {
 				"        				}\n" + 
 				"        			}\n" + 
 				"		        	if (!writerFound) {\n" + 
-				"		        		// Write the reader in a temp field.\n" + 
-				"						int TODO = 0;\n" + 
+				"		        		Map tempCorrelation = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
+				"		        		if (tempCorrelation == null) {\n" + 
+				"							tempCorrelation = new HashMap<String, Object>();\n" + 
+				"							targetSource.put(\"temp_for_correlations\", tempCorrelation);\n" + 
+				"		        		}\n" + 
+				"		        		List dataForWriters = tempCorrelation.get(\"data_for_writers\");\n" + 
+				"		        		if (dataForWriters == null) {\n" + 
+				"		        			dataForWriters = new ArrayList<Object>();\n" + 
+				"		        			tempCorrelation.put(\"data_for_writers\", dataForWriters);\n" + 
+				"						}        			\n" + 
+				"		    			Map writer = new HashMap<String, Object>();\n" + 
+				"		    			writer.put(\"name\", readerAppName);\n" + 
+				"		    			writer.put(\"handling_time\", readerHandlingTime);\n" + 
+				"		    			dataForWriters.add(writer);\n" + 
 				"		        	}\n" + 
 				"        		}\n" + 
 				"        	}\n" + 
