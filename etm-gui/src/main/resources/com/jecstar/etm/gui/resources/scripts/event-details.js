@@ -64,8 +64,10 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 	appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
 	appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
 	var $endpoints = $(data.source.endpoints);
-	var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
-	appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+	if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
+		var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
+		appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+	}
 	if ('log' === data.type) {
 		appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
 	} else if ('http' === data.type) {
@@ -91,6 +93,10 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 				}
 			} else if ('REQUEST' === data.source.messaging_type) {
 				$tabHeader.text('Request message');
+				var response_times = $endpoints.map(function () {return this.writing_endpoint_handler.response_time}).get();
+				if (response_times) {
+					appendToContainerInRow($eventTab, 'Highest writer response time', Math.max.apply(Math, response_times));
+				}
 				if (data.source.correlations && !correlated) {
 					$.each(data.source.correlations, function (index, correlation_id) {
 						addCorrelationTab(data._index, data._type, correlation_id, 'response-tab' + index, 'Response message');
@@ -165,11 +171,11 @@ function addCorrelationTab(index, type, id, tabType, tabName) {
 function appendToContainerInRow(container, name, value) {
 	var $container = $(container);
 	var $row = $container.children(":last-child");
-	if ($container.children().length !== 0 || $row.children().length === 2) {
+	if ($row.children().length > 0 && $row.children().length <= 2) {
 		$row.append(
 		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
 		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value))
-		)
+		);
 	} else {
 		$container.append(
 				$('<div>').addClass('row')
@@ -177,7 +183,7 @@ function appendToContainerInRow(container, name, value) {
 					    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
 					    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value))
 				)
-		)
+		);
 	}
 }
 
@@ -412,7 +418,6 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		$this = $(this).empty();
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Read time', eh.handling_time);
-		appendToContainerInRow($this, 'Latency', eh.latency);
 		appendToContainerInRow($this, 'Response time', eh.response_time);
 		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
 		appendToContainerInRow($this, 'Location', eh.location);
@@ -421,6 +426,7 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		appendToContainerInRow($this, 'Application instance', eh.application_instance);
 		appendToContainerInRow($this, 'Application user', eh.application_principal);
 		appendToContainerInRow($this, 'Application address', eh.application_host);
+		appendToContainerInRow($this, 'Latency', eh.latency);
 		$this.append('<br>');
 		$this.hide().fadeIn('fast', function () {
 			cyEndpoints.resize();
