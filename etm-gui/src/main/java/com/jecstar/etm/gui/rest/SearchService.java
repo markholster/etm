@@ -51,7 +51,7 @@ public class SearchService extends AbstractJsonService {
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	
-	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
+	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.client = client;
@@ -205,8 +205,8 @@ public class SearchService extends AbstractJsonService {
 			fields = new ArrayList<String>(2);
 		}
 		if (fields.isEmpty()) {
-			fields.add(this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag());
-			fields.add(this.tags.getNameTag());
+			fields.add(this.eventTags.getEndpointsTag() + "." + this.eventTags.getWritingEndpointHandlerTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());
+			fields.add(this.eventTags.getNameTag());
 		}
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
 		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(queryString)

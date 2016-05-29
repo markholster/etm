@@ -74,6 +74,12 @@
             <select id="input-time-zone" class="form-control"></select>
           </div>        
         </div>
+        <div class="row">
+          <div class="form-group col-sm-6">
+            <label for="input-query-history-size">Query history size</label>
+            <input id="input-query-history-size" type="number" class="form-control" min="0"/>
+          </div>
+        </div>
         <div class="modal-footer">
           <button id="btn-apply-preferences" type="button" class="btn btn-primary">Apply</button>
         </div>
@@ -173,6 +179,7 @@
                 $('#input-user-name').val(data.name);
                 $('#input-locale').val(data.locale);
                 $('#input-time-zone').val(data.time_zone);
+                $('#input-query-history-size').val(data.query_history_size);
             }
         })
         
@@ -245,7 +252,8 @@
         var userSettings = {
             name: $('#input-user-name').val(),
             locale: $('#input-locale').val(),
-            time_zone: $('#input-time-zone').val() 
+            time_zone: $('#input-time-zone').val(),
+            query_history_size: Number($('#input-query-history-size').val())
         }
         return userSettings;
     }

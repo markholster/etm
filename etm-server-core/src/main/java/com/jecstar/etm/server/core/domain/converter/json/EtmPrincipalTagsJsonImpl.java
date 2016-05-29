@@ -15,10 +15,14 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	}
 	
 	@Override
+	public String getQueryHistorySizeTag() {
+		return "query_history_size";
+	}
+	
+	@Override
 	public String getLocaleTag() {
 		return "locale";
 	}
-
 	
 	@Override
 	public String getNameTag() {

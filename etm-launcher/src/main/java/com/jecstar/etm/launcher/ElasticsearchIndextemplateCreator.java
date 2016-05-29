@@ -197,14 +197,16 @@ public class ElasticsearchIndextemplateCreator {
 				"            }" +
 				"        }" + 
 				"        input.ctx._source.query_history.add(input.query);" +
-				"        int removeCount = input.ctx._source.query_history.size() - input.history_size;" +
-				"        for (int i=0; i < removeCount; i++) {" +
-				"            input.ctx._source.query_history.remove(0);" +
-				"        }" +
 				"    } else {" + 
 				"        input.ctx._source.query_history = new ArrayList<Object>();" +
 				"        input.ctx._source.query_history.add(input.query);" +
 				"    }" + 
+				"}" +
+				"if (input.ctx._source.query_history != null && input.history_size != null) {" +
+				"    int removeCount = input.ctx._source.query_history.size() - input.history_size;" +
+				"    for (int i=0; i < removeCount; i++) {" +
+				"        input.ctx._source.query_history.remove(0);" +
+				"    }" +
 				"}";		
 	}
 	

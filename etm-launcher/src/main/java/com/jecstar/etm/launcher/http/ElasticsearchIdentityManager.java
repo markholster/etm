@@ -36,7 +36,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	@Override
 	public Account verify(Account account) {
 		EtmAccount etmAccount = (EtmAccount) account;
-		if (System.currentTimeMillis() - etmAccount.getLastUpdated() > 60000) {
+		if (System.currentTimeMillis() - etmAccount.getLastUpdated() > 60000 || etmAccount.getPrincipal().forceReload) {
 			GetResponse getResponse = this.elasticClient.prepareGet(ElasticBackedEtmConfiguration.INDEX_NAME, "user", etmAccount.getPrincipal().getId()).get();
 			if (!getResponse.isExists()) {
 				if (log.isDebugLevelEnabled()) {

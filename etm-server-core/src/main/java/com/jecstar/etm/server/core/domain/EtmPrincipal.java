@@ -10,6 +10,8 @@ import java.util.TimeZone;
 
 public class EtmPrincipal implements Principal {
 	
+	public static final int DEFAULT_HISTORY_SIZE = 5;
+	
 	public enum PrincipalRole { 
 		ADMIN("admin"), SEARCHER("searcher"), CONTROLLER("controller"), PROCESSOR("processor");
 		
@@ -32,9 +34,12 @@ public class EtmPrincipal implements Principal {
 	private Set<PrincipalRole> roles = new HashSet<PrincipalRole>();
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
-	private int historySize = 5;
+	private int historySize = DEFAULT_HISTORY_SIZE;
 
-
+	
+	// State properties. DO NOT CHANGE!!
+	public boolean forceReload = false;
+	
 	public EtmPrincipal(String id, String passwordHash) {
 		if (id == null || passwordHash == null) {
 			throw new NullPointerException("id: '" + id + "', passwordHash: '" + passwordHash + "'");

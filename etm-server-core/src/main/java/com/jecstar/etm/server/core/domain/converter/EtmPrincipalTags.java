@@ -4,6 +4,7 @@ public interface EtmPrincipalTags {
 
 	String getIdTag();
 	String getFilterQueryTag();
+	String getQueryHistorySizeTag();
 	String getLocaleTag();
 	String getNameTag();
 	String getPasswordHashTag();
