@@ -301,7 +301,7 @@ public class SearchService extends AbstractJsonService {
 		result.append("}");
 		return result.toString();
 	}
-
+	
 	private void addSearchHits(StringBuilder result, SearchHits hits) {
 		boolean first = true;
 		for (SearchHit searchHit : hits.getHits()) {

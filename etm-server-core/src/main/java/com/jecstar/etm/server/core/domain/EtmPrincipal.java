@@ -112,4 +112,11 @@ public class EtmPrincipal implements Principal {
 	public int getHistorySize() {
 		return this.historySize;
 	}
+	
+	public void setHistorySize(int historySize) {
+		if (historySize < 0) {
+			this.historySize =  0;
+		}
+		this.historySize = historySize;
+	}
 }

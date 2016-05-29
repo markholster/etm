@@ -1,7 +1,6 @@
 var cyEndpoints; 
 
-function showEvent(type, id) {
-	var scrollTo =  $(window).scrollTop();
+function showEvent(scrollTo, type, id) {
 	$('#search-container').hide();
 	$('#event-tabs').children().slice(1).remove();
 	$('#tabcontents').children().slice(1).remove();
@@ -20,6 +19,7 @@ function showEvent(type, id) {
 	        if (!data) {
 	            return;
 	        }
+	        data._scrollTo = scrollTo;
 	        addContent(data);
 	    }
 	});
@@ -56,9 +56,32 @@ function addContent(data) {
 function writeEventDataToTab(tab, tabHeader, data, correlated) {
 	$eventTab = $(tab);
 	$tabHeader = $(tabHeader);
-	appendToContainerInRow($eventTab, 'Id', data.id);
+	if (correlated && data.id) {
+		var dataLink = $('<a href="#">')
+			.text(data.id)
+			.addClass('form-control-static')
+			.attr('style', 'display: inline-block;')
+			.click(function (event) {
+				showEvent(data._scrollTo, data.type, data.id);
+		}); 
+		appendElementToContainerInRow($eventTab, 'Id', dataLink);
+	} else {
+		appendToContainerInRow($eventTab, 'Id', data.id);
+	}
 	appendToContainerInRow($eventTab, 'Name', data.source.name);
-	appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
+	if (!correlated && data.source.correlation_id) {
+		var dataLink = $('<a href="#">')
+			.text(data.source.correlation_id)
+			.addClass('form-control-static')
+			.attr('style', 'display: inline-block;')
+			.click(function (event) {
+				showEvent(data._scrollTo, data.type, data.source.correlation_id);
+		}); 
+		appendElementToContainerInRow($eventTab, 'Correlation id', dataLink);
+	} else {
+		appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
+	}
+	
 	appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
 	var $endpoints = $(data.source.endpoints);
 	if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
@@ -88,7 +111,7 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 			if ('RESPONSE' === data.source.messaging_type) {
 				$tabHeader.text('Response message');
 				if (data.source.correlation_id && !correlated) {
-					addCorrelationTab(data.type, data.source.correlation_id, 'request-tab', 'Request message');
+					addCorrelationTab(data._scrollTo, data.type, data.source.correlation_id, 'request-tab', 'Request message');
 				}
 			} else if ('REQUEST' === data.source.messaging_type) {
 				$tabHeader.text('Request message');
@@ -110,7 +133,7 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 				}
 				if (data.source.correlations && !correlated) {
 					$.each(data.source.correlations, function (index, correlation_id) {
-						addCorrelationTab(data.type, correlation_id, 'response-tab' + index, 'Response message');
+						addCorrelationTab(data._scrollTo, data.type, correlation_id, 'response-tab' + index, 'Response message');
 					});
 				}
 			} else {
@@ -145,7 +168,7 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 	
 }
 
-function addCorrelationTab(type, id, tabType, tabName) {
+function addCorrelationTab(scrollTo, type, id, tabType, tabName) {
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -154,6 +177,7 @@ function addCorrelationTab(type, id, tabType, tabName) {
 	        if (!correlation_data) {
 	            return;
 	        }
+	        correlation_data._scrollTo = scrollTo;
 			$('#event-tabs').children().eq(0).after(
 				$('<li>').addClass('nav-item').append(
 					$('<a>').attr('id',  tabType + '-header')
@@ -178,19 +202,23 @@ function addCorrelationTab(type, id, tabType, tabName) {
 }
 
 function appendToContainerInRow(container, name, value) {
+	appendElementToContainerInRow(container, name, $('<p>').addClass('form-control-static').text(value));
+}
+
+function appendElementToContainerInRow(container, name, element) {
 	var $container = $(container);
 	var $row = $container.children(":last-child");
 	if ($row.children().length > 0 && $row.children().length <= 2) {
 		$row.append(
 		    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
-		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value))
+		    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append(element)
 		);
 	} else {
 		$container.append(
 				$('<div>').addClass('row')
 					.append(
 					    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
-					    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append($('<p>').addClass('form-control-static').text(value))
+					    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append(element)
 				)
 		);
 	}

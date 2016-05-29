@@ -496,7 +496,7 @@
                         .attr('id', searchResult.id)
                         .text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
                         .click(function (event) {
-                            showEvent(searchResult.type, searchResult.id);
+                            showEvent($(window).scrollTop(), searchResult.type, searchResult.id);
                         })
                 )    
             } else {
