@@ -68,6 +68,8 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 		var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
 		appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 	}
+	appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
+	appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 	if ('log' === data.type) {
 		appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
 	} else if ('http' === data.type) {
@@ -93,9 +95,21 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 				}
 			} else if ('REQUEST' === data.source.messaging_type) {
 				$tabHeader.text('Request message');
-				var response_times = $endpoints.map(function () {return this.writing_endpoint_handler.response_time}).get();
-				if (response_times) {
-					appendToContainerInRow($eventTab, 'Highest writer response time', Math.max.apply(Math, response_times));
+				if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
+					var response_times = $endpoints.map(function () {return this.writing_endpoint_handler.response_time}).get();
+					if (response_times) {
+						appendToContainerInRow($eventTab, 'Highest writer response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+					}
+					response_times = $endpoints.map(function () {
+						if (this.reading_endpoint_handlers) {
+							return $(this.reading_endpoint_handlers).map(function () {
+								return this.response_time;
+							}).get();
+						}
+					}).get();
+					if (response_times) {
+						appendToContainerInRow($eventTab, 'Highest reader response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+					}
 				}
 				if (data.source.correlations && !correlated) {
 					$.each(data.source.correlations, function (index, correlation_id) {
@@ -106,8 +120,6 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 				$tabHeader.text('Fire-forget message');
 			}
 		}
-		appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
-		appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 	} else if ('sql' === data.type) {
 	}
 	if ("undefined" != typeof data.source.metadata) {
@@ -137,24 +149,6 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 }
 
 function addCorrelationTab(index, type, id, tabType, tabName) {
-	$('#event-tabs').append(
-		$('<li>').addClass('nav-item').append(
-			$('<a>').attr('id',  tabType + '-header')
-				.attr('aria-expanded', 'false')
-				.attr('role', 'tab')
-				.attr('data-toggle', 'tab')
-				.attr('href', '#' + tabType)
-				.addClass('nav-link')
-				.text(tabName)
-		)
-	);
-	$('#tabcontents').append(
-		$('<div>').attr('id', tabType)
-			.attr('aria-labelledby', tabType + '-header')
-			.attr('role', 'tabpanel')
-			.attr('aria-expanded', 'false')
-			.addClass('tab-pane fade')
-	);
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -163,6 +157,24 @@ function addCorrelationTab(index, type, id, tabType, tabName) {
 	        if (!correlation_data) {
 	            return;
 	        }
+			$('#event-tabs').children().eq(0).after(
+				$('<li>').addClass('nav-item').append(
+					$('<a>').attr('id',  tabType + '-header')
+						.attr('aria-expanded', 'false')
+						.attr('role', 'tab')
+						.attr('data-toggle', 'tab')
+						.attr('href', '#' + tabType)
+						.addClass('nav-link')
+						.text(tabName)
+				)
+			);
+			$('#tabcontents').children().eq(0).after(
+				$('<div>').attr('id', tabType)
+					.attr('aria-labelledby', tabType + '-header')
+					.attr('role', 'tabpanel')
+					.attr('aria-expanded', 'false')
+					.addClass('tab-pane fade')
+			);
 	        writeEventDataToTab($('#' + tabType), $('#' + tabType + '-header'), correlation_data, true);
 	    }
 	});
