@@ -32,6 +32,7 @@ public class EtmPrincipal implements Principal {
 	private Set<PrincipalRole> roles = new HashSet<PrincipalRole>();
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
+	private int historySize = 5;
 
 
 	public EtmPrincipal(String id, String passwordHash) {
@@ -106,5 +107,9 @@ public class EtmPrincipal implements Principal {
 	
 	public void setFilterQuery(String filterQuery) {
 		this.filterQuery = filterQuery;
+	}
+	
+	public int getHistorySize() {
+		return this.historySize;
 	}
 }

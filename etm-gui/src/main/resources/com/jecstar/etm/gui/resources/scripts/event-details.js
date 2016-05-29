@@ -1,6 +1,6 @@
 var cyEndpoints; 
 
-function showEvent(id, type, index) {
+function showEvent(type, id) {
 	var scrollTo =  $(window).scrollTop();
 	$('#search-container').hide();
 	$('#event-tabs').children().slice(1).remove();
@@ -15,14 +15,11 @@ function showEvent(id, type, index) {
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
-	    url: '../rest/search/event/' + encodeURIComponent(index) + '/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
+	    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
 	    success: function(data) {
 	        if (!data) {
 	            return;
 	        }
-	        data._id = id;
-	        data._type = type;
-	        data._index = index; 
 	        addContent(data);
 	    }
 	});
@@ -91,7 +88,7 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 			if ('RESPONSE' === data.source.messaging_type) {
 				$tabHeader.text('Response message');
 				if (data.source.correlation_id && !correlated) {
-					addCorrelationTab(data._index, data._type, data.source.correlation_id, 'request-tab', 'Request message');
+					addCorrelationTab(data.type, data.source.correlation_id, 'request-tab', 'Request message');
 				}
 			} else if ('REQUEST' === data.source.messaging_type) {
 				$tabHeader.text('Request message');
@@ -113,7 +110,7 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 				}
 				if (data.source.correlations && !correlated) {
 					$.each(data.source.correlations, function (index, correlation_id) {
-						addCorrelationTab(data._index, data._type, correlation_id, 'response-tab' + index, 'Response message');
+						addCorrelationTab(data.type, correlation_id, 'response-tab' + index, 'Response message');
 					});
 				}
 			} else {
@@ -148,11 +145,11 @@ function writeEventDataToTab(tab, tabHeader, data, correlated) {
 	
 }
 
-function addCorrelationTab(index, type, id, tabType, tabName) {
+function addCorrelationTab(type, id, tabType, tabName) {
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
-	    url: '../rest/search/event/' + encodeURIComponent(index) + '/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
+	    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
 	    success: function(correlation_data) {
 	        if (!correlation_data) {
 	            return;

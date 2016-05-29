@@ -31,6 +31,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
@@ -188,7 +189,6 @@ public class SearchService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String executeQuery(String json) {
 		long startTime = System.currentTimeMillis();
-		int history_size = 5;
 		Map<String, Object> requestValues = toMap(json);
 		String queryString = getString("query", requestValues);
 		Integer startIndex = getInteger("start_ix", requestValues, new Integer(0));
@@ -232,7 +232,7 @@ public class SearchService extends AbstractJsonService {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"status\": \"success\"");
-		result.append(",\"history_size\": " + history_size);
+		result.append(",\"history_size\": " + etmPrincipal.getHistorySize());
 		result.append(",\"hits\": " + response.getHits().getTotalHits());
 		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
@@ -249,7 +249,7 @@ public class SearchService extends AbstractJsonService {
 		result.append("}");
 		
 		if (startIndex == 0) {
-			writeQueryHistory(startTime, queryString, startIndex, maxResults, sortField, sortOrder, types, fieldsLayout, etmPrincipal, history_size);
+			writeQueryHistory(startTime, queryString, startIndex, maxResults, sortField, sortOrder, types, fieldsLayout, etmPrincipal, etmPrincipal.getHistorySize());
 		}
 		return result.toString();
 	}
@@ -276,20 +276,28 @@ public class SearchService extends AbstractJsonService {
 	}
 
 	@GET
-	@Path("/event/{index}/{type}/{id}")
+	@Path("/event/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEvent(@PathParam("index") String index, @PathParam("type") String type, @PathParam("id") String id) {
-		GetResponse getResponse = SearchService.client.prepareGet(index, type, id).get();
-		if (getResponse.isSourceEmpty()) {
-			return "{}";
+	public String getEvent(@PathParam("type") String type, @PathParam("id") String id) {
+		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(type)
+				.addIds(id);
+		SearchResponse response =  client.prepareSearch("etm_event_all")
+			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
+			.setFetchSource(true)
+			.setFrom(0)
+			.setSize(1)
+			.get();
+		if (response.getHits().hits().length == 0) {
+			return null;
 		}
+		SearchHit searchHit = response.getHits().getAt(0);
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		addStringElementToJsonBuffer("index", getResponse.getIndex() , result, true);
-		addStringElementToJsonBuffer("type", getResponse.getType() , result, false);
-		addStringElementToJsonBuffer("id", getResponse.getId() , result, false);
+		addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
+		addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
+		addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, false);
-		result.append(", \"source\": " + getResponse.getSourceAsString());
+		result.append(", \"source\": " + searchHit.getSourceAsString());
 		result.append("}");
 		return result.toString();
 	}
@@ -303,9 +311,9 @@ public class SearchService extends AbstractJsonService {
 			} else {
 				result.append(", {");
 			}
-			addStringElementToJsonBuffer("type", searchHit.getType() , result, true);
+			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
+			addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
 			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
-			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, false);
 			result.append(", \"source\": " + searchHit.getSourceAsString());
 			result.append("}");
 		}
