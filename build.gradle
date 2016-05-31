@@ -1,7 +1,7 @@
-def version_jackson = "2.7.2"
-def version_resteasy = "3.0.16.Final"
-def version_slf4j = "1.7.18"
-def version_undertow = "1.3.21.Final"
+def version_jackson = "2.7.4"
+def version_resteasy = "3.0.17.Final"
+def version_slf4j = "1.7.21"
+def version_undertow = "1.3.22.Final"
 
 ext {
     dep_disruptor = "com.lmax:disruptor:3.3.4"
@@ -15,8 +15,8 @@ ext {
     dep_resteasyJaxrs = "org.jboss.resteasy:resteasy-jaxrs:" + version_resteasy
     dep_resteasyJacksonProvider = "org.jboss.resteasy:resteasy-jackson2-provider:" + version_resteasy
     dep_log4jOverSlf4j = "org.slf4j:log4j-over-slf4j:" + version_slf4j
-    dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-3"
-    dep_seleniumJava = "org.seleniumhq.selenium:htmlunit-driver:2.20"
+    dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-5"
+    dep_seleniumJava = "org.seleniumhq.selenium:htmlunit-driver:2.21"
     dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_undertowCore = "io.undertow:undertow-core:" + version_undertow
     dep_undertowServlet = "io.undertow:undertow-servlet:" + version_undertow

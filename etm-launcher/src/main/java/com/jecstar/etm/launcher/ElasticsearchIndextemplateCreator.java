@@ -150,64 +150,64 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateSearchTemplateScript() {
-		return  "if (input.template != null) {" + 
-				"    if (input.ctx._source.search_templates != null) {" +
-				"        boolean found = false;" +
-				"        for (int i=0; i < input.ctx._source.search_templates.size(); i++) {" + 
-				"            if (input.ctx._source.search_templates[i].name.equals(input.template.name)) {" + 
-				"                input.ctx._source.search_templates[i].query = input.template.query;" + 
-				"                input.ctx._source.search_templates[i].types = input.template.types;" + 
-				"                input.ctx._source.search_templates[i].fields = input.template.fields;" + 
-				"                input.ctx._source.search_templates[i].results_per_page = input.template.results_per_page;" + 
-				"                input.ctx._source.search_templates[i].sort_field = input.template.sort_field;" + 
-				"                input.ctx._source.search_templates[i].sort_order = input.template.sort_order;" +
-				"                found = true;" + 
-				"             }" +
-				"        }" + 
-				"        if (!found) {" +
-				"            input.ctx._source.search_templates.add(input.template);" +
-				"        }" +
-				"    } else {" + 
-				"        input.ctx._source.search_templates = new ArrayList<Object>();" +
-				"        input.ctx._source.search_templates.add(input.template);" +
-				"    }" + 
-				"}";
+		return  "if (input.template != null) {\n" + 
+				"    if (input.ctx._source.search_templates != null) {\n" +
+				"        boolean found = false;\n" +
+				"        for (int i=0; i < input.ctx._source.search_templates.size(); i++) {\n" + 
+				"            if (input.ctx._source.search_templates[i].name.equals(input.template.name)) {\n" + 
+				"                input.ctx._source.search_templates[i].query = input.template.query;\n" + 
+				"                input.ctx._source.search_templates[i].types = input.template.types;\n" + 
+				"                input.ctx._source.search_templates[i].fields = input.template.fields;\n" + 
+				"                input.ctx._source.search_templates[i].results_per_page = input.template.results_per_page;\n" + 
+				"                input.ctx._source.search_templates[i].sort_field = input.template.sort_field;\n" + 
+				"                input.ctx._source.search_templates[i].sort_order = input.template.sort_order;\n" +
+				"                found = true;\n" + 
+				"             }\n" +
+				"        }\n" + 
+				"        if (!found) {\n" +
+				"            input.ctx._source.search_templates.add(input.template);\n" +
+				"        }\n" +
+				"    } else {\n" + 
+				"        input.ctx._source.search_templates = new ArrayList<Object>;\n" +
+				"        input.ctx._source.search_templates.add(input.template);\n" +
+				"    }\n" + 
+				"}\n";
 	}
 	
 	private String createRemoveSearchTemplateScript() {
-		return  "if (input.name != null) {" + 
-				"    if (input.ctx._source.search_templates != null) {" +
-				"		 Iterator it = input.ctx._source.search_templates.iterator();" +
-				"        while (it.hasNext()) {" +
-				"            def item = it.next();" +	
-				"            if (item.name.equals(input.name)) {" +	
-				"                it.remove();" +	
-				"            }" +	
-				"        }" + 	
-				"    }" + 
-				"}";
+		return  "if (input.name != null) {\n" + 
+				"    if (input.ctx._source.search_templates != null) {\n" +
+				"		 Iterator it = input.ctx._source.search_templates.iterator();\n" +
+				"        while (it.hasNext()) {\n" +
+				"            def item = it.next()\n;" +	
+				"            if (item.name.equals(input.name)) {\n" +	
+				"                it.remove();\n" +	
+				"            }\n" +	
+				"        }\n" + 	
+				"    }\n" + 
+				"}\n";
 	}
 	
 	private String createUpdateQueryHistoryScript() {
-		return  "if (input.query != null) {" + 
-				"    if (input.ctx._source.query_history != null) {" +
-				"        for (int i=0; i < input.ctx._source.query_history.size(); i++) {" + 
-				"            if (input.ctx._source.query_history[i].query.equals(input.query.query)) {" +
-				"                input.ctx._source.query_history.remove(i);" +
-				"            }" +
-				"        }" + 
-				"        input.ctx._source.query_history.add(input.query);" +
-				"    } else {" + 
-				"        input.ctx._source.query_history = new ArrayList<Object>();" +
-				"        input.ctx._source.query_history.add(input.query);" +
-				"    }" + 
-				"}" +
-				"if (input.ctx._source.query_history != null && input.history_size != null) {" +
-				"    int removeCount = input.ctx._source.query_history.size() - input.history_size;" +
-				"    for (int i=0; i < removeCount; i++) {" +
-				"        input.ctx._source.query_history.remove(0);" +
-				"    }" +
-				"}";		
+		return  "if (input.query != null) {\n" + 
+				"    if (input.ctx._source.query_history != null) {\n" +
+				"        for (int i=0; i < input.ctx._source.query_history.size(); i++) {\n" + 
+				"            if (input.ctx._source.query_history[i].query.equals(input.query.query)) {\n" +
+				"                input.ctx._source.query_history.remove(i);\n" +
+				"            }\n" +
+				"        }\n" + 
+				"        input.ctx._source.query_history.add(input.query);\n" +
+				"    } else {\n" + 
+				"        input.ctx._source.query_history = new ArrayList<Object>();\n" +
+				"        input.ctx._source.query_history.add(input.query);\n" +
+				"    }\n" + 
+				"}\n" +
+				"if (input.ctx._source.query_history != null && input.history_size != null) {\n" +
+				"    int removeCount = input.ctx._source.query_history.size() - input.history_size;\n" +
+				"    for (int i=0; i < removeCount; i++) {\n" +
+				"        input.ctx._source.query_history.remove(0);\n" +
+				"    }\n" +
+				"}\n";		
 	}
 	
 	private String createUpdateEventScript() {
