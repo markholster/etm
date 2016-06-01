@@ -1,5 +1,5 @@
-Map inputSource = (Map)input.get("source");
-Map targetSource = (Map)((Map)input.get("ctx")).get("_source");
+Map inputSource = (Map)params.get("source");
+Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
 Map tempForCorrelations = (Map)targetSource.get("temp_for_correlations");
 boolean correlatedBeforeInserted = false;
 if (targetSource.get("payload") == null &&
@@ -13,7 +13,7 @@ if (targetSource.get("payload") == null &&
     if (tempForCorrelations != null) {
 	    targetSource.put("temp_for_correlations", tempForCorrelations);
     }
-    ((Map)input.get("ctx")).put("_source", targetSource);
+    ((Map)params.get("ctx")).put("_source", targetSource);
 }
 
 // Merge the endpoints.
@@ -29,14 +29,15 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
             for (int i=0; i < targetEndpoints.size(); i++) { 
             	if ( ((String)((Map)targetEndpoints.get(i)).get("name")).equals(((String)inputEndpoint.get("name"))) ) {
                     targetEndpointIx = i;
-                    break;
+//COMPILE ERRORS SINCE ALPHA3                    
+//                    break;
                 }
             }
         }
         if (targetEndpointIx == -1) {
             // This endpoint was not present.
             if (targetEndpoints == null) {
-            	targetEndpoints = new ArrayList<Object>();
+            	targetEndpoints = new ArrayList();
                 targetSource.put("endpoints", targetEndpoints);
             }
             targetEndpoints.add(inputEndpoint);
@@ -57,7 +58,7 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
                 // Add reading endpoint handlers to target.
                 List targetReadingEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
                 if (targetReadingEndpointHandlers == null) {
-                	targetReadingEndpointHandlers = new ArrayList<Object>();
+                	targetReadingEndpointHandlers = new ArrayList();
                     targetEndpoint.put("reading_endpoint_handlers", targetReadingEndpointHandlers);
                 }
                 for (int i=0; i < inputReadingEndpointHandlers.size(); i++) {
@@ -91,7 +92,7 @@ if (targetEndpoints != null) {
 if (tempForCorrelations != null) {
 	List dataForReaders = (List)tempForCorrelations.get("data_for_readers");
 	if (dataForReaders != null && targetEndpoints != null) {
-		Iterator<Object> it = dataForReaders.iterator();
+		Iterator it = dataForReaders.iterator();
 		while (it.hasNext()) {
 			Map dataForReader = (Map)it.next();
 			String appName = (String)dataForReader.get("name");
@@ -118,7 +119,7 @@ if (tempForCorrelations != null) {
 	}
 	List dataForWriters = (List)tempForCorrelations.get("data_for_writers");
 	if (dataForWriters != null && targetEndpoints != null) {
-		Iterator<Object> it = dataForWriters.iterator();
+		Iterator it = dataForWriters.iterator();
 		while (it.hasNext()) {
 			Map dataForWriter = (Map)it.next();
 			String appName = (String)dataForWriter.get("name");

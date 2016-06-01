@@ -1,10 +1,10 @@
-Map inputSource = (Map)input.get("source");
-Map targetSource = (Map)((Map)input.get("ctx")).get("_source");
+Map inputSource = (Map)params.get("source");
+Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
 
 List correlations = (List)targetSource.get("correlations");
 // Add the ID as a correlation.
 if (correlations == null) {
-	correlations = new ArrayList<String>();
+	correlations = new ArrayList();
 	targetSource.put("correlations", correlations);
 }
 if (!correlations.contains(inputSource.get("id"))) {
@@ -29,9 +29,11 @@ if (inputEndpoints != null) {
         		for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {
         			Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);
         			List targetReadingEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
-        			if (targetReadingEndpointHandlers == null) {
-        				continue;
-        			}
+//        			if (targetReadingEndpointHandlers == null) {
+//COMPILE ERRORS SINCE ALPHA3        			
+//        				continue;
+//        			}
+if (targetReadingEndpointHandlers != null) {
         			for (int j=0; j < targetReadingEndpointHandlers.size(); j++) {
         				Map targetReadingEndpointHandler = (Map)targetReadingEndpointHandlers.get(i);
         				if (targetReadingEndpointHandler.get("application") != null &&
@@ -40,21 +42,22 @@ if (inputEndpoints != null) {
         					readerFound = true;
         					targetReadingEndpointHandler.put("response_time", (writerHandlingTime - (long)targetReadingEndpointHandler.get("handling_time")));
         				}
-        			} 
+        			}
+}        			 
         		}  
         	}
         	if (!readerFound) {
         		Map tempCorrelation = (Map)targetSource.get("temp_for_correlations");
         		if (tempCorrelation == null) {
-					tempCorrelation = new HashMap<String, Object>();
+					tempCorrelation = new HashMap();
 					targetSource.put("temp_for_correlations", tempCorrelation);
         		}
         		List dataForReaders = tempCorrelation.get("data_for_readers");
         		if (dataForReaders == null) {
-        			dataForReaders = new ArrayList<Object>();
+        			dataForReaders = new ArrayList();
         			tempCorrelation.put("data_for_readers", dataForReaders);
 				}        			
-    			Map reader = new HashMap<String, Object>();
+    			Map reader = new HashMap();
     			reader.put("name", writerAppName);
     			reader.put("handling_time", writerHandlingTime);
     			dataForReaders.add(reader);
@@ -88,15 +91,15 @@ if (inputEndpoints != null) {
 		        	if (!writerFound) {
 		        		Map tempCorrelation = (Map)targetSource.get("temp_for_correlations");
 		        		if (tempCorrelation == null) {
-							tempCorrelation = new HashMap<String, Object>();
+							tempCorrelation = new HashMap();
 							targetSource.put("temp_for_correlations", tempCorrelation);
 		        		}
 		        		List dataForWriters = tempCorrelation.get("data_for_writers");
 		        		if (dataForWriters == null) {
-		        			dataForWriters = new ArrayList<Object>();
+		        			dataForWriters = new ArrayList();
 		        			tempCorrelation.put("data_for_writers", dataForWriters);
 						}        			
-		    			Map writer = new HashMap<String, Object>();
+		    			Map writer = new HashMap();
 		    			writer.put("name", readerAppName);
 		    			writer.put("handling_time", readerHandlingTime);
 		    			dataForWriters.add(writer);

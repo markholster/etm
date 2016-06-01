@@ -150,37 +150,37 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateSearchTemplateScript() {
-		return  "if (input.template != null) {\n" + 
-				"    if (input.ctx._source.search_templates != null) {\n" +
+		return  "if (params.template != null) {\n" + 
+				"    if (params.ctx._source.search_templates != null) {\n" +
 				"        boolean found = false;\n" +
-				"        for (int i=0; i < input.ctx._source.search_templates.size(); i++) {\n" + 
-				"            if (input.ctx._source.search_templates[i].name.equals(input.template.name)) {\n" + 
-				"                input.ctx._source.search_templates[i].query = input.template.query;\n" + 
-				"                input.ctx._source.search_templates[i].types = input.template.types;\n" + 
-				"                input.ctx._source.search_templates[i].fields = input.template.fields;\n" + 
-				"                input.ctx._source.search_templates[i].results_per_page = input.template.results_per_page;\n" + 
-				"                input.ctx._source.search_templates[i].sort_field = input.template.sort_field;\n" + 
-				"                input.ctx._source.search_templates[i].sort_order = input.template.sort_order;\n" +
+				"        for (int i=0; i < params.ctx._source.search_templates.size(); i++) {\n" + 
+				"            if (params.ctx._source.search_templates[i].name.equals(params.template.name)) {\n" + 
+				"                params.ctx._source.search_templates[i].query = params.template.query;\n" + 
+				"                params.ctx._source.search_templates[i].types = params.template.types;\n" + 
+				"                params.ctx._source.search_templates[i].fields = params.template.fields;\n" + 
+				"                params.ctx._source.search_templates[i].results_per_page = params.template.results_per_page;\n" + 
+				"                params.ctx._source.search_templates[i].sort_field = params.template.sort_field;\n" + 
+				"                params.ctx._source.search_templates[i].sort_order = params.template.sort_order;\n" +
 				"                found = true;\n" + 
 				"             }\n" +
 				"        }\n" + 
 				"        if (!found) {\n" +
-				"            input.ctx._source.search_templates.add(input.template);\n" +
+				"            params.ctx._source.search_templates.add(params.template);\n" +
 				"        }\n" +
 				"    } else {\n" + 
-				"        input.ctx._source.search_templates = new ArrayList<Object>;\n" +
-				"        input.ctx._source.search_templates.add(input.template);\n" +
+				"        params.ctx._source.search_templates = new ArrayList();\n" +
+				"        params.ctx._source.search_templates.add(params.template);\n" +
 				"    }\n" + 
 				"}\n";
 	}
 	
 	private String createRemoveSearchTemplateScript() {
-		return  "if (input.name != null) {\n" + 
-				"    if (input.ctx._source.search_templates != null) {\n" +
-				"		 Iterator it = input.ctx._source.search_templates.iterator();\n" +
+		return  "if (params.name != null) {\n" + 
+				"    if (params.ctx._source.search_templates != null) {\n" +
+				"		 Iterator it = params.ctx._source.search_templates.iterator();\n" +
 				"        while (it.hasNext()) {\n" +
 				"            def item = it.next()\n;" +	
-				"            if (item.name.equals(input.name)) {\n" +	
+				"            if (item.name.equals(params.name)) {\n" +	
 				"                it.remove();\n" +	
 				"            }\n" +	
 				"        }\n" + 	
@@ -189,30 +189,30 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateQueryHistoryScript() {
-		return  "if (input.query != null) {\n" + 
-				"    if (input.ctx._source.query_history != null) {\n" +
-				"        for (int i=0; i < input.ctx._source.query_history.size(); i++) {\n" + 
-				"            if (input.ctx._source.query_history[i].query.equals(input.query.query)) {\n" +
-				"                input.ctx._source.query_history.remove(i);\n" +
+		return  "if (params.query != null) {\n" + 
+				"    if (params.ctx._source.query_history != null) {\n" +
+				"        for (int i=0; i < params.ctx._source.query_history.size(); i++) {\n" + 
+				"            if (params.ctx._source.query_history[i].query.equals(params.query.query)) {\n" +
+				"                params.ctx._source.query_history.remove(i);\n" +
 				"            }\n" +
 				"        }\n" + 
-				"        input.ctx._source.query_history.add(input.query);\n" +
+				"        params.ctx._source.query_history.add(params.query);\n" +
 				"    } else {\n" + 
-				"        input.ctx._source.query_history = new ArrayList<Object>();\n" +
-				"        input.ctx._source.query_history.add(input.query);\n" +
+				"        params.ctx._source.query_history = new ArrayList();\n" +
+				"        params.ctx._source.query_history.add(params.query);\n" +
 				"    }\n" + 
 				"}\n" +
-				"if (input.ctx._source.query_history != null && input.history_size != null) {\n" +
-				"    int removeCount = input.ctx._source.query_history.size() - input.history_size;\n" +
+				"if (params.ctx._source.query_history != null && params.history_size != null) {\n" +
+				"    int removeCount = params.ctx._source.query_history.size() - params.history_size;\n" +
 				"    for (int i=0; i < removeCount; i++) {\n" +
-				"        input.ctx._source.query_history.remove(0);\n" +
+				"        params.ctx._source.query_history.remove(0);\n" +
 				"    }\n" +
 				"}\n";		
 	}
 	
 	private String createUpdateEventScript() {
-		return "Map inputSource = (Map)input.get(\"source\");\n" + 
-				"Map targetSource = (Map)((Map)input.get(\"ctx\")).get(\"_source\");\n" + 
+		return "Map inputSource = (Map)params.get(\"source\");\n" + 
+				"Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" + 
 				"Map tempForCorrelations = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
 				"boolean correlatedBeforeInserted = false;\n" + 
 				"if (targetSource.get(\"payload\") == null &&\n" + 
@@ -226,7 +226,7 @@ public class ElasticsearchIndextemplateCreator {
 				"    if (tempForCorrelations != null) {\n" + 
 				"	    targetSource.put(\"temp_for_correlations\", tempForCorrelations);\n" + 
 				"    }\n" + 
-				"    ((Map)input.get(\"ctx\")).put(\"_source\", targetSource);\n" + 
+				"    ((Map)params.get(\"ctx\")).put(\"_source\", targetSource);\n" + 
 				"}\n" + 
 				"\n" + 
 				"// Merge the endpoints.\n" + 
@@ -242,14 +242,14 @@ public class ElasticsearchIndextemplateCreator {
 				"            for (int i=0; i < targetEndpoints.size(); i++) { \n" + 
 				"            	if ( ((String)((Map)targetEndpoints.get(i)).get(\"name\")).equals(((String)inputEndpoint.get(\"name\"))) ) {\n" + 
 				"                    targetEndpointIx = i;\n" + 
-				"                    break;\n" + 
+				"//                    break;\n" + 
 				"                }\n" + 
 				"            }\n" + 
 				"        }\n" + 
 				"        if (targetEndpointIx == -1) {\n" + 
 				"            // This endpoint was not present.\n" + 
 				"            if (targetEndpoints == null) {\n" + 
-				"            	targetEndpoints = new ArrayList<Object>();\n" + 
+				"            	targetEndpoints = new ArrayList();\n" + 
 				"                targetSource.put(\"endpoints\", targetEndpoints);\n" + 
 				"            }\n" + 
 				"            targetEndpoints.add(inputEndpoint);\n" + 
@@ -270,7 +270,7 @@ public class ElasticsearchIndextemplateCreator {
 				"                // Add reading endpoint handlers to target.\n" + 
 				"                List targetReadingEndpointHandlers = (List)targetEndpoint.get(\"reading_endpoint_handlers\");\n" + 
 				"                if (targetReadingEndpointHandlers == null) {\n" + 
-				"                	targetReadingEndpointHandlers = new ArrayList<Object>();\n" + 
+				"                	targetReadingEndpointHandlers = new ArrayList();\n" + 
 				"                    targetEndpoint.put(\"reading_endpoint_handlers\", targetReadingEndpointHandlers);\n" + 
 				"                }\n" + 
 				"                for (int i=0; i < inputReadingEndpointHandlers.size(); i++) {\n" + 
@@ -304,7 +304,7 @@ public class ElasticsearchIndextemplateCreator {
 				"if (tempForCorrelations != null) {\n" + 
 				"	List dataForReaders = (List)tempForCorrelations.get(\"data_for_readers\");\n" + 
 				"	if (dataForReaders != null && targetEndpoints != null) {\n" + 
-				"		Iterator<Object> it = dataForReaders.iterator();\n" + 
+				"		Iterator it = dataForReaders.iterator();\n" + 
 				"		while (it.hasNext()) {\n" + 
 				"			Map dataForReader = (Map)it.next();\n" + 
 				"			String appName = (String)dataForReader.get(\"name\");\n" + 
@@ -331,7 +331,7 @@ public class ElasticsearchIndextemplateCreator {
 				"	}\n" + 
 				"	List dataForWriters = (List)tempForCorrelations.get(\"data_for_writers\");\n" + 
 				"	if (dataForWriters != null && targetEndpoints != null) {\n" + 
-				"		Iterator<Object> it = dataForWriters.iterator();\n" + 
+				"		Iterator it = dataForWriters.iterator();\n" + 
 				"		while (it.hasNext()) {\n" + 
 				"			Map dataForWriter = (Map)it.next();\n" + 
 				"			String appName = (String)dataForWriter.get(\"name\");\n" + 
@@ -360,13 +360,13 @@ public class ElasticsearchIndextemplateCreator {
 	}
 	
 	private String createUpdateRequestWithResponseScript() {
-		return "Map inputSource = (Map)input.get(\"source\");\n" + 
-				"Map targetSource = (Map)((Map)input.get(\"ctx\")).get(\"_source\");\n" + 
+		return "Map inputSource = (Map)params.get(\"source\");\n" + 
+				"Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" + 
 				"\n" + 
 				"List correlations = (List)targetSource.get(\"correlations\");\n" + 
 				"// Add the ID as a correlation.\n" + 
 				"if (correlations == null) {\n" + 
-				"	correlations = new ArrayList<String>();\n" + 
+				"	correlations = new ArrayList();\n" + 
 				"	targetSource.put(\"correlations\", correlations);\n" + 
 				"}\n" + 
 				"if (!correlations.contains(inputSource.get(\"id\"))) {\n" + 
@@ -391,9 +391,11 @@ public class ElasticsearchIndextemplateCreator {
 				"        		for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {\n" + 
 				"        			Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);\n" + 
 				"        			List targetReadingEndpointHandlers = (List)targetEndpoint.get(\"reading_endpoint_handlers\");\n" + 
-				"        			if (targetReadingEndpointHandlers == null) {\n" + 
-				"        				continue;\n" + 
-				"        			}\n" + 
+				"//        			if (targetReadingEndpointHandlers == null) {\n" + 
+				"//COMPILE ERRORS SINCE ALPHA3        			\n" + 
+				"//        				continue;\n" + 
+				"//        			}\n" + 
+				"if (targetReadingEndpointHandlers != null) {\n" + 
 				"        			for (int j=0; j < targetReadingEndpointHandlers.size(); j++) {\n" + 
 				"        				Map targetReadingEndpointHandler = (Map)targetReadingEndpointHandlers.get(i);\n" + 
 				"        				if (targetReadingEndpointHandler.get(\"application\") != null &&\n" + 
@@ -402,21 +404,22 @@ public class ElasticsearchIndextemplateCreator {
 				"        					readerFound = true;\n" + 
 				"        					targetReadingEndpointHandler.put(\"response_time\", (writerHandlingTime - (long)targetReadingEndpointHandler.get(\"handling_time\")));\n" + 
 				"        				}\n" + 
-				"        			} \n" + 
+				"        			}\n" + 
+				"}        			 \n" + 
 				"        		}  \n" + 
 				"        	}\n" + 
 				"        	if (!readerFound) {\n" + 
 				"        		Map tempCorrelation = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
 				"        		if (tempCorrelation == null) {\n" + 
-				"					tempCorrelation = new HashMap<String, Object>();\n" + 
+				"					tempCorrelation = new HashMap();\n" + 
 				"					targetSource.put(\"temp_for_correlations\", tempCorrelation);\n" + 
 				"        		}\n" + 
 				"        		List dataForReaders = tempCorrelation.get(\"data_for_readers\");\n" + 
 				"        		if (dataForReaders == null) {\n" + 
-				"        			dataForReaders = new ArrayList<Object>();\n" + 
+				"        			dataForReaders = new ArrayList();\n" + 
 				"        			tempCorrelation.put(\"data_for_readers\", dataForReaders);\n" + 
 				"				}        			\n" + 
-				"    			Map reader = new HashMap<String, Object>();\n" + 
+				"    			Map reader = new HashMap();\n" + 
 				"    			reader.put(\"name\", writerAppName);\n" + 
 				"    			reader.put(\"handling_time\", writerHandlingTime);\n" + 
 				"    			dataForReaders.add(reader);\n" + 
@@ -450,15 +453,15 @@ public class ElasticsearchIndextemplateCreator {
 				"		        	if (!writerFound) {\n" + 
 				"		        		Map tempCorrelation = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
 				"		        		if (tempCorrelation == null) {\n" + 
-				"							tempCorrelation = new HashMap<String, Object>();\n" + 
+				"							tempCorrelation = new HashMap();\n" + 
 				"							targetSource.put(\"temp_for_correlations\", tempCorrelation);\n" + 
 				"		        		}\n" + 
 				"		        		List dataForWriters = tempCorrelation.get(\"data_for_writers\");\n" + 
 				"		        		if (dataForWriters == null) {\n" + 
-				"		        			dataForWriters = new ArrayList<Object>();\n" + 
+				"		        			dataForWriters = new ArrayList();\n" + 
 				"		        			tempCorrelation.put(\"data_for_writers\", dataForWriters);\n" + 
 				"						}        			\n" + 
-				"		    			Map writer = new HashMap<String, Object>();\n" + 
+				"		    			Map writer = new HashMap();\n" + 
 				"		    			writer.put(\"name\", readerAppName);\n" + 
 				"		    			writer.put(\"handling_time\", readerHandlingTime);\n" + 
 				"		    			dataForWriters.add(writer);\n" + 

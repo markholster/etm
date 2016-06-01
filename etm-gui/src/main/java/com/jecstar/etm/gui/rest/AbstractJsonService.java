@@ -33,7 +33,7 @@ public class AbstractJsonService extends JsonConverter {
 				.timeZone(getEtmPrincipal().getTimeZone().getID());
     }
     
-    protected QueryBuilder<?> addEtmPrincipalFilterQuery(QueryBuilder<?> queryBuilder) {
+    protected QueryBuilder addEtmPrincipalFilterQuery(QueryBuilder queryBuilder) {
     	QueryStringQueryBuilder etmPrincipalFilterQuery = getEtmPrincipalFilterQuery();
     	if (etmPrincipalFilterQuery == null) {
     		return queryBuilder;
