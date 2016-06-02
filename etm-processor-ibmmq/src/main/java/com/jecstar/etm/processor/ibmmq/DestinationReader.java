@@ -68,7 +68,7 @@ public class DestinationReader implements Runnable {
 				this.telemetryEvent.initialize();
 				if ("etmevent".equalsIgnoreCase(this.destination.getMessageTypes()) && this.etmEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
 					this.processor.processTelemetryEvent(this.telemetryEvent);
-				} else if ("ïibevent".equalsIgnoreCase(this.destination.getMessageTypes()) && this.iibEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
+				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessageTypes()) && this.iibEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
 					this.processor.processTelemetryEvent(this.telemetryEvent);
 				} else if ("clone".equalsIgnoreCase(this.destination.getMessageTypes()) && this.clonedMessageHandler.handleMessage(this.telemetryEvent, byteContent)) {
 					this.clonedMessageHandler.handleHeader(this.telemetryEvent, message);
