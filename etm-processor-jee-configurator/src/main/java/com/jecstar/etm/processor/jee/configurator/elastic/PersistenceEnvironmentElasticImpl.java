@@ -49,12 +49,12 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
 	
 	private String createEventMapping(String type) {
 		// TODO moet dit misschien met een path_match i.p.v. een match? 
-		return "{\"dynamic_templates\": ["
+		return "{ \"" + type + "\" : {\"dynamic_templates\": ["
 				+ "{ \"" + this.eventTags.getContentTag() + "\": { \"match\": \"" + this.eventTags.getContentTag() + "\", \"mapping\": {\"index\": \"analyzed\"}}}"
 				+ ", { \"" + this.eventTags.getCreationTimeTag() + "\": { \"match\": \"" + this.eventTags.getCreationTimeTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
 				+ ", { \"" + this.eventTags.getExpiryTimeTag() + "\": { \"match\": \"" + this.eventTags.getExpiryTimeTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
 				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}"
-				+ "]}";
+				+ "]}}";
 	}
 	
 	@Override
