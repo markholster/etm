@@ -3,10 +3,10 @@ package com.jecstar.etm.processor.ibmmq;
 import java.io.IOException;
 import java.util.Hashtable;
 
+import com.ibm.mq.MQDestination;
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
 import com.ibm.mq.MQMessage;
-import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.core.TelemetryEvent;
@@ -34,7 +34,7 @@ public class DestinationReader implements Runnable {
 	private boolean stop = false;
 	
 	private MQQueueManager mqQueueManager;
-	private MQQueue mqQueue;
+	private MQDestination mqDestination;
 	
 	private int counter = 0;
 	
@@ -61,7 +61,7 @@ public class DestinationReader implements Runnable {
 		while (!this.stop) {
 			try {
 				MQMessage message = new MQMessage();
-				this.mqQueue.get(message, getOptions);
+				this.mqDestination.get(message, getOptions);
 				this.telemetryEvent.initialize();
 				byte[] byteContent = new byte[message.getMessageLength()];
 				message.readFully(byteContent);
@@ -166,7 +166,11 @@ public class DestinationReader implements Runnable {
 			}
 			connectionProperties.put(CMQC.PORT_PROPERTY, this.queueManager.getPort());
 			this.mqQueueManager = new MQQueueManager(this.queueManager.getName(), connectionProperties);
-			this.mqQueue = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
+			if ("queue".equals(this.destination)) {
+				this.mqDestination = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
+			} else {
+				this.mqDestination = this.mqQueueManager.accessTopic(this.destination.getName(), null, CMQC.MQSO_CREATE, null, "Enterprise Telemetry Monitor");
+			}
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "' and queue '" + this.destination.getName() + "'");
 			}
@@ -181,9 +185,9 @@ public class DestinationReader implements Runnable {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Disconnecting from queuemanager");
 		}
-		if (this.mqQueue != null) {
+		if (this.mqDestination != null) {
 			try {
-				this.mqQueue.close();
+				this.mqDestination.close();
 			} catch (MQException e) {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Unable to close queue", e);

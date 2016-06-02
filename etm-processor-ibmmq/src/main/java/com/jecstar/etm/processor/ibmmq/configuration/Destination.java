@@ -27,7 +27,7 @@ public class Destination {
 	}
 	
 	public void setType(String type) {
-		if (!"queue".equalsIgnoreCase(type)) {
+		if (!"queue".equalsIgnoreCase(type) && !"topic".equalsIgnoreCase(type)) {
 			throw new IllegalArgumentException("'" + type + "' is an invalid destination type.");
 		}
 		this.type = type;
