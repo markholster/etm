@@ -172,11 +172,11 @@ public class DestinationReader implements Runnable {
 				this.mqDestination = this.mqQueueManager.accessTopic(this.destination.getName(), null, CMQC.MQSO_CREATE, null, "Enterprise Telemetry Monitor");
 			}
 			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "' and queue '" + this.destination.getName() + "'");
+				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
 			}
 		} catch (MQException e) {
 			if (log.isWarningLevelEnabled()) {
-				log.logWarningMessage("Failed to connect to queuemanager '" + this.queueManager.getName() + "' and/or queue '" + this.destination.getName() + "'" , e);
+				log.logWarningMessage("Failed to connect to queuemanager '" + this.queueManager.getName() + "' and/or " + this.destination.getType() + " '" + this.destination.getName() + "'" , e);
 			}
 		}
 	}
@@ -190,7 +190,7 @@ public class DestinationReader implements Runnable {
 				this.mqDestination.close();
 			} catch (MQException e) {
 				if (log.isDebugLevelEnabled()) {
-					log.logDebugMessage("Unable to close queue", e);
+					log.logDebugMessage("Unable to close " + this.destination.getType() , e);
 				}
 			}
 		}
