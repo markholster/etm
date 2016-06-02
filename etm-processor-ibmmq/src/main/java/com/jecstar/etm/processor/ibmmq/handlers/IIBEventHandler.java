@@ -189,12 +189,7 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 			throws MQDataException, IOException, ParseException {
 		if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
 			try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
-				MQMD mqmd = null;
-				if (encoding != -1 && ccsid != -1) {
-					mqmd = new MQMD(inputData, encoding, ccsid);
-				} else {
-					mqmd = new MQMD(inputData);
-				}
+				MQMD mqmd = new MQMD(inputData);
 				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), telemetryEvent.metadata);
 				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, telemetryEvent.metadata);
 				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), telemetryEvent.metadata);
