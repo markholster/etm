@@ -122,7 +122,7 @@ public class IIBEventHandler implements MessageHandler<byte[]> {
 					}
 					NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");
 					if (nodeList.getLength() > 0) {
-						telemetryEvent.endpoint = nodeList.item(0).getTextContent();
+						telemetryEvent.endpoint = nodeList.item(0).getTextContent() != null ? nodeList.item(0).getTextContent().trim() : null;
 					}
 					nodeList = complexContent.getAny().getElementsByTagName("msgId");
 					if (nodeList.getLength() > 0) {
