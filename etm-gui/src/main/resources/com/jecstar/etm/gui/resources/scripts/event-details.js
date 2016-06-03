@@ -351,6 +351,9 @@ function createEndpointsTab(endpoints, timeZone) {
 				.attr('aria-expanded', 'false')
 				.addClass('tab-pane fade')
 				.append(
+						$('<div>').addClass('row').append(
+								$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + ((rowIx) * 3) + 6 + 'em; width: 100%;')
+						),
 						$('<div>').attr('id', 'endpoint-node-detail').append(
 								$('<div>').addClass('row').append(
 										$('<div>').addClass('col-sm-12').append(
@@ -358,9 +361,7 @@ function createEndpointsTab(endpoints, timeZone) {
 										)		
 								)		
 						),
-						$('<div>').addClass('row').append(
-								$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + (rowIx + 1) * 3 + 'em; width: 100%;')
-						)
+						$('<div>').attr('id', 'endpoint-node-transaction-detail')
 				) 
 	);
 	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -424,7 +425,17 @@ function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Write time', eh.handling_time);
 		appendToContainerInRow($this, 'Response time', eh.response_time);
-		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
+		if (eh.transaction_id) {
+			var dataLink = $('<a href="#">')
+			.text(eh.transaction_id)
+			.addClass('form-control-static')
+			.attr('style', 'display: inline-block;')
+			.click(function (event) {
+			}); 
+			appendElementToContainerInRow($this, 'Transaction id', dataLink);	
+		} else {
+			appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
+		}
 		appendToContainerInRow($this, 'Location', eh.location);
 		appendToContainerInRow($this, 'Application name', eh.application_name);
 		appendToContainerInRow($this, 'Application version', eh.application_version);
@@ -456,7 +467,17 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Read time', eh.handling_time);
 		appendToContainerInRow($this, 'Response time', eh.response_time);
-		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
+		if (eh.transaction_id) {
+			var dataLink = $('<a href="#">')
+			.text(eh.transaction_id)
+			.addClass('form-control-static')
+			.attr('style', 'display: inline-block;')
+			.click(function (event) {
+			}); 
+			appendElementToContainerInRow($this, 'Transaction id', dataLink);	
+		} else {
+			appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
+		}
 		appendToContainerInRow($this, 'Location', eh.location);
 		appendToContainerInRow($this, 'Application name', eh.application_name);
 		appendToContainerInRow($this, 'Application version', eh.application_version);
