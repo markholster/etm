@@ -338,12 +338,12 @@
                 $(this).autocomplete( "search", "" );
             }
         } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
-            executeQuery(createQuery());
+            executeQuery(createQuery(false));
         }
     }).autocompleteFieldQuery({queryKeywords: queryKeywords});
     
     $('#btn-search').click(function() {
-        executeQuery(createQuery());
+        executeQuery(createQuery(false));
     });
     
     function isSearchInView(elem) {
@@ -367,12 +367,17 @@
         }
     }
     
-    function createQuery() {
-        if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
-            return null;
+    function createQuery(reusePreviousQueryString) {
+    	if (!reusePreviousQueryString) {
+    		if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
+            	return null;
+            }
+        	tableLayout.current_query = $('#query-string').val();
+        } else if (!tableLayout.current_query) {
+        	return null;
         }
         var query = { 
-            query: $('#query-string').val(),
+            query: tableLayout.current_query,
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
             fields: tableLayout.getInternalFieldNames(),
             start_ix: tableLayout.current_ix,
@@ -448,7 +453,7 @@
                                             .append($('<td>').addClass('text-xs-center').attr('colspan', $(tableLayout.fields).length)
                                                 .append($('<a href="#">').text('Show more').click(function (event) {
                                                     event.preventDefault();
-                                                    var query = createQuery();
+                                                    var query = createQuery(true);
                                                     query.start_ix = tableLayout.current_ix + tableLayout.results_per_page; 
                                                     executeQuery(query, true);
                                                 }))
@@ -518,7 +523,7 @@
             tableLayout.sort_field = fieldName;
         }
         tableLayout.current_ix = 0;
-        executeQuery(createQuery());
+        executeQuery(createQuery(true));
     }
   </script>
   

@@ -7,6 +7,7 @@ var tableLayout = {
     sort_field: 'endpoints.writing_endpoint_handler.handling_time',
     sort_order: 'desc',
     current_ix: 0,
+    current_query: null,
     getFieldNames: function () {
         return this.fields.map(function(item, index) {
             return item.name;
@@ -255,7 +256,7 @@ $('#btn-apply-table-settings').click(function () {
     }
     tableLayout.fields = fields;
     if (changed) {
-        executeQuery(createQuery());    
+        executeQuery(createQuery(true));    
     }
     $('#modal-table-settings').modal('hide');
 });
