@@ -33,6 +33,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	public String getEndpointNameTag() {
 		return "name";
 	}
+
+	@Override
+	public String getEventHashesTag() {
+		return "event_hashes";
+	}
 	
 	@Override
 	public String getExpiryTag() {

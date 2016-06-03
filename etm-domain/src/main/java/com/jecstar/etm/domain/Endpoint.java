@@ -75,4 +75,17 @@ public class Endpoint {
 		}
 		return this.name.hashCode();
 	}
+	
+	public long getCalculatedHash() {
+		long hash = 7;
+		for (int i = 0; i < this.name.length(); i++) {
+		    hash = hash * 31 + this.name.charAt(i);
+		}
+		hash = hash * 31 + this.writingEndpointHandler.getCalculatedHash();
+		for (EndpointHandler endpointHandler : this.readingEndpointHandlers) {
+			hash = hash * 31 + endpointHandler.getCalculatedHash();
+		}
+		return hash;
+		
+	}
 }

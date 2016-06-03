@@ -8,6 +8,7 @@ public interface TelemetryEventTags {
 	String getCorrelationDataTag();
 	String getCorrelationsTag();
 	String getExtractedDataTag();
+	String getEventHashesTag();
 	String getNameTag();
 	String getMetadataTag();
 	String getPackagingTag();

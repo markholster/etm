@@ -327,6 +327,8 @@ public class SearchService extends AbstractJsonService {
 		}
 		// Remove temp fields that are used for correlating events.
 		valueMap.remove("temp_for_correlations");
+		// Remove event hashes field. It is used for internal handling of events.
+		valueMap.remove("event_hashes");
 		for (Entry<String, Object> entry : valueMap.entrySet()) {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
 			String name = determineName(prefix, entry.getKey());

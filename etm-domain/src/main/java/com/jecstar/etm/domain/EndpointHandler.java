@@ -70,7 +70,25 @@ public class EndpointHandler {
 	}
 	
 	public boolean isSet() {
-		return this.handlingTime != null || this.transactionId != null || this.location.isSet() || this.application.isSet() || this.location.isSet();
+		return this.handlingTime != null || this.transactionId != null || this.location.isSet() || this.application.isSet();
+	}
+	
+	public long getCalculatedHash() {
+		long hash = 7;
+		if (this.handlingTime != null) {
+			   hash = hash * 31 + this.handlingTime.toInstant().toEpochMilli();
+		}
+		if (this.transactionId != null) {
+			for (int i = 0; i < this.transactionId.length(); i++) {
+			    hash = hash * 31 + this.transactionId.charAt(i);
+			}
+		}
+		if (this.application.name != null) {
+			for (int i = 0; i < this.application.name.length(); i++) {
+			    hash = hash * 31 + this.application.name.charAt(i);
+			}			
+		}
+		return hash;
 	}
 	
 }

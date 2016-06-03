@@ -27,26 +27,24 @@ public class Startup {
 			// TODO set the application version.		
 			new Launcher().launch(commandLineParameters, configuration);
 		} catch (FileNotFoundException e) {
-			System.err.println("Configuration file not found.");
+			System.err.println("Configuration file not found: " + e.getMessage());
 			return;
 		} catch (YamlException e) {
-			System.err.println("Error reading configuration file.");
+			System.err.println("Error reading configuration file: " + e.getMessage());
 			return;
 		} catch (UnknownHostException e) {
-			System.err.println("Invalid binding address.");
+			System.err.println("Invalid binding address: " + e.getMessage());
 			return;
 		}
 	}		
 	
 	private static Configuration loadConfiguration(File configDir) throws FileNotFoundException, YamlException {
 		if (!configDir.exists()) {
-			Configuration configuration = new Configuration();
-			return configuration;
+			throw new FileNotFoundException(configDir.getAbsolutePath());
 		}
 		File configFile = new File(configDir, "etm.yml");
 		if (!configFile.exists() || !configFile.isFile() || !configFile.canRead()) {
-			Configuration configuration = new Configuration();
-			return configuration;
+			throw new FileNotFoundException(configFile.getAbsolutePath());
 		}
 		YamlReader reader = new YamlReader(new FileReader(configFile));
 		reader.getConfig().setBeanProperties(false);

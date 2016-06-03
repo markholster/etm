@@ -1,5 +1,17 @@
 Map inputSource = (Map)params.get("source");
 Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
+// Check if we have handled this message before.
+long inputHash = ((List)inputSource.get("event_hashes")).get(0);
+List targetHashes = (List)targetSource.get("event_hashes");
+if (targetHashes != null) {
+	for (int i=0; i < targetHashes.size(); i++) {
+		if ( ((long)targetHashes.get(i)) == inputHash) {
+			return;
+		}
+	}
+	targetHashes.add(inputHash);
+}
+
 Map tempForCorrelations = (Map)targetSource.get("temp_for_correlations");
 boolean correlatedBeforeInserted = false;
 if (targetSource.get("payload") == null &&

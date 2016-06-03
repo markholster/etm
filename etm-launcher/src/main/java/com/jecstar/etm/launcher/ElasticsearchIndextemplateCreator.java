@@ -213,6 +213,18 @@ public class ElasticsearchIndextemplateCreator {
 	private String createUpdateEventScript() {
 		return "Map inputSource = (Map)params.get(\"source\");\n" + 
 				"Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" + 
+				"// Check if we have handled this message before.\n" + 
+				"long inputHash = ((List)inputSource.get(\"event_hashes\")).get(0);\n" + 
+				"List targetHashes = (List)targetSource.get(\"event_hashes\");\n" + 
+				"if (targetHashes != null) {\n" + 
+				"	for (int i=0; i < targetHashes.size(); i++) {\n" + 
+				"		if ( ((long)targetHashes.get(i)) == inputHash) {\n" + 
+				"			return null;\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	targetHashes.add(inputHash);\n" + 
+				"}\n" + 
+				"\n" + 
 				"Map tempForCorrelations = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
 				"boolean correlatedBeforeInserted = false;\n" + 
 				"if (targetSource.get(\"payload\") == null &&\n" + 
@@ -242,6 +254,7 @@ public class ElasticsearchIndextemplateCreator {
 				"            for (int i=0; i < targetEndpoints.size(); i++) { \n" + 
 				"            	if ( ((String)((Map)targetEndpoints.get(i)).get(\"name\")).equals(((String)inputEndpoint.get(\"name\"))) ) {\n" + 
 				"                    targetEndpointIx = i;\n" + 
+				"//COMPILE ERRORS SINCE ALPHA3                    \n" + 
 				"//                    break;\n" + 
 				"                }\n" + 
 				"            }\n" + 

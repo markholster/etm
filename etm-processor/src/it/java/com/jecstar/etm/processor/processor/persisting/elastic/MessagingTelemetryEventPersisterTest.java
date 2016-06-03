@@ -339,4 +339,42 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		assertEquals(event.id, 3000, endpoint.writingEndpointHandler.responseTime.longValue());
 	}
 	
+	@Test
+	public void testPersistMessageTwice() throws InterruptedException {
+		final String requestId = UUID.randomUUID().toString();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		
+		final ZonedDateTime timeStamp = ZonedDateTime.now();
+		final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(timeStamp)
+				.setApplication(new ApplicationBuilder()
+						.setName("Requesting App")
+				);
+		
+		final EndpointHandlerBuilder respondingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(timeStamp.plusSeconds(1))
+				.setApplication(new ApplicationBuilder()
+						.setName("Responding App")
+				);
+		
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+			.setId(requestId)
+			.setPayload("Test case " + this.getClass().getName())
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("REQUEST.QUEUE")
+					.setWritingEndpointHandler(requestingEndpointHandler)
+					.addReadingEndpointHandler(respondingEndpointHandler)
+					);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
+		MessagingTelemetryEvent event_v1 = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		
+		persister.persist(builder.build(), this.messagingEventConverter);
+		getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
+		MessagingTelemetryEvent event_v2 = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertEquals(event_v1.getCalculatedHash(), event_v2.getCalculatedHash());
+	}
+	
 }
