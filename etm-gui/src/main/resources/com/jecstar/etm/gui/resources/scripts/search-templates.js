@@ -130,7 +130,7 @@ function updateHistory(query, max_size) {
                    event.preventDefault();
                    setValuesFromHistory(query)
                 })
-                .text(query.query.length > 40 ? query.query.substring(0, 40) : query.query)
+                .text(query.query)
                 .attr('title', query.query)
             )
      ).children().slice(max_size).remove();
