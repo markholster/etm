@@ -78,6 +78,7 @@ public class EventOverviewTest extends AbstractIntegrationTest {
 		timestamp = timestamp.plus(15, ChronoUnit.MILLIS);
 		guiEndpointHandler.setHandlingTime(timestamp);
 		assertTrue(sendEventToEtm("log", this.logEventWriter.write(new LogTelemetryEventBuilder()
+				.setId(UUID.randomUUID().toString())
 				.setPayload("User is requesting his/her shopping card.")
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setLogLevel("DEBUG")
@@ -90,6 +91,7 @@ public class EventOverviewTest extends AbstractIntegrationTest {
 		timestamp = timestamp.plus(8, ChronoUnit.MILLIS);
 		guiEndpointHandler.setHandlingTime(timestamp);
 		assertTrue(sendEventToEtm("log", this.logEventWriter.write(new LogTelemetryEventBuilder()
+				.setId(UUID.randomUUID().toString())
 				.setPayload("Requesting shoppping card over MQ.")
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setLogLevel("DEBUG")
@@ -122,6 +124,7 @@ public class EventOverviewTest extends AbstractIntegrationTest {
 		timestamp = timestamp.plus(7, ChronoUnit.MILLIS);
 		backendEndpointHandler.setHandlingTime(timestamp);
 		assertTrue(sendEventToEtm("log", this.logEventWriter.write(new LogTelemetryEventBuilder()
+				.setId(UUID.randomUUID().toString())
 				.setPayload("Received shopping card request.")
 				.setPayloadFormat(PayloadFormat.TEXT)
 				.setLogLevel("DEBUG")
@@ -148,6 +151,7 @@ public class EventOverviewTest extends AbstractIntegrationTest {
 		timestamp = timestamp.plus(275, ChronoUnit.MILLIS);
 		backendEndpointHandler.setHandlingTime(timestamp);
 		assertTrue(sendEventToEtm("sql", this.sqlEventWriter.write(new SqlTelemetryEventBuilder()
+				.setId(UUID.randomUUID().toString())
 				.setCorrelationId(sqlRequestId)
 				.setPayload("found 10 results")
 				.setDbQueryEventType(SqlEventType.RESULTSET)
@@ -164,6 +168,7 @@ public class EventOverviewTest extends AbstractIntegrationTest {
 		timestamp = timestamp.plus(4, ChronoUnit.MILLIS);
 		guiEndpointHandler.setHandlingTime(timestamp);
 		assertTrue(sendEventToEtm("messaging", this.mqEventWriter.write(new MessagingTelemetryEventBuilder()
+				.setId(UUID.randomUUID().toString())
 				.setCorrelationId(mqMessageId)
 				.setPayload("<shoppingcard_request><customer_id>543214</customer_id></shoppingcard_request>")
 				.setPayloadFormat(PayloadFormat.XML)
@@ -180,6 +185,7 @@ public class EventOverviewTest extends AbstractIntegrationTest {
 		timestamp = timestamp.plus(32, ChronoUnit.MILLIS);
 		guiEndpointHandler.setHandlingTime(timestamp);
 		assertTrue(sendEventToEtm("http", this.httpEventWriter.write(new HttpTelemetryEventBuilder()
+				.setId(UUID.randomUUID().toString())
 				.setCorrelationId(eventId)
 				.setPayload("<html><body><p>We found 2 items in your shopping card</p></body></html>")
 				.setPayloadFormat(PayloadFormat.HTML)
