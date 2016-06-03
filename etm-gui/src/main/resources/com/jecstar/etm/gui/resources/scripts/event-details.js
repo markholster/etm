@@ -420,22 +420,16 @@ function createEndpointsTab(endpoints, timeZone) {
 }
 
 function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
+	$transactionDetails = $('#endpoint-node-transaction-detail');
+	$transactionDetails.fadeOut('fast', function() {
+		$(this).empty();
+	});
 	$('#endpoint-node-detail').fadeOut('fast', function () {
 		$this = $(this).empty();
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Write time', eh.handling_time);
 		appendToContainerInRow($this, 'Response time', eh.response_time);
-		if (eh.transaction_id) {
-			var dataLink = $('<a href="#">')
-			.text(eh.transaction_id)
-			.addClass('form-control-static')
-			.attr('style', 'display: inline-block;')
-			.click(function (event) {
-			}); 
-			appendElementToContainerInRow($this, 'Transaction id', dataLink);	
-		} else {
-			appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
-		}
+		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
 		appendToContainerInRow($this, 'Location', eh.location);
 		appendToContainerInRow($this, 'Application name', eh.application_name);
 		appendToContainerInRow($this, 'Application version', eh.application_version);
@@ -443,9 +437,12 @@ function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		appendToContainerInRow($this, 'Application user', eh.application_principal);
 		appendToContainerInRow($this, 'Application address', eh.application_host);
 		$this.append('<br>');
-		$this.fadeIn('fast', function () {
-			cyEndpoints.resize();
-		});
+		if (eh.transaction_id && eh.application_name) {
+			displayTransactionDetails($transactionDetails, eh.application_name, eh.transaction_id)
+			$transactionDetails.append('<br>');
+		}		
+		$this.fadeIn('fast');
+		$transactionDetails.fadeIn('fast');
 	});
 }
 
@@ -455,29 +452,24 @@ function displayEndpoint(cyEndpoints, endpoint, timeZone) {
 		appendToContainerInRow($this, 'Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		appendToContainerInRow($this, 'Endpoint name', endpoint.name);
 		$this.append('<br>');
-		$this.hide().fadeIn('fast', function () {
-			cyEndpoints.resize();
-		});
+		$this.fadeIn('fast');
+	});
+	$('#endpoint-node-transaction-detail').fadeOut('fast', function() {
+		$this = $(this).empty();
 	});
 }
 
 function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
+	$transactionDetails = $('#endpoint-node-transaction-detail');
+	$transactionDetails.fadeOut('fast', function() {
+		$(this).empty();
+	});
 	$('#endpoint-node-detail').fadeOut('fast', function () {
 		$this = $(this).empty();
 		var eh = formatEndpointHandler(endpoint_handler, timeZone);
 		appendToContainerInRow($this, 'Read time', eh.handling_time);
 		appendToContainerInRow($this, 'Response time', eh.response_time);
-		if (eh.transaction_id) {
-			var dataLink = $('<a href="#">')
-			.text(eh.transaction_id)
-			.addClass('form-control-static')
-			.attr('style', 'display: inline-block;')
-			.click(function (event) {
-			}); 
-			appendElementToContainerInRow($this, 'Transaction id', dataLink);	
-		} else {
-			appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
-		}
+		appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
 		appendToContainerInRow($this, 'Location', eh.location);
 		appendToContainerInRow($this, 'Application name', eh.application_name);
 		appendToContainerInRow($this, 'Application version', eh.application_version);
@@ -486,10 +478,18 @@ function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) 
 		appendToContainerInRow($this, 'Application address', eh.application_host);
 		appendToContainerInRow($this, 'Latency', eh.latency);
 		$this.append('<br>');
-		$this.hide().fadeIn('fast', function () {
-			cyEndpoints.resize();
-		});
+		if (eh.transaction_id && eh.application_name) {
+			displayTransactionDetails($transactionDetails, eh.application_name, eh.transaction_id)
+			$transactionDetails.append('<br>');
+		}
+		$this.fadeIn('fast');
+		$transactionDetails.fadeIn('fast');
 	});
+}
+
+function displayTransactionDetails(container, applicationName, transactionId) {
+	$container = $(container);
+	appendToContainerInRow($container, 'Transaction id', transactionId);
 }
 
 function formatEndpointHandler(endpoint_handler, timeZone) {
