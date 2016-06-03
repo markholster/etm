@@ -34,6 +34,9 @@ public class Destination {
 	}
 	
 	public int getNrOfListeners() {
+		if ("topic".equalsIgnoreCase(type)) {
+			return 1;
+		}
 		return this.nrOfListeners;
 	}
 	

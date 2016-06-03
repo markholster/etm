@@ -130,7 +130,7 @@ public class Startup {
 		for (QueueManager queueManager : configuration.getQueueManagers()) {
 			for (Destination destination : queueManager.getDestinations()) {
 				for (int i=0; i < destination.getNrOfListeners(); i++) {
-					this.executorService.submit(new DestinationReader(this.processor, queueManager, destination));
+					this.executorService.submit(new DestinationReader(configuration.getClusterName() + "_" + configuration.getCalculatedNodeName(), this.processor, queueManager, destination));
 				}
 			}
 		}

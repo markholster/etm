@@ -23,6 +23,7 @@ public class DestinationReader implements Runnable {
 	
 	private static final LogWrapper log = LogFactory.getLogger(DestinationReader.class);
 
+	private final String configurationName;
 	private final AutoManagedTelemetryEventProcessor processor;
 	private final TelemetryEvent telemetryEvent = new TelemetryEvent();
 	private final QueueManager queueManager;
@@ -42,8 +43,10 @@ public class DestinationReader implements Runnable {
 	private final XmlTelemetryEventHandler etmEventHandler;
 	private final IIBEventHandler iibEventHandler;
 	private final ClonedMessageHandler clonedMessageHandler;
+
 	
-	public DestinationReader(final AutoManagedTelemetryEventProcessor processor, final QueueManager queueManager, final Destination destination) {
+	public DestinationReader(String configurationName, final AutoManagedTelemetryEventProcessor processor, final QueueManager queueManager, final Destination destination) {
+		this.configurationName = configurationName;
 		this.processor = processor;
 		this.queueManager = queueManager;
 		this.destination = destination;
@@ -169,7 +172,7 @@ public class DestinationReader implements Runnable {
 			if ("queue".equals(this.destination)) {
 				this.mqDestination = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
 			} else {
-				this.mqDestination = this.mqQueueManager.accessTopic(this.destination.getName(), null, CMQC.MQSO_CREATE, null, "Enterprise Telemetry Monitor");
+				this.mqDestination = this.mqQueueManager.accessTopic(this.destination.getName(), null, CMQC.MQSO_CREATE, null, "Enterprise Telemetry Monitor - " + this.configurationName);
 			}
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
