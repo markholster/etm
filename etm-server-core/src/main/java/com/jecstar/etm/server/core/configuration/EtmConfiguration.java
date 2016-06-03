@@ -19,6 +19,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
 	public static final String CONFIG_KEY_MAX_INDEX_COUNT = "maxIndexCount";
 	public static final String CONFIG_KEY_WRITE_CONSISTENCY = "writeConsistency";
+	public static final String CONFIG_KEY_QUERY_TIMEOUT = "queryTimeout";
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -38,6 +39,9 @@ public class EtmConfiguration {
 	// Data configuration properties;
 	private int maxIndexCount = 7; 
 
+	// Query options
+	private long queryTimeout = 60 * 1000;
+	
 	// Other stuff.		
 	private final String nodeName;
 
@@ -171,6 +175,17 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public long getQueryTimeout() {
+		return this.queryTimeout;
+	}
+	
+	public EtmConfiguration setQueryTimeout(long queryTimeout) {
+		if (queryTimeout > 0) {
+			this.queryTimeout = queryTimeout;
+		}
+		return this;
+	}
 
 	public String getNodeName() {
 		return this.nodeName;
@@ -236,6 +251,10 @@ public class EtmConfiguration {
 		if (!this.writeConsistency.equals(etmConfiguration.getWriteConsistency())) {
 			setWriteConsistency(etmConfiguration.getWriteConsistency());
 			changed.add(CONFIG_KEY_WRITE_CONSISTENCY);
+		}
+		if (this.queryTimeout != etmConfiguration.getQueryTimeout()) {
+			setQueryTimeout(etmConfiguration.getQueryTimeout());
+			changed.add(CONFIG_KEY_QUERY_TIMEOUT);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);

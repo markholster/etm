@@ -3,6 +3,7 @@ package com.jecstar.etm.gui.rest;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -31,8 +32,11 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.SearchHit;
@@ -220,7 +224,8 @@ public class SearchService extends AbstractJsonService {
 			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
 			.setFetchSource(fields.toArray(new String[fields.size()]), null)
 			.setFrom(startIndex)
-			.setSize(maxResults);
+			.setSize(maxResults)
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		if (sortField != null && sortField.trim().length() > 0) {
 			requestBuilder.addSort(sortField, "desc".equals(sortOrder) ? SortOrder.DESC : SortOrder.ASC);
 		}
@@ -286,6 +291,7 @@ public class SearchService extends AbstractJsonService {
 			.setFetchSource(true)
 			.setFrom(0)
 			.setSize(1)
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
 		if (response.getHits().hits().length == 0) {
 			return null;
@@ -302,6 +308,112 @@ public class SearchService extends AbstractJsonService {
 		return result.toString();
 	}
 	
+	@SuppressWarnings("unchecked")
+	@GET
+	@Path("/transaction/{application}/{id}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getTransaction(@PathParam("application") String applicationName, @PathParam("id") String id) {
+		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
+			.minimumNumberShouldMatch(1)
+			.should(
+					new BoolQueryBuilder()
+						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+								"." + this.eventTags.getReadingEndpointHandlersTag() + 
+								"." + this.eventTags.getEndpointHandlerApplicationTag() + 
+								"." + this.eventTags.getApplicationNameTag(), applicationName))
+						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+								"." + this.eventTags.getReadingEndpointHandlersTag() + 
+								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), id))
+			).should(
+					new BoolQueryBuilder()
+						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+								"." + this.eventTags.getWritingEndpointHandlerTag() + 
+								"." + this.eventTags.getEndpointHandlerApplicationTag() + 
+								"." + this.eventTags.getApplicationNameTag(), applicationName))
+						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+								"." + this.eventTags.getWritingEndpointHandlerTag() + 
+								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), id))
+		);
+		
+		SearchResponse response =  client.prepareSearch("etm_event_all")
+				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
+				.setFetchSource(new String[] {this.eventTags.getEndpointsTag() + ".*", this.eventTags.getNameTag(), this.eventTags.getPayloadTag()}, null)
+				.setFrom(0)
+				.setSize(1000)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.get();
+		if (response.getHits().hits().length == 0) {
+			return null;
+		}
+		List<TransactionEvent> events = new ArrayList<>();
+		StringBuilder result = new StringBuilder();
+		for (SearchHit searchHit : response.getHits().hits()) {
+			TransactionEvent event = new TransactionEvent();
+			event.index = searchHit.getIndex();
+			event.type = searchHit.getType();
+			event.id = searchHit.getId();
+			Map<String, Object> source = searchHit.getSource();
+			event.name = (String) source.get(this.eventTags.getNameTag());
+			event.payload = (String) source.get(this.eventTags.getPayloadTag());
+			List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+			if (endpoints != null) {
+				for (Map<String, Object> endpoint : endpoints) {
+					Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
+					if (isWithinTransaction(writingEndpointHandler, applicationName, id)) {
+						event.handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+						event.direction = "outgoing";
+					}
+					List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
+					if (readingEndpointHandlers != null) {
+						for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+							if (isWithinTransaction(readingEndpointHandler, applicationName, id)) {
+								event.handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+								event.direction = "incomming";
+							}
+						}
+					}
+				}
+			}
+			events.add(event);
+		}
+		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
+		result.append("{ \"events\":[");
+		boolean first = true;
+		for (TransactionEvent event : events) {
+			if (first) {
+				result.append("{");
+				first = false;
+			} else {
+				result.append(", {");
+			}
+			addStringElementToJsonBuffer("index", event.index , result, true);
+			addStringElementToJsonBuffer("type", event.type , result, false);
+			addStringElementToJsonBuffer("id", event.id , result, false);
+			addLongElementToJsonBuffer("handling_time", event.handlingTime , result, false);
+			addStringElementToJsonBuffer("name", event.name , result, false);
+			addStringElementToJsonBuffer("direction", event.direction , result, false);
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	@SuppressWarnings("unchecked")
+	private boolean isWithinTransaction(Map<String, Object> endpointHandler, String applicationName, String id) {
+		if (endpointHandler == null) {
+			return false;
+		}
+		String transactionId = (String) endpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+		if (!id.equals(transactionId)) {
+			return false;
+		}
+		Map<String, Object> application = (Map<String, Object>) endpointHandler.get(this.eventTags.getEndpointHandlerApplicationTag());
+		if (application == null) {
+			return false;
+		}
+		String appName = (String) application.get(this.eventTags.getApplicationNameTag());
+		return applicationName.equals(appName);
+	}
+
 	private void addSearchHits(StringBuilder result, SearchHits hits) {
 		boolean first = true;
 		for (SearchHit searchHit : hits.getHits()) {

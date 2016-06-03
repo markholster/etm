@@ -93,6 +93,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return super.getWriteConsistency();
 	}
 	
+	@Override
+	public long getQueryTimeout() {
+		reloadConfigurationWhenNecessary();
+		return super.getQueryTimeout();
+	}
+	
 	private boolean reloadConfigurationWhenNecessary() {
 		boolean changed = false;
 		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
