@@ -337,7 +337,13 @@ public class SearchService extends AbstractJsonService {
 		
 		SearchResponse response =  client.prepareSearch("etm_event_all")
 				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
-				.setFetchSource(new String[] {this.eventTags.getEndpointsTag() + ".*", this.eventTags.getNameTag(), this.eventTags.getPayloadTag()}, null)
+				.setFetchSource(new String[] {
+						this.eventTags.getEndpointsTag() + ".*", 
+						this.eventTags.getNameTag(), 
+						this.eventTags.getPayloadTag(),
+						this.eventTags.getMessagingEventTypeTag(),
+						this.eventTags.getHttpEventTypeTag(),
+						this.eventTags.getSqlEventTypeTag()}, null)
 				.setFrom(0)
 				.setSize(1000)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -362,22 +368,32 @@ public class SearchService extends AbstractJsonService {
 					if (isWithinTransaction(writingEndpointHandler, applicationName, id)) {
 						event.handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
 						event.direction = "outgoing";
-					}
-					List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
-					if (readingEndpointHandlers != null) {
-						for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-							if (isWithinTransaction(readingEndpointHandler, applicationName, id)) {
-								event.handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
-								event.direction = "incomming";
+					} else {
+						List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
+						if (readingEndpointHandlers != null) {
+							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+								if (isWithinTransaction(readingEndpointHandler, applicationName, id)) {
+									event.handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+									event.direction = "incomming";
+								}
 							}
 						}
+					}
+					if ("http".equals(searchHit.getType())) {
+						event.subType = (String) source.get(this.eventTags.getHttpEventTypeTag());
+					} else if ("messaging".equals(searchHit.getType())) {
+						event.subType = (String) source.get(this.eventTags.getMessagingEventTypeTag());
+					} else if ("sql".equals(searchHit.getType())) {
+						event.subType = (String) source.get(this.eventTags.getSqlEventTypeTag());
 					}
 				}
 			}
 			events.add(event);
 		}
 		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
-		result.append("{ \"events\":[");
+		result.append("{");
+		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
+		result.append(",\"events\":[");
 		boolean first = true;
 		for (TransactionEvent event : events) {
 			if (first) {
@@ -388,10 +404,13 @@ public class SearchService extends AbstractJsonService {
 			}
 			addStringElementToJsonBuffer("index", event.index , result, true);
 			addStringElementToJsonBuffer("type", event.type , result, false);
+			addStringElementToJsonBuffer("sub_type", event.subType , result, false);
 			addStringElementToJsonBuffer("id", event.id , result, false);
 			addLongElementToJsonBuffer("handling_time", event.handlingTime , result, false);
 			addStringElementToJsonBuffer("name", event.name , result, false);
 			addStringElementToJsonBuffer("direction", event.direction , result, false);
+			addStringElementToJsonBuffer("payload", event.payload , result, false);
+			result.append("}");
 		}
 		result.append("]}");
 		return result.toString();

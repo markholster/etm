@@ -9,4 +9,5 @@ public class TransactionEvent {
 	public Long handlingTime;
 	public String direction;
 	public String payload;
+	public String subType;
 }
