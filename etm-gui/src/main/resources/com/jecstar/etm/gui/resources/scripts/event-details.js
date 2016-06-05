@@ -572,7 +572,7 @@ function showEvent(scrollTo, type, id) {
 	
 	function formatTransactionLine(event) {
 		if ('business' == event.type) {
-			return event.payload;
+			return event.name ? event.name : '?';
 		} else if ('http' == event.type) {
 			if ('incomming' == event.direction) {
 				return 'Received ' + ("RESPONSE" == event.sub_type ? 'http response' : 'http ' + event.payload);
