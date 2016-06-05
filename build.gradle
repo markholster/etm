@@ -20,7 +20,7 @@ ext {
     dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_undertowCore = "io.undertow:undertow-core:" + version_undertow
     dep_undertowServlet = "io.undertow:undertow-servlet:" + version_undertow
-    dep_yamlbeans = "com.esotericsoftware.yamlbeans:yamlbeans:1.09"
+    dep_snakeyaml = "org.yaml:snakeyaml:1.17"
 }
 
 allprojects {

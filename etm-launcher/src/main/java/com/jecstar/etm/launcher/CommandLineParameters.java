@@ -1,11 +1,7 @@
 package com.jecstar.etm.launcher;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import org.yaml.snakeyaml.Yaml;
 
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.server.core.util.BCrypt;
 
@@ -35,18 +31,8 @@ public class CommandLineParameters {
 				this.quiet = true;
 			} else if (argument.startsWith(PARAM_DUMP_DEFAULT_CONFIG)) {
 				this.proceedNormalStartup = false;
-				try (Writer writer = new OutputStreamWriter(System.out);){
-					YamlWriter yamlWriter = new YamlWriter(writer);
-					yamlWriter.getConfig().setBeanProperties(false);
-					yamlWriter.getConfig().writeConfig.setWriteDefaultValues(true);
-					
-					yamlWriter.write(new Configuration());
-					yamlWriter.close();
-				} catch (YamlException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			    Yaml yaml = new Yaml();
+			    System.out.print(yaml.dumpAsMap(new Configuration()));
 			}
 		}
 	}

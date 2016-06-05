@@ -3,11 +3,13 @@ package com.jecstar.etm.launcher;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlReader;
+import org.yaml.snakeyaml.Yaml;
+
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.slf4j.ConfigurationImpl;
 
@@ -29,16 +31,16 @@ public class Startup {
 		} catch (FileNotFoundException e) {
 			System.err.println("Configuration file not found: " + e.getMessage());
 			return;
-		} catch (YamlException e) {
-			System.err.println("Error reading configuration file: " + e.getMessage());
-			return;
 		} catch (UnknownHostException e) {
 			System.err.println("Invalid binding address: " + e.getMessage());
+			return;
+		} catch (IOException e) {
+			System.err.println("Error loading configuration: " + e.getMessage());
 			return;
 		}
 	}		
 	
-	private static Configuration loadConfiguration(File configDir) throws FileNotFoundException, YamlException {
+	private static Configuration loadConfiguration(File configDir) throws IOException {
 		if (!configDir.exists()) {
 			throw new FileNotFoundException(configDir.getAbsolutePath());
 		}
@@ -46,8 +48,9 @@ public class Startup {
 		if (!configFile.exists() || !configFile.isFile() || !configFile.canRead()) {
 			throw new FileNotFoundException(configFile.getAbsolutePath());
 		}
-		YamlReader reader = new YamlReader(new FileReader(configFile));
-		reader.getConfig().setBeanProperties(false);
-		return reader.read(Configuration.class);
+		try (Reader reader = new FileReader(configFile);) {
+			Yaml yaml = new Yaml();
+			return yaml.loadAs(reader, Configuration.class);
+		} 
 	}
 }
