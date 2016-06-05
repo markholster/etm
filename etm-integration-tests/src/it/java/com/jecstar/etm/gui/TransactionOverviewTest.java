@@ -34,7 +34,7 @@ import com.jecstar.etm.domain.writers.json.SqlTelemetryEventWriterJsonImpl;
  * 
  * @author Mark Holster
  */
-public class EventOverviewTest extends AbstractIntegrationTest {
+public class TransactionOverviewTest extends AbstractIntegrationTest {
 	
 	private final TelemetryEventWriter<String, HttpTelemetryEvent> httpEventWriter = new HttpTelemetryEventWriterJsonImpl(); 
 	private final TelemetryEventWriter<String, LogTelemetryEvent> logEventWriter = new LogTelemetryEventWriterJsonImpl(); 

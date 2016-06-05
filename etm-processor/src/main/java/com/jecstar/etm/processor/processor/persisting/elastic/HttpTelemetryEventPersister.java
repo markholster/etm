@@ -1,9 +1,15 @@
 package com.jecstar.etm.processor.processor.persisting.elastic;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent;
+import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.writers.json.HttpTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
@@ -18,9 +24,19 @@ public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPe
 
 	@Override
 	public void persist(HttpTelemetryEvent event, HttpTelemetryEventWriterJsonImpl writer) {
-		IndexRequest indexRequest = createIndexRequest(event.id).source(writer.write(event));
-		// TODO create update event as this should be a request/reply aware persister 
-		bulkProcessor.add(indexRequest);
+		IndexRequest indexRequest = createIndexRequest(event.id)
+				.source(writer.write(event));
+		Map<String, Object> parameters =  new HashMap<>();
+		parameters.put("source", indexRequest.sourceAsMap());
+		bulkProcessor.add(createUpdateRequest(event.id)
+					.script(new Script("etm_update-event", ScriptType.STORED, "painless", parameters))
+					.upsert(indexRequest));
+		if (HttpEventType.RESPONSE.equals(event.httpEventType) && event.correlationId != null) {
+			bulkProcessor.add(createUpdateRequest(event.correlationId)
+					.script(new Script("etm_update-request-with-response", ScriptType.STORED, "painless", parameters))
+					.upsert("{}")
+					.scriptedUpsert(true));
+		}	
 	}
 
 	@Override

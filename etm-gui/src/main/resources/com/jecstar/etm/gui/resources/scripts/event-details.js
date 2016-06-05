@@ -1,7 +1,7 @@
-function showEvent(scrollTo, type, id) {
-	var cyEndpoints; 
-	var transactionMap = new Map();
+var cyEndpoints; 
+var transactionMap = new Map();
 
+function showEvent(scrollTo, type, id) {
 	$('#search-container').hide();
 	$('#event-tabs').children().slice(1).remove();
 	$('#tabcontents').children().slice(1).remove();
@@ -12,6 +12,9 @@ function showEvent(scrollTo, type, id) {
 	if (cyEndpoints) {
 		cyEndpoints.destroy();
 	}
+	transactionMap.forEach(function (element) {$(element).remove();});
+	transactionMap.clear();
+	
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -28,6 +31,11 @@ function showEvent(scrollTo, type, id) {
 		.unbind('click')
 		.click(function(event) {
 			event.preventDefault();
+			if (cyEndpoints) {
+				cyEndpoints.destroy();
+			}
+			transactionMap.forEach(function (element) {$(element).remove();});
+			transactionMap.clear();
 			$('#event-container').hide();
 			$('#search-container').show();
 			$('html,body').animate({scrollTop: scrollTo},'fast');
@@ -95,8 +103,16 @@ function showEvent(scrollTo, type, id) {
 				// http type known, determine request or response.
 				if ('RESPONSE' === data.source.http_type) {
 					$tabHeader.text('Http response');
+					if (data.source.correlation_id && !correlated) {
+						addCorrelationTab(scrollTo, data.type, data.source.correlation_id, 'request-tab', 'Http request');
+					}
 				} else {
 					$tabHeader.text('Http request');
+					if (data.source.correlations && !correlated) {
+						$.each(data.source.correlations, function (index, correlation_id) {
+							addCorrelationTab(scrollTo, data.type, correlation_id, 'response-tab' + index, 'Http response');
+						});
+					}
 				}
 			}
 			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
@@ -139,6 +155,22 @@ function showEvent(scrollTo, type, id) {
 				}
 			}
 		} else if ('sql' === data.type) {
+			if (data.source.sql_type) {
+				// sql type known, determine query or result.
+				if ('RESULTSET' === data.source.sql_type) {
+					$tabHeader.text('Sql result');
+					if (data.source.correlation_id && !correlated) {
+						addCorrelationTab(scrollTo, data.type, data.source.correlation_id, 'request-tab', 'Sql query');
+					}
+				} else {
+					$tabHeader.text('Sql query');
+					if (data.source.correlations && !correlated) {
+						$.each(data.source.correlations, function (index, correlation_id) {
+							addCorrelationTab(scrollTo, data.type, correlation_id, 'response-tab' + index, 'Sql result');
+						});
+					}
+				}
+			}		
 		}
 		if ("undefined" != typeof data.source.metadata) {
 	    	$eventTab.append(createDetailMap('metadata', data.source.metadata));
@@ -419,6 +451,7 @@ function showEvent(scrollTo, type, id) {
 	function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
 		$transactionDetails = $('#endpoint-node-transaction-detail');
 		$transactionDetails.fadeOut('fast', function() {
+			$('#transactionDetailTable').detach();
 			$(this).empty();
 		});
 		$('#endpoint-node-detail').fadeOut('fast', function () {
@@ -453,13 +486,15 @@ function showEvent(scrollTo, type, id) {
 			$this.fadeIn('fast');
 		});
 		$('#endpoint-node-transaction-detail').fadeOut('fast', function() {
-			$this = $(this).empty();
+			$('#transactionDetailTable').detach();
+			$(this).empty();
 		});
 	}
 	
 	function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
 		$transactionDetails = $('#endpoint-node-transaction-detail');
 		$transactionDetails.fadeOut('fast', function() {
+			$('#transactionDetailTable').detach();
 			$(this).empty();
 		});
 		$('#endpoint-node-detail').fadeOut('fast', function () {
@@ -488,9 +523,9 @@ function showEvent(scrollTo, type, id) {
 	
 	function displayTransactionDetails(container, applicationName, transactionId) {
 		$container = $(container);
-		var transactionTable = transactionMap.get(transactionId);
-		if ("undefined" != typeof transactionTable) {
-			$container.append($(transactionTable));
+		$transactionTable = transactionMap.get(transactionId);
+		if ("undefined" != typeof $transactionTable) {
+			$container.append($transactionTable);
 		} else {
 			$.ajax({
 			    type: 'GET',
@@ -500,7 +535,7 @@ function showEvent(scrollTo, type, id) {
 			        if (!transaction_data || !transaction_data.events) {
 			            return;
 			        }
-			        transactionTable = $('<table>').addClass('table table-hover table-sm').append($('<caption>').attr('style', 'caption-side: top;').text('Transaction ' + transactionId)).append(
+			        $transactionTable = $('<table id="transactionDetailTable">').addClass('table table-hover table-sm').append($('<caption>').attr('style', 'caption-side: top;').text('Transaction ' + transactionId)).append(
 			        	$('<thead>').append(
 			        		$('<tr>').append(
 			        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Id'),
@@ -514,7 +549,7 @@ function showEvent(scrollTo, type, id) {
 			        	$.each(transaction_data.events, function(index, event) {
 			        		$link = $('<a href="#">')
 								.text(event.id)
-								.click(function () {
+								.click(function (clickEvent) {
 									showEvent(scrollTo, event.type, event.id);
 							}); 
 			        		$tbody.append(
@@ -528,8 +563,8 @@ function showEvent(scrollTo, type, id) {
 			        	});
 			        	return $tbody;
 			        })
-			        transactionMap.set(transactionId, transactionTable);
-			        $container.append($(transactionTable));
+			        transactionMap.set(transactionId, $transactionTable);
+			        $container.append($transactionTable);
 			    }
 			});			
 		}
