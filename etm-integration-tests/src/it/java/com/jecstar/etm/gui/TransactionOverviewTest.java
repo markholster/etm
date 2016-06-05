@@ -1,12 +1,17 @@
 package com.jecstar.etm.gui;
 
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
@@ -194,7 +199,38 @@ public class TransactionOverviewTest extends AbstractIntegrationTest {
 										.setWritingEndpointHandler(guiEndpointHandler)
 									)
 				.build())));
-
+		
+		// Now get the index page.
+		getSecurePage(this.httpHost + "/gui/search/index.html");
+	    
+	    // Now find the event and click on it.
+	    waitForSearchResult(eventId).click();
+	    // Wait for the endpoints tab to show up.
+	    waitForShow("endpoint-tab-header");
+	    // And select the endpoint tab
+	    this.driver.findElement(By.id("endpoint-tab-header")).click();
+	    // Wait for the tab content to show up.
+	    waitForShow("endpoint-overview");
+	    
+	    // Now select the canvas elements.
+	    List<WebElement> canvasElements = this.driver.findElement(By.id("endpoint-overview")).findElements(By.tagName("canvas"));
+	    // Cytoscape renders 3 canvas elements. Make sure they are all present.
+	    assertSame(3, canvasElements.size());
+	    // Now click on the event reader
+	    WebElement canvas = canvasElements.get(0);
+	    
+	    // Calculate the clich point in the canvas.
+	    // The canvas consits of a grid with 3 columns. We have to click on the center of the 3th cell. 
+	    int clickPointXOffset = (canvas.getRect().width / 6) * 5;
+	    int clickPointYOffset = (canvas.getRect().height / 3) * 2;
+	    
+	    // Move to the event reader in the canvas and send a click event.
+	    new Actions(this.driver).moveToElement(canvas, clickPointXOffset, clickPointYOffset).click().perform();
+	    // And wait for the detail table to show.
+	    waitForShow("transaction-detail-table");
+	    // Make sure 6 events are in the transaction (and 1 for the table header). 
+	    List<WebElement> tableRows = this.driver.findElement(By.id("transaction-detail-table")).findElements(By.tagName("tr"));
+	    assertSame(6 + 1, tableRows.size());
 	}
 
 }

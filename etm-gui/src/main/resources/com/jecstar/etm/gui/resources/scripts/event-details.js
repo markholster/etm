@@ -451,7 +451,7 @@ function showEvent(scrollTo, type, id) {
 	function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
 		$transactionDetails = $('#endpoint-node-transaction-detail');
 		$transactionDetails.fadeOut('fast', function() {
-			$('#transactionDetailTable').detach();
+			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 		$('#endpoint-node-detail').fadeOut('fast', function () {
@@ -486,7 +486,7 @@ function showEvent(scrollTo, type, id) {
 			$this.fadeIn('fast');
 		});
 		$('#endpoint-node-transaction-detail').fadeOut('fast', function() {
-			$('#transactionDetailTable').detach();
+			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 	}
@@ -494,7 +494,7 @@ function showEvent(scrollTo, type, id) {
 	function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
 		$transactionDetails = $('#endpoint-node-transaction-detail');
 		$transactionDetails.fadeOut('fast', function() {
-			$('#transactionDetailTable').detach();
+			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 		$('#endpoint-node-detail').fadeOut('fast', function () {
@@ -535,7 +535,7 @@ function showEvent(scrollTo, type, id) {
 			        if (!transaction_data || !transaction_data.events) {
 			            return;
 			        }
-			        $transactionTable = $('<table id="transactionDetailTable">').addClass('table table-hover table-sm').append($('<caption>').attr('style', 'caption-side: top;').text('Transaction ' + transactionId)).append(
+			        $transactionTable = $('<table id="transaction-detail-table">').addClass('table table-hover table-sm').append($('<caption>').attr('style', 'caption-side: top;').text('Transaction ' + transactionId)).append(
 			        	$('<thead>').append(
 			        		$('<tr>').append(
 			        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Id'),
