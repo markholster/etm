@@ -169,10 +169,10 @@ public class DestinationReader implements Runnable {
 			}
 			connectionProperties.put(CMQC.PORT_PROPERTY, this.queueManager.getPort());
 			this.mqQueueManager = new MQQueueManager(this.queueManager.getName(), connectionProperties);
-			if ("queue".equals(this.destination)) {
-				this.mqDestination = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
-			} else {
+			if ("topic".equals(this.destination.getType())) {
 				this.mqDestination = this.mqQueueManager.accessTopic(this.destination.getName(), null, CMQC.MQSO_CREATE, null, "Enterprise Telemetry Monitor - " + this.configurationName);
+			} else {
+				this.mqDestination = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
 			}
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
