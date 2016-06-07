@@ -1,4 +1,5 @@
 var cyEndpoints; 
+var cyEventOverview;
 var transactionMap = new Map();
 
 function showEvent(scrollTo, type, id) {
@@ -9,11 +10,7 @@ function showEvent(scrollTo, type, id) {
 	$eventTab.empty();	
 	$eventTab.tab('show');
 	$('#event-tab-header').addClass('active').attr('area-expanded', 'true');
-	if (cyEndpoints) {
-		cyEndpoints.destroy();
-	}
-	transactionMap.forEach(function (element) {$(element).remove();});
-	transactionMap.clear();
+	intialize();
 	
 	$.ajax({
 	    type: 'GET',
@@ -31,16 +28,23 @@ function showEvent(scrollTo, type, id) {
 		.unbind('click')
 		.click(function(event) {
 			event.preventDefault();
-			if (cyEndpoints) {
-				cyEndpoints.destroy();
-			}
-			transactionMap.forEach(function (element) {$(element).remove();});
-			transactionMap.clear();
+			intialize();
 			$('#event-container').hide();
 			$('#search-container').show();
 			$('html,body').animate({scrollTop: scrollTo},'fast');
     });
 	$('#event-container').show();
+
+	function intialize() {
+		if (cyEndpoints) {
+			cyEndpoints.destroy();
+		}
+		if (cyEventOverview) {
+			cyEventOverview.destroy();
+		}
+		transactionMap.forEach(function (element) {$(element).remove();});
+		transactionMap.clear();
+	}
 
 	function addContent(data) {
 		$('#event-card-title').text('Event ' + data.id);
@@ -54,8 +58,8 @@ function showEvent(scrollTo, type, id) {
 			var $endpoints = $(data.source.endpoints);
 			if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 				createEndpointsTab($endpoints, data.time_zone);
+				createEventOverviewTab($endpoints, data.time_zone);
 			}
-	
 		}
 	}
 	
@@ -287,7 +291,6 @@ function showEvent(scrollTo, type, id) {
 		);
 		return $detailMap;
 	}
-	
 	
 	function createEndpointsTab(endpoints, timeZone) {
 		$('#event-tabs').append(
@@ -655,6 +658,114 @@ function showEvent(scrollTo, type, id) {
 		}
 		
 		return flat;
+	}
+	
+	function createEventOverviewTab(endpoints, timeZone) {
+		$('#event-tabs').append(
+			$('<li>').addClass('nav-item').append(
+					$('<a>').attr('id', 'event-overview-tab-header')
+						.attr('aria-expanded', 'false')
+						.attr('role', 'tab')
+						.attr('data-toggle', 'tab')
+						.attr('href', '#event-overview-tab')
+						.addClass('nav-link')
+						.text('Event overview')
+			)
+		);
+	
+		// Sort endpoints on writing time
+		endpoints.sort(function (ep1, ep2) {
+			return ep1.writing_endpoint_handler.handling_time - ep2.writing_endpoint_handler.handling_time;
+		});
+		$('#tabcontents').append(
+				$('<div>').attr('id', 'event-overview-tab')
+					.attr('aria-labelledby', 'event-overview-tab-header')
+					.attr('role', 'tabpanel')
+					.attr('aria-expanded', 'false')
+					.addClass('tab-pane fade')
+					.append(
+							$('<div>').addClass('row').append(
+									$('<div>').attr('id', 'event-overview').attr('style', 'width: 100%;')
+							)
+					) 
+		);
+		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+			var target = $(e.target).attr("href") // activated tab
+			if (target == '#event-overview-tab' && !$('#event-overview > div > canvas').length) {
+				var body = document.body, html = document.documentElement;
+				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 3 * 2;
+				$('#event-overview').attr('style', 'height: ' + height+ 'px; width: 100%;')
+				cyEventOverview = cytoscape({
+				  container: document.querySelector('#event-overview'),
+				  
+				  boxSelectionEnabled: false,
+				  autounselectify: true,
+				  
+				  style: [
+				    {
+				      selector: 'node',
+				      css: {
+				        'content': 'data(id)',
+				        'text-valign': 'center',
+				        'text-halign': 'center'
+				      }
+				    },
+				    {
+				      selector: '$node > node',
+				      css: {
+				        'padding-top': '10px',
+				        'padding-left': '10px',
+				        'padding-bottom': '10px',
+				        'padding-right': '10px',
+				        'shape': 'roundrectangle',
+				        'text-valign': 'top',
+				        'text-halign': 'center',
+				        'background-color': '#bbb'
+				      }
+				    },
+				    {
+				      selector: 'edge',
+				      css: {
+				      	'label': 'data(label)',
+				      	'edge-text-rotation': 'autorotate',
+				        'target-arrow-shape': 'triangle'
+				      }
+				    },
+				    {
+				      selector: ':selected',
+				      css: {
+				        'background-color': 'black',
+				        'line-color': 'black',
+				        'target-arrow-color': 'black',
+				        'source-arrow-color': 'black'
+				      }
+				    }
+				  ],
+				  
+				  elements: {
+				    nodes: [
+				      { data: { id: 'Flow 2', parent: 'IIB_app1' }},
+				      { data: { id: 'IIB_app1' } },
+				      { data: { id: 'Flow 1', parent: 'IIB_app1' }},
+				      { data: { id: 'Backend' }},
+				      { data: { id: 'Front end' } },
+				      { data: { id: '1', parent: 'Front end' }}
+				    ],
+				    edges: [
+				      { data: { id: 'ad', source: 'Flow 2', target: 'Backend', label: 'Request message' } },
+				      { data: { id: 'eb', source: 'Front end', target: 'Flow 1', label: 'Request message' } }
+				      
+				    ]
+				  },
+				  
+				  layout: {
+				    name: 'breadthfirst',
+				    avoidOverlap: true,
+				    animate: true
+				  }
+				});
+			}
+		});		
 	}
 	
 	function capitalize(text) {
