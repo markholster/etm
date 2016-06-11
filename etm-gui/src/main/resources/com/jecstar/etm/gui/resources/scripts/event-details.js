@@ -1,6 +1,6 @@
 var cyEndpoints; 
-var cyEventOverview;
-var transactionMap = new Map();
+var cyEventChain;
+var transactionMap = {};
 
 function showEvent(scrollTo, type, id) {
 	$('#search-container').hide();
@@ -39,11 +39,13 @@ function showEvent(scrollTo, type, id) {
 		if (cyEndpoints) {
 			cyEndpoints.destroy();
 		}
-		if (cyEventOverview) {
-			cyEventOverview.destroy();
+		if (cyEventChain) {
+			cyEventChain.destroy();
 		}
-		transactionMap.forEach(function (element) {$(element).remove();});
-		transactionMap.clear();
+		$.map(transactionMap, function(value, index) {
+    		return [value];
+		}).forEach(function (element) {$(element).remove();});
+		transactionMap = {};
 	}
 
 	function addContent(data) {
@@ -58,7 +60,7 @@ function showEvent(scrollTo, type, id) {
 			var $endpoints = $(data.source.endpoints);
 			if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 				createEndpointsTab($endpoints, data.time_zone);
-				createEventOverviewTab($endpoints, data.time_zone);
+				createEventChainTab($endpoints, data.time_zone);
 			}
 		}
 	}
@@ -273,7 +275,7 @@ function showEvent(scrollTo, type, id) {
 										).append(function () {
 											$tbody = $('<tbody>');
 								            $.each(valueMap, function(key, value) {
-								            	if (key.endsWith('_as_number') || key.endsWith('_as_boolean') || key.endsWith('_as_date')) {
+								            	if (endsWith(key, '_as_number') || endsWith(key, '_as_boolean') || endsWith(key, '_as_date')) {
 								            		return true;
 								            	}
 								            	$tbody.append(
@@ -526,7 +528,7 @@ function showEvent(scrollTo, type, id) {
 	
 	function displayTransactionDetails(container, applicationName, transactionId) {
 		$container = $(container);
-		$transactionTable = transactionMap.get(transactionId);
+		$transactionTable = transactionMap[transactionId];
 		if ("undefined" != typeof $transactionTable) {
 			$container.append($transactionTable);
 		} else {
@@ -566,7 +568,7 @@ function showEvent(scrollTo, type, id) {
 			        	});
 			        	return $tbody;
 			        })
-			        transactionMap.set(transactionId, $transactionTable);
+			        transactionMap[transactionId] = $transactionTable;
 			        $container.append($transactionTable);
 			    }
 			});			
@@ -660,16 +662,16 @@ function showEvent(scrollTo, type, id) {
 		return flat;
 	}
 	
-	function createEventOverviewTab(endpoints, timeZone) {
+	function createEventChainTab(endpoints, timeZone) {
 		$('#event-tabs').append(
 			$('<li>').addClass('nav-item').append(
-					$('<a>').attr('id', 'event-overview-tab-header')
+					$('<a>').attr('id', 'event-chain-tab-header')
 						.attr('aria-expanded', 'false')
 						.attr('role', 'tab')
 						.attr('data-toggle', 'tab')
-						.attr('href', '#event-overview-tab')
+						.attr('href', '#event-chain-tab')
 						.addClass('nav-link')
-						.text('Event overview')
+						.text('Event chain')
 			)
 		);
 	
@@ -678,25 +680,25 @@ function showEvent(scrollTo, type, id) {
 			return ep1.writing_endpoint_handler.handling_time - ep2.writing_endpoint_handler.handling_time;
 		});
 		$('#tabcontents').append(
-				$('<div>').attr('id', 'event-overview-tab')
-					.attr('aria-labelledby', 'event-overview-tab-header')
+				$('<div>').attr('id', 'event-chain-tab')
+					.attr('aria-labelledby', 'event-chain-tab-header')
 					.attr('role', 'tabpanel')
 					.attr('aria-expanded', 'false')
 					.addClass('tab-pane fade')
 					.append(
 							$('<div>').addClass('row').append(
-									$('<div>').attr('id', 'event-overview').attr('style', 'width: 100%;')
+									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
 							)
 					) 
 		);
 		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 			var target = $(e.target).attr("href") // activated tab
-			if (target == '#event-overview-tab' && !$('#event-overview > div > canvas').length) {
+			if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
 				var body = document.body, html = document.documentElement;
 				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 3 * 2;
-				$('#event-overview').attr('style', 'height: ' + height+ 'px; width: 100%;')
-				cyEventOverview = cytoscape({
-				  container: document.querySelector('#event-overview'),
+				$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;')
+				cyEventChain = cytoscape({
+				  container: document.querySelector('#event-chain'),
 				  
 				  boxSelectionEnabled: false,
 				  autounselectify: true,
@@ -706,6 +708,7 @@ function showEvent(scrollTo, type, id) {
 				      selector: 'node',
 				      css: {
 				        'content': 'data(id)',
+				        'shape': 'roundrectangle',
 				        'text-valign': 'center',
 				        'text-halign': 'center'
 				      }
@@ -713,10 +716,6 @@ function showEvent(scrollTo, type, id) {
 				    {
 				      selector: '$node > node',
 				      css: {
-				        'padding-top': '10px',
-				        'padding-left': '10px',
-				        'padding-bottom': '10px',
-				        'padding-right': '10px',
 				        'shape': 'roundrectangle',
 				        'text-valign': 'top',
 				        'text-halign': 'center',
@@ -744,23 +743,25 @@ function showEvent(scrollTo, type, id) {
 				  
 				  elements: {
 				    nodes: [
-				      { data: { id: 'Flow 2', parent: 'IIB_app1' }},
-				      { data: { id: 'IIB_app1' } },
-				      { data: { id: 'Flow 1', parent: 'IIB_app1' }},
-				      { data: { id: 'Backend' }},
 				      { data: { id: 'Front end' } },
-				      { data: { id: '1', parent: 'Front end' }}
+				      { data: { id: 'Http req', parent: 'Front end' }},
+				      { data: { id: 'APP.REQ.ESB' }},
+				      { data: { id: 'IIB App' } },
+				      { data: { id: 'Flow 1', parent: 'IIB App' }},
+				      { data: { id: 'IIB.SRV00001', parent: 'IIB App' }},
+				      { data: { id: 'Flow 2', parent: 'IIB App' }},
 				    ],
 				    edges: [
-				      { data: { id: 'ad', source: 'Flow 2', target: 'Backend', label: 'Request message' } },
-				      { data: { id: 'eb', source: 'Front end', target: 'Flow 1', label: 'Request message' } }
+				      { data: { id: 'e1', source: 'Http req', target: 'APP.REQ.ESB', label: '(1)' } },
+				      { data: { id: 'e2', source: 'APP.REQ.ESB', target: 'Flow 1', label: '(2)' } },
+				      { data: { id: 'e3', source: 'Flow 1', target: 'IIB.SRV00001', label: '(3)' } },
+				      { data: { id: 'e4', source: 'IIB.SRV00001', target: 'Flow 2', label: '(4)' } },
 				      
 				    ]
 				  },
 				  
 				  layout: {
-				    name: 'breadthfirst',
-				    avoidOverlap: true,
+    				name: 'cose',
 				    animate: true
 				  }
 				});
@@ -773,6 +774,11 @@ function showEvent(scrollTo, type, id) {
 			return text;
 		}
 		return text.charAt(0).toUpperCase() + text.toLowerCase().slice(1);
+	}
+	
+	function endsWith(value, valueToTest) {
+		var d = value.length - valueToTest.length;
+		return d >= 0 && value.lastIndexOf(valueToTest) === d;
 	}
 	
 }

@@ -81,7 +81,7 @@
                 return false;
             }  
             var termToQuery = term.trim();
-            if (termToQuery.endsWith(':')) {
+            if (endsWith(termToQuery, ':')) {
                 termToQuery = termToQuery.substring(0, termToQuery.length - 1);
             }
             return queryForFields.indexOf(termToQuery) != -1;
@@ -130,4 +130,10 @@
 	    });
 	 
 	};
+	
+	function endsWith(value, valueToTest) {
+		var d = value.length - valueToTest.length;
+		return d >= 0 && value.lastIndexOf(valueToTest) === d;
+	}
+	
 }(jQuery));
