@@ -1,4 +1,4 @@
-package com.jecstar.etm.gui.rest;
+package com.jecstar.etm.gui.rest.services.search;
 
 public class TransactionEvent {
 

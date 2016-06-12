@@ -1,4 +1,4 @@
-package com.jecstar.etm.gui.rest;
+package com.jecstar.etm.gui.rest.services.user;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -21,6 +21,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
+import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;

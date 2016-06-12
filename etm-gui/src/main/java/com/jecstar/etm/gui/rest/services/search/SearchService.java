@@ -1,4 +1,4 @@
-package com.jecstar.etm.gui.rest;
+package com.jecstar.etm.gui.rest.services.search;
 
 import java.io.IOException;
 import java.text.NumberFormat;
@@ -51,6 +51,7 @@ import org.elasticsearch.search.sort.SortOrder;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
@@ -440,6 +441,7 @@ public class SearchService extends AbstractJsonService {
 		return result.toString();
 	}
 
+	@SuppressWarnings("unchecked")
 	@GET
 	@Path("/event/{type}/{id}/chain")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -456,9 +458,118 @@ public class SearchService extends AbstractJsonService {
 		if (response.getHits().hits().length == 0) {
 			return null;
 		}
-		// TODO haal de transactie id's eruit bepaald welke events een http of messaging event zijn. Bou hiervan een keten op.
+		SearchHit searchHit = response.getHits().getAt(0);
+		Map<String, Object> source = searchHit.getSource();
+		List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+		// Search for the earliest transaction id.
+		long lowestTransactionHandling = Long.MAX_VALUE;
+		String currentTransactionId = null;
+		if (endpoints != null) {
+			for (Map<String, Object> endpoint : endpoints) {
+				Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
+				if (writingEndpointHandler != null && writingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+					String transactionId = (String) writingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+					long handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+					if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
+						lowestTransactionHandling = handlingTime;
+						currentTransactionId = transactionId;
+					}
+				}
+				List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
+				if (readingEndpointHandlers != null) {
+					for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+						if (readingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+							String transactionId = (String) readingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+							long handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+							if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
+								lowestTransactionHandling = handlingTime;
+								currentTransactionId = transactionId;
+							}					
+						}
+					}
+				}
+			}
+		}
+		if (currentTransactionId == null)  {
+			return null;
+		}
 		StringBuilder result = new StringBuilder();
 		return result.toString();
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void addTransactionToEventChain(String transactionId) {
+		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
+				.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+						"." + this.eventTags.getReadingEndpointHandlersTag() + 
+						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
+				.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+						"." + this.eventTags.getWritingEndpointHandlerTag() + 
+						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId));
+		final int scrollSize = 25;
+		SearchResponse response =  client.prepareSearch("etm_event_all")
+				.setTypes("http", "messaging")
+				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
+				.addSort(SortBuilders.fieldSort("_doc"))
+				.setFetchSource(new String[] {
+						this.eventTags.getEndpointsTag() + ".*", 
+						this.eventTags.getNameTag(), 
+						this.eventTags.getMessagingEventTypeTag(),
+						this.eventTags.getHttpEventTypeTag()}, null)
+				.setFrom(0)
+				.setSize(scrollSize)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
+				.get();
+		if (response.getHits().hits().length == 0) {
+			return;
+		}
+		Set<String> scrollIds = new HashSet<>();
+		String scrollId = response.getScrollId();
+		scrollIds.add(scrollId);
+		boolean nextBatchRequired = false;
+		do {
+			nextBatchRequired = scrollSize == response.getHits().hits().length;
+			for (SearchHit searchHit : response.getHits().hits()) {
+				Map<String, Object> source = searchHit.getSource();
+				List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+				if (endpoints != null) {
+					for (Map<String, Object> endpoint : endpoints) {
+						String endpointName = (String) endpoint.get(this.eventTags.getEndpointNameTag());
+						
+						Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
+						if (writingEndpointHandler != null && writingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+							String writerTransactionid = (String) writingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+							long handlingTime = (Long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+//							if (!eventChain.containsTransaction(transactionId)) {
+								addTransactionToEventChain(writerTransactionid);
+//							}
+						}
+						List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
+						if (readingEndpointHandlers != null) {
+							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+								if (readingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+									String readerTransactionId = (String) readingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+									long handlingTime = (Long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+//									if (!eventChain.containsTransaction(transactionId)) {
+										addTransactionToEventChain(readerTransactionId);
+//									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (nextBatchRequired) {
+				// Full batch fetched, request the next batch.
+				response = client.prepareSearchScroll(scrollId)
+						.setScroll(TimeValue.timeValueSeconds(30))
+						.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+				scrollId = response.getScrollId();
+				scrollIds.add(scrollId);
+			}
+		} while (nextBatchRequired);
+
 	}
 	
 	@SuppressWarnings("unchecked")
