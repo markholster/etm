@@ -3,8 +3,10 @@ package com.jecstar.etm.gui.rest;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,7 @@ import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.ClearScrollRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -39,8 +42,10 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
@@ -283,9 +288,9 @@ public class SearchService extends AbstractJsonService {
 	@GET
 	@Path("/event/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEvent(@PathParam("type") String type, @PathParam("id") String id) {
-		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(type)
-				.addIds(id);
+	public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
+				.addIds(eventId);
 		SearchResponse response =  client.prepareSearch("etm_event_all")
 			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
 			.setFetchSource(true)
@@ -312,7 +317,7 @@ public class SearchService extends AbstractJsonService {
 	@GET
 	@Path("/transaction/{application}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)	
-	public String getTransaction(@PathParam("application") String applicationName, @PathParam("id") String id) {
+	public String getTransaction(@PathParam("application") String applicationName, @PathParam("id") String transactionId) {
 		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
 			.minimumNumberShouldMatch(1)
 			.should(
@@ -323,7 +328,7 @@ public class SearchService extends AbstractJsonService {
 								"." + this.eventTags.getApplicationNameTag(), applicationName))
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 								"." + this.eventTags.getReadingEndpointHandlersTag() + 
-								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), id))
+								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
 			).should(
 					new BoolQueryBuilder()
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
@@ -332,11 +337,12 @@ public class SearchService extends AbstractJsonService {
 								"." + this.eventTags.getApplicationNameTag(), applicationName))
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 								"." + this.eventTags.getWritingEndpointHandlerTag() + 
-								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), id))
+								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
 		);
 		
 		SearchResponse response =  client.prepareSearch("etm_event_all")
 				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
+				.addSort(SortBuilders.fieldSort("_doc"))
 				.setFetchSource(new String[] {
 						this.eventTags.getEndpointsTag() + ".*", 
 						this.eventTags.getNameTag(), 
@@ -345,51 +351,65 @@ public class SearchService extends AbstractJsonService {
 						this.eventTags.getHttpEventTypeTag(),
 						this.eventTags.getSqlEventTypeTag()}, null)
 				.setFrom(0)
-				.setSize(1000)
+				.setSize(1)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
 				.get();
 		if (response.getHits().hits().length == 0) {
 			return null;
 		}
+		
 		List<TransactionEvent> events = new ArrayList<>();
+		Set<String> scrollIds = new HashSet<>();
 		StringBuilder result = new StringBuilder();
-		for (SearchHit searchHit : response.getHits().hits()) {
-			TransactionEvent event = new TransactionEvent();
-			event.index = searchHit.getIndex();
-			event.type = searchHit.getType();
-			event.id = searchHit.getId();
-			Map<String, Object> source = searchHit.getSource();
-			event.name = (String) source.get(this.eventTags.getNameTag());
-			event.payload = (String) source.get(this.eventTags.getPayloadTag());
-			List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
-			if (endpoints != null) {
-				for (Map<String, Object> endpoint : endpoints) {
-					Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
-					if (isWithinTransaction(writingEndpointHandler, applicationName, id)) {
-						event.handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
-						event.direction = "outgoing";
-					} else {
-						List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
-						if (readingEndpointHandlers != null) {
-							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-								if (isWithinTransaction(readingEndpointHandler, applicationName, id)) {
-									event.handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
-									event.direction = "incomming";
+		String scrollId = response.getScrollId();
+		scrollIds.add(scrollId);
+		do {
+			for (SearchHit searchHit : response.getHits().hits()) {
+				TransactionEvent event = new TransactionEvent();
+				event.index = searchHit.getIndex();
+				event.type = searchHit.getType();
+				event.id = searchHit.getId();
+				Map<String, Object> source = searchHit.getSource();
+				event.name = (String) source.get(this.eventTags.getNameTag());
+				event.payload = (String) source.get(this.eventTags.getPayloadTag());
+				List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+				if (endpoints != null) {
+					for (Map<String, Object> endpoint : endpoints) {
+						Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
+						if (isWithinTransaction(writingEndpointHandler, applicationName, transactionId)) {
+							event.handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+							event.direction = "outgoing";
+						} else {
+							List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
+							if (readingEndpointHandlers != null) {
+								for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+									if (isWithinTransaction(readingEndpointHandler, applicationName, transactionId)) {
+										event.handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+										event.direction = "incomming";
+									}
 								}
 							}
 						}
-					}
-					if ("http".equals(searchHit.getType())) {
-						event.subType = (String) source.get(this.eventTags.getHttpEventTypeTag());
-					} else if ("messaging".equals(searchHit.getType())) {
-						event.subType = (String) source.get(this.eventTags.getMessagingEventTypeTag());
-					} else if ("sql".equals(searchHit.getType())) {
-						event.subType = (String) source.get(this.eventTags.getSqlEventTypeTag());
+						if ("http".equals(searchHit.getType())) {
+							event.subType = (String) source.get(this.eventTags.getHttpEventTypeTag());
+						} else if ("messaging".equals(searchHit.getType())) {
+							event.subType = (String) source.get(this.eventTags.getMessagingEventTypeTag());
+						} else if ("sql".equals(searchHit.getType())) {
+							event.subType = (String) source.get(this.eventTags.getSqlEventTypeTag());
+						}
 					}
 				}
+				events.add(event);
 			}
-			events.add(event);
-		}
+			response = client.prepareSearchScroll(scrollId)
+					.setScroll(TimeValue.timeValueSeconds(30))
+					.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+			scrollId = response.getScrollId();
+			scrollIds.add(scrollId);
+		} while (response.getHits().hits().length != 0);
+		clearScrolls(scrollIds);
+		
 		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
 		result.append("{");
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
@@ -413,6 +433,30 @@ public class SearchService extends AbstractJsonService {
 			result.append("}");
 		}
 		result.append("]}");
+		return result.toString();
+	}
+
+	@GET
+	@Path("/event/{type}/{id}/chain")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEventChain(String eventType, String eventId) {
+		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
+				.addIds(eventId);
+		SearchResponse response =  client.prepareSearch("etm_event_all")
+			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
+			.setFetchSource(new String[] {
+					this.eventTags.getEndpointsTag() + ".*", 
+					this.eventTags.getNameTag(), 
+					this.eventTags.getMessagingEventTypeTag(),
+					this.eventTags.getHttpEventTypeTag()}, null)
+			.setFrom(0)
+			.setSize(1)
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		if (response.getHits().hits().length == 0) {
+			return null;
+		}
+		StringBuilder result = new StringBuilder();
 		return result.toString();
 	}
 	
@@ -449,6 +493,14 @@ public class SearchService extends AbstractJsonService {
 			result.append("}");
 		}
 	}
+	
+	private void clearScrolls(Collection<String> scrollIds) {
+		ClearScrollRequestBuilder clearScroll = client.prepareClearScroll();
+		for (String scrollId : scrollIds) {
+			clearScroll.addScrollId(scrollId);
+		}
+		clearScroll.execute();
+	}
 
 	@SuppressWarnings("unchecked")
 	private void addProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
@@ -462,7 +514,7 @@ public class SearchService extends AbstractJsonService {
 		valueMap.remove("event_hashes");
 		for (Entry<String, Object> entry : valueMap.entrySet()) {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
-			String name = determineName(prefix, entry.getKey());
+			String name = determinePropertyName(prefix, entry.getKey());
 			if (entryValues.containsKey("properties")) {
 				addProperties(names, name, entryValues);
 			} else {
@@ -473,7 +525,7 @@ public class SearchService extends AbstractJsonService {
 		}
 	}
 	
-	private String determineName(String prefix, String name) {
+	private String determinePropertyName(String prefix, String name) {
 		if (prefix.length() == 0) {
 			return name;
 		}
