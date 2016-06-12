@@ -10,4 +10,18 @@ public class TransactionEvent {
 	public String direction;
 	public String payload;
 	public String subType;
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TransactionEvent) {
+			TransactionEvent other = (TransactionEvent) obj;
+			return this.index.equals(other.index) && this.type.equals(other.type) && this.id.equals(other.id);
+		}
+		return super.equals(obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return (this.index + this.type + this.id).hashCode();
+	}
 }

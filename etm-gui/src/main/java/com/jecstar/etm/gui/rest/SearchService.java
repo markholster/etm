@@ -448,11 +448,7 @@ public class SearchService extends AbstractJsonService {
 				.addIds(eventId);
 		SearchResponse response =  client.prepareSearch("etm_event_all")
 			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
-			.setFetchSource(new String[] {
-					this.eventTags.getEndpointsTag() + ".*", 
-					this.eventTags.getNameTag(), 
-					this.eventTags.getMessagingEventTypeTag(),
-					this.eventTags.getHttpEventTypeTag()}, null)
+			.setFetchSource(new String[] {this.eventTags.getEndpointsTag() + ".*"}, null)
 			.setFrom(0)
 			.setSize(1)
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -460,6 +456,7 @@ public class SearchService extends AbstractJsonService {
 		if (response.getHits().hits().length == 0) {
 			return null;
 		}
+		// TODO haal de transactie id's eruit bepaald welke events een http of messaging event zijn. Bou hiervan een keten op.
 		StringBuilder result = new StringBuilder();
 		return result.toString();
 	}
