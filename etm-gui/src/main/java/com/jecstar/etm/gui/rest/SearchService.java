@@ -339,7 +339,7 @@ public class SearchService extends AbstractJsonService {
 								"." + this.eventTags.getWritingEndpointHandlerTag() + 
 								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
 		);
-		
+		final int scrollSize = 25;
 		SearchResponse response =  client.prepareSearch("etm_event_all")
 				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
 				.addSort(SortBuilders.fieldSort("_doc"))
@@ -351,20 +351,21 @@ public class SearchService extends AbstractJsonService {
 						this.eventTags.getHttpEventTypeTag(),
 						this.eventTags.getSqlEventTypeTag()}, null)
 				.setFrom(0)
-				.setSize(1)
+				.setSize(scrollSize)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
 				.get();
 		if (response.getHits().hits().length == 0) {
 			return null;
 		}
-		
 		List<TransactionEvent> events = new ArrayList<>();
 		Set<String> scrollIds = new HashSet<>();
 		StringBuilder result = new StringBuilder();
 		String scrollId = response.getScrollId();
 		scrollIds.add(scrollId);
+		boolean nextBatchRequired = false;
 		do {
+			nextBatchRequired = scrollSize == response.getHits().hits().length;
 			for (SearchHit searchHit : response.getHits().hits()) {
 				TransactionEvent event = new TransactionEvent();
 				event.index = searchHit.getIndex();
@@ -402,12 +403,15 @@ public class SearchService extends AbstractJsonService {
 				}
 				events.add(event);
 			}
-			response = client.prepareSearchScroll(scrollId)
-					.setScroll(TimeValue.timeValueSeconds(30))
-					.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-			scrollId = response.getScrollId();
-			scrollIds.add(scrollId);
-		} while (response.getHits().hits().length != 0);
+			if (nextBatchRequired) {
+				// Full batch fetched, request the next batch.
+				response = client.prepareSearchScroll(scrollId)
+						.setScroll(TimeValue.timeValueSeconds(30))
+						.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+				scrollId = response.getScrollId();
+				scrollIds.add(scrollId);
+			}
+		} while (nextBatchRequired);
 		clearScrolls(scrollIds);
 		
 		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
