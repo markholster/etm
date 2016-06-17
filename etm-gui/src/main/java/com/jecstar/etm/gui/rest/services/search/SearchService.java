@@ -538,8 +538,35 @@ public class SearchService extends AbstractJsonService {
 			result.append("}}");
 			first = false;						
 		}
-		result.append("]");
-		result.append("}");
+		result.append("], \"edges\": [");
+		first = true;
+		for (EventChainEndpoint endpoint : eventChain.getEventChainEndpoints()) {
+			if (!first) {
+				result.append(",");
+			}
+			if (endpoint.getWriter() != null) {
+				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getWriter().getKey(), true) + ", \"target\": " + escapeToJson(endpoint.getKey(), true) + "}}");
+				first = false;						
+			}
+			for (EventChainKey reader : endpoint.getReaders()) {
+				if (!first) {
+					result.append(",");
+				}
+				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getKey(), true) + ", \"target\": " + escapeToJson(reader.getKey(), true) + "}}");
+				first = false;						
+			}
+		}
+		for (EventChainTransactionEvents transaction : eventChain.getTransactions()) {
+			if (transaction.getReader() != null && !transaction.getWriters().isEmpty()) {
+				for (EventChainKey writer : transaction.getWriters()) {
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{ \"data\": { \"source\": " + escapeToJson(transaction.getReader().getKey(), true) + ", \"target\": " + escapeToJson(writer.getKey(), true) + "}}");
+					first = false;						
+				}			}
+		}
+		result.append("]}");
 		return result.toString();
 	}
 	

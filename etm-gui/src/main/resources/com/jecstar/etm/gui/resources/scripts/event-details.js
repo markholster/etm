@@ -749,7 +749,7 @@ function showEvent(scrollTo, type, id) {
 						  
 						  elements: {
 						    nodes: data.nodes,
-						    edges: []
+						    edges: data.edges
 						  },
 						  
 						  layout: {
