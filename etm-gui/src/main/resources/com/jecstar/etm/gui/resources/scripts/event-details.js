@@ -60,7 +60,7 @@ function showEvent(scrollTo, type, id) {
 			var $endpoints = $(data.source.endpoints);
 			if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 				createEndpointsTab($endpoints, data.time_zone);
-				createEventChainTab($endpoints, data.time_zone);
+				createEventChainTab(data.id, data.type, data.time_zone);
 			}
 		}
 	}
@@ -662,111 +662,107 @@ function showEvent(scrollTo, type, id) {
 		return flat;
 	}
 	
-	function createEventChainTab(endpoints, timeZone) {
-		$('#event-tabs').append(
-			$('<li>').addClass('nav-item').append(
-					$('<a>').attr('id', 'event-chain-tab-header')
-						.attr('aria-expanded', 'false')
-						.attr('role', 'tab')
-						.attr('data-toggle', 'tab')
-						.attr('href', '#event-chain-tab')
-						.addClass('nav-link')
-						.text('Event chain')
-			)
-		);
-	
-		// Sort endpoints on writing time
-		endpoints.sort(function (ep1, ep2) {
-			return ep1.writing_endpoint_handler.handling_time - ep2.writing_endpoint_handler.handling_time;
+	function createEventChainTab(id, type, timeZone) {
+		$.ajax({
+		    type: 'GET',
+		    contentType: 'application/json',
+		    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id) + '/chain',
+		    success: function(data) {
+		        if (!data) {
+		            return;
+		        }
+				$('#event-tabs').append(
+					$('<li>').addClass('nav-item').append(
+							$('<a>').attr('id', 'event-chain-tab-header')
+								.attr('aria-expanded', 'false')
+								.attr('role', 'tab')
+								.attr('data-toggle', 'tab')
+								.attr('href', '#event-chain-tab')
+								.addClass('nav-link')
+								.text('Event chain')
+					)
+				);
+			
+				$('#tabcontents').append(
+						$('<div>').attr('id', 'event-chain-tab')
+							.attr('aria-labelledby', 'event-chain-tab-header')
+							.attr('role', 'tabpanel')
+							.attr('aria-expanded', 'false')
+							.addClass('tab-pane fade')
+							.append(
+									$('<div>').addClass('row').append(
+											$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
+									)
+							) 
+				);
+				$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+					var target = $(e.target).attr("href") // activated tab
+					if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
+						var body = document.body, html = document.documentElement;
+						var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 3 * 2;
+						$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;')
+						cyEventChain = cytoscape({
+						  container: document.querySelector('#event-chain'),
+						  
+						  boxSelectionEnabled: false,
+						  autounselectify: true,
+						  
+						  style: [
+						    {
+						      selector: 'node',
+						      css: {
+						        'content': 'data(label)',
+						        'shape': 'roundrectangle',
+						        'width': 'label',
+						        'text-valign': 'center',
+						        'text-halign': 'center'
+						      }
+						    },
+						    {
+						      selector: '$node > node',
+						      css: {
+						        'content': 'data(label)',
+						        'shape': 'roundrectangle',
+						        'text-valign': 'top',
+						        'text-halign': 'center',
+						        'background-color': '#bbb'
+						      }
+						    },
+						    {
+						      selector: 'edge',
+						      css: {
+						      	'label': 'data(label)',
+						      	'edge-text-rotation': 'autorotate',
+						        'target-arrow-shape': 'triangle'
+						      }
+						    },
+						    {
+						      selector: ':selected',
+						      css: {
+						        'background-color': 'black',
+						        'line-color': 'black',
+						        'target-arrow-color': 'black',
+						        'source-arrow-color': 'black'
+						      }
+						    }
+						  ],
+						  
+						  elements: {
+						    nodes: data.nodes,
+						    edges: []
+						  },
+						  
+						  layout: {
+		    				name: 'dagre',
+		    				rankDir: 'LR',
+						    animate: true
+						  }
+						});
+					}
+				});		
+		    }
 		});
-		$('#tabcontents').append(
-				$('<div>').attr('id', 'event-chain-tab')
-					.attr('aria-labelledby', 'event-chain-tab-header')
-					.attr('role', 'tabpanel')
-					.attr('aria-expanded', 'false')
-					.addClass('tab-pane fade')
-					.append(
-							$('<div>').addClass('row').append(
-									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
-							)
-					) 
-		);
-		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-			var target = $(e.target).attr("href") // activated tab
-			if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
-				var body = document.body, html = document.documentElement;
-				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 3 * 2;
-				$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;')
-				cyEventChain = cytoscape({
-				  container: document.querySelector('#event-chain'),
-				  
-				  boxSelectionEnabled: false,
-				  autounselectify: true,
-				  
-				  style: [
-				    {
-				      selector: 'node',
-				      css: {
-				        'content': 'data(id)',
-				        'shape': 'roundrectangle',
-				        'text-valign': 'center',
-				        'text-halign': 'center'
-				      }
-				    },
-				    {
-				      selector: '$node > node',
-				      css: {
-				        'shape': 'roundrectangle',
-				        'text-valign': 'top',
-				        'text-halign': 'center',
-				        'background-color': '#bbb'
-				      }
-				    },
-				    {
-				      selector: 'edge',
-				      css: {
-				      	'label': 'data(label)',
-				      	'edge-text-rotation': 'autorotate',
-				        'target-arrow-shape': 'triangle'
-				      }
-				    },
-				    {
-				      selector: ':selected',
-				      css: {
-				        'background-color': 'black',
-				        'line-color': 'black',
-				        'target-arrow-color': 'black',
-				        'source-arrow-color': 'black'
-				      }
-				    }
-				  ],
-				  
-				  elements: {
-				    nodes: [
-				      { data: { id: 'Front end' } },
-				      { data: { id: 'Http req', parent: 'Front end' }},
-				      { data: { id: 'APP.REQ.ESB' }},
-				      { data: { id: 'IIB App' } },
-				      { data: { id: 'Flow 1', parent: 'IIB App' }},
-				      { data: { id: 'IIB.SRV00001', parent: 'IIB App' }},
-				      { data: { id: 'Flow 2', parent: 'IIB App' }},
-				    ],
-				    edges: [
-				      { data: { id: 'e1', source: 'Http req', target: 'APP.REQ.ESB', label: '(1)' } },
-				      { data: { id: 'e2', source: 'APP.REQ.ESB', target: 'Flow 1', label: '(2)' } },
-				      { data: { id: 'e3', source: 'Flow 1', target: 'IIB.SRV00001', label: '(3)' } },
-				      { data: { id: 'e4', source: 'IIB.SRV00001', target: 'Flow 2', label: '(4)' } },
-				      
-				    ]
-				  },
-				  
-				  layout: {
-    				name: 'cose',
-				    animate: true
-				  }
-				});
-			}
-		});		
+		
 	}
 	
 	function capitalize(text) {

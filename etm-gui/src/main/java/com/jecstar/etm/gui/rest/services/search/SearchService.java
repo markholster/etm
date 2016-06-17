@@ -445,7 +445,7 @@ public class SearchService extends AbstractJsonService {
 	@GET
 	@Path("/event/{type}/{id}/chain")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEventChain(String eventType, String eventId) {
+	public String getEventChain(@PathParam("type") String eventType, @PathParam("id") String eventId) {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
 				.addIds(eventId);
 		SearchResponse response =  client.prepareSearch("etm_event_all")
@@ -463,7 +463,7 @@ public class SearchService extends AbstractJsonService {
 		List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
 		// Search for the earliest transaction id.
 		long lowestTransactionHandling = Long.MAX_VALUE;
-		String currentTransactionId = null;
+		String earliestTransactionId = null;
 		if (endpoints != null) {
 			for (Map<String, Object> endpoint : endpoints) {
 				Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
@@ -472,7 +472,7 @@ public class SearchService extends AbstractJsonService {
 					long handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
 					if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
 						lowestTransactionHandling = handlingTime;
-						currentTransactionId = transactionId;
+						earliestTransactionId = transactionId;
 					}
 				}
 				List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
@@ -483,27 +483,74 @@ public class SearchService extends AbstractJsonService {
 							long handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
 							if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
 								lowestTransactionHandling = handlingTime;
-								currentTransactionId = transactionId;
+								earliestTransactionId = transactionId;
 							}					
 						}
 					}
 				}
 			}
 		}
-		if (currentTransactionId == null)  {
+		if (earliestTransactionId == null)  {
 			return null;
 		}
+		EventChain eventChain = new EventChain();
+		addTransactionToEventChain(eventChain, earliestTransactionId);
 		StringBuilder result = new StringBuilder();
+		result.append("{");
+		result.append("\"nodes\" : [");
+		boolean first = true;
+		for (String application : eventChain.getApplications()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{ \"data\": { \"id\": " + escapeToJson(application, true) + ", \"label\": " + escapeToJson(application, true));
+			result.append("}}");
+			first = false;
+		}
+		for (Entry<EventChainKey, EventChainConnectionData> entry : eventChain.getReaders().entrySet()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{ \"data\": { \"id\": " + escapeToJson(entry.getKey().getKey(), true) + ", \"label\": " + escapeToJson(entry.getValue().getEventName(), true));
+			if (entry.getValue().getApplicationName() != null) {
+				result.append(", \"parent\": " + escapeToJson(entry.getValue().getApplicationName(), true)); 
+			}
+			result.append("}}");
+			first = false;			
+		}
+		for (Entry<EventChainKey, EventChainConnectionData> entry : eventChain.getWriters().entrySet()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{ \"data\": { \"id\": " + escapeToJson(entry.getKey().getKey(), true) + ", \"label\": " + escapeToJson(entry.getValue().getEventName(), true));
+			if (entry.getValue().getApplicationName() != null) {
+				result.append(", \"parent\": " + escapeToJson(entry.getValue().getApplicationName(), true)); 
+			}
+			result.append("}}");
+			first = false;			
+		}
+		for (EventChainEndpoint endpoint : eventChain.getEventChainEndpoints()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{ \"data\": { \"id\": " + escapeToJson(endpoint.getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getEndpointName(), true));
+			// TODO add application als alle readers en writers van dezelfde applicatie zijn
+			result.append("}}");
+			first = false;						
+		}
+		result.append("]");
+		result.append("}");
 		return result.toString();
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void addTransactionToEventChain(String transactionId) {
+	private void addTransactionToEventChain(EventChain eventChain, String transactionId) {
 		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
-				.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+				.minimumNumberShouldMatch(1)
+				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 						"." + this.eventTags.getReadingEndpointHandlersTag() + 
 						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
-				.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
+				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 						"." + this.eventTags.getWritingEndpointHandlerTag() + 
 						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId));
 		final int scrollSize = 25;
@@ -532,29 +579,18 @@ public class SearchService extends AbstractJsonService {
 			nextBatchRequired = scrollSize == response.getHits().hits().length;
 			for (SearchHit searchHit : response.getHits().hits()) {
 				Map<String, Object> source = searchHit.getSource();
+				String eventName = source.containsKey(this.eventTags.getNameTag()) ? (String) source.get(this.eventTags.getNameTag()) : "?";
 				List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
 				if (endpoints != null) {
 					for (Map<String, Object> endpoint : endpoints) {
 						String endpointName = (String) endpoint.get(this.eventTags.getEndpointNameTag());
 						
 						Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
-						if (writingEndpointHandler != null && writingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-							String writerTransactionid = (String) writingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-							long handlingTime = (Long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
-//							if (!eventChain.containsTransaction(transactionId)) {
-								addTransactionToEventChain(writerTransactionid);
-//							}
-						}
+						processEndpointHandlerForEventChain(eventChain, writingEndpointHandler, true, searchHit.getId(), eventName, searchHit.getType(), endpointName, transactionId);
 						List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
 						if (readingEndpointHandlers != null) {
 							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-								if (readingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-									String readerTransactionId = (String) readingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-									long handlingTime = (Long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
-//									if (!eventChain.containsTransaction(transactionId)) {
-										addTransactionToEventChain(readerTransactionId);
-//									}
-								}
+								processEndpointHandlerForEventChain(eventChain, readingEndpointHandler, false, searchHit.getId(), eventName, searchHit.getType(), endpointName, transactionId);
 							}
 						}
 					}
@@ -569,7 +605,32 @@ public class SearchService extends AbstractJsonService {
 				scrollIds.add(scrollId);
 			}
 		} while (nextBatchRequired);
-
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void processEndpointHandlerForEventChain(EventChain eventChain, Map<String, Object> endpointHandler,
+			boolean writer, String eventId, String eventName, String eventType, String endpointName,
+			String transactionId) {
+		if (endpointHandler != null && endpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+			String handlerTransactionId = (String) endpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+			long handlingTime = (Long) endpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+			String applicationName = null;
+			if (endpointHandler.containsKey(this.eventTags.getEndpointHandlerApplicationTag())) {
+				Map<String, Object> application = (Map<String, Object>) endpointHandler.get(this.eventTags.getEndpointHandlerApplicationTag());
+				if (application.containsKey(this.eventTags.getApplicationNameTag())) {
+					applicationName = (String) application.get(this.eventTags.getApplicationNameTag());
+				}
+			}
+			if (transactionId.equals(handlerTransactionId)) {
+				if (writer) {
+					eventChain.addWriter(eventId, transactionId, eventName, eventType, endpointName, applicationName, handlingTime);
+				} else {
+					eventChain.addReader(eventId, transactionId, eventName, eventType, endpointName, applicationName, handlingTime);
+				}
+			} else if (!eventChain.containsTransaction(handlerTransactionId)) {
+				addTransactionToEventChain(eventChain, handlerTransactionId);
+			}
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
