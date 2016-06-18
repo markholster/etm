@@ -377,7 +377,8 @@ function showEvent(scrollTo, type, id) {
 				});
 			}
 		}); 
-		
+		var body = document.body, html = document.documentElement;
+		var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 10;
 		$('#tabcontents').append(
 				$('<div>').attr('id', 'endpoint-tab')
 					.attr('aria-labelledby', 'endpoint-tab-header')
@@ -386,7 +387,7 @@ function showEvent(scrollTo, type, id) {
 					.addClass('tab-pane fade')
 					.append(
 							$('<div>').addClass('row').append(
-									$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + ((rowIx) * 3) + 6 + 'em; width: 100%;')
+									$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + ((rowIx == 0 ? 1 : rowIx) * height) + 'px; width: 100%;')
 							),
 							$('<div>').attr('id', 'endpoint-node-detail').append(
 									$('<div>').addClass('row').append(
