@@ -6,7 +6,6 @@ def version_undertow = "1.3.22.Final"
 ext {
     dep_disruptor = "com.lmax:disruptor:3.3.4"
     dep_elasticsearch = "org.elasticsearch:elasticsearch:5.0.0-alpha3"
-    dep_groovyAll = "org.codehaus.groovy:groovy-all:2.4.6:indy"
     dep_htmlunitDriver = "org.seleniumhq.selenium:selenium-java:2.53.0"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:" + version_jackson
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.2.0"

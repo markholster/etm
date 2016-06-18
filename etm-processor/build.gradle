@@ -10,8 +10,8 @@ sourceSets {
 }
 
 dependencies {
-    compile project(":etm-server-core"), dep_metricsCore, dep_disruptor, dep_groovyAll, dep_elasticsearch
-    integrationTestCompile project(":etm-server-core"), dep_metricsCore, dep_disruptor, dep_groovyAll, dep_elasticsearch, dep_junit
+    compile project(":etm-server-core"), dep_metricsCore, dep_disruptor, dep_elasticsearch
+    integrationTestCompile project(":etm-server-core"), dep_metricsCore, dep_disruptor, dep_elasticsearch, dep_junit
     integrationTestRuntime dep_log4jOverSlf4j
 }
 
