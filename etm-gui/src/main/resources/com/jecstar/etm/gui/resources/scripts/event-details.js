@@ -343,7 +343,7 @@ function showEvent(scrollTo, type, id) {
 					shape: 'roundrectangle',
 					width: 'label',
 					color: '#ffffff',
-					background_color: '#8fbc8f',
+					background_color: '#98afc7',
 					row: rowIx,
 					col: 1,
 					endpoint: endpoint,
@@ -706,47 +706,32 @@ function showEvent(scrollTo, type, id) {
 						  
 						  boxSelectionEnabled: false,
 						  autounselectify: true,
-						  
-						  style: [
-						    {
-						      selector: 'node',
-						      css: {
+						  style: cytoscape.stylesheet()
+						    .selector('node')
+						      .css({
 						        'content': 'data(label)',
 						        'shape': 'roundrectangle',
 						        'width': 'label',
 						        'text-valign': 'center',
-						        'text-halign': 'center'
-						      }
-						    },
-						    {
-						      selector: '$node > node',
-						      css: {
+						        'color': '#ffffff',
+						        'background-color': '#98afc7'
+						      })
+						    .selector('$node > node') 
+						      .css({
 						        'content': 'data(label)',
 						        'shape': 'roundrectangle',
+						        'color': '#000',
 						        'text-valign': 'top',
 						        'text-halign': 'center',
-						        'background-color': '#bbb'
-						      }
-						    },
-						    {
-						      selector: 'edge',
-						      css: {
+						        'background-color': '#777'						      
+						      })
+						    .selector('edge')
+						      .css({
 						      	'label': 'data(label)',
 						      	'edge-text-rotation': 'autorotate',
+						    	'width': 2,
 						        'target-arrow-shape': 'triangle'
-						      }
-						    },
-						    {
-						      selector: ':selected',
-						      css: {
-						        'background-color': 'black',
-						        'line-color': 'black',
-						        'target-arrow-color': 'black',
-						        'source-arrow-color': 'black'
-						      }
-						    }
-						  ],
-						  
+					      }),
 						  elements: {
 						    nodes: data.nodes,
 						    edges: data.edges
