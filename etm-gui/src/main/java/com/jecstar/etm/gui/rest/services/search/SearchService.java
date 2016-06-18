@@ -507,65 +507,86 @@ public class SearchService extends AbstractJsonService {
 			result.append("}}");
 			first = false;
 		}
-		for (Entry<EventChainKey, EventChainConnectionData> entry : eventChain.getReaders().entrySet()) {
-			if (!first) {
-				result.append(",");
-			}
-			result.append("{ \"data\": { \"id\": " + escapeToJson(entry.getKey().getKey(), true) + ", \"label\": " + escapeToJson(entry.getValue().getEventName(), true));
-			if (entry.getValue().getApplicationName() != null) {
-				result.append(", \"parent\": " + escapeToJson(entry.getValue().getApplicationName(), true)); 
-			}
-			result.append("}}");
-			first = false;			
-		}
-		for (Entry<EventChainKey, EventChainConnectionData> entry : eventChain.getWriters().entrySet()) {
-			if (!first) {
-				result.append(",");
-			}
-			result.append("{ \"data\": { \"id\": " + escapeToJson(entry.getKey().getKey(), true) + ", \"label\": " + escapeToJson(entry.getValue().getEventName(), true));
-			if (entry.getValue().getApplicationName() != null) {
-				result.append(", \"parent\": " + escapeToJson(entry.getValue().getApplicationName(), true)); 
-			}
-			result.append("}}");
-			first = false;			
-		}
-		for (EventChainEndpoint endpoint : eventChain.getEventChainEndpoints()) {
-			if (!first) {
-				result.append(",");
-			}
-			result.append("{ \"data\": { \"id\": " + escapeToJson(endpoint.getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getEndpointName(), true));
-			// TODO add application als alle readers en writers van dezelfde applicatie zijn
-			result.append("}}");
-			first = false;						
-		}
-		result.append("], \"edges\": [");
-		first = true;
-		for (EventChainEndpoint endpoint : eventChain.getEventChainEndpoints()) {
-			if (!first) {
-				result.append(",");
-			}
-			if (endpoint.getWriter() != null) {
-				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getWriter().getKey(), true) + ", \"target\": " + escapeToJson(endpoint.getKey(), true) + "}}");
-				first = false;						
-			}
-			for (EventChainKey reader : endpoint.getReaders()) {
+		for (EventChainEvent event : eventChain.events.values()) {
+			if (event.getEndpointName() != null) {
 				if (!first) {
 					result.append(",");
 				}
-				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getKey(), true) + ", \"target\": " + escapeToJson(reader.getKey(), true) + "}}");
-				first = false;						
+				result.append("{ \"data\": { \"id\": " + escapeToJson(event.getEventId(), true) + ", \"label\": " + escapeToJson(event.getEndpointName(), true));
+				result.append("}}");
+				first = false;				
+			}
+			if (event.getReader() != null) {
+				if (!first) {
+					result.append(",");
+				}
+				result.append("{ \"data\": { \"id\": " + escapeToJson(event.getReader().getKey(), true) + ", \"label\": " + escapeToJson(event.getReader().getName(), true));
+				if (event.getReader().getApplicationName() != null) {
+					result.append(", \"parent\": " + escapeToJson(event.getReader().getApplicationName(), true)); 
+				}
+				result.append("}}");
+				first = false;			
+			}
+			for (EventChainItem item : event.getWriters()) {
+				if (!first) {
+					result.append(",");
+				}
+				result.append("{ \"data\": { \"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true));
+				if (item.getApplicationName() != null) {
+					result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
+				}
+				result.append("}}");
+				first = false;							
 			}
 		}
-		for (EventChainTransactionEvents transaction : eventChain.getTransactions()) {
-			if (transaction.getReader() != null && !transaction.getWriters().isEmpty()) {
-				for (EventChainKey writer : transaction.getWriters()) {
-					if (!first) {
-						result.append(",");
-					}
-					result.append("{ \"data\": { \"source\": " + escapeToJson(transaction.getReader().getKey(), true) + ", \"target\": " + escapeToJson(writer.getKey(), true) + "}}");
-					first = false;						
-				}			}
-		}
+//		for (Entry<EventChainKey, EventChainConnectionData> entry : eventChain.getWriters().entrySet()) {
+//			if (!first) {
+//				result.append(",");
+//			}
+//			result.append("{ \"data\": { \"id\": " + escapeToJson(entry.getKey().getKey(), true) + ", \"label\": " + escapeToJson(entry.getValue().getEventName(), true));
+//			if (entry.getValue().getApplicationName() != null) {
+//				result.append(", \"parent\": " + escapeToJson(entry.getValue().getApplicationName(), true)); 
+//			}
+//			result.append("}}");
+//			first = false;			
+//		}
+//		for (EventChainEvent endpoint : eventChain.getEventChainEndpoints()) {
+//			if (!first) {
+//				result.append(",");
+//			}
+//			result.append("{ \"data\": { \"id\": " + escapeToJson(endpoint.getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getEndpointName(), true));
+//			// TODO add application als alle readers en writers van dezelfde applicatie zijn
+//			result.append("}}");
+//			first = false;						
+//		}
+//		result.append("], \"edges\": [");
+//		first = true;
+//		for (EventChainEvent endpoint : eventChain.getEventChainEndpoints()) {
+//			if (!first) {
+//				result.append(",");
+//			}
+//			if (endpoint.getWriter() != null) {
+//				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getWriter().getKey(), true) + ", \"target\": " + escapeToJson(endpoint.getKey(), true) + "}}");
+//				first = false;						
+//			}
+//			for (EventChainKey reader : endpoint.getReaders()) {
+//				if (!first) {
+//					result.append(",");
+//				}
+//				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getKey(), true) + ", \"target\": " + escapeToJson(reader.getKey(), true) + "}}");
+//				first = false;						
+//			}
+//		}
+//		for (EventChainTransactionEvents transaction : eventChain.getTransactions()) {
+//			if (transaction.getReader() != null && !transaction.getWriters().isEmpty()) {
+//				for (EventChainKey writer : transaction.getWriters()) {
+//					if (!first) {
+//						result.append(",");
+//					}
+//					result.append("{ \"data\": { \"source\": " + escapeToJson(transaction.getReader().getKey(), true) + ", \"target\": " + escapeToJson(writer.getKey(), true) + "}}");
+//					first = false;						
+//				}			}
+//		}
 		result.append("]}");
 		return result.toString();
 	}
