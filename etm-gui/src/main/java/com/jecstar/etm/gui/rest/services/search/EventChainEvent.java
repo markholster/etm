@@ -28,7 +28,9 @@ class EventChainEvent {
 	}
 	
 	public void addWriter(EventChainItem item) {
-		this.writers.add(item);
+		if (!this.writers.contains(item)) {
+			this.writers.add(item);
+		}
 	}
 	
 	public List<EventChainItem> getWriters() {

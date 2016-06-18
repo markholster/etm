@@ -26,7 +26,9 @@ class EventChainTransaction {
 	}
 	
 	public void addReader(EventChainItem item) {
-		this.readers.add(item);
+		if (!this.readers.contains(item)) {
+			this.readers.add(item);
+		}
 	}
 	
 	public List<EventChainItem> getReaders() {
@@ -34,7 +36,9 @@ class EventChainTransaction {
 	}
 	
 	public void addWriter(EventChainItem item) {
-		this.writers.add(item);
+		if (!this.writers.contains(item)) {
+			this.writers.add(item);
+		}
 	}
 	
 	public List<EventChainItem> getWriters() {

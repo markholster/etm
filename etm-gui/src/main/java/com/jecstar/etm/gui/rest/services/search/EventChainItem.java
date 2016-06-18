@@ -57,4 +57,18 @@ class EventChainItem {
 	public String getEventType() {
 		return this.eventType;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof EventChainItem) {
+			EventChainItem other = (EventChainItem) obj;
+			return getKey().equals(other.getKey());
+		}
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return getKey().hashCode();
+	}
 }

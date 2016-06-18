@@ -504,8 +504,7 @@ public class SearchService extends AbstractJsonService {
 			if (!first) {
 				result.append(",");
 			}
-			result.append("{ \"data\": { \"id\": " + escapeToJson(application, true) + ", \"label\": " + escapeToJson(application, true));
-			result.append("}}");
+			result.append("{\"id\": " + escapeToJson(application, true) + ", \"label\": " + escapeToJson(application, true) + ", \"type\": \"application\"}");
 			first = false;
 		}
 		for (EventChainEvent event : eventChain.events.values()) {
@@ -514,8 +513,7 @@ public class SearchService extends AbstractJsonService {
 				if (!first) {
 					result.append(",");
 				}
-				result.append("{ \"data\": { \"id\": " + escapeToJson(event.getEventId(), true) + ", \"label\": " + escapeToJson(event.getEndpointName(), true));
-				result.append("}}");
+				result.append("{\"id\": " + escapeToJson(event.getEventId(), true) + ", \"label\": " + escapeToJson(event.getEndpointName(), true) + ", \"type\": \"endpoint\"}");
 				first = false;				
 			}
 			// Add the reader as item.
@@ -523,11 +521,11 @@ public class SearchService extends AbstractJsonService {
 				if (!first) {
 					result.append(",");
 				}
-				result.append("{ \"data\": { \"id\": " + escapeToJson(event.getReader().getKey(), true) + ", \"label\": " + escapeToJson(event.getReader().getName(), true));
+				result.append("{\"id\": " + escapeToJson(event.getReader().getKey(), true) + ", \"label\": " + escapeToJson(event.getReader().getName(), true) + ", \"type\": \"event\"");
 				if (event.getReader().getApplicationName() != null) {
 					result.append(", \"parent\": " + escapeToJson(event.getReader().getApplicationName(), true)); 
 				}
-				result.append("}}");
+				result.append("}");
 				first = false;			
 			}
 			// Add all writers as item.
@@ -535,11 +533,11 @@ public class SearchService extends AbstractJsonService {
 				if (!first) {
 					result.append(",");
 				}
-				result.append("{ \"data\": { \"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true));
+				result.append("{\"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true) + ", \"type\": \"application\"");
 				if (item.getApplicationName() != null) {
 					result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
 				}
-				result.append("}}");
+				result.append("}");
 				first = false;							
 			}
 		}

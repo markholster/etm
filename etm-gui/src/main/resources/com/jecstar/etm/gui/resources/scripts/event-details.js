@@ -695,18 +695,32 @@ function showEvent(scrollTo, type, id) {
 									)
 							) 
 				);
+				var nodesData = [];
+				$.each(data.nodes, function (index, node) {
+					nodesData.push({
+						data: {
+							id: node.id,
+							label: node.label,
+							width: 'label',
+							color: '#000',
+							background_color: node.type == 'endpoint' ? '#98afc7' : '#777',
+							parent: node.parent
+						}
+					});
+				});
 				$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
 					var target = $(e.target).attr("href") // activated tab
 					if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
 						var body = document.body, html = document.documentElement;
-						var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 3 * 2;
+						var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 4;
 						$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;')
 						cyEventChain = cytoscape({
 						  container: document.querySelector('#event-chain'),
-						  
+						  zoomingEnabled: false,
+						  panningEnabled: true,
 						  boxSelectionEnabled: false,
-						  autounselectify: true,
-						  style: cytoscape.stylesheet()
+					  	  autoungrabify: true, 						  
+					  	  style: cytoscape.stylesheet()
 						    .selector('node')
 						      .css({
 						        'content': 'data(label)',
@@ -714,7 +728,7 @@ function showEvent(scrollTo, type, id) {
 						        'width': 'label',
 						        'text-valign': 'center',
 						        'color': '#ffffff',
-						        'background-color': '#98afc7'
+						        'background-color': 'data(background_color)'
 						      })
 						    .selector('$node > node') 
 						      .css({
@@ -733,16 +747,16 @@ function showEvent(scrollTo, type, id) {
 						        'target-arrow-shape': 'triangle'
 					      }),
 						  elements: {
-						    nodes: data.nodes,
+						    nodes: nodesData,
 						    edges: data.edges
 						  },
 						  
 						  layout: {
 		    				name: 'dagre',
-		    				rankDir: 'LR',
-						    animate: true
+		    				rankDir: 'LR'
 						  }
 						});
+						cyEventChain.center();
 					}
 				});		
 		    }
