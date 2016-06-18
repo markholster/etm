@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.search;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 class EventChainTransaction {
@@ -9,6 +10,12 @@ class EventChainTransaction {
 	
 	private List<EventChainItem> readers = new ArrayList<>();
 	private List<EventChainItem> writers = new ArrayList<>();
+	
+	private Comparator<EventChainItem> handlingTimeComparator = new Comparator<EventChainItem>(){
+		@Override
+		public int compare(EventChainItem o1, EventChainItem o2) {
+			return new Long(o1.getHandlingTime()).compareTo(new Long(o2.getHandlingTime()));
+		}};
 
 	EventChainTransaction(String transactionId) {
 		this.transactionId = transactionId;
@@ -32,6 +39,11 @@ class EventChainTransaction {
 	
 	public List<EventChainItem> getWriters() {
 		return this.writers;
+	}
+
+	public void sort() {
+		this.readers.sort(this.handlingTimeComparator);
+		this.writers.sort(this.handlingTimeComparator);
 	}
 	
 	@Override

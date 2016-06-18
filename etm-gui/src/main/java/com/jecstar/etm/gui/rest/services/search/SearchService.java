@@ -499,6 +499,7 @@ public class SearchService extends AbstractJsonService {
 		result.append("{");
 		result.append("\"nodes\" : [");
 		boolean first = true;
+		// Add all applications as item.
 		for (String application : eventChain.getApplications()) {
 			if (!first) {
 				result.append(",");
@@ -508,6 +509,7 @@ public class SearchService extends AbstractJsonService {
 			first = false;
 		}
 		for (EventChainEvent event : eventChain.events.values()) {
+			// Add all endpoints as item.
 			if (event.getEndpointName() != null) {
 				if (!first) {
 					result.append(",");
@@ -516,6 +518,7 @@ public class SearchService extends AbstractJsonService {
 				result.append("}}");
 				first = false;				
 			}
+			// Add the reader as item.
 			if (event.getReader() != null) {
 				if (!first) {
 					result.append(",");
@@ -527,6 +530,7 @@ public class SearchService extends AbstractJsonService {
 				result.append("}}");
 				first = false;			
 			}
+			// Add all writers as item.
 			for (EventChainItem item : event.getWriters()) {
 				if (!first) {
 					result.append(",");
@@ -539,54 +543,55 @@ public class SearchService extends AbstractJsonService {
 				first = false;							
 			}
 		}
-//		for (Entry<EventChainKey, EventChainConnectionData> entry : eventChain.getWriters().entrySet()) {
-//			if (!first) {
-//				result.append(",");
-//			}
-//			result.append("{ \"data\": { \"id\": " + escapeToJson(entry.getKey().getKey(), true) + ", \"label\": " + escapeToJson(entry.getValue().getEventName(), true));
-//			if (entry.getValue().getApplicationName() != null) {
-//				result.append(", \"parent\": " + escapeToJson(entry.getValue().getApplicationName(), true)); 
-//			}
-//			result.append("}}");
-//			first = false;			
-//		}
-//		for (EventChainEvent endpoint : eventChain.getEventChainEndpoints()) {
-//			if (!first) {
-//				result.append(",");
-//			}
-//			result.append("{ \"data\": { \"id\": " + escapeToJson(endpoint.getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getEndpointName(), true));
-//			// TODO add application als alle readers en writers van dezelfde applicatie zijn
-//			result.append("}}");
-//			first = false;						
-//		}
-//		result.append("], \"edges\": [");
-//		first = true;
-//		for (EventChainEvent endpoint : eventChain.getEventChainEndpoints()) {
-//			if (!first) {
-//				result.append(",");
-//			}
-//			if (endpoint.getWriter() != null) {
-//				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getWriter().getKey(), true) + ", \"target\": " + escapeToJson(endpoint.getKey(), true) + "}}");
-//				first = false;						
-//			}
-//			for (EventChainKey reader : endpoint.getReaders()) {
-//				if (!first) {
-//					result.append(",");
-//				}
-//				result.append("{ \"data\": { \"source\": " + escapeToJson(endpoint.getKey(), true) + ", \"target\": " + escapeToJson(reader.getKey(), true) + "}}");
-//				first = false;						
-//			}
-//		}
-//		for (EventChainTransactionEvents transaction : eventChain.getTransactions()) {
-//			if (transaction.getReader() != null && !transaction.getWriters().isEmpty()) {
-//				for (EventChainKey writer : transaction.getWriters()) {
-//					if (!first) {
-//						result.append(",");
-//					}
-//					result.append("{ \"data\": { \"source\": " + escapeToJson(transaction.getReader().getKey(), true) + ", \"target\": " + escapeToJson(writer.getKey(), true) + "}}");
-//					first = false;						
-//				}			}
-//		}
+		result.append("], \"edges\": [");
+		first = true;
+		for (EventChainEvent event : eventChain.events.values()) {
+			if (event.getEndpointName() != null) {
+				if (!first) {
+					result.append(",");
+				}
+				if (event.getReader() != null) {
+					// Add the connection from the endpoint to the reader.
+					result.append("{ \"data\": { \"source\": " + escapeToJson(event.getEventId(), true)
+							+ ", \"target\": " + escapeToJson(event.getReader().getKey(), true) 
+//							+ ", \"label\": " + escapeToJson(event.getReader().getEventType(), true)
+							+ "}}");
+					first = false;			
+				}
+				first = false;				
+				for (EventChainItem item : event.getWriters()) {
+					// Add a connection between the endpoint and all writers.
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{ \"data\": { \"source\": " + escapeToJson(item.getKey(), true) 
+						+ ", \"target\": " + escapeToJson(event.getEventId(), true) 
+//						+ ", \"label\": " + escapeToJson(item.getEventType(), true)
+						+ "}}");
+					first = false;							
+				}
+			}
+		}
+		for (EventChainTransaction transaction : eventChain.transactions.values()) {
+			// Add connections between the events within a transaction
+			transaction.sort();
+			int writerIx = 0;
+			for (int i=0; i < transaction.getReaders().size(); i++) {
+				long endTime = Long.MAX_VALUE;
+				if ((i + 1) < transaction.getReaders().size()) {
+					endTime = transaction.getReaders().get(i + 1).getHandlingTime();
+				}
+				String readerSource = transaction.getReaders().get(i).getKey();
+				for (; writerIx < transaction.getWriters().size() && transaction.getWriters().get(writerIx).getHandlingTime() < endTime; writerIx++) {
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{ \"data\": { \"source\": " + escapeToJson(readerSource, true) + ", \"target\": " + escapeToJson(transaction.getWriters().get(writerIx).getKey(), true) + "}}");
+					first = false;												
+				}
+			}
+			
+		}
 		result.append("]}");
 		return result.toString();
 	}
