@@ -720,7 +720,7 @@ function showEvent(scrollTo, type, id) {
 						  zoomingEnabled: false,
 						  panningEnabled: true,
 						  boxSelectionEnabled: false,
-					  	  autoungrabify: true, 						  
+					  	  autounselectify: true, 						  
 					  	  style: cytoscape.stylesheet()
 						    .selector('node')
 						      .css({
