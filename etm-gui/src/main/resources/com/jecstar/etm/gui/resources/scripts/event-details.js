@@ -60,7 +60,28 @@ function showEvent(scrollTo, type, id) {
 			var $endpoints = $(data.source.endpoints);
 			if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 				createEndpointsTab($endpoints, data.time_zone);
-				createEventChainTab(data.id, data.type, data.time_zone);
+				// Check if a transaction id is present
+				var hasTransactionId = false;
+				$.each($endpoints, function (index, endpoint) {
+					if (endpoint.writing_endpoint_handler && endpoint.writing_endpoint_handler.transaction_id) {
+						hasTransactionId = true;
+						return false;
+					}
+					if (endpoint.reading_endpoint_handlers) {
+						$.each(endpoint.reading_endpoint_handlers, function (index, eh) {
+							if (eh.transaction_id) {
+								hasTransactionId = true;
+								return false;
+							}
+						});
+					}
+					if (hasTransactionId) {
+						return false;
+					}
+				});
+				if (hasTransactionId) {
+					createEventChainTab(data.id, data.type, data.time_zone);
+				}
 			}
 		}
 	}
@@ -664,57 +685,57 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function createEventChainTab(id, type, timeZone) {
-		$.ajax({
-		    type: 'GET',
-		    contentType: 'application/json',
-		    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id) + '/chain',
-		    success: function(data) {
-		        if (!data) {
-		            return;
-		        }
-				$('#event-tabs').append(
-					$('<li>').addClass('nav-item').append(
-							$('<a>').attr('id', 'event-chain-tab-header')
-								.attr('aria-expanded', 'false')
-								.attr('role', 'tab')
-								.attr('data-toggle', 'tab')
-								.attr('href', '#event-chain-tab')
-								.addClass('nav-link')
-								.text('Event chain')
-					)
-				);
-			
-				$('#tabcontents').append(
-						$('<div>').attr('id', 'event-chain-tab')
-							.attr('aria-labelledby', 'event-chain-tab-header')
-							.attr('role', 'tabpanel')
-							.attr('aria-expanded', 'false')
-							.addClass('tab-pane fade')
-							.append(
-									$('<div>').addClass('row').append(
-											$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
-									)
-							) 
-				);
-				var nodesData = [];
-				$.each(data.nodes, function (index, node) {
-					nodesData.push({
-						data: {
-							id: node.id,
-							label: node.label,
-							width: 'label',
-							color: '#000',
-							background_color: node.type == 'endpoint' ? '#98afc7' : '#777',
-							parent: node.parent
-						}
-					});
-				});
-				$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-					var target = $(e.target).attr("href") // activated tab
-					if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
-						var body = document.body, html = document.documentElement;
-						var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 4;
-						$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;')
+		$('#event-tabs').append(
+			$('<li>').addClass('nav-item').append(
+					$('<a>').attr('id', 'event-chain-tab-header')
+						.attr('aria-expanded', 'false')
+						.attr('role', 'tab')
+						.attr('data-toggle', 'tab')
+						.attr('href', '#event-chain-tab')
+						.addClass('nav-link')
+						.text('Event chain')
+			)
+		);
+	
+		$('#tabcontents').append(
+				$('<div>').attr('id', 'event-chain-tab')
+					.attr('aria-labelledby', 'event-chain-tab-header')
+					.attr('role', 'tabpanel')
+					.attr('aria-expanded', 'false')
+					.addClass('tab-pane fade')
+					.append(
+							$('<div>').addClass('row').append(
+									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
+							)
+					) 
+		);
+		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+			var target = $(e.target).attr("href") // activated tab
+			if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
+				var body = document.body, html = document.documentElement;
+				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 4;
+				$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;');
+				$.ajax({
+				    type: 'GET',
+				    contentType: 'application/json',
+				    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id) + '/chain',
+				    success: function(data) {
+				        if (!data) {
+				            return;
+				        }
+						var nodesData = [];
+						$.each(data.nodes, function (index, node) {
+							nodesData.push({
+								data: {
+									id: node.id,
+									label: node.label,
+									width: 'label',
+									color: '#000',
+									background_color: node.type == 'endpoint' ? '#98afc7' : '#777',
+									parent: node.parent
+								}
+							});
+						});
 						cyEventChain = cytoscape({
 						  container: document.querySelector('#event-chain'),
 						  zoomingEnabled: false,
@@ -753,16 +774,15 @@ function showEvent(scrollTo, type, id) {
 						  },
 						  
 						  layout: {
-		    				name: 'dagre',
-		    				rankDir: 'LR'
+							name: 'dagre',
+							rankDir: 'LR'
 						  }
 						});
 						cyEventChain.center();
-					}
-				});		
-		    }
-		});
-		
+				    }
+				});				
+			}
+		});				
 	}
 	
 	function capitalize(text) {
