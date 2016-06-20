@@ -736,8 +736,17 @@ function showEvent(scrollTo, type, id) {
 									label: node.label,
 									width: 'label',
 									color: '#000',
-									background_color: node.type == 'endpoint' ? '#98afc7' : (node.type == 'event' ? eventColorCode : '#b6b6b6'),
+									background_color: node.type == 'endpoint' ? '#98afc7' : '#b6b6b6',
 									parent: node.parent
+								}
+							});
+						});
+						var edgesData = [];
+						$.each(data.edges, function (index, edge) {
+							edgesData.push({
+								data: {
+									source: edge.source,
+									target: edge.target
 								}
 							});
 						});
@@ -775,7 +784,7 @@ function showEvent(scrollTo, type, id) {
 					      }),
 						  elements: {
 						    nodes: nodesData,
-						    edges: data.edges
+						    edges: edgesData
 						  },
 						  
 						  layout: {

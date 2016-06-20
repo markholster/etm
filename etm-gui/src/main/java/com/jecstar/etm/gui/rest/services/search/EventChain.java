@@ -85,44 +85,10 @@ public class EventChain {
 	public void done() {
 		for (EventChainTransaction transaction : this.transactions.values()) {
 			transaction.sort();
-			transaction.calculateAbsoluteResponseTimes();
 		}
 		for (EventChainEvent event : this.events.values()) {
 			event.sort();
-			if (event.isRequest()) {
-				EventChainItem rootRequest = getRootRequest(event);
-				if (rootRequest != null) {
-					Long transactionTime = rootRequest.getResponseTime();
-					if (transactionTime == null && rootRequest.getExpiry() != null) {
-						transactionTime = rootRequest.getExpiry() - rootRequest.getHandlingTime();
-					}
-					if (transactionTime != null) {
-						event.calculateResponseTimePercentages(transactionTime);
-					}
-				}
-			}
 		}
 	}
 
-	private EventChainItem getRootRequest(EventChainEvent event) {
-		if (event.isRequest()) {
-			if (event.getWriter() != null) {
-				EventChainTransaction eventChainTransaction = this.transactions.get(event.getWriter().getTransactionId());
-				if (eventChainTransaction.getReaders().isEmpty()) {
-					return event.getWriter();
-				}
-				EventChainItem reader = eventChainTransaction.getReaders().get(0);
-				if (reader.getEventId().equals(event.getEventId())) {
-					return reader;
-				}
-				if (reader.isRequest()) {
-					return getRootRequest(this.events.get(reader.getEventId()));
-				}
-			}
-			return event.getReaders().get(0);
-		} else {
-			return null;
-			// TODO dit is een datagram of een response. Bijbehorende spullen zoeken.
-		}
-	}
 }

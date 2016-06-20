@@ -49,38 +49,6 @@ class EventChainTransaction {
 		this.readers.sort(this.handlingTimeComparator);
 		this.writers.sort(this.handlingTimeComparator);
 	}
-
-	/**
-	 * Method calculating the absolute response time for the first reader. If
-	 * the first reader is not a request, this method will do nothing.
-	 * 
-	 * The absolute response time is calculated by subtracting the response time
-	 * of the reader with the response time of all writers combined.
-	 */
-	public void calculateAbsoluteResponseTimes() {
-		if (this.readers.isEmpty() || !this.readers.get(0).isRequest()) {
-			// First reading item in a transaction is not a request -> could be a response or datagram. Not calculating absolute response time for those items.
-			return;
-		}
-		long totalWriterResponseTimes = 0;
-		for (EventChainItem item : this.writers) {
-			if (item.isRequest()) {
-				if (item.getResponseTime() != null) {
-					totalWriterResponseTimes += item.getResponseTime();
-				} else if (item.getExpiry() != null) {
-					totalWriterResponseTimes += (item.getExpiry() - item.getHandlingTime());
-				}
-			}
-		}
-		EventChainItem reader = this.readers.get(0);
-		if (reader.getResponseTime() == null) {
-			// A request without a response time must be expired
-			reader.setAbsoluteResponseTime(reader.getExpiry());
-		} else {
-			reader.setAbsoluteResponseTime(reader.getResponseTime() - totalWriterResponseTimes); 
-		}
-	}
-
 	
 	@Override
 	public boolean equals(Object obj) {

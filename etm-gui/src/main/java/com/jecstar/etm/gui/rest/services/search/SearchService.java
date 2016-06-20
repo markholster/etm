@@ -525,9 +525,6 @@ public class SearchService extends AbstractJsonService {
 					result.append(",");
 				}
 				result.append("{\"id\": " + escapeToJson(event.getWriter().getKey(), true) + ", \"label\": " + escapeToJson(event.getWriter().getName(), true) + ", \"type\": \"event\"");
-				if (event.getWriter().getAbsoluteResponseTimePercentage() != null) {
-					result.append(", \"absolute_response_percentage\": " + event.getWriter().getAbsoluteResponseTimePercentage());
-				}
 				if (event.getWriter().getApplicationName() != null) {
 					result.append(", \"parent\": " + escapeToJson(event.getWriter().getApplicationName(), true)); 
 				}
@@ -540,9 +537,6 @@ public class SearchService extends AbstractJsonService {
 					result.append(",");
 				}
 				result.append("{\"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true) + ", \"type\": \"event\"");
-				if (item.getAbsoluteResponseTimePercentage() != null) {
-					result.append(", \"absolute_response_percentage\": " + item.getAbsoluteResponseTimePercentage());
-				}
 				if (item.getApplicationName() != null) {
 					result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
 				}
@@ -552,6 +546,27 @@ public class SearchService extends AbstractJsonService {
 		}
 		result.append("], \"edges\": [");
 		first = true;
+		long firstHandlingTime = -1;
+		long lastHandlingTime = -1;
+		for (EventChainEvent event : eventChain.events.values()) {
+			if (event.getWriter() != null) {
+				if (event.getWriter().getHandlingTime() < firstHandlingTime || firstHandlingTime == -1) {
+					firstHandlingTime = event.getWriter().getHandlingTime();
+				}
+				if (event.getWriter().getHandlingTime() > lastHandlingTime || lastHandlingTime == -1) {
+					lastHandlingTime = event.getWriter().getHandlingTime();
+				}
+			}
+			for (EventChainItem reader : event.getReaders()) {
+				if (reader.getHandlingTime() < firstHandlingTime || firstHandlingTime == -1) {
+					firstHandlingTime = reader.getHandlingTime();
+				}
+				if (reader.getHandlingTime() > lastHandlingTime || lastHandlingTime == -1) {
+					lastHandlingTime = reader.getHandlingTime();
+				}				
+			}
+		}
+		long totalHandlingTime = lastHandlingTime - firstHandlingTime;
 		for (EventChainEvent event : eventChain.events.values()) {
 			if (event.getEndpointName() != null) {
 				if (event.getWriter() != null) {
@@ -559,9 +574,10 @@ public class SearchService extends AbstractJsonService {
 						result.append(",");
 					}
 					// Add the connection from the writer to the endpoint.
-					result.append("{ \"data\": { \"source\": " + escapeToJson(event.getWriter().getKey(), true) 
+					result.append("{\"source\": " + escapeToJson(event.getWriter().getKey(), true) 
 							+ ", \"target\": " + escapeToJson(event.getEventId(), true)
-							+ "}}");
+							+ "}");
+					// No edge time because the queue time is the same as the writer time.
 					first = false;			
 				}
 				for (EventChainItem item : event.getReaders()) {
@@ -569,10 +585,31 @@ public class SearchService extends AbstractJsonService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{ \"data\": { \"source\": " +  escapeToJson(event.getEventId(), true)
-						+ ", \"target\": " + escapeToJson(item.getKey(), true) 
-						+ "}}");
+					result.append("{ \"source\": " +  escapeToJson(event.getEventId(), true)
+						+ ", \"target\": " + escapeToJson(item.getKey(), true)); 
+//					Float edgeTime = calculateEdgeTime(event, item, totalHandlingTime);
+//					if (edgeTime != null) {
+//						result.append(", \"absolute_response_percentage\": " + edgeTime);
+//					}
+					result.append("}");
 					first = false;							
+				}
+			} else {
+				// No endpoint name, so a direct connection from a writer to the readers.
+				if (event.getWriter() != null) {
+					for (EventChainItem item : event.getReaders()) {
+						// Add a connection between the writer and all readers.
+						if (!first) {
+							result.append(",");
+						}
+						result.append("{ \"source\": " +  escapeToJson(event.getWriter().getKey(), true)
+							+ ", \"target\": " + escapeToJson(item.getKey(), true)); 
+//						if (edgeTime != null) {
+//							result.append(", \"absolute_response_percentage\": " + edgeTime);
+//						}
+						result.append("}");
+						first = false;							
+					}					
 				}
 			}
 		}
@@ -589,7 +626,7 @@ public class SearchService extends AbstractJsonService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{ \"data\": { \"source\": " + escapeToJson(readerSource, true) + ", \"target\": " + escapeToJson(transaction.getWriters().get(writerIx).getKey(), true) + "}}");
+					result.append("{ \"source\": " + escapeToJson(readerSource, true) + ", \"target\": " + escapeToJson(transaction.getWriters().get(writerIx).getKey(), true) + "}");
 					first = false;												
 				}
 			}
@@ -598,7 +635,7 @@ public class SearchService extends AbstractJsonService {
 		result.append("]}");
 		return result.toString();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void addTransactionToEventChain(EventChain eventChain, String transactionId) {
 		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()

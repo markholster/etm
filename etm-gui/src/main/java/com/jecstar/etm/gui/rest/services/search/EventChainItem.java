@@ -12,9 +12,6 @@ class EventChainItem {
 	private Long responseTime;
 	private Long expiry;
 	private boolean request;
-	private Long absoluteResponseTime;
-	private Float absoluteResponseTimePercentage;
-	private Float responseTimePercentage;
 
 	EventChainItem(String transactionId, String eventId, long handlingTime) {
 		this.transactionId = transactionId;
@@ -99,33 +96,6 @@ class EventChainItem {
 	
 	public Long getExpiry() {
 		return this.expiry;
-	}
-	
-	public EventChainItem setAbsoluteResponseTime(Long absoluteResponseTime) {
-		this.absoluteResponseTime = absoluteResponseTime;
-		return this;
-	}
-	
-	public Long getAbsoluteResponseTime() {
-		return this.absoluteResponseTime;
-	}
-	
-	public EventChainItem setAbsoluteResponseTimePercentage(float percentage) {
-		this.absoluteResponseTimePercentage = percentage;
-		return this;
-	}
-	
-	public Float getAbsoluteResponseTimePercentage() {
-		return this.absoluteResponseTimePercentage;
-	}
-	
-	public EventChainItem setResponseTimePercentage(float percentage) {
-		this.responseTimePercentage = percentage;
-		return this;
-	}
-	
-	public Float getResponseTimePercentage() {
-		return this.responseTimePercentage;
 	}
 	
 	@Override
