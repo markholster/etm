@@ -352,7 +352,7 @@
     });
     
     function isInViewport(elem) {
-        var $elem = elem;
+        var $elem = $(elem);
         var $window = $(window);
         var docViewTop = $window.scrollTop();
         var docViewBottom = docViewTop + $window.height();

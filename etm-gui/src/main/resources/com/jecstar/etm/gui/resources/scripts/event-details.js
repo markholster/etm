@@ -348,7 +348,7 @@ function showEvent(scrollTo, type, id) {
 						shape: 'roundrectangle',
 						width: 'label',
 						color: '#ffffff',
-						background_color: '#777',
+						background_color: '#b6b6b6',
 						row: rowIx,
 						col: 0,
 						writing_endpoint_handler: endpoint.writing_endpoint_handler,
@@ -387,7 +387,7 @@ function showEvent(scrollTo, type, id) {
 							shape: 'roundrectangle',
 							width: 'label',
 							color: '#ffffff',
-							background_color: '#777',
+							background_color: '#b6b6b6',
 							row: rowIx,
 							col: 2,
 							reading_endpoint_handler: rep,
@@ -725,13 +725,18 @@ function showEvent(scrollTo, type, id) {
 				        }
 						var nodesData = [];
 						$.each(data.nodes, function (index, node) {
+							var eventColorCode = '#b6b6b6';
+							if ("undefined" != typeof node.absolute_response_percentage) {
+								var colorValue = Math.round(node.absolute_response_percentage * 178);
+								eventColorCode = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (178 - colorValue).toString(16)).slice(-2) + '34';
+							}
 							nodesData.push({
 								data: {
 									id: node.id,
 									label: node.label,
 									width: 'label',
 									color: '#000',
-									background_color: node.type == 'endpoint' ? '#98afc7' : '#777',
+									background_color: node.type == 'endpoint' ? '#98afc7' : (node.type == 'event' ? eventColorCode : '#b6b6b6'),
 									parent: node.parent
 								}
 							});
@@ -759,7 +764,7 @@ function showEvent(scrollTo, type, id) {
 						        'color': '#000',
 						        'text-valign': 'top',
 						        'text-halign': 'center',
-						        'background-color': '#777'						      
+						        'background-color': 'data(background_color)'						      
 						      })
 						    .selector('edge')
 						      .css({

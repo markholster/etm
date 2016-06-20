@@ -5,11 +5,18 @@ class EventChainItem {
 	private final String eventId;
 	private final String transactionId;
 	private long handlingTime;
+	private String correlationId;
 	private String name;
 	private String applicationName;
 	private String eventType;
+	private Long responseTime;
+	private Long expiry;
+	private boolean request;
+	private Long absoluteResponseTime;
+	private Float absoluteResponseTimePercentage;
+	private Float responseTimePercentage;
 
-	public EventChainItem(String transactionId, String eventId, long handlingTime) {
+	EventChainItem(String transactionId, String eventId, long handlingTime) {
 		this.transactionId = transactionId;
 		this.eventId = eventId;
 		this.handlingTime = handlingTime;
@@ -29,6 +36,24 @@ class EventChainItem {
 	
 	public long getHandlingTime() {
 		return this.handlingTime;
+	}
+	
+	public EventChainItem setCorrelationId(String correlationId) {
+		this.correlationId = correlationId;
+		return this;
+	}
+	
+	public String getCorrelationId() {
+		return this.correlationId;
+	}
+	
+	public EventChainItem setRequest(boolean request) {
+		this.request = request;
+		return this;
+	}
+
+	public boolean isRequest() {
+		return request;
 	}
 	
 	public EventChainItem setName(String name) {
@@ -56,6 +81,51 @@ class EventChainItem {
 	
 	public String getEventType() {
 		return this.eventType;
+	}
+	
+	public EventChainItem setResponseTime(Long responseTime) {
+		this.responseTime = responseTime;
+		return this;
+	}
+	
+	public Long getResponseTime() {
+		return this.responseTime;
+	}
+	
+	public EventChainItem setExpiry(Long expiry) {
+		this.expiry = expiry;
+		return this;
+	}
+	
+	public Long getExpiry() {
+		return this.expiry;
+	}
+	
+	public EventChainItem setAbsoluteResponseTime(Long absoluteResponseTime) {
+		this.absoluteResponseTime = absoluteResponseTime;
+		return this;
+	}
+	
+	public Long getAbsoluteResponseTime() {
+		return this.absoluteResponseTime;
+	}
+	
+	public EventChainItem setAbsoluteResponseTimePercentage(float percentage) {
+		this.absoluteResponseTimePercentage = percentage;
+		return this;
+	}
+	
+	public Float getAbsoluteResponseTimePercentage() {
+		return this.absoluteResponseTimePercentage;
+	}
+	
+	public EventChainItem setResponseTimePercentage(float percentage) {
+		this.responseTimePercentage = percentage;
+		return this;
+	}
+	
+	public Float getResponseTimePercentage() {
+		return this.responseTimePercentage;
 	}
 	
 	@Override

@@ -49,6 +49,8 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
@@ -495,6 +497,7 @@ public class SearchService extends AbstractJsonService {
 		}
 		EventChain eventChain = new EventChain();
 		addTransactionToEventChain(eventChain, earliestTransactionId);
+		eventChain.done();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"nodes\" : [");
@@ -517,23 +520,29 @@ public class SearchService extends AbstractJsonService {
 				first = false;				
 			}
 			// Add the reader as item.
-			if (event.getReader() != null) {
+			if (event.getWriter() != null) {
 				if (!first) {
 					result.append(",");
 				}
-				result.append("{\"id\": " + escapeToJson(event.getReader().getKey(), true) + ", \"label\": " + escapeToJson(event.getReader().getName(), true) + ", \"type\": \"event\"");
-				if (event.getReader().getApplicationName() != null) {
-					result.append(", \"parent\": " + escapeToJson(event.getReader().getApplicationName(), true)); 
+				result.append("{\"id\": " + escapeToJson(event.getWriter().getKey(), true) + ", \"label\": " + escapeToJson(event.getWriter().getName(), true) + ", \"type\": \"event\"");
+				if (event.getWriter().getAbsoluteResponseTimePercentage() != null) {
+					result.append(", \"absolute_response_percentage\": " + event.getWriter().getAbsoluteResponseTimePercentage());
+				}
+				if (event.getWriter().getApplicationName() != null) {
+					result.append(", \"parent\": " + escapeToJson(event.getWriter().getApplicationName(), true)); 
 				}
 				result.append("}");
 				first = false;			
 			}
 			// Add all writers as item.
-			for (EventChainItem item : event.getWriters()) {
+			for (EventChainItem item : event.getReaders()) {
 				if (!first) {
 					result.append(",");
 				}
-				result.append("{\"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true) + ", \"type\": \"application\"");
+				result.append("{\"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true) + ", \"type\": \"event\"");
+				if (item.getAbsoluteResponseTimePercentage() != null) {
+					result.append(", \"absolute_response_percentage\": " + item.getAbsoluteResponseTimePercentage());
+				}
 				if (item.getApplicationName() != null) {
 					result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
 				}
@@ -545,26 +554,23 @@ public class SearchService extends AbstractJsonService {
 		first = true;
 		for (EventChainEvent event : eventChain.events.values()) {
 			if (event.getEndpointName() != null) {
-				if (!first) {
-					result.append(",");
-				}
-				if (event.getReader() != null) {
-					// Add the connection from the endpoint to the reader.
-					result.append("{ \"data\": { \"source\": " + escapeToJson(event.getEventId(), true)
-							+ ", \"target\": " + escapeToJson(event.getReader().getKey(), true) 
-//							+ ", \"label\": " + escapeToJson(event.getReader().getEventType(), true)
-							+ "}}");
-					first = false;			
-				}
-				first = false;				
-				for (EventChainItem item : event.getWriters()) {
-					// Add a connection between the endpoint and all writers.
+				if (event.getWriter() != null) {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{ \"data\": { \"source\": " + escapeToJson(item.getKey(), true) 
-						+ ", \"target\": " + escapeToJson(event.getEventId(), true) 
-//						+ ", \"label\": " + escapeToJson(item.getEventType(), true)
+					// Add the connection from the writer to the endpoint.
+					result.append("{ \"data\": { \"source\": " + escapeToJson(event.getWriter().getKey(), true) 
+							+ ", \"target\": " + escapeToJson(event.getEventId(), true)
+							+ "}}");
+					first = false;			
+				}
+				for (EventChainItem item : event.getReaders()) {
+					// Add a connection between the endpoint and all readers.
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{ \"data\": { \"source\": " +  escapeToJson(event.getEventId(), true)
+						+ ", \"target\": " + escapeToJson(item.getKey(), true) 
 						+ "}}");
 					first = false;							
 				}
@@ -572,7 +578,6 @@ public class SearchService extends AbstractJsonService {
 		}
 		for (EventChainTransaction transaction : eventChain.transactions.values()) {
 			// Add connections between the events within a transaction
-			transaction.sort();
 			int writerIx = 0;
 			for (int i=0; i < transaction.getReaders().size(); i++) {
 				long endTime = Long.MAX_VALUE;
@@ -610,8 +615,10 @@ public class SearchService extends AbstractJsonService {
 				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
 				.addSort(SortBuilders.fieldSort("_doc"))
 				.setFetchSource(new String[] {
-						this.eventTags.getEndpointsTag() + ".*", 
+						this.eventTags.getEndpointsTag() + ".*",
+						this.eventTags.getExpiryTag(),
 						this.eventTags.getNameTag(), 
+						this.eventTags.getCorrelationIdTag(),
 						this.eventTags.getMessagingEventTypeTag(),
 						this.eventTags.getHttpEventTypeTag()}, null)
 				.setFrom(0)
@@ -631,17 +638,44 @@ public class SearchService extends AbstractJsonService {
 			for (SearchHit searchHit : response.getHits().hits()) {
 				Map<String, Object> source = searchHit.getSource();
 				String eventName = source.containsKey(this.eventTags.getNameTag()) ? (String) source.get(this.eventTags.getNameTag()) : "?";
+				Long expiry = getLong(this.eventTags.getExpiryTag(), source);
+				boolean request = false;
+				if ("http".equals(searchHit.getType())) {
+					request = !HttpEventType.RESPONSE.name().equals(getString(this.eventTags.getHttpEventTypeTag(), source));
+				} else if ("messaging".equals(searchHit.getType())) {
+					request = MessagingEventType.REQUEST.name().equals(getString(this.eventTags.getMessagingEventTypeTag(), source));
+				}
+				String correlationId = getString(this.eventTags.getCorrelationIdTag(), source);
 				List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
 				if (endpoints != null) {
 					for (Map<String, Object> endpoint : endpoints) {
 						String endpointName = (String) endpoint.get(this.eventTags.getEndpointNameTag());
-						
 						Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
-						processEndpointHandlerForEventChain(eventChain, writingEndpointHandler, true, searchHit.getId(), eventName, searchHit.getType(), endpointName, transactionId);
+						processEndpointHandlerForEventChain(eventChain, 
+								writingEndpointHandler, 
+								true, 
+								searchHit.getId(), 
+								eventName, 
+								searchHit.getType(), 
+								correlationId, 
+								request,
+								endpointName, 
+								transactionId, 
+								expiry);
 						List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
 						if (readingEndpointHandlers != null) {
 							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-								processEndpointHandlerForEventChain(eventChain, readingEndpointHandler, false, searchHit.getId(), eventName, searchHit.getType(), endpointName, transactionId);
+								processEndpointHandlerForEventChain(eventChain, 
+										readingEndpointHandler, 
+										false, 
+										searchHit.getId(), 
+										eventName, 
+										searchHit.getType(), 
+										correlationId,
+										request,
+										endpointName, 
+										transactionId, 
+										expiry);
 							}
 						}
 					}
@@ -659,24 +693,31 @@ public class SearchService extends AbstractJsonService {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void processEndpointHandlerForEventChain(EventChain eventChain, Map<String, Object> endpointHandler,
-			boolean writer, String eventId, String eventName, String eventType, String endpointName,
-			String transactionId) {
+	private void processEndpointHandlerForEventChain(EventChain eventChain, 
+			Map<String, Object> endpointHandler,
+			boolean writer, 
+			String eventId, 
+			String eventName, 
+			String eventType, 
+			String correlationId, 
+			boolean request, 
+			String endpointName,
+			String transactionId, 
+			Long eventExpiry) {
 		if (endpointHandler != null && endpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-			String handlerTransactionId = (String) endpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-			long handlingTime = (Long) endpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+			String handlerTransactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), endpointHandler);
+			long handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), endpointHandler);
 			String applicationName = null;
 			if (endpointHandler.containsKey(this.eventTags.getEndpointHandlerApplicationTag())) {
 				Map<String, Object> application = (Map<String, Object>) endpointHandler.get(this.eventTags.getEndpointHandlerApplicationTag());
-				if (application.containsKey(this.eventTags.getApplicationNameTag())) {
-					applicationName = (String) application.get(this.eventTags.getApplicationNameTag());
-				}
+				applicationName = getString(this.eventTags.getApplicationNameTag(), application);
 			}
+			Long responseTime = getLong(this.eventTags.getEndpointHandlerResponseTimeTag(), endpointHandler);
 			if (transactionId.equals(handlerTransactionId)) {
 				if (writer) {
-					eventChain.addWriter(eventId, transactionId, eventName, eventType, endpointName, applicationName, handlingTime);
+					eventChain.addWriter(eventId, transactionId, eventName, eventType, correlationId, request, endpointName, applicationName, handlingTime, responseTime, eventExpiry);
 				} else {
-					eventChain.addReader(eventId, transactionId, eventName, eventType, endpointName, applicationName, handlingTime);
+					eventChain.addReader(eventId, transactionId, eventName, eventType, correlationId, request, endpointName, applicationName, handlingTime, responseTime, eventExpiry);
 				}
 			} else if (!eventChain.containsTransaction(handlerTransactionId)) {
 				addTransactionToEventChain(eventChain, handlerTransactionId);
