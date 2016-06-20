@@ -346,10 +346,12 @@
     }).autocompleteFieldQuery({queryKeywords: queryKeywords});
     
     $('#btn-search').click(function() {
-        executeQuery(createQuery(false));
+    	var queryParams = createQuery(false);
+    	queryParams.start_ix = 0;
+        executeQuery(queryParams);
     });
     
-    function isSearchInView(elem) {
+    function isInViewport(elem) {
         var $elem = elem;
         var $window = $(window);
         var docViewTop = $window.scrollTop();
@@ -392,10 +394,12 @@
         return query;
     }
     
+    var queryInProgress = false;
     function executeQuery(queryParameters, appendToCurrent) {
-        if (!queryParameters) {
+        if (!queryParameters || queryInProgress) {
             return;
         }
+        queryInProgress = true;
         $('#result_block').show();
         $.ajax({
             type: 'POST',
@@ -454,7 +458,7 @@
                                     return $('<tfoot>')
                                         .append($('<tr>')
                                             .append($('<td>').addClass('text-xs-center').attr('colspan', $(tableLayout.fields).length)
-                                                .append($('<a href="#">').text('Show more').click(function (event) {
+                                                .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more').click(function (event) {
                                                     event.preventDefault();
                                                     var query = createQuery(true);
                                                     query.start_ix = tableLayout.current_ix + tableLayout.results_per_page; 
@@ -474,7 +478,7 @@
                                 return $body;
                             });
                         $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
-                        if (!isSearchInView($('#result_card'))) {
+                        if (!isInViewport($('#result_card'))) {
                             $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
                         }
                     }
@@ -489,6 +493,9 @@
                     }
                     updateHistory(query, data.history_size);
                 }
+            },
+            complete: function () {
+            	queryInProgress = false;
             }
         });    
     }
@@ -528,6 +535,13 @@
         tableLayout.current_ix = 0;
         executeQuery(createQuery(true));
     }
+    
+	$(window).scroll(function(event) {
+		var $showMoreLink = $('#lnk_show_more');
+		if (isInViewport($showMoreLink)) {
+			$showMoreLink.click();
+		}
+	});    
   </script>
   
 </body>
