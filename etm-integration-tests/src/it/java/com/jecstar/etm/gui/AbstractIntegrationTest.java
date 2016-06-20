@@ -2,7 +2,6 @@ package com.jecstar.etm.gui;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -16,8 +15,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.firefox.MarionetteDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -30,23 +28,20 @@ public abstract class AbstractIntegrationTest {
 	public void setup() {
 //		this.driver = new HtmlUnitDriver(true);
 //		this.driver = new ChromeDriver();
-		File profileDir = new File("profiles/firefox");
-		if (!profileDir.exists()) {
-			profileDir.mkdirs();
-		}
-		FirefoxProfile profile = new FirefoxProfile(profileDir);
-		this.driver = new FirefoxDriver(profile);
+		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-0.8.0-linux64");
+		this.driver = new MarionetteDriver();
 	}
 	
 	@After
 	public void tearDown() {
 		if (this.driver != null) {
-			this.driver.close();
+			this.driver.quit();
+			this.driver = null;
 		}
 	}
 	
 	protected void getSecurePage(String url) {
-	    this.driver.get(url);
+	    this.driver.navigate().to(url);
 	    try {
 		    this.driver.findElement(By.id("j_username")).sendKeys("admin");     
 		    this.driver.findElement(By.id("j_password")).sendKeys("password");     
