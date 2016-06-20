@@ -27,7 +27,9 @@ public abstract class AbstractIntegrationTest {
 	@Before
 	public void setup() {
 //		this.driver = new HtmlUnitDriver(true);
+//		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 //		this.driver = new ChromeDriver();
+
 		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-0.8.0-linux64");
 		this.driver = new MarionetteDriver();
 	}
