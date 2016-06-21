@@ -448,8 +448,9 @@ public class SearchService extends AbstractJsonService {
 	public String getEventChain(@PathParam("type") String eventType, @PathParam("id") String eventId) {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
 				.addIds(eventId);
+		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
 		SearchResponse response =  client.prepareSearch("etm_event_all")
-			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
+			.setQuery(idsQueryBuilder)
 			.setFetchSource(new String[] {this.eventTags.getEndpointsTag() + ".*"}, null)
 			.setFrom(0)
 			.setSize(1)
@@ -632,9 +633,10 @@ public class SearchService extends AbstractJsonService {
 						"." + this.eventTags.getWritingEndpointHandlerTag() + 
 						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId));
 		final int scrollSize = 25;
+		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
 		SearchResponse response =  client.prepareSearch("etm_event_all")
 				.setTypes("http", "messaging")
-				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
+				.setQuery(findEventsQuery)
 				.addSort(SortBuilders.fieldSort("_doc"))
 				.setFetchSource(new String[] {
 						this.eventTags.getEndpointsTag() + ".*",
