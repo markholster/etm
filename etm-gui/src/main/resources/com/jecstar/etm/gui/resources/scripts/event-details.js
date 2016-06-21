@@ -767,7 +767,7 @@ function showEvent(scrollTo, type, id) {
 						});
 						cyEventChain = cytoscape({
 						  container: document.querySelector('#event-chain'),
-						  zoomingEnabled: false,
+						  zoomingEnabled: true,
 						  panningEnabled: true,
 						  boxSelectionEnabled: false,
 					  	  autounselectify: true, 						  
@@ -813,7 +813,9 @@ function showEvent(scrollTo, type, id) {
 						  
 						  layout: {
 							name: 'dagre',
-							rankDir: 'LR'
+							rankDir: 'LR',
+							fit: true
+							
 						  }
 						});
 						cyEventChain.center();
