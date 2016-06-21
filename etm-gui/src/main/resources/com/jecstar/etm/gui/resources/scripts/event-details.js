@@ -205,10 +205,12 @@ function showEvent(scrollTo, type, id) {
 	    if ("undefined" != typeof data.source.extracted_data) {
 	    	$eventTab.append(createDetailMap('extracts', data.source.extracted_data));
 	    }
+	    
+	    $eventTab.append($('<br/>'));
 	    $eventTab.append(
 	    		$('<div>').addClass('row').append(
 	    				$('<div>').addClass('col-sm-12').append(
-	    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.payload)
+	    						$('<pre>').attr('style', 'white-space: pre-wrap;').html(prettyPrintOne($("<div>").text(data.source.payload).html()))
 	    				)
 	    		)
 	    );
@@ -705,6 +707,7 @@ function showEvent(scrollTo, type, id) {
 					.addClass('tab-pane fade')
 					.append(
 							$('<div>').addClass('row').append(
+									$('<br/>'),
 									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
 							)
 					) 
@@ -770,7 +773,7 @@ function showEvent(scrollTo, type, id) {
 						  zoomingEnabled: true,
 						  panningEnabled: true,
 						  boxSelectionEnabled: false,
-					  	  autounselectify: true, 						  
+					  	  autounselectify: true, 	
 					  	  style: cytoscape.stylesheet()
 						    .selector('node')
 						      .css({
@@ -817,8 +820,13 @@ function showEvent(scrollTo, type, id) {
 							fit: true
 							
 						  }
+						}).ready(function () {
+							var maxZoom = this.maxZoom();
+							this.maxZoom(2);
+							this.fit();
+							this.maxZoom(maxZoom);
+							this.center();  
 						});
-						cyEventChain.center();
 				    }
 				});				
 			}
