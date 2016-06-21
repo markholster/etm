@@ -7,6 +7,7 @@ import java.util.List;
 class EventChainEvent {
 	
 	private String eventId;
+	private String correlationId;
 	
 	private String endpointName;
 	private EventChainItem writer;
@@ -24,6 +25,15 @@ class EventChainEvent {
 
 	public String getEventId() {
 		return this.eventId;
+	}
+	
+
+	public void setCorrelationId(String correlationId) {
+		this.correlationId = correlationId;
+	}
+	
+	public String getCorrelationId() {
+		return this.correlationId;
 	}
 	
 	public void setWriter(EventChainItem item) {
@@ -59,13 +69,47 @@ class EventChainEvent {
 	}
 	
 	public boolean isRequest() {
+		return getFirstEventChainItem().isRequest();
+	}
+	
+	public boolean isResponse() {
+		return getFirstEventChainItem().isResponse();
+	}
+	
+	public boolean isAsync() {
+		return getFirstEventChainItem().isAsync();
+	}
+	
+
+	public boolean isMissing() {
 		if (this.writer != null) {
-			return this.writer.isRequest();
+			if (!this.writer.isMissing()) {
+				return false;
+			}
 		}
-		if (!this.readers.isEmpty()) {
-			return this.readers.get(0).isRequest();
+		for (EventChainItem reader : this.readers) {
+			if (!reader.isMissing()) {
+				return false;
+			}
 		}
-		return false;
+		return true;
+	}
+	
+	
+	
+	/**
+	 * Gives the first item that occurred in this event. This is the writer, or
+	 * the first reader if no writer is present. Make sure the {@link #sort()}
+	 * method is called before calling this method if you want to retrieve the
+	 * first element in time.
+	 * 
+	 * @return The first item.
+	 */
+	public EventChainItem getFirstEventChainItem() {
+		if (this.writer != null) {
+			return this.writer;
+		}
+		return this.readers.get(0);
 	}
 	
 	@Override

@@ -1,5 +1,8 @@
 package com.jecstar.etm.gui.rest.services.search;
 
+import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+
 class EventChainItem {
 
 	private final String eventId;
@@ -11,7 +14,8 @@ class EventChainItem {
 	private String eventType;
 	private Long responseTime;
 	private Long expiry;
-	private boolean request;
+	private String subType;
+	private boolean missing;
 
 	EventChainItem(String transactionId, String eventId, long handlingTime) {
 		this.transactionId = transactionId;
@@ -44,13 +48,46 @@ class EventChainItem {
 		return this.correlationId;
 	}
 	
-	public EventChainItem setRequest(boolean request) {
-		this.request = request;
+	public EventChainItem setSubType(String subType) {
+		this.subType = subType;
 		return this;
+	}
+	
+	public String getSubType() {
+		return this.subType;
 	}
 
 	public boolean isRequest() {
-		return request;
+		if ("messaging".equals(this.eventType)) {
+			return MessagingEventType.REQUEST.name().equals(this.subType);
+		} else if ("http".equals(this.eventType)) {
+			return !HttpEventType.RESPONSE.name().equals(this.subType);
+		}
+		return false;
+	}
+	
+	public boolean isResponse() {
+		if ("messaging".equals(this.eventType)) {
+			return MessagingEventType.RESPONSE.name().equals(this.subType);
+		} else if ("http".equals(this.eventType)) {
+			return HttpEventType.RESPONSE.name().equals(this.subType);
+		}
+		return false;
+	}
+	
+	public boolean isAsync() {
+		if ("messaging".equals(this.eventType)) {
+			return MessagingEventType.FIRE_FORGET.name().equals(this.subType);
+		}
+		return false;
+	}
+	
+	public boolean isHttpEvent() {
+		return "http".equals(this.eventType);
+	}
+	
+	public boolean isMessagingEvent() {
+		return "messaging".equals(this.eventType);
 	}
 	
 	public EventChainItem setName(String name) {
@@ -96,6 +133,15 @@ class EventChainItem {
 	
 	public Long getExpiry() {
 		return this.expiry;
+	}
+	
+	public EventChainItem setMissing(boolean missing) {
+		this.missing = missing;
+		return this;
+	}
+	
+	public boolean isMissing() {
+		return this.missing;
 	}
 	
 	@Override

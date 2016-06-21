@@ -713,7 +713,7 @@ function showEvent(scrollTo, type, id) {
 			var target = $(e.target).attr("href") // activated tab
 			if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
 				var body = document.body, html = document.documentElement;
-				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 4;
+				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 2 * 1.2;
 				$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;');
 				$.ajax({
 				    type: 'GET',
@@ -730,23 +730,38 @@ function showEvent(scrollTo, type, id) {
 								var colorValue = Math.round(node.absolute_response_percentage * 178);
 								eventColorCode = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (178 - colorValue).toString(16)).slice(-2) + '34';
 							}
+							var color = node.type == 'application' || node.missing ? '#000000' : '#ffffff';
+							var borderColor = node.type == 'endpoint' ? '#98afc7' : '#b6b6b6';
+							var borderStyle = node.missing ? 'dotted' : 'solid';
+							var backgroundColor = node.missing ? '#ffffff' : (node.type == 'endpoint' ? '#98afc7' : '#b6b6b6');
 							nodesData.push({
 								data: {
 									id: node.id,
 									label: node.label,
 									width: 'label',
-									color: '#000',
-									background_color: node.type == 'endpoint' ? '#98afc7' : '#b6b6b6',
+									color: color,
+									border_style: borderStyle,
+									border_color: borderColor,
+									background_color: backgroundColor,
 									parent: node.parent
 								}
 							});
 						});
 						var edgesData = [];
 						$.each(data.edges, function (index, edge) {
+							var arrowColor = '#dddddd';
+							var arrowWidth = 3;
+							if ("undefined" != typeof edge.transition_time_percentage) {
+								var colorValue = Math.round(edge.transition_time_percentage * 178);
+								arrowColor = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (178 - colorValue).toString(16)).slice(-2) + '34';
+								arrowWidth += Math.round(edge.transition_time_percentage * 7);
+							}
 							edgesData.push({
 								data: {
 									source: edge.source,
-									target: edge.target
+									target: edge.target,
+									arrow_color: arrowColor,
+									arrow_width: arrowWidth
 								}
 							});
 						});
@@ -763,23 +778,32 @@ function showEvent(scrollTo, type, id) {
 						        'shape': 'roundrectangle',
 						        'width': 'label',
 						        'text-valign': 'center',
-						        'color': '#ffffff',
+						        'border-width': 2,
+						        'border-style': 'data(border_style)',
+						        'color': 'data(color)',
+						        'border-color': 'data(border_color)',
 						        'background-color': 'data(background_color)'
 						      })
 						    .selector('$node > node') 
 						      .css({
 						        'content': 'data(label)',
 						        'shape': 'roundrectangle',
-						        'color': '#000',
 						        'text-valign': 'top',
 						        'text-halign': 'center',
+						        'border-width': 2,
+						        'border-style': 'data(border_style)',
+						        'color': 'data(color)',
+						        'border-color': 'data(border_color)',
 						        'background-color': 'data(background_color)'						      
 						      })
 						    .selector('edge')
 						      .css({
 						      	'label': 'data(label)',
 						      	'edge-text-rotation': 'autorotate',
-						    	'width': 2,
+						      	'curve-style': 'bezier',
+						    	'width': 'data(arrow_width)',
+						    	'line-color': 'data(arrow_color)',
+						    	'target-arrow-color': 'data(arrow_color)',
 						        'target-arrow-shape': 'triangle'
 					      }),
 						  elements: {
