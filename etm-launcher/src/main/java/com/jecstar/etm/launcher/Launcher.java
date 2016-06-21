@@ -18,6 +18,7 @@ import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
+import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -35,6 +36,7 @@ public class Launcher {
 	private HttpServer httpServer;
 	private Client elasticClient;
 	private ScheduledReporter metricReporter;
+	private IbmMqProcessor ibmMqProcessor;
 
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration) {
@@ -51,6 +53,9 @@ public class Launcher {
 				System.setProperty("org.jboss.logging.provider", "slf4j");
 				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, etmConfiguration, this.processor, this.elasticClient);
 				this.httpServer.start();
+			}
+			if (configuration.ibmmqProcessorEnabled) {
+				
 			}
 			if (!commandLineParameters.isQuiet()) {
 				System.out.println("Enterprise Telemetry Monitor started.");
@@ -74,6 +79,9 @@ public class Launcher {
 			public void run() {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
+				}
+				if (Launcher.this.ibmMqProcessor != null) {
+					try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
 				}
 				if (Launcher.this.httpServer != null) {
 					try { Launcher.this.httpServer.stop(); } catch (Throwable t) {}

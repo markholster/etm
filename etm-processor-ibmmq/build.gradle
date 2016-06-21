@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":etm-processor"), dep_resteasyJaxrs
+    runtime files('lib/com.ibm.mq.allclient.jar')
+}

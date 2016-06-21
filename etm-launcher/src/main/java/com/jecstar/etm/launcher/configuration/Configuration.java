@@ -14,6 +14,7 @@ public class Configuration {
 
 	public boolean guiEnabled = true;
 	public boolean restProcessorEnabled = true;
+	public boolean ibmmqProcessorEnabled = false;
 	
 	public boolean isHttpServerNecessary() {
 		return this.restProcessorEnabled || this.guiEnabled;
