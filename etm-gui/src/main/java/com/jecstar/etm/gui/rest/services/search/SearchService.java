@@ -552,9 +552,11 @@ public class SearchService extends AbstractJsonService {
 					}
 					// Add the connection from the writer to the endpoint.
 					result.append("{\"source\": " + escapeToJson(event.getWriter().getKey(), true) 
-							+ ", \"target\": " + escapeToJson(event.getEventId(), true)
-							+ "}");
-					// No edge time because the endpoint time is the same as the writer time.
+							+ ", \"target\": " + escapeToJson(event.getEventId(), true));
+					if (!event.getWriter().isMissing()) {
+						result.append(", \"transition_time_percentage\": 0.0");
+					}
+					result.append("}");
 					first = false;			
 				}
 				for (EventChainItem item : event.getReaders()) {

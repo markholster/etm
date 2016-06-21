@@ -172,6 +172,9 @@ public class EventChain {
 		if (event.getWriter() == null) {
 			return null;
 		}
+		if (item.isMissing()) {
+			return null;
+		}
 		long endpointTime = item.getHandlingTime() - event.getWriter().getHandlingTime();
 		if (endpointTime <= 0) {
 			return 0f;
@@ -196,6 +199,9 @@ public class EventChain {
 	}
 
 	public Float calculateEdgePercentageFromItemToItem(EventChainItem reader, EventChainItem writer) {
+		if (reader.isMissing() || writer.isMissing()) {
+			return null;
+		}
 		long handlingTime = writer.getHandlingTime() - reader.getHandlingTime();
 		if (handlingTime <= 0) {
 			return null;

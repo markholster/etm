@@ -713,7 +713,7 @@ function showEvent(scrollTo, type, id) {
 			var target = $(e.target).attr("href") // activated tab
 			if (target == '#event-chain-tab' && !$('#event-chain > div > canvas').length) {
 				var body = document.body, html = document.documentElement;
-				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 2 * 1.2;
+				var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) * 0.40;
 				$('#event-chain').attr('style', 'height: ' + height+ 'px; width: 100%;');
 				$.ajax({
 				    type: 'GET',
@@ -750,11 +750,11 @@ function showEvent(scrollTo, type, id) {
 						var edgesData = [];
 						$.each(data.edges, function (index, edge) {
 							var arrowColor = '#dddddd';
-							var arrowWidth = 3;
+							var arrowWidth = 2;
 							if ("undefined" != typeof edge.transition_time_percentage) {
 								var colorValue = Math.round(edge.transition_time_percentage * 178);
 								arrowColor = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (178 - colorValue).toString(16)).slice(-2) + '34';
-								arrowWidth += Math.round(edge.transition_time_percentage * 7);
+								arrowWidth += Math.round(edge.transition_time_percentage * 8);
 							}
 							edgesData.push({
 								data: {
