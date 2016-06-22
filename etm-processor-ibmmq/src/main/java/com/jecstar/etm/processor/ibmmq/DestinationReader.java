@@ -7,6 +7,7 @@ import com.ibm.mq.MQDestination;
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
 import com.ibm.mq.MQMessage;
+import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
@@ -15,6 +16,7 @@ import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.HandlerResult;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -57,8 +59,9 @@ public class DestinationReader implements Runnable {
 		getOptions.options = this.destination.getDestinationGetOptions();
 		this.lastCommitTime = System.currentTimeMillis();
 		while (!this.stop) {
+			MQMessage message = null;
 			try {
-				MQMessage message = new MQMessage();
+				message = new MQMessage();
 				this.mqDestination.get(message, getOptions);
 				byte[] byteContent = new byte[message.getMessageLength()];
 				message.readFully(byteContent);
@@ -74,16 +77,16 @@ public class DestinationReader implements Runnable {
 					}
 				}
 				if (!HandlerResult.PROCESSED.equals(result)) {
-					// TODO, naar een backout queue o.i.d?
+					tryBackout(message);
 				}
-				message.clearMessage();
-				if (++this.counter >= this.destination.getCommitSize()) {
+				this.counter++;
+				if (shouldCommit()) {
 					commit();
 				}
 			} catch (MQException e) {
 				if (e.completionCode == 2 && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
 					// No message available, retry
-					if (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitInterval()) {
+					if (shouldCommit()) {
 						commit();
 					}
 					continue;
@@ -117,9 +120,22 @@ public class DestinationReader implements Runnable {
 							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Retrying.");
 						}
 				}
-			} catch (IOException e) {
-				if (log.isDebugLevelEnabled()) {
-					log.logDebugMessage("Failed to read message content", e);
+			} catch (EtmException | IOException e) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Failed to process message. Try to put it on the backout queue", e);
+				}
+				if (tryBackout(message)) {
+					this.counter++;
+					if (shouldCommit()) {
+						commit();
+					}
+				}
+			} finally {
+				if (message != null) {
+					try {
+						message.clearMessage();
+					} catch (IOException e) {
+					}
 				}
 			}
 			if (Thread.interrupted()) {
@@ -142,6 +158,10 @@ public class DestinationReader implements Runnable {
 		}
 		this.counter = 0;
 		this.lastCommitTime = System.currentTimeMillis();		
+	}
+	
+	private boolean shouldCommit() {
+		return (this.counter >= this.destination.getCommitSize()) || (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitInterval());
 	}
 	
 	private void connect() {
@@ -207,6 +227,28 @@ public class DestinationReader implements Runnable {
 			log.logDebugMessage("Disconnected from queuemanager");
 		}
 	}
+	
+	private boolean tryBackout(MQMessage message) {
+		MQQueue backoutQueue = null;
+		try {
+			String backoutQueueName = this.mqDestination.getAttributeString(CMQC.MQCA_BACKOUT_REQ_Q_NAME, 48);
+			if (backoutQueueName != null && backoutQueueName.trim().length() > 0) {
+				backoutQueue = this.mqQueueManager.accessQueue(backoutQueueName.trim(), CMQC.MQOO_OUTPUT + CMQC.MQOO_FAIL_IF_QUIESCING);
+			}
+			backoutQueue.put(message);
+			backoutQueue.close();
+			return true;
+		} catch (MQException e) {
+			if (backoutQueue != null) {
+				try {
+					backoutQueue.close();
+				} catch (MQException e1) {
+				}
+			}
+		}
+		return false;
+	}
+
 	
 	public void stop() {
 		this.stop = true;
