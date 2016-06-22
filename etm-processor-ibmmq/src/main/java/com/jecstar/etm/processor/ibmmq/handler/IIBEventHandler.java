@@ -33,6 +33,7 @@ import com.ibm.mq.headers.MQDataException;
 import com.ibm.mq.headers.MQMD;
 import com.ibm.mq.headers.MQRFH2;
 import com.jecstar.etm.domain.EndpointHandler;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.domain.builders.ApplicationBuilder;
 import com.jecstar.etm.domain.builders.BusinessTelemetryEventBuilder;
@@ -42,6 +43,7 @@ import com.jecstar.etm.domain.builders.HttpTelemetryEventBuilder;
 import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
 import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.domain.builders.SqlTelemetryEventBuilder;
+import com.jecstar.etm.domain.builders.TelemetryEventBuilder;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.ibmmq.event.ApplicationData.ComplexContent;
@@ -101,49 +103,23 @@ public class IIBEventHandler {
 
 	@SuppressWarnings("unchecked")
 	private HandlerResult process(Event event) {
-		int encoding = -1;
-		int ccsid = -1;
 		// We use the event name field as it is the only field that can be set with hard values. All other fields can only be set with xpath values from the message payload. 
-		String eventData = event.getEventPointData().getEventData().getEventIdentity().getEventName();
-		HashMap<String, Object> eventMetaData = this.objectMapper.readValue(eventData, HashMap.class);
-		String eventType =  this.jsonConverter.getString("type", eventMetaData);
-		CommandType commandType = TelemetryCommand.CommandType.valueOfStringType(eventType);
-		if (commandType == null) {
+		String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
+		if (nodeType == null) {
 			return HandlerResult.FAILED;
 		}
-	    switch (commandType) {
-	    case BUSINESS_EVENT:
-	    	processAsBusinessEvent(event, eventMetaData);
-	    	this.telemetryCommandProcessor.processTelemetryEvent(this.businessTelemetryEventBuilder);
-	    	break;
-	    case HTTP_EVENT:
-	    	processAsHttpEvent(event, eventMetaData);
-	    	this.telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEventBuilder);
-	    	break;
-	    case LOG_EVENT:
-	    	processAsLogEvent(event, eventMetaData);
-	    	this.telemetryCommandProcessor.processTelemetryEvent(this.logTelemetryEventBuilder);
-	    	break;
-	    case MESSAGING_EVENT:
-	    	processAsMessagingpEvent(event, eventMetaData);
-	    	this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
-	    	break;
-// SQL events not yet supported	    	
-	    case SQL_EVENT:
-//	    	processAsSqlEvent(event, eventMetaData);
-//	    	this.telemetryCommandProcessor.processTelemetryEvent(this.sqlTelemetryEventBuilder);
-	    	break;
-	    }		
+		// See https://www.ibm.com/support/knowledgecenter/SSMKHH_10.0.0/com.ibm.etools.mft.doc/as36001_.htm for node types.
+		if (nodeType.startsWith("ComIbmMQ")) {
+			return processAsMessagingEvent(event);
+		} else if (nodeType.startsWith("ComIbmHTTP") ||
+				nodeType.startsWith("ComIbmWS") ||
+				(nodeType.startsWith("ComIbmSOAP") && !nodeType.equals("ComIbmSOAPWrapperNode") && !nodeType.equals("ComIbmSOAPExtractNode"))) {
+			return processAsHttpEvent(event);
+		} else {
+			return HandlerResult.FAILED;
+		}
 		
-		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
-			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
-				if ("Encoding".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
-					encoding = Integer.valueOf(simpleContent.getValue());
-				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
-					ccsid = Integer.valueOf(simpleContent.getValue());
-				} 
-			}
-		}	
+		
 		telemetryEvent.creationTime.setTime(event.getEventPointData().getEventData().getEventSequence().getCreationTime().toGregorianCalendar().getTimeInMillis());
 		putNonNullDataInMap("IIB_LocalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId(), telemetryEvent.correlationData);
 		putNonNullDataInMap("IIB_ParentTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getParentTransactionId(), telemetryEvent.correlationData);
@@ -236,29 +212,106 @@ public class IIBEventHandler {
 		return false;
 	}
 
-	private void processAsBusinessEvent(Event event, Map<String, Object> eventMetaData) {
-		this.businessTelemetryEventBuilder.initialize();
-		EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event, eventMetaData);
-		EndpointBuilder endpointBuilder = new EndpointBuilder().setWritingEndpointHandler(endpointHandlerBuilder);
-		String endpoint = this.jsonConverter.getString("endpoint", eventMetaData);
-		endpointBuilder.setName(endpoint);
-		this.businessTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
-		this.telemetryCommandProcessor.processTelemetryEvent(this.businessTelemetryEventBuilder);
-		// TODO add message payload.
+	@SuppressWarnings("unchecked")
+	private HandlerResult processAsMessagingEvent(Event event) {
+		this.messagingTelemetryEventBuilder.initialize();
+		int encoding = -1;
+		int ccsid = -1;
+		// Determine the encoding & ccsid based on values from the event.
+		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
+			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
+				if ("Encoding".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
+					encoding = Integer.valueOf(simpleContent.getValue());
+				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
+					ccsid = Integer.valueOf(simpleContent.getValue());
+				} 
+			}
+		}	
+	
+		EndpointBuilder endpointBuilder = new EndpointBuilder();
+		// TODO, filteren op output terminal? Events op de in terminal van de MqOutputNode hebben nog geen msg id.
+		if (event.getApplicationData() != null && event.getApplicationData().getComplexContent() != null) {
+			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
+				if (!("DestinationData".equals(complexContent.getElementName())
+						|| "WrittenDestination".equals(complexContent.getElementName()))) {
+					continue;
+				}
+				NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");
+				if (nodeList.getLength() > 0) {
+					endpointBuilder.setName(nodeList.item(0).getTextContent() != null ? nodeList.item(0).getTextContent().trim() : null);
+				}
+				nodeList = complexContent.getAny().getElementsByTagName("msgId");
+				if (nodeList.getLength() > 0) {
+					this.messagingTelemetryEventBuilder.setId(nodeList.item(0).getTextContent());
+				}
+				nodeList = complexContent.getAny().getElementsByTagName("correlId");
+				if (nodeList.getLength() > 0) {
+					String correlId = nodeList.item(0).getTextContent();
+					if (correlId.replaceAll("0", "").trim().length() != 0) {
+						this.messagingTelemetryEventBuilder.setCorrelationId(correlId);
+					}
+				}
+			}
+		}
+		// Add some flow information
+		addSourceInformation(event, this.messagingTelemetryEventBuilder);
+		EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event);
+		String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
+		if ("ComIbmMQInputNode".equals(nodeType) || "ComIbmMQGetNode".equals(nodeType)) {
+			endpointBuilder.addReadingEndpointHandler(endpointHandlerBuilder);
+		} else {
+			endpointBuilder.setWritingEndpointHandler(endpointHandlerBuilder);
+		}
+		this.messagingTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
+		if (event.getBitstreamData() == null|| event.getBitstreamData().getBitstream() == null) {
+			return HandlerResult.FAILED;
+		}
+		if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage("Bitstream encoding type '" + event.getBitstreamData().getBitstream().getEncoding().hashCode()
+								+ "' not supported. Use '" + EncodingType.BASE_64_BINARY.name() + "' instead.");
+			}
+			return HandlerResult.FAILED;
+		}
+		byte[] decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
+		try {
+			parseBitstreamAsMqMessage(decoded, this.messagingTelemetryEventBuilder, encoding, ccsid);
+		} catch (MQDataException | IOException e) {
+			return HandlerResult.FAILED;
+		}	
+		this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
+		return HandlerResult.PROCESSED;
 	}
 	
-	private void processAsLogEvent(Event event, Map<String, Object> eventMetaData) {
-		this.logTelemetryEventBuilder.initialize();
-		EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event, eventMetaData);
-		EndpointBuilder endpointBuilder = new EndpointBuilder().setWritingEndpointHandler(endpointHandlerBuilder);
-		String endpoint = this.jsonConverter.getString("endpoint", eventMetaData);
-		endpointBuilder.setName(endpoint);
-		this.logTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
-		this.telemetryCommandProcessor.processTelemetryEvent(this.businessTelemetryEventBuilder);
-		// TODO add message payload.
+	private HandlerResult processAsHttpEvent(Event event) {
+		this.httpTelemetryEventBuilder.initialize();
+		return HandlerResult.PROCESSED;
 	}
 	
-	private EndpointHandlerBuilder createEndpointHandlerBuilder(Event event, Map<String, Object> eventMetaData) {
+	private void addSourceInformation(Event event, TelemetryEventBuilder<?, ?> builder) {
+		putNonNullDataInMap("IIB_LocalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId(), builder.getCorrelationData());
+		putNonNullDataInMap("IIB_ParentTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getParentTransactionId(), builder.getCorrelationData());
+		putNonNullDataInMap("IIB_GlobalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getGlobalTransactionId(), builder.getCorrelationData());
+		putNonNullDataInMap("IIB_Node", event.getEventPointData().getMessageFlowData().getBroker().getName(), builder.getMetadata());
+		putNonNullDataInMap("IIB_Server", event.getEventPointData().getMessageFlowData().getExecutionGroup().getName(), builder.getMetadata());
+		putNonNullDataInMap("IIB_MessageFlow", event.getEventPointData().getMessageFlowData().getMessageFlow().getName(), builder.getMetadata());
+		putNonNullDataInMap("IIB_MessageFlowNode", event.getEventPointData().getMessageFlowData().getNode().getNodeLabel(), builder.getMetadata());
+		putNonNullDataInMap("IIB_MessageFlowNodeTerminal", event.getEventPointData().getMessageFlowData().getNode().getTerminal(), builder.getMetadata());
+		putNonNullDataInMap("IIB_MessageFlowNodeType", event.getEventPointData().getMessageFlowData().getNode().getNodeType(), builder.getMetadata());		
+	}
+	
+	@SuppressWarnings("unchecked")
+	private EndpointHandlerBuilder createEndpointHandlerBuilder(Event event) {
+		// Try to parse some metadata that can be "hidden" in the event name.
+		String eventData = event.getEventPointData().getEventData().getEventIdentity().getEventName();
+		HashMap<String, Object> eventMetaData = new HashMap<>();
+		try {
+			eventMetaData = this.objectMapper.readValue(eventData, HashMap.class);
+		} catch (IOException e) {
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Event name does not contain ETM metadata.");
+			}
+		}
 		EndpointHandlerBuilder builder = new EndpointHandlerBuilder();
 		long epochMillis = event.getEventPointData().getEventData().getEventSequence().getCreationTime().toGregorianCalendar().getTimeInMillis();
 		builder.setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC));
@@ -278,20 +331,20 @@ public class IIBEventHandler {
 		return builder;
 	}
 
-	private void parseBitstreamAsMqMessage(byte[] decodedBitstream, TelemetryEvent telemetryEvent, int encoding, int ccsid)
-			throws MQDataException, IOException, ParseException {
+	private void parseBitstreamAsMqMessage(byte[] decodedBitstream, MessagingTelemetryEventBuilder builder, int encoding, int ccsid)
+			throws MQDataException, IOException {
 		if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
 			try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
 				MQMD mqmd = new MQMD(inputData);
-				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_Priority", "" + mqmd.getPriority(), telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr() != null ? mqmd.getReplyToQMgr().trim() : null, telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ() != null ? mqmd.getReplyToQ().trim() : null, telemetryEvent.metadata);
-				putNonNullDataInMap("MQMD_BackoutCount", "" + mqmd.getBackoutCount(), telemetryEvent.metadata);
+				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), builder.getMetadata());
+				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, builder.getMetadata());
+				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), builder.getMetadata());
+				putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), builder.getMetadata());
+				putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), builder.getMetadata());
+				putNonNullDataInMap("MQMD_Priority", "" + mqmd.getPriority(), builder.getMetadata());
+				putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr() != null ? mqmd.getReplyToQMgr().trim() : null, builder.getMetadata());
+				putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ() != null ? mqmd.getReplyToQ().trim() : null, builder.getMetadata());
+				putNonNullDataInMap("MQMD_BackoutCount", "" + mqmd.getBackoutCount(), builder.getMetadata());
 				if (mqmd.getFormat().equals(MQConstants.MQFMT_RF_HEADER_2)) {
 					new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
 					// TODO Do something with RFH2 header?
@@ -300,36 +353,34 @@ public class IIBEventHandler {
 				byte[] remaining = new byte[inputData.available()];
 				inputData.readFully(remaining);
 	
-				telemetryEvent.content = new String(remaining, codepage);
-				if (telemetryEvent.id == null) {
+				builder.setPayload(new String(remaining, codepage));
+				if (builder.getId() == null) {
 					// Event can be set earlier in case of ComIbmMQOutputNode, in that case we have to skip the set because it may fail.
-					telemetryEvent.id = byteArrayToString(mqmd.getMsgId());
+					builder.setId(byteArrayToString(mqmd.getMsgId()));
 				}
-				if (telemetryEvent.correlationId == null) {
+				if (builder.getCorrelationId() == null) {
 					// Event can be set earlier in case of ComIbmMQOutputNode, in that case we have to skip the set because it may fail. s	
 					if (mqmd.getCorrelId() != null && mqmd.getCorrelId().length > 0) {
-						telemetryEvent.correlationId = byteArrayToString(mqmd.getCorrelId());
+						builder.setCorrelationId(byteArrayToString(mqmd.getCorrelId()));
 					}
 				}
 				if (CMQC.MQEI_UNLIMITED != mqmd.getExpiry()) {
-					long expiryTime = this.dateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime() + (mqmd.getExpiry() * 100);
-					telemetryEvent.expiryTime.setTime(expiryTime);
+					try {
+						long expiryTime = this.dateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime() + (mqmd.getExpiry() * 100);
+						telemetryEvent.expiryTime.setTime(expiryTime);
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 				int ibmMsgType = mqmd.getMsgType();
 				if (ibmMsgType == CMQC.MQMT_REQUEST) {
-					telemetryEvent.type = TelemetryEventType.MESSAGE_REQUEST;
+					builder.setMessagingEventType(MessagingEventType.REQUEST);
 				} else if (ibmMsgType == CMQC.MQMT_REPLY) {
-					telemetryEvent.type = TelemetryEventType.MESSAGE_RESPONSE;
+					builder.setMessagingEventType(MessagingEventType.RESPONSE);
 				} else if (ibmMsgType == CMQC.MQMT_DATAGRAM) {
-					telemetryEvent.type = TelemetryEventType.MESSAGE_DATAGRAM;
+					builder.setMessagingEventType(MessagingEventType.FIRE_FORGET);
 				}
-			}
-		} else {
-			if (ccsid != -1) {
-				String codepage = CCSID.getCodepage(ccsid);
-				telemetryEvent.content = new String(decodedBitstream, codepage);
-			} else {
-				telemetryEvent.content = new String(decodedBitstream);
 			}
 		}
 	}
@@ -377,13 +428,13 @@ public class IIBEventHandler {
 		}
 	}
 	
-	private void putNonNullDataInMap(String key, String value, Map<String, String> map) {
+	private void putNonNullDataInMap(String key, String value, Map<String, Object> map) {
 		if (value != null && value.trim().length() > 0) {
 			map.put(key, value.trim());
 		}
 	}
 
-	private void putNonNullDataInMap(String key, byte[] value, Map<String, String> map) {
+	private void putNonNullDataInMap(String key, byte[] value, Map<String, Object> map) {
 		if (value != null && value.length > 0) {
 			putNonNullDataInMap(key, byteArrayToString(value), map);
 		}

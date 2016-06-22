@@ -30,11 +30,19 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 		this.event.id = id;
 		return (Builder) this;
 	}
+	
+	public String getId() {
+		return this.event.id;
+	}
 
 	@SuppressWarnings("unchecked")
 	public Builder setCorrelationId(String correlationId) {
 		this.event.correlationId = correlationId;
 		return (Builder) this;
+	}
+	
+	public String getCorrelationId() {
+		return this.event.correlationId;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -53,6 +61,10 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 	public Builder addCorrelationData(String key, Object value) {
 		this.event.correlationData.put(key, value);
 		return (Builder) this;		
+	}
+	
+	public Map<String, Object> getCorrelationData() {
+		return this.event.correlationData;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -118,6 +130,10 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 	public Builder addMetadata(String key, Object value) {
 		this.event.metadata.put(key, value);
 		return (Builder) this;
+	}
+	
+	public Map<String, Object> getMetadata() {
+		return this.event.metadata;
 	}
 
 	@SuppressWarnings("unchecked")
