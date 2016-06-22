@@ -3,29 +3,18 @@ package com.jecstar.etm.processor.ibmmq;
 import java.io.IOException;
 import java.util.Hashtable;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.mq.MQDestination;
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
 import com.ibm.mq.MQMessage;
 import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.CMQC;
-import com.jecstar.etm.domain.BusinessTelemetryEvent;
-import com.jecstar.etm.domain.HttpTelemetryEvent;
-import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.MessagingTelemetryEvent;
-import com.jecstar.etm.domain.SqlTelemetryEvent;
-import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
 import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.HandlerResult;
+import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
-import com.jecstar.etm.server.core.domain.converter.json.BusinessTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -34,8 +23,6 @@ public class DestinationReader implements Runnable {
 	private static final LogWrapper log = LogFactory.getLogger(DestinationReader.class);
 
 	private final String configurationName;
-	private final TelemetryCommandProcessor processor;
-
 	
 	private final QueueManager queueManager;
 	private final Destination destination;
@@ -52,18 +39,15 @@ public class DestinationReader implements Runnable {
 	
 	// Handlers
 	private final EtmEventHandler etmEventHandler;
-//	private final IIBEventHandler iibEventHandler;
-//	private final ClonedMessageHandler clonedMessageHandler;
+	private final IIBEventHandler iibEventHandler;
 
 	
 	public DestinationReader(String configurationName, final TelemetryCommandProcessor processor, final QueueManager queueManager, final Destination destination) {
 		this.configurationName = configurationName;
-		this.processor = processor;
 		this.queueManager = queueManager;
 		this.destination = destination;
 		this.etmEventHandler = new EtmEventHandler(processor);
-//		this.iibEventHandler = new IIBEventHandler(processor.getEtmConfiguration());
-//		this.clonedMessageHandler = new ClonedMessageHandler();
+		this.iibEventHandler = new IIBEventHandler(processor);
 	}
 	@Override
 	public void run() {
@@ -82,15 +66,15 @@ public class DestinationReader implements Runnable {
 				if ("etmevent".equalsIgnoreCase(this.destination.getMessageTypes())) {
 					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
 				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessageTypes())) {
-					result = this.processor.processTelemetryEvent(this.telemetryEvent);
+					result = this.iibEventHandler.handleMessage(message.messageId, byteContent);
 				} else {
-					if(this.etmEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
-						this.processor.processTelemetryEvent(this.telemetryEvent);
-					} else if (this.iibEventHandler.handleMessage(this.telemetryEvent, byteContent)) {
-						this.processor.processTelemetryEvent(this.telemetryEvent);
-					} else {
-						// TODO naar de backout queue?
+					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
+					if (HandlerResult.PARSE_FAILURE.equals(result)) {
+						result = this.iibEventHandler.handleMessage(message.messageId, byteContent);
 					}
+				}
+				if (!HandlerResult.PROCESSED.equals(result)) {
+					// TODO, naar een backout queue o.i.d?
 				}
 				message.clearMessage();
 				if (++this.counter >= this.destination.getCommitSize()) {
@@ -130,7 +114,7 @@ public class DestinationReader implements Runnable {
 					break;
 					default:
 						if (log.isInfoLevelEnabled()) {
-							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Trying to reconnect.");
+							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Retrying.");
 						}
 				}
 			} catch (IOException e) {

@@ -141,6 +141,10 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 		this.event.payload = payload;
 		return (Builder) this;
 	}
+	
+	public String getPayload() {
+		return this.event.payload;
+	}
 
 	@SuppressWarnings("unchecked")
 	public Builder setPayloadFormat(PayloadFormat payloadFormat) {
