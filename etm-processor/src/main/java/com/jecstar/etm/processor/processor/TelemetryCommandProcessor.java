@@ -213,6 +213,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (this.started && event.isAnyChanged(
 				EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
 				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT)) {
+			// TODO check for more options that need a restart, like changing the buffer size.
 			// Configuration changed in such a way that the DisruptorEnvironment needs to be recreated/restarted.
 			try {
 				hotRestart();

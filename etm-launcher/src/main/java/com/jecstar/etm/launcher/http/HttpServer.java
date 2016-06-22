@@ -100,7 +100,7 @@ public class HttpServer {
 			}
 		}
 		this.server = builder.setHandler(root).build();
-		if (this.configuration.restProcessorEnabled) {
+		if (this.configuration.http.restProcessorEnabled) {
 			DeploymentInfo di = createProcessorDeploymentInfo(processor, null);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
@@ -116,7 +116,7 @@ public class HttpServer {
 				}
 			}
 		}
-		if (this.configuration.guiEnabled) {
+		if (this.configuration.http.guiEnabled) {
 			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();

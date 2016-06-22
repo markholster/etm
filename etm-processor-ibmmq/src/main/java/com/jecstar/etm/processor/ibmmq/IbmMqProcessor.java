@@ -1,16 +1,8 @@
 package com.jecstar.etm.processor.ibmmq;
 
-import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
+public interface IbmMqProcessor {
+	
+	public void stop();
 
-public class IbmMqProcessor {
-
-	private TelemetryCommandProcessor processor;
-
-	public IbmMqProcessor(TelemetryCommandProcessor processor, IbmMqProcessorConfiguration config) {
-		this.processor = processor;
-	}
-
-	public void stop() {
-		// TODO Auto-generated method stub
-	}
+	public void start();
 }

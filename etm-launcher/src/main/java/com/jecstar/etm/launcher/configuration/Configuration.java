@@ -1,5 +1,7 @@
 package com.jecstar.etm.launcher.configuration;
 
+import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
+
 public class Configuration {
 
 	public String clusterName = "Enterprise Telemetry Monitor";
@@ -11,13 +13,11 @@ public class Configuration {
 	public Elasticsearch elasticsearch = new Elasticsearch();
 	public Http http = new Http();
 	public Logging logging = new Logging();
-
-	public boolean guiEnabled = true;
-	public boolean restProcessorEnabled = true;
-	public boolean ibmmqProcessorEnabled = false;
 	
+	public IbmMq ibmMq = new IbmMq();
+
 	public boolean isHttpServerNecessary() {
-		return this.restProcessorEnabled || this.guiEnabled;
+		return this.http.restProcessorEnabled || this.http.guiEnabled;
 	}
 	
 	public int getHttpPort() {

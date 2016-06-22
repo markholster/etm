@@ -4,6 +4,9 @@ import java.io.File;
 
 public class Http {
 
+	public boolean guiEnabled = true;
+	public boolean restProcessorEnabled = true;
+	
 	public int httpPort = 8080;
 	public int httpsPort = 8443;
 	

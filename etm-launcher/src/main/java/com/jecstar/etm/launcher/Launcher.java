@@ -1,5 +1,6 @@
 package com.jecstar.etm.launcher;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
@@ -19,6 +20,7 @@ import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
+import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -54,8 +56,8 @@ public class Launcher {
 				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, etmConfiguration, this.processor, this.elasticClient);
 				this.httpServer.start();
 			}
-			if (configuration.ibmmqProcessorEnabled) {
-				
+			if (configuration.ibmMq.enabled) {
+				initializeMqProcessor(configuration);
 			}
 			if (!commandLineParameters.isQuiet()) {
 				System.out.println("Enterprise Telemetry Monitor started.");
@@ -131,6 +133,24 @@ public class Launcher {
 		this.elasticClient = transportClient;
 		new ElasticsearchIndextemplateCreator().createTemplates(this.elasticClient);
 	}
+	
+	private void initializeMqProcessor(Configuration configuration) {
+		try {
+			Class<?> clazz = Class.forName("com.jecstar.etm.processor.ibmmq.IbmMqProcessorImpl");
+			this.ibmMqProcessor = (IbmMqProcessor) clazz
+					.getConstructor(TelemetryCommandProcessor.class, IbmMq.class, String.class).newInstance(
+							this.processor, configuration.ibmMq, configuration.clusterName, configuration.instanceName);
+			this.ibmMqProcessor.start();
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage(
+						"Unable to instantiate Ibm MQ Processor. Is the \"com.ibm.mq.allclient.jar\" file added to the lib directory?",
+						e);
+			}
+		}
+	}
+	
 	
 	private void initializeMetricReporter(MetricRegistry metricRegistry, Configuration configuration) {
 		this.metricReporter = new MetricReporterElasticImpl(metricRegistry, configuration.instanceName, this.elasticClient);
