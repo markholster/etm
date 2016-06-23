@@ -66,9 +66,9 @@ public class DestinationReader implements Runnable {
 				byte[] byteContent = new byte[message.getMessageLength()];
 				message.readFully(byteContent);
 				HandlerResult result = null;
-				if ("etmevent".equalsIgnoreCase(this.destination.getMessageTypes())) {
+				if ("etmevent".equalsIgnoreCase(this.destination.getMessagesType())) {
 					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
-				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessageTypes())) {
+				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessagesType())) {
 					result = this.iibEventHandler.handleMessage(message.messageId, byteContent);
 				} else {
 					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);

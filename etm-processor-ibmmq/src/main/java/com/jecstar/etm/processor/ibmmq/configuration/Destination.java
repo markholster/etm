@@ -7,7 +7,7 @@ public class Destination {
 	private String name;
 	private String type = "queue";
 	private int nrOfListeners = 1;
-	private String messageTypes = "auto"; // iibevent, etmevent  
+	private String messagesType = "auto"; // iibevent, etmevent  
 	
 	private int commitSize = 500;
 	private int commitInterval = 10000;
@@ -47,18 +47,17 @@ public class Destination {
 		this.nrOfListeners = nrOfListeners;
 	}
 	
-	public String getMessageTypes() {
-		return this.messageTypes;
+	public String getMessagesType() {
+		return this.messagesType;
 	}
 	
-	public void setMessageTypes(String messageTypes) {
-		if (!"auto".equalsIgnoreCase(messageTypes) 
-				&& !"clone".equalsIgnoreCase(messageTypes)
-				&& !"iibevent".equalsIgnoreCase(messageTypes)
-				&& !"etmevent".equalsIgnoreCase(messageTypes)) {
-			throw new IllegalArgumentException("'" + messageTypes + "' is an invalid messages type.");
+	public void setMessagesType(String messagesType) {
+		if (!"auto".equalsIgnoreCase(messagesType) 
+				&& !"iibevent".equalsIgnoreCase(messagesType)
+				&& !"etmevent".equalsIgnoreCase(messagesType)) {
+			throw new IllegalArgumentException("'" + messagesType + "' is an invalid messages type.");
 		}
-		this.messageTypes = messageTypes;
+		this.messagesType = messagesType;
 	}
 	
 	public int getCommitSize() {
