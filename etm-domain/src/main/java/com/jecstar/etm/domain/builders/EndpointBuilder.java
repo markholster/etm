@@ -20,6 +20,10 @@ public class EndpointBuilder {
 		return this;
 	}
 	
+	public String getName() {
+		return this.endpoint.name;
+	}
+	
 	public EndpointBuilder setWritingEndpointHandler(EndpointHandler writingEndpointHandler) {
 		this.endpoint.writingEndpointHandler = writingEndpointHandler;
 		return this;

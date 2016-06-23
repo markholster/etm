@@ -138,8 +138,16 @@ public class Launcher {
 		try {
 			Class<?> clazz = Class.forName("com.jecstar.etm.processor.ibmmq.IbmMqProcessorImpl");
 			this.ibmMqProcessor = (IbmMqProcessor) clazz
-					.getConstructor(TelemetryCommandProcessor.class, IbmMq.class, String.class).newInstance(
-							this.processor, configuration.ibmMq, configuration.clusterName, configuration.instanceName);
+					.getConstructor(
+							TelemetryCommandProcessor.class, 
+							IbmMq.class, 
+							String.class,
+							String.class
+						).newInstance(
+							this.processor, 
+							configuration.ibmMq, 
+							configuration.clusterName, 
+							configuration.instanceName);
 			this.ibmMqProcessor.start();
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
