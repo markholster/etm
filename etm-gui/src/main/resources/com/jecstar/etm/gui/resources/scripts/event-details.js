@@ -297,14 +297,19 @@ function showEvent(scrollTo, type, id) {
 												$('<thead>').append($('<tr>').append($('<th>').attr('style', 'padding: 0.1rem;').text('Name')).append($('<th>').attr('style', 'padding: 0.1rem;').text('Value')))
 										).append(function () {
 											$tbody = $('<tbody>');
-								            $.each(valueMap, function(key, value) {
+											var detailItems = [];
+											$.each(valueMap, function(key, value) {
 								            	if (endsWith(key, '_as_number') || endsWith(key, '_as_boolean') || endsWith(key, '_as_date')) {
 								            		return true;
 								            	}
+											 	detailItems.push( { key: key, value: value } );
+											});
+											detailItems.sort(function(item1,item2){ return item1.key.localeCompare(item2.key);});
+								            $.each(detailItems, function(index, item) {
 								            	$tbody.append(
 								            			$('<tr>').append(
-								            					$('<td>').attr('style', 'padding: 0.1rem;').text(key),
-								            					$('<td>').attr('style', 'padding: 0.1rem;').text(value)
+								            					$('<td>').attr('style', 'padding: 0.1rem;').text(item.key),
+								            					$('<td>').attr('style', 'padding: 0.1rem;').text(item.value)
 								            			)
 								            	);
 								            });
