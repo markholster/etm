@@ -44,10 +44,14 @@ public class JsonConverter extends JsonWriter {
 	}
 	
 	public String getString(String tag, Map<String, Object> valueMap) {
+		return getString(tag, valueMap, null);
+	}
+	
+	public String getString(String tag, Map<String, Object> valueMap, String defaultValue) {
 		if (valueMap.containsKey(tag)) {
 			return valueMap.get(tag).toString();
 		}
-		return null;
+		return defaultValue;
 	}
 	
 	public Integer getInteger(String tag, Map<String, Object> valueMap) {

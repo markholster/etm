@@ -38,6 +38,7 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.script.Script;
@@ -49,6 +50,8 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
@@ -622,8 +625,10 @@ public class SearchService extends AbstractJsonService {
 		return result.toString();
 	}
 
-	@SuppressWarnings("unchecked")
 	private void addTransactionToEventChain(EventChain eventChain, String transactionId) {
+		if (eventChain.containsTransaction(transactionId)) {
+			return;
+		}
 		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
 				.minimumNumberShouldMatch(1)
 				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
@@ -648,7 +653,7 @@ public class SearchService extends AbstractJsonService {
 				.setFrom(0)
 				.setSize(scrollSize)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
+				.setScroll(new Scroll(TimeValue.timeValueSeconds(60)))
 				.get();
 		if (response.getHits().hits().length == 0) {
 			return;
@@ -661,7 +666,7 @@ public class SearchService extends AbstractJsonService {
 			nextBatchRequired = scrollSize == response.getHits().hits().length;
 			for (SearchHit searchHit : response.getHits().hits()) {
 				Map<String, Object> source = searchHit.getSource();
-				String eventName = source.containsKey(this.eventTags.getNameTag()) ? (String) source.get(this.eventTags.getNameTag()) : "?";
+				String eventName = getString(this.eventTags.getNameTag(), source, "?");
 				Long expiry = getLong(this.eventTags.getExpiryTag(), source);
 				String subType = null;
 				if ("http".equals(searchHit.getType())) {
@@ -670,11 +675,11 @@ public class SearchService extends AbstractJsonService {
 					subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
 				}
 				String correlationId = getString(this.eventTags.getCorrelationIdTag(), source);
-				List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+				List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
 				if (endpoints != null) {
 					for (Map<String, Object> endpoint : endpoints) {
-						String endpointName = (String) endpoint.get(this.eventTags.getEndpointNameTag());
-						Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
+						String endpointName = getString(this.eventTags.getEndpointNameTag(), endpoint);
+						Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
 						processEndpointHandlerForEventChain(eventChain, 
 								writingEndpointHandler, 
 								true, 
@@ -686,7 +691,7 @@ public class SearchService extends AbstractJsonService {
 								endpointName, 
 								transactionId, 
 								expiry);
-						List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
+						List<Map<String, Object>> readingEndpointHandlers =  getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
 						if (readingEndpointHandlers != null) {
 							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
 								processEndpointHandlerForEventChain(eventChain, 
@@ -704,6 +709,8 @@ public class SearchService extends AbstractJsonService {
 						}
 					}
 				}
+				// Check for request/response correlation and add those transactions as well.
+				addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, searchHit.getType(), subType);
 			}
 			if (nextBatchRequired) {
 				// Full batch fetched, request the next batch.
@@ -748,6 +755,65 @@ public class SearchService extends AbstractJsonService {
 			}
 		}
 	}
+	
+	private void addRequestResponseConnectionToEventChain(EventChain eventChain, String id, String correlationId, String type, String subType) {
+		QueryBuilder queryBuilder = null;
+		// TODO, it's possible to search more accurate -> in case of a request search for a response.
+		if ("messaging".equals(type)) {
+			MessagingEventType messagingEventType = MessagingEventType.safeValueOf(subType);
+			if (MessagingEventType.REQUEST.equals(messagingEventType)) {
+				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), id));
+			} else if (MessagingEventType.RESPONSE.equals(messagingEventType) && correlationId != null) {
+				queryBuilder = new IdsQueryBuilder("messaging").addIds(correlationId);
+			}
+		} else if ("http".equals("type")) {
+			HttpEventType httpEventType = HttpEventType.safeValueOf(subType);
+			if (HttpEventType.RESPONSE.equals(httpEventType) && correlationId != null) {
+				queryBuilder = new IdsQueryBuilder("http").addIds(correlationId);
+			} else {
+				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), id));
+			}
+		}
+		if (queryBuilder == null) {
+			return;
+		}
+		SearchResponse response =  client.prepareSearch("etm_event_all")
+				.setTypes(type)
+				.setQuery(queryBuilder)
+				.setFetchSource(new String[] {this.eventTags.getEndpointsTag() + ".*"}, null)
+				.setFrom(0)
+				.setSize(10)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.get();
+		if (response.getHits().hits().length == 0) {
+			return;
+		}
+		for (SearchHit searchHit : response.getHits().hits()) {
+			Map<String, Object> source = searchHit.getSource();
+			List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
+			if (endpoints == null) {
+				continue;
+			}
+			for (Map<String, Object> endpoint : endpoints) {
+				Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
+				String transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), writingEndpointHandler);
+				if (transactionId != null) {
+					addTransactionToEventChain(eventChain, transactionId);
+				}
+				List<Map<String, Object>> readingEndpointHandlers =  getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
+				if (readingEndpointHandlers != null) {
+					for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+						transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), readingEndpointHandler);
+						if (transactionId != null) {
+							addTransactionToEventChain(eventChain, transactionId);
+						}
+					}
+				}
+			}
+		}
+		
+	}
+
 	
 	@SuppressWarnings("unchecked")
 	private boolean isWithinTransaction(Map<String, Object> endpointHandler, String applicationName, String id) {
