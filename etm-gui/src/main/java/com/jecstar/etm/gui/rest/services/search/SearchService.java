@@ -513,87 +513,91 @@ public class SearchService extends AbstractJsonService {
 			first = false;
 		}
 		for (EventChainEvent event : eventChain.events.values()) {
-			// Add all endpoints as item.
-			if (event.getEndpointName() != null) {
-				if (!first) {
-					result.append(",");
+			for (EventChainEndpoint endpoint : event.getEndpoints()) {
+				// Add all endpoints as item.
+				if (endpoint.getName() != null) {
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{\"id\": " + escapeToJson(endpoint.getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getName(), true) + ", \"type\": \"endpoint\", \"missing\": " + endpoint.isMissing() + "}");
+					first = false;				
 				}
-				result.append("{\"id\": " + escapeToJson(event.getEventId(), true) + ", \"label\": " + escapeToJson(event.getEndpointName(), true) + ", \"type\": \"endpoint\", \"missing\": " + event.isMissing() + "}");
-				first = false;				
-			}
-			// Add the reader as item.
-			if (event.getWriter() != null) {
-				if (!first) {
-					result.append(",");
+				// Add the reader as item.
+				if (endpoint.getWriter() != null) {
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{\"id\": " + escapeToJson(endpoint.getWriter().getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getWriter().getName(), true) + ", \"type\": \"event\", \"missing\": " + endpoint.getWriter().isMissing());
+					if (endpoint.getWriter().getApplicationName() != null) {
+						result.append(", \"parent\": " + escapeToJson(endpoint.getWriter().getApplicationName(), true)); 
+					}
+					result.append("}");
+					first = false;			
 				}
-				result.append("{\"id\": " + escapeToJson(event.getWriter().getKey(), true) + ", \"label\": " + escapeToJson(event.getWriter().getName(), true) + ", \"type\": \"event\", \"missing\": " + event.getWriter().isMissing());
-				if (event.getWriter().getApplicationName() != null) {
-					result.append(", \"parent\": " + escapeToJson(event.getWriter().getApplicationName(), true)); 
+				// Add all writers as item.
+				for (EventChainItem item : endpoint.getReaders()) {
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{\"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true) + ", \"type\": \"event\", \"missing\": " + item.isMissing());
+					if (item.getApplicationName() != null) {
+						result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
+					}
+					result.append("}");
+					first = false;							
 				}
-				result.append("}");
-				first = false;			
-			}
-			// Add all writers as item.
-			for (EventChainItem item : event.getReaders()) {
-				if (!first) {
-					result.append(",");
-				}
-				result.append("{\"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true) + ", \"type\": \"event\", \"missing\": " + item.isMissing());
-				if (item.getApplicationName() != null) {
-					result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
-				}
-				result.append("}");
-				first = false;							
 			}
 		}
 		result.append("], \"edges\": [");
 		first = true;
 		for (EventChainEvent event : eventChain.events.values()) {
-			if (event.getEndpointName() != null) {
-				if (event.getWriter() != null) {
-					if (!first) {
-						result.append(",");
-					}
-					// Add the connection from the writer to the endpoint.
-					result.append("{\"source\": " + escapeToJson(event.getWriter().getKey(), true) 
-							+ ", \"target\": " + escapeToJson(event.getEventId(), true));
-					if (!event.getWriter().isMissing()) {
-						result.append(", \"transition_time_percentage\": 0.0");
-					}
-					result.append("}");
-					first = false;			
-				}
-				for (EventChainItem item : event.getReaders()) {
-					// Add a connection between the endpoint and all readers.
-					if (!first) {
-						result.append(",");
-					}
-					result.append("{ \"source\": " +  escapeToJson(event.getEventId(), true)
-						+ ", \"target\": " + escapeToJson(item.getKey(), true)); 
-					Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, item);
-					if (edgePercentage != null) {
-						result.append(", \"transition_time_percentage\": " + edgePercentage);
-					}
-					result.append("}");
-					first = false;							
-				}
-			} else {
-				// No endpoint name, so a direct connection from a writer to the readers.
-				if (event.getWriter() != null) {
-					for (EventChainItem item : event.getReaders()) {
-						// Add a connection between the writer and all readers.
+			for (EventChainEndpoint endpoint : event.getEndpoints()) {
+				if (endpoint.getName() != null) {
+					if (endpoint.getWriter() != null) {
 						if (!first) {
 							result.append(",");
 						}
-						result.append("{ \"source\": " +  escapeToJson(event.getWriter().getKey(), true)
+						// Add the connection from the writer to the endpoint.
+						result.append("{\"source\": " + escapeToJson(endpoint.getWriter().getKey(), true) 
+								+ ", \"target\": " + escapeToJson(endpoint.getKey(), true));
+						if (!endpoint.getWriter().isMissing()) {
+							result.append(", \"transition_time_percentage\": 0.0");
+						}
+						result.append("}");
+						first = false;			
+					}
+					for (EventChainItem item : endpoint.getReaders()) {
+						// Add a connection between the endpoint and all readers.
+						if (!first) {
+							result.append(",");
+						}
+						result.append("{ \"source\": " +  escapeToJson(endpoint.getKey(), true)
 							+ ", \"target\": " + escapeToJson(item.getKey(), true)); 
-						Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, item);
+						Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, endpoint, item);
 						if (edgePercentage != null) {
 							result.append(", \"transition_time_percentage\": " + edgePercentage);
-						}						
+						}
 						result.append("}");
 						first = false;							
-					}					
+					}
+				} else {
+					// No endpoint name, so a direct connection from a writer to the readers.
+					if (endpoint.getWriter() != null) {
+						for (EventChainItem item : endpoint.getReaders()) {
+							// Add a connection between the writer and all readers.
+							if (!first) {
+								result.append(",");
+							}
+							result.append("{ \"source\": " +  escapeToJson(endpoint.getWriter().getKey(), true)
+								+ ", \"target\": " + escapeToJson(item.getKey(), true)); 
+							Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, endpoint, item);
+							if (edgePercentage != null) {
+								result.append(", \"transition_time_percentage\": " + edgePercentage);
+							}						
+							result.append("}");
+							first = false;							
+						}					
+					}
 				}
 			}
 		}

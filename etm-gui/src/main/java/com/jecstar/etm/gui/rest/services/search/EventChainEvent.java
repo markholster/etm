@@ -9,14 +9,12 @@ class EventChainEvent {
 	private String eventId;
 	private String correlationId;
 	
-	private String endpointName;
-	private EventChainItem writer;
-	private List<EventChainItem> readers = new ArrayList<>();
+	private List<EventChainEndpoint> endpoints = new ArrayList<>();
 	
-	private Comparator<EventChainItem> handlingTimeComparator = new Comparator<EventChainItem>(){
+	private Comparator<EventChainEndpoint> handlingTimeComparator = new Comparator<EventChainEndpoint>(){
 		@Override
-		public int compare(EventChainItem o1, EventChainItem o2) {
-			return new Long(o1.getHandlingTime()).compareTo(new Long(o2.getHandlingTime()));
+		public int compare(EventChainEndpoint o1, EventChainEndpoint o2) {
+			return Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime());
 		}};
 
 	EventChainEvent(String eventId) {
@@ -36,38 +34,26 @@ class EventChainEvent {
 		return this.correlationId;
 	}
 	
-	public void setWriter(EventChainItem item) {
-		this.writer = item;
-	}
 	
-	public EventChainItem getWriter() {
-		return this.writer;
-	}
-	
-	public void addReader(EventChainItem item) {
-		if (!this.readers.contains(item)) {
-			this.readers.add(item);
+	public void addEndpoint(EventChainEndpoint endpoint) {
+		if (!this.endpoints.contains(endpoint)) {
+			this.endpoints.add(endpoint);
 		}
 	}
 	
-	public List<EventChainItem> getReaders() {
-		return this.readers;
+	public List<EventChainEndpoint> getEndpoints() {
+		return this.endpoints;
 	}
 	
-	public void setEndpointName(String endpointName) {
-		if (endpointName != null) {
-			this.endpointName = endpointName;
-		}
+	public EventChainEndpoint getEndpoint(String name) {
+		 EventChainEndpoint endpoint = new EventChainEndpoint(name, this.eventId);
+		 int ix = this.endpoints.indexOf(endpoint); 
+		 if (ix >= 0) {
+			 return this.endpoints.get(ix);
+		 }
+		 return null;
 	}
-	
-	public String getEndpointName() {
-		return this.endpointName;
-	}
-	
-	public void sort() {
-		this.readers.sort(this.handlingTimeComparator);
-	}
-	
+		
 	public boolean isRequest() {
 		return getFirstEventChainItem().isRequest();
 	}
@@ -80,22 +66,12 @@ class EventChainEvent {
 		return getFirstEventChainItem().isAsync();
 	}
 	
-
-	public boolean isMissing() {
-		if (this.writer != null) {
-			if (!this.writer.isMissing()) {
-				return false;
-			}
+	public void sort() {
+		for (EventChainEndpoint endpoint : this.endpoints) {
+			endpoint.sort();
 		}
-		for (EventChainItem reader : this.readers) {
-			if (!reader.isMissing()) {
-				return false;
-			}
-		}
-		return true;
+		this.endpoints.sort(this.handlingTimeComparator);
 	}
-	
-	
 	
 	/**
 	 * Gives the first item that occurred in this event. This is the writer, or
@@ -106,10 +82,7 @@ class EventChainEvent {
 	 * @return The first item.
 	 */
 	public EventChainItem getFirstEventChainItem() {
-		if (this.writer != null) {
-			return this.writer;
-		}
-		return this.readers.get(0);
+		return this.endpoints.get(0).getFirstEventChainItem();
 	}
 	
 	@Override

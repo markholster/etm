@@ -58,29 +58,35 @@ public class EventChain {
 			event = new EventChainEvent(item.getEventId());
 			this.events.put(item.getEventId(), event);
 		}
-		event.setEndpointName(endpointName);
+		EventChainEndpoint endpoint = event.getEndpoint(endpointName);
+		if (endpoint == null) {
+			endpoint = new EventChainEndpoint(endpointName, item.getEventId());
+			event.addEndpoint(endpoint);
+		}
 		if (item.getCorrelationId() != null) {
 			event.setCorrelationId(item.getCorrelationId());
 		}
 		if (writer) {
-			event.setWriter(item);
+			endpoint.setWriter(item);
 		} else {
-			event.addReader(item);
+			endpoint.addReader(item);
 		}
 	}
 	
 	public List<String> getApplications() {
 		List<String> result = new ArrayList<String>();
 		for (EventChainEvent event : this.events.values()) {
-			if (event.getWriter() != null 
-					&& event.getWriter().getApplicationName() != null
-					&& !result.contains(event.getWriter().getApplicationName())) {
-				result.add(event.getWriter().getApplicationName());
-			}
-			for (EventChainItem item : event.getReaders()) {
-				if (item.getApplicationName() != null && !result.contains(item.getApplicationName())) {
-					result.add(item.getApplicationName());
+			for (EventChainEndpoint endpoint : event.getEndpoints()) {
+				if (endpoint.getWriter() != null 
+						&& endpoint.getWriter().getApplicationName() != null
+						&& !result.contains(endpoint.getWriter().getApplicationName())) {
+					result.add(endpoint.getWriter().getApplicationName());
 				}
+				for (EventChainItem item : endpoint.getReaders()) {
+					if (item.getApplicationName() != null && !result.contains(item.getApplicationName())) {
+						result.add(item.getApplicationName());
+					}
+				}				
 			}
 		}
 		return result;
@@ -104,56 +110,59 @@ public class EventChain {
 			return;
 		}
 		// If the root event is an http message and no writer present we have to make up one.
-		EventChainEvent eventChainEvent = values.get(0);
-		if (eventChainEvent.getWriter() == null) {
-			EventChainItem reader = eventChainEvent.getReaders().get(0);
-			if (reader.isRequest() && reader.isHttpEvent()) {
-				eventChainEvent.setWriter(new EventChainItem(null, eventChainEvent.getEventId(), reader.getHandlingTime())
-						.setApplicationName("Requestor")
-						.setName(reader.getName())
-						.setSubType(reader.getSubType())
-						.setEventType(reader.getEventType())
-						.setResponseTime(reader.getResponseTime())
-						.setExpiry(reader.getExpiry())
-						.setMissing(true));
-				// Look for the response and hook it up to the requestor.
-				EventChainEvent response = findResponse(eventChainEvent.getEventId());
-				if (response != null && response.getReaders().isEmpty()) {
-					response.addReader(new EventChainItem(null, response.getEventId(), response.getWriter().getHandlingTime())
-							.setApplicationName("Requestor")
-							.setName(response.getWriter().getName())
-							.setSubType(response.getWriter().getSubType())
-							.setEventType(response.getWriter().getEventType())
-							.setMissing(true));
-				}
-			}
-		}
+//		EventChainEvent eventChainEvent = values.get(0);
+//		EventChainEndpoint endpoint = eventChainEvent.getEndpoints().get(0);
+//		if (endpoint.getWriter() == null) {
+//			EventChainItem reader = endpoint.getReaders().get(0);
+//			if (reader.isRequest() && reader.isHttpEvent()) {
+//				endpoint.setWriter(new EventChainItem(null, eventChainEvent.getEventId(), reader.getHandlingTime())
+//						.setApplicationName("Requestor")
+//						.setName(reader.getName())
+//						.setSubType(reader.getSubType())
+//						.setEventType(reader.getEventType())
+//						.setResponseTime(reader.getResponseTime())
+//						.setExpiry(reader.getExpiry())
+//						.setMissing(true));
+//				// Look for the response and hook it up to the requestor.
+//				EventChainEvent response = findResponse(eventChainEvent.getEventId());
+//				if (response != null && response.getReaders().isEmpty()) {
+//					response.addReader(new EventChainItem(null, response.getEventId(), response.getWriter().getHandlingTime())
+//							.setApplicationName("Requestor")
+//							.setName(response.getWriter().getName())
+//							.setSubType(response.getWriter().getSubType())
+//							.setEventType(response.getWriter().getEventType())
+//							.setMissing(true));
+//				}
+//			}
+//		}
 	}
 
 	public boolean isApplicationMissing(String application) {
 		for (EventChainEvent event : this.events.values()) {
-			if (event.getWriter() != null) {
-				if (application.equals(event.getWriter().getApplicationName()) && !event.getWriter().isMissing()) {
-					return false;
+			for (EventChainEndpoint endpoint : event.getEndpoints()) {
+				if (endpoint.getWriter() != null) {
+					if (application.equals(endpoint.getWriter().getApplicationName()) && !endpoint.getWriter().isMissing()) {
+						return false;
+					}
 				}
-			}
-			for (EventChainItem item : event.getReaders()) {
-				if (application.equals(item.getApplicationName()) && !item.isMissing()) {
-					return false;
-				}				
+				for (EventChainItem item : endpoint.getReaders()) {
+					if (application.equals(item.getApplicationName()) && !item.isMissing()) {
+						return false;
+					}				
+				}
 			}
 		}
 		return true;
 	}
 	
-	private EventChainEvent findResponse(String id) {
-		for (EventChainEvent event : this.events.values()) {
-			if (event.isResponse() && id.equals(event.getCorrelationId())) {
-				return event;
-			}
-		}
-		return null;
-	}
+//	private EventChainEvent findResponse(String id) {
+//		for (EventChainEvent event : this.events.values()) {
+//			if (event.isResponse() && id.equals(event.getCorrelationId())) {
+//				return event;
+//			}
+//		}
+//		return null;
+//	}
 	
 	private EventChainEvent findRequest(String correlationId) {
 		for (EventChainEvent event : this.events.values()) {
@@ -168,14 +177,14 @@ public class EventChain {
 	 * Calculate the percentage of time that was spent in the transition from
 	 * the endpoint to given item.
 	 */
-	public Float calculateEdgePercentageFromEndpointToItem(EventChainEvent event, EventChainItem item) {
-		if (event.getWriter() == null) {
+	public Float calculateEdgePercentageFromEndpointToItem(EventChainEvent event, EventChainEndpoint endpoint, EventChainItem item) {
+		if (endpoint.getWriter() == null) {
 			return null;
 		}
 		if (item.isMissing()) {
 			return null;
 		}
-		long endpointTime = item.getHandlingTime() - event.getWriter().getHandlingTime();
+		long endpointTime = item.getHandlingTime() - endpoint.getWriter().getHandlingTime();
 		if (endpointTime <= 0) {
 			return 0f;
 		}
@@ -232,8 +241,9 @@ public class EventChain {
 			}
 			return findRootRequest(request);
 		}
-		if (event.getWriter() != null && event.getWriter().getTransactionId() != null) {
-			EventChainTransaction transaction = this.transactions.get(event.getWriter().getTransactionId());
+		EventChainEndpoint endpoint = event.getEndpoints().get(0);
+		if (endpoint.getWriter() != null && endpoint.getWriter().getTransactionId() != null) {
+			EventChainTransaction transaction = this.transactions.get(endpoint.getWriter().getTransactionId());
 			if (!transaction.getReaders().isEmpty()) {
 				EventChainItem eventChainItem = transaction.getReaders().get(0);
 				EventChainEvent parent = this.events.get(eventChainItem.getEventId());
