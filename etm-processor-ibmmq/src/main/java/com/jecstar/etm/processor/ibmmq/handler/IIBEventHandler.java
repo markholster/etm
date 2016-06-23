@@ -161,6 +161,10 @@ public class IIBEventHandler {
 		EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event);
 		String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
 		if ("ComIbmMQInputNode".equals(nodeType) || "ComIbmMQGetNode".equals(nodeType)) {
+			String endpoint = event.getEventPointData().getMessageFlowData().getNode().getDetail();
+			if (endpointBuilder.getName() == null) {
+				endpointBuilder.setName(endpoint);
+			}
 			endpointBuilder.addReadingEndpointHandler(endpointHandlerBuilder);
 		} else {
 			endpointBuilder.setWritingEndpointHandler(endpointHandlerBuilder);
