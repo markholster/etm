@@ -296,7 +296,9 @@ public class SearchService extends AbstractJsonService {
 		return getEvent(eventType, eventId, true, null, null);
 	}
 	
+	@GET
 	@Path("/event/{type}/{id}/endpoints")
+	@Produces(MediaType.APPLICATION_JSON)
 	public String getEventChainEndpoint(@PathParam("type") String eventType, @PathParam("id") String eventId) {
 		return getEvent(eventType, eventId, false, new String[] {this.eventTags.getEndpointsTag() + ".*"}, null);
 	}
@@ -331,7 +333,6 @@ public class SearchService extends AbstractJsonService {
 		
 	}
 	
-	@SuppressWarnings("unchecked")
 	@GET
 	@Path("/transaction/{application}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)	
@@ -390,32 +391,34 @@ public class SearchService extends AbstractJsonService {
 				event.type = searchHit.getType();
 				event.id = searchHit.getId();
 				Map<String, Object> source = searchHit.getSource();
-				event.name = (String) source.get(this.eventTags.getNameTag());
-				event.payload = (String) source.get(this.eventTags.getPayloadTag());
-				List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+				event.name = getString(this.eventTags.getNameTag(), source);
+				event.payload = getString(this.eventTags.getPayloadTag(), source);
+				List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
 				if (endpoints != null) {
 					for (Map<String, Object> endpoint : endpoints) {
-						Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
+						Map<String, Object> writingEndpointHandler = (Map<String, Object>) getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
 						if (isWithinTransaction(writingEndpointHandler, applicationName, transactionId)) {
-							event.handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+							event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
 							event.direction = "outgoing";
+							event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
 						} else {
-							List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
+							List<Map<String, Object>> readingEndpointHandlers = getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
 							if (readingEndpointHandlers != null) {
 								for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
 									if (isWithinTransaction(readingEndpointHandler, applicationName, transactionId)) {
-										event.handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+										event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
 										event.direction = "incomming";
+										event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
 									}
 								}
 							}
 						}
 						if ("http".equals(searchHit.getType())) {
-							event.subType = (String) source.get(this.eventTags.getHttpEventTypeTag());
+							event.subType = getString(this.eventTags.getHttpEventTypeTag(), source);
 						} else if ("messaging".equals(searchHit.getType())) {
-							event.subType = (String) source.get(this.eventTags.getMessagingEventTypeTag());
+							event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
 						} else if ("sql".equals(searchHit.getType())) {
-							event.subType = (String) source.get(this.eventTags.getSqlEventTypeTag());
+							event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
 						}
 					}
 				}
@@ -452,6 +455,7 @@ public class SearchService extends AbstractJsonService {
 			addStringElementToJsonBuffer("name", event.name , result, false);
 			addStringElementToJsonBuffer("direction", event.direction , result, false);
 			addStringElementToJsonBuffer("payload", event.payload , result, false);
+			addStringElementToJsonBuffer("endpoint", event.endpoint , result, false);
 			result.append("}");
 		}
 		result.append("]}");
@@ -539,6 +543,8 @@ public class SearchService extends AbstractJsonService {
 					}
 					result.append("{\"id\": " + escapeToJson(endpoint.getKey(), true) 
 						+ ", \"label\": " + escapeToJson(endpoint.getName(), true) 
+						+ ", \"event_id\": " + escapeToJson(event.getEventId(), true) 
+						+ ", \"event_type\": " + escapeToJson(event.getEventType(), true)
 						+ ", \"node_type\": \"endpoint\""
 						+ ", \"missing\": " + endpoint.isMissing() + "}");
 					first = false;				
@@ -550,6 +556,10 @@ public class SearchService extends AbstractJsonService {
 					}
 					result.append("{\"id\": " + escapeToJson(endpoint.getWriter().getKey(), true) 
 						+ ", \"label\": " + escapeToJson(endpoint.getWriter().getName(), true) 
+						+ ", \"event_id\": " + escapeToJson(event.getEventId(), true) 
+						+ ", \"event_type\": " + escapeToJson(event.getEventType(), true) 
+						+ ", \"endpoint\": " + escapeToJson(endpoint.getName(), true) 
+						+ ", \"transaction_id\": " + escapeToJson(endpoint.getWriter().getTransactionId(), true) 
 						+ ", \"node_type\": \"event\""
 						+ ", \"missing\": " + endpoint.getWriter().isMissing());
 					if (endpoint.getWriter().getApplicationName() != null) {
@@ -565,6 +575,10 @@ public class SearchService extends AbstractJsonService {
 					}
 					result.append("{\"id\": " + escapeToJson(item.getKey(), true) 
 						+ ", \"label\": " + escapeToJson(item.getName(), true) 
+						+ ", \"event_id\": " + escapeToJson(event.getEventId(), true) 
+						+ ", \"event_type\": " + escapeToJson(event.getEventType(), true) 
+						+ ", \"endpoint\": " + escapeToJson(endpoint.getName(), true) 
+						+ ", \"transaction_id\": " + escapeToJson(item.getTransactionId(), true) 
 						+ ", \"node_type\": \"event\""
 						+ ", \"missing\": " + item.isMissing());
 					if (item.getApplicationName() != null) {

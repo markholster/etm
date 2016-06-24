@@ -101,6 +101,9 @@ public class JsonWriter {
 	}
 	
 	public String escapeToJson(String value, boolean quote) {
+		if (value == null) {
+			return "null";
+		}
 		int maxLength = value.length() * 6;
 		if (quote) {
 			maxLength += 2;

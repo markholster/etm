@@ -1,6 +1,7 @@
 var cyEndpoints; 
 var cyEventChain;
 var transactionMap = {};
+var eventMap = {};
 
 function showEvent(scrollTo, type, id) {
 	$('#search-container').hide();
@@ -46,6 +47,7 @@ function showEvent(scrollTo, type, id) {
     		return [value];
 		}).forEach(function (element) {$(element).remove();});
 		transactionMap = {};
+		eventMap = {};
 	}
 
 	function addContent(data) {
@@ -470,11 +472,11 @@ function showEvent(scrollTo, type, id) {
 					  var evtTarget = event.cyTarget;
 					  if( evtTarget !== cyEndpoints ){
 						  if (evtTarget.data('writing_endpoint_handler')) {
-							  displayWritingEndpointHandler(cyEndpoints, evtTarget.data('writing_endpoint_handler'), evtTarget.data('time_zone'));
+							  displayWritingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', evtTarget.data('writing_endpoint_handler'), evtTarget.data('time_zone'));
 						  } else if (evtTarget.data('endpoint')) {
-							  displayEndpoint(cyEndpoints, evtTarget.data('endpoint'), evtTarget.data('time_zone'));
+							  displayEndpoint('endpoint-node-detail', 'endpoint-node-transaction-detail', evtTarget.data('endpoint'), evtTarget.data('time_zone'));
 						  } else if (evtTarget.data('reading_endpoint_handler')) {
-							  displayReadingEndpointHandler(cyEndpoints, evtTarget.data('reading_endpoint_handler'), evtTarget.data('time_zone'));
+							  displayReadingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', evtTarget.data('reading_endpoint_handler'), evtTarget.data('time_zone'));
 						  }
 					  }
 				});
@@ -482,13 +484,13 @@ function showEvent(scrollTo, type, id) {
 		});
 	}
 	
-	function displayWritingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
-		$transactionDetails = $('#endpoint-node-transaction-detail');
+	function displayWritingEndpointHandler(nodeDetailContainerId, transactionDetailContainerId, endpoint_handler, timeZone) {
+		$transactionDetails = $('#' + transactionDetailContainerId);
 		$transactionDetails.fadeOut('fast', function() {
 			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
-		$('#endpoint-node-detail').fadeOut('fast', function () {
+		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
 			$this = $(this).empty();
 			var eh = formatEndpointHandler(endpoint_handler, timeZone);
 			appendToContainerInRow($this, 'Write time', eh.handling_time);
@@ -511,27 +513,27 @@ function showEvent(scrollTo, type, id) {
 		});
 	}
 	
-	function displayEndpoint(cyEndpoints, endpoint, timeZone) {
-		$('#endpoint-node-detail').fadeOut('fast', function () {
+	function displayEndpoint(nodeDetailContainerId, transactionDetailContainerId, endpoint, timeZone) {
+		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
 			$this = $(this).empty();
 			appendToContainerInRow($this, 'Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			appendToContainerInRow($this, 'Endpoint name', endpoint.name);
 			$this.append('<br>');
 			$this.fadeIn('fast');
 		});
-		$('#endpoint-node-transaction-detail').fadeOut('fast', function() {
+		$('#' + transactionDetailContainerId).fadeOut('fast', function() {
 			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 	}
 	
-	function displayReadingEndpointHandler(cyEndpoints, endpoint_handler, timeZone) {
-		$transactionDetails = $('#endpoint-node-transaction-detail');
+	function displayReadingEndpointHandler(nodeDetailContainerId, transactionDetailContainerId, endpoint_handler, timeZone) {
+		$transactionDetails = $('#' + transactionDetailContainerId);
 		$transactionDetails.fadeOut('fast', function() {
 			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
-		$('#endpoint-node-detail').fadeOut('fast', function () {
+		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
 			$this = $(this).empty();
 			var eh = formatEndpointHandler(endpoint_handler, timeZone);
 			appendToContainerInRow($this, 'Read time', eh.handling_time);
@@ -618,21 +620,21 @@ function showEvent(scrollTo, type, id) {
 		} else if ('messaging' == event.type) {
 			if ('REQUEST' == event.sub_type) {
 				if ('incomming' == event.direction) {
-					return 'Received request message ' + (event.name ? event.name : '?');
+					return 'Received request message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
-					return 'Send request message ' + (event.name ? event.name : '?');
+					return 'Send request message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			} else if ('RESPONSE' == event.sub_type) {
 				if ('incomming' == event.direction) {
-					return 'Received response message ' + (event.name ? event.name : '?');
+					return 'Received response message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
-					return 'Send response message ' + (event.name ? event.name : '?');
+					return 'Send response message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			} else {
 				if ('incomming' == event.direction) {
-					return 'Received fire-forget message ' + (event.name ? event.name : '?');
+					return 'Received fire-forget message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
-					return 'Send fire-forget message ' + (event.name ? event.name : '?');
+					return 'Send fire-forget message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			}
 		} else if ('sql' == event.type) {
@@ -713,7 +715,16 @@ function showEvent(scrollTo, type, id) {
 					.append(
 							$('<div>').addClass('row').append(
 									$('<br/>'),
-									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
+									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;'),
+									$('<br/>'),
+									$('<div>').attr('id', 'event-chain-node-detail').append(
+											$('<div>').addClass('row').append(
+													$('<div>').addClass('col-sm-12').append(
+															$('<p>').addClass('text-xs-center').text('Click on a node to view more details')
+													)		
+											)		
+									),
+									$('<div>').attr('id', 'event-chain-node-transaction-detail')									
 							)
 					) 
 		);
@@ -746,6 +757,11 @@ function showEvent(scrollTo, type, id) {
 								data: {
 									id: node.id,
 									label: node.label,
+									event_id: node.event_id,
+									event_type: node.event_type,
+									endpoint: node.endpoint,
+									transaction_id: node.transaction_id,
+									type: node.node_type,
 									width: 'label',
 									color: color,
 									border_style: borderStyle,
@@ -827,11 +843,67 @@ function showEvent(scrollTo, type, id) {
 						  }
 						}).ready(function () {
 							var maxZoom = this.maxZoom();
-							this.maxZoom(2);
+							this.maxZoom(1);
 							this.fit();
 							this.maxZoom(maxZoom);
 							this.center();  
 						});
+						cyEventChain.on('tap', function(event) {
+							var evtTarget = event.cyTarget;
+							if( evtTarget !== cyEndpoints ) {
+								var eventId = evtTarget.data('event_id');
+								var eventData = eventMap[eventId];
+								if ("undefined" == typeof eventData) {
+									var eventType = evtTarget.data('event_type');
+									$.ajax({
+									    type: 'GET',
+									    contentType: 'application/json',
+									    async: false,
+									    url: '../rest/search/event/' + encodeURIComponent(eventType) + '/' + encodeURIComponent(eventId) + '/endpoints',
+									    success: function(data) {
+									        if (!data || !data.source) {
+									        	eventMap[eventId] = "";
+									            return;
+									        }
+									        eventMap[eventId] = eventData = data;
+									    }
+									});									
+								}
+								if ("" == eventData) {
+									return;
+								}
+								var nodeType = evtTarget.data('type');
+								if ("endpoint" === nodeType) {
+									var endpointName = evtTarget.data('label')
+									$.each(eventData.source.endpoints, function (index, endpoint) {
+										if (endpointName == endpoint.name) {
+											displayEndpoint('event-chain-node-detail', 'event-chain-node-transaction-detail', endpoint, eventData.time_zone);
+											return false;
+										}
+									});
+								} else if ("event" === nodeType) {
+									var endpointName = evtTarget.data('endpoint')
+									var transactionId = evtTarget.data('transaction_id')
+									$.each(eventData.source.endpoints, function (index, endpoint) {
+										if (endpointName == endpoint.name) {
+											if (endpoint.writing_endpoint_handler && transactionId == endpoint.writing_endpoint_handler.transaction_id) {
+												displayWritingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', endpoint.writing_endpoint_handler, eventData.time_zone);
+												return false;
+											}
+											if (endpoint.reading_endpoint_handlers) {
+												$.each(endpoint.reading_endpoint_handlers, function (index, eh) {
+													if (transactionId == eh.transaction_id) {
+														displayReadingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', eh, eventData.time_zone);
+														return false;
+													}
+												});
+											}
+										}
+									});
+									
+								}
+							}
+						});						
 				    }
 				});				
 			}

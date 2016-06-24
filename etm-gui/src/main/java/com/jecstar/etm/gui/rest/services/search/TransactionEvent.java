@@ -10,6 +10,7 @@ public class TransactionEvent {
 	public String direction;
 	public String payload;
 	public String subType;
+	public String endpoint;
 
 	@Override
 	public boolean equals(Object obj) {
