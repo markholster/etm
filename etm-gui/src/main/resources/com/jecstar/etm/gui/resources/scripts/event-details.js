@@ -738,10 +738,10 @@ function showEvent(scrollTo, type, id) {
 								var colorValue = Math.round(node.absolute_response_percentage * 178);
 								eventColorCode = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (178 - colorValue).toString(16)).slice(-2) + '34';
 							}
-							var color = node.type == 'application' || node.missing ? '#000000' : '#ffffff';
-							var borderColor = node.type == 'endpoint' ? '#98afc7' : '#b6b6b6';
+							var color = node.node_type == 'application' || node.missing ? '#000000' : '#ffffff';
+							var borderColor = node.node_type == 'endpoint' ? '#98afc7' : '#b6b6b6';
 							var borderStyle = node.missing ? 'dotted' : 'solid';
-							var backgroundColor = node.missing ? '#ffffff' : (node.type == 'endpoint' ? '#98afc7' : '#b6b6b6');
+							var backgroundColor = node.missing ? '#ffffff' : (node.node_type == 'endpoint' ? '#98afc7' : '#b6b6b6');
 							nodesData.push({
 								data: {
 									id: node.id,

@@ -17,8 +17,6 @@ public class EventChainEndpoint {
 		public int compare(EventChainItem o1, EventChainItem o2) {
 			return new Long(o1.getHandlingTime()).compareTo(new Long(o2.getHandlingTime()));
 		}};
-
-
 	
 	EventChainEndpoint(String name, String eventId) {
 		this.name = name;

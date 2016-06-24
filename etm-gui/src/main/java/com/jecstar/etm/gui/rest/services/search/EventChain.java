@@ -55,7 +55,7 @@ public class EventChain {
 		}
 		EventChainEvent event = this.events.get(item.getEventId());
 		if (event == null) {
-			event = new EventChainEvent(item.getEventId());
+			event = new EventChainEvent(item.getEventId(), item.getEventType());
 			this.events.put(item.getEventId(), event);
 		}
 		EventChainEndpoint endpoint = event.getEndpoint(endpointName);

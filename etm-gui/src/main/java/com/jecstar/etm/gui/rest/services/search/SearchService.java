@@ -293,15 +293,28 @@ public class SearchService extends AbstractJsonService {
 	@Path("/event/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+		return getEvent(eventType, eventId, true, null, null);
+	}
+	
+	@Path("/event/{type}/{id}/endpoints")
+	public String getEventChainEndpoint(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+		return getEvent(eventType, eventId, false, new String[] {this.eventTags.getEndpointsTag() + ".*"}, null);
+	}
+	
+	private String getEvent(String eventType, String eventId, boolean fetchAll, String[] includes, String[] excludes) {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
 				.addIds(eventId);
-		SearchResponse response =  client.prepareSearch("etm_event_all")
+		SearchRequestBuilder builder = client.prepareSearch("etm_event_all")
 			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
-			.setFetchSource(true)
 			.setFrom(0)
 			.setSize(1)
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.get();
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		if (fetchAll) {
+			builder.setFetchSource(true);
+		} else {
+			builder.setFetchSource(includes, excludes);
+		}
+		SearchResponse response = builder.get();
 		if (response.getHits().hits().length == 0) {
 			return null;
 		}
@@ -315,6 +328,7 @@ public class SearchService extends AbstractJsonService {
 		result.append(", \"source\": " + searchHit.getSourceAsString());
 		result.append("}");
 		return result.toString();
+		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -443,6 +457,7 @@ public class SearchService extends AbstractJsonService {
 		result.append("]}");
 		return result.toString();
 	}
+	
 
 	@SuppressWarnings("unchecked")
 	@GET
@@ -509,7 +524,10 @@ public class SearchService extends AbstractJsonService {
 			if (!first) {
 				result.append(",");
 			}
-			result.append("{\"id\": " + escapeToJson(application, true) + ", \"label\": " + escapeToJson(application, true) + ", \"type\": \"application\", \"missing\": " + eventChain.isApplicationMissing(application) + "}");
+			result.append("{\"id\": " + escapeToJson(application, true) 
+				+ ", \"label\": " + escapeToJson(application, true) 
+				+ ", \"node_type\": \"application\""
+				+ ", \"missing\": " + eventChain.isApplicationMissing(application) + "}");
 			first = false;
 		}
 		for (EventChainEvent event : eventChain.events.values()) {
@@ -519,7 +537,10 @@ public class SearchService extends AbstractJsonService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{\"id\": " + escapeToJson(endpoint.getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getName(), true) + ", \"type\": \"endpoint\", \"missing\": " + endpoint.isMissing() + "}");
+					result.append("{\"id\": " + escapeToJson(endpoint.getKey(), true) 
+						+ ", \"label\": " + escapeToJson(endpoint.getName(), true) 
+						+ ", \"node_type\": \"endpoint\""
+						+ ", \"missing\": " + endpoint.isMissing() + "}");
 					first = false;				
 				}
 				// Add the reader as item.
@@ -527,7 +548,10 @@ public class SearchService extends AbstractJsonService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{\"id\": " + escapeToJson(endpoint.getWriter().getKey(), true) + ", \"label\": " + escapeToJson(endpoint.getWriter().getName(), true) + ", \"type\": \"event\", \"missing\": " + endpoint.getWriter().isMissing());
+					result.append("{\"id\": " + escapeToJson(endpoint.getWriter().getKey(), true) 
+						+ ", \"label\": " + escapeToJson(endpoint.getWriter().getName(), true) 
+						+ ", \"node_type\": \"event\""
+						+ ", \"missing\": " + endpoint.getWriter().isMissing());
 					if (endpoint.getWriter().getApplicationName() != null) {
 						result.append(", \"parent\": " + escapeToJson(endpoint.getWriter().getApplicationName(), true)); 
 					}
@@ -539,7 +563,10 @@ public class SearchService extends AbstractJsonService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{\"id\": " + escapeToJson(item.getKey(), true) + ", \"label\": " + escapeToJson(item.getName(), true) + ", \"type\": \"event\", \"missing\": " + item.isMissing());
+					result.append("{\"id\": " + escapeToJson(item.getKey(), true) 
+						+ ", \"label\": " + escapeToJson(item.getName(), true) 
+						+ ", \"node_type\": \"event\""
+						+ ", \"missing\": " + item.isMissing());
 					if (item.getApplicationName() != null) {
 						result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
 					}

@@ -6,7 +6,8 @@ import java.util.List;
 
 class EventChainEvent {
 	
-	private String eventId;
+	private final String eventId;
+	private final String eventType;
 	private String correlationId;
 	
 	private List<EventChainEndpoint> endpoints = new ArrayList<>();
@@ -17,14 +18,18 @@ class EventChainEvent {
 			return Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime());
 		}};
 
-	EventChainEvent(String eventId) {
+	EventChainEvent(String eventId, String eventType) {
 		this.eventId = eventId;
+		this.eventType = eventType;
 	}
 
 	public String getEventId() {
 		return this.eventId;
 	}
 	
+	public String getEventType() {
+		return this.eventType;
+	}
 
 	public void setCorrelationId(String correlationId) {
 		this.correlationId = correlationId;
