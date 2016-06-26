@@ -658,7 +658,7 @@ public class SearchService extends AbstractJsonService {
 						}
 						result.append("{ \"source\": " +  escapeToJson(from, true)
 							+ ", \"target\": " + escapeToJson(to, true)); 
-						Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, lastRequestEndpoint, firstResponseEndpoint.getReaders().get(0));
+						Float edgePercentage = eventChain.calculateEdgePercentageFromItemToItem(lastRequestEndpoint.getWriter(), firstResponseEndpoint.getReaders().get(0));
 						if (edgePercentage != null) {
 							result.append(", \"transition_time_percentage\": " + edgePercentage);
 						}

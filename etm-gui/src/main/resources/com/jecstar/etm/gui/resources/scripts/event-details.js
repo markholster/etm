@@ -781,9 +781,6 @@ function showEvent(scrollTo, type, id) {
 								var colorValue = Math.round(edge.transition_time_percentage * redFactor);
 								arrowColor = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (redFactor - colorValue).toString(16)).slice(-2) + '34';
 								arrowWidth += Math.round(edge.transition_time_percentage * 8);
-								if (colorValue > 100) {
-									color = '#ffffff';
-								}
 							}
 							edgesData.push({
 								data: {

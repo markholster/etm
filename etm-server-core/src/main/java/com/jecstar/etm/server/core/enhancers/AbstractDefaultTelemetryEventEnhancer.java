@@ -37,7 +37,7 @@ public abstract class AbstractDefaultTelemetryEventEnhancer {
 			for (Endpoint endpoint : event.endpoints) {
 				if (endpoint.writingEndpointHandler.handlingTime == null) {
 					ZonedDateTime earliestReadTime = endpoint.getEarliestReadTime();
-					if (earliestReadTime != null && earliestReadTime.isBefore(enhanceTime)) {
+					if (earliestReadTime != null) {
 						endpoint.writingEndpointHandler.handlingTime = earliestReadTime;
 					} else {
 						endpoint.writingEndpointHandler.handlingTime = enhanceTime;
