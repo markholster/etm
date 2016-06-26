@@ -641,6 +641,32 @@ public class SearchService extends AbstractJsonService {
 					}
 				}
 			}
+			if (event.isRequest()) {
+				// If the last part of the request chain is an endpoint (without
+				// a reader) and the first part of the request chain has no
+				// writers then we lay a connection between the endpoints.
+				EventChainEvent responseEvent = eventChain.findResponse(event.getEventId());
+				// TODO, add an missing response when responseEvent == null?
+				if (responseEvent != null) {
+					EventChainEndpoint lastRequestEndpoint = event.getEndpoints().get(event.getEndpoints().size() - 1);
+					EventChainEndpoint firstResponseEndpoint = responseEvent.getEndpoints().get(0);
+					if (lastRequestEndpoint.getReaders().isEmpty() && firstResponseEndpoint.getWriter() == null) {
+						String from = lastRequestEndpoint.getName() != null ? lastRequestEndpoint.getKey() : lastRequestEndpoint.getWriter().getKey();
+						String to = firstResponseEndpoint.getName() != null ? firstResponseEndpoint.getKey() : firstResponseEndpoint.getReaders().get(0).getKey();
+						if (!first) {
+							result.append(",");
+						}
+						result.append("{ \"source\": " +  escapeToJson(from, true)
+							+ ", \"target\": " + escapeToJson(to, true)); 
+						Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, lastRequestEndpoint, firstResponseEndpoint.getReaders().get(0));
+						if (edgePercentage != null) {
+							result.append(", \"transition_time_percentage\": " + edgePercentage);
+						}
+						result.append("}");
+						first = false;													
+					}
+				}
+			}
 		}
 		for (EventChainTransaction transaction : eventChain.transactions.values()) {
 			// Add connections between the events within a transaction

@@ -155,14 +155,14 @@ public class EventChain {
 		return true;
 	}
 	
-//	private EventChainEvent findResponse(String id) {
-//		for (EventChainEvent event : this.events.values()) {
-//			if (event.isResponse() && id.equals(event.getCorrelationId())) {
-//				return event;
-//			}
-//		}
-//		return null;
-//	}
+	public EventChainEvent findResponse(String id) {
+		for (EventChainEvent event : this.events.values()) {
+			if (event.isResponse() && id.equals(event.getCorrelationId())) {
+				return event;
+			}
+		}
+		return null;
+	}
 	
 	private EventChainEvent findRequest(String correlationId) {
 		for (EventChainEvent event : this.events.values()) {
@@ -204,7 +204,7 @@ public class EventChain {
 			return null;
 		}
 		float percentage = (float)endpointTime / (float)responseTime;
-		return percentage < 0.01f ? 0.01f : percentage;
+		return percentage < 0.001f ? 0.001f : percentage;
 	}
 
 	public Float calculateEdgePercentageFromItemToItem(EventChainItem reader, EventChainItem writer) {

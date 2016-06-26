@@ -773,17 +773,24 @@ function showEvent(scrollTo, type, id) {
 						});
 						var edgesData = [];
 						$.each(data.edges, function (index, edge) {
+							var color = '#000000';
 							var arrowColor = '#dddddd';
 							var arrowWidth = 2;
 							if ("undefined" != typeof edge.transition_time_percentage) {
-								var colorValue = Math.round(edge.transition_time_percentage * 178);
-								arrowColor = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (178 - colorValue).toString(16)).slice(-2) + '34';
+								var redFactor = 178;
+								var colorValue = Math.round(edge.transition_time_percentage * redFactor);
+								arrowColor = '#' + ('0' + colorValue.toString(16)).slice(-2) + ('0' + (redFactor - colorValue).toString(16)).slice(-2) + '34';
 								arrowWidth += Math.round(edge.transition_time_percentage * 8);
+								if (colorValue > 100) {
+									color = '#ffffff';
+								}
 							}
 							edgesData.push({
 								data: {
+									label: (edge.transition_time_percentage ? Math.round(edge.transition_time_percentage * 100) : '0') + '%',
 									source: edge.source,
 									target: edge.target,
+									color: color,
 									arrow_color: arrowColor,
 									arrow_width: arrowWidth
 								}
@@ -826,6 +833,7 @@ function showEvent(scrollTo, type, id) {
 						      	'edge-text-rotation': 'autorotate',
 						      	'curve-style': 'bezier',
 						    	'width': 'data(arrow_width)',
+						    	'color': 'data(color)',
 						    	'line-color': 'data(arrow_color)',
 						    	'target-arrow-color': 'data(arrow_color)',
 						        'target-arrow-shape': 'triangle'
