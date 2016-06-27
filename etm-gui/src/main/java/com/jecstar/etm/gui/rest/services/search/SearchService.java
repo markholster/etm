@@ -160,7 +160,7 @@ public class SearchService extends AbstractJsonService {
 				values.add("_missing_");
 				try {
 					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
-					addProperties(values, "", valueMap);
+					addKeywordProperties(values, "", valueMap);
 					if (names.containsKey(mappingMetadataCursor.key)) {
 						List<String> currentValues = names.get(mappingMetadataCursor.key);
 						for (String value : values) {
@@ -929,7 +929,7 @@ public class SearchService extends AbstractJsonService {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
+	private void addKeywordProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
 		valueMap = getObject("properties", valueMap);
 		if (valueMap == null) {
 			return;
@@ -940,9 +940,9 @@ public class SearchService extends AbstractJsonService {
 		valueMap.remove("event_hashes");
 		for (Entry<String, Object> entry : valueMap.entrySet()) {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
-			String name = determinePropertyName(prefix, entry.getKey());
+			String name = determinePropertyForKeywordName(prefix, entry.getKey());
 			if (entryValues.containsKey("properties")) {
-				addProperties(names, name, entryValues);
+				addKeywordProperties(names, name, entryValues);
 			} else {
 				if (!names.contains(name)) {
 					names.add(name);
@@ -951,7 +951,7 @@ public class SearchService extends AbstractJsonService {
 		}
 	}
 	
-	private String determinePropertyName(String prefix, String name) {
+	private String determinePropertyForKeywordName(String prefix, String name) {
 		if (prefix.length() == 0) {
 			return name;
 		}
