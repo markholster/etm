@@ -667,6 +667,7 @@ public class SearchService extends AbstractJsonService {
 					}
 				}
 			}
+			// TODO, achmea maatwerk om de dispatchers te koppelen aan de flows daarna.
 		}
 		for (EventChainTransaction transaction : eventChain.transactions.values()) {
 			// Add connections between the events within a transaction
