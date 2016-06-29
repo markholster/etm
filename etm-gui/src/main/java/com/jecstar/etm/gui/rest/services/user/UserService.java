@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -141,6 +143,48 @@ public class UserService extends AbstractJsonService {
 				return o1.getDisplayName(requestedLocale).compareTo(o2.getDisplayName(requestedLocale));
 			}}).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
 				.collect(Collectors.joining(",")) + "]}";
+	}
+	
+	@GET
+	@Path("/menu")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getMenu() {
+		StringBuilder result = new StringBuilder();
+		Set<PrincipalRole> roles = getEtmPrincipal().getRoles();
+		result.append("{");
+		result.append("\"items\": [");
+		boolean added = false;
+		if (roles.contains(PrincipalRole.ADMIN) || roles.contains(PrincipalRole.SEARCHER)) {
+			result.append("{");
+			added = addStringElementToJsonBuffer("name", "search", result, true) || added;
+			result.append("}");
+		}
+		if (roles.contains(PrincipalRole.ADMIN) || roles.contains(PrincipalRole.CONTROLLER)) {
+			if (added) {
+				result.append(",");
+			}
+			result.append("{");
+			added = addStringElementToJsonBuffer("name", "dashboard", result, true) || added;
+			result.append("}");
+		}
+		if (roles.contains(PrincipalRole.ADMIN) || roles.contains(PrincipalRole.SEARCHER) || roles.contains(PrincipalRole.CONTROLLER)) {
+			if (added) {
+				result.append(",");
+			}
+			result.append("{");
+			added = addStringElementToJsonBuffer("name", "preferences", result, true) || added;
+			result.append("}");
+		}
+		if (roles.contains(PrincipalRole.ADMIN)) {
+			if (added) {
+				result.append(",");
+			}
+			result.append("{");
+			added = addStringElementToJsonBuffer("name", "settings", result, true) || added;
+			result.append("}");
+		}
+		result.append("]}"); 
+		return result.toString();
 	}
 	
 	
