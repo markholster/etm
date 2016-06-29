@@ -183,7 +183,10 @@ public class UserService extends AbstractJsonService {
 			added = addStringElementToJsonBuffer("name", "settings", result, true) || added;
 			result.append("}");
 		}
-		result.append("]}"); 
+		result.append("]");
+		addBooleanElementToJsonBuffer("license_expired", etmConfiguration.isLicenseExpired(), result, false);
+		addBooleanElementToJsonBuffer("license_almost_expired", etmConfiguration.isLicenseAlmostExpired(), result, false);
+		result.append("}"); 
 		return result.toString();
 	}
 	

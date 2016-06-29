@@ -1,5 +1,7 @@
 package com.jecstar.etm.server.core.configuration;
 
+import java.time.Instant;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -199,6 +201,28 @@ public class EtmConfiguration {
 	
 	public void removeConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
 		this.changeListeners.remove(configurationChangeListener);
+	}
+	
+	public boolean isLicenseExpired() {
+		if (this.license == null) {
+			return true;
+		}
+		return isLicenseValidAt(Instant.now());
+	}
+	
+
+	public Boolean isLicenseAlmostExpired() {
+		if (this.license == null) {
+			return false;
+		}		
+		return !isLicenseExpired() && isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
+	}
+	
+	private boolean isLicenseValidAt(Instant moment) {
+		if (this.license == null) {
+			return false;
+		}
+		return !moment.isAfter(this.license.getExpiryDate());
 	}
 
 	/**

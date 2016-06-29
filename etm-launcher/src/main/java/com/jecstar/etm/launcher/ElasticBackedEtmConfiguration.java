@@ -99,6 +99,18 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return super.getQueryTimeout();
 	}
 	
+	@Override
+	public boolean isLicenseExpired() {
+		reloadConfigurationWhenNecessary();
+		return super.isLicenseExpired();
+	}
+	
+	@Override
+	public Boolean isLicenseAlmostExpired() {
+		reloadConfigurationWhenNecessary();
+		return super.isLicenseAlmostExpired();
+	}
+	
 	private boolean reloadConfigurationWhenNecessary() {
 		boolean changed = false;
 		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {

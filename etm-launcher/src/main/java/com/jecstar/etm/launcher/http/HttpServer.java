@@ -197,6 +197,9 @@ public class HttpServer {
 			di.addSecurityConstraint(new SecurityConstraint()
 					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.CONTROLLER.getRoleName())
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
+			di.addSecurityConstraint(new SecurityConstraint()
+					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName())
+					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*")));
 			di.addSecurityRoles(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.SEARCHER.getRoleName(), PrincipalRole.CONTROLLER.getRoleName());
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));

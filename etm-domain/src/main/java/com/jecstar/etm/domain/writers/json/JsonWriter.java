@@ -25,7 +25,6 @@ public class JsonWriter {
         table[0x0D] = 'r';
         ESCAPE_TABLE = table;
     }	
-
     
 	public boolean addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer, boolean firstElement) {
 		if (elementValue == null) {
@@ -61,6 +60,17 @@ public class JsonWriter {
 	}
 	
 	public boolean addIntegerElementToJsonBuffer(String elementName, Integer elementValue, StringBuilder buffer, boolean firstElement) {
+		if (elementValue == null) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
+		return true;
+	}
+	
+	public boolean addBooleanElementToJsonBuffer(String elementName, Boolean elementValue, StringBuilder buffer, boolean firstElement) {
 		if (elementValue == null) {
 			return false;
 		}
