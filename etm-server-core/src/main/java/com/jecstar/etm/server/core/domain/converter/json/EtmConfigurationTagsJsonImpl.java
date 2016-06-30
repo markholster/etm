@@ -49,4 +49,24 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 		return "replicas_per_index";
 	}
 
+	@Override
+	public String getMaxIndexCountTag() {
+		return "max_index_count";
+	}
+
+	@Override
+	public String getWriteConsistencyTag() {
+		return "write_consistency";
+	}
+
+	@Override
+	public String getQueryTimeoutTag() {
+		return "query_timeout";
+	}
+
+	@Override
+	public String getRetryOnConflictCountTag() {
+		return "retry_on_conflict_count";
+	}
+
 }

@@ -100,6 +100,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	@Override
+	public int getRetryOnConflictCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getRetryOnConflictCount();
+	}
+	
+	@Override
 	public boolean isLicenseExpired() {
 		reloadConfigurationWhenNecessary();
 		return super.isLicenseExpired();

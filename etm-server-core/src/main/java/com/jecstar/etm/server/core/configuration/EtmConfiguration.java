@@ -22,6 +22,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_MAX_INDEX_COUNT = "maxIndexCount";
 	public static final String CONFIG_KEY_WRITE_CONSISTENCY = "writeConsistency";
 	public static final String CONFIG_KEY_QUERY_TIMEOUT = "queryTimeout";
+	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT = "retryOnConflictCount";
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -37,6 +38,7 @@ public class EtmConfiguration {
 	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 0;
 	private WriteConsistency writeConsistency = WriteConsistency.QUORUM;
+	private int retryOnConflictCount = 3;
 	
 	// Data configuration properties;
 	private int maxIndexCount = 7; 
@@ -178,6 +180,17 @@ public class EtmConfiguration {
 		return this;
 	}
 	
+	public int getRetryOnConflictCount() {
+		return this.retryOnConflictCount;
+	}
+	
+	public EtmConfiguration setRetryOnConflictCount(int retryOnConflictCount) {
+		if (retryOnConflictCount >= 0) {
+			this.retryOnConflictCount = retryOnConflictCount;
+		}
+		return this;
+	}
+	
 	public long getQueryTimeout() {
 		return this.queryTimeout;
 	}
@@ -279,6 +292,10 @@ public class EtmConfiguration {
 		if (this.queryTimeout != etmConfiguration.getQueryTimeout()) {
 			setQueryTimeout(etmConfiguration.getQueryTimeout());
 			changed.add(CONFIG_KEY_QUERY_TIMEOUT);
+		}
+		if (this.retryOnConflictCount != etmConfiguration.getRetryOnConflictCount()) {
+			setRetryOnConflictCount(etmConfiguration.getRetryOnConflictCount());
+			changed.add(CONFIG_KEY_RETRY_ON_CONFLICT_COUNT);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);

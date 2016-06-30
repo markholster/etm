@@ -62,7 +62,8 @@ public abstract class AbstractElasticTelemetryEventPersister {
     
     protected UpdateRequest createUpdateRequest(String id) {
     	return new UpdateRequest(getElasticIndexName(), getElasticTypeName(), id)
-    			.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()));
+    			.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
+    			.retryOnConflict(this.etmConfiguration.getRetryOnConflictCount());
     	
     }
 

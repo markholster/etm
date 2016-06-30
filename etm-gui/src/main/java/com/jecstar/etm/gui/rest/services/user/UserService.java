@@ -19,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
@@ -80,7 +81,9 @@ public class UserService extends AbstractJsonService {
 		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 		.setDoc(updateMap)
 		.setDetectNoop(true)
-		.setRetryOnConflict(3)
+		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 		.get();
 		
 		if (newHistorySize < etmPrincipal.getHistorySize()) {
@@ -88,9 +91,10 @@ public class UserService extends AbstractJsonService {
 			Map<String, Object> scriptParams = new HashMap<String, Object>();
 			scriptParams.put("history_size", newHistorySize);
 			UserService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
-					.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 					.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
-					.setRetryOnConflict(3)
+					.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+					.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 					.execute();
 		}
 		etmPrincipal.forceReload = true;
@@ -117,10 +121,11 @@ public class UserService extends AbstractJsonService {
 		updateMap.put(this.tags.getPasswordHashTag(), newHash);
 		
 		UserService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
-		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 		.setDoc(updateMap)
 		.setDetectNoop(true)
-		.setRetryOnConflict(3)
+		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 		.get();
 		return "{ \"status\": \"success\" }";
 	}

@@ -116,9 +116,10 @@ public class SearchService extends AbstractJsonService {
 		
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 				.setScript(new Script("etm_update-search-template", ScriptType.STORED, "painless", scriptParams))
-				.setRetryOnConflict(3)
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 				.get();
 		return "{ \"status\": \"success\" }";
 	}
@@ -130,9 +131,10 @@ public class SearchService extends AbstractJsonService {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		scriptParams.put("name", templateName);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setScript(new Script("etm_remove-search-template", ScriptType.STORED, "painless", scriptParams))
-			.setRetryOnConflict(3)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		return "{ \"status\": \"success\" }";
 	}
@@ -283,9 +285,10 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("query", query);
 		scriptParams.put("history_size", history_size);
 		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 				.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
-				.setRetryOnConflict(3)
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 				.execute();
 	}
 
