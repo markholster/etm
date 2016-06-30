@@ -67,10 +67,22 @@ public class SettingsService extends AbstractJsonService {
 		values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
 		client.prepareUpdate(this.licenseIndexName, this.licenseIndexType, this.licenseId)
 			.setDoc(values)
+			.setDocAsUpsert(true)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
-		return "{ \"status\": \"success\" }";
+		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		License license = etmConfiguration.getLicense();
+		boolean added = false;
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		added = addStringElementToJsonBuffer("status", "success", result, !added) || added;
+		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
+		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
+		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
+		added = addStringElementToJsonBuffer("license_type", license.getLicenseType().name(), result, !added) || added;
+		result.append("}");
+		return result.toString();
 	}
 }

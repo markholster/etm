@@ -21,6 +21,7 @@ import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.metrics.GarbageCollectorMetricSet;
 import com.jecstar.etm.processor.metrics.MemoryUsageMetricSet;
 import com.jecstar.etm.processor.metrics.OperatingSystemMetricSet;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -198,14 +199,23 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	    return this.metricRegistry;
     }
 	
+	public boolean isReadyForProcessing() {
+		if (!this.started) {
+			return false;
+		}
+		if (this.etmConfiguration.isLicenseExpired()) {
+			return false;
+		}
+		return true;
+	}
+	
 	private void preProcess() {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		// TODO check on license.
-//		if (this.etmConfiguration.getLicenseExpriy().getTime() < System.currentTimeMillis()) {
-//			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
-//		}
+		if (this.etmConfiguration.isLicenseExpired()) {
+			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
+		}
 	}
 
 	@Override

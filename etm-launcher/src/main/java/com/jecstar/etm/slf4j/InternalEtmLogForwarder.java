@@ -9,7 +9,7 @@ public class InternalEtmLogForwarder implements EtmLogForwarder {
 
 	@Override
 	public void forwardLog(LogTelemetryEvent event) {
-		if (processor != null) {
+		if (processor != null && processor.isReadyForProcessing()) {
 			processor.processTelemetryEvent(event);
 		} else {
 			// TODO log op console dumpen als processor leeg is?

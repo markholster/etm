@@ -220,7 +220,7 @@ public class EtmConfiguration {
 		if (this.license == null) {
 			return true;
 		}
-		return isLicenseValidAt(Instant.now());
+		return !isLicenseValidAt(Instant.now());
 	}
 	
 
@@ -228,7 +228,7 @@ public class EtmConfiguration {
 		if (this.license == null) {
 			return false;
 		}		
-		return !isLicenseExpired() && isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
+		return !isLicenseExpired() && !isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
 	}
 	
 	private boolean isLicenseValidAt(Instant moment) {

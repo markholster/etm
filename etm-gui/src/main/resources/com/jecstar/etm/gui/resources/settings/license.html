@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+
+<title>Jecstar - Enterprise Telemetry Monitor</title>
+
+<link rel="stylesheet" href="../styles/bootstrap.min.css">
+<link rel="stylesheet" href="../styles/font-awesome.min.css">
+<link rel="stylesheet" href="../styles/jquery-ui.min.css">
+<link rel="stylesheet" href="../styles/spinner.css">
+</head>
+<body>
+   <nav class="navbar navbar-full navbar-dark" style="background-color: #777;">
+     <div class="navbar-header">
+        <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#collapsing_navbar">
+          &#9776;
+        </button>
+        <div class="pull-left">
+         <!-- This needs to be on 1 line because otherwise the menu will be screwed in konqueror and android browsers -->
+         <img src="../images/jecstar.svg" style="max-height: 2.4em; max-width: 2.4em;" />&nbsp;<a class="navbar-brand pull-right" href="http://www.jecstar.com">Jecstar</a>
+      </div>
+      <div class="collapse navbar-toggleable-xs" id="collapsing_navbar">
+        <ul id="etm_mainmenu" class="nav navbar-nav">
+        </ul>
+      </div>
+      <div id="spinner" class="pull-right" style="display: none;">
+        <div class="spinner_line"></div>
+        <div class="spinner_line spinner_line_2"></div>
+        <div class="spinner_line spinner_line_3"></div>
+        <div class="spinner_line spinner_line_4"></div>
+      </div>
+    </div>
+  </nav>
+  
+    <div class="container" style="margin-top: 1em;">
+    <div class="card card-block">
+      <h5 class="card-title">License</h5>
+      <div class="card-text">
+        <div id="license_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+        <div id="license_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+        <div class="row">
+          <div class="form-group col-sm-6">
+            <label for="input-owner">Owner</label>
+            <input id="input-owner" type="text" class="form-control" disabled />
+          </div>
+          <div class="form-group col-sm-6">
+            <label for="input-expiration-date">Expiration date</label>
+            <input id="input-expiration-date" type="text" class="form-control" disabled />
+          </div>        
+        </div>
+        <div class="row">
+         <div class="form-group col-sm-12">
+         	<div class="input-group">
+	            <input id="license-key" type="text" class="form-control" placeholder="Enter your (new) license key..." autofocus autocomplete="off">
+	            <span class="input-group-btn">
+	              <button id="btn-apply" class="btn btn-primary" type="button" disabled="disabled">Apply</button>
+	            </span>
+            </div>
+          </div>        
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+  <!-- jQuery first, then Bootstrap JS. -->
+  <script src="../scripts/tether.min.js"></script>
+  <script src="../scripts/jquery.min.js"></script>
+  <script src="../scripts/bootstrap.min.js"></script>
+  <script src="../scripts/moment.min.js"></script>
+  <script src="../scripts/moment-timezone-with-data-2010-2020.min.js"></script>
+  <script src="../scripts/menu.js"></script>
+  <script>
+  	buildMenu('settings');
+    $(document).ajaxStart(function () {
+        $("#license_errorBox").hide('fast');
+        $('#spinner').fadeIn(100);
+    }).ajaxStop(function () {
+        $('#spinner').fadeOut(200);
+    }).ajaxError(function(event, jqXHR, settings, thrownError) {
+        if ("undefined" != typeof jqXHR.responseJSON) {
+            $('#license_errorBox').text('Error saving license: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+        } else {
+            $('#license_errorBox').text('Error saving license: ' +  thrownError).show('fast');
+        }
+    }).ajaxComplete(function(event, jqXHR, settings) {
+        var contentType = jqXHR.getResponseHeader("Content-Type");
+        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+            // assume that our login has expired - reload our current page
+            window.location.reload();
+            return;
+        }          
+    });
+    $('#license-key').on('input', enableOrDisableApplyButton);
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/settings/license',
+        success: function(data) {
+            if (!data) {
+                return;
+            }
+            $('#input-owner').val(data.owner);
+            $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+        }
+    });    
+    
+    $('#btn-apply').click(function() {
+    	var requestValues = {
+    		key: $('#license-key').val()	
+    	};
+        $.ajax({
+            type: 'PUT',
+            contentType: 'application/json',
+            url: '../rest/settings/license',
+            data: JSON.stringify(requestValues),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+                $('#license_infoBox').text('License applied').show('fast').delay(5000).hide('fast');
+                $('#input-owner').val(data.owner);
+                $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+                $('#license-key').val('');
+            }
+        });    
+    });
+    
+    function enableOrDisableApplyButton() {
+        if ($('#license-key').val()) {
+            $('#btn-apply').removeAttr("disabled");
+        } else {
+            $('#btn-apply').attr('disabled', 'disabled');
+        }
+    }
+  	
+  </script>
+  
+</body>
+</html>
