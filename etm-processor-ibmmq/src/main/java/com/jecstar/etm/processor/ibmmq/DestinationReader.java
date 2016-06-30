@@ -16,7 +16,6 @@ import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.HandlerResult;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
-import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -25,6 +24,7 @@ public class DestinationReader implements Runnable {
 	private static final LogWrapper log = LogFactory.getLogger(DestinationReader.class);
 
 	private final String configurationName;
+	private final StringBuilder byteArrayBuilder = new StringBuilder();
 	
 	private final QueueManager queueManager;
 	private final Destination destination;
@@ -42,7 +42,6 @@ public class DestinationReader implements Runnable {
 	// Handlers
 	private final EtmEventHandler etmEventHandler;
 	private final IIBEventHandler iibEventHandler;
-
 	
 	public DestinationReader(String configurationName, final TelemetryCommandProcessor processor, final QueueManager queueManager, final Destination destination) {
 		this.configurationName = configurationName;
@@ -120,15 +119,19 @@ public class DestinationReader implements Runnable {
 							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Retrying.");
 						}
 				}
-			} catch (EtmException | IOException e) {
+			} catch (OutOfMemoryError e) {
 				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Failed to process message. Try to put it on the backout queue", e);
+					log.logWarningMessage("OutOfMemoryError detected while processing messages. Stopping reader to prevent further unexpected behaviouor.", e);
 				}
-				if (tryBackout(message)) {
-					this.counter++;
-					if (shouldCommit()) {
-						commit();
-					}
+				this.stop = true;
+			} catch (Throwable t) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Failed to process message. Trying to put it on the backout queue.", t);
+				}
+				tryBackout(message);
+				this.counter++;
+				if (shouldCommit()) {
+					commit();
 				}
 			} finally {
 				if (message != null) {
@@ -234,11 +237,18 @@ public class DestinationReader implements Runnable {
 			String backoutQueueName = this.mqDestination.getAttributeString(CMQC.MQCA_BACKOUT_REQ_Q_NAME, 48);
 			if (backoutQueueName != null && backoutQueueName.trim().length() > 0) {
 				backoutQueue = this.mqQueueManager.accessQueue(backoutQueueName.trim(), CMQC.MQOO_OUTPUT + CMQC.MQOO_FAIL_IF_QUIESCING);
+				backoutQueue.put(message);
+				backoutQueue.close();
+				return true;
+			} else {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("No backout queue defined on destination '" + this.mqDestination.getName() + "'. Unable to backout messages.");
+				}				
 			}
-			backoutQueue.put(message);
-			backoutQueue.close();
-			return true;
 		} catch (MQException e) {
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage("Failed to put message with id '" + byteArrayToString(message.messageId) + "' to the configured backout queue", e);
+			}
 			if (backoutQueue != null) {
 				try {
 					backoutQueue.close();
@@ -252,6 +262,18 @@ public class DestinationReader implements Runnable {
 	
 	public void stop() {
 		this.stop = true;
+	}
+	
+	private String byteArrayToString(byte[] bytes) {
+		this.byteArrayBuilder.setLength(0);
+		boolean allZero = true;
+		for (int i = 0; i < bytes.length; i++) {
+			this.byteArrayBuilder.append(String.format("%02x", bytes[i]));
+			if (bytes[i] != 0) {
+				allZero = false;
+			}
+		}
+		return allZero ? null : this.byteArrayBuilder.toString();
 	}
 
 }
