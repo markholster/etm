@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,10 +11,17 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
+import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
+import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -84,5 +92,21 @@ public class SettingsService extends AbstractJsonService {
 		added = addStringElementToJsonBuffer("license_type", license.getLicenseType().name(), result, !added) || added;
 		result.append("}");
 		return result.toString();
+	}
+	
+	@GET
+	@Path("/nodes/es")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEsNodes() {
+		NodesStatsResponse nodesStatsResponse = new NodesStatsRequestBuilder(client, NodesStatsAction.INSTANCE).all().setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())).get();
+		try {
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            builder.startObject();
+            nodesStatsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
+            builder.endObject();
+            return builder.string();
+        } catch (IOException e) {
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
 	}
 }

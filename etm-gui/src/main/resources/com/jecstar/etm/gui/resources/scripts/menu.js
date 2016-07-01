@@ -50,7 +50,9 @@ function buildMenu(currentContext) {
 							$('<a>').addClass('dropdown-item').attr('href', '#').text('Nodes'),
 							$('<a>').addClass('dropdown-item').attr('href', '#').text('Users'),
 							$('<a>').addClass('dropdown-item').attr('href', '#').text('Parsers'),
-							$('<a>').addClass('dropdown-item').attr('href', '#').text('Cluster'),
+							$('<div>').addClass('dropdown-divider'),
+							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Nodes'),
+							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Cluster'),
 							$('<div>').addClass('dropdown-divider'),
 							$license
 					)
