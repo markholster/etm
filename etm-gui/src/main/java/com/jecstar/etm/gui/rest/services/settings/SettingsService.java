@@ -67,7 +67,7 @@ public class SettingsService extends AbstractJsonService {
 	@PUT
 	@Path("/license")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getLicense(String json) {
+	public String setLicense(String json) {
 		Map<String, Object> requestValues = toMap(json); 
 		String licenseKey = getString("key", requestValues);
 		etmConfiguration.setLicenseKey(licenseKey);
@@ -90,6 +90,17 @@ public class SettingsService extends AbstractJsonService {
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
 		added = addStringElementToJsonBuffer("license_type", license.getLicenseType().name(), result, !added) || added;
+		result.append("}");
+		return result.toString();
+	}
+	
+	@GET
+	@Path("/parsers")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getParsers() {
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		result.append("\"parsers\" : [{\"name\": \"parser2\"},{\"name\": \"parser1\"}]");
 		result.append("}");
 		return result.toString();
 	}

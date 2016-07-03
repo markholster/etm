@@ -5,6 +5,7 @@ import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.util.ObjectUtils;
 
 //TODO document this class and the different properties. 
@@ -64,6 +65,9 @@ public class EtmConfiguration {
 	}
 
 	public void setLicenseKey(String licenseKey) {
+		if (licenseKey == null || licenseKey.trim().length() == 0) {
+			throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
+		}		
 		this.license = new License(licenseKey);
 	}
 	
