@@ -8,12 +8,21 @@ import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
 
 public abstract class AbstractDefaultTelemetryEventEnhancer {
-
 	
+	private boolean enhancePayloadFormat = true;
+
 	protected void doEnhance(final TelemetryEvent<?> event, final ZonedDateTime enhanceTime) {
 		setId(event);
 		setDetectedPayloadFormat(event);
 		setWritingHandlerTimes(event, enhanceTime);
+	}
+	
+	public void setEnhancePayloadFormat(boolean enhancePayloadFormat) {
+		this.enhancePayloadFormat = enhancePayloadFormat;
+	}
+	
+	public boolean isEnhancePayloadFormat() {
+		return this.enhancePayloadFormat;
 	}
 	
 	private void setId(final TelemetryEvent<?> event) {
@@ -23,7 +32,7 @@ public abstract class AbstractDefaultTelemetryEventEnhancer {
 	}
 	
 	private void setDetectedPayloadFormat(final TelemetryEvent<?> event) {
-		if (event.payloadFormat == null) {
+		if (event.payloadFormat == null && this.enhancePayloadFormat) {
 			event.payloadFormat = detectPayloadFormat(event.payload);
 		}
 	}
