@@ -22,7 +22,8 @@ function buildMenu(currentContext) {
 		if ('search' == menu) {
 			$li.append(createMenuLink('../search/', 'fa-search', 'Search'));
 		} else if ('dashboard' == menu) {
-			$li.append(createMenuLink('../dashboard/', 'fa-dashboard', 'Dashboard'));
+// No dashboard yet			
+//			$li.append(createMenuLink('../dashboard/', 'fa-dashboard', 'Dashboard'));
 		} else if ('preferences' == menu) {
 			$li.append(createMenuLink('../preferences/', 'fa-user', 'Preferences'));
 		} else if ('settings' == menu) {
