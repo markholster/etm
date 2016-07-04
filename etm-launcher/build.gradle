@@ -27,10 +27,10 @@ distributions {
 
 startScripts {
     doLast {
-        unixScript.text = new File('src/main/scripts/etm.sh').text
+        unixScript.text = file('src/main/scripts/etm.sh').text
             .replace('${applicationName}', applicationName)
             .replace('${mainClassName}', mainClassName)
-        windowsScript.text = new File('src/main/scripts/etm.bat').text
+        windowsScript.text = file('src/main/scripts/etm.bat').text
             .replace('APP_HOME=%DIRNAME%..', 'APP_HOME=%DIRNAME%')
             .replace('%APP_HOME%\\lib', '%APP_HOME%\\wrapper')
             .replace('%GAIDENW_OPTS%', '%GAIDENW_OPTS% -Dapp.home=%APP_HOME%')
