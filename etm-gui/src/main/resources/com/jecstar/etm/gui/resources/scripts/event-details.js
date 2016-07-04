@@ -285,14 +285,15 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function createDetailMap(name, valueMap) {
+		$panelDiv = $('<div>');
 		$detailMap = $('<div>').addClass('panel panel-default').append(
 				$('<div>').addClass('panel-heading clearfix').append(
 						$('<div>').addClass('pull-left').append($('<a>').addClass('font-weight-bold').attr('href', '#').text(capitalize(name)).click(function (event) {
 							event.preventDefault();
-							$('#event_' + name + '_panel_collapse').collapse('toggle');
+							$panelDiv.collapse('toggle');
 						}))
 				),
-				$('<div>').attr('id', 'event_' + name + '_panel_collapse').addClass('panel-collapse collapse').append(
+				$panelDiv.addClass('panel-collapse collapse').append(
 						$('<div>').addClass('panel-body').append(
 								$('<div>').addClass('table-responsive').append(
 										$('<table>').addClass('table table-sm table-striped table-hover').append(
