@@ -92,8 +92,8 @@
 					<textarea id="input-xslt-template" class="form-control" rows="10" required="required"></textarea>
 				</fieldset>
 		        <div class="modal-footer">
-                  <input type="submit" id="btn_endpoint_delete" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" />  		        
-                  <input type="submit" id="btn_endpoint_save" class="btn btn-primary" value="Save" />
+                  <input type="submit" id="btn-confirm-remove-parser" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
+                  <input type="submit" id="btn-confirm-save-parser" class="btn btn-primary" value="Save" disabled="disabled" />
 		        </div>
 		      </form>
 		    </div>      
@@ -101,14 +101,53 @@
         </div>
       </div>
     </div>
+  
+    <div class="modal fade" id="modal-parser-overwrite" tabindex="-1" role="dialog" aria-labelledby="parser-overwrite-modal-label" aria-hidden="true">
+       <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+             <h4 class="modal-title" id="parser-overwrite-modal-label">Parser already exists</h4>
+           </div>
+           <div class="modal-body">
+            A parser with the name '<i id="overwrite-parser-name"></i>' already exists. Do you want to overwrite that parser?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            <button id="btn-save-parser" type="button" class="btn btn-primary">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal fade" id="modal-parser-remove" tabindex="-1" role="dialog" aria-labelledby="parser-remove-modal-label" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="parser-remove-modal-label">Confirm removal</h4>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to remove the parser '<i id="remove-parser-name"></i>' ?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            <button id="btn-remove-parser" type="button" class="btn btn-primary">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>  
+  
   </div>
   
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/tether.min.js"></script>
   <script src="../scripts/jquery.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/moment.min.js"></script>
-  <script src="../scripts/moment-timezone-with-data-2010-2020.min.js"></script>
   <script src="../scripts/menu.js"></script>
   <script src="../scripts/parsers.js"></script>
   <script>
