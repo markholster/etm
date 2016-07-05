@@ -100,7 +100,7 @@ public class SettingsService extends AbstractJsonService {
 	public String getParsers() {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		result.append("\"parsers\" : [{\"name\": \"parser2\"},{\"name\": \"parser1\"}]");
+		result.append("\"parsers\" : [{\"name\": \"parser2\", \"type\": \"xpath\", \"expression\": \"xpath expression\"},{\"name\": \"parser1\", \"type\": \"jsonpath\", \"expression\": \"jsonpath expression\"}]");
 		result.append("}");
 		return result.toString();
 	}
