@@ -119,14 +119,14 @@ public class DestinationReader implements Runnable {
 							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Retrying.");
 						}
 				}
-			} catch (OutOfMemoryError e) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("OutOfMemoryError detected while processing messages. Stopping reader to prevent further unexpected behaviouor.", e);
+			} catch (Error e) {
+				if (log.isFatalLevelEnabled()) {
+					log.logFatalMessage("Error detected while processing messages. Stopping reader to prevent further unexpected behaviour.", e);
 				}
 				this.stop = true;
-			} catch (Throwable t) {
+			} catch (Exception e) {
 				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Failed to process message. Trying to put it on the backout queue.", t);
+					log.logWarningMessage("Failed to process message. Trying to put it on the backout queue.", e);
 				}
 				tryBackout(message);
 				this.counter++;
