@@ -285,15 +285,15 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function createDetailMap(name, valueMap) {
-		$panelDiv = $('<div>');
+		var panelId = generateUUID();
 		$detailMap = $('<div>').addClass('panel panel-default').append(
 				$('<div>').addClass('panel-heading clearfix').append(
 						$('<div>').addClass('pull-left').append($('<a>').addClass('font-weight-bold').attr('href', '#').text(capitalize(name)).click(function (event) {
 							event.preventDefault();
-							$panelDiv.collapse('toggle');
+							$('#' + panelId).collapse('toggle');
 						}))
 				),
-				$panelDiv.addClass('panel-collapse collapse').append(
+				$('<div>').attr('id', panelId).addClass('panel-collapse collapse').append(
 						$('<div>').addClass('panel-body').append(
 								$('<div>').addClass('table-responsive').append(
 										$('<table>').addClass('table table-sm table-striped table-hover').append(
@@ -323,6 +323,19 @@ function showEvent(scrollTo, type, id) {
 				)
 		);
 		return $detailMap;
+	}
+	
+	function generateUUID(){
+    	var d = new Date().getTime();
+	    if(window.performance && typeof window.performance.now === "function"){
+	        d += performance.now(); //use high-precision timer if available
+	    }
+	    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	        var r = (d + Math.random()*16)%16 | 0;
+	        d = Math.floor(d/16);
+	        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+	    });
+	    return uuid;
 	}
 	
 	function createEndpointsTab(endpoints, timeZone) {
