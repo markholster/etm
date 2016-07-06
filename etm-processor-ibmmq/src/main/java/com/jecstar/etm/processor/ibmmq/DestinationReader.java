@@ -7,6 +7,7 @@ import com.ibm.mq.MQDestination;
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
 import com.ibm.mq.MQMessage;
+import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.core.TelemetryEvent;
@@ -24,6 +25,7 @@ public class DestinationReader implements Runnable {
 	private static final LogWrapper log = LogFactory.getLogger(DestinationReader.class);
 
 	private final String configurationName;
+	private final StringBuilder byteArrayBuilder = new StringBuilder();
 	private final AutoManagedTelemetryEventProcessor processor;
 	private final TelemetryEvent telemetryEvent = new TelemetryEvent();
 	private final QueueManager queueManager;
@@ -62,8 +64,9 @@ public class DestinationReader implements Runnable {
 		getOptions.options = this.destination.getDestinationGetOptions();
 		this.lastCommitTime = System.currentTimeMillis();
 		while (!this.stop) {
+			MQMessage message = null;
 			try {
-				MQMessage message = new MQMessage();
+				message = new MQMessage();
 				this.mqDestination.get(message, getOptions);
 				this.telemetryEvent.initialize();
 				byte[] byteContent = new byte[message.getMessageLength()];
@@ -89,13 +92,14 @@ public class DestinationReader implements Runnable {
 					}
 				}
 				message.clearMessage();
-				if (++this.counter >= this.destination.getCommitSize()) {
+				this.counter++;
+				if (shouldCommit()) {
 					commit();
 				}
 			} catch (MQException e) {
 				if (e.completionCode == 2 && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
 					// No message available, retry
-					if (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitInterval()) {
+					if (shouldCommit()) {
 						commit();
 					}
 					continue;
@@ -129,9 +133,26 @@ public class DestinationReader implements Runnable {
 							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Trying to reconnect.");
 						}
 				}
-			} catch (IOException e) {
-				if (log.isDebugLevelEnabled()) {
-					log.logDebugMessage("Failed to read message content", e);
+			} catch (OutOfMemoryError e) {
+				if (log.isErrorLevelEnabled()) {
+					log.logErrorMessage("OutOfMemoryError detected while processing messages. Stopping reader to prevent further unexpected behaviouor.", e);
+				}
+				this.stop = true;
+			} catch (Throwable t) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Failed to process message. Trying to put it on the backout queue.", t);
+				}
+				tryBackout(message);
+				this.counter++;
+				if (shouldCommit()) {
+					commit();
+				}
+			} finally {
+				if (message != null) {
+					try {
+						message.clearMessage();
+					} catch (IOException e) {
+					}
 				}
 			}
 			if (Thread.interrupted()) {
@@ -220,8 +241,52 @@ public class DestinationReader implements Runnable {
 		}
 	}
 	
+	private boolean shouldCommit() {
+		return (this.counter >= this.destination.getCommitSize()) || (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitInterval());
+	}
+	
+	private boolean tryBackout(MQMessage message) {
+		MQQueue backoutQueue = null;
+		try {
+			String backoutQueueName = this.mqDestination.getAttributeString(CMQC.MQCA_BACKOUT_REQ_Q_NAME, 48);
+			if (backoutQueueName != null && backoutQueueName.trim().length() > 0) {
+				backoutQueue = this.mqQueueManager.accessQueue(backoutQueueName.trim(), CMQC.MQOO_OUTPUT + CMQC.MQOO_FAIL_IF_QUIESCING);
+				backoutQueue.put(message);
+				backoutQueue.close();
+				return true;
+			} else {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("No backout queue defined on destination '" + this.mqDestination.getName() + "'. Unable to backout messages.");
+				}				
+			}
+		} catch (MQException e) {
+			if (log.isWarningLevelEnabled()) {
+				log.logWarningMessage("Failed to put message with id '" + byteArrayToString(message.messageId) + "' to the configured backout queue", e);
+			}
+			if (backoutQueue != null) {
+				try {
+					backoutQueue.close();
+				} catch (MQException e1) {
+				}
+			}
+		}
+		return false;
+	}
+	
 	public void stop() {
 		this.stop = true;
+	}
+	
+	private String byteArrayToString(byte[] bytes) {
+		this.byteArrayBuilder.setLength(0);
+		boolean allZero = true;
+		for (int i = 0; i < bytes.length; i++) {
+			this.byteArrayBuilder.append(String.format("%02x", bytes[i]));
+			if (bytes[i] != 0) {
+				allZero = false;
+			}
+		}
+		return allZero ? null : this.byteArrayBuilder.toString();
 	}
 
 }
