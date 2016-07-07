@@ -121,12 +121,12 @@ public class DestinationReader implements Runnable {
 				}
 			} catch (Error e) {
 				if (log.isFatalLevelEnabled()) {
-					log.logFatalMessage("Error detected while processing messages. Stopping reader to prevent further unexpected behaviour.", e);
+					log.logFatalMessage("Error detected while processing message with id '" + byteArrayToString(message.messageId) + "'. Stopping reader to prevent further unexpected behaviour.", e);
 				}
 				this.stop = true;
 			} catch (Exception e) {
 				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Failed to process message. Trying to put it on the backout queue.", e);
+					log.logWarningMessage("Failed to process message with id '" + byteArrayToString(message.messageId) + "'. Trying to put it on the backout queue.", e);
 				}
 				tryBackout(message);
 				this.counter++;
@@ -265,6 +265,9 @@ public class DestinationReader implements Runnable {
 	}
 	
 	private String byteArrayToString(byte[] bytes) {
+		if (bytes == null) {
+			return null;
+		}
 		this.byteArrayBuilder.setLength(0);
 		boolean allZero = true;
 		for (int i = 0; i < bytes.length; i++) {
