@@ -1,13 +1,14 @@
 package com.jecstar.etm.server.core.parsers;
 
-public class FixedPositionExpressionParser implements ExpressionParser {
+public class FixedPositionExpressionParser extends AbstractExpressionParser {
 	
 	private Integer startIx;
 	private Integer endIx;
-	private Integer lineIx;
+	private Integer line;
 	
-	public FixedPositionExpressionParser(Integer lineIx, Integer startIx, Integer endIx) {
-		this.lineIx = lineIx;
+	public FixedPositionExpressionParser(final String name, final Integer line, final Integer startIx, final Integer endIx) {
+		super(name);
+		this.line = line;
 	    this.startIx = startIx;
 	    this.endIx = endIx;
     }
@@ -18,12 +19,12 @@ public class FixedPositionExpressionParser implements ExpressionParser {
 			return null;
 		}
 		String line = null;
-		if (this.lineIx != null) {
+		if (this.line != null) {
 			String lines[] = content.split("\n");
-			if (lines.length <= this.lineIx) {
+			if (lines.length <= this.line) {
 				return null;
 			}
-			line = lines[this.lineIx];
+			line = lines[this.line];
 		} else {
 			line = content;
 		}
@@ -53,8 +54,8 @@ public class FixedPositionExpressionParser implements ExpressionParser {
 	    return this.endIx;
     }
 	
-	public Integer getLineIx() {
-	    return this.lineIx;
+	public Integer getLine() {
+	    return this.line;
     }
 
 }

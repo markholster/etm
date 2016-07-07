@@ -18,7 +18,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.om.NamePool.NamePoolLimitException;
 
-public class XsltExpressionParser implements ExpressionParser {
+public class XsltExpressionParser extends AbstractExpressionParser {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -28,7 +28,8 @@ public class XsltExpressionParser implements ExpressionParser {
 	private Transformer transformer;
 	private final String template;
 	
-	public XsltExpressionParser(String template) {
+	public XsltExpressionParser(final String name, final String template) {
+		super(name);
 	    this.transformer = createTransformer(template);
 		this.template = template;
     }

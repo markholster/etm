@@ -1,10 +1,11 @@
 package com.jecstar.etm.server.core.parsers;
 
-public class FixedValueExpressionParser implements ExpressionParser {
+public class FixedValueExpressionParser extends AbstractExpressionParser {
 
 	private final String value;
 
-	public FixedValueExpressionParser(final String value) {
+	public FixedValueExpressionParser(final String name, final String value) {
+		super(name);
 	    this.value = value;
     }
 	

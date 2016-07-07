@@ -19,7 +19,7 @@ public class FixedPositionExpressionParserTest {
 	 */
 	@Test
 	public void testEvaluateMultipleLines() {
-		ExpressionParser parser = new FixedPositionExpressionParser(1, 0, 2); 
+		ExpressionParser parser = new FixedPositionExpressionParser("test", 1, 0, 2); 
 		String text = "This is a test\r\non 2 lines.";
 		assertEquals("on", parser.evaluate(text));
 	}
@@ -29,7 +29,7 @@ public class FixedPositionExpressionParserTest {
 	 */
 	@Test
 	public void testEvaluateNoLine() {
-		ExpressionParser parser = new FixedPositionExpressionParser(null, 0, 2); 
+		ExpressionParser parser = new FixedPositionExpressionParser("test", null, 0, 2); 
 		String text = "This is a test\r\non 2 lines.";
 		assertEquals("Th", parser.evaluate(text));
 	}
@@ -39,7 +39,7 @@ public class FixedPositionExpressionParserTest {
 	 */
 	@Test
 	public void testEvaluateNoStart() {
-		ExpressionParser parser = new FixedPositionExpressionParser(1, null, 2); 
+		ExpressionParser parser = new FixedPositionExpressionParser("test", 1, null, 2); 
 		String text = "This is a test\r\non 2 lines.";
 		assertEquals("on", parser.evaluate(text));
 	}
@@ -50,7 +50,7 @@ public class FixedPositionExpressionParserTest {
 	 */
 	@Test
 	public void testEvaluateNoEnd() {
-		ExpressionParser parser = new FixedPositionExpressionParser(1, 3, null); 
+		ExpressionParser parser = new FixedPositionExpressionParser("test", 1, 3, null); 
 		String text = "This is a test\r\non 2 lines.";
 		assertEquals("2 lines.", parser.evaluate(text));
 	}

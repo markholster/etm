@@ -16,7 +16,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NamePool.NamePoolLimitException;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 
-public class XPathExpressionParser implements ExpressionParser {
+public class XPathExpressionParser extends AbstractExpressionParser {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -26,7 +26,8 @@ public class XPathExpressionParser implements ExpressionParser {
 	private XPathExpression compiledExpression;
 	private final String expression;
 	
-	public XPathExpressionParser(String expression) {
+	public XPathExpressionParser(final String name, final String expression) {
+		super(name);
 		this.compiledExpression = createCompiledExpression(expression);
 		this.expression = expression;
     }

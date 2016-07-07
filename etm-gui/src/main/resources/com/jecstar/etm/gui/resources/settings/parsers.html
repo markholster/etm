@@ -77,19 +77,19 @@
 				</fieldset>
 				<fieldset id="grp-fixed_value" class="form-group" style="display: none;">
 					<label for="input-fixed-value">Fixed value</label>
-					<input id="input-fixed-value" type="text" class="form-control" required="required" />
+					<input id="input-fixed-value" type="text" class="form-control" required="required" disabled="disabled" />
 				</fieldset>
 				<fieldset id="grp-jsonpath" class="form-group" style="display: none;">
 					<label for="input-jsonpath-expression">JsonPath expression</label>
-					<input id="input-jsonpath-expression" type="text" class="form-control" required="required" />
+					<input id="input-jsonpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
 				</fieldset>
 				<fieldset id="grp-xpath" class="form-group" style="display: none;">
 					<label for="input-xpath-expression">XPath expression</label>
-					<input id="input-xpath-expression" type="text" class="form-control" required="required" />
+					<input id="input-xpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
 				</fieldset>
 				<fieldset id="grp-xslt" class="form-group" style="display: none;">
 					<label for="input-xslt-template">XSLT template</label>
-					<textarea id="input-xslt-template" class="form-control" rows="10" required="required"></textarea>
+					<textarea id="input-xslt-template" class="form-control" rows="10" required="required" disabled="disabled"></textarea>
 				</fieldset>
 		        <div class="modal-footer">
                   <input type="submit" id="btn-confirm-remove-parser" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
@@ -152,7 +152,7 @@
   <script src="../scripts/parsers.js"></script>
   <script>
     $(document).ajaxStart(function () {
-        $("#parser_errorBox").hide('fast');
+        $("#parsers_errorBox").hide('fast');
         $('#spinner').fadeIn(100);
     }).ajaxStop(function () {
         $('#spinner').fadeOut(200);

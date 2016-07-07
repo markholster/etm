@@ -796,6 +796,7 @@ public class SearchService extends AbstractJsonService {
 				scrollIds.add(scrollId);
 			}
 		} while (nextBatchRequired);
+		clearScrolls(scrollIds);
 	}
 	
 	@SuppressWarnings("unchecked")

@@ -17,7 +17,7 @@ public class XPathExpressionParserTest {
 		Field declaredField = NamePool.class.getDeclaredField("MAX_PREFIXES_PER_URI");
 		declaredField.setAccessible(true);
 		Integer maxPrefixesPerUri = (Integer) declaredField.get(NamePool.class);		
-		XPathExpressionParser parser = new XPathExpressionParser("local-name(/*)");
+		XPathExpressionParser parser = new XPathExpressionParser("test", "local-name(/*)");
 		for (int i=0; i <= maxPrefixesPerUri; i++) {
 			String result = parser.evaluate("<ns" + i + ":test xmlns:ns" + i + "=\"http://www.test.com\">NamePoolLimitTest</ns" + i + ":test>");
 			assertEquals("test", result);

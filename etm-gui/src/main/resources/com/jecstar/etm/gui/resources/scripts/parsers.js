@@ -9,7 +9,8 @@ function buildParserPage() {
 		$('#grp-' +$(this).val()).show(); 
 	});
 
-	$('#sel-parser').change(function() {
+	$('#sel-parser').change(function(event) {
+		event.preventDefault();
 		var parserData = parserMap[$(this).val()];
 		if ('undefined' == typeof parserData) {
 			resetValues();
@@ -35,10 +36,10 @@ function buildParserPage() {
 	});
 	
 	$('#btn-confirm-save-parser').click(function(event) {
-		event.preventDefault();
 		if (!document.getElementById('parser_form').checkValidity()) {
 			return;
 		}
+		event.preventDefault();
 		var parserName = $('#input-parser-name').val();
 		if (isParserExistent(parserName)) {
 			$('#overwrite-parser-name').text(parserName);
@@ -113,21 +114,42 @@ function buildParserPage() {
 	
 	function saveParser() {
 		var parserData = createParserData();
-		if (!isParserExistent(parserData.name)) {
-			$parserSelect = $('#sel-parser');
-			$parserSelect.append($('<option>').attr('value', parserData.name).text(parserData.name));
-			sortSelectOptions($parserSelect);
-		}
-		parserMap[parserData.name] = parserData;
-		$('#parsers_infoBox').text('Parser \'' + parserData.name + '\' saved.').show('fast').delay(5000).hide('fast');
-		$('#modal-parser-overwrite').modal('hide');
+		$.ajax({
+            type: 'PUT',
+            contentType: 'application/json',
+            url: '../rest/settings/parser/' + encodeURIComponent(parserData.name),
+            data: JSON.stringify(parserData),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+        		if (!isParserExistent(parserData.name)) {
+        			$parserSelect = $('#sel-parser');
+        			$parserSelect.append($('<option>').attr('value', parserData.name).text(parserData.name));
+        			sortSelectOptions($parserSelect);
+        		}
+        		parserMap[parserData.name] = parserData;
+        		$('#modal-parser-overwrite').modal('hide');
+        		$('#parsers_infoBox').text('Parser \'' + parserData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+            }
+        });    		
 	}
 	
 	function removeParser(parserName) {
-		delete parserMap[parserName];
-		$('#sel-parser > option[value=\'' + parserName + '\']').remove();
-		$('#modal-parser-remove').modal('hide');
-		$('#parsers_infoBox').text('Parser \'' + parserName + '\' removed.').show('fast').delay(5000).hide('fast');
+		$.ajax({
+            type: 'DELETE',
+            contentType: 'application/json',
+            url: '../rest/settings/parser/' + encodeURIComponent(parserName),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+        		delete parserMap[parserName];
+        		$('#sel-parser > option[value=\'' + parserName + '\']').remove();
+        		$('#modal-parser-remove').modal('hide');
+        		$('#parsers_infoBox').text('Parser \'' + parserName + '\' removed.').show('fast').delay(5000).hide('fast');
+            }
+        });    		
 	}
 	
 	function createParserData() {
