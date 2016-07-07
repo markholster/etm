@@ -145,7 +145,9 @@ function buildParserPage() {
                     return;
                 }
         		delete parserMap[parserName];
-        		$('#sel-parser > option[value=\'' + parserName + '\']').remove();
+        		$("#sel-parser > option").filter(function(i){
+        		       return $(this).attr("value") == parserName;
+        		}).remove();
         		$('#modal-parser-remove').modal('hide');
         		$('#parsers_infoBox').text('Parser \'' + parserName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
