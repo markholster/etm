@@ -2,11 +2,12 @@ function buildEndpointPage() {
 	var endpointMap = {};
 	$('#sel-endpoint').change(function(event) {
 		event.preventDefault();
-		var endpointData = endpoint[$(this).val()];
+		var endpointData = endpointMap[$(this).val()];
 		if ('undefined' == typeof endpointData) {
 			resetValues();
 			return;
 		}
+		$('#input-endpoint-name').val('default_configuration' == endpointData.name ? '*' : endpointData.name);
 		enableOrDisableButtons();
 	});
 	
@@ -51,7 +52,7 @@ function buildEndpointPage() {
 	        }
 	        $endpointSelect = $('#sel-endpoint');
 	        $.each(data.endpoints, function(index, endpoint) {
-	        	$endpointSelect.append($('<option>').attr('value', endpoint.name).text(endpoint.name));
+	        	$endpointSelect.append($('<option>').attr('value', endpoint.name).text('default_configuration' == endpoint.name ? '*' : endpoint.name));
 	        	endpointMap[endpoint.name] = endpoint;
 	        });
 	        sortSelectOptions($endpointSelect)
@@ -63,7 +64,17 @@ function buildEndpointPage() {
 		var options = $endpointSelect.children('option');
 		options.detach().sort(function(a,b) {
 		    var at = $(a).text();
-		    var bt = $(b).text();         
+		    var bt = $(b).text();   
+		    if ('' == at) {
+		    	return -1;
+		    } else if ('' == bt) {
+		    	return 1;
+		    }
+		    if ('*' == at) {
+		    	return -1;
+		    } else if ('*' == bt) {
+		    	return 1;
+		    }
 		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
 		});
 		options.appendTo($endpointSelect);
@@ -131,7 +142,7 @@ function buildEndpointPage() {
 	
 	function createEndpointData() {
 		var endpointData = {
-			name: $('#input-endpoint-name').val(),
+			name: $('#input-endpoint-name').val() == '*' ? 'default_configuration' : $('#input-endpoint-name').val(),
 		}
 		return endpointData;
 	}

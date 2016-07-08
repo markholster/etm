@@ -45,6 +45,8 @@ public class SettingsService extends AbstractJsonService {
 	private final String licenseIndexType = "license";
 	private final String licenseId = "default_configuration";
 	private final String parserIndexType = "parser";
+	private final String endpointIndexType = "endpoint";
+	private final String defaultEndpointId = "default_configuration";
 	
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
@@ -111,7 +113,7 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/parsers")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getParsers() {
-		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(configurationIndexName)
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(this.configurationIndexName)
 			.setTypes(this.parserIndexType)
 			.setFetchSource(true)
 			.setQuery(QueryBuilders.matchAllQuery())
@@ -161,6 +163,70 @@ public class SettingsService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
+		return "{ \"status\": \"success\" }";
+	}
+
+	@GET
+	@Path("/endpoints")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getEndpoints() {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(this.configurationIndexName)
+			.setTypes(this.endpointIndexType)
+			.setFetchSource(true)
+			.setQuery(QueryBuilders.matchAllQuery())
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		StringBuilder result = new StringBuilder();
+		result.append("{\"endpoints\": [");
+		boolean first = true;
+		boolean defaultFound = false;
+		for (SearchHit searchHit : scrollableSearch) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append(searchHit.getSourceAsString());
+			if (this.defaultEndpointId.equals(searchHit.getId())) {
+				defaultFound = true;
+			}
+			first = false;
+		}
+		if (!defaultFound) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{\"name\": " + escapeToJson(this.defaultEndpointId, true) + "}");			
+		}
+	
+		result.append("]}");
+		return result.toString();
+	}
+	
+	
+	@DELETE
+	@Path("/endpoint/{endpointName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String deleteEndpoint(@PathParam("endpointName") String endpointName) {
+		client.prepareDelete(this.configurationIndexName, this.endpointIndexType, endpointName)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return "{\"status\":\"success\"}";
+	}
+
+	@PUT
+	@Path("/endpoint/{endpointName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addEndpoint(@PathParam("endpointName") String endpointName, String json) {
+		// Do a read and write of the parser to make sure it's valid.
+//		ExpressionParser expressionParser = this.expressionParserConverter.read(json);
+//		client.prepareUpdate(this.configurationIndexName, this.endpointIndexType, endpointName)
+//			.setDoc(this.expressionParserConverter.write(expressionParser))
+//			.setDocAsUpsert(true)
+//			.setDetectNoop(true)
+//			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+//			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+//			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+//			.get();
 		return "{ \"status\": \"success\" }";
 	}
 	
