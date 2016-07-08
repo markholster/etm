@@ -57,6 +57,18 @@
 				  <label for="input-endpoint-name">Endpoint name</label>
 				  <input id="input-endpoint-name" type="text" class="form-control" required="required">
 				</fieldset>
+		        <fieldset class="form-group">
+				  <label for="sel-detect-payload-format">Detect payload format</label>
+		          <select id="sel-detect-payload-format" class="form-control c-select">
+		          	<option value="true">Yes</option>
+		          	<option value="false" selected="selected">No</option>
+		          </select>
+				</fieldset>
+	            <div class="card card-block">
+	                <div class="card-title"><h6>Fields<a id="link-add-field" class="pull-right" href="#">Add field</a></h6></div>
+	                <div id="field-columns">
+	                </div>
+	            </div> 				
 		        <div class="modal-footer">
                   <input type="submit" id="btn-confirm-remove-endpoint" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
                   <input type="submit" id="btn-confirm-save-endpoint" class="btn btn-primary" value="Save" disabled="disabled" />

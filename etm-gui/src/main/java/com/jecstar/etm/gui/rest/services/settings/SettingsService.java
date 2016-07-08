@@ -194,7 +194,7 @@ public class SettingsService extends AbstractJsonService {
 			if (!first) {
 				result.append(",");
 			}
-			result.append("{\"name\": " + escapeToJson(this.defaultEndpointId, true) + "}");			
+			result.append("{\"name\": " + escapeToJson(this.defaultEndpointId, true) + ", \"detect_payload_format\": true}");			
 		}
 	
 		result.append("]}");

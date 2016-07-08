@@ -8,6 +8,12 @@ function buildEndpointPage() {
 			return;
 		}
 		$('#input-endpoint-name').val(getEndpointNameById(endpointData.name));
+		if (endpointData.detect_payload_format) {
+			$('#sel-detect-payload-format').val('true');
+		} else {
+			$('#sel-detect-payload-format').val('false');
+		}
+		
 		enableOrDisableButtons();
 	});
 	
@@ -84,7 +90,7 @@ function buildEndpointPage() {
 		var endpointName = $('#input-endpoint-name').val();
 		if (endpointName) {
 			$('#btn-confirm-save-endpoint').removeAttr('disabled');
-			if (isEndpointExistent(endpointName) && !'*' == endpointName) {
+			if (isEndpointExistent(endpointName) && '*' != endpointName) {
 				$('#btn-confirm-remove-endpoint').removeAttr('disabled');
 			} else {
 				$('#btn-confirm-remove-endpoint').attr('disabled', 'disabled');
@@ -117,6 +123,7 @@ function buildEndpointPage() {
         		endpointMap[endpointData.name] = endpointData;
         		$('#modal-endpoint-overwrite').modal('hide');
         		$('#endpoints_infoBox').text('Endpoint \'' + getEndpointNameById(endpointData.name) + '\' saved.').show('fast').delay(5000).hide('fast');
+        		enableOrDisableButtons();
             }
         });    		
 	}
@@ -136,13 +143,15 @@ function buildEndpointPage() {
         		}).remove();
         		$('#modal-endpoint-remove').modal('hide');
         		$('#endpoints_infoBox').text('Endpoint \'' + endpointName + '\' removed.').show('fast').delay(5000).hide('fast');
+        		enableOrDisableButtons();
             }
         });    		
 	}
 	
 	function createEndpointData() {
 		var endpointData = {
-			name: $('#input-endpoint-name').val() == '*' ? 'default_configuration' : $('#input-endpoint-name').val(),
+			name: getEndpointIdByName($('#input-endpoint-name').val()),
+			detect_payload_format: $('#sel-detect-payload-format').val() == 'true' ? true : false
 		}
 		return endpointData;
 	}
@@ -157,6 +166,7 @@ function buildEndpointPage() {
 
 	function resetValues() {
 		$('#input-endpoint-name').val('');
+		$('#sel-detect-payload-format').val('false');
 		enableOrDisableButtons();
 	}
 }
