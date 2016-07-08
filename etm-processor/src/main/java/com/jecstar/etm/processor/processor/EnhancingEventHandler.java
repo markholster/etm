@@ -11,18 +11,10 @@ import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent;
+import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
-import com.jecstar.etm.server.core.enhancers.BusinessTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.DefaultBusinessTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.DefaultHttpTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.DefaultLogTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.DefaultMessagingTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.DefaultSqlTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.HttpTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.LogTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.MessagingTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.SqlTelemetryEventEnhancer;
+import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
 import com.lmax.disruptor.EventHandler;
 
@@ -35,11 +27,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	
 	private final EndpointConfiguration endpointConfiguration;
 	
-	private final BusinessTelemetryEventEnhancer defaultBusinessTelemetryEventEnhancer = new DefaultBusinessTelemetryEventEnhancer();
-	private final LogTelemetryEventEnhancer defaultLogTelemetryEventEnhancer = new DefaultLogTelemetryEventEnhancer();
-	private final HttpTelemetryEventEnhancer defaultHttpTelemetryEventEnhancer = new DefaultHttpTelemetryEventEnhancer();
-	private final MessagingTelemetryEventEnhancer defaultMessagingTelemetryEventEnhancer = new DefaultMessagingTelemetryEventEnhancer();
-	private final SqlTelemetryEventEnhancer defaultSqlTelemetryEventEnhancer = new DefaultSqlTelemetryEventEnhancer();
+	private final DefaultTelemetryEventEnhancer defaultTelemetryEventEnhancer = new DefaultTelemetryEventEnhancer();
 	private final Timer timer;
 	
 	public EnhancingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
@@ -57,99 +45,39 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		}
 		switch (command.commandType) {
 		case BUSINESS_EVENT:
-			enhanceBusinessTelemetryEvent(command.businessTelemetryEvent);
+			enhanceTelemetryEvent(command.businessTelemetryEvent);
 			break;
 		case HTTP_EVENT:
-			enhanceHttpTelemetryEvent(command.httpTelemetryEvent);
+			enhanceTelemetryEvent(command.httpTelemetryEvent);
 			break;
 		case LOG_EVENT:
-			enhanceLogTelemetryEvent(command.logTelemetryEvent);
+			enhanceTelemetryEvent(command.logTelemetryEvent);
 			break;
 		case MESSAGING_EVENT:
-			enhanceMessagingTelemetryEvent(command.messagingTelemetryEvent);
+			enhanceTelemetryEvent(command.messagingTelemetryEvent);
 			break;
 		case SQL_EVENT:
-			enhanceSqlTelemetryEvent(command.sqlTelemetryEvent);
+			enhanceTelemetryEvent(command.sqlTelemetryEvent);
 			break;
 		default:
 			throw new IllegalArgumentException("'" + command.commandType.name() + "' not implemented.");
 		}
 	}
 
-	private void enhanceBusinessTelemetryEvent(BusinessTelemetryEvent event) {
+	private void enhanceTelemetryEvent(TelemetryEvent<?> event) {
 		final Context timerContext = this.timer.time();
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
 			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
-			if (this.endpointConfiguration.businessEventEnhancers != null && this.endpointConfiguration.businessEventEnhancers.size() > 0) {
-				this.endpointConfiguration.businessEventEnhancers.forEach(c -> c.enhance(event, now));
+			if (this.endpointConfiguration.eventEnhancers != null && this.endpointConfiguration.eventEnhancers.size() > 0) {
+				this.endpointConfiguration.eventEnhancers.forEach(c -> c.enhance(event, now));
 			} else {
-				this.defaultBusinessTelemetryEventEnhancer.enhance(event, now);
+				this.defaultTelemetryEventEnhancer.enhance(event, now);
 			}
 		} finally {
 			timerContext.stop();
 		}	    
 	}
-	
-	private void enhanceHttpTelemetryEvent(HttpTelemetryEvent event) {
-		final Context timerContext = this.timer.time();
-		try {
-			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
-			if (this.endpointConfiguration.httpEventEnhancers != null && this.endpointConfiguration.httpEventEnhancers.size() > 0) {
-				this.endpointConfiguration.httpEventEnhancers.forEach(c -> c.enhance(event, now));
-			} else {
-				this.defaultHttpTelemetryEventEnhancer.enhance(event, now);
-			}
-		} finally {
-			timerContext.stop();
-		}	    
-	}
-	
-	private void enhanceLogTelemetryEvent(LogTelemetryEvent event) {
-		final Context timerContext = this.timer.time();
-		try {
-			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
-			if (this.endpointConfiguration.logEventEnhancers != null && this.endpointConfiguration.logEventEnhancers.size() > 0) {
-				this.endpointConfiguration.logEventEnhancers.forEach(c -> c.enhance(event, now));
-			} else {
-				this.defaultLogTelemetryEventEnhancer.enhance(event, now);
-			}
-		} finally {
-			timerContext.stop();
-		}	    
-	}
-
-	private void enhanceMessagingTelemetryEvent(MessagingTelemetryEvent event) {
-		final Context timerContext = this.timer.time();
-		try {
-			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
-			if (this.endpointConfiguration.messagingEventEnhancers != null && this.endpointConfiguration.messagingEventEnhancers.size() > 0) {
-				this.endpointConfiguration.messagingEventEnhancers.forEach(c -> c.enhance(event, now));
-			} else {
-				this.defaultMessagingTelemetryEventEnhancer.enhance(event, now);
-			}
-		} finally {
-			timerContext.stop();
-		}	    
-    }
-
-	private void enhanceSqlTelemetryEvent(SqlTelemetryEvent event) {
-		final Context timerContext = this.timer.time();
-		try {
-			final ZonedDateTime now = ZonedDateTime.now();
-			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
-			if (this.endpointConfiguration.sqlEventEnhancers != null && this.endpointConfiguration.sqlEventEnhancers.size() > 0) {
-				this.endpointConfiguration.sqlEventEnhancers.forEach(c -> c.enhance(event, now));
-			} else {
-				this.defaultSqlTelemetryEventEnhancer.enhance(event, now);
-			}
-		} finally {
-			timerContext.stop();
-		}	    
-    }
 
 	private String parseValue(List<ExpressionParser> expressionParsers, String content) {
 		if (content == null || expressionParsers == null) {

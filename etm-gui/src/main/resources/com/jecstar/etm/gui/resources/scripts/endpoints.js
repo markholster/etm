@@ -7,7 +7,7 @@ function buildEndpointPage() {
 			resetValues();
 			return;
 		}
-		$('#input-endpoint-name').val('default_configuration' == endpointData.name ? '*' : endpointData.name);
+		$('#input-endpoint-name').val(getEndpointNameById(endpointData.name));
 		enableOrDisableButtons();
 	});
 	
@@ -52,7 +52,7 @@ function buildEndpointPage() {
 	        }
 	        $endpointSelect = $('#sel-endpoint');
 	        $.each(data.endpoints, function(index, endpoint) {
-	        	$endpointSelect.append($('<option>').attr('value', endpoint.name).text('default_configuration' == endpoint.name ? '*' : endpoint.name));
+	        	$endpointSelect.append($('<option>').attr('value', endpoint.name).text(getEndpointNameById(endpoint.name)));
 	        	endpointMap[endpoint.name] = endpoint;
 	        });
 	        sortSelectOptions($endpointSelect)
@@ -84,7 +84,7 @@ function buildEndpointPage() {
 		var endpointName = $('#input-endpoint-name').val();
 		if (endpointName) {
 			$('#btn-confirm-save-endpoint').removeAttr('disabled');
-			if (isEndpointExistent(endpointName)) {
+			if (isEndpointExistent(endpointName) && !'*' == endpointName) {
 				$('#btn-confirm-remove-endpoint').removeAttr('disabled');
 			} else {
 				$('#btn-confirm-remove-endpoint').attr('disabled', 'disabled');
@@ -95,7 +95,7 @@ function buildEndpointPage() {
 	}
 	
 	function isEndpointExistent(name) {
-		return "undefined" != typeof endpointMap[name];
+		return "undefined" != typeof endpointMap[getEndpointIdByName(name)];
 	}
 	
 	function saveEndpoint() {
@@ -116,7 +116,7 @@ function buildEndpointPage() {
         		}
         		endpointMap[endpointData.name] = endpointData;
         		$('#modal-endpoint-overwrite').modal('hide');
-        		$('#endpoints_infoBox').text('Endpoint \'' + endpointData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+        		$('#endpoints_infoBox').text('Endpoint \'' + getEndpointNameById(endpointData.name) + '\' saved.').show('fast').delay(5000).hide('fast');
             }
         });    		
 	}
@@ -125,14 +125,14 @@ function buildEndpointPage() {
 		$.ajax({
             type: 'DELETE',
             contentType: 'application/json',
-            url: '../rest/settings/endpoint/' + encodeURIComponent(endpointName),
+            url: '../rest/settings/endpoint/' + encodeURIComponent(getEndpointIdByName(endpointName)),
             success: function(data) {
                 if (!data) {
                     return;
                 }
-        		delete endpointMap[endpointName];
+        		delete endpointMap[getEndpointIdByName(endpointName)];
         		$("#sel-endpoint > option").filter(function(i){
-     		       return $(this).attr("value") == endpointName;
+     		       return $(this).attr("value") == getEndpointIdByName(endpointName);
         		}).remove();
         		$('#modal-endpoint-remove').modal('hide');
         		$('#endpoints_infoBox').text('Endpoint \'' + endpointName + '\' removed.').show('fast').delay(5000).hide('fast');
@@ -145,6 +145,14 @@ function buildEndpointPage() {
 			name: $('#input-endpoint-name').val() == '*' ? 'default_configuration' : $('#input-endpoint-name').val(),
 		}
 		return endpointData;
+	}
+	
+	function getEndpointIdByName(endpointName) {
+		return endpointName == '*' ? 'default_configuration' : endpointName;
+	}
+	
+	function getEndpointNameById(endpointId) {
+		return endpointId == 'default_configuration' ? '*' : endpointId;
 	}
 
 	function resetValues() {

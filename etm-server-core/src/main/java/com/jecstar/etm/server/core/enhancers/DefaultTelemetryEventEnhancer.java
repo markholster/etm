@@ -7,11 +7,12 @@ import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
 
-public abstract class AbstractDefaultTelemetryEventEnhancer {
+public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	
 	private boolean enhancePayloadFormat = true;
-
-	protected void doEnhance(final TelemetryEvent<?> event, final ZonedDateTime enhanceTime) {
+	
+	@Override
+	public void enhance(TelemetryEvent<?> event, ZonedDateTime enhanceTime) {
 		setId(event);
 		setDetectedPayloadFormat(event);
 		setWritingHandlerTimes(event, enhanceTime);

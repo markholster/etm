@@ -217,6 +217,9 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/endpoint/{endpointName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String addEndpoint(@PathParam("endpointName") String endpointName, String json) {
+		// TODO als de naam default_configuration is moeten alle endpoints bij langs om bijgewerkt te worden.
+		// Anders -> Default ophalen en mergen met dit endpoint.
+		
 		// Do a read and write of the parser to make sure it's valid.
 //		ExpressionParser expressionParser = this.expressionParserConverter.read(json);
 //		client.prepareUpdate(this.configurationIndexName, this.endpointIndexType, endpointName)
