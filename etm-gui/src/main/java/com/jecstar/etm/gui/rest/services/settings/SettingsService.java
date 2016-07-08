@@ -1,11 +1,8 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -19,18 +16,17 @@ import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
-import org.elasticsearch.action.search.ClearScrollRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
@@ -115,45 +111,25 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/parsers")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getParsers() {
-		final int scrollSize = 25;
-		SearchResponse response = client.prepareSearch(configurationIndexName)
-			.setTypes(parserIndexType)
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(configurationIndexName)
+			.setTypes(this.parserIndexType)
 			.setFetchSource(true)
 			.setQuery(QueryBuilders.matchAllQuery())
-			.setFrom(0)
-			.setSize(scrollSize)
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
-			.get();
-		if (response.getHits().hits().length == 0) {
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		if (!scrollableSearch.hasNext()) {
 			return null;
-		}			
+		}
 		StringBuilder result = new StringBuilder();
 		result.append("{\"parsers\": [");
-		Set<String> scrollIds = new HashSet<>();
-		String scrollId = response.getScrollId();
-		scrollIds.add(scrollId);
-		boolean nextBatchRequired = false;
 		boolean first = true;
-		do {
-			for (SearchHit searchHit : response.getHits().hits()) {
-				if (!first) {
-					result.append(",");
-				}
-				result.append(searchHit.getSourceAsString());
-				first = false;
+		for (SearchHit searchHit : scrollableSearch) {
+			if (!first) {
+				result.append(",");
 			}
-			if (nextBatchRequired) {
-				// Full batch fetched, request the next batch.
-				response = client.prepareSearchScroll(scrollId)
-						.setScroll(TimeValue.timeValueSeconds(30))
-						.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-				scrollId = response.getScrollId();
-				scrollIds.add(scrollId);
-			}			
-			nextBatchRequired = scrollSize == response.getHits().hits().length;
-		} while (nextBatchRequired);	
-		clearScrolls(scrollIds);
+			result.append(searchHit.getSourceAsString());
+			first = false;
+		}
 		result.append("]}");
 		return result.toString();
 	}
@@ -202,13 +178,5 @@ public class SettingsService extends AbstractJsonService {
         } catch (IOException e) {
         	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
         }
-	}
-	
-	private void clearScrolls(Collection<String> scrollIds) {
-		ClearScrollRequestBuilder clearScroll = client.prepareClearScroll();
-		for (String scrollId : scrollIds) {
-			clearScroll.addScrollId(scrollId);
-		}
-		clearScroll.execute();
 	}
 }

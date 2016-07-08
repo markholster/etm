@@ -3,10 +3,8 @@ package com.jecstar.etm.gui.rest.services.search;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +27,6 @@ import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.ClearScrollRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -43,7 +40,6 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
-import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -55,6 +51,7 @@ import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
@@ -361,82 +358,64 @@ public class SearchService extends AbstractJsonService {
 								"." + this.eventTags.getWritingEndpointHandlerTag() + 
 								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
 		);
-		final int scrollSize = 25;
-		SearchResponse response =  client.prepareSearch("etm_event_all")
-				.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
-				.addSort(SortBuilders.fieldSort("_doc"))
-				.setFetchSource(new String[] {
-						this.eventTags.getEndpointsTag() + ".*", 
-						this.eventTags.getNameTag(), 
-						this.eventTags.getPayloadTag(),
-						this.eventTags.getMessagingEventTypeTag(),
-						this.eventTags.getHttpEventTypeTag(),
-						this.eventTags.getSqlEventTypeTag()}, null)
-				.setFrom(0)
-				.setSize(scrollSize)
-				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
-				.get();
-		if (response.getHits().hits().length == 0) {
+		
+		
+		SearchRequestBuilder searchRequest = client.prepareSearch("etm_event_all")
+			.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
+			.addSort(SortBuilders.fieldSort("_doc"))
+			.setFetchSource(new String[] {
+					this.eventTags.getEndpointsTag() + ".*", 
+					this.eventTags.getNameTag(), 
+					this.eventTags.getPayloadTag(),
+					this.eventTags.getMessagingEventTypeTag(),
+					this.eventTags.getHttpEventTypeTag(),
+					this.eventTags.getSqlEventTypeTag()}, null)
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequest);
+		if (!scrollableSearch.hasNext()) {
 			return null;
 		}
 		List<TransactionEvent> events = new ArrayList<>();
-		Set<String> scrollIds = new HashSet<>();
 		StringBuilder result = new StringBuilder();
-		String scrollId = response.getScrollId();
-		scrollIds.add(scrollId);
-		boolean nextBatchRequired = false;
-		do {
-			nextBatchRequired = scrollSize == response.getHits().hits().length;
-			for (SearchHit searchHit : response.getHits().hits()) {
-				TransactionEvent event = new TransactionEvent();
-				event.index = searchHit.getIndex();
-				event.type = searchHit.getType();
-				event.id = searchHit.getId();
-				Map<String, Object> source = searchHit.getSource();
-				event.name = getString(this.eventTags.getNameTag(), source);
-				event.payload = getString(this.eventTags.getPayloadTag(), source);
-				List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
-				if (endpoints != null) {
-					for (Map<String, Object> endpoint : endpoints) {
-						Map<String, Object> writingEndpointHandler = (Map<String, Object>) getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
-						if (isWithinTransaction(writingEndpointHandler, applicationName, transactionId)) {
-							event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
-							event.direction = "outgoing";
-							event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-						} else {
-							List<Map<String, Object>> readingEndpointHandlers = getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
-							if (readingEndpointHandlers != null) {
-								for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-									if (isWithinTransaction(readingEndpointHandler, applicationName, transactionId)) {
-										event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
-										event.direction = "incomming";
-										event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-									}
+		for (SearchHit searchHit : scrollableSearch) {
+			TransactionEvent event = new TransactionEvent();
+			event.index = searchHit.getIndex();
+			event.type = searchHit.getType();
+			event.id = searchHit.getId();
+			Map<String, Object> source = searchHit.getSource();
+			event.name = getString(this.eventTags.getNameTag(), source);
+			event.payload = getString(this.eventTags.getPayloadTag(), source);
+			List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
+			if (endpoints != null) {
+				for (Map<String, Object> endpoint : endpoints) {
+					Map<String, Object> writingEndpointHandler = (Map<String, Object>) getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
+					if (isWithinTransaction(writingEndpointHandler, applicationName, transactionId)) {
+						event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
+						event.direction = "outgoing";
+						event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
+					} else {
+						List<Map<String, Object>> readingEndpointHandlers = getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
+						if (readingEndpointHandlers != null) {
+							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+								if (isWithinTransaction(readingEndpointHandler, applicationName, transactionId)) {
+									event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
+									event.direction = "incomming";
+									event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
 								}
 							}
 						}
-						if ("http".equals(searchHit.getType())) {
-							event.subType = getString(this.eventTags.getHttpEventTypeTag(), source);
-						} else if ("messaging".equals(searchHit.getType())) {
-							event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
-						} else if ("sql".equals(searchHit.getType())) {
-							event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
-						}
+					}
+					if ("http".equals(searchHit.getType())) {
+						event.subType = getString(this.eventTags.getHttpEventTypeTag(), source);
+					} else if ("messaging".equals(searchHit.getType())) {
+						event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
+					} else if ("sql".equals(searchHit.getType())) {
+						event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
 					}
 				}
-				events.add(event);
 			}
-			if (nextBatchRequired) {
-				// Full batch fetched, request the next batch.
-				response = client.prepareSearchScroll(scrollId)
-						.setScroll(TimeValue.timeValueSeconds(30))
-						.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-				scrollId = response.getScrollId();
-				scrollIds.add(scrollId);
-			}
-		} while (nextBatchRequired);
-		clearScrolls(scrollIds);
+			events.add(event);
+		}
 		
 		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
 		result.append("{");
@@ -712,9 +691,8 @@ public class SearchService extends AbstractJsonService {
 				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 						"." + this.eventTags.getWritingEndpointHandlerTag() + 
 						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId));
-		final int scrollSize = 25;
 		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
-		SearchResponse response =  client.prepareSearch("etm_event_all")
+		SearchRequestBuilder searchRequest = client.prepareSearch("etm_event_all")
 				.setTypes("http", "messaging")
 				.setQuery(findEventsQuery)
 				.addSort(SortBuilders.fieldSort("_doc"))
@@ -725,78 +703,59 @@ public class SearchService extends AbstractJsonService {
 						this.eventTags.getCorrelationIdTag(),
 						this.eventTags.getMessagingEventTypeTag(),
 						this.eventTags.getHttpEventTypeTag()}, null)
-				.setFrom(0)
-				.setSize(scrollSize)
-				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.setScroll(new Scroll(TimeValue.timeValueSeconds(60)))
-				.get();
-		if (response.getHits().hits().length == 0) {
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequest);
+		if (!scrollableSearch.hasNext()) {
 			return;
 		}
-		Set<String> scrollIds = new HashSet<>();
-		String scrollId = response.getScrollId();
-		scrollIds.add(scrollId);
-		boolean nextBatchRequired = false;
-		do {
-			nextBatchRequired = scrollSize == response.getHits().hits().length;
-			for (SearchHit searchHit : response.getHits().hits()) {
-				Map<String, Object> source = searchHit.getSource();
-				String eventName = getString(this.eventTags.getNameTag(), source, "?");
-				Long expiry = getLong(this.eventTags.getExpiryTag(), source);
-				String subType = null;
-				if ("http".equals(searchHit.getType())) {
-					subType = getString(this.eventTags.getHttpEventTypeTag(), source);
-				} else if ("messaging".equals(searchHit.getType())) {
-					subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
-				}
-				String correlationId = getString(this.eventTags.getCorrelationIdTag(), source);
-				List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
-				if (endpoints != null) {
-					for (Map<String, Object> endpoint : endpoints) {
-						String endpointName = getString(this.eventTags.getEndpointNameTag(), endpoint);
-						Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
-						processEndpointHandlerForEventChain(eventChain, 
-								writingEndpointHandler, 
-								true, 
-								searchHit.getId(), 
-								eventName, 
-								searchHit.getType(), 
-								correlationId, 
-								subType,
-								endpointName, 
-								transactionId, 
-								expiry);
-						List<Map<String, Object>> readingEndpointHandlers =  getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
-						if (readingEndpointHandlers != null) {
-							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-								processEndpointHandlerForEventChain(eventChain, 
-										readingEndpointHandler, 
-										false, 
-										searchHit.getId(), 
-										eventName, 
-										searchHit.getType(), 
-										correlationId,
-										subType,
-										endpointName, 
-										transactionId, 
-										expiry);
-							}
+		for (SearchHit searchHit : scrollableSearch) {
+			Map<String, Object> source = searchHit.getSource();
+			String eventName = getString(this.eventTags.getNameTag(), source, "?");
+			Long expiry = getLong(this.eventTags.getExpiryTag(), source);
+			String subType = null;
+			if ("http".equals(searchHit.getType())) {
+				subType = getString(this.eventTags.getHttpEventTypeTag(), source);
+			} else if ("messaging".equals(searchHit.getType())) {
+				subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
+			}
+			String correlationId = getString(this.eventTags.getCorrelationIdTag(), source);
+			List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
+			if (endpoints != null) {
+				for (Map<String, Object> endpoint : endpoints) {
+					String endpointName = getString(this.eventTags.getEndpointNameTag(), endpoint);
+					Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
+					processEndpointHandlerForEventChain(eventChain, 
+							writingEndpointHandler, 
+							true, 
+							searchHit.getId(), 
+							eventName, 
+							searchHit.getType(), 
+							correlationId, 
+							subType,
+							endpointName, 
+							transactionId, 
+							expiry);
+					List<Map<String, Object>> readingEndpointHandlers =  getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
+					if (readingEndpointHandlers != null) {
+						for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+							processEndpointHandlerForEventChain(eventChain, 
+									readingEndpointHandler, 
+									false, 
+									searchHit.getId(), 
+									eventName, 
+									searchHit.getType(), 
+									correlationId,
+									subType,
+									endpointName, 
+									transactionId, 
+									expiry);
 						}
 					}
 				}
-				// Check for request/response correlation and add those transactions as well.
-				addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, searchHit.getType(), subType);
 			}
-			if (nextBatchRequired) {
-				// Full batch fetched, request the next batch.
-				response = client.prepareSearchScroll(scrollId)
-						.setScroll(TimeValue.timeValueSeconds(30))
-						.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-				scrollId = response.getScrollId();
-				scrollIds.add(scrollId);
-			}
-		} while (nextBatchRequired);
-		clearScrolls(scrollIds);
+			// Check for request/response correlation and add those transactions as well.
+			addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, searchHit.getType(), subType);
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -925,14 +884,6 @@ public class SearchService extends AbstractJsonService {
 		}
 	}
 	
-	private void clearScrolls(Collection<String> scrollIds) {
-		ClearScrollRequestBuilder clearScroll = client.prepareClearScroll();
-		for (String scrollId : scrollIds) {
-			clearScroll.addScrollId(scrollId);
-		}
-		clearScroll.execute();
-	}
-
 	@SuppressWarnings("unchecked")
 	private void addKeywordProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
 		valueMap = getObject("properties", valueMap);
