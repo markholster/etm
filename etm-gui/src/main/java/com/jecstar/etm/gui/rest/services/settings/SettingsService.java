@@ -36,6 +36,7 @@ import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.ExpressionParserConverterJsonImpl;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
+import com.jecstar.etm.server.core.parsers.ExpressionParserField;
 
 @Path("/settings")
 public class SettingsService extends AbstractJsonService {
@@ -130,6 +131,26 @@ public class SettingsService extends AbstractJsonService {
 				result.append(",");
 			}
 			result.append(searchHit.getSourceAsString());
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	@GET
+	@Path("/parserfields")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getParserFields() {
+		StringBuilder result = new StringBuilder();
+		boolean first = true;
+		result.append("{\"parserfields\": [");
+		for (ExpressionParserField field : ExpressionParserField.values()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{");
+			addStringElementToJsonBuffer("name", field.getJsonTag(), result, true);
+			result.append("}");
 			first = false;
 		}
 		result.append("]}");

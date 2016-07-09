@@ -151,7 +151,8 @@
                        $locales.append($('<option>').attr('value', locale.value).text(locale.name))
                    }); 
                }
-    })).done(function () {    
+           })
+    ).done(function () {    
         $.ajax({
             type: 'GET',
             contentType: 'application/json',
