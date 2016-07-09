@@ -48,6 +48,14 @@ function buildEndpointPage() {
 	
 	$('#input-endpoint-name').on('input', enableOrDisableButtons);
 	
+	$('#link-add-field').click(function(event) {
+		$('#field-columns').append(
+		    $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;').append(
+		        $('<div>').addClass('col-sm-4').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control c-select'))
+		    )
+		);
+	});
+	
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
