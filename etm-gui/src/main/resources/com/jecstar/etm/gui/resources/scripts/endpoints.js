@@ -10,6 +10,7 @@ function buildEndpointPage() {
 			resetValues();
 			return;
 		}
+		$('#field-columns').empty();
 		$('#input-endpoint-name').val(getEndpointNameById(endpointData.name));
 		if (endpointData.detect_payload_format) {
 			$('#sel-detect-payload-format').val('true');
@@ -84,7 +85,6 @@ function buildEndpointPage() {
 		$('#link-add-field').click(function(event) {
 			event.preventDefault();
 			$('#field-columns').append(createFieldExtractionRow());
-			updateRowActions();
 		});
 		
 		$.ajax({
@@ -107,24 +107,29 @@ function buildEndpointPage() {
 		
 	});
 	
-    function removeRow(row) {
-        $(row).remove();
-        updateRowActions();
+    function removeParserRow(anchor) {
+    	anchor.parent().parent().parent().remove();
     }
     
-    function moveRowUp(row) {
-        $(row).after($(row).prev());
-        updateRowActions();
+    function addParserRow(anchor) {
+    	anchor.siblings('ol').append(createParserRow);
     }
-
-    function moveRowDown(row) {
-        $(row).before($(row).next());
-        updateRowActions();
+    
+    function removeField(anchor)  {
+    	anchor.parent().parent().remove();
     }
-	
+    
+    function createParserRow() {
+    	return 	$('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+					$('<div>').addClass('input-group').append(
+							$parserSelect.clone(true), 
+							$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeParserRow($(this));}))
+					)
+			);
+    }
+    
 	function createFieldExtractionRow() {
-		var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
-		var inputKey = $('<input>').attr('type', 'text').addClass('form-control');
+		var inputKey = $('<input>').attr('type', 'text').attr('required', 'required').addClass('form-control');
 		var localParserFieldSelect =  $parserFieldSelect.clone(true).change(function (event) {
 			event.preventDefault();
 			if (endsWith($(this).val(), '.')) {
@@ -133,42 +138,26 @@ function buildEndpointPage() {
 				$(inputKey).attr('disabled', 'disabled');
 			}
 		});
-		row.append(
-	        $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(localParserFieldSelect),
-	        $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(inputKey),
-	        $('<div>').addClass('col-sm-4').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($parserSelect.clone(true))
-		);
-		row.append($('<div>').addClass('col-sm-2'));
-        var fieldActionDiv = $('<div>').addClass('col-sm-2').append(
-                $('<div>').addClass('row actionRow').append(
-                    $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
-                    $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
-                    $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeRow(row)}))
-                )
-            );
-        row.append(fieldActionDiv);
-		return row;
+		var card = $('<div>').addClass('card card-block');
+		card.append(
+				$('<fieldset>').addClass('form-group').append(
+						$('<a href="#">').addClass('pull-right').text('Remove this field').click(function (event) {event.preventDefault(); removeField($(this))}),
+						$('<label>').text('Field'),
+						localParserFieldSelect
+				),
+				$('<fieldset>').addClass('form-group').append(
+						$('<label>').text('Collection key'),
+						inputKey
+				),
+				$('<fieldset>').addClass('form-group').append(
+						$('<a href="#">').addClass('pull-right').text('Add parser').click(function (event) {event.preventDefault(); addParserRow($(this))}),
+						$('<label>').text('Parsers'),
+						$('<ol>').append(createParserRow)
+				)
+		)
+		return card;
 	}
 	
-    function updateRowActions() {
-        $('#field-columns .actionRow').each(function (index, row) {
-            if ($('#field-columns').children().size() > 2) {
-                if (index == 0) {
-                    $(row).find('.fa-arrow-up').hide();
-                } else {
-                    $(row).find('.fa-arrow-up').show();
-                }
-                if (index >= $('#field-columns').children().size() -2) {
-                    $(row).find('.fa-arrow-down').hide();
-                } else {
-                    $(row).find('.fa-arrow-down').show();
-                }
-            } else {
-                $(row).find('.fa-arrow-up').hide();
-                $(row).find('.fa-arrow-down').hide();
-            }
-        });
-    }
 	
 	function endsWith(text, textToEndWith) {
 		return text.lastIndexOf(textToEndWith) == text.length - textToEndWith.length;
@@ -276,6 +265,7 @@ function buildEndpointPage() {
 	function resetValues() {
 		$('#input-endpoint-name').val('');
 		$('#sel-detect-payload-format').val('false');
+		$('#field-columns').empty();
 		enableOrDisableButtons();
 	}
 	
