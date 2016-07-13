@@ -26,7 +26,10 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
 	
 	@Override
 	public ExpressionParser read(String content) {
-		Map<String, Object> valueMap = this.converter.toMap(content);
+		return read(this.converter.toMap(content));
+	}
+	
+	public ExpressionParser read(Map<String, Object> valueMap) {
 		String name = this.converter.getString(this.tags.getNameTag(), valueMap);
 		String type = this.converter.getString(this.tags.getTypeTag(), valueMap);
 		if ("fixed_position".equals(type)) {
@@ -64,7 +67,7 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
 		if (log.isErrorLevelEnabled()) {
 			log.logErrorMessage("Unknown expression parser type: '" + type + "'.");
 		}
-		throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
+		throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);		
 	}
 
 	@Override

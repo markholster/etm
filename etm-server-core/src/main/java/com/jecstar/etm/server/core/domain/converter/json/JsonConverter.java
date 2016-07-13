@@ -43,6 +43,17 @@ public class JsonConverter extends JsonWriter {
 		return null;
 	}
 	
+	public Boolean getBoolean(String tag, Map<String, Object> valueMap) {
+		return getBoolean(tag, valueMap, null);
+	}
+	
+	public Boolean getBoolean(String tag, Map<String, Object> valueMap, Boolean defaultValue) {
+		if (valueMap.containsKey(tag)) {
+			return (Boolean)valueMap.get(tag);
+		}
+		return defaultValue;
+	}
+	
 	public String getString(String tag, Map<String, Object> valueMap) {
 		return getString(tag, valueMap, null);
 	}

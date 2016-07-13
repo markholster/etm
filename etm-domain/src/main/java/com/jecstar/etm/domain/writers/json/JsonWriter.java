@@ -77,7 +77,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
+		buffer.append(escapeToJson(elementName, true) + ": " + elementValue.booleanValue());
 		return true;
 	}
 	

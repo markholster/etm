@@ -62,8 +62,8 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 		try {
 			final ZonedDateTime now = ZonedDateTime.now();
 			this.commandResources.loadEndpointConfig(event.endpoints, this.endpointConfiguration);
-			if (this.endpointConfiguration.eventEnhancers != null && this.endpointConfiguration.eventEnhancers.size() > 0) {
-				this.endpointConfiguration.eventEnhancers.forEach(c -> c.enhance(event, now));
+			if (this.endpointConfiguration.eventEnhancer != null) {
+				this.endpointConfiguration.eventEnhancer.enhance(event, now);
 			} else {
 				this.defaultTelemetryEventEnhancer.enhance(event, now);
 			}

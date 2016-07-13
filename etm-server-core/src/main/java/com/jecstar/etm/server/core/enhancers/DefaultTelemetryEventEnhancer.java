@@ -17,7 +17,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	
 	private boolean enhancePayloadFormat = true;
 	
-	private Map<String,List<ExpressionParser>> fieldParsers = new LinkedHashMap<>();
+	private Map<String,List<ExpressionParser>> fields = new LinkedHashMap<>();
 	
 	@Override
 	public void enhance(TelemetryEvent<?> event, ZonedDateTime enhanceTime) {
@@ -35,27 +35,45 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		return this.enhancePayloadFormat;
 	}
 	
+	public Map<String, List<ExpressionParser>> getFields() {
+		return this.fields;
+	}
+	
+	public void addField(String field, List<ExpressionParser> expressionParsers) {
+		if (this.fields.containsKey(field)) {
+			List<ExpressionParser> currentParsers = this.fields.get(field);
+			if (currentParsers == null) {
+				this.fields.put(field, expressionParsers);
+			} else {
+				currentParsers.addAll(expressionParsers);
+			}
+			
+		} else {
+			this.fields.put(field, expressionParsers);
+		}
+	}
+	
 	/**
 	 * Merge the field <code>ExpressionParsers</code> of another <code>DefaultTelemetryEventEnhancer</code> to this one.
 	 * 
 	 * @param other The other <code>DefaultTelemetryEventEnhancer</code> to merge into this one.
 	 */
 	public void mergeFieldParsers(DefaultTelemetryEventEnhancer other) {
-		if (other.fieldParsers.isEmpty()) {
+		if (other.fields.isEmpty()) {
 			// Nothing to merge.
 			return;
 		}
-		if (this.fieldParsers.isEmpty()) {
+		if (this.fields.isEmpty()) {
 			// Current parsers is empty, just overwrite with other.
-			this.fieldParsers.putAll(other.fieldParsers);
+			this.fields.putAll(other.fields);
 			return;
 		}
-		for (Entry<String, List<ExpressionParser>> entry : other.fieldParsers.entrySet()) {
-			if (this.fieldParsers.get(entry.getKey()) != null) {
+		for (Entry<String, List<ExpressionParser>> entry : other.fields.entrySet()) {
+			if (this.fields.get(entry.getKey()) != null) {
 				// Both enhancers contain the same key. Append the "other" parsers to the current ones.
-				this.fieldParsers.get(entry.getKey()).addAll(entry.getValue());
+				this.fields.get(entry.getKey()).addAll(entry.getValue());
 			} else {
-				this.fieldParsers.put(entry.getKey(), entry.getValue());
+				this.fields.put(entry.getKey(), entry.getValue());
 			}
 		}
 	}
@@ -125,10 +143,10 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	
 	
 	private void enhanceFields(TelemetryEvent<?> event) {
-		if (this.fieldParsers.size() == 0) {
+		if (this.fields.size() == 0) {
 			return;
 		}
-		for (Entry<String, List<ExpressionParser>> entry : this.fieldParsers.entrySet()) {
+		for (Entry<String, List<ExpressionParser>> entry : this.fields.entrySet()) {
 			setWhenCurrentValueEmpty(event, entry.getKey(), entry.getValue());
 		}
 			

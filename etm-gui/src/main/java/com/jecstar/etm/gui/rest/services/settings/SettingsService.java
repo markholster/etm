@@ -30,11 +30,15 @@ import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
+import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
+import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.ExpressionParserConverterJsonImpl;
+import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
 import com.jecstar.etm.server.core.parsers.ExpressionParserField;
 
@@ -51,6 +55,7 @@ public class SettingsService extends AbstractJsonService {
 	
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
+	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
@@ -166,6 +171,8 @@ public class SettingsService extends AbstractJsonService {
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
+		
+		System.out.println("TODO: deleteParser in SettingsService moet nog aangepast!!");
 		// TODO, loop door endpoints en verwijder referentie
 		return "{\"status\":\"success\"}";
 	}
@@ -215,7 +222,10 @@ public class SettingsService extends AbstractJsonService {
 			if (!first) {
 				result.append(",");
 			}
-			result.append("{\"name\": " + escapeToJson(this.defaultEndpointId, true) + ", \"detect_payload_format\": true}");			
+			EndpointConfiguration defaultEndpointConfiguration = new EndpointConfiguration();
+			defaultEndpointConfiguration.name = "*";
+			defaultEndpointConfiguration.eventEnhancer = new  DefaultTelemetryEventEnhancer();
+			result.append(this.endpointConfigurationConverter.write(defaultEndpointConfiguration));			
 		}
 	
 		result.append("]}");
@@ -238,19 +248,16 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/endpoint/{endpointName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String addEndpoint(@PathParam("endpointName") String endpointName, String json) {
-		// TODO als de naam default_configuration is moeten alle endpoints bij langs om bijgewerkt te worden.
-		// Anders -> Default ophalen en mergen met dit endpoint.
-		
-		// Do a read and write of the parser to make sure it's valid.
-//		ExpressionParser expressionParser = this.expressionParserConverter.read(json);
-//		client.prepareUpdate(this.configurationIndexName, this.endpointIndexType, endpointName)
-//			.setDoc(this.expressionParserConverter.write(expressionParser))
-//			.setDocAsUpsert(true)
-//			.setDetectNoop(true)
-//			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-//			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-//			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
-//			.get();
+		// Do a read and write of the endpoint to make sure it's valid.
+		EndpointConfiguration endpointConfiguration = this.endpointConfigurationConverter.read(json);
+		client.prepareUpdate(this.configurationIndexName, this.endpointIndexType, endpointName)
+			.setDoc(this.endpointConfigurationConverter.write(endpointConfiguration))
+			.setDocAsUpsert(true)
+			.setDetectNoop(true)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.get();
 		return "{ \"status\": \"success\" }";
 	}
 	
