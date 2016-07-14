@@ -15,7 +15,7 @@ ext {
     dep_resteasyJacksonProvider = "org.jboss.resteasy:resteasy-jackson2-provider:" + version_resteasy
     dep_log4jOverSlf4j = "org.slf4j:log4j-over-slf4j:" + version_slf4j
     dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-5"
-    dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:2.53.0"
+    dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:2.53.1"
     dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_undertowCore = "io.undertow:undertow-core:" + version_undertow
     dep_undertowServlet = "io.undertow:undertow-servlet:" + version_undertow

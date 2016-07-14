@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.junit.After;
@@ -30,8 +31,9 @@ public abstract class AbstractIntegrationTest {
 //		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 //		this.driver = new ChromeDriver();
 
-		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-0.8.0-linux64");
+		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-0.9.0-linux64");
 		this.driver = new MarionetteDriver();
+//		this.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 	}
 	
 	@After
