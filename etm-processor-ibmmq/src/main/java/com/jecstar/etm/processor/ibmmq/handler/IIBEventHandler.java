@@ -290,18 +290,19 @@ public class IIBEventHandler {
 		EndpointHandlerBuilder builder = new EndpointHandlerBuilder();
 		long epochMillis = event.getEventPointData().getEventData().getEventSequence().getCreationTime().toGregorianCalendar().getTimeInMillis();
 		builder.setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC));
-		String application = this.jsonConverter.getString("application", eventMetaData);
-		String version = this.jsonConverter.getString("version", eventMetaData);
-		if (application == null) {
+		Map<String, Object> applicationValues = this.jsonConverter.getObject("application", eventMetaData);
+		String appName = this.jsonConverter.getString("name", applicationValues);
+		String appVersion = this.jsonConverter.getString("version", applicationValues);
+		if (appName == null) {
 			String productVersion = event.getEventPointData().getEventData().getProductVersion();
 			if (productVersion.startsWith("6") || productVersion.startsWith("7") || productVersion.startsWith("8")) {
-				application = "WMB";
+				appName = "WMB";
 			} else {
-				application = "IIB";
+				appName = "IIB";
 			}
-			version = productVersion;
+			appVersion = productVersion;
 		}
-		builder.setApplication(new ApplicationBuilder().setName(application).setVersion(version));
+		builder.setApplication(new ApplicationBuilder().setName(appName).setVersion(appVersion));
 		builder.setTransactionId(event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId());
 		return builder;
 	}
