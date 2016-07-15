@@ -14,7 +14,7 @@ public class ConfigurationImpl implements Configuration {
 	public static String rootLogLevel = "INFO";
 	public static TreeMap<String, String> loggers = new TreeMap<String, String>();
 	public static String applicationName = "Enterprise Telemetry Monitor";
-	public static String applicationVersion = null;
+	public static String applicationVersion = System.getProperty("app.version");
 	public static String applicationInstance = null;
 	public static String principalName = System.getProperty("user.name");
 	public static InetAddress hostAddress = null;

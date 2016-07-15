@@ -29,6 +29,7 @@ startScripts {
     doLast {
         unixScript.text = file('src/main/scripts/etm.sh').text
             .replace('${applicationName}', applicationName)
+            .replace('${applicationVersion}', version)
             .replace('${mainClassName}', mainClassName)
         windowsScript.text = file('src/main/scripts/etm.bat').text
             .replace('APP_HOME=%DIRNAME%..', 'APP_HOME=%DIRNAME%')
