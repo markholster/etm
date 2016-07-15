@@ -9,7 +9,6 @@ import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -60,28 +59,6 @@ public class RestTelemetryEventProcessor {
 		RestTelemetryEventProcessor.telemetryCommandProcessor = processor;
 	}
 	
-	@POST
-	@Path("/{eventType}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@SuppressWarnings("unchecked")
-	public String addSpecificEvent(@PathParam("eventType") String eventType, InputStream data) {
-		CommandType commandType = TelemetryCommand.CommandType.valueOfStringType(eventType);
-		if (commandType == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-		try {
-			Map<String, Object> event = this.objectMapper.readValue(data, HashMap.class);
-		    process(commandType, event);
-			return "{ \"status\": \"acknowledged\" }";
-		} catch (IOException e) {
-			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Not processing rest message.", e);
-			}
-			throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-		}
-	}
-
 	@POST
 	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
