@@ -1,6 +1,5 @@
 package com.jecstar.etm.processor.elastic;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -30,22 +30,32 @@ import com.jecstar.etm.processor.processor.persisting.elastic.MessagingTelemetry
 import com.jecstar.etm.processor.processor.persisting.elastic.SqlTelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
+import com.jecstar.etm.server.core.util.LruCache;
 
 public class CommandResourcesElasticImpl implements CommandResources, ConfigurationChangeListener {
+
+	private static final long ENDPOINT_CACHE_VALIDITY = 60_000;
 
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
 	private final BulkProcessorMetricLogger bulkProcessorMetricLogger;
 	
 	private final EndpointHandlingTimeComparator endpointComparater = new EndpointHandlingTimeComparator();
+	private final EndpointConfigurationConverterJsonImpl endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
+	
 	
 	@SuppressWarnings("rawtypes")
-	private Map<CommandType, TelemetryEventPersister> persisters = new HashMap<CommandType, TelemetryEventPersister>();
+	private Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
 	
 	private BulkProcessor bulkProcessor;
 
+	private Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
+	
 	public CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
 		this.elasticClient = elasticClient;
 		this.etmConfiguration = etmConfiguration;
@@ -71,11 +81,50 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		endpointConfiguration.initialize();
 		endpoints.sort(this.endpointComparater);
 		for (Endpoint endpoint : endpoints) {
-//			this.elasticClient.prepareGet(index, type, id)
+			mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
 		}
-		
+		mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT));
 	}
 	
+	private EndpointConfiguration retrieveEndpoint(String endpointName) {
+		EndpointConfiguration cachedItem = endpointCache.get(endpointName);
+		if (cachedItem != null) {
+			if (System.currentTimeMillis() - cachedItem.retrievalTimestamp > ENDPOINT_CACHE_VALIDITY) {
+				this.endpointCache.remove(endpointName);
+			} else {
+				return cachedItem;
+			}
+		}
+		GetResponse getResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointName)
+			.setFetchSource(true)
+			.get();
+		if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
+			EndpointConfiguration loadedConfig = this.endpointConfigurationConverter.read(getResponse.getSourceAsMap());
+			loadedConfig.retrievalTimestamp = System.currentTimeMillis();
+			this.endpointCache.put(endpointName, loadedConfig);
+			return loadedConfig;
+		} else {
+			NonExsistentEndpointConfiguration endpointConfig = new NonExsistentEndpointConfiguration();
+			endpointConfig.retrievalTimestamp = System.currentTimeMillis();
+			this.endpointCache.put(endpointName, endpointConfig);
+			return endpointConfig;
+		}
+	}
+
+	private void mergeEndpointConfigs(EndpointConfiguration endpointConfiguration, EndpointConfiguration endpointToMerge) {
+		if (endpointToMerge instanceof NonExsistentEndpointConfiguration) {
+			return;
+		}
+		if (endpointConfiguration.eventEnhancer == null) {
+			endpointConfiguration.eventEnhancer = endpointToMerge.eventEnhancer;
+			return;
+		}
+		if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer &&
+			endpointToMerge.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
+			((DefaultTelemetryEventEnhancer)endpointConfiguration.eventEnhancer).mergeFieldParsers((DefaultTelemetryEventEnhancer) endpointToMerge.eventEnhancer);
+		}
+	}
+
 	@Override
 	public void close() {
 		this.etmConfiguration.removeConfigurationChangeListener(this);
@@ -125,8 +174,14 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
 			this.metricContext.remove(executionId).stop();
 		}
-		
 	}
 
+	/**
+	 * Class to store in de endpoint cache to make sure the 
+	 * 
+	 * @author Mark Holster
+	 */
+	private class NonExsistentEndpointConfiguration extends EndpointConfiguration {}
+	
 	
 }

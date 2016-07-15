@@ -29,7 +29,10 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 
 	@Override
 	public EndpointConfiguration read(String content) {
-		Map<String, Object> valueMap = this.converter.toMap(content);
+		return read(this.converter.toMap(content));
+	}
+	
+	public EndpointConfiguration read(Map<String, Object> valueMap) {
 		EndpointConfiguration endpointConfiguration = new EndpointConfiguration();
 		endpointConfiguration.name = this.converter.getString(this.tags.getNameTag(), valueMap);
 		Map<String, Object> enhancerValues = this.converter.getObject(this.tags.getEnhancerTag(), valueMap);
@@ -49,7 +52,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 				endpointConfiguration.eventEnhancer = readDefaultEnhancer(enhancerValues);
 			}
 		}
-		return endpointConfiguration;
+		return endpointConfiguration;		
 	}
 	
 	private DefaultTelemetryEventEnhancer readDefaultEnhancer(Map<String, Object> enhancerValues) {
