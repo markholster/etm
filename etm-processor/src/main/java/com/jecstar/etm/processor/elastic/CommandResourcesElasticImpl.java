@@ -1,5 +1,6 @@
 package com.jecstar.etm.processor.elastic;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.Endpoint;
+import com.jecstar.etm.domain.EndpointHandlingTimeComparator;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.CommandResources;
 import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
@@ -36,6 +38,8 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
 	private final BulkProcessorMetricLogger bulkProcessorMetricLogger;
+	
+	private final EndpointHandlingTimeComparator endpointComparater = new EndpointHandlingTimeComparator();
 	
 	@SuppressWarnings("rawtypes")
 	private Map<CommandType, TelemetryEventPersister> persisters = new HashMap<CommandType, TelemetryEventPersister>();
@@ -65,6 +69,11 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	@Override
 	public void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration) {
 		endpointConfiguration.initialize();
+		endpoints.sort(this.endpointComparater);
+		for (Endpoint endpoint : endpoints) {
+//			this.elasticClient.prepareGet(index, type, id)
+		}
+		
 	}
 	
 	@Override

@@ -69,11 +69,13 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 			return;
 		}
 		for (Entry<String, List<ExpressionParser>> entry : other.fields.entrySet()) {
-			if (this.fields.get(entry.getKey()) != null) {
-				// Both enhancers contain the same key. Append the "other" parsers to the current ones.
-				this.fields.get(entry.getKey()).addAll(entry.getValue());
-			} else {
-				this.fields.put(entry.getKey(), entry.getValue());
+			if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+				if (this.fields.get(entry.getKey()) != null) {
+					// Both enhancers contain the same key. Append the "other" parsers to the current ones.
+					this.fields.get(entry.getKey()).addAll(entry.getValue());
+				} else {
+					this.fields.put(entry.getKey(), entry.getValue());
+				}
 			}
 		}
 	}

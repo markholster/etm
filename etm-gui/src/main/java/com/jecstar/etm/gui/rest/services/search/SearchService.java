@@ -52,6 +52,7 @@ import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
@@ -72,7 +73,7 @@ public class SearchService extends AbstractJsonService {
 	@Path("/templates")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSearchTemplates() {
-		GetResponse getResponse = SearchService.client.prepareGet("etm_configuration", "user", getEtmPrincipal().getId())
+		GetResponse getResponse = SearchService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setFetchSource("search_templates", null)
 				.get();
 		if (getResponse.isSourceEmpty()) {
@@ -86,7 +87,7 @@ public class SearchService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getRecentQueries() {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
-		GetResponse getResponse = SearchService.client.prepareGet("etm_configuration", "user", etmPrincipal.getId())
+		GetResponse getResponse = SearchService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
 				.setFetchSource("query_history", null)
 				.get();
 		if (getResponse.isSourceEmpty()) {
@@ -112,7 +113,7 @@ public class SearchService extends AbstractJsonService {
 		template.put("sort_order", getString("sort_order", requestValues));
 		
 		scriptParams.put("template", template);
-		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
+		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setScript(new Script("etm_update-search-template", ScriptType.STORED, "painless", scriptParams))
 				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -127,7 +128,7 @@ public class SearchService extends AbstractJsonService {
 	public String removeSearchTemplate(@PathParam("templateName") String templateName) {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		scriptParams.put("name", templateName);
-		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
+		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 			.setScript(new Script("etm_remove-search-template", ScriptType.STORED, "painless", scriptParams))
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -228,7 +229,7 @@ public class SearchService extends AbstractJsonService {
 			.locale(etmPrincipal.getLocale())
 			.lowercaseExpandedTerms(false)
 			.timeZone(etmPrincipal.getTimeZone().getID());
-		SearchRequestBuilder requestBuilder = client.prepareSearch("etm_event_all")
+		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
 			.setFetchSource(fields.toArray(new String[fields.size()]), null)
 			.setFrom(startIndex)
@@ -281,7 +282,7 @@ public class SearchService extends AbstractJsonService {
 		
 		scriptParams.put("query", query);
 		scriptParams.put("history_size", history_size);
-		SearchService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
+		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
 				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -306,7 +307,7 @@ public class SearchService extends AbstractJsonService {
 	private String getEvent(String eventType, String eventId, boolean fetchAll, String[] includes, String[] excludes) {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
 				.addIds(eventId);
-		SearchRequestBuilder builder = client.prepareSearch("etm_event_all")
+		SearchRequestBuilder builder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
 			.setFrom(0)
 			.setSize(1)
@@ -360,7 +361,7 @@ public class SearchService extends AbstractJsonService {
 		);
 		
 		
-		SearchRequestBuilder searchRequest = client.prepareSearch("etm_event_all")
+		SearchRequestBuilder searchRequest = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
 			.addSort(SortBuilders.fieldSort("_doc"))
 			.setFetchSource(new String[] {
@@ -453,7 +454,7 @@ public class SearchService extends AbstractJsonService {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
 				.addIds(eventId);
 		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
-		SearchResponse response =  client.prepareSearch("etm_event_all")
+		SearchResponse response =  client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setQuery(idsQueryBuilder)
 			.setFetchSource(new String[] {this.eventTags.getEndpointsTag() + ".*"}, null)
 			.setFrom(0)
@@ -692,7 +693,7 @@ public class SearchService extends AbstractJsonService {
 						"." + this.eventTags.getWritingEndpointHandlerTag() + 
 						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId));
 		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
-		SearchRequestBuilder searchRequest = client.prepareSearch("etm_event_all")
+		SearchRequestBuilder searchRequest = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 				.setTypes("http", "messaging")
 				.setQuery(findEventsQuery)
 				.addSort(SortBuilders.fieldSort("_doc"))
@@ -812,7 +813,7 @@ public class SearchService extends AbstractJsonService {
 		if (queryBuilder == null) {
 			return;
 		}
-		SearchResponse response =  client.prepareSearch("etm_event_all")
+		SearchResponse response =  client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 				.setTypes(type)
 				.setQuery(queryBuilder)
 				.setFetchSource(new String[] {this.eventTags.getEndpointsTag() + ".*"}, null)

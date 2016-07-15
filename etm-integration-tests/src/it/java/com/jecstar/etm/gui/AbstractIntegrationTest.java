@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.junit.After;
@@ -39,6 +38,7 @@ public abstract class AbstractIntegrationTest {
 	@After
 	public void tearDown() {
 		if (this.driver != null) {
+			this.driver.close();
 			this.driver.quit();
 			this.driver = null;
 		}

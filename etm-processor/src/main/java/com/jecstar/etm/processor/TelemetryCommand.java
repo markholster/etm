@@ -5,15 +5,16 @@ import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 
 public class TelemetryCommand {
 
 	public enum CommandType {
-		BUSINESS_EVENT("business"),
-		HTTP_EVENT("http"), 
-		LOG_EVENT("log"), 
-		MESSAGING_EVENT("messaging"),
-		SQL_EVENT("sql");
+		BUSINESS_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_BUSINESS),
+		HTTP_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_HTTP), 
+		LOG_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_LOG), 
+		MESSAGING_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING),
+		SQL_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_SQL);
 		
 		private final String type;
 

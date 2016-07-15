@@ -18,6 +18,7 @@ import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
@@ -40,12 +41,12 @@ public class ElasticsearchIndextemplateCreator {
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
 				new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_event")
 					.setCreate(true)
-					.setTemplate("etm_event_*")
+					.setTemplate(ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + "*")
 					.setSettings(Settings.builder()
 						.put("number_of_shards", 5)
 						.put("number_of_replicas", 0)
 						.put("index.translog.durability", "async"))
-					.addMapping("_default_", createEventMapping("_default_")).addAlias(new Alias("etm_event_all"))
+					.addMapping("_default_", createEventMapping("_default_")).addAlias(new Alias(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL))
 					.get();
 				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
 					.setScriptLang("painless")
@@ -83,7 +84,7 @@ public class ElasticsearchIndextemplateCreator {
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
 				new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, "etm_metrics")
 					.setCreate(true)
-					.setTemplate("etm_metrics_*")
+					.setTemplate(ElasticSearchLayout.ETM_METRICS_INDEX_PREFIX + "*")
 					.setSettings(Settings.builder()
 						.put("number_of_shards", 1)
 						.put("number_of_replicas", 0))
@@ -93,11 +94,11 @@ public class ElasticsearchIndextemplateCreator {
 		} catch (IndexTemplateAlreadyExistsException e) {}
 		
 		try {
-			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME).get();
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.CONFIGURATION_INDEX_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
-				new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticBackedEtmConfiguration.INDEX_NAME)
+				new PutIndexTemplateRequestBuilder(elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 					.setCreate(true)
-					.setTemplate(ElasticBackedEtmConfiguration.INDEX_NAME)
+					.setTemplate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 					.setSettings(Settings.builder()
 						.put("number_of_shards", 1)
 						.put("number_of_replicas", 0))
@@ -134,7 +135,7 @@ public class ElasticsearchIndextemplateCreator {
 	}
 
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
-		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, ElasticBackedEtmConfiguration.NODE_INDEX_TYPE, ElasticBackedEtmConfiguration.DEFAULT_ID)
+		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
 			.setSource(this.etmConfigurationConverter.write(null, new EtmConfiguration("temp-for-creating-default")))
 			.get();
@@ -143,7 +144,7 @@ public class ElasticsearchIndextemplateCreator {
 	private void insertAdminUser(Client elasticClient) {
 		EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
 		adminUser.addRole(PrincipalRole.ADMIN);
-		elasticClient.prepareIndex(ElasticBackedEtmConfiguration.INDEX_NAME, "user", adminUser.getId())
+		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, adminUser.getId())
 			.setConsistencyLevel(WriteConsistencyLevel.ONE)
 			.setSource(this.etmPrincipalConverter.write(adminUser))
 			.get();	

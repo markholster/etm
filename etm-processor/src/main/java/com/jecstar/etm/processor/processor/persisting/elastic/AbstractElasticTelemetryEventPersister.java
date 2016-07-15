@@ -11,6 +11,7 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 /**
@@ -50,7 +51,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
 	}
     
     protected String getElasticIndexName() {
-    	return "etm_event_" + this.dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+    	return ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + this.dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
     
     protected abstract String getElasticTypeName();

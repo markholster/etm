@@ -25,6 +25,7 @@ import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
@@ -53,7 +54,7 @@ public class UserService extends AbstractJsonService {
 	@Path("/settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getUserSettings() {
-		GetResponse getResponse = UserService.client.prepareGet("etm_configuration", "user", getEtmPrincipal().getId())
+		GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setFetchSource(null, new String[] {"searchtemplates"})
 				.get();
 		if (getResponse.isSourceEmpty()) {
@@ -77,7 +78,7 @@ public class UserService extends AbstractJsonService {
 		updateMap.put(this.tags.getQueryHistorySizeTag(), newHistorySize);
 		
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
-		UserService.client.prepareUpdate("etm_configuration", "user", etmPrincipal.getId())
+		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
 		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 		.setDoc(updateMap)
 		.setDetectNoop(true)
@@ -90,7 +91,7 @@ public class UserService extends AbstractJsonService {
 			// History size is smaller. Make sure the stored queries are sliced to the new size.
 			Map<String, Object> scriptParams = new HashMap<String, Object>();
 			scriptParams.put("history_size", newHistorySize);
-			UserService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
+			UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 					.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
 					.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -120,7 +121,7 @@ public class UserService extends AbstractJsonService {
 		Map<String, Object> updateMap = new HashMap<String, Object>();
 		updateMap.put(this.tags.getPasswordHashTag(), newHash);
 		
-		UserService.client.prepareUpdate("etm_configuration", "user", getEtmPrincipal().getId())
+		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 		.setDoc(updateMap)
 		.setDetectNoop(true)
 		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))

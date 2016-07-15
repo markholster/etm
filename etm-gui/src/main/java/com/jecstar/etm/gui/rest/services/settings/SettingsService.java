@@ -2,6 +2,9 @@ package com.jecstar.etm.gui.rest.services.settings;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import javax.ws.rs.DELETE;
@@ -16,7 +19,9 @@ import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
@@ -28,6 +33,7 @@ import org.elasticsearch.search.SearchHit;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
@@ -45,17 +51,14 @@ import com.jecstar.etm.server.core.parsers.ExpressionParserField;
 @Path("/settings")
 public class SettingsService extends AbstractJsonService {
 	
-	
-	private final String configurationIndexName = "etm_configuration";
-	private final String licenseIndexType = "license";
-	private final String licenseId = "default_configuration";
-	private final String parserIndexType = "parser";
-	private final String endpointIndexType = "endpoint";
-	private final String defaultEndpointId = "default_configuration";
-	
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
+	
+	private final String parserInEnpointTag = this.endpointConfigurationConverter.getTags().getEnhancerTag() +
+			"." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
+			"." + this.endpointConfigurationConverter.getTags().getParsersTag() +
+			"." + this.endpointConfigurationConverter.getTags().getNameTag();
 	
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
@@ -94,7 +97,7 @@ public class SettingsService extends AbstractJsonService {
 		etmConfiguration.setLicenseKey(licenseKey);
 		Map<String, Object> values = new HashMap<>();
 		values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
-		client.prepareUpdate(this.configurationIndexName, this.licenseIndexType, this.licenseId)
+		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID)
 			.setDoc(values)
 			.setDocAsUpsert(true)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
@@ -119,8 +122,8 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/parsers")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getParsers() {
-		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(this.configurationIndexName)
-			.setTypes(this.parserIndexType)
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_PARSER)
 			.setFetchSource(true)
 			.setQuery(QueryBuilders.matchAllQuery())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
@@ -167,39 +170,106 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/parser/{parserName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteParser(@PathParam("parserName") String parserName) {
-		client.prepareDelete(this.configurationIndexName, this.parserIndexType, parserName)
+		BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()));
+		bulkRequestBuilder.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_PARSER, parserName)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.get();
-		
-		System.out.println("TODO: deleteParser in SettingsService moet nog aangepast!!");
-		// TODO, loop door endpoints en verwijder referentie
+		);
+		removeParserFromEndpoints(bulkRequestBuilder, parserName);
+		bulkRequestBuilder.get();
 		return "{\"status\":\"success\"}";
+	}
+
+	private void removeParserFromEndpoints(BulkRequestBuilder bulkRequestBuilder, String parserName) {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT)
+				.setFetchSource(true)
+				.setQuery(QueryBuilders.termQuery(parserInEnpointTag, parserName))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		for (SearchHit searchHit : scrollableSearch) {
+			boolean updated = false;
+			EndpointConfiguration endpointConfig = this.endpointConfigurationConverter.read(searchHit.getSourceAsString());
+			if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
+				DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfig.eventEnhancer;
+				for (List<ExpressionParser> parsers : enhancer.getFields().values()) {
+					if (parsers != null) {
+						Iterator<ExpressionParser> it = parsers.iterator();
+						while (it.hasNext()) {
+							ExpressionParser parser = it.next();
+							if (parser.getName().equals(parserName)) {
+								it.remove();
+								updated = true;
+							}
+						}
+					}
+				}
+			}
+			if (updated) {
+				bulkRequestBuilder.add(createEndpointUpdateRequest(endpointConfig));
+			}
+		}
 	}
 
 	@PUT
 	@Path("/parser/{parserName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String addParser(@PathParam("parserName") String parserName, String json) {
+		BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()));
 		// Do a read and write of the parser to make sure it's valid.
 		ExpressionParser expressionParser = this.expressionParserConverter.read(json);
-		client.prepareUpdate(this.configurationIndexName, this.parserIndexType, parserName)
+		bulkRequestBuilder.add(client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_PARSER, parserName)
 			.setDoc(this.expressionParserConverter.write(expressionParser))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
-			.get();
+		);
+		updateParserInEndpoints(bulkRequestBuilder, expressionParser);
+		bulkRequestBuilder.get();
 		return "{ \"status\": \"success\" }";
+	}
+	
+	private void updateParserInEndpoints(BulkRequestBuilder bulkRequestBuilder, ExpressionParser expressionParser) {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT)
+				.setFetchSource(true)
+				.setQuery(QueryBuilders.termQuery(parserInEnpointTag, expressionParser.getName()))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		for (SearchHit searchHit : scrollableSearch) {
+			boolean updated = false;
+			EndpointConfiguration endpointConfig = this.endpointConfigurationConverter.read(searchHit.getSourceAsString());
+			if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
+				DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfig.eventEnhancer;
+				for (List<ExpressionParser> parsers : enhancer.getFields().values()) {
+					if (parsers != null) {
+						ListIterator<ExpressionParser> it = parsers.listIterator();
+						while (it.hasNext()) {
+							ExpressionParser parser = it.next();
+							if (parser.getName().equals(expressionParser.getName())) {
+								it.set(expressionParser);
+								updated = true;
+							}
+						}
+					}					
+				}
+			}
+			if (updated) {
+				bulkRequestBuilder.add(createEndpointUpdateRequest(endpointConfig));
+			}
+		}
 	}
 
 	@GET
 	@Path("/endpoints")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getEndpoints() {
-		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(this.configurationIndexName)
-			.setTypes(this.endpointIndexType)
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT)
 			.setFetchSource(true)
 			.setQuery(QueryBuilders.matchAllQuery())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
@@ -213,7 +283,7 @@ public class SettingsService extends AbstractJsonService {
 				result.append(",");
 			}
 			result.append(searchHit.getSourceAsString());
-			if (this.defaultEndpointId.equals(searchHit.getId())) {
+			if (ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT.equals(searchHit.getId())) {
 				defaultFound = true;
 			}
 			first = false;
@@ -237,7 +307,7 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/endpoint/{endpointName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteEndpoint(@PathParam("endpointName") String endpointName) {
-		client.prepareDelete(this.configurationIndexName, this.endpointIndexType, endpointName)
+		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointName)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
@@ -250,15 +320,18 @@ public class SettingsService extends AbstractJsonService {
 	public String addEndpoint(@PathParam("endpointName") String endpointName, String json) {
 		// Do a read and write of the endpoint to make sure it's valid.
 		EndpointConfiguration endpointConfiguration = this.endpointConfigurationConverter.read(json);
-		client.prepareUpdate(this.configurationIndexName, this.endpointIndexType, endpointName)
-			.setDoc(this.endpointConfigurationConverter.write(endpointConfiguration))
-			.setDocAsUpsert(true)
-			.setDetectNoop(true)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
-			.get();
+		createEndpointUpdateRequest(endpointConfiguration).get();
 		return "{ \"status\": \"success\" }";
+	}
+	
+	private UpdateRequestBuilder createEndpointUpdateRequest(EndpointConfiguration endpointConfiguration) {
+		return client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointConfiguration.name)
+		.setDoc(this.endpointConfigurationConverter.write(endpointConfiguration))
+		.setDocAsUpsert(true)
+		.setDetectNoop(true)
+		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());		
 	}
 	
 	@GET

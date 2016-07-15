@@ -5,7 +5,7 @@ import java.security.cert.X509Certificate;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
@@ -37,7 +37,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	public Account verify(Account account) {
 		EtmAccount etmAccount = (EtmAccount) account;
 		if (System.currentTimeMillis() - etmAccount.getLastUpdated() > 60000 || etmAccount.getPrincipal().forceReload) {
-			GetResponse getResponse = this.elasticClient.prepareGet(ElasticBackedEtmConfiguration.INDEX_NAME, "user", etmAccount.getPrincipal().getId()).get();
+			GetResponse getResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmAccount.getPrincipal().getId()).get();
 			if (!getResponse.isExists()) {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Account with id '" + etmAccount.getPrincipal().getId() + "' not found. Account will be invalidated.");
@@ -53,7 +53,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
 	@Override
 	public Account verify(String id, Credential credential) {
-		GetResponse getResponse = this.elasticClient.prepareGet(ElasticBackedEtmConfiguration.INDEX_NAME, "user", id).get();
+		GetResponse getResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, id).get();
 		if (!getResponse.isExists()) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Account with id '" + id + "' not found.");
@@ -80,7 +80,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	public Account verify(Credential credential) {
 		if (credential instanceof X509CertificateCredential) {
 			X509Certificate certificate = ((X509CertificateCredential) credential).getCertificate();
-			GetResponse getResponse = this.elasticClient.prepareGet(ElasticBackedEtmConfiguration.INDEX_NAME, "user", certificate.getSerialNumber().toString()).get();
+			GetResponse getResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, certificate.getSerialNumber().toString()).get();
 			if (!getResponse.isExists()) {
 				return null;
 			}

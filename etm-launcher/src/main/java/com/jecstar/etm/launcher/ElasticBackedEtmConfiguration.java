@@ -3,6 +3,7 @@ package com.jecstar.etm.launcher;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
 import com.jecstar.etm.server.core.configuration.WriteConsistency;
@@ -11,10 +12,6 @@ import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConvert
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
-	public static final String INDEX_NAME = "etm_configuration";
-	public static final String DEFAULT_ID = "default_configuration";
-	public static final String NODE_INDEX_TYPE = "node";
-	private final String licenseIndexType = "license";
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	
@@ -122,9 +119,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
 			return changed;
 		}
-		GetResponse defaultResponse = this.elasticClient.prepareGet(INDEX_NAME, NODE_INDEX_TYPE, DEFAULT_ID).get();
-		GetResponse nodeResponse = this.elasticClient.prepareGet(INDEX_NAME, NODE_INDEX_TYPE, getNodeName()).get();
-		GetResponse licenseResponse = this.elasticClient.prepareGet(INDEX_NAME, this.licenseIndexType, DEFAULT_ID).get();
+		GetResponse defaultResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT).get();
+		GetResponse nodeResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, getNodeName()).get();
+		GetResponse licenseResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID).get();
 
 		String defaultContent = defaultResponse.getSourceAsString();
 		String nodeContent = null;
