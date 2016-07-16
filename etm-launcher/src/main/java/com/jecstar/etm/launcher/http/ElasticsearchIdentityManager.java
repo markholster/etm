@@ -84,6 +84,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			if (!getResponse.isExists()) {
 				return null;
 			}
+			// TODO, de public key zou hier uitgelezen moeten worden, en vergeleken met hetgeen in de DB.
 			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
 			boolean valid = BCrypt.checkpw(certificate.getIssuerX500Principal().getName(), principal.getPasswordHash());
 			if (!valid) {
