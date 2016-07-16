@@ -435,6 +435,7 @@ public class SettingsService extends AbstractJsonService {
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		if (userId.equals(principal.getId())) {
+			// TODO deze gebruiker was admin, controleren of hij/zij zichzelf admin rechten ontnomen heeft en er geen admin meer overblijft.
 			principal.forceReload = true;
 		}
 		return "{ \"status\": \"success\" }";
