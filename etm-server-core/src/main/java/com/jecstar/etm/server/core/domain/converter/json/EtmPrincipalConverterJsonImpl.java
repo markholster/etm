@@ -35,7 +35,10 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 
 	@Override
 	public EtmPrincipal read(String jsonContent) {
-		Map<String, Object> valueMap = this.converter.toMap(jsonContent);
+		return read(this.converter.toMap(jsonContent));
+	}
+	
+	public EtmPrincipal read(Map<String, Object> valueMap) {
 		EtmPrincipal principal = new EtmPrincipal(this.converter.getString(this.tags.getIdTag(), valueMap));
 		principal.setPasswordHash(this.converter.getString(this.tags.getPasswordHashTag(), valueMap));
 		principal.setName(this.converter.getString(this.tags.getNameTag(), valueMap));
@@ -55,6 +58,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		}
 		return principal;
 	}
+
 
 	@Override
 	public EtmPrincipalTags getTags() {

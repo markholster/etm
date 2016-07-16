@@ -66,6 +66,25 @@
 				  <label for="input-filter-query">Filter query</label>
 				  <input id="input-filter-query" type="text" class="form-control" />
 				</fieldset>				
+		        <fieldset class="form-group">
+		          <label for="sel-locale">Locale</label>
+		          <select id="sel-locale" class="form-control c-select"></select>
+				</fieldset>				
+		        <fieldset class="form-group">
+            	  <label for="sel-time-zone">Time zone</label>
+            	  <select id="sel-time-zone" class="form-control c-select"></select>				
+            	</fieldset>
+            	<fieldset class="form-group" id="user-groups-container">
+            		<label>User roles</label><br/>
+            	</fieldset>		
+		        <fieldset class="form-group">
+		          <label for="input-new-password1">New password</label>
+		          <input id="input-new-password1" type="password" class="form-control" required="required" />
+		        </fieldset>        
+		        <fieldset class="form-group">
+		          <label for="input-new-password2">Retype password</label>
+		          <input id="input-new-password2" type="password" class="form-control" required="required" />
+		        </fieldset>
 		        <div class="modal-footer">
                   <input type="submit" id="btn-confirm-remove-user" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
                   <input type="submit" id="btn-confirm-save-user" class="btn btn-primary" value="Save" disabled="disabled" />

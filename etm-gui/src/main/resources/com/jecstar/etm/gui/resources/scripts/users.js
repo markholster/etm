@@ -1,4 +1,6 @@
 function buildUserPage() {
+	var defaultLocale;
+	var defaultTimeZone;
     $.ajax({
         type: 'GET',
         contentType: 'application/json',
@@ -14,9 +16,60 @@ function buildUserPage() {
             }).autocompleteFieldQuery({queryKeywords: data.keywords, keywordGroupSelector: 'all'});       
         }
     });
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/user/timezones',
+        success: function(data) {
+            if (!data || !data.time_zones) {
+                return;
+            }
+            var $timezones = $('#sel-time-zone');
+            $(data.time_zones).each(function (index, timeZone) {
+                $timezones.append($('<option>').attr('value', timeZone).text(timeZone))
+            }); 
+            defaultTimeZone = data.default_time_zone;
+            $timezones.val(defaultTimeZone);
+        }
+    });
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/user/locales',
+        success: function(data) {
+            if (!data || !data.locales) {
+                return;
+            }
+            var $locales = $('#sel-locale');
+            $(data.locales).each(function (index, locale) {
+                $locales.append($('<option>').attr('value', locale.value).text(locale.name))
+            });
+            defaultLocale = data.default_locale.value;
+            $locales.val(defaultLocale);
+        }
+    });
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/settings/userroles',
+        success: function(data) {
+            if (!data || !data.user_roles) {
+                return;
+            }
+            var $rolesContainer = $('#user-groups-container');
+            $(data.user_roles).each(function (index, user_role) {
+            	$rolesContainer.append(
+            			$('<label>').addClass('checkbox-inline').append(
+            					$('<input>').attr('type', 'checkbox').attr('id', 'check-role-' + user_role.value).attr('name', 'check-user-roles').attr('value', user_role.value),
+            					user_role.name
+            			)
+            	);
+            });
+            
+        }
+    });
 	
 	var userMap = {};
-
 	$('#sel-user').change(function(event) {
 		event.preventDefault();
 		var userData = userMap[$(this).val()];
@@ -27,14 +80,28 @@ function buildUserPage() {
 		$('#input-user-id').val(userData.id);
 		$('#input-user-name').val(userData.name);
 		$('#input-filter-query').val(userData.filter_query);
+		$('#sel-locale').val(userData.locale);
+		$('#sel-time-zone').val(userData.time_zone);
+		$('#user-groups-container > label > input').prop('checked', false);
+		if (userData.roles) {
+			$.each(userData.roles, function(index, role) {
+				$('#check-role-' + role).prop('checked', true);
+			});
+		}
+        $('#input-new-password1').val('');
+        $('#input-new-password2').val('');		
 		enableOrDisableButtons();
 	});
 	
 	$('#btn-confirm-save-user').click(function(event) {
+		event.preventDefault();
+		$('#input-new-password1, #input-new-password2').parent().removeClass('has-danger');
 		if (!document.getElementById('user_form').checkValidity()) {
 			return;
 		}
-		event.preventDefault();
+		if (!checkOrInvalidateFormInCaseOfPasswordMismatch()) {
+			return;
+		}
 		var userId = $('#input-user-id').val();
 		if (isUserExistent(userId)) {
 			$('#overwrite-user-id').text(userId);
@@ -95,8 +162,10 @@ function buildUserPage() {
 			$('#btn-confirm-save-user').removeAttr('disabled');
 			if (isUserExistent(userId)) {
 				$('#btn-confirm-remove-user').removeAttr('disabled');
+				$('#input-new-password1, #input-new-password2').removeAttr('required');
 			} else {
 				$('#btn-confirm-remove-user').attr('disabled', 'disabled');
+				$('#input-new-password1, #input-new-password2').attr('required', 'required');
 			}
 		} else {
 			$('#btn-confirm-save-user, #btn-confirm-remove-user').attr('disabled', 'disabled');
@@ -108,6 +177,9 @@ function buildUserPage() {
 	}
 	
 	function saveUser() {
+		if (!checkOrInvalidateFormInCaseOfPasswordMismatch()) {
+			return;
+		}		
 		var userData = createUserData();
 		$.ajax({
             type: 'PUT',
@@ -149,12 +221,33 @@ function buildUserPage() {
         });    		
 	}
 	
+	function checkOrInvalidateFormInCaseOfPasswordMismatch() {
+        var new1 = $('#input-new-password1').val();
+        var new2 = $('#input-new-password2').val();
+        
+        if (new1 !== new2) {
+            $('#input-new-password1, #input-new-password2').parent().addClass('has-danger');
+            $("#users_errorBox").text('The new password didn\'t match the retyped password').show('fast');
+            return false;
+        }
+        return true;
+	}
+	
 	function createUserData() {
 		var userData = {
 			id: $('#input-user-id').val(),
 			name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
-			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null
+			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
+			locale: $('#sel-locale').val(),
+			time_zone: $('sel-time-zone').val(),
+			roles: []
 		}
+        if ($('#input-new-password1').val()) {
+        	userData.new_password = $('#input-new-password1').val();
+        }
+		$('#user-groups-container > label > input:checked').each(function () {
+			userData.roles.push($(this).val());
+		});
 		return userData;
 	}
 
@@ -162,6 +255,11 @@ function buildUserPage() {
 		$('#input-user-id').val('');
 		$('#input-user-name').val('')
 		$('#input-filter-query').val('')
+		$('#sel-locale').val(defaultLocale);
+		$('#sel-time-zone').val(defaultTimeZone);
+		$('#user-groups-container > label > input').prop('checked', false);
+        $('#input-new-password1').val('');
+        $('#input-new-password2').val('');
 		enableOrDisableButtons();
 	}
 }

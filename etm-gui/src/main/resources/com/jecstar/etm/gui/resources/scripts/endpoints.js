@@ -147,7 +147,7 @@ function buildEndpointPage() {
 					localParserFieldSelect.val(option);
 					localParserFieldSelect.trigger('change');
 					return false;
-				} else if (fieldData.field.startsWith(option)) {
+				} else if (startsWith(fieldData.field, option)) {
 					localParserFieldSelect.val(option);
 					inputKey.val(fieldData.field.substring(option.length));
 					return false;
@@ -183,6 +183,11 @@ function buildEndpointPage() {
 	function endsWith(text, textToEndWith) {
 		return text.lastIndexOf(textToEndWith) == text.length - textToEndWith.length;
 	}
+	
+	function startsWith(text, textToStartWith) {
+		return text.indexOf(textToStartWith) == 0;
+	}
+	
 	
 	
 	function sortSelectOptions($endpointSelect) {

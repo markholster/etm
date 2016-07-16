@@ -251,7 +251,7 @@
     
     function createUserSettings() {
         var userSettings = {
-            name: $('#input-user-name').val(),
+            name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
             locale: $('#input-locale').val(),
             time_zone: $('#input-time-zone').val(),
             query_history_size: Number($('#input-query-history-size').val())

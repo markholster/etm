@@ -41,7 +41,6 @@ import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
@@ -51,6 +50,7 @@ import com.jecstar.etm.server.core.domain.converter.json.ExpressionParserConvert
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
 import com.jecstar.etm.server.core.parsers.ExpressionParserField;
+import com.jecstar.etm.server.core.util.BCrypt;
 
 @Path("/settings")
 public class SettingsService extends AbstractJsonService {
@@ -58,7 +58,7 @@ public class SettingsService extends AbstractJsonService {
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
-	private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
+	private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
 	
 	private final String parserInEnpointTag = this.endpointConfigurationConverter.getTags().getEnhancerTag() +
 			"." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
@@ -389,13 +389,14 @@ public class SettingsService extends AbstractJsonService {
 	public String getUserRoles() {
 		StringBuilder result = new StringBuilder();
 		boolean first = true;
-		result.append("{\"userRoles\": [");
+		result.append("{\"user_roles\": [");
 		for (PrincipalRole role : PrincipalRole.values()) {
 			if (!first) {
 				result.append(",");
 			}
 			result.append("{");
 			addStringElementToJsonBuffer("name", role.getRoleName(), result, true);
+			addStringElementToJsonBuffer("value", role.getRoleName(), result, false);
 			result.append("}");
 			first = false;
 		}
@@ -420,7 +421,11 @@ public class SettingsService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String addUser(@PathParam("userId") String userId, String json) {
 		// Do a read and write of the user to make sure it's valid.
-		EtmPrincipal principal = this.etmPrincipalConverter.read(json);
+		Map<String, Object> valueMap = toMap(json);
+		EtmPrincipal principal = this.etmPrincipalConverter.read(valueMap);
+		if (valueMap.containsKey("new_password")) {
+			principal.setPasswordHash(BCrypt.hashpw(getString("new_password", valueMap), BCrypt.gensalt()));
+		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setDoc(this.etmPrincipalConverter.write(principal))
 			.setDocAsUpsert(true)
