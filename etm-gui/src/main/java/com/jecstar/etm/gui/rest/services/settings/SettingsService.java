@@ -405,10 +405,10 @@ public class SettingsService extends AbstractJsonService {
 	
 	
 	@DELETE
-	@Path("/user/{userName}")
+	@Path("/user/{userId}")
 	@Produces(MediaType.APPLICATION_JSON)	
-	public String deleteUser(@PathParam("userName") String userName) {
-		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userName)
+	public String deleteUser(@PathParam("userId") String userId) {
+		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
@@ -416,12 +416,12 @@ public class SettingsService extends AbstractJsonService {
 	}
 
 	@PUT
-	@Path("/user/{userName}")
+	@Path("/user/{userId}")
 	@Produces(MediaType.APPLICATION_JSON)	
-	public String addUser(@PathParam("userName") String userName, String json) {
+	public String addUser(@PathParam("userId") String userId, String json) {
 		// Do a read and write of the user to make sure it's valid.
 		EtmPrincipal principal = this.etmPrincipalConverter.read(json);
-		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userName)
+		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setDoc(this.etmPrincipalConverter.write(principal))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
@@ -429,7 +429,7 @@ public class SettingsService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
-		if (userName.equals(principal.getId())) {
+		if (userId.equals(principal.getId())) {
 			principal.forceReload = true;
 		}
 		return "{ \"status\": \"success\" }";
