@@ -11,22 +11,26 @@
             mode: 'query',
             queryKeywords : null	
         }, options );
-        
-        // TODO optimize this. It should be possible to provide the keywords via the options object.
 
         
         function getCurrentKeywords() {
-            if (!settings.queryKeywords || $(settings.keywordGroupSelector).size() == 0) {
+        	if (!settings.queryKeywords || (settings.keywordGroupSelector != 'all' && $(settings.keywordGroupSelector).size() == 0)) {
                 return null;
             }
-            var selectedTypes = $(settings.keywordGroupSelector).map(function(){ return $(this).val(); }).get();
-            var keywordGroups = $(settings.queryKeywords).filter(function (index, keywordGroup) {
-                return selectedTypes.indexOf(keywordGroup.type) != -1;
-            })
             var values = [];
-            $.each(keywordGroups, function(index, keywordGroup) {
-                $.merge(values, keywordGroup.names);    
-            })
+            if ('all' == settings.keywordGroupSelector) {
+	            $.each(settings.queryKeywords, function(index, keywordGroup) {
+	                $.merge(values, keywordGroup.names);    
+	            })
+            } else {
+	            var selectedTypes = $(settings.keywordGroupSelector).map(function(){ return $(this).val(); }).get();
+	            var keywordGroups = $(settings.queryKeywords).filter(function (index, keywordGroup) {
+	                return selectedTypes.indexOf(keywordGroup.type) != -1;
+	            })
+	            $.each(keywordGroups, function(index, keywordGroup) {
+	                $.merge(values, keywordGroup.names);    
+	            })
+            }
             if ('field' === settings.mode) {
             	$.each(queryForFields, function(index, fieldName) {
                        var ix = $.inArray(fieldName, values);
@@ -37,6 +41,7 @@
             }
             return $.uniqueSort(values.sort());
         }
+        
         
         function extractAutocompleteTerm(query) {
             if (!query) {

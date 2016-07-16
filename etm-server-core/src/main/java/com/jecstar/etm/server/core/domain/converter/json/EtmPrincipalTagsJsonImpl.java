@@ -44,4 +44,14 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 		return "time_zone";
 	}
 
+	@Override
+	public String getQueryHistoryTag() {
+		return "query_history";
+	}
+
+	@Override
+	public String getSearchTemplatesTag() {
+		return "search_templates";
+	}
+
 }

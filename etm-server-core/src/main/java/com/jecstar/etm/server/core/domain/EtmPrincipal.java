@@ -27,7 +27,7 @@ public class EtmPrincipal implements Principal {
 	}
 	
 	private final String id;
-	private final String passwordHash;
+	private String passwordHash;
 	
 	private String name = null;
 	private Locale locale = Locale.getDefault();
@@ -40,12 +40,13 @@ public class EtmPrincipal implements Principal {
 	// State properties. DO NOT CHANGE!!
 	public boolean forceReload = false;
 	
-	public EtmPrincipal(String id, String passwordHash) {
-		if (id == null || passwordHash == null) {
-			throw new NullPointerException("id: '" + id + "', passwordHash: '" + passwordHash + "'");
-		}
+	public EtmPrincipal(String id) {
 		this.id = id;
-		this.passwordHash = passwordHash;
+	}
+	
+	public EtmPrincipal(String id, String passwordHash) {
+		this(id);
+		setPasswordHash(passwordHash);
 	}
 
 	@Override
@@ -59,6 +60,10 @@ public class EtmPrincipal implements Principal {
 	
 	public String getPasswordHash() {
 		return this.passwordHash;
+	}
+
+	public void setPasswordHash(String passwordHash) {
+		this.passwordHash = passwordHash;
 	}
 	
 	public void setName(String name) {
@@ -124,4 +129,5 @@ public class EtmPrincipal implements Principal {
 		}
 		this.historySize = historySize;
 	}
+
 }

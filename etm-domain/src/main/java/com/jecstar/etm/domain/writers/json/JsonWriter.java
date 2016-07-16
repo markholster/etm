@@ -27,7 +27,11 @@ public class JsonWriter {
     }	
     
 	public boolean addStringElementToJsonBuffer(String elementName, String elementValue, StringBuilder buffer, boolean firstElement) {
-		if (elementValue == null) {
+		return addStringElementToJsonBuffer(elementName, elementValue, false, buffer, firstElement);
+	}
+	
+	public boolean addStringElementToJsonBuffer(String elementName, String elementValue, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
+		if (elementValue == null && !writeWhenNull) {
 			return false;
 		}
 		if (!firstElement) {

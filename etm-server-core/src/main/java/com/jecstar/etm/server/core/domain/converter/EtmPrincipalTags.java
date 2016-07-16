@@ -11,4 +11,7 @@ public interface EtmPrincipalTags {
 	String getRolesTag();
 	String getTimeZoneTag();
 	
+	String getQueryHistoryTag();
+	String getSearchTemplatesTag();
+	
 }

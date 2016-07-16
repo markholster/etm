@@ -38,11 +38,15 @@ import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
+import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.ExpressionParserConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
@@ -54,6 +58,7 @@ public class SettingsService extends AbstractJsonService {
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
+	private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
 	
 	private final String parserInEnpointTag = this.endpointConfigurationConverter.getTags().getEnhancerTag() +
 			"." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
@@ -349,4 +354,85 @@ public class SettingsService extends AbstractJsonService {
         	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
         }
 	}
+	
+	@GET
+	@Path("/users")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getUsers() {
+		EtmPrincipalTags tags = this.etmPrincipalConverter.getTags();
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
+			.setFetchSource(new String[] {"*"}, new String[] {tags.getPasswordHashTag(), tags.getSearchTemplatesTag(), tags.getQueryHistoryTag()})
+			.setQuery(QueryBuilders.matchAllQuery())
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		if (!scrollableSearch.hasNext()) {
+			return null;
+		}
+		StringBuilder result = new StringBuilder();
+		result.append("{\"users\": [");
+		boolean first = true;
+		for (SearchHit searchHit : scrollableSearch) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append(searchHit.getSourceAsString());
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	@GET
+	@Path("/userroles")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getUserRoles() {
+		StringBuilder result = new StringBuilder();
+		boolean first = true;
+		result.append("{\"userRoles\": [");
+		for (PrincipalRole role : PrincipalRole.values()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{");
+			addStringElementToJsonBuffer("name", role.getRoleName(), result, true);
+			result.append("}");
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	
+	@DELETE
+	@Path("/user/{userName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String deleteUser(@PathParam("userName") String userName) {
+		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userName)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return "{\"status\":\"success\"}";
+	}
+
+	@PUT
+	@Path("/user/{userName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addUser(@PathParam("userName") String userName, String json) {
+		// Do a read and write of the user to make sure it's valid.
+		EtmPrincipal principal = this.etmPrincipalConverter.read(json);
+		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userName)
+			.setDoc(this.etmPrincipalConverter.write(principal))
+			.setDocAsUpsert(true)
+			.setDetectNoop(true)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.get();
+		if (userName.equals(principal.getId())) {
+			principal.forceReload = true;
+		}
+		return "{ \"status\": \"success\" }";
+	}
+
 }

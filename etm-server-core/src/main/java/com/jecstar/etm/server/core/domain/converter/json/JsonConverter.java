@@ -48,7 +48,7 @@ public class JsonConverter extends JsonWriter {
 	}
 	
 	public Boolean getBoolean(String tag, Map<String, Object> valueMap, Boolean defaultValue) {
-		if (valueMap.containsKey(tag)) {
+		if (valueMap.get(tag) != null) {
 			return (Boolean)valueMap.get(tag);
 		}
 		return defaultValue;
@@ -59,7 +59,7 @@ public class JsonConverter extends JsonWriter {
 	}
 	
 	public String getString(String tag, Map<String, Object> valueMap, String defaultValue) {
-		if (valueMap.containsKey(tag)) {
+		if (valueMap.get(tag) != null) {
 			return valueMap.get(tag).toString();
 		}
 		return defaultValue;
@@ -70,7 +70,7 @@ public class JsonConverter extends JsonWriter {
 	}
 	
 	public Integer getInteger(String tag, Map<String, Object> valueMap, Integer defaultValue) {
-		if (valueMap.containsKey(tag)) {
+		if (valueMap.get(tag) != null) {
 			return ((Number)valueMap.get(tag)).intValue();
 		}
 		return defaultValue;
@@ -81,14 +81,14 @@ public class JsonConverter extends JsonWriter {
 	}
 
 	public Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
-		if (valueMap.containsKey(tag)) {
+		if (valueMap.get(tag) != null) {
 			return ((Number)valueMap.get(tag)).longValue();
 		}
 		return defaultValue;
 	}
 	
 	public Double getDouble(String tag, Map<String, Object> valueMap) {
-		if (valueMap.containsKey(tag)) {
+		if (valueMap.get(tag) != null) {
 			return ((Double)valueMap.get(tag)).doubleValue();
 		}
 		return null;
