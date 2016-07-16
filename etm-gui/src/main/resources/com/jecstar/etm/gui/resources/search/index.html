@@ -356,8 +356,10 @@
     function enableOrDisableSearchButton() {
         if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
             $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
+            $('#link-edit-table').hide();
         } else {
             $('#btn-search, #template-name').removeAttr("disabled");
+            $('#link-edit-table').show();
             if ($('#template-name').val()) {
                 $('#btn-save-template').removeAttr("disabled");
             }
