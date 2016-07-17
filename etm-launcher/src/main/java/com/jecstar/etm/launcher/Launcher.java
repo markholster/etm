@@ -4,6 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.elasticsearch.client.Client;
@@ -18,6 +20,7 @@ import com.codahale.metrics.ScheduledReporter;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
+import com.jecstar.etm.launcher.retention.IndexCleaner;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
@@ -39,6 +42,7 @@ public class Launcher {
 	private Client elasticClient;
 	private ScheduledReporter metricReporter;
 	private IbmMqProcessor ibmMqProcessor;
+	private ScheduledExecutorService retentionScheduler;
 
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration) {
@@ -51,6 +55,8 @@ public class Launcher {
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);
 			InternalEtmLogForwarder.processor = processor;
+			initializeIndexCleaner(etmConfiguration, this.elasticClient);
+			
 			if (configuration.isHttpServerNecessary()) {
 				System.setProperty("org.jboss.logging.provider", "slf4j");
 				this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient), configuration, etmConfiguration, this.processor, this.elasticClient);
@@ -74,13 +80,16 @@ public class Launcher {
 			}
 		}		
 	}
-	
+
 	private void addShutdownHooks() {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
+				}
+				if (Launcher.this.retentionScheduler != null) {
+					try { Launcher.this.retentionScheduler.shutdownNow(); } catch (Throwable t) {}
 				}
 				if (Launcher.this.ibmMqProcessor != null) {
 					try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
@@ -100,6 +109,13 @@ public class Launcher {
 			}
 		});
 	}
+	
+	
+	private void initializeIndexCleaner(EtmConfiguration etmConfiguration, Client client) {
+		this.retentionScheduler = new ScheduledThreadPoolExecutor(1);
+		this.retentionScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
+	}
+
 	
 	private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration, EtmConfiguration etmConfiguration) {
 		if (this.processor == null) {
@@ -152,9 +168,7 @@ public class Launcher {
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			if (log.isWarningLevelEnabled()) {
-				log.logWarningMessage(
-						"Unable to instantiate Ibm MQ Processor. Is the \"com.ibm.mq.allclient.jar\" file added to the lib directory?",
-						e);
+				log.logWarningMessage("Unable to instantiate Ibm MQ Processor. Is the \"com.ibm.mq.allclient.jar\" file added to the lib directory?", e);
 			}
 		}
 	}

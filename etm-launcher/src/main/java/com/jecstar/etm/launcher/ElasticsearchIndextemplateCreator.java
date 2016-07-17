@@ -46,7 +46,8 @@ public class ElasticsearchIndextemplateCreator {
 						.put("number_of_shards", 5)
 						.put("number_of_replicas", 0)
 						.put("index.translog.durability", "async"))
-					.addMapping("_default_", createEventMapping("_default_")).addAlias(new Alias(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL))
+					.addMapping("_default_", createEventMapping("_default_"))
+					.addAlias(new Alias(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL))
 					.get();
 				new PutStoredScriptRequestBuilder(elasticClient, PutStoredScriptAction.INSTANCE)
 					.setScriptLang("painless")
@@ -76,7 +77,7 @@ public class ElasticsearchIndextemplateCreator {
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {
 		} catch (IOException e) {
-			// TODO putting templates failed.
+			// TODO putting painless scripts failed.
 		}
 		
 		try {
@@ -89,6 +90,7 @@ public class ElasticsearchIndextemplateCreator {
 						.put("number_of_shards", 1)
 						.put("number_of_replicas", 0))
 					.addMapping("_default_", createMetricsMapping("_default_"))
+					.addAlias(new Alias(ElasticSearchLayout.ETM_METRICS_INDEX_ALIAS_ALL))
 					.get();
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {}

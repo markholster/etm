@@ -3,6 +3,7 @@ package com.jecstar.etm.server.core.configuration;
 public class ElasticSearchLayout {
 
 	public static final String ETM_METRICS_INDEX_PREFIX = "etm_metrics_";
+	public static final String ETM_METRICS_INDEX_ALIAS_ALL = "etm_metrics_all";
 	
 	public static final String ETM_EVENT_INDEX_ALIAS_ALL = "etm_event_all";
 	public static final String ETM_EVENT_INDEX_PREFIX = "etm_event_";

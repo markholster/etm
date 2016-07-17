@@ -141,7 +141,7 @@ public class DestinationReader implements Runnable {
 					}
 				}
 			}
-			if (Thread.interrupted()) {
+			if (Thread.currentThread().isInterrupted()) {
 				this.stop = true;
 			}
 		}
