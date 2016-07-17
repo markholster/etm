@@ -42,32 +42,26 @@
       <div class="card-text">
         <div id="settings_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="settings_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <div class="row">
-          <div class="form-group col-sm-6">
-            <label for="input-user-id">User id</label>
-            <input id="input-user-id" type="text" class="form-control" disabled />
-          </div>
-          <div class="form-group col-sm-6">
-            <label for="input-user-name">User name</label>
-            <input id="input-user-name" type="text" class="form-control" />
-          </div>        
-        </div>
-        <div class="row">
-          <div class="form-group col-sm-6">
-            <label for="input-locale">Locale</label>
-            <select id="input-locale" class="form-control c-select"></select>
-          </div>
-          <div class="form-group col-sm-6">
-            <label for="input-time-zone">Time zone</label>
-            <select id="input-time-zone" class="form-control c-select"></select>
-          </div>        
-        </div>
-        <div class="row">
-          <div class="form-group col-sm-6">
-            <label for="input-query-history-size">Query history size</label>
-            <input id="input-query-history-size" type="number" class="form-control" min="0"/>
-          </div>
-        </div>
+        <fieldset class="form-group">
+          <label for="input-user-id">User id</label>
+          <input id="input-user-id" type="text" class="form-control" disabled />
+        </fieldset>
+        <fieldset class="form-group">
+          <label for="input-user-name">User name</label>
+          <input id="input-user-name" type="text" class="form-control" />
+        </fieldset>        
+        <fieldset class="form-group">
+          <label for="input-locale">Locale</label>
+          <select id="input-locale" class="form-control c-select"></select>
+        </fieldset>
+        <fieldset class="form-group">
+          <label for="input-time-zone">Time zone</label>
+          <select id="input-time-zone" class="form-control c-select"></select>
+        </fieldset>        
+        <fieldset class="form-group">
+          <label for="input-query-history-size">Query history size</label>
+          <input id="input-query-history-size" type="number" class="form-control" min="0"/>
+        </fieldset>
         <div class="modal-footer">
           <button id="btn-apply-preferences" type="button" class="btn btn-primary">Apply</button>
         </div>
@@ -79,18 +73,18 @@
       <div class="card-text">
         <div id="password_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="password_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <div class="form-group">
+        <fieldset class="form-group">
           <label for="input-current-password">Current password</label>
           <input id="input-current-password" type="password" class="form-control" required="required" />
-        </div>
-        <div class="form-group">
+        </fieldset>
+        <fieldset class="form-group">
           <label for="input-new-password1">New password</label>
           <input id="input-new-password1" type="password" class="form-control" required="required" />
-        </div>        
-        <div class="form-group">
+        </fieldset>        
+        <fieldset class="form-group">
           <label for="input-new-password2">Retype password</label>
           <input id="input-new-password2" type="password" class="form-control" required="required" />
-        </div>
+        </fieldset>
         <div class="modal-footer">
           <button id="btn-apply-password" type="button" class="btn btn-primary">Apply</button>
         </div>
