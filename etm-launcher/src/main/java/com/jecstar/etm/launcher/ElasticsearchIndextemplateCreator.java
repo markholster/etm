@@ -138,7 +138,7 @@ public class ElasticsearchIndextemplateCreator {
 
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
 		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
-			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.setConsistencyLevel(WriteConsistencyLevel.ALL)
 			.setSource(this.etmConfigurationConverter.write(null, new EtmConfiguration("temp-for-creating-default")))
 			.get();
 	}
@@ -147,7 +147,7 @@ public class ElasticsearchIndextemplateCreator {
 		EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
 		adminUser.addRole(PrincipalRole.ADMIN);
 		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, adminUser.getId())
-			.setConsistencyLevel(WriteConsistencyLevel.ONE)
+			.setConsistencyLevel(WriteConsistencyLevel.ALL)
 			.setSource(this.etmPrincipalConverter.write(adminUser))
 			.get();	
 	}

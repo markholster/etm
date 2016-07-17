@@ -130,6 +130,32 @@ public class SettingsService extends AbstractJsonService {
 	}
 	
 	@GET
+	@Path("/cluster")
+	@Produces(MediaType.APPLICATION_JSON)		
+	public String getClusterConfiguration() {
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
+				.get();
+		return getResponse.getSourceAsString();
+	}
+	
+	@PUT
+	@Path("/cluster")
+	@Produces(MediaType.APPLICATION_JSON)		
+	public String setClusterConfiguration(String json) {
+		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, json, null);
+		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
+			.setDoc(this.etmConfigurationConverter.write(null, defaultConfig))
+			.setDocAsUpsert(true)
+			.setDetectNoop(true)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.get();
+
+		return "{\"status\":\"success\"}";
+	}
+	
+	@GET
 	@Path("/parsers")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getParsers() {
@@ -346,22 +372,6 @@ public class SettingsService extends AbstractJsonService {
 	}
 	
 	@GET
-	@Path("/nodes/es")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getEsNodes() {
-		NodesStatsResponse nodesStatsResponse = new NodesStatsRequestBuilder(client, NodesStatsAction.INSTANCE).all().setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())).get();
-		try {
-            XContentBuilder builder = XContentFactory.jsonBuilder();
-            builder.startObject();
-            nodesStatsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
-            builder.endObject();
-            return builder.string();
-        } catch (IOException e) {
-        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-        }
-	}
-	
-	@GET
 	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getUsers() {
@@ -482,5 +492,22 @@ public class SettingsService extends AbstractJsonService {
 		}
 		return false;
 	}
+	
+	@GET
+	@Path("/nodes/es")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEsNodes() {
+		NodesStatsResponse nodesStatsResponse = new NodesStatsRequestBuilder(client, NodesStatsAction.INSTANCE).all().setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())).get();
+		try {
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            builder.startObject();
+            nodesStatsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
+            builder.endObject();
+            return builder.string();
+        } catch (IOException e) {
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+	}
+
 
 }
