@@ -9,7 +9,6 @@
 
 <link rel="stylesheet" href="../styles/bootstrap.min.css">
 <link rel="stylesheet" href="../styles/font-awesome.min.css">
-<link rel="stylesheet" href="../styles/jquery-ui.min.css">
 <link rel="stylesheet" href="../styles/spinner.css">
 </head>
 <body>
@@ -63,7 +62,7 @@
 				</fieldset>
 		        <fieldset class="form-group">
 				  <label for="sel-write-consistency">Write consistency</label>
-				  <select id="sel-sel-write-consistency" class="form-control c-select">
+				  <select id="sel-write-consistency" class="form-control c-select">
 	          	    <option value="ONE">One</option>
 	          	    <option value="QUORUM">Quorum</option>
 	          	    <option value="AL">All</option>
@@ -107,7 +106,7 @@
 				  <input id="input-persisting-bulk-time" type="number" class="form-control" min="1" required="required" />
 				</fieldset>
 		        <div class="modal-footer">
-                  <input type="submit" id="btn-save-cluster" class="btn btn-primary" value="Save" disabled="disabled" />
+                  <input type="submit" id="btn-save-cluster" class="btn btn-primary" value="Save" />
 		        </div>
 		      </form>
 		    </div>      

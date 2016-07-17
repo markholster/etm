@@ -248,7 +248,7 @@
             name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
             locale: $('#input-locale').val(),
             time_zone: $('#input-time-zone').val(),
-            query_history_size: Number($('#input-query-history-size').val())
+            query_history_size: $('#input-query-history-size').val() ? Number($('#input-query-history-size').val()) : 0
         }
         return userSettings;
     }
