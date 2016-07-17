@@ -48,13 +48,13 @@ function buildMenu(currentContext) {
 							'Settings'
 					),
 					$('<div>').addClass('dropdown-menu').append(
+							$('<a>').addClass('dropdown-item').attr('href', '../settings/cluster.html').text('Cluster'),
 							$('<a>').addClass('dropdown-item').attr('href', '../settings/endpoints.html').text('Endpoints'),
-							$('<a>').addClass('dropdown-item').attr('href', '#').text('Nodes'),
 							$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers'),
 							$('<a>').addClass('dropdown-item').attr('href', '../settings/users.html').text('Users'),
-							$('<div>').addClass('dropdown-divider'),
-							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Nodes'),
-							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Cluster'),
+//							$('<div>').addClass('dropdown-divider'),
+//							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Nodes'),
+//							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Cluster'),
 							$('<div>').addClass('dropdown-divider'),
 							$license
 					)

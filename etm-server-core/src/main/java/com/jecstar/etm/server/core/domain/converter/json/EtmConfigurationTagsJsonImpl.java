@@ -50,8 +50,13 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	}
 
 	@Override
-	public String getMaxIndexCountTag() {
-		return "max_index_count";
+	public String getMaxEventIndexCountTag() {
+		return "max_event_index_count";
+	}
+	
+	@Override
+	public String getMaxMetricsIndexCountTag() {
+		return "max_metrics_index_count";
 	}
 
 	@Override
@@ -67,6 +72,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	@Override
 	public String getRetryOnConflictCountTag() {
 		return "retry_on_conflict_count";
+	}
+	
+	@Override
+	public String getMaxSearchResultDownloadRowsTag() {
+		return "max_search_result_download_rows";
 	}
 
 }

@@ -10,20 +10,27 @@ import com.jecstar.etm.server.core.util.ObjectUtils;
 
 //TODO document this class and the different properties. 
 public class EtmConfiguration {
+	//License configuration
+	public static final String CONFIG_KEY_LICENSE 							= "license";
 	
-	public static final String CONFIG_KEY_LICENSE = "license";
-	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT = "enhancingHandlerCount";
-	public static final String CONFIG_KEY_PERSISTING_HANDLER_COUNT = "persistingHandlerCount";
-	public static final String CONFIG_KEY_EVENT_BUFFER_SIZE = "eventBufferSize";
-	public static final String CONFIG_KEY_PERSISTING_BULK_COUNT = "persistingBulkCount";
-	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE = "persistingBulkSize";
-	public static final String CONFIG_KEY_PERSISTING_BULK_TIME = "persistingBulkTime";
-	public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
-	public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
-	public static final String CONFIG_KEY_MAX_INDEX_COUNT = "maxIndexCount";
-	public static final String CONFIG_KEY_WRITE_CONSISTENCY = "writeConsistency";
-	public static final String CONFIG_KEY_QUERY_TIMEOUT = "queryTimeout";
-	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT = "retryOnConflictCount";
+	// Cluster configuration
+	public static final String CONFIG_KEY_SHARDS_PER_INDEX 					= "shardsPerIndex";
+	public static final String CONFIG_KEY_REPLICAS_PER_INDEX 				= "replicasPerIndex";
+	public static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT 			= "maxEventIndexCount";
+	public static final String CONFIG_KEY_MAX_METRICS_INDEX_COUNT 			= "maxMetricsIndexCount";
+	public static final String CONFIG_KEY_WRITE_CONSISTENCY 				= "writeConsistency";
+	public static final String CONFIG_KEY_QUERY_TIMEOUT 					= "queryTimeout";
+	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
+	public static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS 	= "maxSearchResultDownloadRows";
+
+	// Node configurations
+	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT 			= "enhancingHandlerCount";
+	public static final String CONFIG_KEY_PERSISTING_HANDLER_COUNT 			= "persistingHandlerCount";
+	public static final String CONFIG_KEY_EVENT_BUFFER_SIZE 				= "eventBufferSize";
+	public static final String CONFIG_KEY_PERSISTING_BULK_COUNT 			= "persistingBulkCount";
+	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE 				= "persistingBulkSize";
+	public static final String CONFIG_KEY_PERSISTING_BULK_TIME 				= "persistingBulkTime";
+	
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
@@ -42,10 +49,13 @@ public class EtmConfiguration {
 	private int retryOnConflictCount = 3;
 	
 	// Data configuration properties;
-	private int maxIndexCount = 7; 
+	private int maxEventIndexCount = 7; 
+	private int maxMetricsIndexCount = 7; 
 
 	// Query options
 	private long queryTimeout = 60 * 1000;
+	private int maxSearchResultDownloadRows = 500;
+	
 	
 	// Other stuff.		
 	private final String nodeName;
@@ -162,16 +172,28 @@ public class EtmConfiguration {
 		return this;
 	}
 	
-	public int getMaxIndexCount() {
-		return this.maxIndexCount;
+	public int getMaxEventIndexCount() {
+		return this.maxEventIndexCount;
 	}
 	
-	public EtmConfiguration setMaxIndexCount(int maxIndexCount) {
-		if (maxIndexCount > 0) {
-			this.maxIndexCount = maxIndexCount;
+	public EtmConfiguration setMaxEventIndexCount(int maxEventIndexCount) {
+		if (maxEventIndexCount > 0) {
+			this.maxEventIndexCount = maxEventIndexCount;
 		}
 		return this;
 	}
+
+	public int getMaxMetricsIndexCount() {
+		return this.maxMetricsIndexCount;
+	}
+	
+	public EtmConfiguration setMaxMetricsIndexCount(int maxMetricsIndexCount) {
+		if (maxMetricsIndexCount > 0) {
+			this.maxMetricsIndexCount = maxMetricsIndexCount;
+		}
+		return this;
+	}
+
 	
 	public WriteConsistency getWriteConsistency() {
 		return this.writeConsistency;
@@ -202,6 +224,17 @@ public class EtmConfiguration {
 	public EtmConfiguration setQueryTimeout(long queryTimeout) {
 		if (queryTimeout > 0) {
 			this.queryTimeout = queryTimeout;
+		}
+		return this;
+	}
+
+	public int getMaxSearchResultDownloadRows() {
+		return this.maxSearchResultDownloadRows;
+	}
+	
+	public EtmConfiguration setMaxSearchResultDownloadRows(int maxSearchResultDownloadRows) {
+		if (maxSearchResultDownloadRows > 0) {
+			this.maxSearchResultDownloadRows = maxSearchResultDownloadRows;
 		}
 		return this;
 	}
@@ -285,9 +318,13 @@ public class EtmConfiguration {
 			setReplicasPerIndex(etmConfiguration.replicasPerIndex);
 			changed.add(CONFIG_KEY_REPLICAS_PER_INDEX);
 		}
-		if (this.maxIndexCount != etmConfiguration.getMaxIndexCount()) {
-			 setMaxIndexCount(etmConfiguration.getMaxIndexCount());
-			 changed.add(CONFIG_KEY_MAX_INDEX_COUNT);
+		if (this.maxEventIndexCount != etmConfiguration.getMaxEventIndexCount()) {
+			 setMaxEventIndexCount(etmConfiguration.getMaxEventIndexCount());
+			 changed.add(CONFIG_KEY_MAX_EVENT_INDEX_COUNT);
+		}
+		if (this.maxMetricsIndexCount != etmConfiguration.getMaxMetricsIndexCount()) {
+			 setMaxMetricsIndexCount(etmConfiguration.getMaxMetricsIndexCount());
+			 changed.add(CONFIG_KEY_MAX_METRICS_INDEX_COUNT);
 		}
 		if (!this.writeConsistency.equals(etmConfiguration.getWriteConsistency())) {
 			setWriteConsistency(etmConfiguration.getWriteConsistency());

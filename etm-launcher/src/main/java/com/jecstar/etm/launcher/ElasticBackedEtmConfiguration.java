@@ -79,9 +79,15 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 
 	@Override
-	public int getMaxIndexCount() {
+	public int getMaxEventIndexCount() {
 		reloadConfigurationWhenNecessary();
-		return super.getMaxIndexCount();
+		return super.getMaxEventIndexCount();
+	}
+	
+	@Override
+	public int getMaxMetricsIndexCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxMetricsIndexCount();
 	}
 	
 	@Override
@@ -100,6 +106,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	public int getRetryOnConflictCount() {
 		reloadConfigurationWhenNecessary();
 		return super.getRetryOnConflictCount();
+	}
+	
+	@Override
+	public int getMaxSearchResultDownloadRows() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxSearchResultDownloadRows();
 	}
 	
 	@Override

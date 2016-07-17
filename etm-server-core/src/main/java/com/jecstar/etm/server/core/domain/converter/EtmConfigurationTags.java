@@ -15,9 +15,13 @@ public interface EtmConfigurationTags {
 	String getShardsPerIndexTag();
 	String getReplicasPerIndexTag();
 
-	String getMaxIndexCountTag();
+	String getMaxEventIndexCountTag();
+	String getMaxMetricsIndexCountTag();
 	
 	String getWriteConsistencyTag();
-	String getQueryTimeoutTag();
 	String getRetryOnConflictCountTag();
+	String getQueryTimeoutTag();
+	String getMaxSearchResultDownloadRowsTag();
+
+
 }
