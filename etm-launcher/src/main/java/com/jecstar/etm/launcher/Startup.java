@@ -26,7 +26,6 @@ public class Startup {
 			ConfigurationImpl.rootLogLevel = configuration.logging.rootLogger;
 			ConfigurationImpl.applicationInstance = configuration.instanceName;
 			ConfigurationImpl.hostAddress = InetAddress.getByName(configuration.bindingAddress);
-			// TODO set the application version.		
 			new Launcher().launch(commandLineParameters, configuration);
 		} catch (FileNotFoundException e) {
 			System.err.println("Configuration file not found: " + e.getMessage());
