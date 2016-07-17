@@ -10,6 +10,7 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
 
 @Provider
 public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
@@ -49,6 +50,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 					break;
 				case EtmException.INVALID_PASSWORD:
 					errorMessage.setMessage("Invalid password");
+					break;
+				case EtmException.NO_MORE_ADMINS_LEFT:
+					errorMessage.setMessage("No users with the '" + PrincipalRole.ADMIN.getRoleName() + "' role left");
 					break;
 				default:
 					break;

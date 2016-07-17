@@ -15,6 +15,7 @@ public class EtmException extends RuntimeException {
 	public static final int INVALID_JSON_EXPRESSION			= 100_007;
 	public static final int INVALID_EXPRESSION_PARSER_TYPE 	= 100_008;
 	public static final int INVALID_PASSWORD 				= 100_009;
+	public static final int NO_MORE_ADMINS_LEFT 			= 100_010;
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

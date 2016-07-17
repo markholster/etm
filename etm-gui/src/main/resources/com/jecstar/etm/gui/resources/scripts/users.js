@@ -196,10 +196,11 @@ function buildUserPage() {
         			sortSelectOptions($userSelect);
         		}
         		userMap[userData.id] = userData;
-        		$('#modal-user-overwrite').modal('hide');
         		$('#users_infoBox').text('User \'' + userData.id+ '\' saved.').show('fast').delay(5000).hide('fast');
             }
-        });    		
+        }).always(function () {
+        	$('#modal-user-overwrite').modal('hide');
+        });  		
 	}
 	
 	function removeUser(userId) {
@@ -215,10 +216,11 @@ function buildUserPage() {
         		$("#sel-user > option").filter(function(i){
         		       return $(this).attr("value") == userId;
         		}).remove();
-        		$('#modal-user-remove').modal('hide');
         		$('#users_infoBox').text('User \'' + userId + '\' removed.').show('fast').delay(5000).hide('fast');
             }
-        });    		
+        }).always(function() {
+        	$('#modal-user-remove').modal('hide');
+        });  		
 	}
 	
 	function checkOrInvalidateFormInCaseOfPasswordMismatch() {

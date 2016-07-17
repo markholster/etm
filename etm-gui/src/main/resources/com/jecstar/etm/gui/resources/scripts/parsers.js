@@ -129,9 +129,10 @@ function buildParserPage() {
         			sortSelectOptions($parserSelect);
         		}
         		parserMap[parserData.name] = parserData;
-        		$('#modal-parser-overwrite').modal('hide');
         		$('#parsers_infoBox').text('Parser \'' + parserData.name + '\' saved.').show('fast').delay(5000).hide('fast');
             }
+        }).always(function () {
+        	$('#modal-parser-overwrite').modal('hide');
         });    		
 	}
 	
@@ -148,9 +149,10 @@ function buildParserPage() {
         		$("#sel-parser > option").filter(function(i){
         		       return $(this).attr("value") == parserName;
         		}).remove();
-        		$('#modal-parser-remove').modal('hide');
         		$('#parsers_infoBox').text('Parser \'' + parserName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
+        }).always(function () {
+        	$('#modal-parser-remove').modal('hide');
         });    		
 	}
 	

@@ -245,10 +245,11 @@ function buildEndpointPage() {
         			sortSelectOptions($endpointSelect);
         		}
         		endpointMap[endpointData.name] = endpointData;
-        		$('#modal-endpoint-overwrite').modal('hide');
         		$('#endpoints_infoBox').text('Endpoint \'' + getEndpointNameById(endpointData.name) + '\' saved.').show('fast').delay(5000).hide('fast');
         		enableOrDisableButtons();
             }
+        }).always(function () {
+        	$('#modal-endpoint-overwrite').modal('hide');
         });    		
 	}
 	
@@ -265,10 +266,11 @@ function buildEndpointPage() {
         		$("#sel-endpoint > option").filter(function(i){
      		       return $(this).attr("value") == getEndpointIdByName(endpointName);
         		}).remove();
-        		$('#modal-endpoint-remove').modal('hide');
         		$('#endpoints_infoBox').text('Endpoint \'' + endpointName + '\' removed.').show('fast').delay(5000).hide('fast');
         		enableOrDisableButtons();
             }
+        }).always(function () {
+        	$('#modal-endpoint-remove').modal('hide');
         });    		
 	}
 	

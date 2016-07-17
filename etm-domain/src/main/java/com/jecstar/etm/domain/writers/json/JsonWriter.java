@@ -114,6 +114,22 @@ public class JsonWriter {
 		return true;
 	}
 	
+	public boolean addSetElementToJsonBuffer(String elementName, Set<String> elementValues, boolean writeWhenEmpty, StringBuilder buffer, boolean firstElement) {
+		if (elementValues.size() < 1 &&!writeWhenEmpty) {
+			return false;
+		}
+		if (!firstElement) {
+			buffer.append(", ");
+		}
+		buffer.append(escapeToJson(elementName, true) + ": [");
+		buffer.append(elementValues.stream()
+				.map(c -> escapeToJson(c, true))
+				.sorted()
+				.collect(Collectors.joining(", ")));
+		buffer.append("]");
+		return true;
+	}
+	
 	public String escapeToJson(String value, boolean quote) {
 		if (value == null) {
 			return "null";

@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +21,9 @@ import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -64,6 +67,9 @@ public class SettingsService extends AbstractJsonService {
 			"." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
 			"." + this.endpointConfigurationConverter.getTags().getParsersTag() +
 			"." + this.endpointConfigurationConverter.getTags().getNameTag();
+	
+	
+	private final EtmPrincipalTags etmPrincipalTags = this.etmPrincipalConverter.getTags();
 	
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
@@ -359,10 +365,9 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getUsers() {
-		EtmPrincipalTags tags = this.etmPrincipalConverter.getTags();
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-			.setFetchSource(new String[] {"*"}, new String[] {tags.getPasswordHashTag(), tags.getSearchTemplatesTag(), tags.getQueryHistoryTag()})
+			.setFetchSource(new String[] {"*"}, new String[] {this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getSearchTemplatesTag(), this.etmPrincipalTags.getQueryHistoryTag()})
 			.setQuery(QueryBuilders.matchAllQuery())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
@@ -409,6 +414,19 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/user/{userId}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteUser(@PathParam("userId") String userId) {
+		if (isUserAdmin(userId)) {
+			// The user was admin. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
+			// This check should be skipped changed when LDAP is supported.
+			SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
+				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), PrincipalRole.ADMIN.getRoleName()))
+				.setSize(0)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.get();
+			if (searchResponse.getHits().getTotalHits() <= 1) {
+				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
+			}
+		}
 		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -423,8 +441,22 @@ public class SettingsService extends AbstractJsonService {
 		// Do a read and write of the user to make sure it's valid.
 		Map<String, Object> valueMap = toMap(json);
 		EtmPrincipal principal = this.etmPrincipalConverter.read(valueMap);
-		if (valueMap.containsKey("new_password")) {
-			principal.setPasswordHash(BCrypt.hashpw(getString("new_password", valueMap), BCrypt.gensalt()));
+		String newPassword = getString("new_password", valueMap);
+		if (newPassword != null) {
+			principal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+		}
+		if (isUserAdmin(userId) && !principal.getRoles().contains(PrincipalRole.ADMIN)) {
+			// The user was admin, but that role is revoked. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
+			// This check should be skipped changed when LDAP is supported.
+			SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
+				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), PrincipalRole.ADMIN.getRoleName()))
+				.setSize(0)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.get();
+			if (searchResponse.getHits().getTotalHits() <= 1) {
+				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
+			}
 		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setDoc(this.etmPrincipalConverter.write(principal))
@@ -435,10 +467,20 @@ public class SettingsService extends AbstractJsonService {
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		if (userId.equals(principal.getId())) {
-			// TODO deze gebruiker was admin, controleren of hij/zij zichzelf admin rechten ontnomen heeft en er geen admin meer overblijft.
 			principal.forceReload = true;
 		}
 		return "{ \"status\": \"success\" }";
+	}
+
+	private boolean isUserAdmin(String userId) {
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+			.setFetchSource(this.etmPrincipalTags.getRolesTag(), null)
+			.get();
+		if (getResponse.isExists()) {
+			Collection<String> roles = getArray(this.etmPrincipalTags.getRolesTag(), getResponse.getSource());
+			return roles.contains(PrincipalRole.ADMIN.getRoleName());
+		}
+		return false;
 	}
 
 }
