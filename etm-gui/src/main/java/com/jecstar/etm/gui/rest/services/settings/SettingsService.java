@@ -134,6 +134,7 @@ public class SettingsService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)		
 	public String getClusterConfiguration() {
 		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
+				.setFetchSource(true)
 				.get();
 		return getResponse.getSourceAsString();
 	}
