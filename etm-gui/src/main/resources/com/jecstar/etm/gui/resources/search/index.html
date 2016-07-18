@@ -139,7 +139,7 @@
          </div>
          <div class="row" id="result_block" style="display: none;">
            <div id="search-result-card" class="card card-block rowContentMargins">
-             <h5 class="card-title">Search results<small id="search-stats"></small><small style="font-size: 100%;"><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right"></a></small></h5>
+             <h5 class="card-title">Search results<small id="search-stats"></small><small style="font-size: 100%;"><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right"></a><a id="link-request-download" href="#" class="fa fa-download pull-right"></a></small></h5>
              <div id="result_card" class="card-text">
              </div>
            </div>
@@ -231,7 +231,7 @@
             </div>
             <div class="form-group">
                 <label for="table-settings-sort-order">Sort order</label>
-                <select id="table-settings-sort-order" class="form-control" >
+                <select id="table-settings-sort-order" class="form-control c-select" >
                   <option value="asc">Ascending</option>
                   <option value="desc">Descending</option>
                 </select>
@@ -254,7 +254,43 @@
     </div>
   </div>
   
-  
+  <div class="modal fade" id="modal-download-results" tabindex="-1" role="dialog" aria-labelledby="download-results-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="download-results-modal-label">Download results</h4>
+        </div>
+        <div class="modal-body">
+          <p>Select the options you desire, and click on the link below to download the results.</p> 
+          <fieldset class="form-group">
+            <label for="input-download-start-row">Start row</label>
+            <input id="input-download-start-row" type="number" min="1" class="form-control" value="1"/>
+          </fieldset>
+          <fieldset class="form-group">
+            <label for="input-download-number-of-rows">Number of rows</label>
+            <input id="input-download-number-of-rows" type="number" min="1" class="form-control" value="10" />
+          </fieldset>
+          <fieldset class="form-group">
+            <label for="sel-download-type">File type</label>
+            <select id="sel-download-type" class="form-control c-select">
+            	<option value="csv">Comma separated file (csv)</option>
+            	<option value="xlsx">Microsoft Excel (xlsx)</option>
+            </select>
+          </fieldset>
+          <fieldset class="form-group">
+            <label for="input-download-include-payload">Include payload</label>
+            <input id="input-download-include-payload" type="checkbox" checked="checked" />
+          </fieldset>
+          <div class="modal-footer">
+            <button id="btn-download-results" type="button" class="btn btn-primary">Download</button>
+          </div>          
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/tether.min.js"></script>
@@ -313,6 +349,7 @@
   <script src="../scripts/menu.js"></script>
   <script>
   	buildMenu('search');
+    var maxDownloads;
     $('[id^=check-type-]').on('change', function() {
         enableOrDisableSearchButton();
         if ($('[id^=check-type-]:checked').size() == 0) {
@@ -321,7 +358,6 @@
             $('#query-string').removeAttr('disabled');
         }
     });
-    
     // Disable or enable the search button, template name inputfield and save button if the query field contains data.
     $('#query-string').on('input', enableOrDisableSearchButton)
     .bind('keydown', function( event ) {
@@ -342,6 +378,22 @@
         executeQuery(queryParams);
     });
     
+    $('#link-request-download').click(function(event) {
+    	event.preventDefault();
+    	$('#modal-download-results').modal();
+    })
+    
+    $('#btn-download-results').click(function(event) {
+    	event.preventDefault();
+    	$('#modal-download-results').modal('hide');
+    	var q = createQuery(true);
+    	q.start_ix = Number($('#input-download-start-row').val()) - 1;
+    	q.max_results = Number($('#input-download-number-of-rows').val());
+    	q.fileType = $('#sel-download-type').val();
+    	q.includePayload = $('#input-download-include-payload').is(":checked") ? true : false;
+	    window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
+	});
+    
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
     		return false;
@@ -356,10 +408,13 @@
     function enableOrDisableSearchButton() {
         if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
             $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
-            $('#link-edit-table').hide();
+            $('#link-edit-table, #link-request-download').hide();
         } else {
             $('#btn-search, #template-name').removeAttr("disabled");
             $('#link-edit-table').show();
+            if (maxDownloads && maxDownloads > 0) {
+            	$('#link-request-download').show();
+            }
             if ($('#template-name').val()) {
                 $('#btn-save-template').removeAttr("disabled");
             }
@@ -403,6 +458,11 @@
             success: function(data) {
                 if (!data) {
                     return;
+                }
+                maxDownloads = data.max_downloads;
+                if (maxDownloads > 0) {
+                	$('#link-request-download').show();
+                	$('#input-download-number-of-rows').attr('max', maxDownloads);
                 }
                 tableLayout.current_ix = data.start_ix;
                 if (appendToCurrent) {

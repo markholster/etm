@@ -28,6 +28,7 @@ var tableLayout = {
         } else if (values.length == 1) {
             result = tableLayout.formatValue(values[0], tableColumn, timeZone);
         }
+        // When changed also change the SearchService with the same functionality.
         if ('first' === (tableColumn.array)) {
             result = tableLayout.formatValue(values[0], tableColumn, timeZone);
         } else if ('last' === (tableColumn.array)) {
@@ -65,6 +66,7 @@ var tableLayout = {
         });
     },
     formatValue: function(value, tableColumn, timeZone) {
+    	// When changed also change the SearchService with the same functionality.
         if ('plain' === (tableColumn.format)) {
             return value;
         } else if ('isoutctimestamp' === tableColumn.format) {
@@ -158,11 +160,11 @@ $('#link-edit-table').click(function (event) {
                      }
                  })
                 .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'})),
-            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
+            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm c-select')
                 .append($('<option>').attr('value', 'plain').text('Plain'))
                 .append($('<option>').attr('value', 'isotimestamp').text('ISO Timestamp'))
                 .append($('<option>').attr('value', 'isoutctimestamp').text('ISO UTC Timestamp'))),
-            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm')
+            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm c-select')
                 .append($('<option>').attr('value', 'lowest').text('Lowest'))
                 .append($('<option>').attr('value', 'highest').text('Highest'))
                 .append($('<option>').attr('value', 'first').text('First'))

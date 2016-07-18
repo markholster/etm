@@ -66,7 +66,6 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 	
 	private void executeSearch() {
 		this.response = this.searchRequestBuilder
-				.setFrom(0)
 				.setSize(this.scrollSize)
 				.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
 				.get();

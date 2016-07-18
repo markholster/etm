@@ -1,15 +1,22 @@
 package com.jecstar.etm.gui.rest.services.search;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
@@ -20,7 +27,10 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
@@ -52,6 +62,7 @@ import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -61,12 +72,21 @@ public class SearchService extends AbstractJsonService {
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
+	private static final SimpleDateFormat ISO_UTC_FORMATTER = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ");
 	
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
+	private final Comparator<Object> objectComparator = new Comparator<Object>() {
+		@Override
+		public int compare(Object o1, Object o2) {
+			return o1.toString().compareTo(o2.toString());
+		}
+	};
+	
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.client = client;
 		SearchService.etmConfiguration = etmConfiguration;
+		SearchService.ISO_UTC_FORMATTER.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 	
 	@GET
@@ -202,45 +222,9 @@ public class SearchService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String executeQuery(String json) {
 		long startTime = System.currentTimeMillis();
-		Map<String, Object> requestValues = toMap(json);
-		String queryString = getString("query", requestValues);
-		Integer startIndex = getInteger("start_ix", requestValues, new Integer(0));
-		Integer maxResults = getInteger("max_results", requestValues, new Integer(50));
-		if (maxResults > 500) {
-			maxResults = 50;
-		}
-		String sortField = getString("sort_field", requestValues);
-		String sortOrder = getString("sort_order", requestValues);
-		List<String> types = getArray("types", requestValues);
-		List<String> fields = getArray("fields", requestValues);
-		List<Map<String, Object>> fieldsLayout = getArray("fieldsLayout", requestValues);
-		if (fields == null) {
-			fields = new ArrayList<String>(2);
-		}
-		if (fields.isEmpty()) {
-			fields.add(this.eventTags.getEndpointsTag() + "." + this.eventTags.getWritingEndpointHandlerTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());
-			fields.add(this.eventTags.getNameTag());
-		}
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
-		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(queryString)
-			.allowLeadingWildcard(true)
-			.analyzeWildcard(true)
-			.defaultField("payload")
-			.locale(etmPrincipal.getLocale())
-			.lowercaseExpandedTerms(false)
-			.timeZone(etmPrincipal.getTimeZone().getID());
-		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
-			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
-			.setFetchSource(fields.toArray(new String[fields.size()]), null)
-			.setFrom(startIndex)
-			.setSize(maxResults)
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-		if (sortField != null && sortField.trim().length() > 0) {
-			requestBuilder.addSort(sortField, "desc".equals(sortOrder) ? SortOrder.DESC : SortOrder.ASC);
-		}
-		if (types != null && !types.isEmpty()) {
-			requestBuilder.setTypes(types.toArray(new String[types.size()]));
-		}
+		SearchRequestParameters parameters = new SearchRequestParameters(toMap(json));
+		SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
 		NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
 		SearchResponse response = requestBuilder.get();
 		StringBuilder result = new StringBuilder();
@@ -250,10 +234,11 @@ public class SearchService extends AbstractJsonService {
 		result.append(",\"hits\": " + response.getHits().getTotalHits());
 		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
-		result.append(",\"start_ix\": " + startIndex);
-		result.append(",\"end_ix\": " + (startIndex + response.getHits().hits().length - 1));
-		result.append(",\"has_more_results\": " + (startIndex + response.getHits().hits().length < response.getHits().getTotalHits() - 1));
+		result.append(",\"start_ix\": " + parameters.getStartIndex());
+		result.append(",\"end_ix\": " + (parameters.getStartIndex() + response.getHits().hits().length - 1));
+		result.append(",\"has_more_results\": " + (parameters.getStartIndex() + response.getHits().hits().length < response.getHits().getTotalHits() - 1));
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
+		result.append(",\"max_downloads\": " + etmConfiguration.getMaxSearchResultDownloadRows());
 		result.append(",\"results\": [");
 		addSearchHits(result, response.getHits());
 		result.append("]");
@@ -262,23 +247,52 @@ public class SearchService extends AbstractJsonService {
 		result.append(",\"query_time_as_string\": \"" + numberFormat.format(queryTime) + "\"");
 		result.append("}");
 		
-		if (startIndex == 0) {
-			writeQueryHistory(startTime, queryString, startIndex, maxResults, sortField, sortOrder, types, fieldsLayout, etmPrincipal, etmPrincipal.getHistorySize());
+		if (parameters.getStartIndex() == 0) {
+			writeQueryHistory(startTime, 
+					parameters, 
+					etmPrincipal, 
+					etmPrincipal.getHistorySize());
 		}
 		return result.toString();
 	}
 	
-	private void writeQueryHistory(long timestamp, String queryString, Integer startIndex, Integer maxResults,
-			String sortField, String sortOrder, List<String> types, List<Map<String, Object>> fieldsLayout, EtmPrincipal etmPrincipal, int history_size) {
+	private SearchRequestBuilder createRequestFromInput(SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
+		if (parameters.getFields().isEmpty()) {
+			parameters.getFields().add(this.eventTags.getEndpointsTag() + "." + this.eventTags.getWritingEndpointHandlerTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());
+			parameters.getFields().add(this.eventTags.getNameTag());
+		}
+		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString())
+			.allowLeadingWildcard(true)
+			.analyzeWildcard(true)
+			.defaultField("payload")
+			.locale(etmPrincipal.getLocale())
+			.lowercaseExpandedTerms(false)
+			.timeZone(etmPrincipal.getTimeZone().getID());
+		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
+			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
+			.setFetchSource(parameters.getFields().toArray(new String[parameters.getFields().size()]), null)
+			.setFrom(parameters.getStartIndex())
+			.setSize(parameters.getMaxResults())
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
+			requestBuilder.addSort(parameters.getSortField(), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+		}
+		if (parameters.getTypes() != null && !parameters.getTypes().isEmpty()) {
+			requestBuilder.setTypes(parameters.getTypes().toArray(new String[parameters.getTypes().size()]));
+		}
+		return requestBuilder;
+	}
+	
+	private void writeQueryHistory(long timestamp, SearchRequestParameters parameters, EtmPrincipal etmPrincipal, int history_size) {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		Map<String, Object> query = new HashMap<String, Object>();
 		query.put("timestamp", timestamp);
-		query.put("query", queryString);
-		query.put("types", types);
-		query.put("fields", fieldsLayout);
-		query.put("results_per_page", maxResults);
-		query.put("sort_field", sortField);
-		query.put("sort_order", sortOrder);
+		query.put("query", parameters.getQueryString());
+		query.put("types", parameters.getTypes());
+		query.put("fields", parameters.getFieldsLayout());
+		query.put("results_per_page", parameters.getMaxResults());
+		query.put("sort_field", parameters.getSortField());
+		query.put("sort_order", parameters.getSortOrder());
 		
 		scriptParams.put("query", query);
 		scriptParams.put("history_size", history_size);
@@ -288,6 +302,172 @@ public class SearchService extends AbstractJsonService {
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 				.execute();
+	}
+	
+	@GET
+	@Path("/download")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getDownload(@QueryParam("q") String json) {
+		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
+		Map<String, Object> valueMap = toMap(json);
+		SearchRequestParameters parameters = new SearchRequestParameters(valueMap);
+		if (getBoolean("includePayload", valueMap) && !parameters.getFields().contains(this.eventTags.getPayloadTag())) {
+			parameters.getFields().add(this.eventTags.getPayloadTag());
+			Map<String, Object> payloadFieldLayout = new HashMap<>();
+			payloadFieldLayout.put("name", "Payload");
+			payloadFieldLayout.put("field", "payload");
+			payloadFieldLayout.put("format", "plain");
+			payloadFieldLayout.put("array", "first");
+			parameters.getFieldsLayout().add(payloadFieldLayout);
+			
+		}
+		SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
+		
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder);
+		String fileType = getString("fileType", valueMap);
+		File result = writeResponseToTempFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), parameters);
+	    ResponseBuilder response = Response.ok(result);
+	    response.header("Content-Disposition", "attachment; filename=etm-results." + fileType);
+	    response.encoding(System.getProperty("file.encoding"));
+	    if ("csv".equalsIgnoreCase(fileType)) {
+	    	response.header("Content-Type", "text/csv");
+	    } else if ("xlsx".equalsIgnoreCase(fileType)) {
+	    	response.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+	    }
+	    return response.build();
+
+	}
+
+	private File writeResponseToTempFile(ScrollableSearch scrollableSearch, String fileType, int maxResults, SearchRequestParameters parameters) {
+		try {
+			File outputFile = File.createTempFile("etm-", "-download");
+		    if ("csv".equalsIgnoreCase(fileType)) {
+		    	createCsv(scrollableSearch, maxResults, outputFile, parameters);
+		    } else if ("xlsx".equalsIgnoreCase(fileType)) {
+		    	createXlsx(scrollableSearch, maxResults, outputFile, parameters);
+		    }
+			return outputFile;
+		} catch (IOException e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}
+	}
+	
+	private void createCsv(ScrollableSearch scrollableSearch, int maxResults, File outputFile, SearchRequestParameters parameters) throws IOException {
+		final String csvSeparator = ",";
+		Map<String, Map<String, Object>> fieldLayouts = new HashMap<>();
+		for (String field : parameters.getFields()) {
+			for (Map<String, Object> layout : parameters.getFieldsLayout()) {
+				if (field.equals(getString("field", layout))) {
+					fieldLayouts.put(field, layout);
+					break;
+				}
+			}
+		}
+		
+		try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath());) {
+			boolean first = true;
+			for (String field : parameters.getFields()) {
+				if (!first) {
+					writer.append(csvSeparator);
+				}
+				writer.append(escapeToQuotedCsvField(getString("name", fieldLayouts.get(field))));
+				first = false;
+			}
+			
+			for (int i=0; i < maxResults && scrollableSearch.hasNext(); i++) {
+				SearchHit searchHit = scrollableSearch.next();
+				Map<String, Object> sourceValues = searchHit.getSource();
+				writer.newLine();
+				first = true;
+				for (String field : parameters.getFields()) {
+					if (!first) {
+						writer.append(csvSeparator);
+					}
+					List<Object> values = collectValuesFromPath(field, sourceValues);
+					if (values.isEmpty()) {
+						writer.append(escapeToQuotedCsvField(null));
+						break;
+					}
+					Map<String, Object> fieldLayout = fieldLayouts.get(field);
+					String array = getString("array", fieldLayout, "first");
+					Object value = null;
+					// When changed also change the SearchService with the same functionality.
+					if ("last".equals(array)) {
+						value = values.get(values.size() - 1);
+					} else if ("lowest".equals(array)) {
+						Collections.sort(values, this.objectComparator);
+						value = values.get(0);
+					} else if ("highest".equals(array))  {
+						Collections.sort(values, this.objectComparator);
+						value = values.get(values.size() - 1);
+					} else {
+						value = values.get(0);
+					}
+					writer.append(escapeToQuotedCsvField(formatValue(value, fieldLayout)));
+					first = false;
+				}
+			}
+		}
+	}
+	
+	private String formatValue(Object value, Map<String, Object> fieldLayout) {
+		// When changed also change the SearchService with the same functionality.
+		if (value == null) {
+			return null;
+		}
+		String format = getString("format", fieldLayout, "plain");
+		if ("isoutctimestamp".equals(format)) {
+			if (value instanceof Number) {
+				return ISO_UTC_FORMATTER.format(new Date(((Number)value).longValue()));
+			}
+			return value.toString();
+		} else if ("isotimestamp".equals(format)) {
+			if (value instanceof Number) {
+				SimpleDateFormat formatter = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ");
+				formatter.setTimeZone(getEtmPrincipal().getTimeZone());
+				return formatter.format(new Date(((Number)value).longValue()));
+			}
+			return value.toString();
+		}
+ 		return value.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Object> collectValuesFromPath(String path, Map<String, Object> valueMap) {
+		List<Object> values = new ArrayList<>();
+		String[] pathElements = path.split("\\.");
+		if (pathElements.length > 1) {
+			if (valueMap.containsKey(pathElements[0])) {
+				Object object = valueMap.get(pathElements[0]);
+				if (object instanceof List) {
+					List<Map<String, Object>> children = (List<Map<String, Object>>) object;
+					for (Map<String, Object> child : children) {
+						values.addAll(collectValuesFromPath(path.substring(pathElements[0].length() + 1), child));
+					}
+				} else if (object instanceof Map) {
+					Map<String, Object> child = (Map<String, Object>) object;
+					values.addAll(collectValuesFromPath(path.substring(pathElements[0].length() + 1), child));
+				}
+				
+			}
+		}
+		Object object = valueMap.get(path);
+		if (object != null) {
+			values.add(object);
+		}
+		return values;
+	}
+
+
+	private String escapeToQuotedCsvField(String value) {
+		if (value == null) {
+			return "\"\"";
+		}
+		return "\"" + value.toString().replaceAll("\"", "\"\"") + "\"";
+	}
+
+	private void createXlsx(ScrollableSearch scrollableSearch, int maxResults, File outputFile, SearchRequestParameters parameters) {
+		// TODO Auto-generated method stub
 	}
 
 	@GET
