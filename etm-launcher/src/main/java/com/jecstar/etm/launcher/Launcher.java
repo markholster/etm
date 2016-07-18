@@ -37,6 +37,7 @@ public class Launcher {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(Launcher.class);
 
+	private ElasticsearchIndextemplateCreator indexTemplateCreator;
 	private TelemetryCommandProcessor processor;
 	private HttpServer httpServer;
 	private Client elasticClient;
@@ -50,7 +51,10 @@ public class Launcher {
 		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
 		try {
 			initializeElasticsearchClient(configuration);
+			this.indexTemplateCreator = new ElasticsearchIndextemplateCreator(this.elasticClient);
+			this.indexTemplateCreator.createTemplates();
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
+			this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);
@@ -87,6 +91,9 @@ public class Launcher {
 			public void run() {
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
+				}
+				if (Launcher.this.indexTemplateCreator != null) {
+					try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
 				}
 				if (Launcher.this.retentionScheduler != null) {
 					try { Launcher.this.retentionScheduler.shutdownNow(); } catch (Throwable t) {}
@@ -147,7 +154,6 @@ public class Launcher {
 			}
 		}
 		this.elasticClient = transportClient;
-		new ElasticsearchIndextemplateCreator().createTemplates(this.elasticClient);
 	}
 	
 	private void initializeMqProcessor(Configuration configuration) {

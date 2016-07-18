@@ -143,7 +143,6 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/cluster")
 	@Produces(MediaType.APPLICATION_JSON)		
 	public String setClusterConfiguration(String json) {
-		// TODO controleer op wijzigingen in cluster die direct doorgevoerd kunnen worden (zoals aantal shards in indextemplate, of aantal replicas on the fly).
 		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, json, null);
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
 			.setDoc(this.etmConfigurationConverter.write(null, defaultConfig))
@@ -153,7 +152,6 @@ public class SettingsService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
-
 		return "{\"status\":\"success\"}";
 	}
 	

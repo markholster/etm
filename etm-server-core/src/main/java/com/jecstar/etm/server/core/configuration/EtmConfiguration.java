@@ -166,7 +166,7 @@ public class EtmConfiguration {
 	}
 	
 	public EtmConfiguration setReplicasPerIndex(int replicasPerIndex) {
-		if (replicasPerIndex > 0) {
+		if (replicasPerIndex >= 0) {
 			this.replicasPerIndex = replicasPerIndex;
 		}
 		return this;
