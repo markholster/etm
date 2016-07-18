@@ -55,6 +55,7 @@ public class QueryExporter {
 	public File exportToFile(ScrollableSearch scrollableSearch, String fileType, int maxRows, SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
 		try {
 			File outputFile = File.createTempFile("etm-", "-download");
+			outputFile.deleteOnExit();
 		    if ("csv".equalsIgnoreCase(fileType)) {
 		    	createCsv(scrollableSearch, maxRows, outputFile, parameters, etmPrincipal);
 		    } else if ("xlsx".equalsIgnoreCase(fileType)) {
