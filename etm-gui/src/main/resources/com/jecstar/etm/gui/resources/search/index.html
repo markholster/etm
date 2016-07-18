@@ -139,7 +139,7 @@
          </div>
          <div class="row" id="result_block" style="display: none;">
            <div id="search-result-card" class="card card-block rowContentMargins">
-             <h5 class="card-title">Search results<small id="search-stats"></small><small style="font-size: 100%;"><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right"></a><a id="link-request-download" href="#" class="fa fa-download pull-right"></a></small></h5>
+             <h5 class="card-title">Search results<small id="search-stats"></small><small style="font-size: 100%;"><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right" title="Edit result table"></a><a id="link-request-download" href="#" class="fa fa-download pull-right" title="Download results"></a></small></h5>
              <div id="result_card" class="card-text">
              </div>
            </div>
@@ -266,6 +266,10 @@
         <div class="modal-body">
           <p>Select the options you desire, and click on the link below to download the results.</p> 
           <fieldset class="form-group">
+            <label for="input-download-include-payload">Include payload</label>
+            <input id="input-download-include-payload" type="checkbox" checked="checked" />
+          </fieldset>
+          <fieldset class="form-group">
             <label for="input-download-start-row">Start row</label>
             <input id="input-download-start-row" type="number" min="1" class="form-control" value="1"/>
           </fieldset>
@@ -279,10 +283,6 @@
             	<option value="csv">Comma separated file (csv)</option>
             	<option value="xlsx">Microsoft Excel (xlsx)</option>
             </select>
-          </fieldset>
-          <fieldset class="form-group">
-            <label for="input-download-include-payload">Include payload</label>
-            <input id="input-download-include-payload" type="checkbox" checked="checked" />
           </fieldset>
           <div class="modal-footer">
             <button id="btn-download-results" type="button" class="btn btn-primary">Download</button>

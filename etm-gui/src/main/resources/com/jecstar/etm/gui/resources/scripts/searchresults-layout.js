@@ -28,7 +28,7 @@ var tableLayout = {
         } else if (values.length == 1) {
             result = tableLayout.formatValue(values[0], tableColumn, timeZone);
         }
-        // When changed also change the SearchService with the same functionality.
+        // When changed also change the QueryExporter.java with the same functionality.
         if ('first' === (tableColumn.array)) {
             result = tableLayout.formatValue(values[0], tableColumn, timeZone);
         } else if ('last' === (tableColumn.array)) {
@@ -66,7 +66,7 @@ var tableLayout = {
         });
     },
     formatValue: function(value, tableColumn, timeZone) {
-    	// When changed also change the SearchService with the same functionality.
+    	// When changed also change the QueryExporter.java with the same functionality.
         if ('plain' === (tableColumn.format)) {
             return value;
         } else if ('isoutctimestamp' === tableColumn.format) {

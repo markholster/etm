@@ -1,22 +1,16 @@
 package com.jecstar.etm.gui.rest.services.search;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
@@ -62,7 +56,6 @@ import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
-import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -72,21 +65,14 @@ public class SearchService extends AbstractJsonService {
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
-	private static final SimpleDateFormat ISO_UTC_FORMATTER = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ");
 	
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
-	private final Comparator<Object> objectComparator = new Comparator<Object>() {
-		@Override
-		public int compare(Object o1, Object o2) {
-			return o1.toString().compareTo(o2.toString());
-		}
-	};
+	private final QueryExporter queryExporter = new QueryExporter();
 	
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		SearchService.client = client;
 		SearchService.etmConfiguration = etmConfiguration;
-		SearchService.ISO_UTC_FORMATTER.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 	
 	@GET
@@ -325,149 +311,13 @@ public class SearchService extends AbstractJsonService {
 		
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder);
 		String fileType = getString("fileType", valueMap);
-		File result = writeResponseToTempFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), parameters);
+		File result = this.queryExporter.exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), parameters, etmPrincipal);
 	    ResponseBuilder response = Response.ok(result);
 	    response.header("Content-Disposition", "attachment; filename=etm-results." + fileType);
 	    response.encoding(System.getProperty("file.encoding"));
-	    if ("csv".equalsIgnoreCase(fileType)) {
-	    	response.header("Content-Type", "text/csv");
-	    } else if ("xlsx".equalsIgnoreCase(fileType)) {
-	    	response.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-	    }
+	    response.header("Content-Type", this.queryExporter.getContentType(fileType));
 	    return response.build();
 
-	}
-
-	private File writeResponseToTempFile(ScrollableSearch scrollableSearch, String fileType, int maxResults, SearchRequestParameters parameters) {
-		try {
-			File outputFile = File.createTempFile("etm-", "-download");
-		    if ("csv".equalsIgnoreCase(fileType)) {
-		    	createCsv(scrollableSearch, maxResults, outputFile, parameters);
-		    } else if ("xlsx".equalsIgnoreCase(fileType)) {
-		    	createXlsx(scrollableSearch, maxResults, outputFile, parameters);
-		    }
-			return outputFile;
-		} catch (IOException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
-	
-	private void createCsv(ScrollableSearch scrollableSearch, int maxResults, File outputFile, SearchRequestParameters parameters) throws IOException {
-		final String csvSeparator = ",";
-		Map<String, Map<String, Object>> fieldLayouts = new HashMap<>();
-		for (String field : parameters.getFields()) {
-			for (Map<String, Object> layout : parameters.getFieldsLayout()) {
-				if (field.equals(getString("field", layout))) {
-					fieldLayouts.put(field, layout);
-					break;
-				}
-			}
-		}
-		
-		try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath());) {
-			boolean first = true;
-			for (String field : parameters.getFields()) {
-				if (!first) {
-					writer.append(csvSeparator);
-				}
-				writer.append(escapeToQuotedCsvField(getString("name", fieldLayouts.get(field))));
-				first = false;
-			}
-			
-			for (int i=0; i < maxResults && scrollableSearch.hasNext(); i++) {
-				SearchHit searchHit = scrollableSearch.next();
-				Map<String, Object> sourceValues = searchHit.getSource();
-				writer.newLine();
-				first = true;
-				for (String field : parameters.getFields()) {
-					if (!first) {
-						writer.append(csvSeparator);
-					}
-					List<Object> values = collectValuesFromPath(field, sourceValues);
-					if (values.isEmpty()) {
-						writer.append(escapeToQuotedCsvField(null));
-						break;
-					}
-					Map<String, Object> fieldLayout = fieldLayouts.get(field);
-					String array = getString("array", fieldLayout, "first");
-					Object value = null;
-					// When changed also change the SearchService with the same functionality.
-					if ("last".equals(array)) {
-						value = values.get(values.size() - 1);
-					} else if ("lowest".equals(array)) {
-						Collections.sort(values, this.objectComparator);
-						value = values.get(0);
-					} else if ("highest".equals(array))  {
-						Collections.sort(values, this.objectComparator);
-						value = values.get(values.size() - 1);
-					} else {
-						value = values.get(0);
-					}
-					writer.append(escapeToQuotedCsvField(formatValue(value, fieldLayout)));
-					first = false;
-				}
-			}
-		}
-	}
-	
-	private String formatValue(Object value, Map<String, Object> fieldLayout) {
-		// When changed also change the SearchService with the same functionality.
-		if (value == null) {
-			return null;
-		}
-		String format = getString("format", fieldLayout, "plain");
-		if ("isoutctimestamp".equals(format)) {
-			if (value instanceof Number) {
-				return ISO_UTC_FORMATTER.format(new Date(((Number)value).longValue()));
-			}
-			return value.toString();
-		} else if ("isotimestamp".equals(format)) {
-			if (value instanceof Number) {
-				SimpleDateFormat formatter = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ");
-				formatter.setTimeZone(getEtmPrincipal().getTimeZone());
-				return formatter.format(new Date(((Number)value).longValue()));
-			}
-			return value.toString();
-		}
- 		return value.toString();
-	}
-
-	@SuppressWarnings("unchecked")
-	public List<Object> collectValuesFromPath(String path, Map<String, Object> valueMap) {
-		List<Object> values = new ArrayList<>();
-		String[] pathElements = path.split("\\.");
-		if (pathElements.length > 1) {
-			if (valueMap.containsKey(pathElements[0])) {
-				Object object = valueMap.get(pathElements[0]);
-				if (object instanceof List) {
-					List<Map<String, Object>> children = (List<Map<String, Object>>) object;
-					for (Map<String, Object> child : children) {
-						values.addAll(collectValuesFromPath(path.substring(pathElements[0].length() + 1), child));
-					}
-				} else if (object instanceof Map) {
-					Map<String, Object> child = (Map<String, Object>) object;
-					values.addAll(collectValuesFromPath(path.substring(pathElements[0].length() + 1), child));
-				}
-				
-			}
-		}
-		Object object = valueMap.get(path);
-		if (object != null) {
-			values.add(object);
-		}
-		return values;
-	}
-
-
-	private String escapeToQuotedCsvField(String value) {
-		if (value == null) {
-			return "\"\"";
-		}
-		return "\"" + value.toString().replaceAll("\"", "\"\"") + "\"";
-	}
-
-	private void createXlsx(ScrollableSearch scrollableSearch, int maxResults, File outputFile, SearchRequestParameters parameters) {
-		// TODO Auto-generated method stub
 	}
 
 	@GET
