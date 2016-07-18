@@ -29,7 +29,7 @@ import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 public class QueryExporter {
 
-	private static final SimpleDateFormat ISO_UTC_FORMATTER = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ");
+	private static final SimpleDateFormat ISO_UTC_FORMATTER = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	static {
 		ISO_UTC_FORMATTER.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
@@ -104,6 +104,9 @@ public class QueryExporter {
 	}
 	
 	private void createXlsx(ScrollableSearch scrollableSearch, int maxResults, File outputFile, SearchRequestParameters parameters, EtmPrincipal etmPrincipal) throws IOException {
+		SimpleDateFormat principalTimeZoneFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+		principalTimeZoneFormatter.setTimeZone(etmPrincipal.getTimeZone());
+		
 		final int charsPerCell = 30000;
 		// First make sure the payload field is at the end of the field list because it can be splitted into several cells.
 		for (int i = parameters.getFields().size() - 2; i >= 0; i-- ) {
@@ -150,18 +153,20 @@ public class QueryExporter {
 					// When changed also change the searchresults-layout.js with the same functionality.
 					if (this.eventTags.getPayloadTag().equals(field)) {
 						String payload = value.toString();
-						for (int k=0; i < payload.length(); k += charsPerCell) {
+						for (int k=0; k < payload.length(); k += charsPerCell) {
 							XSSFCell cell = row.createCell(cellIx++);
 							if (k + charsPerCell > payload.length()) {
-								cell.setCellValue(payload.substring(i));
+								cell.setCellValue(payload.substring(k));
 							} else {
-								cell.setCellValue(payload.substring(i, i + charsPerCell));
+								cell.setCellValue(payload.substring(k, k + charsPerCell));
 							}
 						}
 					} else {
 						XSSFCell cell = row.createCell(cellIx++);
-						if (("isoutctimestamp".equals(format) || "isotimestamp".equals(format)) && value instanceof Number) {
-							cell.setCellValue(new Date(((Number)value).longValue()));
+						if ("isoutctimestamp".equals(format) && value instanceof Number) {
+							cell.setCellValue(ISO_UTC_FORMATTER.format(new Date(((Number)value).longValue())));
+						} else if ("isotimestamp".equals(format) && value instanceof Number) {
+							cell.setCellValue(principalTimeZoneFormatter.format(new Date(((Number)value).longValue())));
 						} else if (value instanceof Number){
 							cell.setCellValue(((Number)value).doubleValue());
 						} else {
@@ -205,7 +210,7 @@ public class QueryExporter {
 			return value.toString();
 		} else if ("isotimestamp".equals(format)) {
 			if (value instanceof Number) {
-				SimpleDateFormat formatter = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ");
+				SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 				formatter.setTimeZone(etmPrincipal.getTimeZone());
 				return formatter.format(new Date(((Number)value).longValue()));
 			}
