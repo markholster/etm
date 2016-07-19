@@ -12,6 +12,7 @@ import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
+import com.jecstar.etm.processor.ibmmq.handler.ClonedMessageHandler;
 import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.HandlerResult;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
@@ -42,6 +43,7 @@ public class DestinationReader implements Runnable {
 	// Handlers
 	private final EtmEventHandler etmEventHandler;
 	private final IIBEventHandler iibEventHandler;
+	private final ClonedMessageHandler clonedMessageEventHandler;
 	
 	public DestinationReader(String configurationName, final TelemetryCommandProcessor processor, final QueueManager queueManager, final Destination destination) {
 		this.configurationName = configurationName;
@@ -49,6 +51,7 @@ public class DestinationReader implements Runnable {
 		this.destination = destination;
 		this.etmEventHandler = new EtmEventHandler(processor);
 		this.iibEventHandler = new IIBEventHandler(processor);
+		this.clonedMessageEventHandler = new ClonedMessageHandler(processor);
 	}
 	@Override
 	public void run() {
@@ -72,10 +75,15 @@ public class DestinationReader implements Runnable {
 					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
 				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessagesType())) {
 					result = this.iibEventHandler.handleMessage(message.messageId, byteContent);
+				} else if ("clone".equalsIgnoreCase(this.destination.getMessagesType())) {
+					result = this.clonedMessageEventHandler.handleMessage(message, byteContent);
 				} else {
 					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
 					if (HandlerResult.PARSE_FAILURE.equals(result)) {
 						result = this.iibEventHandler.handleMessage(message.messageId, byteContent);
+					}
+					if (HandlerResult.PARSE_FAILURE.equals(result)) {
+						result = this.clonedMessageEventHandler.handleMessage(message, byteContent);
 					}
 				}
 				if (!HandlerResult.PROCESSED.equals(result)) {

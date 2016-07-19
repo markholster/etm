@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.mq.constants.CMQC;
 import com.ibm.mq.constants.MQConstants;
 import com.ibm.mq.headers.CCSID;
+import com.ibm.mq.headers.Charsets;
 import com.ibm.mq.headers.MQDataException;
 import com.ibm.mq.headers.MQMD;
 import com.ibm.mq.headers.MQRFH2;
@@ -325,11 +326,10 @@ public class IIBEventHandler {
 					new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
 					// TODO Do something with RFH2 header?
 				}
-				String codepage = CCSID.getCodepage(mqmd.getCodedCharSetId());
 				byte[] remaining = new byte[inputData.available()];
 				inputData.readFully(remaining);
-	
-				builder.setPayload(new String(remaining, codepage));
+				
+				builder.setPayload(Charsets.convert(remaining, mqmd.getCodedCharSetId()));
 				if (builder.getId() == null) {
 					// Event can be set earlier in case of ComIbmMQOutputNode, in that case we have to skip the set because it may fail.
 					builder.setId(byteArrayToString(mqmd.getMsgId()));
