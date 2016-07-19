@@ -75,6 +75,9 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
+		if (log.isDebugLevelEnabled()) {
+			log.logDebugMessage("Executing hot restart of TelemetryCommandProcessor.");
+		}
 		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.threadFactory, this.persistenceEnvironment, this.metricRegistry);
 		RingBuffer<TelemetryCommand> newRingBuffer = newDisruptorEnvironment.start();
 		DisruptorEnvironment oldDisruptorEnvironment = this.disruptorEnvironment;
@@ -117,6 +120,14 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		try {
 			target = this.ringBuffer.get(sequence);
 			target.initialize(event);
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Processing sql event with id '" + event.id + "'.");
+			}
+		} catch (Exception e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Failed to initialize sql event with id '" + event.id + "'.", e);
+			}		
+			target.initializeToNoop();
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -135,6 +146,14 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		try {
 			target = this.ringBuffer.get(sequence);
 			target.initialize(event);
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Processing http event with id '" + event.id + "'.");
+			}
+		} catch (Exception e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Failed to initialize http event with id '" + event.id + "'.", e);
+			}			
+			target.initializeToNoop();
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -153,6 +172,14 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		try {
 			target = this.ringBuffer.get(sequence);
 			target.initialize(event);
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Processing log event with id '" + event.id + "'.");
+			}
+		} catch (Exception e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Failed to initialize log event with id '" + event.id + "'.", e);
+			}		
+			target.initializeToNoop();
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -171,6 +198,14 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		try {
 			target = this.ringBuffer.get(sequence);
 			target.initialize(event);
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Processing messaging event with id '" + event.id + "'.");
+			}		
+		} catch (Exception e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Failed to initialize messaging event with id '" + event.id + "'.", e);
+			}	
+			target.initializeToNoop();
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -189,6 +224,14 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		try {
 			target = this.ringBuffer.get(sequence);
 			target.initialize(event);
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("Processing business event with id '" + event.id + "'.");
+			}			
+		} catch (Exception e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Failed to initialize business event with id '" + event.id + "'.", e);
+			}
+			target.initializeToNoop();
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();

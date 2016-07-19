@@ -14,7 +14,8 @@ public class TelemetryCommand {
 		HTTP_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_HTTP), 
 		LOG_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_LOG), 
 		MESSAGING_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING),
-		SQL_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_SQL);
+		SQL_EVENT(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_SQL),
+		NOOP(null);
 		
 		private final String type;
 
@@ -93,5 +94,14 @@ public class TelemetryCommand {
 		this.logTelemetryEvent.initialize();
 		this.messagingTelemetryEvent.initialize();
 		this.sqlTelemetryEvent.initialize(sqlTelemetryEvent);
+	}
+	
+	public void initializeToNoop() {
+		this.commandType = CommandType.NOOP;
+		this.businessTelemetryEvent.initialize();
+		this.httpTelemetryEvent.initialize();
+		this.logTelemetryEvent.initialize();
+		this.messagingTelemetryEvent.initialize();
+		this.sqlTelemetryEvent.initialize();		
 	}
 }

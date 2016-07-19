@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.processor.persisting.elastic.BusinessTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.HttpTelemetryEventPersister;
 import com.jecstar.etm.processor.processor.persisting.elastic.LogTelemetryEventPersister;
@@ -40,7 +41,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 
 	@Override
 	public void onEvent(TelemetryCommand command, long sequence, boolean endOfBatch) throws Exception {
-		if (sequence % this.numberOfConsumers != this.ordinal) {
+		if (sequence % this.numberOfConsumers != this.ordinal || CommandType.NOOP.equals(command.commandType)) {
 			return;
 		}
 		switch (command.commandType) {

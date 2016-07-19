@@ -7,6 +7,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.lmax.disruptor.EventHandler;
@@ -33,7 +34,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 
 	@Override
 	public void onEvent(final TelemetryCommand command, final long sequence, final boolean endOfBatch) throws Exception {
-		if (sequence % this.numberOfConsumers != this.ordinal) {
+		if (sequence % this.numberOfConsumers != this.ordinal || CommandType.NOOP.equals(command.commandType)) {
 			return;
 		}
 		switch (command.commandType) {
