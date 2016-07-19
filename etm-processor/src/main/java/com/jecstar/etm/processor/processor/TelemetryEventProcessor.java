@@ -90,6 +90,10 @@ public class TelemetryEventProcessor {
 			target = this.ringBuffer.get(sequence);
 			target.initialize(telemetryEvent);
 			preProcess(target);
+		} catch (Exception e) {
+			if (log.isErrorLevelEnabled()) {
+				log.logErrorMessage("Failed to initialize event with id '" + telemetryEvent.id + "'.", e);
+			}
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
