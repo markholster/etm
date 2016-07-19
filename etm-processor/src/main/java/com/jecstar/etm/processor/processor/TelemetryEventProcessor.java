@@ -12,10 +12,13 @@ import com.jecstar.etm.core.EtmException;
 import com.jecstar.etm.core.EventCommand;
 import com.jecstar.etm.core.TelemetryEvent;
 import com.jecstar.etm.core.configuration.EtmConfiguration;
+import com.jecstar.etm.core.logging.LogFactory;
+import com.jecstar.etm.core.logging.LogWrapper;
 import com.lmax.disruptor.RingBuffer;
 
 public class TelemetryEventProcessor {
 	
+	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventProcessor.class);
 	private RingBuffer<TelemetryEvent> ringBuffer;
 	private boolean started = false;
 	
@@ -112,6 +115,9 @@ public class TelemetryEventProcessor {
     }
 	
 	private void preProcess(TelemetryEvent event) {
+		if (log.isDebugLevelEnabled()) {
+			log.logDebugMessage("Processing event '" + event.id + "'.");
+		}
 	}
 	
 }
