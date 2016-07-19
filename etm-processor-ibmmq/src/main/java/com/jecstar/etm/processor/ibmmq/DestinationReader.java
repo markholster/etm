@@ -68,6 +68,9 @@ public class DestinationReader implements Runnable {
 			try {
 				message = new MQMessage();
 				this.mqDestination.get(message, getOptions);
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Read message with id '" + byteArrayToString(message.messageId) + "'.");
+				}				
 				this.telemetryEvent.initialize();
 				byte[] byteContent = new byte[message.getMessageLength()];
 				message.readFully(byteContent);
@@ -91,7 +94,6 @@ public class DestinationReader implements Runnable {
 						}						
 					}
 				}
-				message.clearMessage();
 				this.counter++;
 				if (shouldCommit()) {
 					commit();
@@ -166,7 +168,13 @@ public class DestinationReader implements Runnable {
 	private void commit() {
 		if (this.mqQueueManager != null) {
 			try {
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Committing messages from queuemanager '" + this.mqQueueManager.getName() + "'.");
+				}
 				this.mqQueueManager.commit();
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Messages from queuemanager '" + this.mqQueueManager.getName() + "' committed.");
+				}
 			} catch (MQException e) {
 				if (log.isErrorLevelEnabled()) {
 					log.logErrorMessage("Unable to execute commit on queuemanager.", e);
@@ -263,6 +271,7 @@ public class DestinationReader implements Runnable {
 			if (log.isWarningLevelEnabled()) {
 				log.logWarningMessage("Failed to put message with id '" + byteArrayToString(message.messageId) + "' to the configured backout queue", e);
 			}
+		} finally {
 			if (backoutQueue != null) {
 				try {
 					backoutQueue.close();
@@ -278,6 +287,9 @@ public class DestinationReader implements Runnable {
 	}
 	
 	private String byteArrayToString(byte[] bytes) {
+		if (bytes == null) {
+			return null;
+		}		
 		this.byteArrayBuilder.setLength(0);
 		boolean allZero = true;
 		for (int i = 0; i < bytes.length; i++) {
