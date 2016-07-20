@@ -2,5 +2,5 @@ package com.jecstar.etm.core;
 
 public enum EventCommand {
 
-	PROCESS, FLUSH_DOCUMENTS;
+	PROCESS, FLUSH_DOCUMENTS, NOOP;
 }

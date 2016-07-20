@@ -45,7 +45,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryEvent> {
 
 	@Override
 	public void onEvent(final TelemetryEvent event, final long sequence, final boolean endOfBatch) throws Exception {
-		if (event.ignore) {
+		if (event.ignore || EventCommand.NOOP.equals(event.eventCommand)) {
 			return;
 		}
 		if (!EventCommand.PROCESS.equals(event.eventCommand) || (sequence % this.numberOfConsumers) != this.ordinal) {

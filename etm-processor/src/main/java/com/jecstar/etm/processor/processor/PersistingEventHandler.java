@@ -26,7 +26,7 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent>, Clo
 
 	@Override
 	public void onEvent(TelemetryEvent event, long sequence, boolean endOfBatch) throws Exception {
-		if (event.ignore) {
+		if (event.ignore || EventCommand.NOOP.equals(event.eventCommand)) {
 			return;
 		}
 		if (EventCommand.FLUSH_DOCUMENTS.equals(event.eventCommand)) {

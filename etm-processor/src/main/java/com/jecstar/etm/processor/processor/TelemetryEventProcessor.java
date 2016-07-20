@@ -94,6 +94,7 @@ public class TelemetryEventProcessor {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to initialize event with id '" + telemetryEvent.id + "'.", e);
 			}
+			target.eventCommand = EventCommand.NOOP;
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
