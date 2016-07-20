@@ -367,7 +367,7 @@ public class IIBEventHandler {
 		if (ccsid != -1) {
 			codepage = CCSID.getCodepage(ccsid);
 		}
-		try (BufferedReader reader = new BufferedReader(codepage == null ? new InputStreamReader(new ByteArrayInputStream(decoded)) : new InputStreamReader(new ByteArrayInputStream(decoded), codepage))) {
+		try (BufferedReader reader = new BufferedReader(ccsid == -1 ? new InputStreamReader(new ByteArrayInputStream(decoded)) : new InputStreamReader(new ByteArrayInputStream(decoded), codepage))) {
 			String line = reader.readLine();
 			if (line != null) {
 				// First line is always the method + url + protocol version;

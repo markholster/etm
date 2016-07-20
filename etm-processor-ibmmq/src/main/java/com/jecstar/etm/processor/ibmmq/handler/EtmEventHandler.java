@@ -93,6 +93,8 @@ public class EtmEventHandler {
 	    	this.sqlConverter.read(eventData, this.sqlTelemetryEvent);
 	    	this.telemetryCommandProcessor.processTelemetryEvent(this.sqlTelemetryEvent);
 	    	break;
+	    case NOOP:
+	    	break;
 	    }		
 	}
 	
