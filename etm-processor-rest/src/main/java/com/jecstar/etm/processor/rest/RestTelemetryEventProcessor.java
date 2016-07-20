@@ -134,6 +134,8 @@ public class RestTelemetryEventProcessor {
 	    	this.sqlConverter.read(eventData, this.sqlTelemetryEvent);
 	    	telemetryCommandProcessor.processTelemetryEvent(this.sqlTelemetryEvent);
 	    	break;
+	    case NOOP:
+	    	break;
 	    }		
 	}
 }

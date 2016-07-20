@@ -1,4 +1,4 @@
-package com.jecstar.etm.gui;
+package com.jecstar.etm.gui.search;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,6 +8,8 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
+
+import com.jecstar.etm.gui.AbstractIntegrationTest;
 
 /**
  * Class testing the usage of the search templates in the GUI.
@@ -23,7 +25,7 @@ public class SearchTemplateTest extends AbstractIntegrationTest {
 		final String updatedTemplateQuery = "This is a test";
 		
 		// Go to the search page
-		getSecurePage(this.httpHost + "/gui/search/index.html");
+		getSecurePage(this.httpHost + "/gui/search/index.html", "query-string");
 		
 	    // Check if certain fields are disabled.
 	    assertFalse("Search button is enabled when search string is not provided", this.driver.findElement(By.id("btn-search")).isEnabled());

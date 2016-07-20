@@ -44,12 +44,13 @@ public abstract class AbstractIntegrationTest {
 		}
 	}
 	
-	protected void getSecurePage(String url) {
+	protected void getSecurePage(String url, String idOfElementToWaitFor) {
 	    this.driver.navigate().to(url);
 	    try {
 		    this.driver.findElement(By.id("j_username")).sendKeys("admin");     
 		    this.driver.findElement(By.id("j_password")).sendKeys("password");     
-		    this.driver.findElement(By.className("btn")).submit();	    	
+		    this.driver.findElement(By.className("btn")).submit();
+		    waitForShow(idOfElementToWaitFor);
 	    } catch (NoSuchElementException e) {}
 	}
 	
@@ -99,19 +100,19 @@ public abstract class AbstractIntegrationTest {
 		
 	}
 	
-	protected boolean sendEventToEtm(String type, String data) {
+	protected boolean sendEventToEtm(String type, String data) throws IOException {
 		HttpURLConnection con = null;
 		DataOutputStream stream = null;
 		BufferedReader in = null;
 		try {
-			URL url = new URL(this.httpHost + "/rest/processor/event/" + type);
+			URL url = new URL(this.httpHost + "/rest/processor/event/");
 			con = (HttpURLConnection) url.openConnection();
 			con.setConnectTimeout(1000);
 			con.setRequestMethod("POST");
 			con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 			con.setDoOutput(true);
 			stream = new DataOutputStream(con.getOutputStream());
-			stream.write(data.getBytes(Charset.forName("utf-8")));
+			stream.write(("{\"type\": \"" + type + "\", \"data\": " + data + "}").getBytes(Charset.forName("utf-8")));
 			stream.flush();
 			stream.close();
 
@@ -125,8 +126,6 @@ public abstract class AbstractIntegrationTest {
 			in.close();
 			con.disconnect();
 			return "{ \"status\": \"acknowledged\" }".equals(response.toString().trim());
-		} catch (Throwable t) {
-			return false;
 		} finally {
 			if (in != null) {
 				try {
