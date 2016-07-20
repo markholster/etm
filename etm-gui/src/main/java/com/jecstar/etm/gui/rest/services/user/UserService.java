@@ -3,6 +3,7 @@ package com.jecstar.etm.gui.rest.services.user;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +56,7 @@ public class UserService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getUserSettings() {
 		GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-				.setFetchSource(null, new String[] {"searchtemplates"})
+				.setFetchSource(null, new String[] {"searchtemplates, dashboards"})
 				.get();
 		if (getResponse.isSourceEmpty()) {
 			return "{}";
@@ -173,6 +174,28 @@ public class UserService extends AbstractJsonService {
 			}
 			result.append("{");
 			added = addStringElementToJsonBuffer("name", "dashboard", result, true) || added;
+			GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+					.setFetchSource(new String[] {"dashboards"}, null)
+					.get();
+			if (!getResponse.isSourceEmpty()) {
+				List<Map<String, Object>> dashboards = getArray("dashboards", getResponse.getSource());
+				if (dashboards != null) {
+					result.append(",\"dashboards\": [");
+					boolean first = true;
+					for (Map<String, Object> dashboardValues : dashboards) {
+						String name = getString("name", dashboardValues);
+						if (name == null) {
+							continue;
+						}
+						if (!first) {
+							result.append(",");
+						}
+						result.append("\"" + name + "\"");
+						first = false;
+					}
+					result.append("]");
+				}
+			}
 			result.append("}");
 		}
 		if (roles.contains(PrincipalRole.ADMIN) || roles.contains(PrincipalRole.SEARCHER) || roles.contains(PrincipalRole.CONTROLLER)) {

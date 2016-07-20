@@ -8,7 +8,7 @@ function buildMenu(currentContext) {
 	            return;
 	        }
 	        $.each(data.items, function(index, item) {
-	        	addToMenu(currentContext, item.name, data.license_expired, data.license_almost_expired);
+	        	addToMenu(currentContext, item, data.license_expired, data.license_almost_expired);
 	        });
 	        
 	    }
@@ -16,17 +16,34 @@ function buildMenu(currentContext) {
 	
 	function addToMenu(currentContext, menu, licenseExpired, licenseWarning) {
 		var $li = $('<li>').addClass('nav-item');
-		if (currentContext == menu)  {
+		if (currentContext == menu.name)  {
 			$li.addClass('active');
 		}
-		if ('search' == menu) {
+		if ('search' == menu.name) {
 			$li.append(createMenuLink('../search/', 'fa-search', 'Search'));
-		} else if ('dashboard' == menu) {
-// No dashboard yet			
-//			$li.append(createMenuLink('../dashboard/', 'fa-dashboard', 'Dashboard'));
-		} else if ('preferences' == menu) {
+		} else if ('dashboard' == menu.name) {
+			$drowDown = $('<div>').addClass('dropdown-menu');
+			$.each(menu.dashboards, function(index, dashboard) {
+				$drowDown.append(
+						$('<a>').addClass('dropdown-item').attr('href', '../dashboard/index.html?name=' + encodeURIComponent(menu.name)).text(menu.name)
+				);
+			});
+			if (menu.dashboards) {
+				$drowDown.append($('<div>').addClass('dropdown-divider'));
+			}
+			$drowDown.append(
+					$('<a>').addClass('dropdown-item').attr('href', '../dashboard/index.html?new=true').text('New dashboard')
+			);
+			$li.addClass('dropdown').append(
+					$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
+							$('<span>').addClass('fa fa-dashboard fa-lg hidden-sm-down').html('&nbsp;'), 
+							'Dashboards'
+					),
+					$drowDown
+			);			
+		} else if ('preferences' == menu.name) {
 			$li.append(createMenuLink('../preferences/', 'fa-user', 'Preferences'));
-		} else if ('settings' == menu) {
+		} else if ('settings' == menu.name) {
 			var $license = $('<a>').addClass('dropdown-item').attr('href', '../settings/license.html');
 			var licenseClass = '';
 			if (licenseExpired) {
