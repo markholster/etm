@@ -7,6 +7,7 @@ import javax.ws.rs.core.Application;
 
 import org.elasticsearch.client.Client;
 
+import com.jecstar.etm.gui.rest.services.dashboard.DashboardService;
 import com.jecstar.etm.gui.rest.services.search.SearchService;
 import com.jecstar.etm.gui.rest.services.settings.SettingsService;
 import com.jecstar.etm.gui.rest.services.user.UserService;
@@ -18,6 +19,7 @@ public class RestGuiApplication extends Application {
 		SearchService.initialize(client, etmConfiguration);
 		UserService.initialize(client, etmConfiguration);
 		SettingsService.initialize(client, etmConfiguration);
+		DashboardService.initialize(client, etmConfiguration);
 	}
 
 
@@ -27,6 +29,7 @@ public class RestGuiApplication extends Application {
 		classes.add(SearchService.class);
 		classes.add(UserService.class);
 		classes.add(SettingsService.class);
+		classes.add(DashboardService.class);
 		return classes;
 	}
 }
