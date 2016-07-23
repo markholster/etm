@@ -35,8 +35,35 @@
   </nav>
   
   <div id="dashboard-container" class="container-fluid" style="margin-top: 1em;">
-  	<h3 id="dashboard-name" class="text-xs-center">Dashboard name</h3>
+  	<div class="text-xs-center"><h3><span id="dashboard-name"></span><a id="lnk-edit-dashboard" href="#" class="fa fa-pencil-square-o pull-right"></a></h3></div>
+  	<div id="graph-container">
+  	</div>
   </div>
+  
+  <div class="modal fade" id="modal-dashboard-settings" tabindex="-1" role="dialog" aria-labelledby="dashboard-settings-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="dashboard-settings-modal-label">Dashboard settings</h4>
+        </div>
+        <div class="modal-body">
+          <form id="dashboard_form">
+	          <fieldset class="form-group">
+	            <label for="input-dashboard-name">Dashboard name</label>
+	            <input id="input-dashboard-name" type="text" class="form-control" required="required" />
+	          </fieldset>
+	          <div class="modal-footer">
+	          	<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+	            <button id="btn-apply-dashboard-settings" type="button" class="btn btn-primary">Apply</button>
+	          </div>
+          </form>          
+        </div>
+      </div>
+    </div>
+  </div>  
   
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/tether.min.js"></script>
@@ -49,6 +76,26 @@
   <script src="../scripts/dashboard.js"></script>
 <script>
 buildMenu('dashboard');
+$(document).ajaxStart(function () {
+    $('.errorBox').hide('fast');
+    $('#spinner').fadeIn(100);
+}).ajaxStop(function () {
+    $('#spinner').fadeOut(200);
+}).ajaxError(function(event, jqXHR, settings, thrownError) {
+    if ("undefined" != typeof jqXHR.responseJSON) {
+        $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+    } else {
+        $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+    }
+}).ajaxComplete(function(event, jqXHR, settings) {
+    var contentType = jqXHR.getResponseHeader("Content-Type");
+    if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+        // assume that our login has expired - reload our current page
+        window.location.reload();
+        return;
+    }          
+});
+
 var queryParams = {};
 window.location.search.substr(1).split("&").forEach(function(item) {
     var s = item.split("="),
@@ -59,7 +106,7 @@ window.location.search.substr(1).split("&").forEach(function(item) {
 if (queryParams['name']) {
 	loadDashboard(queryParams['name']);
 } else if ('true' == queryParams['new']) {
-	createNewDashboard();	
+	loadDashboard();	
 }
 </script>
   
