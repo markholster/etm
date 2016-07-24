@@ -11,11 +11,12 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation.Bucket;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
@@ -38,7 +39,8 @@ public class DashboardService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getChartData(String json) {
 		Map<String, Object> valueMap = toMap(json);
-		String type = getString("type", valueMap);
+		Map<String, Object> dataValues = getObject("data", valueMap);
+		String type = getString("type", dataValues);
 		if ("line".equals(type)) {
 			return getDataForLineChart(valueMap);
 		}
@@ -47,28 +49,46 @@ public class DashboardService extends AbstractJsonService {
 
 
 	private String getDataForLineChart(Map<String, Object> valueMap) {
-		StringBuilder result = new StringBuilder();
-		result.append("[");
-		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(getString("index", valueMap))
+		Map<String, Object> dataValues = getObject("data", valueMap);
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(getString("index", dataValues))
+			.setQuery(getEtmPrincipalFilterQuery())
 			.setSize(0)
 			.setFetchSource(false)
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-		Map<String, Object> aggregationValues = getObject("agg", valueMap);
+		Map<String, Object> aggregationValues = getObject("agg", dataValues);
 		AggregationBuilder aggregationBuilder = createAggregations(aggregationValues);
 		if (aggregationBuilder != null) {
 			searchRequestBuilder.addAggregation(aggregationBuilder);
 		}
 		SearchResponse searchResponse = searchRequestBuilder.get();
-		Map<String, Object> xAxisValues = getObject("x_axis", aggregationValues);
-		Map<String, Object> yAxisValues = getObject("y_axis", aggregationValues);
+		Map<String, Object> xAxisValues = getObject("x_axis", valueMap);
+		Map<String, Object> yAxisValues = getObject("y_axis", valueMap);
 		String[] xSelectors = getString("selector", xAxisValues).split("->");
-		String[] ySelectors = getString("selector", xAxisValues).split("->");
-		
-		Aggregations aggregations = searchResponse.getAggregations();
-		Aggregation aggregation = aggregations.get("Events over time");
-		
-		
-		result.append("]");
+		String[] ySelectors = getString("selector", yAxisValues).split("->");
+		MultiBucketsAggregation aggregation = searchResponse.getAggregations().get(getString("name",aggregationValues));
+		StringBuilder result = new StringBuilder();
+		result.append("[{");
+		addStringElementToJsonBuffer("key", getString("name",aggregationValues), result, true);
+		result.append(", \"values\": [");
+		boolean first = true;
+		for (Bucket bucket : aggregation.getBuckets()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("[");
+			Object key = bucket.getKey();
+			if (key instanceof DateTime) {
+				result.append(((DateTime)key).getMillis());
+			} else if (key instanceof Number) {
+				result.append(((Number)key).longValue());
+			} else {
+				result.append(escapeToJson(bucket.getKeyAsString(), true));
+			}
+			result.append("," + bucket.getDocCount());
+			result.append("]");
+			first = false;
+		}
+		result.append("]}]");
 		return result.toString();
 	}
 

@@ -5,10 +5,11 @@ function loadDashboard(name) {
 			  { height: 16,
 				cols: [
 				  { 
-					id: '3523523',
+					id: 'chart1',
 					parts: 6,
-					title: 'Test colom 1',
+					title: 'Events over time',
 					bordered: true,
+					showLegend: false,
 					data: {
 						index: 'etm_event_all',
 						type: 'line',
@@ -16,18 +17,43 @@ function loadDashboard(name) {
 							name: 'Events over time',
 							type: 'date-histogram',
 							field: 'endpoints.writing_endpoint_handler.handling_time',
-							interval: 'hour'
+							interval: 'day'
+						}
+					},
+					x_axis: { 
+						selector: 'Events over time->$key',
+//						label: 'Events over time'
+					},
+					y_axis: {
+						selector: 'Events over time->$doc_count',
+						label: 'Count'
+					}					
+				  },
+				  { 
+						id: 'chart2',
+						parts: 6,
+						title: 'Metrics over time',
+						bordered: true,
+						showLegend: false,
+						data: {
+							index: 'etm_metrics_all',
+							type: 'line',
+							agg: {
+								name: 'Metrics over time',
+								type: 'date-histogram',
+								field: 'timestamp',
+								interval: 'hour'
+							}
 						},
 						x_axis: { 
-							selector: 'Events over time->$key',
-							label: 'Events over time'
+							selector: 'Metrics over time->$key',
+//							label: 'Events over time'
 						},
 						y_axis: {
-							selector: 'Events over time->$doc_count',
+							selector: 'Metrics over time->$doc_count',
 							label: 'Count'
-						}
-					}
-				  }			  
+						}					
+					  }				  
 				]
 			  }
 			]	
@@ -55,20 +81,17 @@ function loadDashboard(name) {
 		$.each(board.rows, function(rowIx, row) {
 			var rowContainer = $('<div>').addClass('row').attr('style', 'height: ' + row.height + 'rem;');
 			$.each(row.cols, function (colIx, col) {
-				var colContainer = $('<div>').addClass('col-md-' + col.parts).attr('style', 'height: 100%;');
+				var colContainer = $('<div>').addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
 				var svgContainer = colContainer;
-				var svg = $('<svg>').attr('id', col.id).attr('style', 'height: 100%; display: block;');
 				if (col.bordered) {
 					var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
 					svgContainer = card;
 					colContainer.append(card);
-					svg.addClass('card-img');
 				}
 				svgContainer.append(
 				  $('<h5>').addClass('card-title').text(col.title).append(
 				    $('<i>').addClass('fa fa-pencil-square-o pull-right')
-				  ),
-				  svg
+				  )
 				);
 				rowContainer.append(colContainer);
 				// Now load the data.
@@ -76,45 +99,40 @@ function loadDashboard(name) {
 			        type: 'POST',
 			        contentType: 'application/json',
 			        url: '../rest/dashboard/chart',
-			        data: JSON.stringify(col.data),
+			        data: JSON.stringify(col),
 			        success: function(data) {
 			            if (!data) {
 			                return;
 			            }
 			            if ('line' == col.data.type) {
-			            	renderLineChart(svg, col.data, data);
+			            	renderLineChart(svgContainer, col, data);
 			            }
 			        }
-			    });
+			    });							
 			});
 			graphContainer.append(rowContainer);
 		});
 	}
 	
-	function renderLineChart(svg, config, data) {
+	function renderLineChart(svgContainer, config, data) {
         nv.addGraph(function() {
       	  var chart = nv.models.lineChart()
-      	                .margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
-      	                .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
-      	                .transitionDuration(350)  //how fast do you want the lines to transition?
-      	                .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
-      	                .showYAxis(true)        //Show the y-axis
-      	                .showXAxis(true)        //Show the x-axis
-      	  ;
+            .x(function(d) { return d[0] })
+            .y(function(d) { return d[1] })
+      	  	.useInteractiveGuideline(false)
+      	  	.showLegend(config.showLegend);
 
-      	  chart.xAxis     //Chart x-axis settings
-      	      .axisLabel(config.x_axis.label)
-      	      .tickFormat(d3.format(',r'));
+          chart.xAxis
+            .axisLabel(config.x_axis.label)
+            .tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
+          chart.yAxis
+          	.axisLabel(config.y_axis.label)
 
-      	  chart.yAxis     //Chart y-axis settings
-      	      .axisLabel(config.y_axis.label)
-      	      .tickFormat(d3.format('.02f'));
+      	  d3.select(svgContainer.get(0))   
+      	  	.append("svg")
+      	    .datum(data)
+      	    .call(chart);
 
-      	  d3.select(svg.get(0))    //Select the <svg> element you want to render the chart in.   
-      	      .datum(data)         //Populate the <svg> element with chart data...
-      	      .call(chart);          //Finally, render the chart!
-
-      	  //Update the chart when window resizes.
       	  nv.utils.windowResize(function() { chart.update() });
       	  return chart;
       });			            
@@ -133,5 +151,4 @@ function loadDashboard(name) {
 	    });
 	    return uuid;
 	}
-
 }
