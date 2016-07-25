@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.POST;
@@ -39,8 +40,7 @@ public class DashboardService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getChartData(String json) {
 		Map<String, Object> valueMap = toMap(json);
-		Map<String, Object> dataValues = getObject("data", valueMap);
-		String type = getString("type", dataValues);
+		String type = getString("type", valueMap);
 		if ("line".equals(type)) {
 			return getDataForLineChart(valueMap);
 		}
@@ -55,6 +55,10 @@ public class DashboardService extends AbstractJsonService {
 			.setSize(0)
 			.setFetchSource(false)
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		List<String> types = getArray("index_types", dataValues);
+		if (types != null && types.size() > 0) {
+			searchRequestBuilder.setTypes(types.toArray(new String[types.size()]));
+		}
 		Map<String, Object> aggregationValues = getObject("agg", dataValues);
 		AggregationBuilder aggregationBuilder = createAggregations(aggregationValues);
 		if (aggregationBuilder != null) {
@@ -63,8 +67,9 @@ public class DashboardService extends AbstractJsonService {
 		SearchResponse searchResponse = searchRequestBuilder.get();
 		Map<String, Object> xAxisValues = getObject("x_axis", valueMap);
 		Map<String, Object> yAxisValues = getObject("y_axis", valueMap);
-		String[] xSelectors = getString("selector", xAxisValues).split("->");
-		String[] ySelectors = getString("selector", yAxisValues).split("->");
+		String[] elementSelector = getString("elementSelector", valueMap).split("->");
+		String xSelectors = getString("selector", xAxisValues, "$key");
+		String ySelectors = getString("selector", yAxisValues, "$doc_count");
 		MultiBucketsAggregation aggregation = searchResponse.getAggregations().get(getString("name",aggregationValues));
 		StringBuilder result = new StringBuilder();
 		result.append("[{");
@@ -95,13 +100,32 @@ public class DashboardService extends AbstractJsonService {
 
 	private AggregationBuilder createAggregations(Map<String, Object> aggregationValues) {
 		String type = getString("type", aggregationValues);
+		AggregationBuilder aggregationBuilder = null;
 		if ("date-histogram".equals(type)) {
-			return AggregationBuilders.dateHistogram(getString("name",aggregationValues))
+			aggregationBuilder =  AggregationBuilders.dateHistogram(getString("name",aggregationValues))
 				.timeZone(DateTimeZone.forID(getEtmPrincipal().getTimeZone().getID()))
 				.field(getString("field", aggregationValues))
 				.dateHistogramInterval(getDateHistogramInterval(getString("interval", aggregationValues)));
+		} else if ("terms".equals(type)) {
+			aggregationBuilder = AggregationBuilders.terms(getString("name",aggregationValues))
+				.timeZone(DateTimeZone.forID(getEtmPrincipal().getTimeZone().getID()))
+				.field(getString("field", aggregationValues))
+				.size(getInteger("size", aggregationValues, 10));
+		} else if ("stats".equals(type)) {
+			aggregationBuilder = AggregationBuilders.stats(getString("name",aggregationValues))
+				.timeZone(DateTimeZone.forID(getEtmPrincipal().getTimeZone().getID()))
+				.field(getString("field", aggregationValues));
 		}
-		return null;
+		if (aggregationBuilder != null) {
+			List<Map<String, Object>> subAggregations = getArray("aggs", aggregationValues);
+			for (Map<String, Object> subAggregation : subAggregations) {
+				AggregationBuilder subAggregationBuilder = createAggregations(subAggregation);
+				if (subAggregationBuilder != null) {
+					aggregationBuilder.subAggregation(subAggregationBuilder);
+				}
+			}
+		}
+		return aggregationBuilder;
 	}
 
 

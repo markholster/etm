@@ -7,53 +7,37 @@ function loadDashboard(name) {
 				  { 
 					id: 'chart1',
 					parts: 6,
-					title: 'Events over time',
+					title: 'Log types over time',
 					bordered: true,
 					showLegend: false,
+					type: 'line',
 					data: {
 						index: 'etm_event_all',
-						type: 'line',
+						index_types: ['log'],
 						agg: {
-							name: 'Events over time',
+							name: 'Logs over time',
 							type: 'date-histogram',
 							field: 'endpoints.writing_endpoint_handler.handling_time',
-							interval: 'day'
+							interval: 'day',
+							aggs: [
+							       {
+							    	   name: 'Log levels',
+							    	   type: 'term',
+							    	   field: 'log_level'
+							       }
+							]
 						}
 					},
+					elementSelector: 'Logs over time->Log levels',
 					x_axis: { 
-						selector: 'Events over time->$key',
+						selector: '$key',
 //						label: 'Events over time'
 					},
 					y_axis: {
-						selector: 'Events over time->$doc_count',
+						selector: '$doc_count',
 						label: 'Count'
 					}					
-				  },
-				  { 
-						id: 'chart2',
-						parts: 6,
-						title: 'Metrics over time',
-						bordered: true,
-						showLegend: false,
-						data: {
-							index: 'etm_metrics_all',
-							type: 'line',
-							agg: {
-								name: 'Metrics over time',
-								type: 'date-histogram',
-								field: 'timestamp',
-								interval: 'hour'
-							}
-						},
-						x_axis: { 
-							selector: 'Metrics over time->$key',
-//							label: 'Events over time'
-						},
-						y_axis: {
-							selector: 'Metrics over time->$doc_count',
-							label: 'Count'
-						}					
-					  }				  
+				  }	  
 				]
 			  }
 			]	
@@ -104,7 +88,7 @@ function loadDashboard(name) {
 			            if (!data) {
 			                return;
 			            }
-			            if ('line' == col.data.type) {
+			            if ('line' == col.type) {
 			            	renderLineChart(svgContainer, col, data);
 			            }
 			        }
