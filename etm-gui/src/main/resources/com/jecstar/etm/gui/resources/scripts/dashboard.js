@@ -18,25 +18,26 @@ function loadDashboard(name) {
 							name: 'Logs over time',
 							type: 'date-histogram',
 							field: 'endpoints.writing_endpoint_handler.handling_time',
-							interval: 'day',
+							interval: 'hour',
 							aggs: [
 							       {
 							    	   name: 'Log levels',
-							    	   type: 'term',
+							    	   type: 'terms',
 							    	   field: 'log_level'
 							       }
 							]
 						}
 					},
-					elementSelector: 'Logs over time->Log levels',
-					x_axis: { 
-						selector: '$key',
-//						label: 'Events over time'
-					},
-					y_axis: {
-						selector: '$doc_count',
-						label: 'Count'
-					}					
+					series: {
+						selector: 'Logs over time->Log levels->key',
+						x_axis: { 
+							selector: 'Logs over time->key',
+						},
+						y_axis: {
+							selector: 'Logs over time->Log levels->doc_count',
+							label: 'Count'
+						}					
+					}
 				  }	  
 				]
 			  }
@@ -107,19 +108,29 @@ function loadDashboard(name) {
       	  	.showLegend(config.showLegend);
 
           chart.xAxis
-            .axisLabel(config.x_axis.label)
+            .axisLabel(config.series.x_axis.label)
             .tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
           chart.yAxis
-          	.axisLabel(config.y_axis.label)
+          	.axisLabel(config.series.y_axis.label)
 
       	  d3.select(svgContainer.get(0))   
       	  	.append("svg")
-      	    .datum(data)
+      	    .datum(createData(config, data))
       	    .call(chart);
 
       	  nv.utils.windowResize(function() { chart.update() });
       	  return chart;
-      });			            
+      });	
+        
+      function createData(config, data) {
+    	  var elements = config.series.y_axis.selector.split('->');
+    	  var result = [];
+    	  result.push({
+    		  key: elements[0],
+    	  	  values: data[elements[0]].buckets.map(function (d) { return [d.key, d.doc_count]})
+    	  })
+    	  return result;
+      }
 	}
 	
 	// TODO deze functie moet gebruikt worden tijdens het opslaan van een grafiek. Het ID moet dan geset worden naar een unieke waarde

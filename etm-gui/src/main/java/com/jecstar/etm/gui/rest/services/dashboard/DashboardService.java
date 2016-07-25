@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -12,15 +13,17 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
-import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation.Bucket;
+import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 @Path("/dashboard")
@@ -65,38 +68,17 @@ public class DashboardService extends AbstractJsonService {
 			searchRequestBuilder.addAggregation(aggregationBuilder);
 		}
 		SearchResponse searchResponse = searchRequestBuilder.get();
-		Map<String, Object> xAxisValues = getObject("x_axis", valueMap);
-		Map<String, Object> yAxisValues = getObject("y_axis", valueMap);
-		String[] elementSelector = getString("elementSelector", valueMap).split("->");
-		String xSelectors = getString("selector", xAxisValues, "$key");
-		String ySelectors = getString("selector", yAxisValues, "$doc_count");
-		MultiBucketsAggregation aggregation = searchResponse.getAggregations().get(getString("name",aggregationValues));
-		StringBuilder result = new StringBuilder();
-		result.append("[{");
-		addStringElementToJsonBuffer("key", getString("name",aggregationValues), result, true);
-		result.append(", \"values\": [");
-		boolean first = true;
-		for (Bucket bucket : aggregation.getBuckets()) {
-			if (!first) {
-				result.append(",");
-			}
-			result.append("[");
-			Object key = bucket.getKey();
-			if (key instanceof DateTime) {
-				result.append(((DateTime)key).getMillis());
-			} else if (key instanceof Number) {
-				result.append(((Number)key).longValue());
-			} else {
-				result.append(escapeToJson(bucket.getKeyAsString(), true));
-			}
-			result.append("," + bucket.getDocCount());
-			result.append("]");
-			first = false;
-		}
-		result.append("]}]");
-		return result.toString();
+		InternalAggregation aggregation = searchResponse.getAggregations().get(getString("name",aggregationValues));
+		try {
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            builder.startObject();
+            aggregation.toXContent(builder, ToXContent.EMPTY_PARAMS);
+            builder.endObject();
+            return builder.string();
+        } catch (IOException e) {
+        	throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }		
 	}
-
 
 	private AggregationBuilder createAggregations(Map<String, Object> aggregationValues) {
 		String type = getString("type", aggregationValues);
@@ -108,20 +90,20 @@ public class DashboardService extends AbstractJsonService {
 				.dateHistogramInterval(getDateHistogramInterval(getString("interval", aggregationValues)));
 		} else if ("terms".equals(type)) {
 			aggregationBuilder = AggregationBuilders.terms(getString("name",aggregationValues))
-				.timeZone(DateTimeZone.forID(getEtmPrincipal().getTimeZone().getID()))
 				.field(getString("field", aggregationValues))
 				.size(getInteger("size", aggregationValues, 10));
 		} else if ("stats".equals(type)) {
 			aggregationBuilder = AggregationBuilders.stats(getString("name",aggregationValues))
-				.timeZone(DateTimeZone.forID(getEtmPrincipal().getTimeZone().getID()))
 				.field(getString("field", aggregationValues));
 		}
 		if (aggregationBuilder != null) {
 			List<Map<String, Object>> subAggregations = getArray("aggs", aggregationValues);
-			for (Map<String, Object> subAggregation : subAggregations) {
-				AggregationBuilder subAggregationBuilder = createAggregations(subAggregation);
-				if (subAggregationBuilder != null) {
-					aggregationBuilder.subAggregation(subAggregationBuilder);
+			if (subAggregations != null) {
+				for (Map<String, Object> subAggregation : subAggregations) {
+					AggregationBuilder subAggregationBuilder = createAggregations(subAggregation);
+					if (subAggregationBuilder != null) {
+						aggregationBuilder.subAggregation(subAggregationBuilder);
+					}
 				}
 			}
 		}
