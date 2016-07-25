@@ -15,13 +15,13 @@ function loadDashboard(name) {
 						index: 'etm_event_all',
 						index_types: ['log'],
 						agg: {
-							name: 'Logs over time',
+							name: 'logs',
 							type: 'date-histogram',
 							field: 'endpoints.writing_endpoint_handler.handling_time',
 							interval: 'hour',
 							aggs: [
 							       {
-							    	   name: 'Log levels',
+							    	   name: 'levels',
 							    	   type: 'terms',
 							    	   field: 'log_level'
 							       }
@@ -29,12 +29,11 @@ function loadDashboard(name) {
 						}
 					},
 					series: {
-						selector: 'Logs over time->Log levels->key',
 						x_axis: { 
-							selector: 'Logs over time->key',
+							selector: 'logs->key',
 						},
 						y_axis: {
-							selector: 'Logs over time->Log levels->doc_count',
+							selectors: ['logs->levels->doc_count'],
 							label: 'Count'
 						}					
 					}
@@ -123,12 +122,30 @@ function loadDashboard(name) {
       });	
         
       function createData(config, data) {
-    	  var elements = config.series.y_axis.selector.split('->');
     	  var result = [];
-    	  result.push({
-    		  key: elements[0],
-    	  	  values: data[elements[0]].buckets.map(function (d) { return [d.key, d.doc_count]})
-    	  })
+    	  // See https://www.elastic.co/guide/en/kibana/current/line-chart.html for kibana rules.
+    	  
+    	  
+//    	  $.each(config.series.y_axis.selectors, function(index, yAxisSelector) {
+//    		  var selectorElements = yAxisSelector.split('->');
+//    		  
+//    	  });
+//    	  
+//    	  // first create the series
+//    	  var currentElements = data[elements[0].bucket];
+//    	  $.each(elements, function(index, element) {
+//    		  var value = currentElement[element];
+//    		  if (index == elements.length) {
+//    			  
+//    		  }
+//    	  });
+    	  
+    	  
+//    	  var elements = config.series.y_axis.selector.split('->');
+//    	  result.push({
+//    		  key: elements[0],
+//    	  	  values: data[elements[0]].buckets.map(function (d) { return [d.key, d.doc_count]})
+//    	  })
     	  return result;
       }
 	}
