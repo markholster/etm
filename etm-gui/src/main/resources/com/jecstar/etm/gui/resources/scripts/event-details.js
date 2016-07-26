@@ -209,19 +209,26 @@ function showEvent(scrollTo, type, id) {
 	    }
 	    
 	    $eventTab.append($('<br/>'));
+	    var payloadCode = $('<code>').text(data.source.payload);
 	    $eventTab.append(
 	    		$('<div>').addClass('row').append(
 	    				$('<div>').addClass('col-sm-12').append(
-	    						$('<pre>').attr('style', 'white-space: pre-wrap;').html(prettyPrintOne($("<div>").text(data.source.payload).html()))
+	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append(payloadCode)
 	    				)
 	    		)
 	    );
-	    
+	    if (typeof(Worker) !== "undefined") {
+	    	var worker = new Worker('../scripts/highlight-worker.js');
+	    	worker.onmessage = function(event) { payloadCode.html(event.data);}
+	    	worker.postMessage(payloadCode.text());
+	    } else {
+	    	hljs.highlightBlock(payloadCode);
+	    }
 	    if ('log' === data.type && "undefined" != typeof data.source.stack_trace) {
 	    	$eventTab.append(
 	    		$('<div>').addClass('row').append(
 	    				$('<div>').addClass('col-sm-12').append(
-	    						$('<pre>').attr('style', 'white-space: pre-wrap;').text(data.source.stack_trace)
+	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append($('<code>').text(data.source.stack_trace))
 	    				)
 	    		)
 			);
