@@ -75,6 +75,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	}
 	
 	@Override
+	public String getPayloadLengthTag() {
+		return "payload_length";
+	}
+	
+	@Override
 	public String getReadingEndpointHandlerTag() {
 		return "reading_endpoint_handler";
 	}

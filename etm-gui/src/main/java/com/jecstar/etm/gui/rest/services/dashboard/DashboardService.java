@@ -52,23 +52,33 @@ public class DashboardService extends AbstractJsonService {
 
 
 	private String getDataForLineChart(Map<String, Object> valueMap) {
-		Map<String, Object> dataValues = getObject("data", valueMap);
-		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(getString("index", dataValues))
+		Map<String, Object> indexValues = getObject("index", valueMap);
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(getString("name", indexValues))
 			.setQuery(getEtmPrincipalFilterQuery())
 			.setSize(0)
 			.setFetchSource(false)
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-		List<String> types = getArray("index_types", dataValues);
+		List<String> types = getArray("types", indexValues);
 		if (types != null && types.size() > 0) {
 			searchRequestBuilder.setTypes(types.toArray(new String[types.size()]));
 		}
-		Map<String, Object> aggregationValues = getObject("agg", dataValues);
-		AggregationBuilder aggregationBuilder = createAggregations(aggregationValues);
-		if (aggregationBuilder != null) {
-			searchRequestBuilder.addAggregation(aggregationBuilder);
-		}
+		
+		
+		Map<String, Object> xAxisValues = getObject("x_axis", valueMap);
+		Map<String, Object> yAxisValues = getObject("y_axis", valueMap);
+		
+		Map<String, Object> xAxisAggregationValues = getObject("agg", xAxisValues);
+		Map<String, Object> yAxisAggregationValues = getObject("agg", yAxisValues);
+
+		AggregationBuilder yAxisAggregationBuilder = createAggregations(yAxisAggregationValues, false);
+		
+		AggregationBuilder xAxisAggregationBuilder = createAggregations(xAxisAggregationValues, true, yAxisAggregationBuilder);
+		searchRequestBuilder.addAggregation(xAxisAggregationBuilder);
+		
 		SearchResponse searchResponse = searchRequestBuilder.get();
-		InternalAggregation aggregation = searchResponse.getAggregations().get(getString("name",aggregationValues));
+		
+		
+		InternalAggregation aggregation = searchResponse.getAggregations().get(getString("name", xAxisAggregationValues));
 		try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
@@ -80,7 +90,7 @@ public class DashboardService extends AbstractJsonService {
         }		
 	}
 
-	private AggregationBuilder createAggregations(Map<String, Object> aggregationValues) {
+	private AggregationBuilder createAggregations(Map<String, Object> aggregationValues, boolean addSubAggregations, AggregationBuilder appendingSubAggregation) {
 		String type = getString("type", aggregationValues);
 		AggregationBuilder aggregationBuilder = null;
 		if ("date-histogram".equals(type)) {
@@ -95,19 +105,42 @@ public class DashboardService extends AbstractJsonService {
 		} else if ("stats".equals(type)) {
 			aggregationBuilder = AggregationBuilders.stats(getString("name",aggregationValues))
 				.field(getString("field", aggregationValues));
+// Matrix aggregations			
+		} else if ("avg".equals(type)) {
+			aggregationBuilder = AggregationBuilders.avg(getString("name",aggregationValues))
+				.field(getString("field", aggregationValues));
+		} else if ("min".equals(type)) {
+			aggregationBuilder = AggregationBuilders.min(getString("name",aggregationValues))
+					.field(getString("field", aggregationValues));
+		} else if ("max".equals(type)) {
+			aggregationBuilder = AggregationBuilders.max(getString("name",aggregationValues))
+					.field(getString("field", aggregationValues));
+//		} else if ("percentiles".equals(type)) {
+//			aggregationBuilder = AggregationBuilders.percentiles(getString("name",aggregationValues))
+//					.field(getString("field", aggregationValues));			
 		}
 		if (aggregationBuilder != null) {
-			List<Map<String, Object>> subAggregations = getArray("aggs", aggregationValues);
-			if (subAggregations != null) {
-				for (Map<String, Object> subAggregation : subAggregations) {
-					AggregationBuilder subAggregationBuilder = createAggregations(subAggregation);
-					if (subAggregationBuilder != null) {
-						aggregationBuilder.subAggregation(subAggregationBuilder);
+			if (addSubAggregations) {
+				List<Map<String, Object>> subAggregations = getArray("aggs", aggregationValues);
+				if (subAggregations != null) {
+					for (Map<String, Object> subAggregation : subAggregations) {
+						AggregationBuilder subAggregationBuilder = createAggregations(subAggregation, addSubAggregations, appendingSubAggregation);
+						if (subAggregationBuilder != null) {
+							aggregationBuilder.subAggregation(subAggregationBuilder);
+						} 
 					}
+				} else if (appendingSubAggregation != null) {
+					aggregationBuilder.subAggregation(appendingSubAggregation);
 				}
+			} else if (appendingSubAggregation != null) {
+				aggregationBuilder.subAggregation(appendingSubAggregation);
 			}
 		}
-		return aggregationBuilder;
+		return aggregationBuilder;		
+	}
+	
+	private AggregationBuilder createAggregations(Map<String, Object> aggregationValues, boolean addSubAggregations) {
+		return createAggregations(aggregationValues, addSubAggregations, null);
 	}
 
 

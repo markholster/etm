@@ -14,6 +14,7 @@ public interface TelemetryEventTags {
 	String getPackagingTag();
 	String getPayloadTag();
 	String getPayloadFormatTag();
+	String getPayloadLengthTag();
 	String getTransportTag();
 	String getReadingEndpointHandlerTag();
 	String getReadingEndpointHandlersTag();

@@ -11,9 +11,11 @@ function loadDashboard(name) {
 					bordered: true,
 					showLegend: false,
 					type: 'line',
-					data: {
-						index: 'etm_event_all',
-						index_types: ['log'],
+					index: {
+						name: 'etm_event_all',
+						types: ['log'],
+					},
+					x_axis: { 
 						agg: {
 							name: 'logs',
 							type: 'date-histogram',
@@ -28,16 +30,16 @@ function loadDashboard(name) {
 							]
 						}
 					},
-					series: {
-						x_axis: { 
-							selector: 'logs->key',
+					y_axis: {
+						agg : {
+							name: 'avg_size',
+							type: 'avg',
+							field: 'payload_length'
+								
 						},
-						y_axis: {
-							selectors: ['logs->levels->doc_count'],
-							label: 'Count'
-						}					
-					}
-				  }	  
+						label: 'Average size'
+					}					
+				  }	
 				]
 			  }
 			]	
@@ -107,10 +109,10 @@ function loadDashboard(name) {
       	  	.showLegend(config.showLegend);
 
           chart.xAxis
-            .axisLabel(config.series.x_axis.label)
+            .axisLabel(config.x_axis.label)
             .tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
           chart.yAxis
-          	.axisLabel(config.series.y_axis.label)
+          	.axisLabel(config.y_axis.label)
 
       	  d3.select(svgContainer.get(0))   
       	  	.append("svg")
@@ -141,11 +143,10 @@ function loadDashboard(name) {
 //    	  });
     	  
     	  
-//    	  var elements = config.series.y_axis.selector.split('->');
-//    	  result.push({
-//    		  key: elements[0],
-//    	  	  values: data[elements[0]].buckets.map(function (d) { return [d.key, d.doc_count]})
-//    	  })
+    	  result.push({
+    		  key: config.x_axis.agg.name,
+    	  	  values: data[config.x_axis.agg.name].buckets.map(function (d) { return [d.key, d.doc_count]})
+    	  })
     	  return result;
       }
 	}

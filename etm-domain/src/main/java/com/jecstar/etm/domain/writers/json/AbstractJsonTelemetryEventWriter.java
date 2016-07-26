@@ -58,6 +58,9 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 		if (event.payloadFormat != null) {
 			added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), sb, !added) || added;
 		}
+		if (event.payload != null) {
+			added = this.jsonWriter.addIntegerElementToJsonBuffer(this.tags.getPayloadLengthTag(), event.payload.length(), sb, !added) || added;
+		}
 		added = doWrite(event, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
