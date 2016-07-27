@@ -92,6 +92,9 @@ public class DashboardService extends AbstractJsonService {
 
 	private AggregationBuilder createAggregations(Map<String, Object> aggregationValues, boolean addSubAggregations, AggregationBuilder appendingSubAggregation) {
 		String type = getString("type", aggregationValues);
+		if ("count".equals(type)) {
+			return null;
+		}
 		AggregationBuilder aggregationBuilder = null;
 		if ("date-histogram".equals(type)) {
 			aggregationBuilder =  AggregationBuilders.dateHistogram(getString("name",aggregationValues))

@@ -9,7 +9,7 @@ function loadDashboard(name) {
 					parts: 6,
 					title: 'Log types over time',
 					bordered: true,
-					showLegend: false,
+					showLegend: true,
 					type: 'line',
 					index: {
 						name: 'etm_event_all',
@@ -32,12 +32,11 @@ function loadDashboard(name) {
 					},
 					y_axis: {
 						agg : {
-							name: 'avg_size',
-							type: 'avg',
-							field: 'payload_length'
+							name: 'count',
+							type: 'count',
 								
 						},
-						label: 'Average size'
+						label: 'Count'
 					}					
 				  }	
 				]
