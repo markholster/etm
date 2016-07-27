@@ -125,29 +125,40 @@ function loadDashboard(name) {
         
       function createData(config, data) {
     	  var result = [];
-    	  // See https://www.elastic.co/guide/en/kibana/current/line-chart.html for kibana rules.
+    	  var xBuckets = data[config.x_axis.agg.name].buckets;
+    	  var xSubAggs = config.x_axis.agg.aggs;
     	  
-    	  
-//    	  $.each(config.series.y_axis.selectors, function(index, yAxisSelector) {
-//    		  var selectorElements = yAxisSelector.split('->');
-//    		  
-//    	  });
-//    	  
-//    	  // first create the series
-//    	  var currentElements = data[elements[0].bucket];
-//    	  $.each(elements, function(index, element) {
-//    		  var value = currentElement[element];
-//    		  if (index == elements.length) {
-//    			  
-//    		  }
-//    	  });
-    	  
-    	  
-    	  result.push({
-    		  key: config.x_axis.agg.name,
-    	  	  values: data[config.x_axis.agg.name].buckets.map(function (d) { return [d.key, d.doc_count]})
-    	  })
+    	  $.each(xBuckets, function(xBucketIx, xBucket) {
+    		  var x = xBucket.key;
+    		  var seriesName = config.y_axis.agg.name;
+    		  if ("undefined" !== typeof xSubAggs) {
+    			  var xSubAgg = xSubAggs[0];
+    			  var xSubBuckets = xBucket[xSubAgg.name].buckets;
+    			  $.each(xSubBuckets, function(xSubBucketIx, xSubBucket) {
+    				  seriesName = xSubBucket.key;
+    				  var y = "count" == config.y_axis.agg.name ? xSubBucket.doc_count : xSubBucket[config.y_axis.agg.name].value;
+    				  addToResult(result, seriesName, x, y);
+    			  });
+    		  } else {
+    			  var y = "count" == config.y_axis.agg.name ? xBucket.doc_count : xBucket[config.y_axis.agg.name].value;
+    			  addToResult(result, seriesName, x, y);
+    		  }
+    	  });
     	  return result;
+      }
+      
+      function addToResult(result, serieName, x, y) {
+		  var serie = $.grep(result, function(n,i) {
+			  return n.key === serieName;
+		  });
+		  if ("undefined" !== typeof serie && serie.length > 0) {
+			  serie[0].values.push([x, y]);
+		  } else {
+			  result.push({
+				 key: serieName,
+				 values: [[x,y]]
+			  });
+		  }
       }
 	}
 	
