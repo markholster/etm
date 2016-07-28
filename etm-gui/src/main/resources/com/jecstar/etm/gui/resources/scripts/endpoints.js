@@ -1,8 +1,8 @@
 function buildEndpointPage() {
 	var parserMap = {};
 	var endpointMap = {};
-	$parserSelect = $('<select>').addClass('form-control c-select etm-expression-parser');
-	$parserFieldSelect = $('<select>').addClass('form-control c-select etm-parser-field');
+	$parserSelect = $('<select>').addClass('form-control custom-select etm-expression-parser');
+	$parserFieldSelect = $('<select>').addClass('form-control custom-select etm-parser-field');
 	
 	$('#sel-endpoint').change(function(event) {
 		event.preventDefault();

@@ -160,11 +160,11 @@ $('#link-edit-table').click(function (event) {
                      }
                  })
                 .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'})),
-            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm c-select')
+            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm custom-select')
                 .append($('<option>').attr('value', 'plain').text('Plain'))
                 .append($('<option>').attr('value', 'isotimestamp').text('ISO Timestamp'))
                 .append($('<option>').attr('value', 'isoutctimestamp').text('ISO UTC Timestamp'))),
-            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm c-select')
+            $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm custom-select')
                 .append($('<option>').attr('value', 'lowest').text('Lowest'))
                 .append($('<option>').attr('value', 'highest').text('Highest'))
                 .append($('<option>').attr('value', 'first').text('First'))
