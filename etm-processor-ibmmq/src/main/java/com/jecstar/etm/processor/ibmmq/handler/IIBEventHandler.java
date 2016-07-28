@@ -14,7 +14,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -25,7 +24,6 @@ import javax.xml.bind.Unmarshaller;
 
 import org.w3c.dom.NodeList;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.mq.constants.CMQC;
 import com.ibm.mq.constants.MQConstants;
 import com.ibm.mq.headers.CCSID;
@@ -48,7 +46,6 @@ import com.jecstar.etm.processor.ibmmq.event.Event;
 import com.jecstar.etm.processor.ibmmq.event.SimpleContentDataType;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -60,9 +57,7 @@ public class IIBEventHandler {
 	private static final LogWrapper log = LogFactory.getLogger(IIBEventHandler.class);
 
 	private final TelemetryCommandProcessor telemetryCommandProcessor;
-	private final ObjectMapper objectMapper = new ObjectMapper();
-	private final JsonConverter jsonConverter = new JsonConverter();
-	
+
 	private final StringBuilder byteArrayBuilder = new StringBuilder();
 	private final Unmarshaller unmarshaller;
 	private final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
@@ -276,24 +271,23 @@ public class IIBEventHandler {
 		putNonNullDataInMap("IIB_MessageFlowNodeType", event.getEventPointData().getMessageFlowData().getNode().getNodeType(), builder.getMetadata());		
 	}
 	
-	@SuppressWarnings("unchecked")
 	private EndpointHandlerBuilder createEndpointHandlerBuilder(Event event) {
 		// Try to parse some metadata that can be "hidden" in the event name.
 		String eventData = event.getEventPointData().getEventData().getEventIdentity().getEventName();
-		HashMap<String, Object> eventMetaData = new HashMap<>();
-		try {
-			eventMetaData = this.objectMapper.readValue(eventData, HashMap.class);
-		} catch (IOException e) {
-			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Event name does not contain ETM metadata.");
+		String appName = null;
+		String appVersion = null;
+		if (eventData != null) {
+			String[] values = eventData.split("(?<!\\\\),");
+			if (values.length >= 1) {
+				appName = values[0].trim().length() > 0 ? values[0] : null;
+			}
+			if (values.length >= 2) {
+				appVersion = values[1].trim().length() > 0 ? values[1] : null;
 			}
 		}
 		EndpointHandlerBuilder builder = new EndpointHandlerBuilder();
 		long epochMillis = event.getEventPointData().getEventData().getEventSequence().getCreationTime().toGregorianCalendar().getTimeInMillis();
 		builder.setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC));
-		Map<String, Object> applicationValues = this.jsonConverter.getObject("application", eventMetaData);
-		String appName = this.jsonConverter.getString("name", applicationValues);
-		String appVersion = this.jsonConverter.getString("version", applicationValues);
 		if (appName == null) {
 			String productVersion = event.getEventPointData().getEventData().getProductVersion();
 			if (productVersion.startsWith("6") || productVersion.startsWith("7") || productVersion.startsWith("8")) {
