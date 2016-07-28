@@ -109,7 +109,7 @@ function loadDashboard(name) {
       	  var chart = nv.models.lineChart()
             .x(function(d) { return d[0] })
             .y(function(d) { return d[1] })
-      	  	.useInteractiveGuideline(false)
+      	  	.useInteractiveGuideline(true)
       	  	.showLegend(config.showLegend);
 
           chart.xAxis
