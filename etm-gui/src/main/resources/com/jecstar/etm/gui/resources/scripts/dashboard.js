@@ -75,7 +75,9 @@ function loadDashboard(name) {
 				}
 				svgContainer.append(
 				  $('<h5>').addClass('card-title').text(col.title).append(
-				    $('<i>').addClass('fa fa-pencil-square-o pull-right')
+				    $('<a>').addClass('fa fa-pencil-square-o pull-right').click(function (event) {
+				    	editGraph(rowIx, colIx)
+				    }) 
 				  )
 				);
 				rowContainer.append(colContainer);
@@ -97,6 +99,9 @@ function loadDashboard(name) {
 			});
 			graphContainer.append(rowContainer);
 		});
+	}
+	
+	function editGraph(rowIx, colIx) {
 	}
 	
 	function renderLineChart(svgContainer, config, data) {
