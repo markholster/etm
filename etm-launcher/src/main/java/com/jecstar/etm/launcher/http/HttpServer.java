@@ -28,7 +28,7 @@ import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -165,9 +165,9 @@ public class HttpServer {
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.PROCESSOR.getRoleName())
+					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.PROCESSOR.getRoleName())
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
-			di.addSecurityRoles(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.PROCESSOR.getRoleName());
+			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.PROCESSOR.getRoleName());
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
@@ -189,18 +189,18 @@ public class HttpServer {
 			deployment.setSecurityEnabled(true);
 			// TODO add the uri of all rest interfaces to the appropriated roles.
 			di.addSecurityConstraint(new SecurityConstraint()
-						.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.SEARCHER.getRoleName(), PrincipalRole.CONTROLLER.getRoleName())
+						.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName())
 						.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
 			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.SEARCHER.getRoleName())
+					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName())
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
 			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.CONTROLLER.getRoleName())
+					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName())
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
 			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(PrincipalRole.ADMIN.getRoleName())
+					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName())
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*")));
-			di.addSecurityRoles(PrincipalRole.ADMIN.getRoleName(), PrincipalRole.SEARCHER.getRoleName(), PrincipalRole.CONTROLLER.getRoleName());
+			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName());
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
 			di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));

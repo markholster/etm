@@ -46,7 +46,6 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			}
 			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
 			etmAccount = new EtmAccount(principal);
-			etmAccount.setRoles(principal.getRoles());
 		}
 		return etmAccount;
 	}
@@ -70,7 +69,6 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				return null;
 			}
 			EtmAccount etmAccount = new EtmAccount(principal);
-			etmAccount.setRoles(principal.getRoles());
 			return etmAccount;
 		}
 		return null;
@@ -94,7 +92,6 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				return null;
 			}
 			EtmAccount etmAccount = new EtmAccount(principal);
-			etmAccount.setRoles(principal.getRoles());
 			return etmAccount;
 		}
 		return null;

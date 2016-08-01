@@ -38,6 +38,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	public String getRolesTag() {
 		return "roles";
 	}
+	
+	@Override
+	public String getGroupsTag() {
+		return "groups";
+	}
 
 	@Override
 	public String getTimeZoneTag() {

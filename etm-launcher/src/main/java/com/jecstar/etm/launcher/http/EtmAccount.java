@@ -1,12 +1,11 @@
 package com.jecstar.etm.launcher.http;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 
 import io.undertow.security.idm.Account;
 
@@ -14,10 +13,19 @@ public class EtmAccount implements Account {
 	
 	private final EtmPrincipal principal;
 	private long lastUpdated;
-	private Set<PrincipalRole> roles = new HashSet<PrincipalRole>();
+	private Set<String> roles = new HashSet<>();
 	
 	EtmAccount(EtmPrincipal principal) {
 		this.principal = principal;
+		for (EtmPrincipalRole role : this.principal.getRoles()) {
+			roles.add(role.getRoleName());
+		}
+		for (EtmGroup group : this.principal.getGroups()) {
+			for (EtmPrincipalRole role : group.getRoles()) {
+				roles.add(role.getRoleName());
+			}			
+		}
+		this.lastUpdated = System.currentTimeMillis();
 	}
 
 	@Override
@@ -27,15 +35,7 @@ public class EtmAccount implements Account {
 
 	@Override
 	public Set<String> getRoles() {
-		return this.roles.stream().map(r -> r.getRoleName()).collect(Collectors.toSet());
-	}
-	
-	public void setRoles(Collection<PrincipalRole> roles) {
-		this.roles.clear();
-		if (roles != null) {
-			this.roles.addAll(roles);
-		}
-		this.lastUpdated = System.currentTimeMillis();
+		return this.roles;
 	}
 	
 	public long getLastUpdated() {

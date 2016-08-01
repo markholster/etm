@@ -34,6 +34,7 @@ public class AbstractJsonService extends JsonConverter {
     }
     
     protected QueryBuilder addEtmPrincipalFilterQuery(QueryBuilder queryBuilder) {
+    	// FIXME: Ook filter uit groups toevoegen!!
     	QueryStringQueryBuilder etmPrincipalFilterQuery = getEtmPrincipalFilterQuery();
     	if (etmPrincipalFilterQuery == null) {
     		return queryBuilder;

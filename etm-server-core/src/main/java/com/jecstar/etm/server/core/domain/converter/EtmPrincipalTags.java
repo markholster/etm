@@ -9,6 +9,7 @@ public interface EtmPrincipalTags {
 	String getNameTag();
 	String getPasswordHashTag();
 	String getRolesTag();
+	String getGroupsTag();
 	String getTimeZoneTag();
 	
 	String getQueryHistoryTag();

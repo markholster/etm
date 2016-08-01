@@ -29,7 +29,7 @@ import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
@@ -163,7 +163,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	
 	private void insertAdminUser(Client elasticClient) {
 		EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
-		adminUser.addRole(PrincipalRole.ADMIN);
+		adminUser.addRole(EtmPrincipalRole.ADMIN);
 		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, adminUser.getId())
 			.setConsistencyLevel(WriteConsistencyLevel.ALL)
 			.setSource(this.etmPrincipalConverter.write(adminUser))

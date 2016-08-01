@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
@@ -29,7 +28,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -159,16 +158,16 @@ public class UserService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getMenu() {
 		StringBuilder result = new StringBuilder();
-		Set<PrincipalRole> roles = getEtmPrincipal().getRoles();
+		EtmPrincipal principal = getEtmPrincipal();
 		result.append("{");
 		result.append("\"items\": [");
 		boolean added = false;
-		if (roles.contains(PrincipalRole.ADMIN) || roles.contains(PrincipalRole.SEARCHER)) {
+		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.SEARCHER)) {
 			result.append("{");
 			added = addStringElementToJsonBuffer("name", "search", result, true) || added;
 			result.append("}");
 		}
-		if (roles.contains(PrincipalRole.ADMIN) || roles.contains(PrincipalRole.CONTROLLER)) {
+		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER)) {
 			if (added) {
 				result.append(",");
 			}
@@ -198,7 +197,7 @@ public class UserService extends AbstractJsonService {
 			}
 			result.append("}");
 		}
-		if (roles.contains(PrincipalRole.ADMIN) || roles.contains(PrincipalRole.SEARCHER) || roles.contains(PrincipalRole.CONTROLLER)) {
+		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER, EtmPrincipalRole.SEARCHER)) {
 			if (added) {
 				result.append(",");
 			}
@@ -206,7 +205,7 @@ public class UserService extends AbstractJsonService {
 			added = addStringElementToJsonBuffer("name", "preferences", result, true) || added;
 			result.append("}");
 		}
-		if (roles.contains(PrincipalRole.ADMIN)) {
+		if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
 			if (added) {
 				result.append(",");
 			}

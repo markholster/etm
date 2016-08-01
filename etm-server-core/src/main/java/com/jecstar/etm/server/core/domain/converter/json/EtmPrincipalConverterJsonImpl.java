@@ -7,7 +7,7 @@ import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 
@@ -54,7 +54,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		}
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
-			principal.addRoles(roles.stream().map(c -> PrincipalRole.valueOf(c.toUpperCase())).collect(Collectors.toSet()));
+			principal.addRoles(roles.stream().map(c -> EtmPrincipalRole.valueOf(c.toUpperCase())).collect(Collectors.toSet()));
 		}
 		return principal;
 	}

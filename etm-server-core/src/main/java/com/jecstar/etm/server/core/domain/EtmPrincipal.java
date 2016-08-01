@@ -12,26 +12,13 @@ public class EtmPrincipal implements Principal {
 	
 	public static final int DEFAULT_HISTORY_SIZE = 5;
 	
-	public enum PrincipalRole { 
-		ADMIN("admin"), SEARCHER("searcher"), CONTROLLER("controller"), PROCESSOR("processor");
-		
-		private final String roleName;
-		
-		private PrincipalRole(String roleName) {
-			this.roleName = roleName;
-		}
-		
-		public String getRoleName() {
-			return this.roleName;
-		}
-	}
-	
 	private final String id;
 	private String passwordHash;
 	
 	private String name = null;
 	private Locale locale = Locale.getDefault();
-	private Set<PrincipalRole> roles = new HashSet<PrincipalRole>();
+	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
+	private Set<EtmGroup> groups = new HashSet<EtmGroup>();
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
 	private int historySize = DEFAULT_HISTORY_SIZE;
@@ -92,23 +79,68 @@ public class EtmPrincipal implements Principal {
 		this.timeZone = timeZone;
 	}
 	
-	public Set<PrincipalRole> getRoles() {
+	public Set<EtmPrincipalRole> getRoles() {
 		return Collections.unmodifiableSet(this.roles);
 	}
 	
-	public void addRole(PrincipalRole role) {
+	public void addRole(EtmPrincipalRole role) {
 		if (role != null && !this.roles.contains(role)) {
 			this.roles.add(role);
 		}
 	}
 	
-	public void addRoles(Collection<PrincipalRole> roles) {
+	public void addRoles(Collection<EtmPrincipalRole> roles) {
 		if (roles == null) {
 			return;
 		}
-		for (PrincipalRole role : roles) {
+		for (EtmPrincipalRole role : roles) {
 			addRole(role);
 		}
+	}
+	
+	public Set<EtmGroup> getGroups() {
+		return Collections.unmodifiableSet(this.groups);
+	}
+	
+	public void addGroup(EtmGroup group) {
+		if (group != null && !this.groups.contains(group)) {
+			this.groups.add(group);
+		}
+	}
+	
+	public void addGroups(Collection<EtmGroup> groups) {
+		if (groups== null) {
+			return;
+		}
+		for (EtmGroup group : groups) {
+			addGroup(group);
+		}
+	}
+	
+	public boolean isInRole(EtmPrincipalRole role) {
+		if (this.roles.contains(role)) {
+			return true;
+		}
+		for (EtmGroup group : this.groups) {
+			if (group.isInRole(role)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isInAnyRole(EtmPrincipalRole... roles) {
+		for (EtmPrincipalRole role : roles) {
+			if (this.roles.contains(role)) {
+				return true;
+			}
+		}
+		for (EtmGroup group : this.groups) {
+			if (group.isInAnyRole(roles)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public String getFilterQuery() {

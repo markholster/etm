@@ -41,7 +41,7 @@ import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipal.PrincipalRole;
+import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
@@ -405,7 +405,7 @@ public class SettingsService extends AbstractJsonService {
 		StringBuilder result = new StringBuilder();
 		boolean first = true;
 		result.append("{\"user_roles\": [");
-		for (PrincipalRole role : PrincipalRole.values()) {
+		for (EtmPrincipalRole role : EtmPrincipalRole.values()) {
 			if (!first) {
 				result.append(",");
 			}
@@ -425,11 +425,12 @@ public class SettingsService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteUser(@PathParam("userId") String userId) {
 		if (isUserAdmin(userId)) {
+			// FIXME: De gebruiker kan ook nog in een groep zitten met de admin rol. Dan hoeft deze exceptie niet gegooid te worden.
 			// The user was admin. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
 			// This check should be skipped changed when LDAP is supported.
 			SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), PrincipalRole.ADMIN.getRoleName()))
+				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName()))
 				.setSize(0)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.get();
@@ -455,12 +456,13 @@ public class SettingsService extends AbstractJsonService {
 		if (newPassword != null) {
 			principal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
 		}
-		if (isUserAdmin(userId) && !principal.getRoles().contains(PrincipalRole.ADMIN)) {
+		if (isUserAdmin(userId) && !principal.getRoles().contains(EtmPrincipalRole.ADMIN)) {
+			// FIXME: De gebruiker kan ook nog in een groep zitten met de admin rol. Dan hoeft deze exceptie niet gegooid te worden.
 			// The user was admin, but that role is revoked. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
 			// This check should be skipped changed when LDAP is supported.
 			SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), PrincipalRole.ADMIN.getRoleName()))
+				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName()))
 				.setSize(0)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.get();
@@ -483,12 +485,13 @@ public class SettingsService extends AbstractJsonService {
 	}
 
 	private boolean isUserAdmin(String userId) {
+		// FIXME: Admin kan nu ook via groups. Hier moet op gecontroleerd worden. Kortom: alle groupen met admin rollen bij langs en kijken of de gebruiker daar invalt.
 		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setFetchSource(this.etmPrincipalTags.getRolesTag(), null)
 			.get();
 		if (getResponse.isExists()) {
 			Collection<String> roles = getArray(this.etmPrincipalTags.getRolesTag(), getResponse.getSource());
-			return roles.contains(PrincipalRole.ADMIN.getRoleName());
+			return roles.contains(EtmPrincipalRole.ADMIN.getRoleName());
 		}
 		return false;
 	}
