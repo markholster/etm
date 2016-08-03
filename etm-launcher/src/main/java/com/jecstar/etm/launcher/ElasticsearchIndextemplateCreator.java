@@ -166,7 +166,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		adminUser.addRole(EtmPrincipalRole.ADMIN);
 		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, adminUser.getId())
 			.setConsistencyLevel(WriteConsistencyLevel.ALL)
-			.setSource(this.etmPrincipalConverter.write(adminUser))
+			.setSource(this.etmPrincipalConverter.writePrincipal(adminUser))
 			.get();	
 	}
 	

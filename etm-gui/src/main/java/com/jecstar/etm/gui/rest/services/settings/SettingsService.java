@@ -40,6 +40,7 @@ import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
@@ -372,6 +373,27 @@ public class SettingsService extends AbstractJsonService {
 	}
 	
 	@GET
+	@Path("/userroles")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getUserRoles() {
+		StringBuilder result = new StringBuilder();
+		boolean first = true;
+		result.append("{\"user_roles\": [");
+		for (EtmPrincipalRole role : EtmPrincipalRole.values()) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{");
+			addStringElementToJsonBuffer("name", role.getRoleName(), result, true);
+			addStringElementToJsonBuffer("value", role.getRoleName(), result, false);
+			result.append("}");
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	@GET
 	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getUsers() {
@@ -397,28 +419,6 @@ public class SettingsService extends AbstractJsonService {
 		result.append("]}");
 		return result.toString();
 	}
-	
-	@GET
-	@Path("/userroles")
-	@Produces(MediaType.APPLICATION_JSON)	
-	public String getUserRoles() {
-		StringBuilder result = new StringBuilder();
-		boolean first = true;
-		result.append("{\"user_roles\": [");
-		for (EtmPrincipalRole role : EtmPrincipalRole.values()) {
-			if (!first) {
-				result.append(",");
-			}
-			result.append("{");
-			addStringElementToJsonBuffer("name", role.getRoleName(), result, true);
-			addStringElementToJsonBuffer("value", role.getRoleName(), result, false);
-			result.append("}");
-			first = false;
-		}
-		result.append("]}");
-		return result.toString();
-	}
-	
 	
 	@DELETE
 	@Path("/user/{userId}")
@@ -451,7 +451,7 @@ public class SettingsService extends AbstractJsonService {
 	public String addUser(@PathParam("userId") String userId, String json) {
 		// Do a read and write of the user to make sure it's valid.
 		Map<String, Object> valueMap = toMap(json);
-		EtmPrincipal principal = this.etmPrincipalConverter.read(valueMap);
+		EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(valueMap);
 		String newPassword = getString("new_password", valueMap);
 		if (newPassword != null) {
 			principal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
@@ -471,7 +471,7 @@ public class SettingsService extends AbstractJsonService {
 			}
 		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-			.setDoc(this.etmPrincipalConverter.write(principal))
+			.setDoc(this.etmPrincipalConverter.writePrincipal(principal))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
@@ -479,6 +479,68 @@ public class SettingsService extends AbstractJsonService {
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		if (userId.equals(principal.getId())) {
+			principal.forceReload = true;
+		}
+		return "{ \"status\": \"success\" }";
+	}
+	
+	@GET
+	@Path("/groups")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getGroups() {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP)
+			.setFetchSource(true)
+			.setQuery(QueryBuilders.matchAllQuery())
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		if (!scrollableSearch.hasNext()) {
+			return null;
+		}
+		StringBuilder result = new StringBuilder();
+		result.append("{\"groups\": [");
+		boolean first = true;
+		for (SearchHit searchHit : scrollableSearch) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append(searchHit.getSourceAsString());
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	@DELETE
+	@Path("/group/{groupName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String deleteGroup(@PathParam("groupName") String groupName) {
+		// FIXME: Controleer of met het verwijderen van deze group alle admins verdwenen zijn. Als dat zo is dan de ETM-no-more-admins exception gooien.
+		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return "{\"status\":\"success\"}";
+	}
+
+	@PUT
+	@Path("/group/{groupName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addGroup(@PathParam("groupName") String groupName, String json) {
+		// Do a read and write of the group to make sure it's valid.
+		Map<String, Object> valueMap = toMap(json);
+		EtmGroup group = this.etmPrincipalConverter.readGroup(valueMap);
+		// FIXME: Controleer of de admin role verdwijnt bij de group en als dat zo is of dan alle admins weg zijn. Als dat zo is een ETM-no-more-admins exceptie gooien.
+		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
+			.setDoc(this.etmPrincipalConverter.writeGroup(group))
+			.setDocAsUpsert(true)
+			.setDetectNoop(true)
+			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.get();
+		EtmPrincipal principal = getEtmPrincipal();
+		if (principal.isInGroup(groupName)) {
 			principal.forceReload = true;
 		}
 		return "{ \"status\": \"success\" }";

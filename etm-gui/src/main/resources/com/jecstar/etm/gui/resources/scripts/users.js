@@ -56,7 +56,7 @@ function buildUserPage() {
             if (!data || !data.user_roles) {
                 return;
             }
-            var $rolesContainer = $('#user-groups-container');
+            var $rolesContainer = $('#user-roles-container');
             $(data.user_roles).each(function (index, user_role) {
             	$rolesContainer.append(
             			$('<label>').addClass('checkbox-inline').append(
@@ -83,7 +83,7 @@ function buildUserPage() {
 		$('#sel-locale').val(userData.locale);
 		$('#sel-time-zone').val(userData.time_zone);
 		$('#input-query-history-size').val(userData.query_history_size);
-		$('#user-groups-container > label > input').prop('checked', false);
+		$('#user-roles-container > label > input').prop('checked', false);
 		if (userData.roles) {
 			$.each(userData.roles, function(index, role) {
 				$('#check-role-' + role).prop('checked', true);
@@ -249,7 +249,7 @@ function buildUserPage() {
         if ($('#input-new-password1').val()) {
         	userData.new_password = $('#input-new-password1').val();
         }
-		$('#user-groups-container > label > input:checked').each(function () {
+		$('#user-roles-container > label > input:checked').each(function () {
 			userData.roles.push($(this).val());
 		});
 		return userData;
@@ -261,7 +261,7 @@ function buildUserPage() {
 		$('#input-filter-query').val('')
 		$('#sel-locale').val(defaultLocale);
 		$('#sel-time-zone').val(defaultTimeZone);
-		$('#user-groups-container > label > input').prop('checked', false);
+		$('#user-roles-container > label > input').prop('checked', false);
         $('#input-new-password1').val('');
         $('#input-new-password2').val('');
 		enableOrDisableButtons();

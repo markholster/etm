@@ -44,7 +44,8 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				}
 				return null;
 			}
-			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
+			EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
+			// TODO, Bijlezen groupen waarin de principal zit.
 			etmAccount = new EtmAccount(principal);
 		}
 		return etmAccount;
@@ -60,7 +61,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			return null;
 		}
 		if (credential instanceof PasswordCredential) {
-			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
+			EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
 			boolean valid = BCrypt.checkpw(new String(((PasswordCredential) credential).getPassword()), principal.getPasswordHash());
 			if (!valid) {
 				if (log.isDebugLevelEnabled()) {
@@ -68,6 +69,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				}
 				return null;
 			}
+			// TODO, Bijlezen groupen waarin de principal zit.
 			EtmAccount etmAccount = new EtmAccount(principal);
 			return etmAccount;
 		}
@@ -83,7 +85,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				return null;
 			}
 			// TODO, de public key zou hier uitgelezen moeten worden, en vergeleken met hetgeen in de DB.
-			EtmPrincipal principal = this.etmPrincipalConverter.read(getResponse.getSourceAsString());
+			EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
 			boolean valid = BCrypt.checkpw(certificate.getIssuerX500Principal().getName(), principal.getPasswordHash());
 			if (!valid) {
 				if (log.isDebugLevelEnabled()) {
@@ -91,6 +93,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				}
 				return null;
 			}
+			// TODO, Bijlezen groupen waarin de principal zit.
 			EtmAccount etmAccount = new EtmAccount(principal);
 			return etmAccount;
 		}

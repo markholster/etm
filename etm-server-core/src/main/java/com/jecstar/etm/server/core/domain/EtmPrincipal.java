@@ -143,6 +143,15 @@ public class EtmPrincipal implements Principal {
 		return false;
 	}
 	
+	public boolean isInGroup(String groupName) {
+		for (EtmGroup group : this.groups) {
+			if (group.getName().equals(groupName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public String getFilterQuery() {
 		return this.filterQuery;
 	}
@@ -161,5 +170,4 @@ public class EtmPrincipal implements Principal {
 		}
 		this.historySize = historySize;
 	}
-
 }

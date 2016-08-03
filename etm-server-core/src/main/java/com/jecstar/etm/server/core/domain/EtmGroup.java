@@ -7,9 +7,21 @@ import java.util.Set;
 
 public class EtmGroup {
 
+	private String name;
+	
 	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
 
 	private String filterQuery = null;
+	
+	
+	public EtmGroup(String name) {
+		this.name = name;
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+	
 	
 	public String getFilterQuery() {
 		return this.filterQuery;
