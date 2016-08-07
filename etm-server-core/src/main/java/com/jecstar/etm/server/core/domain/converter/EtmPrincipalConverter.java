@@ -9,7 +9,7 @@ public interface EtmPrincipalConverter<T> {
 	EtmPrincipal readPrincipal(T content);
 	
 	T writeGroup(EtmGroup etmGroup);
-	EtmGroup readGroup(T contenr);
+	EtmGroup readGroup(T content);
 	
 	EtmPrincipalTags getTags();
 }

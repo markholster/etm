@@ -1,12 +1,15 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -22,6 +25,9 @@ import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilde
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.get.MultiGetItemResponse;
+import org.elasticsearch.action.get.MultiGetRequestBuilder;
+import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -30,6 +36,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
@@ -424,17 +431,14 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/user/{userId}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteUser(@PathParam("userId") String userId) {
-		if (isUserAdmin(userId)) {
-			// FIXME: De gebruiker kan ook nog in een groep zitten met de admin rol. Dan hoeft deze exceptie niet gegooid te worden.
+		EtmPrincipal principal = loadPrincipal(userId);
+		if (principal == null) {
+			return null;
+		}
+		if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
 			// The user was admin. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
-			// This check should be skipped changed when LDAP is supported.
-			SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
-				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName()))
-				.setSize(0)
-				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.get();
-			if (searchResponse.getHits().getTotalHits() <= 1) {
+			// This check should be skipped/changed when LDAP is supported.
+			if (getNumberOfUsersWithAdminRole() <= 1) {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
 			}
 		}
@@ -451,35 +455,29 @@ public class SettingsService extends AbstractJsonService {
 	public String addUser(@PathParam("userId") String userId, String json) {
 		// Do a read and write of the user to make sure it's valid.
 		Map<String, Object> valueMap = toMap(json);
-		EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(valueMap);
+		EtmPrincipal newPrincipal = loadPrincipal(valueMap);
 		String newPassword = getString("new_password", valueMap);
 		if (newPassword != null) {
-			principal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+			newPrincipal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
 		}
-		if (isUserAdmin(userId) && !principal.getRoles().contains(EtmPrincipalRole.ADMIN)) {
-			// FIXME: De gebruiker kan ook nog in een groep zitten met de admin rol. Dan hoeft deze exceptie niet gegooid te worden.
+		EtmPrincipal currentPrincipal = loadPrincipal(userId);
+		if (currentPrincipal != null && currentPrincipal.isInRole(EtmPrincipalRole.ADMIN) && !newPrincipal.isInRole(EtmPrincipalRole.ADMIN)) {
 			// The user was admin, but that role is revoked. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
-			// This check should be skipped changed when LDAP is supported.
-			SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
-				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName()))
-				.setSize(0)
-				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.get();
-			if (searchResponse.getHits().getTotalHits() <= 1) {
+			// This check should be skipped/changed when LDAP is supported.
+			if (getNumberOfUsersWithAdminRole() <= 1) {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
 			}
 		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-			.setDoc(this.etmPrincipalConverter.writePrincipal(principal))
+			.setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
-		if (userId.equals(principal.getId())) {
-			principal.forceReload = true;
+		if (userId.equals(newPrincipal.getId())) {
+			newPrincipal.forceReload = true;
 		}
 		return "{ \"status\": \"success\" }";
 	}
@@ -515,13 +513,67 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/group/{groupName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteGroup(@PathParam("groupName") String groupName) {
-		// FIXME: Controleer of met het verwijderen van deze group alle admins verdwenen zijn. Als dat zo is dan de ETM-no-more-admins exception gooien.
-		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.get();
+		List<String> adminGroups = getGroupsWithRole(EtmPrincipalRole.ADMIN);
+		if (adminGroups.contains(groupName)) {
+			// Check if there are admins left if this group is removed.
+			// This check should be skipped/changed when LDAP is supported.
+			adminGroups.remove(groupName);
+			if (getNumberOfUsersWithAdminRole(adminGroups) < 1) {
+				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
+			}
+		}		
+		BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()));
+		bulkRequestBuilder.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
+				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+		);
+		removeGroupFromPrincipal(bulkRequestBuilder, groupName);
+		bulkRequestBuilder.get();
+		// Force a reload of the principal if he/she is in the deleted group.
+		EtmPrincipal principal = getEtmPrincipal();
+		if (principal.isInGroup(groupName)) {
+			principal.forceReload = true;
+		}
 		return "{\"status\":\"success\"}";
 	}
+	
+	private void removeGroupFromPrincipal(BulkRequestBuilder bulkRequestBuilder, String groupName) {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
+				.setFetchSource(false)
+				.setQuery(QueryBuilders.termQuery(this.etmPrincipalTags.getGroupsTag(), groupName))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		for (SearchHit searchHit : scrollableSearch) {
+			boolean updated = false;
+			EtmPrincipal principal = loadPrincipal(searchHit.getId());
+			if (principal.isInGroup(groupName)) {
+				Iterator<EtmGroup> it = principal.getGroups().iterator();
+				while (it.hasNext()) {
+					EtmGroup group = it.next();
+					if (group.getName().equals(groupName)) {
+						it.remove();
+						updated = true;
+					}
+				}
+			}
+			if (updated) {
+				bulkRequestBuilder.add(createPrincipalUpdateRequest(principal));
+			}
+		}
+	}
+	
+	private UpdateRequestBuilder createPrincipalUpdateRequest(EtmPrincipal principal) {
+		return client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
+		.setDoc(this.etmPrincipalConverter.writePrincipal(principal))
+		.setDocAsUpsert(true)
+		.setDetectNoop(true)
+		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());		
+	}
+
 
 	@PUT
 	@Path("/group/{groupName}")
@@ -529,35 +581,153 @@ public class SettingsService extends AbstractJsonService {
 	public String addGroup(@PathParam("groupName") String groupName, String json) {
 		// Do a read and write of the group to make sure it's valid.
 		Map<String, Object> valueMap = toMap(json);
-		EtmGroup group = this.etmPrincipalConverter.readGroup(valueMap);
-		// FIXME: Controleer of de admin role verdwijnt bij de group en als dat zo is of dan alle admins weg zijn. Als dat zo is een ETM-no-more-admins exceptie gooien.
+		EtmGroup newGroup = this.etmPrincipalConverter.readGroup(valueMap);
+		
+		EtmGroup currentGroup = loadGroup(groupName);
+		if (currentGroup != null && currentGroup.isInRole(EtmPrincipalRole.ADMIN) && !newGroup.isInRole(EtmPrincipalRole.ADMIN)) {
+			// The group had the admin role, but that role is revoked. Check if this removes all the admins. If so, block this operation because we don't want a user without the admin role.
+			// This check should be skipped/changed when LDAP is supported.
+			if (getNumberOfUsersWithAdminRole() <= 1) {
+				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
+			}
+		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
-			.setDoc(this.etmPrincipalConverter.writeGroup(group))
+			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
+		// Force a reload of the principal if he/she is in the deleted group.
 		EtmPrincipal principal = getEtmPrincipal();
 		if (principal.isInGroup(groupName)) {
 			principal.forceReload = true;
 		}
 		return "{ \"status\": \"success\" }";
 	}
-
-	private boolean isUserAdmin(String userId) {
-		// FIXME: Admin kan nu ook via groups. Hier moet op gecontroleerd worden. Kortom: alle groupen met admin rollen bij langs en kijken of de gebruiker daar invalt.
-		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-			.setFetchSource(this.etmPrincipalTags.getRolesTag(), null)
-			.get();
-		if (getResponse.isExists()) {
-			Collection<String> roles = getArray(this.etmPrincipalTags.getRolesTag(), getResponse.getSource());
-			return roles.contains(EtmPrincipalRole.ADMIN.getRoleName());
+	
+	/**
+	 * Load an <code>EtmPrincipal</code> based on the user id.
+	 * 
+	 * @param userId
+	 *            The id of the user to load.
+	 * @return A fully loaded <code>EtmPrincipal</code>, or <code>null</code> if no user with the given userId exists.
+	 */
+	private EtmPrincipal loadPrincipal(String userId) {
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId).get();
+		if (!getResponse.isExists()) {
+			return null;
 		}
-		return false;
+		return loadPrincipal(getResponse.getSourceAsMap());
 	}
 	
+	/**
+	 * Converts a map with json key/value pairs to an <code>EtmPrincipal</code>
+	 * and reads the corresponding groups from the database.
+	 * 
+	 * @param principalValues
+	 *            The map with json key/value pairs.
+	 * @return A fully loaded <code>EtmPrincipal</code>
+	 */
+	private EtmPrincipal loadPrincipal(Map<String, Object> principalValues) {
+		EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(principalValues);
+		Collection<String> groups = getArray(this.etmPrincipalTags.getGroupsTag(), principalValues);
+		if (groups != null && !groups.isEmpty()) {
+			MultiGetRequestBuilder multiGetBuilder = client.prepareMultiGet();
+			for (String group : groups) {
+				multiGetBuilder.add(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group);
+			}
+			MultiGetResponse multiGetResponse = multiGetBuilder.get();
+			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
+			while (iterator.hasNext()) {
+				MultiGetItemResponse item = iterator.next();
+				EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
+				principal.addGroup(etmGroup);
+			}
+		}
+		return principal;		
+	}
+	
+	/**
+	 * Load an <code>EtmGroup</code> based on the group name.
+	 * @param groupName The name of the group.
+	 * @return The <code>EtmGroup</code> with the given name, or <code>null</code> when no such group exists.
+	 */
+	private EtmGroup loadGroup(String groupName) {
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName).get();
+		if (!getResponse.isExists()) {
+			return null;
+		}
+		return this.etmPrincipalConverter.readGroup(getResponse.getSourceAsMap());
+	}
+	
+	/**
+	 * Gives a list with group names that have a gives role.
+	 * 
+	 * @param roles
+	 *            The roles to search for.
+	 * @return A list with group names that have one of the given roles, or an
+	 *         empty list if non of the groups has any of the given roles.
+	 */
+	private List<String> getGroupsWithRole(EtmPrincipalRole... roles) {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP)
+				.setFetchSource(true)
+				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), Arrays.stream(roles).map(c -> c.getRoleName()).collect(Collectors.toList())))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		List<String> groups = new ArrayList<>();
+		if (scrollableSearch.hasNext()) {
+			for (SearchHit searchHit : scrollableSearch) {
+				String group = searchHit.getId();
+				if (!groups.contains(group)) {
+					groups.add(group);
+				}
+			}
+		}		
+		return groups;
+	}
+	
+	/**
+	 * Gives the number of users with the admin role. This is the number of
+	 * users with the direct admin role added with the users that are in a group
+	 * with the admin role.
+	 * 
+	 * @return The number of users with the admin role.
+	 */
+	private long getNumberOfUsersWithAdminRole() {
+		List<String> adminGroups = getGroupsWithRole(EtmPrincipalRole.ADMIN);
+		return getNumberOfUsersWithAdminRole(adminGroups);
+	}
+
+	/**
+	 * Gives the number of users with the admin role for a given collection of
+	 * admin groups. This is the number of users with the direct admin role
+	 * added with the users that are in a group with the admin role.
+	 * 
+	 * @return The number of users with the admin role.
+	 */
+	private long getNumberOfUsersWithAdminRole(Collection<String> adminGroups) {
+		QueryBuilder query = null;
+		if (adminGroups == null || adminGroups.isEmpty()) {
+			query = QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName());
+		} else {
+			query = QueryBuilders.boolQuery()
+					.should(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName()))
+					.should(QueryBuilders.termsQuery(this.etmPrincipalTags.getGroupsTag(), adminGroups))
+					.minimumNumberShouldMatch(1);
+		}
+		SearchResponse response = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP)
+				.setFetchSource(false)
+				.setSize(0)
+				.setQuery(query)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.get();
+		return response.getHits().getTotalHits();		
+	}
+ 	
 	@GET
 	@Path("/nodes/es")
 	@Produces(MediaType.APPLICATION_JSON)
