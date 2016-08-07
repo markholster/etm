@@ -16,6 +16,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.InternalAggregation;
@@ -54,7 +55,7 @@ public class DashboardService extends AbstractJsonService {
 	private String getDataForLineChart(Map<String, Object> valueMap) {
 		Map<String, Object> indexValues = getObject("index", valueMap);
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(getString("name", indexValues))
-			.setQuery(getEtmPrincipalFilterQuery())
+			.setQuery(addEtmPrincipalFilterQuery(QueryBuilders.matchAllQuery()))
 			.setSize(0)
 			.setFetchSource(false)
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
