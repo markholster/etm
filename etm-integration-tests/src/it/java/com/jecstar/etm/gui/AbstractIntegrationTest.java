@@ -30,7 +30,7 @@ public abstract class AbstractIntegrationTest {
 //		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 //		this.driver = new ChromeDriver();
 
-		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-0.9.0-linux64");
+		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-0.10.0-linux64");
 		this.driver = new MarionetteDriver();
 //		this.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 	}
