@@ -15,7 +15,8 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.MarionetteDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -31,8 +32,9 @@ public abstract class AbstractIntegrationTest {
 //		this.driver = new ChromeDriver();
 
 		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-0.10.0-linux64");
-		this.driver = new MarionetteDriver();
-//		this.driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		DesiredCapabilities capabilities = DesiredCapabilities.firefox();
+		capabilities.setJavascriptEnabled(true);
+		this.driver = new FirefoxDriver(capabilities);
 	}
 	
 	@After
