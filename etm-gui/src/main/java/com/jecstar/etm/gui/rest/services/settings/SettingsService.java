@@ -718,7 +718,7 @@ public class SettingsService extends AbstractJsonService {
 					.minimumNumberShouldMatch(1);
 		}
 		SearchResponse response = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
-				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP)
+				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
 				.setFetchSource(false)
 				.setSize(0)
 				.setQuery(query)

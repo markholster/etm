@@ -1,73 +1,111 @@
 function buildUserPage() {
 	var defaultLocale;
 	var defaultTimeZone;
-    $.ajax({
-        type: 'GET',
-        contentType: 'application/json',
-        url: '../rest/search/keywords/etm_event_all',
-        success: function(data) {
-            if (!data || !data.keywords) {
-                return;
-            }
-            $('#input-filter-query').bind('keydown', function( event ) {
-                if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                    event.stopPropagation();
-                }
-            }).autocompleteFieldQuery({queryKeywords: data.keywords, keywordGroupSelector: 'all'});       
-        }
-    });
-    $.ajax({
-        type: 'GET',
-        contentType: 'application/json',
-        url: '../rest/user/timezones',
-        success: function(data) {
-            if (!data || !data.time_zones) {
-                return;
-            }
-            var $timezones = $('#sel-time-zone');
-            $(data.time_zones).each(function (index, timeZone) {
-                $timezones.append($('<option>').attr('value', timeZone).text(timeZone))
-            }); 
-            defaultTimeZone = data.default_time_zone;
-            $timezones.val(defaultTimeZone);
-        }
-    });
-    $.ajax({
-        type: 'GET',
-        contentType: 'application/json',
-        url: '../rest/user/locales',
-        success: function(data) {
-            if (!data || !data.locales) {
-                return;
-            }
-            var $locales = $('#sel-locale');
-            $(data.locales).each(function (index, locale) {
-                $locales.append($('<option>').attr('value', locale.value).text(locale.name))
-            });
-            defaultLocale = data.default_locale.value;
-            $locales.val(defaultLocale);
-        }
-    });
-    $.ajax({
-        type: 'GET',
-        contentType: 'application/json',
-        url: '../rest/settings/userroles',
-        success: function(data) {
-            if (!data || !data.user_roles) {
-                return;
-            }
-            var $rolesContainer = $('#user-roles-container');
-            $(data.user_roles).each(function (index, user_role) {
-            	$rolesContainer.append(
-            			$('<label>').addClass('checkbox-inline').append(
-            					$('<input>').attr('type', 'checkbox').attr('id', 'check-role-' + user_role.value).attr('name', 'check-user-roles').attr('value', user_role.value),
-            					user_role.name
-            			)
-            	);
-            });
-            
-        }
-    });
+	$groupSelect = $('<select>').addClass('form-control custom-select etm-group');
+	
+	$.when(
+	    $.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/search/keywords/etm_event_all',
+	        success: function(data) {
+	            if (!data || !data.keywords) {
+	                return;
+	            }
+	            $('#input-filter-query').bind('keydown', function( event ) {
+	                if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+	                    event.stopPropagation();
+	                }
+	            }).autocompleteFieldQuery({queryKeywords: data.keywords, keywordGroupSelector: 'all'});       
+	        }
+	    }),
+	    $.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/user/timezones',
+	        success: function(data) {
+	            if (!data || !data.time_zones) {
+	                return;
+	            }
+	            var $timezones = $('#sel-time-zone');
+	            $(data.time_zones).each(function (index, timeZone) {
+	                $timezones.append($('<option>').attr('value', timeZone).text(timeZone))
+	            }); 
+	            defaultTimeZone = data.default_time_zone;
+	            $timezones.val(defaultTimeZone);
+	        }
+	    }),
+	    $.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/user/locales',
+	        success: function(data) {
+	            if (!data || !data.locales) {
+	                return;
+	            }
+	            var $locales = $('#sel-locale');
+	            $(data.locales).each(function (index, locale) {
+	                $locales.append($('<option>').attr('value', locale.value).text(locale.name))
+	            });
+	            defaultLocale = data.default_locale.value;
+	            $locales.val(defaultLocale);
+	        }
+	    }),
+	    $.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/settings/userroles',
+	        success: function(data) {
+	            if (!data || !data.user_roles) {
+	                return;
+	            }
+	            var $rolesContainer = $('#user-roles-container');
+	            $(data.user_roles).each(function (index, user_role) {
+	            	$rolesContainer.append(
+	            			$('<label>').addClass('checkbox-inline').append(
+	            					$('<input>').attr('type', 'checkbox').attr('id', 'check-role-' + user_role.value).attr('name', 'check-user-roles').attr('value', user_role.value),
+	            					user_role.name
+	            			)
+	            	);
+	            });
+	            
+	        }
+	    }),
+	    $.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/settings/groups',
+	        success: function(data) {
+	            if (!data || !data.groups) {
+	            	// No groups, remove the fieldset.
+	            	$('#lnk-add-group').parent().remove();
+	                return;
+	            }
+	            $.each(data.groups, function(index, group) {
+	            	$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
+	            });
+	            sortSelectOptions($groupSelect);
+	        }
+	    })	    
+	).done(function () {
+		$.ajax({
+		    type: 'GET',
+		    contentType: 'application/json',
+		    url: '../rest/settings/users',
+		    success: function(data) {
+		        if (!data) {
+		            return;
+		        }
+		        $userSelect = $('#sel-user');
+		        $.each(data.users, function(index, user) {
+		        	$userSelect.append($('<option>').attr('value', user.id).text(user.id + ' - ' + user.name));
+		        	userMap[user.id] = user;
+		        });
+		        sortSelectOptions($userSelect)
+		        $userSelect.val('');
+		    }
+		});
+	});
 	
 	var userMap = {};
 	$('#sel-user').change(function(event) {
@@ -87,6 +125,11 @@ function buildUserPage() {
 		if (userData.roles) {
 			$.each(userData.roles, function(index, role) {
 				$('#check-role-' + role).prop('checked', true);
+			});
+		}
+		if (userData.groups) {
+			$.each(userData.groups, function(index, groupName) {
+				$('#list-groups').append(createGroupRow(groupName));
 			});
 		}
         $('#input-new-password1').val('');
@@ -125,28 +168,15 @@ function buildUserPage() {
 	$('#btn-remove-user').click(function(event) {
 		removeUser($('#input-user-id').val());
 	});
+	
+	$('#lnk-add-group').click(function(event) {
+		event.preventDefault();
+		$('#list-groups').append(createGroupRow());
+	});
 
 	
 	$('#input-user-id').on('input', enableOrDisableButtons);
-	
-	$.ajax({
-	    type: 'GET',
-	    contentType: 'application/json',
-	    url: '../rest/settings/users',
-	    success: function(data) {
-	        if (!data) {
-	            return;
-	        }
-	        $userSelect = $('#sel-user');
-	        $.each(data.users, function(index, user) {
-	        	$userSelect.append($('<option>').attr('value', user.id).text(user.id + ' - ' + user.name));
-	        	userMap[user.id] = user;
-	        });
-	        sortSelectOptions($userSelect)
-	        $userSelect.val('');
-	    }
-	});
-	
+		
 	function sortSelectOptions($select) {
 		var options = $select.children('option');
 		options.detach().sort(function(a,b) {
@@ -173,6 +203,23 @@ function buildUserPage() {
 		}
 	}
 	
+    function createGroupRow(groupName) {
+    	var groupRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+					$('<div>').addClass('input-group').append(
+							$groupSelect.clone(true), 
+							$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeGroupRow($(this));}))
+					)
+			);
+    	if (groupName) {
+    		$(groupRow).find('.etm-group').val(groupName)
+    	}
+    	return groupRow;
+    }
+
+    function removeGroupRow(anchor) {
+    	anchor.parent().parent().parent().remove();
+    }
+    
 	function isUserExistent(userId) {
 		return "undefined" != typeof userMap[userId];
 	}
@@ -244,13 +291,20 @@ function buildUserPage() {
 			locale: $('#sel-locale').val(),
 			time_zone: $('sel-time-zone').val(),
 			query_history_size: $('#input-query-history-size').val() ? Number($('#input-query-history-size').val()) : 0,
-			roles: []
+			roles: [],
+			groups: []
 		}
         if ($('#input-new-password1').val()) {
         	userData.new_password = $('#input-new-password1').val();
         }
 		$('#user-roles-container > label > input:checked').each(function () {
 			userData.roles.push($(this).val());
+		});
+		$('.etm-group').each(function () {
+			var groupName = $(this).val();
+			if (-1 == userData.groups.indexOf(groupName)) {
+				userData.groups.push(groupName);
+			}
 		});
 		return userData;
 	}
@@ -264,6 +318,7 @@ function buildUserPage() {
 		$('#user-roles-container > label > input').prop('checked', false);
         $('#input-new-password1').val('');
         $('#input-new-password2').val('');
+        $('#list-groups').empty();
 		enableOrDisableButtons();
 	}
 }
