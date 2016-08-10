@@ -60,8 +60,8 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	}
 
 	@Override
-	public String getWriteConsistencyTag() {
-		return "write_consistency";
+	public String getWaitForActiveShardsTag() {
+		return "wait_for_active_shards";
 	}
 
 	@Override

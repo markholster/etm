@@ -14,7 +14,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-import org.elasticsearch.action.WriteConsistencyLevel;
+import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 
 import com.codahale.metrics.Counter;
@@ -86,7 +86,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 		try (StringWriter sw = new StringWriter()){
 			objectMapper.writeValue(sw, root);
 	        this.elasticClient.prepareIndex(getElasticIndexName(now), this.nodeName, "" + now.toEpochMilli())
-        	.setConsistencyLevel(WriteConsistencyLevel.ONE)
+        	.setWaitForActiveShards(ActiveShardCount.ONE)
         	.setSource(sw.toString()).get();
 		} catch (IOException e) {
 			if (log.isDebugLevelEnabled()) {

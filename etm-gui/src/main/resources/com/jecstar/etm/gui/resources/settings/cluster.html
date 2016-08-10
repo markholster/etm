@@ -57,12 +57,8 @@
 				  <input id="input-max-metrics-indices" type="number" class="form-control" min="1" required="required" />
 				</fieldset>
 		        <fieldset class="form-group">
-				  <label for="sel-write-consistency">Write consistency</label>
-				  <select id="sel-write-consistency" class="form-control custom-select">
-	          	    <option value="ONE">One</option>
-	          	    <option value="QUORUM">Quorum</option>
-	          	    <option value="AL">All</option>
-	              </select>
+				  <label for="input-wait-for-active-shards">Wait for active shards</label>
+				  <input id="input-wait-for-active-shards" type="number" class="form-control" min="-1" required="required" />
 				</fieldset>				
 		        <fieldset class="form-group">
 				  <label for="input-retries-on-conflict">Retries on conflict</label>

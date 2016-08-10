@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
@@ -121,7 +120,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("template", template);
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setScript(new Script("etm_update-search-template", ScriptType.STORED, "painless", scriptParams))
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 				.get();
@@ -136,7 +135,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("name", templateName);
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 			.setScript(new Script("etm_remove-search-template", ScriptType.STORED, "painless", scriptParams))
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
@@ -284,7 +283,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("history_size", history_size);
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 				.execute();

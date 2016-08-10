@@ -16,7 +16,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -79,10 +78,9 @@ public class UserService extends AbstractJsonService {
 		
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
-		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
 		.setDoc(updateMap)
 		.setDetectNoop(true)
-		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 		.get();
@@ -93,7 +91,7 @@ public class UserService extends AbstractJsonService {
 			scriptParams.put("history_size", newHistorySize);
 			UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 					.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
-					.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+					.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 					.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 					.execute();
@@ -124,7 +122,7 @@ public class UserService extends AbstractJsonService {
 		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 		.setDoc(updateMap)
 		.setDetectNoop(true)
-		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 		.get();

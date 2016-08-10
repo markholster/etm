@@ -32,7 +32,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 	public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int scrollSize) {
 		this.client = client;
 		this.searchRequestBuilder = searchRequestBuilder;
-		this.requestTimeout = searchRequestBuilder.request().source().timeoutInMillis();
+		this.requestTimeout = searchRequestBuilder.request().source().timeout().getMillis();
 		this.scrollSize = scrollSize;
 	}
 	

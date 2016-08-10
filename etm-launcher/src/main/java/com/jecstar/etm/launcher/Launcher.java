@@ -12,6 +12,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 
@@ -135,9 +136,9 @@ public class Launcher {
 		if (this.elasticClient != null) {
 			return;
 		}
-		TransportClient transportClient = TransportClient.builder().settings(Settings.builder()
+		TransportClient transportClient = new PreBuiltTransportClient(Settings.builder()
 				.put("cluster.name", configuration.clusterName)
-				.put("client.transport.sniff", true)).build();
+				.put("client.transport.sniff", true).build());
 		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
 		for (String host : hosts) {
 			int ix = host.lastIndexOf(":");

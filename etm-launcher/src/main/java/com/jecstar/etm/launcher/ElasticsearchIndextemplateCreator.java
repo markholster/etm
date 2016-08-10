@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedMap;
 
-import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptAction;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.Alias;
@@ -16,6 +15,7 @@ import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequ
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
+import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.common.settings.Settings;
@@ -156,7 +156,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
 		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
-			.setConsistencyLevel(WriteConsistencyLevel.ALL)
+			.setWaitForActiveShards(ActiveShardCount.ALL)
 			.setSource(this.etmConfigurationConverter.write(null, new EtmConfiguration("temp-for-creating-default")))
 			.get();
 	}
@@ -165,7 +165,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
 		adminUser.addRole(EtmPrincipalRole.ADMIN);
 		elasticClient.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, adminUser.getId())
-			.setConsistencyLevel(WriteConsistencyLevel.ALL)
+			.setWaitForActiveShards(ActiveShardCount.ALL)
 			.setSource(this.etmPrincipalConverter.writePrincipal(adminUser))
 			.get();	
 	}

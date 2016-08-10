@@ -19,7 +19,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
@@ -119,7 +118,7 @@ public class SettingsService extends AbstractJsonService {
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID)
 			.setDoc(values)
 			.setDocAsUpsert(true)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
@@ -156,7 +155,7 @@ public class SettingsService extends AbstractJsonService {
 			.setDoc(this.etmConfigurationConverter.write(null, defaultConfig))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
@@ -216,9 +215,9 @@ public class SettingsService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteParser(@PathParam("parserName") String parserName) {
 		BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()));
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration));
 		bulkRequestBuilder.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_PARSER, parserName)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		);
 		removeParserFromEndpoints(bulkRequestBuilder, parserName);
@@ -262,14 +261,14 @@ public class SettingsService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String addParser(@PathParam("parserName") String parserName, String json) {
 		BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()));
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration));
 		// Do a read and write of the parser to make sure it's valid.
 		ExpressionParser expressionParser = this.expressionParserConverter.read(json);
 		bulkRequestBuilder.add(client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_PARSER, parserName)
 			.setDoc(this.expressionParserConverter.write(expressionParser))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 		);
@@ -353,7 +352,7 @@ public class SettingsService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteEndpoint(@PathParam("endpointName") String endpointName) {
 		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointName)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
 		return "{\"status\":\"success\"}";
@@ -374,7 +373,7 @@ public class SettingsService extends AbstractJsonService {
 		.setDoc(this.endpointConfigurationConverter.write(endpointConfiguration))
 		.setDocAsUpsert(true)
 		.setDetectNoop(true)
-		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());		
 	}
@@ -443,7 +442,7 @@ public class SettingsService extends AbstractJsonService {
 			}
 		}
 		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
 		return "{\"status\":\"success\"}";
@@ -472,7 +471,7 @@ public class SettingsService extends AbstractJsonService {
 			.setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
@@ -523,9 +522,9 @@ public class SettingsService extends AbstractJsonService {
 			}
 		}		
 		BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()));
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration));
 		bulkRequestBuilder.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
-				.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		);
 		removeGroupFromPrincipal(bulkRequestBuilder, groupName);
@@ -569,7 +568,7 @@ public class SettingsService extends AbstractJsonService {
 		.setDoc(this.etmPrincipalConverter.writePrincipal(principal))
 		.setDocAsUpsert(true)
 		.setDetectNoop(true)
-		.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());		
 	}
@@ -595,7 +594,7 @@ public class SettingsService extends AbstractJsonService {
 			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
-			.setConsistencyLevel(WriteConsistencyLevel.valueOf(etmConfiguration.getWriteConsistency().name()))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();

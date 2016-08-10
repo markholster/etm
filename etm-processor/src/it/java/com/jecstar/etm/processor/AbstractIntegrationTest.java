@@ -9,6 +9,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.After;
 import org.junit.Before;
 
@@ -32,9 +33,9 @@ public abstract class AbstractIntegrationTest {
 	@Before
 	public void setup() throws UnknownHostException {
 		this.etmConfiguration.setEventBufferSize(1);
-		TransportClient transportClient = TransportClient.builder().settings(Settings.builder()
+		TransportClient transportClient = new PreBuiltTransportClient(Settings.builder()
 				.put("cluster.name", "Enterprise Telemetry Monitor")
-				.put("client.transport.sniff", false)).build();
+				.put("client.transport.sniff", false).build());
 		transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLocalHost(), 9300));
 		this.client = transportClient;
 		this.bulkProcessor = BulkProcessor.builder(this.client,  createBuilkListener())

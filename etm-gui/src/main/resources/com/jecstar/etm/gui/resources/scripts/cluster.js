@@ -41,7 +41,7 @@ function buildClusterPage() {
 		$("#input-replicas-per-index").val(data.replicas_per_index);
 		$("#input-max-event-indices").val(data.max_event_index_count);
 		$("#input-max-metrics-indices").val(data.max_metrics_index_count);
-		$("#sel-write-consistency").val(data.write_consistency);
+		$("#input-wait-for-active-shards").val(data.wait_for_active_shards);
 		$("#input-retries-on-conflict").val(data.retry_on_conflict_count);
 		$("#input-query-timeout").val(data.query_timeout);
 		$("#input-search-export-max-rows").val(data.max_search_result_download_rows);
@@ -59,7 +59,7 @@ function buildClusterPage() {
 		  replicas_per_index : Number($("#input-replicas-per-index").val()),
 		  max_event_index_count : Number($("#input-max-event-indices").val()),
 		  max_metrics_index_count : Number($("#input-max-metrics-indices").val()),
-		  write_consistency : $("#sel-write-consistency").val(),
+		  wait_for_active_shards : $("#input-wait-for-active-shards").val(),
 		  retry_on_conflict_count : Number($("#input-retries-on-conflict").val()),
 		  query_timeout : Number($("#input-query-timeout").val()),
 		  max_search_result_download_rows : Number($("#input-search-export-max-rows").val()),

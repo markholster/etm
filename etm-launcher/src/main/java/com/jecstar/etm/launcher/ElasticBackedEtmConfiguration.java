@@ -6,7 +6,6 @@ import org.elasticsearch.client.Client;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
-import com.jecstar.etm.server.core.configuration.WriteConsistency;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 
@@ -91,9 +90,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	@Override
-	public WriteConsistency getWriteConsistency() {
+	public int getWaitForActiveShards() {
 		reloadConfigurationWhenNecessary();
-		return super.getWriteConsistency();
+		return super.getWaitForActiveShards();
 	}
 	
 	@Override

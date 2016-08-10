@@ -7,10 +7,12 @@ import java.util.Set;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
+import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -60,5 +62,14 @@ public class AbstractJsonService extends JsonConverter {
     		filteredQuery.filter(filterQuery);
     	}
     	return filteredQuery;
+    }
+    
+    protected ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
+    	if (-1 == etmConfiguration.getWaitForActiveShards()) {
+    		return ActiveShardCount.ALL;
+    	} else if (0 == etmConfiguration.getWaitForActiveShards()) {
+    		return ActiveShardCount.NONE;
+    	}
+    	return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
     }
 }

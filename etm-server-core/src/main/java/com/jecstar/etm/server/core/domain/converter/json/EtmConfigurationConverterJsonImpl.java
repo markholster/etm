@@ -3,11 +3,8 @@ package com.jecstar.etm.server.core.domain.converter.json;
 import java.util.Map;
 
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.configuration.WriteConsistency;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationTags;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
@@ -15,11 +12,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
  * @author mark
  */
 public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConverter<String>{
-	
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(EtmConfigurationConverterJsonImpl.class);
 	
 	private final EtmConfigurationTags tags = new EtmConfigurationTagsJsonImpl();
 	private final JsonConverter converter = new JsonConverter();
@@ -43,7 +35,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getWriteConsistencyTag(), defaultConfiguration.getWriteConsistency() != null ? defaultConfiguration.getWriteConsistency().name() : null, sb, !added) || added;
+			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), sb, !added) || added;
 			added = this.converter.addLongElementToJsonBuffer(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
 		} else {
@@ -59,7 +51,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = addIntegerWhenNotDefault(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), nodeConfiguration.getMaxEventIndexCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), nodeConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), nodeConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
-			added = addStringWhenNotDefault(this.tags.getWriteConsistencyTag(), defaultConfiguration.getWriteConsistency() != null ? defaultConfiguration.getWriteConsistency().name() : null, nodeConfiguration.getWriteConsistency() != null ? nodeConfiguration.getWriteConsistency().name() : null, sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), nodeConfiguration.getWaitForActiveShards(), sb, !added) || added;
 			added = addLongWhenNotDefault(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), nodeConfiguration.getQueryTimeout(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), nodeConfiguration.getRetryOnConflictCount(), sb, !added) || added;
 		}
@@ -84,16 +76,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		etmConfiguration.setMaxEventIndexCount(getIntValue(this.tags.getMaxEventIndexCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxMetricsIndexCount(getIntValue(this.tags.getMaxMetricsIndexCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxSearchResultDownloadRows(getIntValue(this.tags.getMaxSearchResultDownloadRowsTag(), defaultMap, nodeMap));
-		String value = getStringValue(this.tags.getWriteConsistencyTag(), defaultMap, nodeMap);
-		if (value != null) {
-			try {
-				etmConfiguration.setWriteConsistency(WriteConsistency.valueOf(value.toUpperCase()));
-			} catch (IllegalArgumentException e) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Unknown WriteConsistency value in database: '" + value + "'");
-				}
-			}
-		}
+		etmConfiguration.setWaitForActiveShards(getIntValue(this.tags.getWaitForActiveShardsTag(), defaultMap, nodeMap));
 		etmConfiguration.setQueryTimeout(getLongValue(this.tags.getQueryTimeoutTag(), defaultMap, nodeMap));
 		etmConfiguration.setRetryOnConflictCount(getIntValue(this.tags.getRetryOnConflictCountTag(), defaultMap, nodeMap));
 		return etmConfiguration;
@@ -114,14 +97,6 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			return ((Number) defaultMap.get(tag)).longValue();
 		}
 	}
-
-	private String getStringValue(String tag, Map<String, Object> defaultMap, Map<String, Object> nodeMap) {
-		if (nodeMap != null && nodeMap.containsKey(tag)) {
-			return nodeMap.get(tag).toString();
-		} else {
-			return defaultMap.get(tag).toString();
-		}
-	}
 	
 	private boolean addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, StringBuilder buffer, boolean firstElement) {
 		if (defaultValue == specificValue) {
@@ -135,13 +110,6 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			return false;
 		}
 		return this.converter.addLongElementToJsonBuffer(tag, specificValue, buffer, firstElement);
-	}
-	
-	private boolean addStringWhenNotDefault(String tag, String defaultValue, String specificValue, StringBuilder buffer, boolean firstElement) {
-		if (defaultValue == specificValue) {
-			return false;
-		}
-		return this.converter.addStringElementToJsonBuffer(tag, specificValue, buffer, firstElement);
 	}
 
 	@Override

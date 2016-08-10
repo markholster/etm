@@ -18,7 +18,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX 				= "replicasPerIndex";
 	public static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT 			= "maxEventIndexCount";
 	public static final String CONFIG_KEY_MAX_METRICS_INDEX_COUNT 			= "maxMetricsIndexCount";
-	public static final String CONFIG_KEY_WRITE_CONSISTENCY 				= "writeConsistency";
+	public static final String CONFIG_KEY_WAIT_FOR_ACTIVE_SHARDS 			= "waitForActiveShards";
 	public static final String CONFIG_KEY_QUERY_TIMEOUT 					= "queryTimeout";
 	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
 	public static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS 	= "maxSearchResultDownloadRows";
@@ -45,7 +45,7 @@ public class EtmConfiguration {
 	
 	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 0;
-	private WriteConsistency writeConsistency = WriteConsistency.QUORUM;
+	private int waitForActiveShards = 1;
 	private int retryOnConflictCount = 3;
 	
 	// Data configuration properties;
@@ -193,15 +193,14 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
-
 	
-	public WriteConsistency getWriteConsistency() {
-		return this.writeConsistency;
+	public int getWaitForActiveShards() {
+		return this.waitForActiveShards;
 	}
 	
-	public EtmConfiguration setWriteConsistency(WriteConsistency writeConsistency) {
-		if (writeConsistency != null) {
-			this.writeConsistency = writeConsistency;
+	public EtmConfiguration setWaitForActiveShards(int waitForActiveShards) {
+		if (waitForActiveShards >= -1) {
+			this.waitForActiveShards = waitForActiveShards;
 		}
 		return this;
 	}
@@ -326,9 +325,9 @@ public class EtmConfiguration {
 			 setMaxMetricsIndexCount(etmConfiguration.getMaxMetricsIndexCount());
 			 changed.add(CONFIG_KEY_MAX_METRICS_INDEX_COUNT);
 		}
-		if (!this.writeConsistency.equals(etmConfiguration.getWriteConsistency())) {
-			setWriteConsistency(etmConfiguration.getWriteConsistency());
-			changed.add(CONFIG_KEY_WRITE_CONSISTENCY);
+		if (this.waitForActiveShards != etmConfiguration.getWaitForActiveShards()) {
+			setWaitForActiveShards(etmConfiguration.getWaitForActiveShards());
+			changed.add(CONFIG_KEY_WAIT_FOR_ACTIVE_SHARDS);
 		}
 		if (this.queryTimeout != etmConfiguration.getQueryTimeout()) {
 			setQueryTimeout(etmConfiguration.getQueryTimeout());
