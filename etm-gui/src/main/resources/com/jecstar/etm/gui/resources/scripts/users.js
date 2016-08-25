@@ -62,8 +62,9 @@ function buildUserPage() {
 	            var $rolesContainer = $('#user-roles-container');
 	            $(data.user_roles).each(function (index, user_role) {
 	            	$rolesContainer.append(
-	            			$('<label>').addClass('checkbox-inline').append(
-	            					$('<input>').attr('type', 'checkbox').attr('id', 'check-role-' + user_role.value).attr('name', 'check-user-roles').attr('value', user_role.value),
+	            			$('<label>').addClass('form-check-inline').append(
+	            					$('<input>').attr('type', 'checkbox').attr('id', 'check-role-' + user_role.value).attr('name', 'check-user-roles').attr('value', user_role.value).addClass('form-check-input'),
+	            					'&nbsp;',
 	            					user_role.name
 	            			)
 	            	);
