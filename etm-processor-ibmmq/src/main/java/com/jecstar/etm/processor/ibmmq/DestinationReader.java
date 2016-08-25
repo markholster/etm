@@ -64,12 +64,12 @@ public class DestinationReader implements Runnable {
 			MQMessage message = null;
 			try {
 				message = new MQMessage();
+				this.mqDestination.get(message, getOptions, this.destination.getMaxMessageSize());
+				byte[] byteContent = new byte[message.getMessageLength()];
+				message.readFully(byteContent);
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Read message with id '" + byteArrayToString(message.messageId) + "'.");
 				}
-				this.mqDestination.get(message, getOptions);
-				byte[] byteContent = new byte[message.getMessageLength()];
-				message.readFully(byteContent);
 				HandlerResult result = null;
 				if ("etmevent".equalsIgnoreCase(this.destination.getMessagesType())) {
 					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
@@ -127,7 +127,7 @@ public class DestinationReader implements Runnable {
 					break;
 					default:
 						if (log.isInfoLevelEnabled()) {
-							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Retrying.");
+							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Ignoring message.");
 						}
 				}
 			} catch (Error e) {

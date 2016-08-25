@@ -9,6 +9,7 @@ public class Destination {
 	private int nrOfListeners = 1;
 	private String messagesType = "auto"; // iibevent, etmevent  
 	
+	private int maxMessageSize = 1024 * 1024 * 4;
 	private int commitSize = 500;
 	private int commitInterval = 10000;
 	private int destinationGetOptions = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_CONVERT + CMQC.MQGMO_SYNCPOINT + CMQC.MQGMO_LOGICAL_ORDER + CMQC.MQGMO_ALL_SEGMENTS_AVAILABLE + CMQC.MQGMO_COMPLETE_MSG;
@@ -59,6 +60,18 @@ public class Destination {
 		}
 		this.messagesType = messagesType;
 	}
+	
+	public int getMaxMessageSize() {
+		return this.maxMessageSize;
+	}
+	
+	public void setMaxMessageSize(int maxMessageSize) {
+		if (maxMessageSize < 1) {
+			throw new IllegalArgumentException(maxMessageSize + " is an invalid max message size");
+		}
+		this.maxMessageSize = maxMessageSize;
+	}
+	
 	
 	public int getCommitSize() {
 		return this.commitSize;
