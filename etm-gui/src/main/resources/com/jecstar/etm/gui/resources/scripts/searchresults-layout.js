@@ -199,13 +199,13 @@ $('#link-edit-table').click(function (event) {
     
     function updateRowActions() {
         $('#table-settings-columns .actionRow').each(function (index, row) {
-            if ($('#table-settings-columns').children().size() > 2) {
+            if ($('#table-settings-columns').children().length > 2) {
                 if (index == 0) {
                     $(row).find('.fa-arrow-up').hide();
                 } else {
                     $(row).find('.fa-arrow-up').show();
                 }
-                if (index >= $('#table-settings-columns').children().size() -2) {
+                if (index >= $('#table-settings-columns').children().length -2) {
                     $(row).find('.fa-arrow-down').hide();
                 } else {
                     $(row).find('.fa-arrow-down').show();

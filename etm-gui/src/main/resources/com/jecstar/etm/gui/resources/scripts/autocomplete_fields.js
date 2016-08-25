@@ -14,7 +14,7 @@
 
         
         function getCurrentKeywords() {
-        	if (!settings.queryKeywords || (settings.keywordGroupSelector != 'all' && $(settings.keywordGroupSelector).size() == 0)) {
+        	if (!settings.queryKeywords || (settings.keywordGroupSelector != 'all' && $(settings.keywordGroupSelector).length == 0)) {
                 return null;
             }
             var values = [];

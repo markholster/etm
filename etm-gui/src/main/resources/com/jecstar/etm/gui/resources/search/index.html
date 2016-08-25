@@ -345,7 +345,7 @@
     var maxDownloads;
     $('[id^=check-type-]').on('change', function() {
         enableOrDisableSearchButton();
-        if ($('[id^=check-type-]:checked').size() == 0) {
+        if ($('[id^=check-type-]:checked').length == 0) {
             $('#query-string').attr('disabled', 'disabled');
         } else {
             $('#query-string').removeAttr('disabled');
@@ -399,7 +399,7 @@
     }
     
     function enableOrDisableSearchButton() {
-        if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
+        if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
             $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
             $('#link-edit-table, #link-request-download').hide();
         } else {
@@ -416,7 +416,7 @@
     
     function createQuery(reusePreviousQueryString) {
     	if (!reusePreviousQueryString) {
-    		if (!$('#query-string').val() || $('[id^=check-type-]:checked').size() == 0) {
+    		if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
             	return null;
             }
         	tableLayout.current_query = $('#query-string').val();
