@@ -267,7 +267,8 @@
           </fieldset>
           <fieldset class="form-group">
             <label for="input-download-start-row">Start row</label>
-            <input id="input-download-start-row" type="number" min="1" class="form-control" value="1"/>
+            <!-- disable the field, as scrolling in elasticsearch always starts at ix=0 -->
+            <input id="input-download-start-row" type="number" min="1" class="form-control" value="1" disabled="disabled"/>
           </fieldset>
           <fieldset class="form-group">
             <label for="input-download-number-of-rows">Number of rows</label>

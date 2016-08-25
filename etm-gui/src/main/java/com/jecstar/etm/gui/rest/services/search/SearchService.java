@@ -308,10 +308,11 @@ public class SearchService extends AbstractJsonService {
 		}
 		SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
 		
-		ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder);
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder, parameters.getStartIndex());
 		String fileType = getString("fileType", valueMap);
 		File result = this.queryExporter.exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), parameters, etmPrincipal);
-	    ResponseBuilder response = Response.ok(result);
+	    scrollableSearch.clearScrollIds();
+		ResponseBuilder response = Response.ok(result);
 	    response.header("Content-Disposition", "attachment; filename=etm-results." + fileType);
 	    response.encoding(System.getProperty("file.encoding"));
 	    response.header("Content-Type", this.queryExporter.getContentType(fileType));
@@ -403,6 +404,7 @@ public class SearchService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequest);
 		if (!scrollableSearch.hasNext()) {
+			scrollableSearch.clearScrollIds();
 			return null;
 		}
 		List<TransactionEvent> events = new ArrayList<>();
@@ -446,6 +448,7 @@ public class SearchService extends AbstractJsonService {
 			}
 			events.add(event);
 		}
+		scrollableSearch.clearScrollIds();
 		
 		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
 		result.append("{");
@@ -736,6 +739,7 @@ public class SearchService extends AbstractJsonService {
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequest);
 		if (!scrollableSearch.hasNext()) {
+			scrollableSearch.clearScrollIds();
 			return;
 		}
 		for (SearchHit searchHit : scrollableSearch) {
@@ -786,6 +790,7 @@ public class SearchService extends AbstractJsonService {
 			// Check for request/response correlation and add those transactions as well.
 			addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, searchHit.getType(), subType);
 		}
+		scrollableSearch.clearScrollIds();
 	}
 	
 	@SuppressWarnings("unchecked")

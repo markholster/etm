@@ -17,6 +17,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 	private final Client client;
 	private final SearchRequestBuilder searchRequestBuilder;
 	private final long requestTimeout;
+	private final int startIx;
 	private final int scrollSize;
 	
 	private SearchResponse response;
@@ -26,13 +27,18 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 	private int currentIndexInResponse = 0;
 	
 	public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder) {
-		this(client, searchRequestBuilder, 25);
+		this(client, searchRequestBuilder, 0);
 	}
 	
-	public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int scrollSize) {
+	public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int startIx) {
+		this(client, searchRequestBuilder, startIx, 25);
+	}
+	
+	public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int startIx, int scrollSize) {
 		this.client = client;
 		this.searchRequestBuilder = searchRequestBuilder;
 		this.requestTimeout = searchRequestBuilder.request().source().timeout().getMillis();
+		this.startIx = startIx;
 		this.scrollSize = scrollSize;
 	}
 	
@@ -67,6 +73,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 	private void executeSearch() {
 		this.response = this.searchRequestBuilder
 				.setSize(this.scrollSize)
+				.setFrom(this.startIx)
 				.setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
 				.get();
 		this.currentIndexInResponse = 0;
