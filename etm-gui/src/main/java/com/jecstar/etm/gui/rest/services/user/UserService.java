@@ -35,10 +35,20 @@ import com.jecstar.etm.server.core.util.BCrypt;
 @Path("/user")
 public class UserService extends AbstractJsonService {
 
+	private static boolean iibProxyOnClasspath;
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	private final String timezoneResponse;
 	private final EtmPrincipalTags tags = new EtmPrincipalTagsJsonImpl();
+	
+	static {
+		try {
+			Class.forName("com.ibm.proxy.config.BrokerProxy");
+			iibProxyOnClasspath = true;
+		} catch (ClassNotFoundException e) {
+			iibProxyOnClasspath = false;
+		}
+	}
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		UserService.client = client;
@@ -203,12 +213,26 @@ public class UserService extends AbstractJsonService {
 			added = addStringElementToJsonBuffer("name", "preferences", result, true) || added;
 			result.append("}");
 		}
-		if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
+		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN)) {
 			if (added) {
 				result.append(",");
 			}
 			result.append("{");
 			added = addStringElementToJsonBuffer("name", "settings", result, true) || added;
+			result.append(", \"submenus\": [");
+			boolean subMenuAdded = false;
+			if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
+				result.append("\"admin\"");
+				subMenuAdded = true;
+			}
+			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && iibProxyOnClasspath) {
+				if (subMenuAdded) {
+					result.append(",");
+				}
+				result.append("\"iib_admin\"");
+				subMenuAdded = true;
+			}
+			result.append("]");
 			result.append("}");
 		}
 		result.append("]");

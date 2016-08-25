@@ -59,25 +59,39 @@ function buildMenu(currentContext) {
 			} else {
 				$license.text('License');
 			}
+			
+			var $dropdown = $('<div>').addClass('dropdown-menu');
+			if ($.inArray('admin', menu.submenus) != -1) {
+				$dropdown.append(
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/users.html').text('Users'),
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/groups.html').text('Groups'),
+						$('<div>').addClass('dropdown-divider'),
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/cluster.html').text('Cluster'),
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/endpoints.html').text('Endpoints'),
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers'),
+						$('<div>').addClass('dropdown-divider')
+				);
+			}
+			if ($.inArray('iib_admin', menu.submenus) != -1) {
+				$dropdown.append(
+					$('<a>').addClass('dropdown-item').attr('href', '../settings/iib_nodes.html').text('IIB Nodes'),
+					$('<a>').addClass('dropdown-item').attr('href', '../settings/iib_events.html').text('IIB Events'),				
+					$('<div>').addClass('dropdown-divider')
+				);
+			}
+			if ($.inArray('admin', menu.submenus) != -1) {
+				$dropdown.append($license);
+			}
+			
 			$li.addClass('dropdown').append(
 					$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
 							$('<span>').addClass('fa fa-wrench fa-lg hidden-sm-down').html('&nbsp;'), 
 							'Settings'
 					),
-					$('<div>').addClass('dropdown-menu').append(
-							$('<a>').addClass('dropdown-item').attr('href', '../settings/users.html').text('Users'),
-							$('<a>').addClass('dropdown-item').attr('href', '../settings/groups.html').text('Groups'),
-							$('<div>').addClass('dropdown-divider'),
-							$('<a>').addClass('dropdown-item').attr('href', '../settings/cluster.html').text('Cluster'),
-							$('<a>').addClass('dropdown-item').attr('href', '../settings/endpoints.html').text('Endpoints'),
-							$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers'),
-//							$('<div>').addClass('dropdown-divider'),
-//							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Nodes'),
-//							$('<a>').addClass('dropdown-item').attr('href', '#').text('ES Cluster'),
-							$('<div>').addClass('dropdown-divider'),
-							$license
-					)
+					$dropdown
 			);
+			
+			
 		}
 		$('#etm_mainmenu').append($li);
 	}
