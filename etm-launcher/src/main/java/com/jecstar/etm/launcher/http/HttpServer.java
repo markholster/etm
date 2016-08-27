@@ -187,7 +187,6 @@ public class HttpServer {
 		di.setContextPath("/gui");
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
-			// TODO add the uri of all rest interfaces to the appropriated roles.
 			di.addSecurityConstraint(new SecurityConstraint()
 						.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName())
 						.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
@@ -200,7 +199,10 @@ public class HttpServer {
 			di.addSecurityConstraint(new SecurityConstraint()
 					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName())
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*")));
-			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName());
+			di.addSecurityConstraint(new SecurityConstraint()
+					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
+					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/*").addUrlPattern("/rest/iib/*")));
+			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName());
 			di.setIdentityManager(identityManager);
 			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
 			di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));

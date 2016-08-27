@@ -18,5 +18,4 @@ public enum EtmPrincipalRole {
 		return this.roleName;
 	}
 
-	
 }

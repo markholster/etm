@@ -23,6 +23,7 @@ public class ElasticSearchLayout {
 	public static final String CONFIGURATION_INDEX_TYPE_NODE_DEFAULT = "default_configuration";
 	public static final String CONFIGURATION_INDEX_TYPE_USER = "user";
 	public static final String CONFIGURATION_INDEX_TYPE_GROUP = "group";
+	public static final String CONFIGURATION_INDEX_TYPE_IIB_NODE = "iib-node";
 	
 	
 }
