@@ -74,8 +74,8 @@ function buildMenu(currentContext) {
 			}
 			if ($.inArray('iib_admin', menu.submenus) != -1) {
 				$dropdown.append(
-					$('<a>').addClass('dropdown-item').attr('href', '../settings/iib_nodes.html').text('IIB Nodes'),
-					$('<a>').addClass('dropdown-item').attr('href', '../settings/iib_events.html').text('IIB Events'),				
+					$('<a>').addClass('dropdown-item').attr('href', '../iib/nodes.html').text('IIB Nodes'),
+					$('<a>').addClass('dropdown-item').attr('href', '../iib/events.html').text('IIB Events'),				
 					$('<div>').addClass('dropdown-divider')
 				);
 			}

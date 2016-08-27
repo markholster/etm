@@ -54,6 +54,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.NO_MORE_ADMINS_LEFT:
 					errorMessage.setMessage("No users with the '" + EtmPrincipalRole.ADMIN.getRoleName() + "' role left");
 					break;
+				case EtmException.IIB_CONNECTION_ERROR:
+					errorMessage.setMessage("Unable to connect to IIB node");
+					break;
 				default:
 					break;
 			}

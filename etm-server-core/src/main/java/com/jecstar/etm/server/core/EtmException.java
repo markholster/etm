@@ -4,18 +4,25 @@ public class EtmException extends RuntimeException {
 
 	private static final long serialVersionUID = 3169443490910515556L;
 	
-	
+	// 100_* reserved for common errors.
 	public static final int WRAPPED_EXCEPTION 				= 100_000;
-	public static final int INVALID_LICENSE_KEY_EXCEPTION 	= 100_001;
-	public static final int LICENSE_EXPIRED_EXCEPTION 		= 100_002;
-	public static final int CONFIGURATION_LOAD_EXCEPTION 	= 100_003;
-	public static final int UNMARSHALLER_CREATE_EXCEPTION 	= 100_004;
-	public static final int INVALID_XPATH_EXPRESSION 		= 100_005;
-	public static final int INVALID_XSLT_TEMPLATE 			= 100_006;
-	public static final int INVALID_JSON_EXPRESSION			= 100_007;
-	public static final int INVALID_EXPRESSION_PARSER_TYPE 	= 100_008;
-	public static final int INVALID_PASSWORD 				= 100_009;
-	public static final int NO_MORE_ADMINS_LEFT 			= 100_010;
+	
+	// 200_* reserved for license errors.
+	public static final int INVALID_LICENSE_KEY_EXCEPTION 	= 200_000;
+	public static final int LICENSE_EXPIRED_EXCEPTION 		= 200_001;
+	
+	// 201_* reserved for confguration errors.
+	public static final int CONFIGURATION_LOAD_EXCEPTION 	= 201_000;
+	public static final int UNMARSHALLER_CREATE_EXCEPTION 	= 201_001;
+	public static final int INVALID_XPATH_EXPRESSION 		= 201_002;
+	public static final int INVALID_XSLT_TEMPLATE 			= 201_003;
+	public static final int INVALID_JSON_EXPRESSION			= 201_004;
+	public static final int INVALID_EXPRESSION_PARSER_TYPE 	= 201_005;
+	public static final int INVALID_PASSWORD 				= 201_006;
+	public static final int NO_MORE_ADMINS_LEFT 			= 201_007;
+	
+	// 300_* reserved for IIB errors.
+	public static final int IIB_CONNECTION_ERROR 			= 300_000;
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

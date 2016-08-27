@@ -11,7 +11,7 @@ import com.jecstar.etm.server.core.domain.converter.EtmConfigurationTags;
  * 
  * @author mark
  */
-public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConverter<String>{
+public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConverter<String> {
 	
 	private final EtmConfigurationTags tags = new EtmConfigurationTagsJsonImpl();
 	private final JsonConverter converter = new JsonConverter();

@@ -43,7 +43,7 @@ public class UserService extends AbstractJsonService {
 	
 	static {
 		try {
-			Class.forName("com.ibm.proxy.config.BrokerProxy");
+			Class.forName("com.ibm.broker.config.proxy.BrokerProxy");
 			iibProxyOnClasspath = true;
 		} catch (ClassNotFoundException e) {
 			iibProxyOnClasspath = false;

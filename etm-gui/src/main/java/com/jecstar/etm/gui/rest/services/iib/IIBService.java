@@ -14,6 +14,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
+import com.ibm.broker.config.proxy.BrokerProxy;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
@@ -24,6 +25,8 @@ public class IIBService extends AbstractJsonService {
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
+	
+	private final NodeConverterJsonImpl nodeConverter = new NodeConverterJsonImpl();
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		IIBService.client = client;
@@ -73,9 +76,17 @@ public class IIBService extends AbstractJsonService {
 	@Path("/node/{nodeName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String addParser(@PathParam("nodeName") String nodeName, String json) {
-		// TODO try to setup an connection?
+		Node node = this.nodeConverter.read(json);
+		BrokerProxy bp = null;
+		try {
+			bp = node.connect();
+		} finally {
+			if (bp != null) {
+				bp.disconnect();
+			}
+		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName)
-			.setDoc("")
+			.setDoc(this.nodeConverter.write(node))
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
