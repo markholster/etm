@@ -68,19 +68,23 @@ function buildMenu(currentContext) {
 						$('<div>').addClass('dropdown-divider'),
 						$('<a>').addClass('dropdown-item').attr('href', '../settings/cluster.html').text('Cluster'),
 						$('<a>').addClass('dropdown-item').attr('href', '../settings/endpoints.html').text('Endpoints'),
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers'),
-						$('<div>').addClass('dropdown-divider')
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers')
 				);
 			}
 			if ($.inArray('iib_admin', menu.submenus) != -1) {
+				if ($.inArray('admin', menu.submenus) != -1) {
+					$dropdown.append($('<div>').addClass('dropdown-divider'));
+				}
 				$dropdown.append(
 					$('<a>').addClass('dropdown-item').attr('href', '../iib/nodes.html').text('IIB Nodes'),
-					$('<a>').addClass('dropdown-item').attr('href', '../iib/events.html').text('IIB Events'),				
-					$('<div>').addClass('dropdown-divider')
+					$('<a>').addClass('dropdown-item').attr('href', '../iib/events.html').text('IIB Events')				
 				);
 			}
 			if ($.inArray('admin', menu.submenus) != -1) {
-				$dropdown.append($license);
+				$dropdown.append(
+					$('<div>').addClass('dropdown-divider'), 
+					$license
+				);
 			}
 			
 			$li.addClass('dropdown').append(

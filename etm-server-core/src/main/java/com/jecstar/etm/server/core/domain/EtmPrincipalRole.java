@@ -17,5 +17,14 @@ public enum EtmPrincipalRole {
 	public String getRoleName() {
 		return this.roleName;
 	}
+	
+	public static EtmPrincipalRole fromRoleName(String roleName) {
+		for (EtmPrincipalRole role : EtmPrincipalRole.values()) {
+			if (role.getRoleName().equals(roleName)) {
+				return role;
+			}
+		}
+		return null;
+ 	}
 
 }

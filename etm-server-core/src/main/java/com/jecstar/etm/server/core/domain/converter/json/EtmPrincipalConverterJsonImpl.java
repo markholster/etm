@@ -73,7 +73,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		}
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
-			principal.addRoles(roles.stream().map(c -> EtmPrincipalRole.valueOf(c.toUpperCase())).collect(Collectors.toSet()));
+			principal.addRoles(roles.stream().map(c -> EtmPrincipalRole.fromRoleName(c)).collect(Collectors.toSet()));
 		}
 		return principal;
 	}
@@ -83,7 +83,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		group.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
-			group.addRoles(roles.stream().map(c -> EtmPrincipalRole.valueOf(c.toUpperCase())).collect(Collectors.toSet()));
+			group.addRoles(roles.stream().map(c -> EtmPrincipalRole.fromRoleName(c)).collect(Collectors.toSet()));
 		}
 		return group;
 	}
