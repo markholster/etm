@@ -74,7 +74,6 @@ public class Node {
 				if (log.isWarningLevelEnabled()) { 
 					log.logWarningMessage("Integration node '" + getHost() + ":" + getPort() + "' is not responding.");
 				}
-				brokerProxy.disconnect();
 				throw new EtmException(EtmException.IIB_CONNECTION_ERROR);
 			}
 			return brokerProxy;
