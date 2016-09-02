@@ -40,13 +40,19 @@
         <div id="events_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
         <div id="events_box">
           <div class="row">
-            <div class=col-sm-6>
-	          <select id="sel-node" class="form-control custom-select">
-	          </select>
-	        </div>
-            <div class=col-sm-6>
-	          <select id="sel-server" class="form-control custom-select">
-	          </select>
+            <div class=col-sm-12>
+			  <fieldset class="form-group">
+				<label for="sel-node">IIB Node</label>
+	          	<select id="sel-node" class="form-control custom-select">
+	          	  <option selected="selected"></option>
+	          	</select>
+			  </fieldset>
+			  <fieldset class="form-group">
+				<label for="sel-server">IIB Server</label>
+	          	<select id="sel-server" class="form-control custom-select">
+	          	  <option selected="selected"></option>
+	          	</select>
+			  </fieldset>
 	        </div>
 	      </div>  
 	      <hr />
@@ -57,25 +63,8 @@
 				  <label for="input-node-name">Name</label>
 				  <input id="input-node-name" type="text" class="form-control" placeholder="Unique name of the node..." required="required" />
 				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-host">Host</label>
-				  <input id="input-host" type="text" class="form-control" required="required" />
-				</fieldset>				
-		        <fieldset class="form-group">
-				  <label for="input-port">Port</label>
-				  <input id="input-port" type="number" class="form-control" required="required" min="1" max="65535" value="1414"/>
-				</fieldset>				
-		        <fieldset class="form-group">
-				  <label for="input-queue-manager">Queue manager</label>
-				  <input id="input-queue-manager" type="text" class="form-control" required="required" />
-				</fieldset>				
-		        <fieldset class="form-group">
-				  <label for="input-channel">Channel</label>
-				  <input id="input-channel" type="text" class="form-control" />
-				</fieldset>				
 		        <div class="modal-footer">
-                  <input type="submit" id="btn-confirm-remove-node" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
-                  <input type="submit" id="btn-confirm-save-node" class="btn btn-primary" value="Save" disabled="disabled" />
+                  <input type="submit" id="btn-confirm-save-events" class="btn btn-primary" value="Save" disabled="disabled" />
 		        </div>				
 		      </form>
 		    </div>      
