@@ -67,6 +67,22 @@ function buildEventPage() {
 		$('#sel-container').removeAttr('disabled');
 	});
 	
+	$('#sel-container').change(function(event) {
+		$application_fields = $('#application_fields');
+		$library_fields = $('#library_fields');
+		$flow_fields = $('#flows_fields');
+		$application_fields.empty();
+		$application_fields.hide();
+		$library_fields.empty();
+		$library_fields.hide();
+		$flow_fields.empty();
+		$flow_fields.hide();
+		if ($(this).val() == '') {
+			return;
+		}
+		// Add http://stackoverflow.com/questions/29063244/consistent-styling-for-nested-lists-with-bootstrap here....
+	});
+	
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -116,6 +132,10 @@ function buildEventPage() {
 		$('#sel-container-application-group').empty();
 		$('#sel-container-library-group').empty();
 		$('#sel-container-flow-group').empty();
+	}
+	
+	function startsWith(text, textToStartWith) {
+		return text.indexOf(textToStartWith) == 0;
 	}
 	
 }
