@@ -1,17 +1,56 @@
 function buildEventPage() {
 	var nodeMap = {};
+	var serverMap = {}
 	$('#sel-node').change(function(event) {
 		event.preventDefault();
 		$serverSelect = $('#sel-server');
-		$serverSelect.children().slice(1).remove();
+		emptyServerSelect();
+		emptyContainerSelect();
 		var serverData = nodeMap[$(this).val()];
 		if ('undefined' == typeof serverData) {
-			resetValues();
 			return;
 		}
 		$.each(serverData, function(index, server) {
 			$serverSelect.append($('<option>').attr('value', server).text(server));
 		});
+	});
+	
+	$('#sel-server').change(function(event) {
+		event.preventDefault();
+		$applicationGroup = $('#sel-container-application-group');
+		$libraryGroup = $('#sel-container-library-group');
+		$flowGroup = $('#sel-container-flow-group');
+		
+		emptyContainerSelect();
+		
+		var deploymentData = serverMap[$('#sel-node').val() + '_'  + $(this).val()];
+		if ('undefined' == typeof deploymentData) {
+			$.ajax({
+			    type: 'GET',
+			    contentType: 'application/json',
+			    async: false,
+			    url: '../rest/iib/node/' + encodeURIComponent($('#sel-node').val()) + '/server/' + encodeURIComponent($(this).val()),
+			    success: function(data) {
+			        if (!data) {
+			            return;
+			        }
+			        serverMap[$('#sel-node').val() + '_'  + $('#sel-server').val()] = data.deployments;
+			        deploymentData = data.deployments;
+			    }
+			});		
+		}
+		$.each(deploymentData.applications, function(index, application) {
+			$applicationGroup.append($('<option>').attr('value', 'application:' + application.name).text(application.name));
+		});
+		$.each(deploymentData.libraries, function(index, library) {
+			$libraryGroup.append($('<option>').attr('value', 'library:' + library.name).text(library.name));
+		});
+		$.each(deploymentData.flows, function(index, flow) {
+			$flowGroup.append($('<option>').attr('value', 'flow:' + flow.name).text(flow.name));
+		});	
+		sortSelectOptions($applicationGroup);
+		sortSelectOptions($libraryGroup);
+		sortSelectOptions($flowGroup);
 	});
 	
 	$.ajax({
@@ -28,7 +67,6 @@ function buildEventPage() {
 				$.ajax({
 				    type: 'GET',
 				    contentType: 'application/json',
-				    async: true,
 				    url: '../rest/iib/node/' + encodeURIComponent(node.name) + '/servers',
 				    success: function(serverData) {
 				        if (!serverData) {
@@ -54,6 +92,16 @@ function buildEventPage() {
 	}
 	
 	function resetValues() {
+	}
+	
+	function emptyServerSelect() {
+		$('#sel-server').children().slice(1).remove();
+	}
+	
+	function emptyContainerSelect() {
+		$('#sel-container-application-group').empty();
+		$('#sel-container-library-group').empty();
+		$('#sel-container-flow-group').empty();
 	}
 	
 }
