@@ -101,9 +101,9 @@
     $(document).ajaxStart(function () {
         $("#settings_errorBox").hide('fast');
         $("#password_errorBox").hide('fast');
-        $('#spinner').fadeIn(100);
+        $('#spinner').show('fast');
     }).ajaxStop(function () {
-        $('#spinner').fadeOut(200);
+        $('#spinner').hide('fast');
     }).ajaxComplete(function(event, jqXHR, settings) {
         var contentType = jqXHR.getResponseHeader("Content-Type");
         if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {

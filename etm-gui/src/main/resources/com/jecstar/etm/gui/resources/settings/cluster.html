@@ -117,9 +117,9 @@
   <script>
     $(document).ajaxStart(function () {
         $("#cluster_errorBox").hide('fast');
-        $('#spinner').fadeIn(100);
+        $('#spinner').show('fast');
     }).ajaxStop(function () {
-        $('#spinner').fadeOut(200);
+        $('#spinner').hide('fast');
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
         if ("undefined" != typeof jqXHR.responseJSON) {
             $('#cluster_errorBox').text('Error saving cluster configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');

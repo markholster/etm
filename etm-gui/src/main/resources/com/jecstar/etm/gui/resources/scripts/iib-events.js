@@ -8,11 +8,15 @@ function buildEventPage() {
 		emptyContainerSelect();
 		var serverData = nodeMap[$(this).val()];
 		if ('undefined' == typeof serverData) {
+			$('#sel-server, #sel-container').attr('disabled', 'disabled');
 			return;
 		}
 		$.each(serverData, function(index, server) {
 			$serverSelect.append($('<option>').attr('value', server).text(server));
 		});
+		sortSelectOptions($serverSelect);
+		$serverSelect.removeAttr('disabled');
+		$serverSelect.val('');
 	});
 	
 	$('#sel-server').change(function(event) {
@@ -22,6 +26,10 @@ function buildEventPage() {
 		$flowGroup = $('#sel-container-flow-group');
 		
 		emptyContainerSelect();
+		if ($(this).val() == '') {
+			$('#sel-container').attr('disabled', 'disabled');
+			return;
+		}
 		
 		var deploymentData = serverMap[$('#sel-node').val() + '_'  + $(this).val()];
 		if ('undefined' == typeof deploymentData) {
@@ -36,6 +44,11 @@ function buildEventPage() {
 			        }
 			        serverMap[$('#sel-node').val() + '_'  + $('#sel-server').val()] = data.deployments;
 			        deploymentData = data.deployments;
+			    },
+			    // Handle spinner here because it's an synchronous call
+			    beforeSend: function() {
+			    },
+			    complete: function() {
 			    }
 			});		
 		}
@@ -51,6 +64,7 @@ function buildEventPage() {
 		sortSelectOptions($applicationGroup);
 		sortSelectOptions($libraryGroup);
 		sortSelectOptions($flowGroup);
+		$('#sel-container').removeAttr('disabled');
 	});
 	
 	$.ajax({

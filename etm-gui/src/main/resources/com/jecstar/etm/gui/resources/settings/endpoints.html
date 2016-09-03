@@ -126,9 +126,9 @@
   <script>
     $(document).ajaxStart(function () {
         $("#endpoints_errorBox").hide('fast');
-        $('#spinner').fadeIn(100);
+        $('#spinner').show('fast');
     }).ajaxStop(function () {
-        $('#spinner').fadeOut(200);
+        $('#spinner').hide('fast');
     }).ajaxError(function(event, jqXHR, settings, thrownError) {
         if ("undefined" != typeof jqXHR.responseJSON) {
             $('#endpoints_errorBox').text('Error saving endpoint configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
