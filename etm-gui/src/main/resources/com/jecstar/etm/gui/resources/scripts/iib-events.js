@@ -36,47 +36,42 @@ function buildEventPage() {
 			$.ajax({
 			    type: 'GET',
 			    contentType: 'application/json',
-			    async: false,
 			    url: '../rest/iib/node/' + encodeURIComponent($('#sel-node').val()) + '/server/' + encodeURIComponent($(this).val()),
 			    success: function(data) {
 			        if (!data) {
 			            return;
 			        }
 			        serverMap[$('#sel-node').val() + '_'  + $('#sel-server').val()] = data.deployments;
-			        deploymentData = data.deployments;
+			        fillContainerSelect(data.deployments);
 			    },
 			    // Handle spinner here because it's an synchronous call
 			    beforeSend: function() {
-			    },
-			    complete: function() {
+			    	$('#sel-container').attr('disabled', 'disabled');
 			    }
 			});		
+		} else {
+			fillContainerSelect(deploymentData);
 		}
-		$.each(deploymentData.applications, function(index, application) {
-			$applicationGroup.append($('<option>').attr('value', 'application:' + application.name).text(application.name));
-		});
-		$.each(deploymentData.libraries, function(index, library) {
-			$libraryGroup.append($('<option>').attr('value', 'library:' + library.name).text(library.name));
-		});
-		$.each(deploymentData.flows, function(index, flow) {
-			$flowGroup.append($('<option>').attr('value', 'flow:' + flow.name).text(flow.name));
-		});	
-		sortSelectOptions($applicationGroup);
-		sortSelectOptions($libraryGroup);
-		sortSelectOptions($flowGroup);
-		$('#sel-container').removeAttr('disabled');
+		
+		function fillContainerSelect(deploymentData) {
+			$.each(deploymentData.applications, function(index, application) {
+				$applicationGroup.append($('<option>').attr('value', 'application:' + application.name).text(application.name));
+			});
+			$.each(deploymentData.libraries, function(index, library) {
+				$libraryGroup.append($('<option>').attr('value', 'library:' + library.name).text(library.name));
+			});
+			$.each(deploymentData.flows, function(index, flow) {
+				$flowGroup.append($('<option>').attr('value', 'flow:' + flow.name).text(flow.name));
+			});	
+			sortSelectOptions($applicationGroup);
+			sortSelectOptions($libraryGroup);
+			sortSelectOptions($flowGroup);
+			$('#sel-container').removeAttr('disabled');			
+		}
 	});
 	
 	$('#sel-container').change(function(event) {
-		$application_fields = $('#application_fields');
-		$library_fields = $('#library_fields');
-		$flow_fields = $('#flows_fields');
-		$application_fields.empty();
-		$application_fields.hide();
-		$library_fields.empty();
-		$library_fields.hide();
-		$flow_fields.empty();
-		$flow_fields.hide();
+		emptyContainerInfos();
 		if ($(this).val() == '') {
 			return;
 		}
@@ -132,6 +127,12 @@ function buildEventPage() {
 		$('#sel-container-application-group').empty();
 		$('#sel-container-library-group').empty();
 		$('#sel-container-flow-group').empty();
+	}
+	
+	function emptyContainerInfos() {
+		$('#application_fields').empty().hide();
+		$('#library_fields').empty().hide();
+		$('#flows_fields').empty().hide();
 	}
 	
 	function startsWith(text, textToStartWith) {
