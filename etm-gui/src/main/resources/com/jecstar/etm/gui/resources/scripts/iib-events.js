@@ -88,9 +88,16 @@ function buildEventPage() {
 				$applicationFields = $('#application_fields');
 				$applicationFields.append(
 					$('<h5>').text('Application ' + applicationData.name)
-				);				
+				);
+				$.each(applicationData.flows, function(index, flow) {
+					$flowDiv = $('<div>');
+					appendFlowData($flowDiv, flow);
+					$applicationFields.append(
+						$('<strong>').text('Flow ' + flow.name),
+						$flowDiv
+					);
+				});
 				$applicationFields.show();
-				// Add http://stackoverflow.com/questions/29063244/consistent-styling-for-nested-lists-with-bootstrap here....
 			}
 		} else if (startsWith(selectedContainer, 'library:')) {
 			var libraryName = selectedContainer.substring(8);
@@ -101,9 +108,16 @@ function buildEventPage() {
 				$libraryFields = $('#library_fields');
 				$libraryFields.append(
 					$('<h5>').text('Library ' + libraryData.name)
-				);				
+				);
+				$.each(libraryData.flows, function(index, flow) {
+					$flowDiv = $('<div>');
+					appendFlowData($flowDiv, flow);
+					$libraryFields.append(
+						$('<strong>').text('Flow ' + flow.name),
+						$flowDiv
+					);
+				});
 				$libraryFields.show();
-				// Add http://stackoverflow.com/questions/29063244/consistent-styling-for-nested-lists-with-bootstrap here....
 			}
 		} else if (startsWith(selectedContainer, 'flow:')) {
 			var flowName = selectedContainer.substring(5);
@@ -113,43 +127,42 @@ function buildEventPage() {
 			if (flowData) {
 				$flowFields = $('#flow_fields');
 				$flowFields.append(
-					$('<h5>').text('Flow ' + flowData.name),
-					$('<fieldset>').addClass('form-group').append(
-					    $('<label>').attr('for', 'sel-monitoring-enabled').text('Monitoring enabled'),
-					    $('<select>').attr('id', 'sel-monitoring-enabled').addClass('form-control custom-select').append(
-					    	$('<option>').attr('value', 'true').text('Yes'),
-					    	$('<option>').attr('value', 'false').text('No')
-					    )
-					)
+					$('<h5>').text('Flow ' + flowData.name)
 				);
-				if (flowData.monitoring_active) {
-					$('#sel-monitoring-enabled').val('true');
-				} else {
-					$('#sel-monitoring-enabled').val('false');
-				}
-				$flowFields.append(
-					$('<div>').addClass('row').append(
+				appendFlowData($flowFields, flowData);
+				$flowFields.show();
+			}
+		}
+		
+		function appendFlowData(container, flowData) {
+			$(container).append(
+				$('<fieldset>').addClass('form-group').append(
+				    $('<label>').text('Monitoring enabled'),
+				    $('<select>').addClass('form-control custom-select').append(
+				    	$('<option>').attr('value', 'true').text('Yes'),
+				    	$('<option>').attr('value', 'false').text('No')
+				    ).val(flowData.monitoring_active ? 'true' : 'false')
+				),
+				$('<div>').addClass('row').append(
 						$('<div>').addClass('col-sm-6').append($('<strong>').text('Node name')),
 						$('<div>').addClass('col-sm-3').append($('<strong>').text('Node type')),
 						$('<div>').addClass('col-sm-3').append($('<strong>').text('Event enabled'))
-					)
-				);
-				$.each(flowData.nodes, function(index, node) {
-					$flowFields.append(
-							$('<div>').addClass('row').attr('style', 'margin-top: 5px;').append(
-								$('<div>').addClass('col-sm-6').text(node.name),
-								$('<div>').addClass('col-sm-3').text(formateNodeType(node.type)),
-								$('<div>').addClass('col-sm-3').append(
-									$('<select>').addClass('form-control custom-select').append(
-									    	$('<option>').attr('value', 'true').text('Yes'),
-									    	$('<option>').attr('value', 'false').text('No')
-									).val(node.monitoring_set ? 'true' : 'false')
-								)
+				)
+			);
+			$.each(flowData.nodes, function(index, node) {
+				$(container).append(
+						$('<div>').addClass('row').attr('style', 'margin-top: 5px;').append(
+							$('<div>').addClass('col-sm-6').text(node.name),
+							$('<div>').addClass('col-sm-3').text(formateNodeType(node.type)),
+							$('<div>').addClass('col-sm-3').append(
+								$('<select>').addClass('form-control custom-select').append(
+								    	$('<option>').attr('value', 'true').text('Yes'),
+								    	$('<option>').attr('value', 'false').text('No')
+								).val(node.monitoring_set ? 'true' : 'false')
 							)
-					);
-				});
-				$flowFields.show();
-			}
+						)
+				);
+			});			
 		}
 	});
 	
