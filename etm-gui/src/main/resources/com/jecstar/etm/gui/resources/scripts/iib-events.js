@@ -127,6 +127,27 @@ function buildEventPage() {
 				} else {
 					$('#sel-monitoring-enabled').val('false');
 				}
+				$flowFields.append(
+					$('<div>').addClass('row').append(
+						$('<div>').addClass('col-sm-6').append($('<strong>').text('Node name')),
+						$('<div>').addClass('col-sm-3').append($('<strong>').text('Node type')),
+						$('<div>').addClass('col-sm-3').append($('<strong>').text('Event enabled'))
+					)
+				);
+				$.each(flowData.nodes, function(index, node) {
+					$flowFields.append(
+							$('<div>').addClass('row').attr('style', 'margin-top: 5px;').append(
+								$('<div>').addClass('col-sm-6').text(node.name),
+								$('<div>').addClass('col-sm-3').text(formateNodeType(node.type)),
+								$('<div>').addClass('col-sm-3').append(
+									$('<select>').addClass('form-control custom-select').append(
+									    	$('<option>').attr('value', 'true').text('Yes'),
+									    	$('<option>').attr('value', 'false').text('No')
+									).val(node.monitoring_set ? 'true' : 'false')
+								)
+							)
+					);
+				});
 				$flowFields.show();
 			}
 		}
@@ -191,6 +212,17 @@ function buildEventPage() {
 	
 	function startsWith(text, textToStartWith) {
 		return text.indexOf(textToStartWith) == 0;
+	}
+	
+	function formateNodeType(nodeType) {
+		if ('ComIbmMQInputNode' == nodeType) {
+			return 'MQ Input'
+		} else if ('ComIbmMQOutputNode' == nodeType) {
+			return 'MQ Output'
+		} else if ('ComIbmMQGetNode' == nodeType) {
+			return 'MQ Get'
+		}
+		return nodeType
 	}
 	
 }
