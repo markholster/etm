@@ -57,6 +57,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.IIB_CONNECTION_ERROR:
 					errorMessage.setMessage("Unable to connect to IIB node");
 					break;
+				case EtmException.IIB_UNKNOWN_OBJECT:
+					errorMessage.setMessage("Unknown IIB object");
+					break;					
 				default:
 					break;
 			}

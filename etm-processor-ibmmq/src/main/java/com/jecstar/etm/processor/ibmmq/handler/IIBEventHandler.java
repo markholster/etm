@@ -276,7 +276,7 @@ public class IIBEventHandler {
 		String eventData = event.getEventPointData().getEventData().getEventIdentity().getEventName();
 		String appName = null;
 		String appVersion = null;
-		if (eventData != null) {
+		if (eventData != null && eventData.trim().length() > 0) {
 			String[] values = eventData.split("(?<!\\\\),");
 			if (values.length >= 1) {
 				appName = values[0].trim().length() > 0 ? values[0] : null;
