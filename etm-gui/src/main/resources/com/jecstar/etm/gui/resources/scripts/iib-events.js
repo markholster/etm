@@ -46,7 +46,6 @@ function buildEventPage() {
 			        serverMap[$('#sel-node').val() + '_'  + $('#sel-server').val()] = data.deployments;
 			        fillContainerSelect(data.deployments);
 			    },
-			    // Handle spinner here because it's an synchronous call
 			    beforeSend: function() {
 			    	$('#sel-container').attr('disabled', 'disabled');
 			    }
@@ -85,7 +84,7 @@ function buildEventPage() {
 				return n.name === applicationName;
 			})[0];
 			if (applicationData) {
-				$applicationFields = $('#application_fields');
+				$applicationFields = $('div[data-container-type="application"]');
 				$applicationFields.append(
 					$('<h5>').text('Application ' + applicationData.name)
 				);
@@ -105,7 +104,7 @@ function buildEventPage() {
 				return n.name === libraryName;
 			})[0];			
 			if (libraryData) {
-				$libraryFields = $('#library_fields');
+				$libraryFields = $('div[data-container-type="library"]');
 				$libraryFields.append(
 					$('<h5>').text('Library ' + libraryData.name)
 				);
@@ -125,7 +124,7 @@ function buildEventPage() {
 				return n.name === flowName;
 			})[0];
 			if (flowData) {
-				$flowFields = $('#flow_fields');
+				$flowFields = $('div[data-container-type="flow"]');
 				$flowFields.append(
 					$('<h5>').text('Flow ' + flowData.name)
 				);
@@ -133,12 +132,14 @@ function buildEventPage() {
 				$flowFields.show();
 			}
 		}
+		$('#btn-apply-events').removeAttr('disabled');
 		
 		function appendFlowData(container, flowData) {
+			$(container).attr('data-flow-name', flowData.name);
 			$(container).append(
 				$('<fieldset>').addClass('form-group').append(
 				    $('<label>').text('Monitoring enabled'),
-				    $('<select>').addClass('form-control custom-select').append(
+				    $('<select>').attr('name', 'monitoring_active').addClass('form-control custom-select').append(
 				    	$('<option>').attr('value', 'true').text('Yes'),
 				    	$('<option>').attr('value', 'false').text('No')
 				    ).val(flowData.monitoring_active ? 'true' : 'false')
@@ -151,17 +152,79 @@ function buildEventPage() {
 			);
 			$.each(flowData.nodes, function(index, node) {
 				$(container).append(
-						$('<div>').addClass('row').attr('style', 'margin-top: 5px;').append(
+						$('<div>').attr('data-node-name', node.name).addClass('row').attr('style', 'margin-top: 5px;').append(
 							$('<div>').addClass('col-sm-6').text(node.name),
 							$('<div>').addClass('col-sm-3').text(formateNodeType(node.type)),
 							$('<div>').addClass('col-sm-3').append(
-								$('<select>').addClass('form-control custom-select').append(
+								$('<select>').attr('name', 'monitoring_set').addClass('form-control custom-select').append(
 								    	$('<option>').attr('value', 'true').text('Yes'),
 								    	$('<option>').attr('value', 'false').text('No')
 								).val(node.monitoring_set ? 'true' : 'false')
 							)
 						)
 				);
+			});			
+		}
+	});
+	
+	$("#btn-apply-events").click(function (event) {
+		event.preventDefault();
+		var selectedContainer = $('#sel-container').val();
+		if (selectedContainer == '') {
+			return;
+		}
+		var objectType;
+		if (startsWith(selectedContainer, 'application:')) {
+			objectType = 'application'
+		} else if (startsWith(selectedContainer, 'library:')) {
+			objectType = 'library'
+		} else if (startsWith(selectedContainer, 'flow:')) {
+			objectType = 'flow'
+		}
+		
+		var monitoringData = createMonitoringData();
+		if (monitoringData) {
+			$.ajax({
+			    type: 'POST',
+			    contentType: 'application/json',
+			    url: '../rest/iib/node/' + encodeURIComponent($('#sel-node').val()) + '/server/' + encodeURIComponent($('#sel-server').val()) + '/' + encodeURIComponent(objectType),
+			    data: JSON.stringify(monitoringData),
+			    success: function(data) {
+			        if (!data) {
+			            return;
+			        }
+			        $('#events_infoBox').text('Event monitoring configuration applied.').show('fast').delay(5000).hide('fast');
+					var serverMapKey = $('#sel-node').val() + '_'  + $('#sel-server').val();
+					var serverData = serverMap[serverMapKey];
+					if ('application' == objectType) {
+						$.each(serverData.applications, function (index, application) {
+							if (application.name == monitoringData.name) {
+								serverData.applications[index] = monitoringData;
+								return false;
+							}
+						});
+					} else if ('library' == objectType) {
+						$.each(serverData.libraries, function (index, library) {
+							if (library.name == monitoringData.name) {
+								serverData.libraries[index] = monitoringData;
+								return false;
+							}
+						});						
+					} else if ('flow' == objectType) {
+						$.each(serverData.flows, function (index, flow) {
+							if (flow.name == monitoringData.name) {
+								serverData.flows[index] = monitoringData;
+								return false;
+							}
+						});						
+					}
+			    },
+			    beforeSend: function() {
+			    	$('#sel-node, #sel-server, #sel-container, select[name="monitoring_active"], select[name="monitoring_set"], #btn-apply-events').attr('disabled', 'disabled');
+			    },
+			    complete: function () {
+			    	$('#sel-node, #sel-server, #sel-container, select[name="monitoring_active"], select[name="monitoring_set"], #btn-apply-events').removeAttr('disabled');
+			    }
 			});			
 		}
 	});
@@ -204,9 +267,6 @@ function buildEventPage() {
 		options.appendTo($select);
 	}
 	
-	function resetValues() {
-	}
-	
 	function emptyServerSelect() {
 		$('#sel-server').children().slice(1).remove();
 	}
@@ -218,9 +278,8 @@ function buildEventPage() {
 	}
 	
 	function emptyContainerInfos() {
-		$('#application_fields').empty().hide();
-		$('#library_fields').empty().hide();
-		$('#flow_fields').empty().hide();
+		$('#btn-apply-events').attr('disabled', 'disabled');
+		$('div[data-container-type]').empty().hide();
 	}
 	
 	function startsWith(text, textToStartWith) {
@@ -236,6 +295,63 @@ function buildEventPage() {
 			return 'MQ Get'
 		}
 		return nodeType
+	}
+	
+	function createMonitoringData() {
+		var serverMapKey = $('#sel-node').val() + '_'  + $('#sel-server').val();
+		var selectedContainer = $('#sel-container').val();
+		if (selectedContainer == '') {
+			return;
+		}
+		if (startsWith(selectedContainer, 'application:')) {
+			var applicationName = selectedContainer.substring(12);
+			// Clone the current data.
+			var applicationData = $.extend(true, {}, $.grep(serverMap[serverMapKey].applications, function(n, i) {
+				return n.name === applicationName;
+			})[0]);
+			
+			if (applicationData) {
+				$.each(applicationData.flows, function (index, flow) {
+					setFlowMonitoringData(flow);
+				});
+				return applicationData;
+			}
+		} else if (startsWith(selectedContainer, 'library:')) {
+			var libraryName = selectedContainer.substring(8);
+			// Clone the current data.
+			var libraryData = $.extend(true, {}, $.grep(serverMap[serverMapKey].libraries, function(n, i) {
+				return n.name === libraryName;
+			})[0]);
+			if (libraryData) {
+				$.each(libraryData.flows, function (index, flow) {
+					setFlowMonitoringData(flow);
+				});				
+				return libraryData;
+			}
+		} else if (startsWith(selectedContainer, 'flow:')) {
+			var flowName = selectedContainer.substring(5);
+			// Clone the current data.
+			var flowData =$.extend(true, {}, $.grep(serverMap[serverMapKey].flows, function(n, i) {
+				return n.name === flowName;
+			})[0]);
+			if (flowData) {
+				setFlowMonitoringData(flowData);
+				return flowData;
+			}
+		}
+	}
+	
+	function setFlowMonitoringData(flow) {
+		$flowDiv = $($.grep($("div[data-flow-name]"), function(n, i) {
+			return $(n).attr('data-flow-name') === flow.name;
+		})[0]);
+		flow.monitoring_active = $flowDiv.find('select[name="monitoring_active"]').val() == 'true' ? true : false;
+		$.each(flow.nodes, function (index, node) {
+			var nodeDiv = $.grep($flowDiv.find("div[data-node-name]"), function(n, i) {
+				return $(n).attr('data-node-name') === node.name;
+			})[0];
+			node.monitoring_set = $(nodeDiv).find('select[name="monitoring_set"]').val() == 'true' ? true : false;
+		});
 	}
 	
 }

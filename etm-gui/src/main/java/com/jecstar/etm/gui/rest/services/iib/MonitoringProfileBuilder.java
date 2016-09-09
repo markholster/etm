@@ -118,7 +118,7 @@ public class MonitoringProfileBuilder {
 			if (containerName == null) {
 				return "";
 			}
-			if (containerVersion != null) {
+			if (containerVersion != null && containerVersion.trim().length() > 0) {
 				return containerName.replace(",", "\\,") + "," + containerVersion.replace(",", "\\,");
 			} 
 			return containerName.replace(",", "\\,");
