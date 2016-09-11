@@ -81,6 +81,7 @@ public class IIBApplication {
 		if (!IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
 			return new ArrayList<>();
 		}
+		// Actual call to subflow retrieval is done in a separate method to prevent runtime errors when IIB 9 api is on the classpath.
 		return getSubFlowsWhenSubflowApiPresent();
 	}
 	
@@ -101,6 +102,7 @@ public class IIBApplication {
 		if (!IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
 			return null;
 		}
+		// Actual call to subflow retrieval is done in a separate method to prevent runtime errors when IIB 9 api is on the classpath.
 		return getSubflowByNameWhenSubflowApiPresent(subFlowName);
 	}
 	

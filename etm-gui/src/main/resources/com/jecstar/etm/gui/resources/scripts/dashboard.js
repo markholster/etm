@@ -11,6 +11,7 @@ function loadDashboard(name) {
 					bordered: true,
 					showLegend: true,
 					type: 'line',
+					area: true,
 					index: {
 						name: 'etm_event_all',
 						types: ['log'],
@@ -114,7 +115,7 @@ function loadDashboard(name) {
 
           chart.xAxis
             .axisLabel(config.x_axis.label)
-            .tickFormat(function(d) { return d3.time.format('%Y-%m-%d')(new Date(d)) });
+            .tickFormat(function(d) { return d3.time.format('%Y-%m-%d %H:%M')(new Date(d)) });
           chart.yAxis
           	.axisLabel(config.y_axis.label)
 
@@ -141,17 +142,17 @@ function loadDashboard(name) {
     			  $.each(xSubBuckets, function(xSubBucketIx, xSubBucket) {
     				  seriesName = xSubBucket.key;
     				  var y = "count" == config.y_axis.agg.name ? xSubBucket.doc_count : xSubBucket[config.y_axis.agg.name].value;
-    				  addToResult(result, seriesName, x, y);
+    				  addToResult(result, seriesName, config.area, x, y);
     			  });
     		  } else {
     			  var y = "count" == config.y_axis.agg.name ? xBucket.doc_count : xBucket[config.y_axis.agg.name].value;
-    			  addToResult(result, seriesName, x, y);
+    			  addToResult(result, seriesName, config.area, x, y);
     		  }
     	  });
     	  return result;
       }
       
-      function addToResult(result, serieName, x, y) {
+      function addToResult(result, serieName, area, x, y) {
 		  var serie = $.grep(result, function(n,i) {
 			  return n.key === serieName;
 		  });
@@ -160,7 +161,8 @@ function loadDashboard(name) {
 		  } else {
 			  result.push({
 				 key: serieName,
-				 values: [[x,y]]
+				 values: [[x,y]],
+				 area: area
 			  });
 		  }
       }
