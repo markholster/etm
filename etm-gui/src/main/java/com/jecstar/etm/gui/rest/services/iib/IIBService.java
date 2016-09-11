@@ -1,6 +1,5 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 
@@ -20,15 +19,16 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
-import com.ibm.broker.config.proxy.ApplicationProxy;
 import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
-import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedException;
 import com.ibm.broker.config.proxy.ConfigurableService;
-import com.ibm.broker.config.proxy.ExecutionGroupProxy;
-import com.ibm.broker.config.proxy.LibraryProxy;
-import com.ibm.broker.config.proxy.MessageFlowProxy;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBApplication;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBIntegrationServer;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBLibrary;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBMessageFlow;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNode;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNodeConnection;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -42,9 +42,6 @@ public class IIBService extends AbstractJsonService {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(IIBService.class);
-
-	public static final String RUNTIME_PROPERTY_MONITORING = "This/monitoring";
-	public static final String RUNTIME_PROPERTY_MONITORING_PROFILE = "This/monitoringProfile";
 	
 	public static final String MONITORING_PROFILES = "MonitoringProfiles";
 	public static final String PROFILE_PROPERTIES = "profileProperties";
@@ -127,16 +124,14 @@ public class IIBService extends AbstractJsonService {
 		boolean first = true;
 		try (IIBNodeConnection nodeConnection  = new IIBNodeConnection(node);) {
 			nodeConnection.connect();
-			Enumeration<ExecutionGroupProxy> integrationServers = nodeConnection.getServers();
-			while (integrationServers.hasMoreElements()) {
+			List<IIBIntegrationServer> integrationServers = nodeConnection.getServers();
+			for (IIBIntegrationServer integrationServer : integrationServers) {
 				if (!first) {
 					result.append(",");
 				}
-				result.append(escapeToJson(integrationServers.nextElement().getName(), true));
+				result.append(escapeToJson(integrationServer.getName(), true));
 				first = false;
 			}
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
 		result.append("]}");
 		return result.toString();
@@ -157,7 +152,7 @@ public class IIBService extends AbstractJsonService {
 		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
 			nodeConnection.connect();
 			nodeConnection.setSynchronous(240000);
-			ExecutionGroupProxy integrationServer = nodeConnection.getServerByName(serverName);
+			IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
 			if (integrationServer == null) {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Integration server '" + serverName + "' not found. Not updating monitoring.");
@@ -176,7 +171,7 @@ public class IIBService extends AbstractJsonService {
 				}
 				throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
 			}
-		} catch (ConfigManagerProxyPropertyNotInitializedException | IllegalArgumentException | ConfigManagerProxyLoggedException e) {
+		} catch (ConfigManagerProxyLoggedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
 		return result;
@@ -196,16 +191,15 @@ public class IIBService extends AbstractJsonService {
 		result.append("{\"deployments\": {");
 		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
 			nodeConnection.connect();
-			ExecutionGroupProxy executionGroup = nodeConnection.getServerByName(serverName);
-			Enumeration<ApplicationProxy> applications = executionGroup.getApplications(null);
+			IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
+			List<IIBApplication> applications = integrationServer.getApplications();
 			result.append("\"applications\": [");
 			boolean firstApplication = true;
-			while (applications.hasMoreElements()) {
+			for (IIBApplication application : applications) {
 				if (!firstApplication) {
 					result.append(",");
 				}
 				result.append("{");
-				ApplicationProxy application = applications.nextElement();
 				addStringElementToJsonBuffer("name", application.getName(), result, true);
 				// TODO vanaf iib10 is de api voor subflows beschrikbaar. Vanaf dan wordt het handig om de libraries uit te lezen.
 //				Enumeration<LibraryProxy> libraries = application.getLibraries(null);
@@ -219,10 +213,9 @@ public class IIBService extends AbstractJsonService {
 //					firstLibrary = false;
 //				}
 				result.append(", \"flows\": [");
-				Enumeration<MessageFlowProxy> messageFlows = application.getMessageFlows(null);
+				List<IIBMessageFlow> messageFlows = application.getMessageFlows();
 				boolean firstFlow = true;
-				while (messageFlows.hasMoreElements()) {
-					MessageFlowProxy messageFlow = messageFlows.nextElement();
+				for (IIBMessageFlow messageFlow : messageFlows) {
 					if (!firstFlow) {
 						result.append(",");
 					}
@@ -233,20 +226,19 @@ public class IIBService extends AbstractJsonService {
 				firstApplication = false;
 			}
 			result.append("], \"libraries\": [");
-			Enumeration<LibraryProxy> libraries = executionGroup.getLibraries(null);
+			List<IIBLibrary> libraries = integrationServer.getLibraries();
 			boolean firstLibrary = true;
-			while (libraries.hasMoreElements()) {
+			for (IIBLibrary library : libraries) {
 				if (!firstLibrary) {
 					result.append(",");
 				}
-				addLibraryDeployment(nodeConnection, libraries.nextElement(), result);
+				addLibraryDeployment(nodeConnection, library, result);
 				firstLibrary = false;
 			}
 			result.append("], \"flows\": [");
-			Enumeration<MessageFlowProxy> messageFlows = executionGroup.getMessageFlows(null);
+			List<IIBMessageFlow> messageFlows = integrationServer.getMessageFlows();
 			boolean firstFlow = true;
-			while (messageFlows.hasMoreElements()) {
-				MessageFlowProxy messageFlow = messageFlows.nextElement();
+			for (IIBMessageFlow messageFlow : messageFlows) {
 				if (!firstFlow) {
 					result.append(",");
 				}
@@ -254,38 +246,31 @@ public class IIBService extends AbstractJsonService {
 				firstFlow = false;
 			}
 			result.append("]");
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
 		result.append("}}");
 		return result.toString();
 	}
 	
-	private void addLibraryDeployment(IIBNodeConnection nodeConnection, LibraryProxy library, StringBuilder result) throws ConfigManagerProxyPropertyNotInitializedException {
+	private void addLibraryDeployment(IIBNodeConnection nodeConnection, IIBLibrary library, StringBuilder result) {
 		result.append("{");
 		addStringElementToJsonBuffer("name", library.getName(), result, true);
 		result.append(", \"flows\": [");
-		Enumeration<MessageFlowProxy> messageFlows = library.getMessageFlows(null);
+		List<IIBMessageFlow> messageFlows = library.getMessageFlows();
 		boolean firstFlow = true;
-		while (messageFlows.hasMoreElements()) {
+		for (IIBMessageFlow messageFlow : messageFlows) {
 			if (!firstFlow) {
 				result.append(",");
 			}
-			addMessageFlowDeployment(nodeConnection, messageFlows.nextElement(), result);
+			addMessageFlowDeployment(nodeConnection, messageFlow, result);
 			firstFlow = false;
 		}
 		result.append("]}");
 	}
 
-	private void addMessageFlowDeployment(IIBNodeConnection nodeConnection, MessageFlowProxy messageFlow, StringBuilder result) throws ConfigManagerProxyPropertyNotInitializedException {
-		boolean monitoringActivated = false;
-		if (messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING) != null
-				&& messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING)
-						.equals("active")) {
-			monitoringActivated = true;
-		}		
+	private void addMessageFlowDeployment(IIBNodeConnection nodeConnection, IIBMessageFlow messageFlow, StringBuilder result) {
+		boolean monitoringActivated = messageFlow.isMonitoringActivated();
 		String currentProfile = null;
-		String currentProfileName = messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE);
+		String currentProfileName = messageFlow.getMonitoringProfileName();
 		if (currentProfileName != null) {
 			ConfigurableService configurableService = nodeConnection.getConfigurableService(MONITORING_PROFILES, currentProfileName);
 			if (configurableService != null) {
@@ -296,36 +281,27 @@ public class IIBService extends AbstractJsonService {
 		addStringElementToJsonBuffer("name", messageFlow.getName(), result, true);
 		addBooleanElementToJsonBuffer("monitoring_active", monitoringActivated, result, false);
 		result.append(", \"nodes\": [");
-		Enumeration<com.ibm.broker.config.proxy.MessageFlowProxy.Node> nodes = messageFlow.getNodes();
+		List<IIBNode> nodes = messageFlow.getNodes();
 		boolean firstNode = true;
-		while (nodes.hasMoreElements()) {
-			com.ibm.broker.config.proxy.MessageFlowProxy.Node node = nodes.nextElement();
-			if (!isSupportedNode(node)) {
+		for (IIBNode node : nodes) {
+			if (!node.isSupported()) {
 				continue;
 			}
 			if (!firstNode) {
 				result.append(",");
 			}
-			boolean monitoringSet = false;
-			if (currentProfile != null) {
-				monitoringSet = currentProfile.indexOf("profile:eventSourceAddress=\"" + node.getName()+ ".") >= 0;
-			}
 			result.append("{");
 			addStringElementToJsonBuffer("name", node.getName(), result, true);
 			addStringElementToJsonBuffer("type", node.getType(), result, false);
-			addBooleanElementToJsonBuffer("monitoring_set", monitoringSet, result, false);
+			addBooleanElementToJsonBuffer("monitoring_set", node.isMonitoringSetInProfile(currentProfile), result, false);
 			result.append("}");
 			firstNode = false;
 		}
 		result.append("]}");	}
 
-	private boolean isSupportedNode(com.ibm.broker.config.proxy.MessageFlowProxy.Node node) {
-		return node.getType().startsWith("ComIbmMQ")  && !"ComIbmMQHeaderNode".equals(node.getType());
-	}
-	
-	private String updateApplicationMonitorning(IIBNodeConnection nodeConnection, ExecutionGroupProxy integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyPropertyNotInitializedException, IllegalArgumentException, ConfigManagerProxyLoggedException {
+	private String updateApplicationMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		String applicationName = getString("name", valueMap);
-		ApplicationProxy application = integrationServer.getApplicationByName(applicationName);
+		IIBApplication application = integrationServer.getApplicationByName(applicationName);
 		if (application == null) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Application '" + applicationName + "' not found. Not updating monitoring.");
@@ -336,7 +312,7 @@ public class IIBService extends AbstractJsonService {
 		List<Map<String, Object>> flowsValues = getArray("flows", valueMap);
 		for (Map<String, Object> flowValues : flowsValues) {
 			String flowName = getString("name", flowValues);
-			MessageFlowProxy messageFlow = application.getMessageFlowByName(flowName);
+			IIBMessageFlow messageFlow = application.getMessageFlowByName(flowName);
 			if (messageFlow == null) {
 				continue;
 			}
@@ -351,9 +327,9 @@ public class IIBService extends AbstractJsonService {
 		return "{\"status\":\"success\"}";
 	}
 	
-	private String updateLibraryMonitorning(IIBNodeConnection nodeConnection, ExecutionGroupProxy integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyPropertyNotInitializedException, IllegalArgumentException, ConfigManagerProxyLoggedException {
+	private String updateLibraryMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		String libraryName = getString("name", valueMap);
-		LibraryProxy library = integrationServer.getLibraryByName(libraryName);
+		IIBLibrary library = integrationServer.getLibraryByName(libraryName);
 		if (library == null) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Library '" + libraryName + "' not found. Not updating monitoring.");
@@ -364,7 +340,7 @@ public class IIBService extends AbstractJsonService {
 		List<Map<String, Object>> flowsValues = getArray("flows", valueMap);
 		for (Map<String, Object> flowValues : flowsValues) {
 			String flowName = getString("name", flowValues);
-			MessageFlowProxy messageFlow = library.getMessageFlowByName(flowName);
+			IIBMessageFlow messageFlow = library.getMessageFlowByName(flowName);
 			if (messageFlow == null) {
 				continue;
 			}
@@ -379,9 +355,9 @@ public class IIBService extends AbstractJsonService {
 		return "{\"status\":\"success\"}";
 	}
 	
-	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, ExecutionGroupProxy integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyPropertyNotInitializedException, IllegalArgumentException, ConfigManagerProxyLoggedException {
+	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		String flowName = getString("name", valueMap);
-		MessageFlowProxy messageFlow = integrationServer.getMessageFlowByName(flowName);
+		IIBMessageFlow messageFlow = integrationServer.getMessageFlowByName(flowName);
 		if (messageFlow == null) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Message flow '" + flowName + "' not found. Not updating monitoring.");
@@ -398,7 +374,7 @@ public class IIBService extends AbstractJsonService {
 		return "{\"status\":\"success\"}";
 	}
 
-	private void activateMonitoring(IIBNodeConnection nodeConnection, ExecutionGroupProxy integrationServer, String application, String library, String version, MessageFlowProxy messageFlow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException, IllegalArgumentException, ConfigManagerProxyPropertyNotInitializedException {
+	private void activateMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String application, String library, String version, IIBMessageFlow messageFlow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException {
 		if (log.isInfoLevelEnabled()) {
 			log.logInfoMessage("Activating monitoring on '" + messageFlow.getName() + "'.");
 		}
@@ -420,27 +396,15 @@ public class IIBService extends AbstractJsonService {
 		if (currentMonitoringProfile == null || !currentMonitoringProfile.equals(newMonitoringProfile)) {
 			configurableService.setProperty(PROFILE_PROPERTIES, newMonitoringProfile);
 		}
-		String csName = messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE);
-		if (csName == null || !csName.equals(configurableServiceName)) {
-			messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE, configurableServiceName.toString());
-		}
-		String status = messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING);
-		if (status == null || !status.equals("active")) {
-			messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING, "active");
-		}	
+		messageFlow.activateMonitoringProfile(configurableServiceName.toString());
 	}
 
-	private void deactivateMonitoring(IIBNodeConnection nodeConnection, MessageFlowProxy messageFlow) throws ConfigManagerProxyPropertyNotInitializedException, IllegalArgumentException, ConfigManagerProxyLoggedException {
+	private void deactivateMonitoring(IIBNodeConnection nodeConnection, IIBMessageFlow messageFlow) {
 		if (log.isInfoLevelEnabled()) {
 			log.logInfoMessage("Deactivating monitoring on '" + messageFlow.getName() + "'.");
 		}
-		String status = messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING);
-		if ("active".equals(status)) {
-			messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING, "inactive");
-		}
-		String currentProfile = messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE);
+		String currentProfile = messageFlow.deactivateMonitoringProfile();
 		if (currentProfile != null) {
-			messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE, "");
 			nodeConnection.deleteConfigurableService(MONITORING_PROFILES, currentProfile);
 		}
 	}

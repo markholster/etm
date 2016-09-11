@@ -1,7 +1,9 @@
-package com.jecstar.etm.gui.rest.services.iib;
+package com.jecstar.etm.gui.rest.services.iib.proxy;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import com.ibm.broker.config.proxy.BrokerProxy;
 import com.ibm.broker.config.proxy.ConfigManagerProxyException;
@@ -10,6 +12,7 @@ import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedExcep
 import com.ibm.broker.config.proxy.ConfigurableService;
 import com.ibm.broker.config.proxy.ExecutionGroupProxy;
 import com.ibm.broker.config.proxy.MQBrokerConnectionParameters;
+import com.jecstar.etm.gui.rest.services.iib.Node;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -25,15 +28,15 @@ public class IIBNodeConnection implements Closeable {
 	private BrokerProxy brokerProxy;
 	private Node node;
 	
-	protected IIBNodeConnection(Node node) {
+	public IIBNodeConnection(Node node) {
 		this.node = node;
 	}
 	
-	protected Node getNode() {
+	public Node getNode() {
 		return node;
 	}
 
-	protected void connect() {
+	public void connect() {
 		MQBrokerConnectionParameters bcp = new MQBrokerConnectionParameters(this.node.getHost(), this.node.getPort(), this.node.getQueueManager());
 		if (this.node.getChannel()!= null) {
 			bcp.setAdvancedConnectionParameters(this.node.getChannel(), null, null, -1, -1, null);
@@ -64,27 +67,32 @@ public class IIBNodeConnection implements Closeable {
 		}
 	}
 	
-	protected ExecutionGroupProxy getServerByName(String serverName) {
+	public IIBIntegrationServer getServerByName(String serverName) {
 		try {
-			return this.brokerProxy.getExecutionGroupByName(serverName);
+			return new IIBIntegrationServer(brokerProxy.getExecutionGroupByName(serverName));
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
 	}
 	
-	protected Enumeration<ExecutionGroupProxy> getServers() {
+	public List<IIBIntegrationServer> getServers() {
 		try {
-			return this.brokerProxy.getExecutionGroups(null);
+			List<IIBIntegrationServer> servers = new ArrayList<>();
+			Enumeration<ExecutionGroupProxy> executionGroups = this.brokerProxy.getExecutionGroups(null);
+			while (executionGroups.hasMoreElements()) {
+				servers.add(new IIBIntegrationServer(executionGroups.nextElement()));
+			}
+			return servers;
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
 	}
 
-	protected void setSynchronous(int timeout) {
+	public void setSynchronous(int timeout) {
 		this.brokerProxy.setSynchronous(timeout);
 	}
 
-	protected ConfigurableService getConfigurableService(String type, String name) {
+	public ConfigurableService getConfigurableService(String type, String name) {
 		try {
 			return this.brokerProxy.getConfigurableService(type, name);
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
@@ -92,7 +100,7 @@ public class IIBNodeConnection implements Closeable {
 		}
 	}
 
-	protected void createConfigurableService(String type, String name) {
+	public void createConfigurableService(String type, String name) {
 		try {
 			this.brokerProxy.createConfigurableService(type, name);
 		} catch (ConfigManagerProxyLoggedException | IllegalArgumentException e) {
@@ -100,7 +108,7 @@ public class IIBNodeConnection implements Closeable {
 		}
 	}
 	
-	protected void deleteConfigurableService(String type, String name) {
+	public void deleteConfigurableService(String type, String name) {
 		try {
 			this.brokerProxy.deleteConfigurableService(type, name);
 		} catch (ConfigManagerProxyLoggedException | IllegalArgumentException e) {
