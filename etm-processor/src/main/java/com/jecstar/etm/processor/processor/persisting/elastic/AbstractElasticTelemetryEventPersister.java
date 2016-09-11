@@ -24,7 +24,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
 	private final EtmConfiguration etmConfiguration;
 	protected BulkProcessor bulkProcessor;
 	
-	private final DateTimeFormatter dateTimeFormatterIndexPerDay = new DateTimeFormatterBuilder()
+	public static final DateTimeFormatter dateTimeFormatterIndexPerDay = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
 			.appendLiteral("-")
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
@@ -51,19 +51,19 @@ public abstract class AbstractElasticTelemetryEventPersister {
 	}
     
     protected String getElasticIndexName() {
-    	return ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + this.dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+    	return ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
     
     protected abstract String getElasticTypeName();
     
     protected IndexRequest createIndexRequest(String id) {
     	return new IndexRequest(getElasticIndexName(), getElasticTypeName(), id)
-    			.waitForActiveShards(getActiveShardCount(etmConfiguration));
+    			.waitForActiveShards(getActiveShardCount(this.etmConfiguration));
     }
     
     protected UpdateRequest createUpdateRequest(String id) {
     	return new UpdateRequest(getElasticIndexName(), getElasticTypeName(), id)
-    			.waitForActiveShards(getActiveShardCount(etmConfiguration))
+    			.waitForActiveShards(getActiveShardCount(this.etmConfiguration))
     			.retryOnConflict(this.etmConfiguration.getRetryOnConflictCount());
     	
     }

@@ -172,10 +172,6 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		try {
 			target = this.ringBuffer.get(sequence);
 			target.initialize(event);
-// !!!!!!! Not logging that we log a logging message. This will cause an stack overflow if the application itself logs.			
-//			if (log.isDebugLevelEnabled()) {
-//				log.logDebugMessage("Processing log event with id '" + event.id + "'.");
-//			}
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to initialize log event with id '" + event.id + "'.", e);

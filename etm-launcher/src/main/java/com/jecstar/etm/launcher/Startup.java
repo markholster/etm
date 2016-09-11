@@ -11,7 +11,9 @@ import java.net.UnknownHostException;
 import org.yaml.snakeyaml.Yaml;
 
 import com.jecstar.etm.launcher.configuration.Configuration;
-import com.jecstar.etm.slf4j.ConfigurationImpl;
+import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
+import com.jecstar.etm.launcher.slf4j.LogBulkProcessorWrapper;
+import com.jecstar.etm.launcher.slf4j.LogConfiguration;
 
 public class Startup {
 
@@ -22,10 +24,11 @@ public class Startup {
 		}
 		try {
 			Configuration configuration = loadConfiguration(new File(commandLineParameters.getConfigDirectory()));
-			ConfigurationImpl.loggers.putAll(configuration.logging.loggers);
-			ConfigurationImpl.rootLogLevel = configuration.logging.rootLogger;
-			ConfigurationImpl.applicationInstance = configuration.instanceName;
-			ConfigurationImpl.hostAddress = InetAddress.getByName(configuration.bindingAddress);
+			LogConfiguration.loggers.putAll(configuration.logging.loggers);
+			LogConfiguration.rootLogLevel = configuration.logging.rootLogger;
+			LogConfiguration.applicationInstance = configuration.instanceName;
+			LogConfiguration.hostAddress = InetAddress.getByName(configuration.bindingAddress);
+			EtmLoggerFactory.initialize(new LogBulkProcessorWrapper());
 			new Launcher().launch(commandLineParameters, configuration);
 		} catch (FileNotFoundException e) {
 			System.err.println("Configuration file not found: " + e.getMessage());

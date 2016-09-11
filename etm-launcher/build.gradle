@@ -1,8 +1,7 @@
 dependencies {
     compile project(":etm-gui"), 
     		project(":etm-processor-rest"), 
-    		project(":etm-processor-ibmmq"), 
-    		project(":etm-slf4j"), 
+    		project(":etm-processor-ibmmq"),  
     		dep_log4jOverSlf4j, 
     		dep_resteasyJaxrs, 
     		dep_resteasyJacksonProvider, 

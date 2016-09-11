@@ -22,6 +22,7 @@ import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.retention.IndexCleaner;
+import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
@@ -29,7 +30,6 @@ import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import com.jecstar.etm.slf4j.InternalEtmLogForwarder;
 
 public class Launcher {
 
@@ -45,21 +45,21 @@ public class Launcher {
 	private ScheduledReporter metricReporter;
 	private IbmMqProcessor ibmMqProcessor;
 	private ScheduledExecutorService retentionScheduler;
-
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration) {
 		addShutdownHooks();
 		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
 		try {
 			initializeElasticsearchClient(configuration);
+			EtmLoggerFactory.setClient(this.elasticClient);
 			this.indexTemplateCreator = new ElasticsearchIndextemplateCreator(this.elasticClient);
 			this.indexTemplateCreator.createTemplates();
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
+			EtmLoggerFactory.setConfiguration(etmConfiguration);
 			this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);
-			InternalEtmLogForwarder.processor = processor;
 			initializeIndexCleaner(etmConfiguration, this.elasticClient);
 			
 			if (configuration.isHttpServerNecessary()) {
@@ -111,6 +111,8 @@ public class Launcher {
 				if (Launcher.this.metricReporter != null) {
 					try { Launcher.this.metricReporter.close(); } catch (Throwable t) {}
 				}
+				try { EtmLoggerFactory.close(); } catch (Throwable t) {}
+				
 				if (Launcher.this.elasticClient != null) {
 					try { Launcher.this.elasticClient.close(); } catch (Throwable t) {}
 				}
