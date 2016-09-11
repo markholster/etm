@@ -1,4 +1,4 @@
 dependencies {
     compile project(":etm-server-core"), dep_elasticsearchClient, dep_poiOoxml, dep_resteasyJaxrs
-	compile files('../lib/com.ibm.mq.allclient.jar', '../lib/config-manager-proxy-S900-FP03.jar', '../lib/ibmjsseprovider2.jar')
+	compile files('../lib/com.ibm.mq.allclient.jar', '../lib/integration-api-10.0.0.0.jar', '../lib/ibmjsseprovider2.jar')
 }

@@ -52,26 +52,35 @@ public class IIBLibrary {
 	}
 	
 	public List<IIBSubFlow> getSubFlows() {
+		if (!IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
+			return new ArrayList<>();
+		}
+		return getSubFlowsWhenSubflowApiPresent();
+	}
+	
+	private List<IIBSubFlow> getSubFlowsWhenSubflowApiPresent() {
 		try {
 			List<IIBSubFlow> subFlows = new ArrayList<>();
-			if (IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
-				Enumeration<com.ibm.broker.config.proxy.SubFlowProxy> subFlowProxies = this.library.getSubFlows(null);
-				while (subFlowProxies.hasMoreElements()) {
-					subFlows.add(new IIBSubFlow(subFlowProxies.nextElement()));
-				}
+			Enumeration<com.ibm.broker.config.proxy.SubFlowProxy> subFlowProxies = this.library.getSubFlows(null);
+			while (subFlowProxies.hasMoreElements()) {
+				subFlows.add(new IIBSubFlow(subFlowProxies.nextElement()));
 			}
 			return subFlows;
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}		
+		}				
 	}
 	
-	public IIBSubFlow getSubFlowByName(String flowName) {
+	public IIBSubFlow getSubFlowByName(String subFlowName) {
 		if (!IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
 			return null;
 		}
+		return getSubflowByNameWhenSubflowApiPresent(subFlowName);
+	}
+	
+	private IIBSubFlow getSubflowByNameWhenSubflowApiPresent(String subflowName) {
 		try {
-			com.ibm.broker.config.proxy.SubFlowProxy subFlowProxy = this.library.getSubFlowByName(flowName);
+			com.ibm.broker.config.proxy.SubFlowProxy subFlowProxy = this.library.getSubFlowByName(subflowName);
 			if (subFlowProxy == null) {
 				return null;
 			}

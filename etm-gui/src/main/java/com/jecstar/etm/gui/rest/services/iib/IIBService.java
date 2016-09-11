@@ -61,7 +61,7 @@ public class IIBService extends AbstractJsonService {
 	@GET
 	@Path("/nodes")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getParsers() {
+	public String getNodes() {
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE).setFetchSource(true)
 				.setQuery(QueryBuilders.matchAllQuery())
@@ -87,7 +87,7 @@ public class IIBService extends AbstractJsonService {
 	@DELETE
 	@Path("/node/{nodeName}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String deleteParser(@PathParam("nodeName") String nodeName) {
+	public String deleteNode(@PathParam("nodeName") String nodeName) {
 		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME,
 				ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -98,7 +98,7 @@ public class IIBService extends AbstractJsonService {
 	@PUT
 	@Path("/node/{nodeName}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String addParser(@PathParam("nodeName") String nodeName, String json) {
+	public String addNode(@PathParam("nodeName") String nodeName, String json) {
 		Node node = this.nodeConverter.read(json);
 		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
 			nodeConnection.connect();
@@ -229,7 +229,7 @@ public class IIBService extends AbstractJsonService {
 					addLibraryDeployment(nodeConnection, library, result);
 					firstLibrary = false;
 				}
-				result.append(", \"flows\": [");
+				result.append("], \"flows\": [");
 				List<IIBMessageFlow> messageFlows = application.getMessageFlows();
 				boolean firstFlow = true;
 				for (IIBMessageFlow messageFlow : messageFlows) {
@@ -239,7 +239,7 @@ public class IIBService extends AbstractJsonService {
 					addFlowDeployment(nodeConnection, messageFlow, result);
 					firstFlow = false;
 				}
-				result.append(", \"subflows\": [");
+				result.append("], \"subflows\": [");
 				List<IIBSubFlow> subFlows = application.getSubFlows();
 				firstFlow = true;
 				for (IIBSubFlow subFlow : subFlows) {
