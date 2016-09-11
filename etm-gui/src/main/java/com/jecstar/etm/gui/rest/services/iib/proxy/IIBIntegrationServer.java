@@ -42,7 +42,11 @@ public class IIBIntegrationServer {
 	
 	public IIBApplication getApplicationByName(String applicationName) {
 		try {
-			return new IIBApplication(this.integrationServer.getApplicationByName(applicationName));
+			ApplicationProxy applicationProxy = this.integrationServer.getApplicationByName(applicationName);
+			if (applicationProxy == null) {
+				return null;
+			}
+			return new IIBApplication(applicationProxy);
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
@@ -63,7 +67,11 @@ public class IIBIntegrationServer {
 	
 	public IIBLibrary getLibraryByName(String libraryName) {
 		try {
-			return new IIBLibrary(this.integrationServer.getLibraryByName(libraryName));
+			LibraryProxy libraryProxy = this.integrationServer.getLibraryByName(libraryName);
+			if (libraryProxy == null) {
+				return null;
+			}
+			return new IIBLibrary(libraryProxy);
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) { 
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}	
@@ -84,7 +92,11 @@ public class IIBIntegrationServer {
 
 	public IIBMessageFlow getMessageFlowByName(String flowName) {
 		try {
-			return new IIBMessageFlow(this.integrationServer.getMessageFlowByName(flowName));
+			MessageFlowProxy messageFlowProxy = this.integrationServer.getMessageFlowByName(flowName);
+			if (messageFlowProxy == null) {
+				return null;
+			}
+			return new IIBMessageFlow(messageFlowProxy);
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) { 
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}	

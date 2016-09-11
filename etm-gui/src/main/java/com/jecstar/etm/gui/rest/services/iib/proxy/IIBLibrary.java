@@ -7,6 +7,7 @@ import java.util.List;
 import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedException;
 import com.ibm.broker.config.proxy.LibraryProxy;
 import com.ibm.broker.config.proxy.MessageFlowProxy;
+import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.server.core.EtmException;
 
 public class IIBLibrary {
@@ -40,7 +41,41 @@ public class IIBLibrary {
 	
 	public IIBMessageFlow getMessageFlowByName(String flowName) {
 		try {
-			return new IIBMessageFlow(this.library.getMessageFlowByName(flowName));
+			MessageFlowProxy messageFlowProxy = this.library.getMessageFlowByName(flowName);
+			if (messageFlowProxy == null) {
+				return null;
+			}
+			return new IIBMessageFlow(messageFlowProxy);
+		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}
+	}
+	
+	public List<IIBSubFlow> getSubFlows() {
+		try {
+			List<IIBSubFlow> subFlows = new ArrayList<>();
+			if (IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
+				Enumeration<com.ibm.broker.config.proxy.SubFlowProxy> subFlowProxies = this.library.getSubFlows(null);
+				while (subFlowProxies.hasMoreElements()) {
+					subFlows.add(new IIBSubFlow(subFlowProxies.nextElement()));
+				}
+			}
+			return subFlows;
+		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}		
+	}
+	
+	public IIBSubFlow getSubFlowByName(String flowName) {
+		if (!IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
+			return null;
+		}
+		try {
+			com.ibm.broker.config.proxy.SubFlowProxy subFlowProxy = this.library.getSubFlowByName(flowName);
+			if (subFlowProxy == null) {
+				return null;
+			}
+			return new IIBSubFlow(subFlowProxy);
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}

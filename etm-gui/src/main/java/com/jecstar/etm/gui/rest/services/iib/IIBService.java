@@ -24,11 +24,13 @@ import com.ibm.broker.config.proxy.ConfigurableService;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBApplication;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBFlow;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBIntegrationServer;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBLibrary;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBMessageFlow;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNode;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNodeConnection;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBSubFlow;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -162,9 +164,25 @@ public class IIBService extends AbstractJsonService {
 			if ("application".equals(objectType)) {
 				result = updateApplicationMonitorning(nodeConnection, integrationServer, valueMap);
 			} else if ("library".equals(objectType)) {
-				result = updateLibraryMonitorning(nodeConnection, integrationServer, valueMap);
+				String libraryName = getString("name", valueMap);
+				IIBLibrary library = integrationServer.getLibraryByName(libraryName);
+				if (library == null) {
+					if (log.isDebugLevelEnabled()) {
+						log.logDebugMessage("Library '" + libraryName + "' not found. Not updating monitoring.");
+					}
+					throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
+				}
+				result = updateLibraryMonitorning(nodeConnection, integrationServer, null, library.getVersion(), library, valueMap);
 			} else if ("flow".equals(objectType)) {
-				result = updateFlowMonitorning(nodeConnection, integrationServer, valueMap);
+				String flowName = getString("name", valueMap);
+				IIBMessageFlow messageFlow = integrationServer.getMessageFlowByName(flowName);
+				if (messageFlow == null) {
+					if (log.isDebugLevelEnabled()) {
+						log.logDebugMessage("Message flow '" + flowName + "' not found. Not updating monitoring.");
+					}
+					throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
+				}
+				result = updateFlowMonitorning(nodeConnection, integrationServer, null, null, null, messageFlow, valueMap);
 			} else {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Unknown object type '" + objectType + "' not found. Not updating monitoring.");
@@ -201,17 +219,16 @@ public class IIBService extends AbstractJsonService {
 				}
 				result.append("{");
 				addStringElementToJsonBuffer("name", application.getName(), result, true);
-				// TODO vanaf iib10 is de api voor subflows beschrikbaar. Vanaf dan wordt het handig om de libraries uit te lezen.
-//				Enumeration<LibraryProxy> libraries = application.getLibraries(null);
-//				result.append(", \"libraries\": [");
-//				boolean firstLibrary = true;
-//				while (libraries.hasMoreElements()) {
-//					if (!firstLibrary) {
-//						result.append(",");
-//					}
-//					addLibraryDeployment(libraries.nextElement(), result);
-//					firstLibrary = false;
-//				}
+				List<IIBLibrary> libraries = application.getLibraries();
+				result.append(", \"libraries\": [");
+				boolean firstLibrary = true;
+				for (IIBLibrary library : libraries) {
+					if (!firstLibrary) {
+						result.append(",");
+					}
+					addLibraryDeployment(nodeConnection, library, result);
+					firstLibrary = false;
+				}
 				result.append(", \"flows\": [");
 				List<IIBMessageFlow> messageFlows = application.getMessageFlows();
 				boolean firstFlow = true;
@@ -219,7 +236,17 @@ public class IIBService extends AbstractJsonService {
 					if (!firstFlow) {
 						result.append(",");
 					}
-					addMessageFlowDeployment(nodeConnection, messageFlow, result);
+					addFlowDeployment(nodeConnection, messageFlow, result);
+					firstFlow = false;
+				}
+				result.append(", \"subflows\": [");
+				List<IIBSubFlow> subFlows = application.getSubFlows();
+				firstFlow = true;
+				for (IIBSubFlow subFlow : subFlows) {
+					if (!firstFlow) {
+						result.append(",");
+					}
+					addFlowDeployment(nodeConnection, subFlow, result);
 					firstFlow = false;
 				}
 				result.append("]}");
@@ -242,7 +269,7 @@ public class IIBService extends AbstractJsonService {
 				if (!firstFlow) {
 					result.append(",");
 				}
-				addMessageFlowDeployment(nodeConnection, messageFlow, result);
+				addFlowDeployment(nodeConnection, messageFlow, result);
 				firstFlow = false;
 			}
 			result.append("]");
@@ -261,16 +288,26 @@ public class IIBService extends AbstractJsonService {
 			if (!firstFlow) {
 				result.append(",");
 			}
-			addMessageFlowDeployment(nodeConnection, messageFlow, result);
+			addFlowDeployment(nodeConnection, messageFlow, result);
 			firstFlow = false;
 		}
-		result.append("]}");
+		result.append("], \"subflows\": [");
+		List<IIBSubFlow> subFlows = library.getSubFlows();
+		firstFlow = true;
+		for (IIBSubFlow subFlow : subFlows) {
+			if (!firstFlow) {
+				result.append(",");
+			}
+			addFlowDeployment(nodeConnection, subFlow, result);
+			firstFlow = false;
+		}
+		result.append("]}");		
 	}
 
-	private void addMessageFlowDeployment(IIBNodeConnection nodeConnection, IIBMessageFlow messageFlow, StringBuilder result) {
-		boolean monitoringActivated = messageFlow.isMonitoringActivated();
+	private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBFlow flow, StringBuilder result) {
+		boolean monitoringActivated = flow.isMonitoringActivated();
 		String currentProfile = null;
-		String currentProfileName = messageFlow.getMonitoringProfileName();
+		String currentProfileName = flow.getMonitoringProfileName();
 		if (currentProfileName != null) {
 			ConfigurableService configurableService = nodeConnection.getConfigurableService(MONITORING_PROFILES, currentProfileName);
 			if (configurableService != null) {
@@ -278,10 +315,10 @@ public class IIBService extends AbstractJsonService {
 			}
 		}
 		result.append("{");
-		addStringElementToJsonBuffer("name", messageFlow.getName(), result, true);
+		addStringElementToJsonBuffer("name", flow.getName(), result, true);
 		addBooleanElementToJsonBuffer("monitoring_active", monitoringActivated, result, false);
 		result.append(", \"nodes\": [");
-		List<IIBNode> nodes = messageFlow.getNodes();
+		List<IIBNode> nodes = flow.getNodes();
 		boolean firstNode = true;
 		for (IIBNode node : nodes) {
 			if (!node.isSupported()) {
@@ -309,6 +346,18 @@ public class IIBService extends AbstractJsonService {
 			throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
 		}
 		String version = application.getVersion();
+		List<Map<String, Object>> librariesValues = getArray("libraries", valueMap);
+		for (Map<String, Object> libraryValues : librariesValues) {
+			String libraryName = getString("name", valueMap);
+			IIBLibrary library = application.getLibraryByName(libraryName);
+			if (library == null) {
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Library '" + libraryName + "' not found. Not updating monitoring.");
+				}
+				throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
+			}
+			updateLibraryMonitorning(nodeConnection, integrationServer, applicationName, version, library, libraryValues);
+		}		
 		List<Map<String, Object>> flowsValues = getArray("flows", valueMap);
 		for (Map<String, Object> flowValues : flowsValues) {
 			String flowName = getString("name", flowValues);
@@ -316,27 +365,21 @@ public class IIBService extends AbstractJsonService {
 			if (messageFlow == null) {
 				continue;
 			}
-			boolean monitoringActive = getBoolean("monitoring_active", flowValues);
-			if (monitoringActive) {
-				activateMonitoring(nodeConnection, integrationServer, applicationName, null, version, messageFlow, flowValues);
-			} else {
-				deactivateMonitoring(nodeConnection, messageFlow);
-			}
-			
+			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, messageFlow, valueMap);
 		}
+		List<Map<String, Object>> subflowsValues = getArray("subflows", valueMap);
+		for (Map<String, Object> subflowValues : subflowsValues) {
+			String flowName = getString("name", subflowValues);
+			IIBSubFlow subFlow = application.getSubFlowByName(flowName);
+			if (subFlow == null) {
+				continue;
+			}
+			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, subFlow, valueMap);
+		}		
 		return "{\"status\":\"success\"}";
 	}
 	
-	private String updateLibraryMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
-		String libraryName = getString("name", valueMap);
-		IIBLibrary library = integrationServer.getLibraryByName(libraryName);
-		if (library == null) {
-			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Library '" + libraryName + "' not found. Not updating monitoring.");
-			}
-			throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
-		}
-		String version = library.getVersion();
+	private String updateLibraryMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String version, IIBLibrary library, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		List<Map<String, Object>> flowsValues = getArray("flows", valueMap);
 		for (Map<String, Object> flowValues : flowsValues) {
 			String flowName = getString("name", flowValues);
@@ -346,37 +389,42 @@ public class IIBService extends AbstractJsonService {
 			}
 			boolean monitoringActive = getBoolean("monitoring_active", flowValues);
 			if (monitoringActive) {
-				activateMonitoring(nodeConnection, integrationServer, null, libraryName, version, messageFlow, flowValues);
+				activateMonitoring(nodeConnection, integrationServer, applicationName, library.getName(), version, messageFlow, flowValues);
 			} else {
 				deactivateMonitoring(nodeConnection, messageFlow);
 			}
-			
 		}
+		List<Map<String, Object>> subflowsValues = getArray("subflows", valueMap);
+		for (Map<String, Object> subflowValues : subflowsValues) {
+			String flowName = getString("name", subflowValues);
+			IIBSubFlow subFlow = library.getSubFlowByName(flowName);
+			if (subFlow == null) {
+				continue;
+			}
+			boolean monitoringActive = getBoolean("monitoring_active", subflowValues);
+			if (monitoringActive) {
+				activateMonitoring(nodeConnection, integrationServer, applicationName, library.getName(), version, subFlow, subflowValues);
+			} else {
+				deactivateMonitoring(nodeConnection, subFlow);
+			}
+		}		
 		return "{\"status\":\"success\"}";
 	}
 	
-	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
-		String flowName = getString("name", valueMap);
-		IIBMessageFlow messageFlow = integrationServer.getMessageFlowByName(flowName);
-		if (messageFlow == null) {
-			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Message flow '" + flowName + "' not found. Not updating monitoring.");
-			}
-			throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
-		}
-		String version = messageFlow.getVersion();
+	
+	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String libraryName, String version, IIBFlow flow, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		boolean monitoringActive = getBoolean("monitoring_active", valueMap);
 		if (monitoringActive) {
-			activateMonitoring(nodeConnection, integrationServer, null, null, version, messageFlow, valueMap);
+			activateMonitoring(nodeConnection, integrationServer, applicationName, libraryName, version, flow, valueMap);
 		} else {
-			deactivateMonitoring(nodeConnection, messageFlow);
+			deactivateMonitoring(nodeConnection, flow);
 		}
 		return "{\"status\":\"success\"}";
 	}
 
-	private void activateMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String application, String library, String version, IIBMessageFlow messageFlow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException {
+	private void activateMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String application, String library, String version, IIBFlow flow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException {
 		if (log.isInfoLevelEnabled()) {
-			log.logInfoMessage("Activating monitoring on '" + messageFlow.getName() + "'.");
+			log.logInfoMessage("Activating monitoring on '" + flow.getName() + "'.");
 		}
 		StringBuilder configurableServiceName = new StringBuilder("etm-" + nodeConnection.getNode().getName() + "_" + integrationServer.getName());
 		if (application != null) {
@@ -385,7 +433,7 @@ public class IIBService extends AbstractJsonService {
 		if (library != null) {
 			configurableServiceName.append("_" + library);
 		}
-		configurableServiceName.append(messageFlow.getName());
+		configurableServiceName.append("_" + flow.getName());
 		ConfigurableService configurableService = nodeConnection.getConfigurableService(MONITORING_PROFILES, configurableServiceName.toString());
 		if (configurableService == null) {
 			nodeConnection.createConfigurableService(MONITORING_PROFILES, configurableServiceName.toString()); 
@@ -396,14 +444,14 @@ public class IIBService extends AbstractJsonService {
 		if (currentMonitoringProfile == null || !currentMonitoringProfile.equals(newMonitoringProfile)) {
 			configurableService.setProperty(PROFILE_PROPERTIES, newMonitoringProfile);
 		}
-		messageFlow.activateMonitoringProfile(configurableServiceName.toString());
+		flow.activateMonitoringProfile(configurableServiceName.toString());
 	}
 
-	private void deactivateMonitoring(IIBNodeConnection nodeConnection, IIBMessageFlow messageFlow) {
+	private void deactivateMonitoring(IIBNodeConnection nodeConnection, IIBFlow flow) {
 		if (log.isInfoLevelEnabled()) {
-			log.logInfoMessage("Deactivating monitoring on '" + messageFlow.getName() + "'.");
+			log.logInfoMessage("Deactivating monitoring on '" + flow.getName() + "'.");
 		}
-		String currentProfile = messageFlow.deactivateMonitoringProfile();
+		String currentProfile = flow.deactivateMonitoringProfile();
 		if (currentProfile != null) {
 			nodeConnection.deleteConfigurableService(MONITORING_PROFILES, currentProfile);
 		}

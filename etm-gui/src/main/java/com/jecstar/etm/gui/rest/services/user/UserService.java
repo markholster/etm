@@ -23,6 +23,7 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -34,21 +35,12 @@ import com.jecstar.etm.server.core.util.BCrypt;
 
 @Path("/user")
 public class UserService extends AbstractJsonService {
-
-	private static boolean iibProxyOnClasspath;
+	
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	private final String timezoneResponse;
 	private final EtmPrincipalTags tags = new EtmPrincipalTagsJsonImpl();
 	
-	static {
-		try {
-			Class.forName("com.ibm.broker.config.proxy.BrokerProxy");
-			iibProxyOnClasspath = true;
-		} catch (ClassNotFoundException e) {
-			iibProxyOnClasspath = false;
-		}
-	}
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		UserService.client = client;
@@ -225,7 +217,7 @@ public class UserService extends AbstractJsonService {
 				result.append("\"admin\"");
 				subMenuAdded = true;
 			}
-			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && iibProxyOnClasspath) {
+			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && IIBApi.IIB_PROXY_AVAILABLE) {
 				if (subMenuAdded) {
 					result.append(",");
 				}

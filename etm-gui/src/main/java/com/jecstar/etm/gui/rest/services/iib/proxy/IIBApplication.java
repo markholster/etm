@@ -8,6 +8,7 @@ import com.ibm.broker.config.proxy.ApplicationProxy;
 import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedException;
 import com.ibm.broker.config.proxy.LibraryProxy;
 import com.ibm.broker.config.proxy.MessageFlowProxy;
+import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.server.core.EtmException;
 
 public class IIBApplication {
@@ -39,6 +40,18 @@ public class IIBApplication {
 		}		
 	}
 	
+	public IIBLibrary getLibraryByName(String libraryName) {
+		try {
+			LibraryProxy libraryByProxy = this.application.getLibraryByName(libraryName);
+			if (libraryByProxy == null) {
+				return null;
+			}
+			return new IIBLibrary(libraryByProxy);
+		} catch (ConfigManagerProxyPropertyNotInitializedException e) { 
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}	
+	}
+	
 	public List<IIBMessageFlow> getMessageFlows() {
 		try {
 			List<IIBMessageFlow> messageFlows = new ArrayList<>();
@@ -54,11 +67,47 @@ public class IIBApplication {
 	
 	public IIBMessageFlow getMessageFlowByName(String flowName) {
 		try {
-			return new IIBMessageFlow(this.application.getMessageFlowByName(flowName));
+			MessageFlowProxy messageFlowProxy = this.application.getMessageFlowByName(flowName);
+			if (messageFlowProxy == null) {
+				return null;
+			}
+			return new IIBMessageFlow(messageFlowProxy);
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
 	}
+	
+	public List<IIBSubFlow> getSubFlows() {
+		try {
+			List<IIBSubFlow> subFlows = new ArrayList<>();
+			if (IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
+				Enumeration<com.ibm.broker.config.proxy.SubFlowProxy> subFlowProxies = this.application.getSubFlows(null);
+				while (subFlowProxies.hasMoreElements()) {
+					subFlows.add(new IIBSubFlow(subFlowProxies.nextElement()));
+				}
+			}
+			return subFlows;
+		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}		
+	}
+	
+	public IIBSubFlow getSubFlowByName(String flowName) {
+		if (!IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
+			return null;
+		}
+		try {
+			com.ibm.broker.config.proxy.SubFlowProxy subFlowProxy = this.application.getSubFlowByName(flowName);
+			if (subFlowProxy == null) {
+				return null;
+			}
+			return new IIBSubFlow(subFlowProxy);
+		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}
+	}
+
+	
 
 	public String getVersion() {
 		try {
