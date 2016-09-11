@@ -123,11 +123,13 @@ function showEvent(scrollTo, type, id) {
 			var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
 			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		}
-		appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
-		appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		if ('log' === data.type) {
 			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
 		} else if ('http' === data.type) {
+			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
+			if (data.source.expiry) {
+				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			}
 			if (data.source.http_type) {
 				// http type known, determine request or response.
 				if ('RESPONSE' === data.source.http_type) {
@@ -144,11 +146,11 @@ function showEvent(scrollTo, type, id) {
 					}
 				}
 			}
-			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
-			if ('RESPONSE' !== data.source.http_type) {
+		} else if ('messaging' === data.type) {
+			appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
+			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			}
-		} else if ('messaging' === data.type) {
 			if (data.source.messaging_type) {
 				// messaging type known, determine request or response.
 				if ('RESPONSE' === data.source.messaging_type) {
@@ -184,6 +186,10 @@ function showEvent(scrollTo, type, id) {
 				}
 			}
 		} else if ('sql' === data.type) {
+			appendToContainerInRow($eventTab, 'Sql type', data.source.sql_type);
+			if (data.source.expiry) {
+				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			}
 			if (data.source.sql_type) {
 				// sql type known, determine query or result.
 				if ('RESULTSET' === data.source.sql_type) {
