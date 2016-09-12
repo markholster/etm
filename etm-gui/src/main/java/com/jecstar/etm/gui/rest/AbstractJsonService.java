@@ -40,8 +40,8 @@ public class AbstractJsonService extends JsonConverter {
     	}
     	Set<EtmGroup> groups = getEtmPrincipal().getGroups();
     	for (EtmGroup group : groups) {
-    		if (group.getFilterQuery() != null && filterQuery.trim().length() > 0) {
-        		result.add(new QueryStringQueryBuilder(filterQuery.trim())
+    		if (group.getFilterQuery() != null && group.getFilterQuery().trim().length() > 0) {
+        		result.add(new QueryStringQueryBuilder(group.getFilterQuery().trim())
         				.allowLeadingWildcard(true)
         				.analyzeWildcard(true)
         				.locale(getEtmPrincipal().getLocale())
