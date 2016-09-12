@@ -348,7 +348,7 @@ public class IIBService extends AbstractJsonService {
 		String version = application.getVersion();
 		List<Map<String, Object>> librariesValues = getArray("libraries", valueMap);
 		for (Map<String, Object> libraryValues : librariesValues) {
-			String libraryName = getString("name", valueMap);
+			String libraryName = getString("name", libraryValues);
 			IIBLibrary library = application.getLibraryByName(libraryName);
 			if (library == null) {
 				if (log.isDebugLevelEnabled()) {
@@ -365,7 +365,7 @@ public class IIBService extends AbstractJsonService {
 			if (messageFlow == null) {
 				continue;
 			}
-			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, messageFlow, valueMap);
+			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, messageFlow, flowValues);
 		}
 		List<Map<String, Object>> subflowsValues = getArray("subflows", valueMap);
 		for (Map<String, Object> subflowValues : subflowsValues) {
@@ -374,7 +374,7 @@ public class IIBService extends AbstractJsonService {
 			if (subFlow == null) {
 				continue;
 			}
-			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, subFlow, valueMap);
+			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, subFlow, subflowValues);
 		}		
 		return "{\"status\":\"success\"}";
 	}
