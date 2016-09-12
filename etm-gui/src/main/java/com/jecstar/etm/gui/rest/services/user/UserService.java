@@ -76,6 +76,10 @@ public class UserService extends AbstractJsonService {
 		updateMap.put(this.tags.getTimeZoneTag(), valueMap.get(this.tags.getTimeZoneTag()));
 		updateMap.put(this.tags.getLocaleTag(), valueMap.get(this.tags.getLocaleTag()));
 		Integer newHistorySize = getInteger(this.tags.getQueryHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE);
+		if (newHistorySize > 20) {
+			// TODO, the max size should be in the ETM configuration.
+			newHistorySize = 20;
+		}
 		updateMap.put(this.tags.getQueryHistorySizeTag(), newHistorySize);
 		
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
