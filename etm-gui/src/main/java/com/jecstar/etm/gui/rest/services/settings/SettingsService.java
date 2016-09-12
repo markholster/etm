@@ -452,6 +452,7 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/user/{userId}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String addUser(@PathParam("userId") String userId, String json) {
+		// TODO pagina geeft geen error als een nieuwe gebruiker wordt opgevoerd en geen wachtwoorden worden in gegeven.
 		// Do a read and write of the user to make sure it's valid.
 		Map<String, Object> valueMap = toMap(json);
 		EtmPrincipal newPrincipal = loadPrincipal(valueMap);
