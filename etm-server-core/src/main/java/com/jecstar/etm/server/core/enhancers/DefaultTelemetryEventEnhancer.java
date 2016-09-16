@@ -124,7 +124,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 			return null;
 		}
 		String trimmed = payload.toLowerCase().trim();
-		if (trimmed.indexOf("<soap:envelope ") != -1) {
+		if (trimmed.indexOf("http://schemas.xmlsoap.org/soap/envelope/") != -1 || trimmed.indexOf("http://www.w3.org/2003/05/soap-envelope") != -1) {
 			return PayloadFormat.SOAP;
 		} else if (trimmed.indexOf("<!doctype html") != -1) {
 			return PayloadFormat.HTML;

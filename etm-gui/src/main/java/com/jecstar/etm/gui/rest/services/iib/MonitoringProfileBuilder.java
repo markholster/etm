@@ -116,7 +116,7 @@ public class MonitoringProfileBuilder {
 		
 		public String getEventName() {
 			if (containerName == null) {
-				return "";
+				return "_unknown_";
 			}
 			if (containerVersion != null && containerVersion.trim().length() > 0) {
 				return containerName.replace(",", "\\,") + "," + containerVersion.replace(",", "\\,");

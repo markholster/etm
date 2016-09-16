@@ -142,7 +142,7 @@ public class IIBService extends AbstractJsonService {
 	@POST
 	@Path("/node/{nodeName}/server/{serverName}/{objectType}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String updateApplicationMonitoring(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName, @PathParam("objectType") String objectType, String json) {
+	public String updateEventMonitoring(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName, @PathParam("objectType") String objectType, String json) {
 		Map<String, Object> valueMap = toMap(json);
 		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME,
 				ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();

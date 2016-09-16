@@ -120,7 +120,11 @@ function showEvent(scrollTo, type, id) {
 		appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
 		var $endpoints = $(data.source.endpoints);
 		if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
-			var writing_times = $endpoints.map(function () {return this.writing_endpoint_handler.handling_time}).get();
+			var writing_times = $endpoints.map(function () {
+				if (this.writing_endpoint_handler) {
+					return this.writing_endpoint_handler.handling_time
+				}
+			}).get();
 			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		}
 		if ('log' === data.type) {
@@ -161,7 +165,11 @@ function showEvent(scrollTo, type, id) {
 				} else if ('REQUEST' === data.source.messaging_type) {
 					$tabHeader.text('Request message');
 					if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
-						var response_times = $endpoints.map(function () {return this.writing_endpoint_handler.response_time}).get();
+						var response_times = $endpoints.map(function () {
+							if (this.writing_endpoint_handler) {
+								return this.writing_endpoint_handler.response_time
+							}
+						}).get();
 						if (response_times) {
 							appendToContainerInRow($eventTab, 'Highest writer response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
 						}
