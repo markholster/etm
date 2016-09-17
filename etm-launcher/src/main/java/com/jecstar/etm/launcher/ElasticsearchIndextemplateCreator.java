@@ -245,6 +245,19 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"	return null;\n" + 
 				"}\n" + 
 				"\n" + 
+				"boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {\n" + 
+				"	Object entity = targetSource.get(entityName);\n" + 
+				"	if (entity != null) {\n" + 
+				"		return false;\n" + 
+				"	}\n" + 
+				"	entity = inputSource.get(entityName);\n" + 
+				"	if (entity == null) {\n" + 
+				"		return false;\n" + 
+				"	}\n" + 
+				"	targetSource.put(entityName, entity);	\n" + 
+				"	return true;\n" + 
+				"}\n" + 
+				"\n" + 
 				"Map inputSource = (Map)params.get(\"source\");\n" + 
 				"Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" + 
 				"\n" + 
@@ -273,6 +286,12 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"	    targetSource.put(\"temp_for_correlations\", tempForCorrelations);\n" + 
 				"    }\n" + 
 				"    ((Map)params.get(\"ctx\")).put(\"_source\", targetSource);\n" + 
+				"}\n" + 
+				"\n" + 
+				"// Merge several fields\n" + 
+				"if (!correlatedBeforeInserted) {\n" + 
+				"	mergeEntity(targetSource, inputSource, \"name\");\n" + 
+				"	mergeEntity(targetSource, inputSource, \"payload_format\");\n" + 
 				"}\n" + 
 				"\n" + 
 				"// Merge the endpoints.\n" + 

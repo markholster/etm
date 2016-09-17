@@ -11,6 +11,19 @@ Map findEndpointByName(List endpoints, String name) {
 	return null;
 }
 
+boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {
+	Object entity = targetSource.get(entityName);
+	if (entity != null) {
+		return false;
+	}
+	entity = inputSource.get(entityName);
+	if (entity == null) {
+		return false;
+	}
+	targetSource.put(entityName, entity);	
+	return true;
+}
+
 Map inputSource = (Map)params.get("source");
 Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
 
@@ -39,6 +52,12 @@ if (targetSource.get("payload") == null &&
 	    targetSource.put("temp_for_correlations", tempForCorrelations);
     }
     ((Map)params.get("ctx")).put("_source", targetSource);
+}
+
+// Merge several fields
+if (!correlatedBeforeInserted) {
+	mergeEntity(targetSource, inputSource, "name");
+	mergeEntity(targetSource, inputSource, "payload_format");
 }
 
 // Merge the endpoints.
