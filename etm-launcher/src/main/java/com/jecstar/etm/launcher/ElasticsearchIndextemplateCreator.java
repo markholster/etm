@@ -232,16 +232,29 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	}
 	
 	private String createUpdateEventScript() {
-		return "Map inputSource = (Map)params.get(\"source\");\n" + 
+		return "Map findEndpointByName(List endpoints, String name) {\n" + 
+				"	if (endpoints == null) {\n" + 
+				"		return null;\n" + 
+				"	}\n" + 
+				"	for (Map endpoint : endpoints) {\n" + 
+				"		String endpointName = (String)endpoint.get(\"name\");\n" + 
+				"		if (endpointName != null && endpointName.equals(name)) {\n" + 
+				"			return endpoint;\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	return null;\n" + 
+				"}\n" + 
+				"\n" + 
+				"Map inputSource = (Map)params.get(\"source\");\n" + 
 				"Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" + 
-				"// Check if we have handled this message before.\n" + 
+				"\n" + 
+				"// Check if we have handled this message before. Each message has an unique hashcode. We keep track of this hashcode in the elasticsearch db. \n" + 
+				"// If the provided hashcode is already stored with the document we assume a duplicate offering for storage and quit processing.   \n" + 
 				"long inputHash = ((List)inputSource.get(\"event_hashes\")).get(0);\n" + 
 				"List targetHashes = (List)targetSource.get(\"event_hashes\");\n" + 
 				"if (targetHashes != null) {\n" + 
-				"	for (int i=0; i < targetHashes.size(); i++) {\n" + 
-				"		if ( ((long)targetHashes.get(i)) == inputHash) {\n" + 
-				"			return null;\n" + 
-				"		}\n" + 
+				"	if (targetHashes.indexOf(inputHash) != -1) {\n" + 
+				"		return false;\n" + 
 				"	}\n" + 
 				"	targetHashes.add(inputHash);\n" + 
 				"}\n" + 
@@ -267,20 +280,10 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" + 
 				"if (inputEndpoints != null && !correlatedBeforeInserted) {\n" + 
 				"    // Merge endpoints\n" + 
-				"    for (int sourceEndpointIx=0; sourceEndpointIx < inputEndpoints.size(); sourceEndpointIx++) {\n" + 
-				"        int targetEndpointIx = -1;\n" + 
-				"        Map inputEndpoint = (Map)inputEndpoints.get(sourceEndpointIx);\n" + 
+				"    for (Map inputEndpoint : inputEndpoints) {\n" + 
 				"        // Try to find if an endpoint with a given name is present.\n" + 
-				"        if (targetEndpoints != null) {\n" + 
-				"            for (int i=0; i < targetEndpoints.size(); i++) { \n" + 
-				"            	if ( ((String)((Map)targetEndpoints.get(i)).get(\"name\")).equals(((String)inputEndpoint.get(\"name\"))) ) {\n" + 
-				"                    targetEndpointIx = i;\n" + 
-				"//COMPILE ERRORS SINCE ALPHA3                    \n" + 
-				"//                    break;\n" + 
-				"                }\n" + 
-				"            }\n" + 
-				"        }\n" + 
-				"        if (targetEndpointIx == -1) {\n" + 
+				"        Map targetEndpoint = findEndpointByName(targetEndpoints, (String)inputEndpoint.get(\"name\"));\n" + 
+				"        if (targetEndpoint == null) {\n" + 
 				"            // This endpoint was not present.\n" + 
 				"            if (targetEndpoints == null) {\n" + 
 				"            	targetEndpoints = new ArrayList();\n" + 
@@ -288,15 +291,10 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"            }\n" + 
 				"            targetEndpoints.add(inputEndpoint);\n" + 
 				"        } else {\n" + 
-				"        	Map targetEndpoint = (Map)targetEndpoints.get(targetEndpointIx);\n" + 
 				"        	Map targetWritingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
 				"        	Map inputWritingEndpointHandler = (Map)inputEndpoint.get(\"writing_endpoint_handler\");\n" + 
 				"            // Endpoint was present. Set writing handler to target if target has no writing handler currently.\n" + 
-				"            if ((targetWritingEndpointHandler == null ||\n" + 
-				"            	 targetWritingEndpointHandler.get(\"transactionId\") == null ||\n" + 
-				"            	 targetWritingEndpointHandler.get(\"location\") == null ||\n" + 
-				"            	 targetWritingEndpointHandler.get(\"application\") == null\n" + 
-				"            	) && inputWritingEndpointHandler != null) { \n" + 
+				"            if (inputWritingEndpointHandler != null) { \n" + 
 				"            	targetEndpoint.put(\"writing_endpoint_handler\", inputWritingEndpointHandler);\n" + 
 				"            }\n" + 
 				"            List inputReadingEndpointHandlers = (List)inputEndpoint.get(\"reading_endpoint_handlers\"); \n" + 
@@ -307,9 +305,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"                	targetReadingEndpointHandlers = new ArrayList();\n" + 
 				"                    targetEndpoint.put(\"reading_endpoint_handlers\", targetReadingEndpointHandlers);\n" + 
 				"                }\n" + 
-				"                for (int i=0; i < inputReadingEndpointHandlers.size(); i++) {\n" + 
-				"                    targetReadingEndpointHandlers.add(inputReadingEndpointHandlers.get(i));\n" + 
-				"                }\n" + 
+				"                targetReadingEndpointHandlers.addAll(inputReadingEndpointHandlers);\n" + 
 				"            }\n" + 
 				"        }\n" + 
 				"    }\n" + 
@@ -317,15 +313,13 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				" \n" + 
 				"// Recalculate latencies\n" + 
 				"if (targetEndpoints != null) {\n" + 
-				"    for (int i=0; i < targetEndpoints.size(); i++) {\n" + 
-				"    	Map targetWritingEndpointHandler = (Map)((Map)targetEndpoints.get(i)).get(\"writing_endpoint_handler\");\n" + 
-				"    	if (targetWritingEndpointHandler != null &&\n" + 
-				"    	    targetWritingEndpointHandler.get(\"handling_time\") != null) {\n" + 
+				"    for (Map targetEndpont : targetEndpoints) {\n" + 
+				"    	Map targetWritingEndpointHandler = (Map)targetEndpont.get(\"writing_endpoint_handler\");\n" + 
+				"    	if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get(\"handling_time\") != null) {\n" + 
 				"    	    long writeTime = (long)targetWritingEndpointHandler.get(\"handling_time\");\n" + 
-				"    	    List readingEndpointHandlers = (List)((Map)targetEndpoints.get(i)).get(\"reading_endpoint_handlers\");\n" + 
+				"    	    List readingEndpointHandlers = (List)targetEndpont.get(\"reading_endpoint_handlers\");\n" + 
 				"    	    if (readingEndpointHandlers != null) {\n" + 
-				"    	    	for (int j=0; j < readingEndpointHandlers.size(); j++) {\n" + 
-				"    	    		Map readingEndpointHandler = readingEndpointHandlers.get(j);\n" + 
+				"    	    	for (Map readingEndpointHandler : readingEndpointHandlers) {\n" + 
 				"    	    		if (readingEndpointHandler.get(\"handling_time\") != null) {\n" + 
 				"    	    			readingEndpointHandler.put(\"latency\",  ((long)readingEndpointHandler.get(\"handling_time\")) - writeTime);\n" + 
 				"    	    		}\n" + 

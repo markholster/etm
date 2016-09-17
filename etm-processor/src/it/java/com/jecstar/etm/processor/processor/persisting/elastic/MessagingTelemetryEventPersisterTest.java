@@ -169,6 +169,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 	 */
 	@Test
 	public void testMergingOfEndpoints() throws InterruptedException {
+		final String name = "TestMessageFrom " + this.getClass().getName();
 		final String eventId = UUID.randomUUID().toString();
 		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 		
@@ -189,6 +190,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setPayload("Test case " + this.getClass().getName())
 			.setPayloadFormat(PayloadFormat.TEXT)
 			.setMessagingEventType(MessagingEventType.REQUEST)
+			.setName(name)
 			.addOrMergeEndpoint(new EndpointBuilder()
 					.setName("TEST.QUEUE")
 					.setWritingEndpointHandler(writingEndpointHandler)
@@ -213,6 +215,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
 		assertEquals(eventId, eventId, readEvent.id);
 		assertEquals(eventId, 2, readEvent.endpoints.size());
+		assertEquals(name, name, readEvent.name);
 	}
 	
 	/**

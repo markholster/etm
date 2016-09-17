@@ -1,13 +1,26 @@
+Map findEndpointByName(List endpoints, String name) {
+	if (endpoints == null) {
+		return null;
+	}
+	for (Map endpoint : endpoints) {
+		String endpointName = (String)endpoint.get("name");
+		if (endpointName != null && endpointName.equals(name)) {
+			return endpoint;
+		}
+	}
+	return null;
+}
+
 Map inputSource = (Map)params.get("source");
 Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
-// Check if we have handled this message before.
+
+// Check if we have handled this message before. Each message has an unique hashcode. We keep track of this hashcode in the elasticsearch db. 
+// If the provided hashcode is already stored with the document we assume a duplicate offering for storage and quit processing.   
 long inputHash = ((List)inputSource.get("event_hashes")).get(0);
 List targetHashes = (List)targetSource.get("event_hashes");
 if (targetHashes != null) {
-	for (int i=0; i < targetHashes.size(); i++) {
-		if ( ((long)targetHashes.get(i)) == inputHash) {
-			return;
-		}
+	if (targetHashes.indexOf(inputHash) != -1) {
+		return false;
 	}
 	targetHashes.add(inputHash);
 }
@@ -33,20 +46,10 @@ List inputEndpoints = (List)inputSource.get("endpoints");
 List targetEndpoints = (List)targetSource.get("endpoints");
 if (inputEndpoints != null && !correlatedBeforeInserted) {
     // Merge endpoints
-    for (int sourceEndpointIx=0; sourceEndpointIx < inputEndpoints.size(); sourceEndpointIx++) {
-        int targetEndpointIx = -1;
-        Map inputEndpoint = (Map)inputEndpoints.get(sourceEndpointIx);
+    for (Map inputEndpoint : inputEndpoints) {
         // Try to find if an endpoint with a given name is present.
-        if (targetEndpoints != null) {
-            for (int i=0; i < targetEndpoints.size(); i++) { 
-            	if ( ((String)((Map)targetEndpoints.get(i)).get("name")).equals(((String)inputEndpoint.get("name"))) ) {
-                    targetEndpointIx = i;
-//COMPILE ERRORS SINCE ALPHA3                    
-//                    break;
-                }
-            }
-        }
-        if (targetEndpointIx == -1) {
+        Map targetEndpoint = findEndpointByName(targetEndpoints, (String)inputEndpoint.get("name"));
+        if (targetEndpoint == null) {
             // This endpoint was not present.
             if (targetEndpoints == null) {
             	targetEndpoints = new ArrayList();
@@ -54,15 +57,10 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
             }
             targetEndpoints.add(inputEndpoint);
         } else {
-        	Map targetEndpoint = (Map)targetEndpoints.get(targetEndpointIx);
         	Map targetWritingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
         	Map inputWritingEndpointHandler = (Map)inputEndpoint.get("writing_endpoint_handler");
             // Endpoint was present. Set writing handler to target if target has no writing handler currently.
-            if ((targetWritingEndpointHandler == null ||
-            	 targetWritingEndpointHandler.get("transactionId") == null ||
-            	 targetWritingEndpointHandler.get("location") == null ||
-            	 targetWritingEndpointHandler.get("application") == null
-            	) && inputWritingEndpointHandler != null) { 
+            if (inputWritingEndpointHandler != null) { 
             	targetEndpoint.put("writing_endpoint_handler", inputWritingEndpointHandler);
             }
             List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers"); 
@@ -73,9 +71,7 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
                 	targetReadingEndpointHandlers = new ArrayList();
                     targetEndpoint.put("reading_endpoint_handlers", targetReadingEndpointHandlers);
                 }
-                for (int i=0; i < inputReadingEndpointHandlers.size(); i++) {
-                    targetReadingEndpointHandlers.add(inputReadingEndpointHandlers.get(i));
-                }
+                targetReadingEndpointHandlers.addAll(inputReadingEndpointHandlers);
             }
         }
     }
@@ -83,15 +79,13 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
  
 // Recalculate latencies
 if (targetEndpoints != null) {
-    for (int i=0; i < targetEndpoints.size(); i++) {
-    	Map targetWritingEndpointHandler = (Map)((Map)targetEndpoints.get(i)).get("writing_endpoint_handler");
-    	if (targetWritingEndpointHandler != null &&
-    	    targetWritingEndpointHandler.get("handling_time") != null) {
+    for (Map targetEndpont : targetEndpoints) {
+    	Map targetWritingEndpointHandler = (Map)targetEndpont.get("writing_endpoint_handler");
+    	if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get("handling_time") != null) {
     	    long writeTime = (long)targetWritingEndpointHandler.get("handling_time");
-    	    List readingEndpointHandlers = (List)((Map)targetEndpoints.get(i)).get("reading_endpoint_handlers");
+    	    List readingEndpointHandlers = (List)targetEndpont.get("reading_endpoint_handlers");
     	    if (readingEndpointHandlers != null) {
-    	    	for (int j=0; j < readingEndpointHandlers.size(); j++) {
-    	    		Map readingEndpointHandler = readingEndpointHandlers.get(j);
+    	    	for (Map readingEndpointHandler : readingEndpointHandlers) {
     	    		if (readingEndpointHandler.get("handling_time") != null) {
     	    			readingEndpointHandler.put("latency",  ((long)readingEndpointHandler.get("handling_time")) - writeTime);
     	    		}
