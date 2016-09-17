@@ -14,8 +14,7 @@ if (!correlations.contains(inputSource.get("id"))) {
 List inputEndpoints = (List)inputSource.get("endpoints");
 List targetEndpoints = (List)targetSource.get("endpoints");
 if (inputEndpoints != null) {
-	for (int i=0; i < inputEndpoints.size(); i++) {
-		Map inputEndpoint = (Map)inputEndpoints.get(i);
+	for (Map inputEndpoint : inputEndpoints) {
 		Map inputWritingEndpointHandler = (Map)inputEndpoint.get("writing_endpoint_handler");
         if (inputWritingEndpointHandler != null && 
         	inputWritingEndpointHandler.get("application") != null && 
@@ -26,24 +25,18 @@ if (inputEndpoints != null) {
         	// The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.
         	boolean readerFound = false;
         	if (targetEndpoints != null) {
-        		for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {
-        			Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);
+        		for (Map targetEndpoint : targetEndpoints) {
         			List targetReadingEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
-//        			if (targetReadingEndpointHandlers == null) {
-//COMPILE ERRORS SINCE ALPHA3        			
-//        				continue;
-//        			}
-if (targetReadingEndpointHandlers != null) {
-        			for (int j=0; j < targetReadingEndpointHandlers.size(); j++) {
-        				Map targetReadingEndpointHandler = (Map)targetReadingEndpointHandlers.get(i);
-        				if (targetReadingEndpointHandler.get("application") != null &&
-        					((Map)targetReadingEndpointHandler.get("application")).get("name") != null &&
-        					((String)((Map)targetReadingEndpointHandler.get("application")).get("name")).equals(writerAppName)) {
+					if (targetReadingEndpointHandlers != null) {
+        				for (Map targetReadingEndpointHandler : targetReadingEndpointHandlers) {
+        					if (targetReadingEndpointHandler.get("application") != null &&
+        						((Map)targetReadingEndpointHandler.get("application")).get("name") != null &&
+        						((String)((Map)targetReadingEndpointHandler.get("application")).get("name")).equals(writerAppName)) {
         					readerFound = true;
         					targetReadingEndpointHandler.put("response_time", (writerHandlingTime - (long)targetReadingEndpointHandler.get("handling_time")));
+        					}
         				}
-        			}
-}        			 
+					}        			 
         		}  
         	}
         	if (!readerFound) {
@@ -65,8 +58,7 @@ if (targetReadingEndpointHandlers != null) {
         }
         List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers");
         if (inputReadingEndpointHandlers != null) {
-        	for (int j=0; j < inputReadingEndpointHandlers.size(); j++) {
-        		Map inputReadingEndpointHandler = (Map)inputReadingEndpointHandlers.get(j);
+        	for (Map inputReadingEndpointHandler : inputReadingEndpointHandlers) {
         		if (inputReadingEndpointHandler.get("application") != null && 
         			((Map)inputReadingEndpointHandler.get("application")).get("name") != null) {
         			
@@ -75,8 +67,7 @@ if (targetReadingEndpointHandlers != null) {
         			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.
         			boolean writerFound = false;
         			if (targetEndpoints != null) {
-        				for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {
-        					Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);
+        				for (Map targetEndpoint : targetEndpoints) {
         					Map targetWritingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
 		        			if (targetWritingEndpointHandler != null && 
 		        				targetWritingEndpointHandler.get("application") != null && 

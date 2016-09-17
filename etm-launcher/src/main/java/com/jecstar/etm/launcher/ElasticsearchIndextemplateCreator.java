@@ -449,8 +449,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" + 
 				"List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" + 
 				"if (inputEndpoints != null) {\n" + 
-				"	for (int i=0; i < inputEndpoints.size(); i++) {\n" + 
-				"		Map inputEndpoint = (Map)inputEndpoints.get(i);\n" + 
+				"	for (Map inputEndpoint : inputEndpoints) {\n" + 
 				"		Map inputWritingEndpointHandler = (Map)inputEndpoint.get(\"writing_endpoint_handler\");\n" + 
 				"        if (inputWritingEndpointHandler != null && \n" + 
 				"        	inputWritingEndpointHandler.get(\"application\") != null && \n" + 
@@ -461,24 +460,18 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"        	// The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.\n" + 
 				"        	boolean readerFound = false;\n" + 
 				"        	if (targetEndpoints != null) {\n" + 
-				"        		for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {\n" + 
-				"        			Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);\n" + 
+				"        		for (Map targetEndpoint : targetEndpoints) {\n" + 
 				"        			List targetReadingEndpointHandlers = (List)targetEndpoint.get(\"reading_endpoint_handlers\");\n" + 
-				"//        			if (targetReadingEndpointHandlers == null) {\n" + 
-				"//COMPILE ERRORS SINCE ALPHA3        			\n" + 
-				"//        				continue;\n" + 
-				"//        			}\n" + 
-				"if (targetReadingEndpointHandlers != null) {\n" + 
-				"        			for (int j=0; j < targetReadingEndpointHandlers.size(); j++) {\n" + 
-				"        				Map targetReadingEndpointHandler = (Map)targetReadingEndpointHandlers.get(i);\n" + 
-				"        				if (targetReadingEndpointHandler.get(\"application\") != null &&\n" + 
-				"        					((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\") != null &&\n" + 
-				"        					((String)((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\")).equals(writerAppName)) {\n" + 
+				"					if (targetReadingEndpointHandlers != null) {\n" + 
+				"        				for (Map targetReadingEndpointHandler : targetReadingEndpointHandlers) {\n" + 
+				"        					if (targetReadingEndpointHandler.get(\"application\") != null &&\n" + 
+				"        						((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\") != null &&\n" + 
+				"        						((String)((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\")).equals(writerAppName)) {\n" + 
 				"        					readerFound = true;\n" + 
 				"        					targetReadingEndpointHandler.put(\"response_time\", (writerHandlingTime - (long)targetReadingEndpointHandler.get(\"handling_time\")));\n" + 
+				"        					}\n" + 
 				"        				}\n" + 
-				"        			}\n" + 
-				"}        			 \n" + 
+				"					}        			 \n" + 
 				"        		}  \n" + 
 				"        	}\n" + 
 				"        	if (!readerFound) {\n" + 
@@ -500,8 +493,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"        }\n" + 
 				"        List inputReadingEndpointHandlers = (List)inputEndpoint.get(\"reading_endpoint_handlers\");\n" + 
 				"        if (inputReadingEndpointHandlers != null) {\n" + 
-				"        	for (int j=0; j < inputReadingEndpointHandlers.size(); j++) {\n" + 
-				"        		Map inputReadingEndpointHandler = (Map)inputReadingEndpointHandlers.get(j);\n" + 
+				"        	for (Map inputReadingEndpointHandler : inputReadingEndpointHandlers) {\n" + 
 				"        		if (inputReadingEndpointHandler.get(\"application\") != null && \n" + 
 				"        			((Map)inputReadingEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" + 
 				"        			\n" + 
@@ -510,8 +502,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"        			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.\n" + 
 				"        			boolean writerFound = false;\n" + 
 				"        			if (targetEndpoints != null) {\n" + 
-				"        				for (int endpointIx=0; endpointIx < targetEndpoints.size(); endpointIx++) {\n" + 
-				"        					Map targetEndpoint = (Map)targetEndpoints.get(endpointIx);\n" + 
+				"        				for (Map targetEndpoint : targetEndpoints) {\n" + 
 				"        					Map targetWritingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
 				"		        			if (targetWritingEndpointHandler != null && \n" + 
 				"		        				targetWritingEndpointHandler.get(\"application\") != null && \n" + 
