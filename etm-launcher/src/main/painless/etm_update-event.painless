@@ -12,15 +12,35 @@ Map findEndpointByName(List endpoints, String name) {
 }
 
 boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {
-	Object entity = targetSource.get(entityName);
-	if (entity != null) {
+	Object sourceEntity = inputSource.get(entityName);
+	Object targetEntity = targetSource.get(entityName);
+	if (sourceEntity == null) {
 		return false;
 	}
-	entity = inputSource.get(entityName);
-	if (entity == null) {
-		return false;
+	if (sourceEntity instanceof List) {
+		// merge a list, adding all source items to the target list
+		if (targetEntity == null) {
+			targetEntity = sourceEntity;
+		} else {
+			((List)targetEntity).addAll((List)sourceEntity);
+		}
+	} else if (sourceEntity instanceof Map) {
+		// merge a map, adding all items to the map if the target map didn't contain them.
+		if (targetEntity == null) {
+			targetEntity = sourceEntity;
+		} else {
+			Map original = (Map)targetEntity;
+			targetEntity = new HashMap((Map)sourceEntity);
+			((Map)targetEntity).putAll(original);
+		}	
+	} else {
+		// Not a collection, add the value of the target is not null.
+		if (targetEntity != null) {
+			return false;
+		}
+		targetEntity = sourceEntity;
 	}
-	targetSource.put(entityName, entity);	
+	targetSource.put(entityName, targetEntity);	
 	return true;
 }
 
@@ -56,8 +76,14 @@ if (targetSource.get("payload") == null &&
 
 // Merge several fields
 if (!correlatedBeforeInserted) {
-	mergeEntity(targetSource, inputSource, "name");
-	mergeEntity(targetSource, inputSource, "payload_format");
+	for (String field : inputSource.keySet()) {
+		if (!"id".equals(field) 
+		    && !"endpoints".equals(field)
+		    && !"event_hashes".equals(field)
+		   ) {
+				mergeEntity(targetSource, inputSource, field);		
+		}
+	}
 }
 
 // Merge the endpoints.

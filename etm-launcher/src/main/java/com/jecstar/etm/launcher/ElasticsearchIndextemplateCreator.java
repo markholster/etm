@@ -246,15 +246,35 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"}\n" + 
 				"\n" + 
 				"boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {\n" + 
-				"	Object entity = targetSource.get(entityName);\n" + 
-				"	if (entity != null) {\n" + 
+				"	Object sourceEntity = inputSource.get(entityName);\n" + 
+				"	Object targetEntity = targetSource.get(entityName);\n" + 
+				"	if (sourceEntity == null) {\n" + 
 				"		return false;\n" + 
 				"	}\n" + 
-				"	entity = inputSource.get(entityName);\n" + 
-				"	if (entity == null) {\n" + 
-				"		return false;\n" + 
+				"	if (sourceEntity instanceof List) {\n" + 
+				"		// merge a list, adding all source items to the target list\n" + 
+				"		if (targetEntity == null) {\n" + 
+				"			targetEntity = sourceEntity;\n" + 
+				"		} else {\n" + 
+				"			((List)targetEntity).addAll((List)sourceEntity);\n" + 
+				"		}\n" + 
+				"	} else if (sourceEntity instanceof Map) {\n" + 
+				"		// merge a map, adding all items to the map if the target map didn't contain them.\n" + 
+				"		if (targetEntity == null) {\n" + 
+				"			targetEntity = sourceEntity;\n" + 
+				"		} else {\n" + 
+				"			Map original = (Map)targetEntity;\n" + 
+				"			targetEntity = new HashMap((Map)sourceEntity);\n" + 
+				"			((Map)targetEntity).putAll(original);\n" + 
+				"		}	\n" + 
+				"	} else {\n" + 
+				"		// Not a collection, add the value of the target is not null.\n" + 
+				"		if (targetEntity != null) {\n" + 
+				"			return false;\n" + 
+				"		}\n" + 
+				"		targetEntity = sourceEntity;\n" + 
 				"	}\n" + 
-				"	targetSource.put(entityName, entity);	\n" + 
+				"	targetSource.put(entityName, targetEntity);	\n" + 
 				"	return true;\n" + 
 				"}\n" + 
 				"\n" + 
@@ -290,8 +310,14 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"\n" + 
 				"// Merge several fields\n" + 
 				"if (!correlatedBeforeInserted) {\n" + 
-				"	mergeEntity(targetSource, inputSource, \"name\");\n" + 
-				"	mergeEntity(targetSource, inputSource, \"payload_format\");\n" + 
+				"	for (String field : inputSource.keySet()) {\n" + 
+				"		if (!\"id\".equals(field) \n" + 
+				"		    && !\"endpoints\".equals(field)\n" + 
+				"		    && !\"event_hashes\".equals(field)\n" + 
+				"		   ) {\n" + 
+				"				mergeEntity(targetSource, inputSource, field);		\n" + 
+				"		}\n" + 
+				"	}\n" + 
 				"}\n" + 
 				"\n" + 
 				"// Merge the endpoints.\n" + 

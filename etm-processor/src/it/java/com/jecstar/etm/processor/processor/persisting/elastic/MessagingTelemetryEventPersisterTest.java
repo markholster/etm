@@ -169,7 +169,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 	 */
 	@Test
 	public void testMergingOfEndpoints() throws InterruptedException {
-		final String name = "TestMessageFrom " + this.getClass().getName();
 		final String eventId = UUID.randomUUID().toString();
 		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 		
@@ -203,7 +202,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setPayload("Test case " + this.getClass().getName())
 			.setPayloadFormat(PayloadFormat.TEXT)
 			.setMessagingEventType(MessagingEventType.REQUEST)
-			.setName(name)
 			.addOrMergeEndpoint(new EndpointBuilder()
 					.setName("ANOTHER.TEST.QUEUE")
 					.setWritingEndpointHandler(writingEndpointHandler)
@@ -215,7 +213,65 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
 		assertEquals(eventId, eventId, readEvent.id);
 		assertEquals(eventId, 2, readEvent.endpoints.size());
-		assertEquals(name, name, readEvent.name);
+	}
+	
+	/**
+	 * Test the merging of fields. 
+	 */
+	@Test
+	public void testMergingOfField() throws InterruptedException {
+		final String eventId = UUID.randomUUID().toString();
+		final String eventName = "Test case " + this.getClass().getName() + " - testMergingOfFields()"; 
+		final String payload = "Test case " + this.getClass().getName();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		
+		final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now())
+				.setApplication(new ApplicationBuilder()
+						.setName("Writing app")
+				).build();
+		
+		final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+				.setApplication(new ApplicationBuilder()
+						.setName("Reading app")
+				).build();
+		
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+			.setId(eventId)
+			.addMetadata("key1", "initial value")
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("TEST.QUEUE")
+					.setWritingEndpointHandler(writingEndpointHandler)
+					.addReadingEndpointHandler(readingEndpointHandler)
+					);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
+
+		builder.initialize()
+			.setId(eventId)
+			.setPayload(payload)
+			.setName(eventName)
+			.setPayloadFormat(PayloadFormat.TEXT)
+			.addMetadata("key1", "wrong value")
+			.addMetadata("key2", "merged value")
+			.setMessagingEventType(MessagingEventType.REQUEST)
+			.addOrMergeEndpoint(new EndpointBuilder()
+					.setName("ANOTHER.TEST.QUEUE")
+					.setWritingEndpointHandler(writingEndpointHandler)
+					.addReadingEndpointHandler(readingEndpointHandler)
+					);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
+		
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertEquals(eventId, eventId, readEvent.id);
+		assertEquals(eventId, eventName, readEvent.name);
+		assertEquals(eventId, payload, readEvent.payload);
+		assertEquals(eventId, PayloadFormat.TEXT, readEvent.payloadFormat);
+		assertEquals(eventId, MessagingEventType.REQUEST, readEvent.messagingEventType);
+		assertEquals(eventId, "initial value", readEvent.metadata.get("key1"));
+		assertEquals(eventId, "merged value", readEvent.metadata.get("key2"));
 	}
 	
 	/**
