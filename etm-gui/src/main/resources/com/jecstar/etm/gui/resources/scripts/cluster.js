@@ -59,7 +59,7 @@ function buildClusterPage() {
 		  replicas_per_index : Number($("#input-replicas-per-index").val()),
 		  max_event_index_count : Number($("#input-max-event-indices").val()),
 		  max_metrics_index_count : Number($("#input-max-metrics-indices").val()),
-		  wait_for_active_shards : $("#input-wait-for-active-shards").val(),
+		  wait_for_active_shards : Number($("#input-wait-for-active-shards").val()),
 		  retry_on_conflict_count : Number($("#input-retries-on-conflict").val()),
 		  query_timeout : Number($("#input-query-timeout").val()),
 		  max_search_result_download_rows : Number($("#input-search-export-max-rows").val()),
