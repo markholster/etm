@@ -58,6 +58,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.threadFactory = threadFactory;
 		this.persistenceEnvironment = persistenceEnvironment;
 		this.etmConfiguration = etmConfiguration;
+		this.etmConfiguration.addConfigurationChangeListener(this);
 		this.offerTimer = this.metricRegistry.timer("event-processor.offering");
 		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, this.threadFactory, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
@@ -75,8 +76,8 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
-		if (log.isDebugLevelEnabled()) {
-			log.logDebugMessage("Executing hot restart of TelemetryCommandProcessor.");
+		if (log.isInfoLevelEnabled()) {
+			log.logInfoMessage("Executing hot restart of TelemetryCommandProcessor.");
 		}
 		DisruptorEnvironment newDisruptorEnvironment = new DisruptorEnvironment(this.etmConfiguration, this.threadFactory, this.persistenceEnvironment, this.metricRegistry);
 		RingBuffer<TelemetryCommand> newRingBuffer = newDisruptorEnvironment.start();
@@ -98,6 +99,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}		
+		this.etmConfiguration.removeConfigurationChangeListener(this);
 		this.disruptorEnvironment.shutdown();
 		try {
 			this.persistenceEnvironment.close();
