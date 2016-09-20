@@ -64,7 +64,15 @@ public class DestinationReader implements Runnable {
 			MQMessage message = null;
 			try {
 				message = new MQMessage();
-				this.mqDestination.get(message, getOptions, this.destination.getMaxMessageSize());
+				boolean continueProcessing = true;
+				try {
+					this.mqDestination.get(message, getOptions, this.destination.getMaxMessageSize());
+				} catch (MQException e) {
+					continueProcessing = handleMQException(e);
+				}
+				if (!continueProcessing) {
+					continue;
+				}
 				byte[] byteContent = new byte[message.getMessageLength()];
 				message.readFully(byteContent);
 				if (log.isDebugLevelEnabled()) {
@@ -92,43 +100,6 @@ public class DestinationReader implements Runnable {
 				this.counter++;
 				if (shouldCommit()) {
 					commit();
-				}
-			} catch (MQException e) {
-				if (e.completionCode == 2 && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
-					// No message available, retry
-					if (shouldCommit()) {
-						commit();
-					}
-					continue;
-				}
-				switch (e.reasonCode) {
-				case CMQC.MQRC_CONNECTION_BROKEN:
-				case CMQC.MQRC_CONNECTION_QUIESCING:
-				case CMQC.MQRC_CONNECTION_STOPPING:
-				case CMQC.MQRC_Q_MGR_QUIESCING:
-				case CMQC.MQRC_Q_MGR_STOPPING:
-				case CMQC.MQRC_Q_MGR_NOT_AVAILABLE:
-				case CMQC.MQRC_Q_MGR_NOT_ACTIVE:
-				case CMQC.MQRC_CLIENT_CONN_ERROR:
-				case CMQC.MQRC_CHANNEL_STOPPED_BY_USER:
-				case CMQC.MQRC_HCONN_ERROR:
-				case CMQC.MQRC_HOBJ_ERROR:
-				case CMQC.MQRC_UNEXPECTED_ERROR:
-					if (log.isInfoLevelEnabled()) {
-						log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Trying to reconnect.");
-					}
-					disconnect();
-					try {
-						Thread.sleep(this.waitInterval);
-					} catch (InterruptedException interruptedException) {
-						Thread.currentThread().interrupt();
-					}
-					connect();
-					break;
-					default:
-						if (log.isInfoLevelEnabled()) {
-							log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Ignoring message.");
-						}
 				}
 			} catch (Error e) {
 				if (log.isFatalLevelEnabled()) {
@@ -160,6 +131,50 @@ public class DestinationReader implements Runnable {
 		disconnect();
 	}
 	
+	private boolean handleMQException(MQException e) {
+		if (e.completionCode == CMQC.MQCC_FAILED && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
+			// No message available, retry
+			if (shouldCommit()) {
+				commit();
+			}
+			return false;
+		}
+		switch (e.reasonCode) {
+		case CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Accepted a truncated message.");
+			}
+			return true;
+		case CMQC.MQRC_CONNECTION_BROKEN:
+		case CMQC.MQRC_CONNECTION_QUIESCING:
+		case CMQC.MQRC_CONNECTION_STOPPING:
+		case CMQC.MQRC_Q_MGR_QUIESCING:
+		case CMQC.MQRC_Q_MGR_STOPPING:
+		case CMQC.MQRC_Q_MGR_NOT_AVAILABLE:
+		case CMQC.MQRC_Q_MGR_NOT_ACTIVE:
+		case CMQC.MQRC_CLIENT_CONN_ERROR:
+		case CMQC.MQRC_CHANNEL_STOPPED_BY_USER:
+		case CMQC.MQRC_HCONN_ERROR:
+		case CMQC.MQRC_HOBJ_ERROR:
+		case CMQC.MQRC_UNEXPECTED_ERROR:
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Trying to reconnect.");
+			}
+			disconnect();
+			try {
+				Thread.sleep(this.waitInterval);
+			} catch (InterruptedException interruptedException) {
+				Thread.currentThread().interrupt();
+			}
+			connect();
+			return false;
+			default:
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Ignoring message.");
+				}
+				return false;
+		}
+	}
 	private void commit() {
 		if (this.mqQueueManager != null) {
 			try {
