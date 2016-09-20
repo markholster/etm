@@ -141,7 +141,7 @@ public class DestinationReader implements Runnable {
 			if (shouldCommit()) {
 				commit();
 			}
-			return true;
+			return false;
 		}
 		switch (e.reasonCode) {
 		case CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
