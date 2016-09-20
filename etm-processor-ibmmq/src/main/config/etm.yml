@@ -35,10 +35,12 @@ queueManagers:
 # never contains more than 500 messages and never takes longer than 10 seconds.
 #      commitSize: 
 #      commitInterval: 
-# The MQ get options used to get messages from the destination. Defaults to the calculated value of CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_CONVERT + CMQC.MQGMO_SYNCPOINT + CMQC.MQGMO_LOGICAL_ORDER + CMQC.MQGMO_ALL_SEGMENTS_AVAILABLE + CMQC.MQGMO_COMPLETE_MSG
+# The MQ get options used to get messages from the destination. Defaults to the calculated value of CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_CONVERT + CMQC.MQGMO_SYNCPOINT + CMQC.MQGMO_LOGICAL_ORDER + CMQC.MQGMO_ALL_SEGMENTS_AVAILABLE + CMQC.MQGMO_COMPLETE_MSG  + CMQC.MQGMO_ACCEPT_TRUNCATED_MSG
 #      destinationGetOptions:
 # The MQ open options used to acces the destination. Defaults to the calculated value of CMQC.MQOO_INQUIRE + CMQC.MQOO_FAIL_IF_QUIESCING + CMQC.MQOO_INPUT_SHARED
 #      destinationOpenOptions:
+# The maximum size of an message. If the message exceeds this size it will be truncated when truncated is allowed in the get options. It will fail otherwise. The message size defaults to 4 MiB
+#      maxMessageSize: 4194304 
    - !destination
       name: QUEUE.IN.2
       nrOfListeners: 1
