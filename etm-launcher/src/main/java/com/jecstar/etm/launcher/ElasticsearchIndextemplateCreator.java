@@ -66,8 +66,8 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 					.get();
 				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
 					.setScriptLang("painless")
-					.setId("etm_update-query-history")
-					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateQueryHistoryScript()).endObject().bytes())
+					.setId("etm_update-search-history")
+					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateSearchHistoryScript()).endObject().bytes())
 					.get();
 				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
 					.setScriptLang("painless")
@@ -209,24 +209,24 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"}\n";
 	}
 	
-	private String createUpdateQueryHistoryScript() {
+	private String createUpdateSearchHistoryScript() {
 		return  "if (params.query != null) {\n" + 
-				"    if (params.ctx._source.query_history != null) {\n" +
-				"        for (int i=0; i < params.ctx._source.query_history.size(); i++) {\n" + 
-				"            if (params.ctx._source.query_history[i].query.equals(params.query.query)) {\n" +
-				"                params.ctx._source.query_history.remove(i);\n" +
+				"    if (params.ctx._source.search_history != null) {\n" +
+				"        for (int i=0; i < params.ctx._source.search_history.size(); i++) {\n" + 
+				"            if (params.ctx._source.search_history[i].query.equals(params.query.query)) {\n" +
+				"                params.ctx._source.search_history.remove(i);\n" +
 				"            }\n" +
 				"        }\n" + 
-				"        params.ctx._source.query_history.add(params.query);\n" +
+				"        params.ctx._source.search_history.add(params.query);\n" +
 				"    } else {\n" + 
-				"        params.ctx._source.query_history = new ArrayList();\n" +
-				"        params.ctx._source.query_history.add(params.query);\n" +
+				"        params.ctx._source.search_history = new ArrayList();\n" +
+				"        params.ctx._source.search_history.add(params.query);\n" +
 				"    }\n" + 
 				"}\n" +
-				"if (params.ctx._source.query_history != null && params.history_size != null) {\n" +
-				"    int removeCount = params.ctx._source.query_history.size() - params.history_size;\n" +
+				"if (params.ctx._source.search_history != null && params.history_size != null) {\n" +
+				"    int removeCount = params.ctx._source.search_history.size() - params.history_size;\n" +
 				"    for (int i=0; i < removeCount; i++) {\n" +
-				"        params.ctx._source.query_history.remove(0);\n" +
+				"        params.ctx._source.search_history.remove(0);\n" +
 				"    }\n" +
 				"}\n";		
 	}

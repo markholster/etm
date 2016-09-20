@@ -88,12 +88,12 @@ public class SearchService extends AbstractJsonService {
 	}
 	
 	@GET
-	@Path("/query_history")
+	@Path("/history")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getRecentQueries() {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		GetResponse getResponse = SearchService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
-				.setFetchSource("query_history", null)
+				.setFetchSource("search_history", null)
 				.get();
 		if (getResponse.isSourceEmpty()) {
 			return "{}";
@@ -236,7 +236,7 @@ public class SearchService extends AbstractJsonService {
 			writeQueryHistory(startTime, 
 					parameters, 
 					etmPrincipal, 
-					etmPrincipal.getHistorySize());
+					Math.min(etmPrincipal.getHistorySize(), etmConfiguration.getMaxSearchHistoryCount()));
 		}
 		return result.toString();
 	}
@@ -282,7 +282,7 @@ public class SearchService extends AbstractJsonService {
 		scriptParams.put("query", query);
 		scriptParams.put("history_size", history_size);
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-				.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
+				.setScript(new Script("etm_update-search-history", ScriptType.STORED, "painless", scriptParams))
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())

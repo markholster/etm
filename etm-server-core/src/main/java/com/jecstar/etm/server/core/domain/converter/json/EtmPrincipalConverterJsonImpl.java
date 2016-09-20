@@ -24,7 +24,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		sb.append("{");
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
-		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getQueryHistorySizeTag(), etmPrincipal.getHistorySize(), sb, !added) || added;
+		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getSearchHistorySizeTag(), etmPrincipal.getHistorySize(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
@@ -62,7 +62,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		principal.setPasswordHash(this.converter.getString(this.tags.getPasswordHashTag(), valueMap));
 		principal.setName(this.converter.getString(this.tags.getNameTag(), valueMap));
 		principal.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
-		principal.setHistorySize(this.converter.getInteger(this.tags.getQueryHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE));
+		principal.setHistorySize(this.converter.getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE));
 		String value = this.converter.getString(this.tags.getLocaleTag(), valueMap);
 		if (value != null) {
 			principal.setLocale(Locale.forLanguageTag(value));

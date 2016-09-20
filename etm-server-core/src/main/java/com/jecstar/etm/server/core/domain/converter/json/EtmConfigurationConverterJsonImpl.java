@@ -35,6 +35,8 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
+			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount(), sb, !added) || added;
+			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), sb, !added) || added;
 			added = this.converter.addLongElementToJsonBuffer(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
@@ -51,6 +53,8 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = addIntegerWhenNotDefault(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), nodeConfiguration.getMaxEventIndexCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), nodeConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), nodeConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount(), nodeConfiguration.getMaxSearchHistoryCount(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), nodeConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), nodeConfiguration.getWaitForActiveShards(), sb, !added) || added;
 			added = addLongWhenNotDefault(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), nodeConfiguration.getQueryTimeout(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), nodeConfiguration.getRetryOnConflictCount(), sb, !added) || added;
@@ -76,6 +80,8 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		etmConfiguration.setMaxEventIndexCount(getIntValue(this.tags.getMaxEventIndexCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxMetricsIndexCount(getIntValue(this.tags.getMaxMetricsIndexCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxSearchResultDownloadRows(getIntValue(this.tags.getMaxSearchResultDownloadRowsTag(), defaultMap, nodeMap));
+		etmConfiguration.setMaxSearchHistoryCount(getIntValue(this.tags.getMaxSearchHistoryCountTag(), defaultMap, nodeMap));
+		etmConfiguration.setMaxSearchTemplateCount(getIntValue(this.tags.getMaxSearchTemplateCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setWaitForActiveShards(getIntValue(this.tags.getWaitForActiveShardsTag(), defaultMap, nodeMap));
 		etmConfiguration.setQueryTimeout(getLongValue(this.tags.getQueryTimeoutTag(), defaultMap, nodeMap));
 		etmConfiguration.setRetryOnConflictCount(getIntValue(this.tags.getRetryOnConflictCountTag(), defaultMap, nodeMap));

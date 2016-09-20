@@ -121,7 +121,7 @@ function buildUserPage() {
 		$('#input-filter-query').val(userData.filter_query);
 		$('#sel-locale').val(userData.locale);
 		$('#sel-time-zone').val(userData.time_zone);
-		$('#input-query-history-size').val(userData.query_history_size);
+		$('#input-search-history-size').val(userData.search_history_size);
 		$('#user-roles-container > label > input').prop('checked', false);
 		if (userData.roles) {
 			$.each(userData.roles, function(index, role) {
@@ -291,7 +291,7 @@ function buildUserPage() {
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
 			locale: $('#sel-locale').val(),
 			time_zone: $('sel-time-zone').val(),
-			query_history_size: $('#input-query-history-size').val() ? Number($('#input-query-history-size').val()) : 0,
+			search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,
 			roles: [],
 			groups: []
 		}

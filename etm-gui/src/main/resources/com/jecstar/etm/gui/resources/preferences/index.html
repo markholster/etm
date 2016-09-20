@@ -59,8 +59,8 @@ body { padding-top: 60px; }
           <select id="input-time-zone" class="form-control custom-select"></select>
         </fieldset>        
         <fieldset class="form-group">
-          <label for="input-query-history-size">Query history size</label>
-          <input id="input-query-history-size" type="number" class="form-control" min="0"/>
+          <label for="input-search-history-size">Search history size</label>
+          <input id="input-search-history-size" type="number" class="form-control" min="0" value="5"/>
         </fieldset>
         <div class="modal-footer">
           <button id="btn-apply-preferences" type="button" class="btn btn-primary">Apply</button>
@@ -159,7 +159,8 @@ body { padding-top: 60px; }
                 $('#input-user-name').val(data.name);
                 $('#input-locale').val(data.locale);
                 $('#input-time-zone').val(data.time_zone);
-                $('#input-query-history-size').val(data.query_history_size);
+                $('#input-search-history-size').val(data.search_history_size);
+                $('#input-search-history-size').attr('max', data.max_search_history_size);
             }
         })
         
@@ -248,7 +249,7 @@ body { padding-top: 60px; }
             name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
             locale: $('#input-locale').val(),
             time_zone: $('#input-time-zone').val(),
-            query_history_size: $('#input-query-history-size').val() ? Number($('#input-query-history-size').val()) : 0
+            search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0
         }
         return userSettings;
     }

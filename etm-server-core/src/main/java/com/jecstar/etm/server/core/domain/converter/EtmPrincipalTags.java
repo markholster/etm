@@ -4,7 +4,7 @@ public interface EtmPrincipalTags {
 
 	String getIdTag();
 	String getFilterQueryTag();
-	String getQueryHistorySizeTag();
+	String getSearchHistorySizeTag();
 	String getLocaleTag();
 	String getNameTag();
 	String getPasswordHashTag();
@@ -12,7 +12,7 @@ public interface EtmPrincipalTags {
 	String getGroupsTag();
 	String getTimeZoneTag();
 	
-	String getQueryHistoryTag();
+	String getSearchHistoryTag();
 	String getSearchTemplatesTag();
 	
 }

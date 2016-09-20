@@ -70,14 +70,14 @@ $.ajax({
 $.ajax({
     type: 'GET',
     contentType: 'application/json',
-    url: '../rest/search/query_history',
+    url: '../rest/search/history',
     success: function(data) {
-        if (!data || !data.query_history) {
+        if (!data || !data.search_history) {
             return;
         }
-        data.query_history.reverse();
-        $.each(data.query_history, function(index, query){
-            $('#list-query-history-links').append(
+        data.search_history.reverse();
+        $.each(data.search_history, function(index, query){
+            $('#list-search-history-links').append(
                 $('<li>').append(
                     $('<a href="#">')
                     .click(function(event) {
@@ -122,8 +122,8 @@ function setValuesFromHistory(query) {
 }
 
 function updateHistory(query, max_size) {
-	$('#list-query-history-links > li > a[title="' + query.query.replace(/(")/g, "\\$1" ) + '"]').parent().remove();
-    $('#list-query-history-links').prepend(
+	$('#list-search-history-links > li > a[title="' + query.query.replace(/(")/g, "\\$1" ) + '"]').parent().remove();
+    $('#list-search-history-links').prepend(
             $('<li>').append(
                 $('<a href="#">')
                 .click(function(event) {

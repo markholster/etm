@@ -114,6 +114,18 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	@Override
+	public int getMaxSearchHistoryCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxSearchHistoryCount();
+	}
+	
+	@Override
+	public int getMaxSearchTemplateCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxSearchTemplateCount();
+	}
+	
+	@Override
 	public boolean isLicenseExpired() {
 		reloadConfigurationWhenNecessary();
 		return super.isLicenseExpired();

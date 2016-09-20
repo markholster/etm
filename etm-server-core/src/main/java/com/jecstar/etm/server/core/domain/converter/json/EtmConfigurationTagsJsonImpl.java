@@ -79,4 +79,14 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 		return "max_search_result_download_rows";
 	}
 
+	@Override
+	public String getMaxSearchHistoryCountTag() {
+		return "max_search_history_count";
+	}
+
+	@Override
+	public String getMaxSearchTemplateCountTag() {
+		return "max_search_template_count";
+	}
+
 }

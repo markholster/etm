@@ -22,6 +22,8 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_QUERY_TIMEOUT 					= "queryTimeout";
 	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
 	public static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS 	= "maxSearchResultDownloadRows";
+	public static final String CONFIG_KEY_MAX_SEARCH_TEMPLATE_COUNT 		= "maxSearchTemplateCount";
+	public static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT 			= "maxSearchHistoryCount";
 
 	// Node configurations
 	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT 			= "enhancingHandlerCount";
@@ -55,6 +57,8 @@ public class EtmConfiguration {
 	// Query options
 	private long queryTimeout = 60 * 1000;
 	private int maxSearchResultDownloadRows = 500;
+	private int maxSearchTemplateCount = 10;
+	private int maxSearchHistoryCount = 10;
 	
 	
 	// Other stuff.		
@@ -237,6 +241,28 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public int getMaxSearchHistoryCount() {
+		return this.maxSearchHistoryCount;
+	}
+	
+	public EtmConfiguration setMaxSearchHistoryCount(int maxSearchHistoryCount) {
+		if (maxSearchHistoryCount >=  0) {
+			this.maxSearchHistoryCount = maxSearchHistoryCount;
+		}
+		return this;
+	}
+	
+	public int getMaxSearchTemplateCount() {
+		return this.maxSearchTemplateCount;
+	}
+	
+	public EtmConfiguration setMaxSearchTemplateCount(int maxSearchTemplateCount) {
+		if (maxSearchTemplateCount >= 0) {
+			this.maxSearchTemplateCount = maxSearchTemplateCount;
+		}
+		return this;
+	}
 
 	public String getNodeName() {
 		return this.nodeName;
@@ -288,6 +314,7 @@ public class EtmConfiguration {
 		if (etmConfiguration == null) {
 			return false;
 		}
+		
 		List<String> changed = new ArrayList<String>();
 		if (!ObjectUtils.equalsNullProof(this.license, etmConfiguration.getLicense())) {
 			this.license = etmConfiguration.getLicense();
@@ -309,6 +336,14 @@ public class EtmConfiguration {
 			setPersistingBulkSize(etmConfiguration.getPersistingBulkSize());
 			changed.add(CONFIG_KEY_PERSISTING_BULK_SIZE);
 		}
+		if (this.persistingBulkCount != etmConfiguration.getPersistingBulkCount()) {
+			setPersistingBulkCount(etmConfiguration.getPersistingBulkCount());
+			changed.add(CONFIG_KEY_PERSISTING_BULK_COUNT);
+		}		
+		if (this.persistingBulkTime != etmConfiguration.getPersistingBulkTime()) {
+			setPersistingBulkTime(etmConfiguration.getPersistingBulkTime());
+			changed.add(CONFIG_KEY_PERSISTING_BULK_TIME);
+		}		
 		if (this.shardsPerIndex != etmConfiguration.getShardsPerIndex()) {
 			setShardsPerIndex(etmConfiguration.getShardsPerIndex());
 			changed.add(CONFIG_KEY_SHARDS_PER_INDEX);
@@ -336,6 +371,19 @@ public class EtmConfiguration {
 		if (this.retryOnConflictCount != etmConfiguration.getRetryOnConflictCount()) {
 			setRetryOnConflictCount(etmConfiguration.getRetryOnConflictCount());
 			changed.add(CONFIG_KEY_RETRY_ON_CONFLICT_COUNT);
+		}
+		
+		if (this.maxSearchResultDownloadRows != etmConfiguration.getMaxSearchResultDownloadRows()) {
+			setMaxSearchResultDownloadRows(etmConfiguration.getMaxSearchResultDownloadRows());
+			changed.add(CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS);
+		}
+		if (this.maxSearchTemplateCount != etmConfiguration.getMaxSearchTemplateCount()) {
+			setMaxSearchTemplateCount(etmConfiguration.getMaxSearchTemplateCount());
+			changed.add(CONFIG_KEY_MAX_SEARCH_TEMPLATE_COUNT);
+		}
+		if (this.maxSearchHistoryCount != etmConfiguration.getMaxSearchHistoryCount()) {
+			setMaxSearchHistoryCount(etmConfiguration.getMaxSearchHistoryCount());
+			changed.add(CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);

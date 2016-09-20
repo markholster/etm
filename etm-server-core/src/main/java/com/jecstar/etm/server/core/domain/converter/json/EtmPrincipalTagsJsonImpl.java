@@ -15,8 +15,8 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	}
 	
 	@Override
-	public String getQueryHistorySizeTag() {
-		return "query_history_size";
+	public String getSearchHistorySizeTag() {
+		return "search_history_size";
 	}
 	
 	@Override
@@ -50,8 +50,8 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	}
 
 	@Override
-	public String getQueryHistoryTag() {
-		return "query_history";
+	public String getSearchHistoryTag() {
+		return "search_history";
 	}
 
 	@Override

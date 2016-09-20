@@ -22,6 +22,8 @@ public interface EtmConfigurationTags {
 	String getRetryOnConflictCountTag();
 	String getQueryTimeoutTag();
 	String getMaxSearchResultDownloadRowsTag();
+	String getMaxSearchHistoryCountTag();
+	String getMaxSearchTemplateCountTag();
 
 
 }

@@ -405,7 +405,7 @@ public class SettingsService extends AbstractJsonService {
 	public String getUsers() {
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-			.setFetchSource(new String[] {"*"}, new String[] {this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getSearchTemplatesTag(), this.etmPrincipalTags.getQueryHistoryTag()})
+			.setFetchSource(new String[] {"*"}, new String[] {this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getSearchTemplatesTag(), this.etmPrincipalTags.getSearchHistoryTag()})
 			.setQuery(QueryBuilders.matchAllQuery())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);

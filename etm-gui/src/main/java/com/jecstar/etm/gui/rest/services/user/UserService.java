@@ -56,12 +56,16 @@ public class UserService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getUserSettings() {
 		GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-				.setFetchSource(null, new String[] {"searchtemplates, dashboards"})
+				.setFetchSource(null, new String[] {"searchtemplates", "dashboards", "password_hash"})
 				.get();
 		if (getResponse.isSourceEmpty()) {
 			return "{}";
 		}
-		return getResponse.getSourceAsString();
+		// Hack the max search history into the result. Dunno how to do this better.
+		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().length() -1));
+		addIntegerElementToJsonBuffer("max_" + this.tags.getSearchHistorySizeTag(), etmConfiguration.getMaxSearchHistoryCount(), result, false);
+		result.append("}");
+		return result.toString();
 	}
 	
 	@PUT
@@ -75,12 +79,11 @@ public class UserService extends AbstractJsonService {
 		updateMap.put(this.tags.getNameTag(), valueMap.get(this.tags.getNameTag()));
 		updateMap.put(this.tags.getTimeZoneTag(), valueMap.get(this.tags.getTimeZoneTag()));
 		updateMap.put(this.tags.getLocaleTag(), valueMap.get(this.tags.getLocaleTag()));
-		Integer newHistorySize = getInteger(this.tags.getQueryHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE);
-		if (newHistorySize > 20) {
-			// TODO, the max size should be in the ETM configuration.
-			newHistorySize = 20;
+		Integer newHistorySize = getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE);
+		if (newHistorySize > etmConfiguration.getMaxSearchHistoryCount()) {
+			newHistorySize = etmConfiguration.getMaxSearchHistoryCount();
 		}
-		updateMap.put(this.tags.getQueryHistorySizeTag(), newHistorySize);
+		updateMap.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
 		
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
@@ -96,7 +99,7 @@ public class UserService extends AbstractJsonService {
 			Map<String, Object> scriptParams = new HashMap<String, Object>();
 			scriptParams.put("history_size", newHistorySize);
 			UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-					.setScript(new Script("etm_update-query-history", ScriptType.STORED, "painless", scriptParams))
+					.setScript(new Script("etm_update-search-history", ScriptType.STORED, "painless", scriptParams))
 					.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 					.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
