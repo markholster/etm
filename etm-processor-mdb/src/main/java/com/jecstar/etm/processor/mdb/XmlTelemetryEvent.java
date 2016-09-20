@@ -29,7 +29,7 @@ public class XmlTelemetryEvent {
 		MESSAGE_REQUEST,
 		@XmlEnumValue("MESSAGE_RESPONSE")
 		MESSAGE_RESPONSE, 
-		@XmlEnumValue("MESSAGE_DATAGRRAM")
+		@XmlEnumValue("MESSAGE_DATAGRAM")
 		MESSAGE_DATAGRAM
 	}
 	
