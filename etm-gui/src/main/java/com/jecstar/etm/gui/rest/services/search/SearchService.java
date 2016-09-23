@@ -81,10 +81,14 @@ public class SearchService extends AbstractJsonService {
 		GetResponse getResponse = SearchService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setFetchSource("search_templates", null)
 				.get();
-		if (getResponse.isSourceEmpty()) {
-			return "{}";
+		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+			return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + "}";
 		}
-		return getResponse.getSourceAsString();
+		// Hack the max search history into the result. Dunno how to do this better.
+		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
+		addIntegerElementToJsonBuffer("max_search_templates", etmConfiguration.getMaxSearchTemplateCount(), result, false);
+		result.append("}");
+		return result.toString();
 	}
 	
 	@GET
@@ -118,6 +122,7 @@ public class SearchService extends AbstractJsonService {
 		template.put("sort_order", getString("sort_order", requestValues));
 		
 		scriptParams.put("template", template);
+		scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setScript(new Script("etm_update-search-template", ScriptType.STORED, "painless", scriptParams))
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))

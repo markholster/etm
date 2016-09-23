@@ -176,19 +176,14 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"        boolean found = false;\n" +
 				"        for (int i=0; i < params.ctx._source.search_templates.size(); i++) {\n" + 
 				"            if (params.ctx._source.search_templates[i].name.equals(params.template.name)) {\n" + 
-				"                params.ctx._source.search_templates[i].query = params.template.query;\n" + 
-				"                params.ctx._source.search_templates[i].types = params.template.types;\n" + 
-				"                params.ctx._source.search_templates[i].fields = params.template.fields;\n" + 
-				"                params.ctx._source.search_templates[i].results_per_page = params.template.results_per_page;\n" + 
-				"                params.ctx._source.search_templates[i].sort_field = params.template.sort_field;\n" + 
-				"                params.ctx._source.search_templates[i].sort_order = params.template.sort_order;\n" +
+				"                params.ctx._source.search_templates[i] = params.template;\n" + 
 				"                found = true;\n" + 
 				"             }\n" +
 				"        }\n" + 
-				"        if (!found) {\n" +
+				"        if (!found && params.ctx._source.search_templates.size() < params.max_templates) {\n" +
 				"            params.ctx._source.search_templates.add(params.template);\n" +
 				"        }\n" +
-				"    } else {\n" + 
+				"    } else if (params.max_templates > 0) {\n" + 
 				"        params.ctx._source.search_templates = new ArrayList();\n" +
 				"        params.ctx._source.search_templates.add(params.template);\n" +
 				"    }\n" + 

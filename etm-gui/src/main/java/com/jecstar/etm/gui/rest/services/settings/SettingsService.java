@@ -468,6 +468,7 @@ public class SettingsService extends AbstractJsonService {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
 			}
 		}
+		// TODO, als er een nieuwe gebruiker wordt opgevoerd ook een aantal default templates inrichten.
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal))
 			.setDocAsUpsert(true)

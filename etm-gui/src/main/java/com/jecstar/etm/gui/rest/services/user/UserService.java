@@ -62,7 +62,7 @@ public class UserService extends AbstractJsonService {
 			return "{}";
 		}
 		// Hack the max search history into the result. Dunno how to do this better.
-		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().length() -1));
+		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
 		addIntegerElementToJsonBuffer("max_" + this.tags.getSearchHistorySizeTag(), etmConfiguration.getMaxSearchHistoryCount(), result, false);
 		result.append("}");
 		return result.toString();
