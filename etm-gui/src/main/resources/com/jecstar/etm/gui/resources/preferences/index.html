@@ -42,29 +42,31 @@ body { padding-top: 60px; }
       <div class="card-text">
         <div id="settings_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="settings_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <fieldset class="form-group">
-          <label for="input-user-id">User id</label>
-          <input id="input-user-id" type="text" class="form-control" disabled />
-        </fieldset>
-        <fieldset class="form-group">
-          <label for="input-user-name">User name</label>
-          <input id="input-user-name" type="text" class="form-control" />
-        </fieldset>        
-        <fieldset class="form-group">
-          <label for="input-locale">Locale</label>
-          <select id="input-locale" class="form-control custom-select"></select>
-        </fieldset>
-        <fieldset class="form-group">
-          <label for="input-time-zone">Time zone</label>
-          <select id="input-time-zone" class="form-control custom-select"></select>
-        </fieldset>        
-        <fieldset class="form-group">
-          <label for="input-search-history-size">Search history size</label>
-          <input id="input-search-history-size" type="number" class="form-control" min="0" value="5"/>
-        </fieldset>
-        <div class="modal-footer">
-          <button id="btn-apply-preferences" type="button" class="btn btn-primary">Apply</button>
-        </div>
+        <form id="settings_form">
+	        <fieldset class="form-group">
+	          <label for="input-user-id">User id</label>
+	          <input id="input-user-id" type="text" class="form-control" disabled />
+	        </fieldset>
+	        <fieldset class="form-group">
+	          <label for="input-user-name">User name</label>
+	          <input id="input-user-name" type="text" class="form-control" />
+	        </fieldset>        
+	        <fieldset class="form-group">
+	          <label for="input-locale">Locale</label>
+	          <select id="input-locale" class="form-control custom-select"></select>
+	        </fieldset>
+	        <fieldset class="form-group">
+	          <label for="input-time-zone">Time zone</label>
+	          <select id="input-time-zone" class="form-control custom-select"></select>
+	        </fieldset>        
+	        <fieldset class="form-group">
+	          <label for="input-search-history-size">Search history size</label>
+	          <input id="input-search-history-size" type="number" class="form-control" min="0" value="5"/>
+	        </fieldset>
+	        <div class="modal-footer">
+	          <button id="btn-apply-preferences" type="button" class="btn btn-primary">Apply</button>
+	        </div>
+	    </form> 
       </div>
     </div>
     
@@ -167,6 +169,9 @@ body { padding-top: 60px; }
         
         $('#btn-apply-preferences').click(function (event) {
             event.preventDefault();
+    		if (!document.getElementById('settings_form').checkValidity()) {
+    			return;
+    		}            
             $.ajax({
                 type: 'PUT',
                 url: '../rest/user/settings',
