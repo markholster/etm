@@ -12,7 +12,7 @@ sourceSets {
 dependencies {
     compile project(":etm-server-core"), dep_metricsCore, dep_disruptor, dep_elasticsearchClient
     integrationTestCompile project(":etm-server-core"), dep_metricsCore, dep_disruptor, dep_elasticsearchClient, dep_junit
-    integrationTestRuntime dep_log4jOverSlf4j
+    integrationTestRuntime dep_log4jToSlf4j
 }
 
 eclipse {

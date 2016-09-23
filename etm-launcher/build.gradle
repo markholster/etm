@@ -2,7 +2,7 @@ dependencies {
     compile project(":etm-gui"), 
     		project(":etm-processor-rest"), 
     		project(":etm-processor-ibmmq"),  
-    		dep_log4jOverSlf4j, 
+    		dep_log4jToSlf4j, 
     		dep_resteasyJaxrs, 
     		dep_resteasyJacksonProvider, 
     		dep_snakeyaml, 
@@ -20,6 +20,9 @@ distributions {
     main {
         contents {
             exclude '**/com.ibm.mq.allclient.jar'
+            exclude '**/config-manager-proxy-S900-FP03.jar'
+            exclude '**/ibmjsseprovider2.jar'
+            exclude '**/integration-api-10.0.0.0.jar'
         }
     }
 }
