@@ -570,5 +570,4 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		}
 	}
 
-
 }

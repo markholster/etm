@@ -262,7 +262,7 @@ public class SearchService extends AbstractJsonService {
 			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
 			.setFetchSource(parameters.getFields().toArray(new String[parameters.getFields().size()]), null)
 			.setFrom(parameters.getStartIndex())
-			.setSize(parameters.getMaxResults())
+			.setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
 			requestBuilder.addSort(parameters.getSortField(), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);

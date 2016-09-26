@@ -41,6 +41,7 @@ import org.elasticsearch.search.SearchHit;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.gui.rest.services.search.SearchRequestParameters;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -477,8 +478,22 @@ public class SettingsService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
-		if (userId.equals(newPrincipal.getId())) {
-			newPrincipal.forceReload = true;
+		if (currentPrincipal == null && etmConfiguration.getMaxSearchTemplateCount() >= 3 && newPrincipal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.SEARCHER)) {
+			// Add some default templates to the user if he/she is able to search.
+			StringBuilder templates = new StringBuilder();
+			templates.append("{\"search_templates\":[");
+			templates.append(new SearchRequestParameters("endpoints.writing_endpoint_handler.handling_time: [now-1h TO now]").toJsonSearchTemplate("Events of last 60 mins"));
+			templates.append("," + new SearchRequestParameters("endpoints.writing_endpoint_handler.handling_time: [now/d TO now/d]").toJsonSearchTemplate("Events of today"));
+			templates.append("," + new SearchRequestParameters("endpoints.writing_endpoint_handler.handling_time: [now-1d/d TO now-1d/d]").toJsonSearchTemplate("Events of yesterday"));
+			templates.append("]}");
+			client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+				.setDoc(templates.toString())
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+				.get();		}
+		if (userId.equals(getEtmPrincipal().getId())) {
+			getEtmPrincipal().forceReload = true;
 		}
 		return "{ \"status\": \"success\" }";
 	}
