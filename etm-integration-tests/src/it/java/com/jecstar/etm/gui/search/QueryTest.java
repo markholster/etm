@@ -38,7 +38,7 @@ public class QueryTest extends AbstractIntegrationTest {
 
 	    // First check if the "Query history" list is updated with our query. It should be the first link
 	    waitFor(d -> {
-	    	WebElement historyLink = d.findElement(By.id("list-query-history-links")).findElement(By.xpath("./*[1]/*[1]"));
+	    	WebElement historyLink = d.findElement(By.id("list-search-history-links")).findElement(By.xpath("./*[1]/*[1]"));
 	    	return historyLink != null && historyLink.getAttribute("title").equals(query);
 	    });
 	    
