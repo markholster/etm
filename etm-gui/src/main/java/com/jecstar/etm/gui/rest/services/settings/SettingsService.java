@@ -467,7 +467,7 @@ public class SettingsService extends AbstractJsonService {
 			// This check should be skipped/changed when LDAP is supported.
 			if (getNumberOfUsersWithAdminRole() <= 1) {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
-			}
+			} 
 		}
 		// TODO, als er een nieuwe gebruiker wordt opgevoerd ook een aantal default templates inrichten.
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
