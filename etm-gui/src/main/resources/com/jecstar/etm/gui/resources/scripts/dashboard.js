@@ -111,6 +111,7 @@ function loadDashboard(name) {
             .x(function(d) { return d[0] })
             .y(function(d) { return d[1] })
       	  	.useInteractiveGuideline(true)
+      	  	.duration(0)
       	  	.showLegend(config.showLegend);
 
           chart.xAxis
