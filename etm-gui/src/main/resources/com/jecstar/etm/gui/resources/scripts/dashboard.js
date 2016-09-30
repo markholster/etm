@@ -1,65 +1,167 @@
 function loadDashboard(name) {
-	var currentDashboard = {
-			name: 'My Dashboard',
-			rows: [
-			  { height: 16,
-				cols: [
-				  { 
-					id: 'chart1',
-					parts: 6,
-					title: 'Log types over time',
-					bordered: true,
-					showLegend: true,
-					type: 'line',
-					area: true,
-					index: {
-						name: 'etm_event_all',
-						types: ['log'],
-					},
-					x_axis: { 
-						agg: {
-							name: 'logs',
-							type: 'date-histogram',
-							field: 'endpoints.writing_endpoint_handler.handling_time',
-							interval: 'hour',
-							aggs: [
-							       {
-							    	   name: 'levels',
-							    	   type: 'terms',
-							    	   field: 'log_level'
-							       }
-							]
-						}
-					},
-					y_axis: {
-						agg : {
-							name: 'count',
-							type: 'count',
-								
-						},
-						label: 'Count'
-					}					
-				  }	
-				]
-			  }
-			]	
-	}
-	if (name) {
-		// TODO load dashboard into currentDashboard
-	}
-	buildPage(currentDashboard);
+	var currentDashboard;
 	
 	$('#lnk-edit-dashboard').click(function (event) {
 		event.preventDefault();
-		$('#input-dashboard-name').val(currentDashboard.name);
-		$('#modal-dashboard-settings').modal();
+		showSettings();
 	});
 	
 	$('#btn-apply-dashboard-settings').click(function (event) {
+		if (!currentDashboard) {
+			currentDashboard = {};
+		}
 		currentDashboard.name = $('#input-dashboard-name').val();
+		var oldRows = currentDashboard.rows;
+		
+		
 		$('#modal-dashboard-settings').modal('hide');
+		// TODO update dashboard via rest.
 		buildPage(currentDashboard);
 	});
+	
+	if (name) {
+		// TODO load dashboard via rest.
+		currentDashboard = {
+				name: 'My Dashboard',
+				rows: [
+				  { height: 16,
+					cols: [
+					  { 
+						id: 'chart1',
+						parts: 6,
+						title: 'Log types over time',
+						bordered: true,
+						showLegend: true,
+						type: 'line',
+						area: true,
+						index: {
+							name: 'etm_event_all',
+							types: ['log'],
+						},
+						x_axis: { 
+							agg: {
+								name: 'logs',
+								type: 'date-histogram',
+								field: 'endpoints.writing_endpoint_handler.handling_time',
+								interval: 'hour',
+								aggs: [
+								       {
+								    	   name: 'levels',
+								    	   type: 'terms',
+								    	   field: 'log_level'
+								       }
+								]
+							}
+						},
+						y_axis: {
+							agg : {
+								name: 'count',
+								type: 'count',
+									
+							},
+							label: 'Count'
+						}					
+					  }	
+					]
+				  }
+				]	
+		}
+		buildPage(currentDashboard);
+	} else {
+		showSettings();
+	}
+	
+	function showSettings() {
+		$('#dashboard-settings-columns').empty();
+		$('#dashboard-settings-columns').append(
+		    $('<div>').addClass('row').append(
+		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Columns'), 
+		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Height'), 
+		    	$('<div>').addClass('col-sm-2 font-weight-bold')
+		        	.append($('<a href="#">').text('Add row')
+		        		.attr('id', 'link-add-dashboard-row')	
+		        		.click(function (event) {
+		        			event.preventDefault(); 
+		                	$('#dashboard-settings-columns').append(createRow());
+		                    updateRowActions();
+		        		})
+		            )        
+		        )
+		    );			
+		if (currentDashboard) {
+			$('#input-dashboard-name').val(currentDashboard.name);
+			if (currentDashboard.rows) {
+				$.each(currentDashboard.rows, function(ix, row) {
+					$('#dashboard-settings-columns').append(createRow(row));
+				});
+				updateRowActions();
+			}
+		} else {
+			$('#input-dashboard-name').val('My New Dashboard');
+		}
+		$('#modal-dashboard-settings').modal();
+		
+		function createRow(rowData) {
+	        var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
+	        $(row).append(
+	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'number').attr('min', '1').attr('max', '12').addClass('form-control form-control-sm').val(1)),
+	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'number').attr('min', '1').attr('max', '50').addClass('form-control form-control-sm').val(16))
+	        );
+	        var actionDiv = $('<div>').addClass('col-sm-2').append(
+	            $('<div>').addClass('row actionRow').append(
+	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
+	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
+	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeRow(row)}))
+	            )
+	        );
+	        $(row).append($(actionDiv));
+	        if (rowData) {
+	        	$(row).children().each(function (index, child) {
+	                if (0 === index) {
+	                    $(child).find('input').val(rowData.cols.length);
+	                } else if (1 === index) {
+	                    $(child).find('input').val(rowData.height);
+	                } 
+	            }); 
+	        }
+	        return row;        
+	    }
+		
+		function updateRowActions() {
+	        $('#dashboard-settings-columns .actionRow').each(function (index, row) {
+	            if ($('#dashboard-settings-columns').children().length > 2) {
+	                if (index == 0) {
+	                    $(row).find('.fa-arrow-up').hide();
+	                } else {
+	                    $(row).find('.fa-arrow-up').show();
+	                }
+	                if (index >= $('#dashboard-settings-columns').children().length -2) {
+	                    $(row).find('.fa-arrow-down').hide();
+	                } else {
+	                    $(row).find('.fa-arrow-down').show();
+	                }
+	            } else {
+	                $(row).find('.fa-arrow-up').hide();
+	                $(row).find('.fa-arrow-down').hide();
+	            }
+	        });			
+		}
+		
+		function removeRow(row) {
+	        $(row).remove();
+	        updateRowActions();
+	    }
+	    
+	    function moveRowUp(row) {
+	        $(row).after($(row).prev());
+	        updateRowActions();
+	    }
+
+	    function moveRowDown(row) {
+	        $(row).before($(row).next());
+	        updateRowActions();
+	    }
+	}
 	
 	function buildPage(board) {
 		$('#dashboard-name').text(board.name);
