@@ -51,7 +51,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	
 	public void createTemplates() {
 		try {
-			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, "etm_event").get();
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.ETM_EVENT_TEMPLATE_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
 				creatEtmEventIndexTemplate(true, 5, 0);
 				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
@@ -86,9 +86,9 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		}
 		
 		try {
-			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, "etm_metrics").get();
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.ETM_METRICS_TEMPLATE_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
-				new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, "etm_metrics")
+				new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_METRICS_TEMPLATE_NAME)
 					.setCreate(false)
 					.setTemplate(ElasticSearchLayout.ETM_METRICS_INDEX_PREFIX + "*")
 					.setSettings(Settings.builder()
@@ -118,7 +118,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	}
 	
 	private void creatEtmEventIndexTemplate(boolean create, int shardsPerIndex, int replicasPerIndex) {
-		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, "etm_event")
+		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_EVENT_TEMPLATE_NAME)
 		.setCreate(create)
 		.setTemplate(ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + "*")
 		.setSettings(Settings.builder()

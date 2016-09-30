@@ -54,7 +54,7 @@ public class LogBulkProcessorWrapper implements Closeable {
 		.setFlushInterval(TimeValue.timeValueSeconds(10))
 		.build();
 		if (this.persister == null && this.configuration != null) {
-			this.persister = new LogTelemetryEventPersister(bulkProcessor, this.configuration);
+			this.persister = new LogTelemetryEventPersister(this.bulkProcessor, this.configuration);
 			flushStartupBuffer();
 		}
 	}

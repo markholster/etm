@@ -2,11 +2,13 @@ package com.jecstar.etm.server.core.configuration;
 
 public class ElasticSearchLayout {
 
-	public static final String ETM_METRICS_INDEX_PREFIX = "etm_metrics_";
-	public static final String ETM_METRICS_INDEX_ALIAS_ALL = "etm_metrics_all";
+	public static final String ETM_METRICS_TEMPLATE_NAME = "etm_metrics";
+	public static final String ETM_METRICS_INDEX_PREFIX = ETM_METRICS_TEMPLATE_NAME + "_";
+	public static final String ETM_METRICS_INDEX_ALIAS_ALL = ETM_METRICS_INDEX_PREFIX + "all";
 	
-	public static final String ETM_EVENT_INDEX_ALIAS_ALL = "etm_event_all";
-	public static final String ETM_EVENT_INDEX_PREFIX = "etm_event_";
+	public static final String ETM_EVENT_TEMPLATE_NAME = "etm_event";
+	public static final String ETM_EVENT_INDEX_PREFIX = ETM_EVENT_TEMPLATE_NAME + "_";
+	public static final String ETM_EVENT_INDEX_ALIAS_ALL = ETM_EVENT_INDEX_PREFIX + "all";
 	public static final String ETM_EVENT_INDEX_TYPE_BUSINESS = "business";
 	public static final String ETM_EVENT_INDEX_TYPE_HTTP = "http";
 	public static final String ETM_EVENT_INDEX_TYPE_LOG = "log";
