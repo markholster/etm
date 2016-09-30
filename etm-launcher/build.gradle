@@ -6,7 +6,6 @@ dependencies {
     		dep_resteasyJaxrs, 
     		dep_resteasyJacksonProvider, 
     		dep_snakeyaml, 
-    		dep_undertowCore, 
     		dep_undertowServlet
     testCompile dep_junit
 }
