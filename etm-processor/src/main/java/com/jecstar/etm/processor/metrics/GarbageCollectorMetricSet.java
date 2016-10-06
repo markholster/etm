@@ -17,6 +17,7 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricSet;
 
 public class GarbageCollectorMetricSet implements MetricSet {
+	
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]+");
 
     private final List<GarbageCollectorMXBean> garbageCollectors;
@@ -40,7 +41,7 @@ public class GarbageCollectorMetricSet implements MetricSet {
     @Override
     public Map<String, Metric> getMetrics() {
         final Map<String, Metric> gauges = new HashMap<String, Metric>();
-        for (final GarbageCollectorMXBean gc : garbageCollectors) {
+        for (final GarbageCollectorMXBean gc : this.garbageCollectors) {
             final String name = WHITESPACE.matcher(gc.getName()).replaceAll("-");
             gauges.put(name("gc.collectors", name, "count"), new Gauge<Long>() {
                 @Override

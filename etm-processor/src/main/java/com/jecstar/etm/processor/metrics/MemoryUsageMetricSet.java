@@ -20,6 +20,7 @@ import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.RatioGauge;
 
 public class MemoryUsageMetricSet implements MetricSet {
+	
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]+");
 
     private final MemoryMXBean mxBean;

@@ -20,6 +20,7 @@ import com.jecstar.etm.domain.builders.SqlTelemetryEventBuilder;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.metrics.GarbageCollectorMetricSet;
 import com.jecstar.etm.processor.metrics.MemoryUsageMetricSet;
+import com.jecstar.etm.processor.metrics.NetworkMetricSet;
 import com.jecstar.etm.processor.metrics.OperatingSystemMetricSet;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
@@ -70,6 +71,9 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.metricRegistry.registerAll(new GarbageCollectorMetricSet());
 		this.metricRegistry.registerAll(new MemoryUsageMetricSet());
 		this.metricRegistry.registerAll(new OperatingSystemMetricSet());
+		if (NetworkMetricSet.isCapableOfMonitoring()) {
+			this.metricRegistry.registerAll(new NetworkMetricSet());
+		}
 	}
 	
 	public void hotRestart() {
