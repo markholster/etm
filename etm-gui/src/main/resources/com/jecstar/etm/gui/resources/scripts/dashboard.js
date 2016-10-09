@@ -12,7 +12,28 @@ function loadDashboard(name) {
 		}
 		currentDashboard.name = $('#input-dashboard-name').val();
 		var oldRows = currentDashboard.rows;
-		
+		currentDashboard.rows = [];
+		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (index, row){
+			var nrOfCols = $(row).find("input[name='row-cols']").val();
+			var height = $(row).find("input[name='row-height']").val();
+			var jsonRow = {
+					height: height,
+					cols: []
+			}
+			var remainingParts = 12;
+			for (i=0; i< nrOfCols; i++) {
+				var parts = Math.ceil(remainingParts / (nrOfCols - i));
+				jsonRow.cols.push(
+					{
+						id: generateUUID(),
+						parts: parts,
+						bordered: true
+					}
+				);
+				remainingParts -= parts;
+			}
+			currentDashboard.rows.push(jsonRow);
+		});
 		
 		$('#modal-dashboard-settings').modal('hide');
 		// TODO update dashboard via rest.
@@ -104,13 +125,17 @@ function loadDashboard(name) {
 		function createRow(rowData) {
 	        var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
 	        $(row).append(
-	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'number').attr('min', '1').attr('max', '12').addClass('form-control form-control-sm').val(1)),
-	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'number').attr('min', '1').attr('max', '50').addClass('form-control form-control-sm').val(16))
+	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(
+	            		$('<input>').attr('type', 'number').attr('min', '1').attr('max', '12').attr('name', 'row-cols').addClass('form-control form-control-sm').val(1)
+	            ),
+	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(
+	            		$('<input>').attr('type', 'number').attr('min', '1').attr('max', '50').attr('name', 'row-height').addClass('form-control form-control-sm').val(16)
+	            )
 	        );
 	        var actionDiv = $('<div>').addClass('col-sm-2').append(
 	            $('<div>').addClass('row actionRow').append(
-	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
-	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
+//	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
+//	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
 	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeRow(row)}))
 	            )
 	        );
@@ -167,24 +192,35 @@ function loadDashboard(name) {
 		$('#dashboard-name').text(board.name);
 		var graphContainer = $('#graph-container').empty();
 		$.each(board.rows, function(rowIx, row) {
-			var rowContainer = $('<div>').addClass('row').attr('style', 'height: ' + row.height + 'rem;');
+			var rowContainer = $('<div>').addClass('row').attr('style', 'height: ' + row.height + 'rem; padding-bottom: 15px;');
+			if (rowIx != 0) {
+				var oldStyle = $(rowContainer).attr('style');
+				$(rowContainer).attr('style', oldStyle + ' padding-top: 15px;');
+			}
 			$.each(row.cols, function (colIx, col) {
 				var colContainer = $('<div>').addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
-				var svgContainer = colContainer;
-				if (col.bordered) {
-					var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
-					svgContainer = card;
-					colContainer.append(card);
+				var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
+				colContainer.append(card);
+				if (!col.bordered) {
+					card.addClass('noBorder');
 				}
-				svgContainer.append(
+				card.append(
 				  $('<h5>').addClass('card-title').text(col.title).append(
-				    $('<a>').addClass('fa fa-pencil-square-o pull-right').click(function (event) {
+				    $('<a>').addClass('fa fa-pencil-square-o pull-right invisible').attr('name', 'edit-graph').click(function (event) {
 				    	editGraph(rowIx, colIx)
 				    }) 
 				  )
 				);
+				colContainer.on("mouseover mouseout", function() {
+					colContainer.find("a[name='edit-graph']").toggleClass('invisible');
+					card.toggleClass('selectedColumn');
+					if (!col.bordered) {
+						card.toggleClass('noBorder');
+					}
+				});
 				rowContainer.append(colContainer);
 				// Now load the data.
+				// TODO controleer of de col ook data heeft om op te halen...
 			    $.ajax({
 			        type: 'POST',
 			        contentType: 'application/json',
