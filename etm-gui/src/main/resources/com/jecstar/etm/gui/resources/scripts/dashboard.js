@@ -1,36 +1,59 @@
 function loadDashboard(name) {
 	var currentDashboard;
+	var currentGraph;
 	
 	$('#lnk-edit-dashboard').click(function (event) {
 		event.preventDefault();
-		showSettings();
+		showSettings(currentDashboard);
 	});
 	
 	$('#btn-apply-dashboard-settings').click(function (event) {
 		if (!currentDashboard) {
-			currentDashboard = {};
+			currentDashboard = {
+			};
 		}
 		currentDashboard.name = $('#input-dashboard-name').val();
 		var oldRows = currentDashboard.rows;
 		currentDashboard.rows = [];
-		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (index, row){
+		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (rowIx, row){
 			var nrOfCols = $(row).find("input[name='row-cols']").val();
 			var height = $(row).find("input[name='row-height']").val();
+			var oldRow;
+			var rowId = $(row).attr('data-row-id');
+			if (oldRows && rowId) {
+				// find the row that is edited.
+				oldRow = $.grep(oldRows, function(n, i) {
+					return n.id == rowId;
+				})[0];
+			}
 			var jsonRow = {
+					id: generateUUID(),
 					height: height,
 					cols: []
 			}
-			var remainingParts = 12;
-			for (i=0; i< nrOfCols; i++) {
-				var parts = Math.ceil(remainingParts / (nrOfCols - i));
-				jsonRow.cols.push(
-					{
+			if (oldRow) {
+				jsonRow.id = oldRow.id;
+				jsonRow.height =  height
+			} 
+			if (oldRow && oldRow.cols && oldRow.cols.length == nrOfCols) {
+				// Number of columns in row not changed.
+				jsonRow.cols = oldRow.cols;
+			} else {
+				var remainingParts = 12;
+				for (i=0; i< nrOfCols; i++) {
+					var parts = Math.ceil(remainingParts / (nrOfCols - i));
+					column = {
 						id: generateUUID(),
 						parts: parts,
 						bordered: true
 					}
-				);
-				remainingParts -= parts;
+					if (oldRow && oldRow.cols && oldRow.cols[i]) {
+						column = oldRow.cols[i];
+						column.parts = parts;
+					}
+					jsonRow.cols.push(column);
+					remainingParts -= parts;
+				}		
 			}
 			currentDashboard.rows.push(jsonRow);
 		});
@@ -40,15 +63,25 @@ function loadDashboard(name) {
 		buildPage(currentDashboard);
 	});
 	
+	$('#btn-apply-graph-settings').click(function (event) {
+		currentGraph.title = $("#input-graph-title").val();
+		var column = $("div[data-col-id='" + currentGraph.id + "']");
+		column.find('.card-title').text(currentGraph.title);
+		// TODO update data via rest.
+		$('#modal-graph-settings').modal('hide');
+	});
+	
 	if (name) {
 		// TODO load dashboard via rest.
 		currentDashboard = {
 				name: 'My Dashboard',
 				rows: [
-				  { height: 16,
+				  { 
+					id: generateUUID(),
+					height: 16,
 					cols: [
 					  { 
-						id: 'chart1',
+						id: generateUUID(),
 						parts: 6,
 						title: 'Log types over time',
 						bordered: true,
@@ -92,7 +125,7 @@ function loadDashboard(name) {
 		showSettings();
 	}
 	
-	function showSettings() {
+	function showSettings(dashboardData) {
 		$('#dashboard-settings-columns').empty();
 		$('#dashboard-settings-columns').append(
 		    $('<div>').addClass('row').append(
@@ -109,16 +142,17 @@ function loadDashboard(name) {
 		            )        
 		        )
 		    );			
-		if (currentDashboard) {
-			$('#input-dashboard-name').val(currentDashboard.name);
-			if (currentDashboard.rows) {
-				$.each(currentDashboard.rows, function(ix, row) {
+		if (dashboardData) {
+			$('#input-dashboard-name').val(dashboardData.name);
+			if (dashboardData.rows) {
+				$.each(dashboardData.rows, function(ix, row) {
 					$('#dashboard-settings-columns').append(createRow(row));
 				});
 				updateRowActions();
 			}
 		} else {
 			$('#input-dashboard-name').val('My New Dashboard');
+			$('#dashboard-settings-columns').append(createRow());
 		}
 		$('#modal-dashboard-settings').modal();
 		
@@ -141,6 +175,7 @@ function loadDashboard(name) {
 	        );
 	        $(row).append($(actionDiv));
 	        if (rowData) {
+	        	$(row).attr('data-row-id', rowData.id);
 	        	$(row).children().each(function (index, child) {
 	                if (0 === index) {
 	                    $(child).find('input').val(rowData.cols.length);
@@ -188,17 +223,17 @@ function loadDashboard(name) {
 	    }
 	}
 	
-	function buildPage(board) {
-		$('#dashboard-name').text(board.name);
+	function buildPage() {
+		$('#dashboard-name').text(currentDashboard.name);
 		var graphContainer = $('#graph-container').empty();
-		$.each(board.rows, function(rowIx, row) {
-			var rowContainer = $('<div>').addClass('row').attr('style', 'height: ' + row.height + 'rem; padding-bottom: 15px;');
+		$.each(currentDashboard.rows, function(rowIx, row) {
+			var rowContainer = $('<div>').addClass('row').attr('data-row-id', row.id).attr('style', 'height: ' + row.height + 'rem; padding-bottom: 15px;');
 			if (rowIx != 0) {
 				var oldStyle = $(rowContainer).attr('style');
 				$(rowContainer).attr('style', oldStyle + ' padding-top: 15px;');
 			}
 			$.each(row.cols, function (colIx, col) {
-				var colContainer = $('<div>').addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
+				var colContainer = $('<div>').attr('data-col-id', col.id).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
 				var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
 				colContainer.append(card);
 				if (!col.bordered) {
@@ -206,8 +241,9 @@ function loadDashboard(name) {
 				}
 				card.append(
 				  $('<h5>').addClass('card-title').text(col.title).append(
-				    $('<a>').addClass('fa fa-pencil-square-o pull-right invisible').attr('name', 'edit-graph').click(function (event) {
-				    	editGraph(rowIx, colIx)
+				    $('<a>').attr('href', '#').addClass('fa fa-pencil-square-o pull-right invisible').attr('name', 'edit-graph').click(function (event) {
+				    	event.preventDefault();
+				    	editGraph(rowIx, colIx);
 				    }) 
 				  )
 				);
@@ -241,6 +277,9 @@ function loadDashboard(name) {
 	}
 	
 	function editGraph(rowIx, colIx) {
+		currentGraph = currentDashboard.rows[rowIx].cols[colIx];
+		$('#input-graph-title').val(currentGraph.title);
+		$('#modal-graph-settings').modal();
 	}
 	
 	function renderLineChart(svgContainer, config, data) {
