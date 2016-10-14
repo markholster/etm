@@ -65,8 +65,11 @@ function loadDashboard(name) {
 	
 	$('#btn-apply-graph-settings').click(function (event) {
 		currentGraph.title = $("#input-graph-title").val();
-		var column = $("div[data-col-id='" + currentGraph.id + "']");
-		column.find('.card-title').text(currentGraph.title);
+		currentGraph.bordered = $('#sel-graph-border').val() == 'true' ? true : false;
+		currentGraph.showLegend = $('#sel-graph-legend').val() == 'true' ? true : false;
+
+		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
+		
 		// TODO update data via rest.
 		$('#modal-graph-settings').modal('hide');
 	});
@@ -168,8 +171,8 @@ function loadDashboard(name) {
 	        );
 	        var actionDiv = $('<div>').addClass('col-sm-2').append(
 	            $('<div>').addClass('row actionRow').append(
-//	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
-//	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
+	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
+	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
 	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeRow(row)}))
 	            )
 	        );
@@ -233,28 +236,8 @@ function loadDashboard(name) {
 				$(rowContainer).attr('style', oldStyle + ' padding-top: 15px;');
 			}
 			$.each(row.cols, function (colIx, col) {
-				var colContainer = $('<div>').attr('data-col-id', col.id).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
-				var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
-				colContainer.append(card);
-				if (!col.bordered) {
-					card.addClass('noBorder');
-				}
-				card.append(
-				  $('<h5>').addClass('card-title').text(col.title).append(
-				    $('<a>').attr('href', '#').addClass('fa fa-pencil-square-o pull-right invisible').attr('name', 'edit-graph').click(function (event) {
-				    	event.preventDefault();
-				    	editGraph(rowIx, colIx);
-				    }) 
-				  )
-				);
-				colContainer.on("mouseover mouseout", function() {
-					colContainer.find("a[name='edit-graph']").toggleClass('invisible');
-					card.toggleClass('selectedColumn');
-					if (!col.bordered) {
-						card.toggleClass('noBorder');
-					}
-				});
-				rowContainer.append(colContainer);
+				var cell = createCell(col);
+				rowContainer.append(cell);
 				// Now load the data.
 				// TODO controleer of de col ook data heeft om op te halen...
 			    $.ajax({
@@ -267,7 +250,7 @@ function loadDashboard(name) {
 			                return;
 			            }
 			            if ('line' == col.type) {
-			            	renderLineChart(svgContainer, col, data);
+			            	renderLineChart(cell, col, data);
 			            }
 			        }
 			    });							
@@ -276,9 +259,42 @@ function loadDashboard(name) {
 		});
 	}
 	
-	function editGraph(rowIx, colIx) {
-		currentGraph = currentDashboard.rows[rowIx].cols[colIx];
+	function createCell(col) {
+		var cellContainer = $('<div>').attr('data-col-id', col.id).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
+		var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
+		cellContainer.append(card);
+		if (!col.bordered) {
+			card.addClass('noBorder');
+		}
+		card.append(
+		  $('<h5>').addClass('card-title').text(col.title).append(
+		    $('<a>').attr('href', '#').addClass('fa fa-pencil-square-o pull-right invisible').attr('name', 'edit-graph').click(function (event) {
+		    	event.preventDefault();
+		    	editGraph(col.id);
+		    }) 
+		  )
+		);
+		cellContainer.on("mouseover mouseout", function() {
+			cellContainer.find("a[name='edit-graph']").toggleClass('invisible');
+			card.toggleClass('selectedColumn');
+			if (!col.bordered) {
+				card.toggleClass('noBorder');
+			}
+		});	
+		return cellContainer;
+	}
+	
+	function editGraph(cellId) {
+		for (rowIx=0; rowIx < currentDashboard.rows.length; rowIx++) {
+			for (colIx=0; colIx < currentDashboard.rows[rowIx].cols.length; colIx++) {
+				if (currentDashboard.rows[rowIx].cols[colIx].id == cellId) {
+					currentGraph = currentDashboard.rows[rowIx].cols[colIx];
+				}
+			}
+		}
 		$('#input-graph-title').val(currentGraph.title);
+		$('#sel-graph-border').val(currentGraph.bordered ? 'true' : 'false');
+		$('#sel-graph-legend').val(currentGraph.showLegend ? 'true' : 'false');
 		$('#modal-graph-settings').modal();
 	}
 	
