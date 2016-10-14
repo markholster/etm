@@ -88,24 +88,30 @@ body { padding-top: 60px; }
         </div>
         <div class="modal-body">
           <form id="graph_form">
-	          <fieldset class="form-group">
-	            <label for="input-graph-title">Graph title</label>
-	            <input id="input-graph-title" type="text" class="form-control" />
-	          </fieldset>
-	          <fieldset class="form-group">
-	            <label for="sel-graph-border">Border</label>
-	            <select id="sel-graph-border" class="form-control custom-select">
-	            	<option value="true">Yes</option>
-	            	<option value="false">No</option>
-	            </select>
-	          </fieldset>
-	          <fieldset class="form-group">
-	            <label for="sel-graph-legend">Show legend</label>
-	            <select id="sel-graph-legend" class="form-control custom-select">
-	            	<option value="true">Yes</option>
-	            	<option value="false">No</option>
-	            </select>
-	          </fieldset>	          	          
+	          <div class="form-group row">
+	            <label for="input-graph-title" class="col-xs-2 col-form-label">Graph title</label>
+	            <div class="col-xs-10">
+	            	<input id="input-graph-title" type="text" class="form-control" />
+				</div>
+	          </div>
+	          <div class="form-group row">
+	            <label for="sel-graph-border" class="col-xs-2 col-form-label">Border</label>
+	            <div class="col-xs-10">
+	            	<select id="sel-graph-border" class="form-control custom-select">
+	            		<option value="true">Yes</option>
+	            		<option value="false">No</option>
+	            	</select>
+	            </div>	
+	          </div>
+	          <div class="form-group row">
+	            <label for="sel-graph-legend" class="col-xs-2 col-form-label">Show legend</label>
+	            <div class="col-xs-10">
+	            	<select id="sel-graph-legend" class="form-control custom-select">
+	            		<option value="true">Yes</option>
+	            		<option value="false">No</option>
+	            	</select>
+	            </div>	
+	          </div>	          	          
               <div class="modal-footer">
 	          	<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 	            <button id="btn-apply-graph-settings" type="button" class="btn btn-primary">Apply</button>
