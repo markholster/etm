@@ -1,0 +1,26 @@
+bindingAddress: 127.0.0.1
+bindingPortOffset: 0
+clusterName: Enterprise Telemetry Monitor
+elasticsearch:
+  connectAddresses: 127.0.0.1:9300
+http:
+  guiEnabled: true
+  httpPort: 8080
+  httpsPort: 8443
+  maxConcurrentRequests: 100
+  maxQueuedRequests: 100
+  restProcessorEnabled: true
+  sslKeystoreLocation: null
+  sslKeystorePassword: null
+  sslKeystoreType: PKCS12
+  sslProtocol: TLS
+  sslTruststoreLocation: null
+  sslTruststorePassword: null
+  sslTruststoreType: JKS
+ibmMq:
+  enabled: false
+  queueManagers: []
+instanceName: Node_1
+logging:
+  loggers: {}
+  rootLogger: INFO

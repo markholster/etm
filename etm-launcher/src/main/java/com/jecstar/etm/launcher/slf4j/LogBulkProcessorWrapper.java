@@ -28,11 +28,13 @@ public class LogBulkProcessorWrapper implements Closeable {
 	private LogTelemetryEventPersister persister;
 	
 	private List<LogTelemetryEvent> startupBuffer = new ArrayList<>();
+	
+	private boolean open = true;
 
 	public void setConfiguration(EtmConfiguration configuration) {
 		this.configuration = configuration;
 		if (this.persister == null && this.bulkProcessor != null) {
-			this.persister = new LogTelemetryEventPersister(bulkProcessor, this.configuration);
+			this.persister = new LogTelemetryEventPersister(this.bulkProcessor, this.configuration);
 			flushStartupBuffer();
 		}
 	}
@@ -59,7 +61,7 @@ public class LogBulkProcessorWrapper implements Closeable {
 		}
 	}
 	
-	private void flushStartupBuffer() {
+	private synchronized void flushStartupBuffer() {
 		for (LogTelemetryEvent event : this.startupBuffer) {
 			persist(event);
 		}
@@ -67,15 +69,20 @@ public class LogBulkProcessorWrapper implements Closeable {
 	}
 	
 	public void persist(LogTelemetryEvent event) {
-		if (this.persister != null) {
+		if (this.persister != null && isOpen()) {
 			this.persister.persist(event, writer);
 		} else {
 			this.startupBuffer.add(event);
 		}
 	}
+	
+	private boolean isOpen() {
+		return this.open;
+	}
 
 	@Override
 	public void close() {
+		this.open = false;
 		if (this.bulkProcessor != null) {
 			this.bulkProcessor.close();
 		}

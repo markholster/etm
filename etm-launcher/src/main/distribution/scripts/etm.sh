@@ -26,7 +26,8 @@ fi
 
 
 # Location of the pid file.
-PIDDIR="$BASEDIR/logs"
+PIDDIR="$BASEDIR"
+CONFIGDIR="$BASEDIR/config"
 
 # The following two lines are used by the chkconfig command. Change as is
 #  appropriate for your application.  They should remain commented.
@@ -218,7 +219,7 @@ console() {
     if [ "X$pid" = "X" ]
     then
         # The string passed to eval must handles spaces in paths correctly.
-        COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" -Dlog4j.configuration=file:\"$BASEDIR\"/etc/log4j-console.properties ${mainClassName}"
+        COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\""
         eval $COMMAND_LINE
     else
         echo "$APP_LONG_NAME is already running."
@@ -232,8 +233,8 @@ start() {
     if [ "X$pid" = "X" ]
     then
         # The string passed to eval must handles spaces in paths correctly.
-        COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" -Dlog4j.configuration=file:\"$BASEDIR\"/etc/log4j.properties ${mainClassName}"
-        nohup $JAVACMD $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath "$CLASSPATH" -Dapp.name="$APP_NAME" -Dapp.version="$APP_VERSION" -Dapp.repo="$REPO" -Dapp.home="$BASEDIR" -Dlog4j.configuration=file:"$BASEDIR"/etc/log4j.properties ${mainClassName} </dev/null >/dev/null 2>&1 &
+        COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\""
+        nohup $JAVACMD $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath "$CLASSPATH" -Dapp.name="$APP_NAME" -Dapp.version="$APP_VERSION" -Dapp.repo="$REPO" -Dapp.home="$BASEDIR" ${mainClassName} --config-dir="$CONFIGDIR" </dev/null >/dev/null 2>&1 &
         echo $! > $PIDFILE
     else
         echo "$APP_LONG_NAME is already running."
