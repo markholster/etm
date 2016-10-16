@@ -7,5 +7,6 @@ include 'etm-domain',
         'etm-slf4j', 
         'etm-launcher',
         'etm-license-generator',
-        'etm-integration-tests' 
-        'etm-license-generator'
+        'etm-integration-tests', 
+        'etm-license-generator',
+        'etm-distribution'

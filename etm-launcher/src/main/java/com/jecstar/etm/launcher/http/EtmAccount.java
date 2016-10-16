@@ -11,6 +11,11 @@ import io.undertow.security.idm.Account;
 
 public class EtmAccount implements Account {
 	
+	/**
+	 * The serialVersionUID for this class.
+	 */
+	private static final long serialVersionUID = -7980565495248385591L;
+	
 	private final EtmPrincipal principal;
 	private long lastUpdated;
 	private Set<String> roles = new HashSet<>();
