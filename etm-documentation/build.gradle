@@ -1,0 +1,27 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.3'
+    }
+}
+
+apply plugin: 'org.asciidoctor.convert'
+
+asciidoctor {
+  sourceDir = file('src/main/asciidoc')
+  sources {
+    include 'etm.adoc'
+  }
+  attributes 'author': 'Mark Holster',
+  			 'email': 'info@jecstar.com',
+  			 'toc': 'right',
+    		 'toc-title': 'Table of Contents',
+    		 'source-highlighter': 'coderay',
+    		 'stylesheet': 'github.css',
+    		 'stylesdir': 'stylesheets',
+    		 
+    		 'etm': 'Enterprise Telemetry Monitor'
+}

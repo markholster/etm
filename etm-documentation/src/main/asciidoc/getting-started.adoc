@@ -1,0 +1,31 @@
+== Getting started
+{etm} is a highly scalable event processor. The goal of {etm} is to gain near realtime insights in the information flows inside and between your enterprise applications. It is generally used to help organizations in monitoring their complex application landscapes. 
+
+A few sample usecases that {etm} could be used for:
+
+* Correlating events from different applications to create an information flow. These information flows can be individually inspected to locate performance issues in your application chain. 
+* Finding the cause of an error in your information flow and pinpointing it to a specific application (component). 
+* Act as a central point of information for http, messaging and log events of all of your applications. By giving people access to only certain events it is ensured that people can seen and monitor only the things they are responsible for.
+
+The rest of this manual will explain to you how you can use {etm} in the most efficient way in your organization.
+
+=== Basic concepts
+Before we can go any further it is important to explain the basis concepts of {etm}.
+
+.Cluster
+A Cluster is a group of {etm} Nodes forming a distributed application without a single point of failure. Technically speaking a Cluster can be formed with a single Node but this is not a recommended setup.
+
+.Node
+A Node is an instance of an {etm} installation. Each node can provide all of the functionalities that {etm} provides.
+
+.Event
+An Event is the most basic entity in {etm}. An Event can be an http request, but also a log line from an application. 
+
+.Processor
+The Processor is the component that handles the processing of all events. It is capable of enriching and grouping event based on your configuration.
+
+.Transaction
+An transaction is a group of Events that belong together. The scope of a Transaction is configurable, and highly dependent on how the Event is handled over to the Processor.
+
+.Gui
+The Graphical User Interface of {etm}. You can access {etm} with (almost) any modern browser on any Node. With the Gui your are able to monitor, search and correlate all of the processed events.  

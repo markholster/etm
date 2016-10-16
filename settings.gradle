@@ -9,4 +9,5 @@ include 'etm-domain',
         'etm-license-generator',
         'etm-integration-tests', 
         'etm-license-generator',
-        'etm-distribution'
+        'etm-distribution',
+        'etm-documentation'

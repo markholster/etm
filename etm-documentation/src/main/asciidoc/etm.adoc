@@ -1,0 +1,8 @@
+Enterprise Telemetry Monitor
+============================
+:author: Mark Holster
+:email: info@jecstar.com
+:revnumber: {project-version} 
+:revdate: {docdate}
+
+include::getting-started.adoc[]
