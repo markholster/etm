@@ -15,7 +15,7 @@ asciidoctor {
   sources {
     include 'etm.adoc'
   }
-  attributes 'author': 'Mark Holster',
+  attributes 'author': 'Milo Jacobs & Mark Holster',
   			 'email': 'info@jecstar.com',
   			 'toc': 'right',
     		 'toc-title': 'Table of Contents',

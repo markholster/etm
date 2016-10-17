@@ -28,4 +28,24 @@ The Processor is the component that handles the processing of all events. It is 
 An transaction is a group of Events that belong together. The scope of a Transaction is configurable, and highly dependent on how the Event is handled over to the Processor.
 
 .Gui
-The Graphical User Interface of {etm}. You can access {etm} with (almost) any modern browser on any Node. With the Gui your are able to monitor, search and correlate all of the processed events.  
+The Graphical User Interface of {etm}. You can access {etm} with (almost) any modern browser on any Node. With the Gui your are able to monitor, search and correlate all of the processed events.
+
+.Elasticsearch
+The database that is used by {etm}. This database is not provided with the product, but needs to be setup separately if not already available in your organization. More information can be found on the link:https://www.elastic.co/products/elasticsearch[Elasticsearch website].
+
+In short a simple setup could be something like the image below; Application 1 and Ibm Integration Bus provide Event to the Processor. The processor is enhancing and saving the Events to the Elasticsarch database. Users are able to query and monitoring events with a browsers on any device.
+
+.{etm} overview
+image::images/etm-overview.png["{etm} overview",link="./images/etm-overview.png"]
+
+=== Installation
+{etm} is written in Java and hence needs a Java 8 runtime installed on your machine. It is recommended that you use the Oracle JDK version 1.8, but {etm} might run with other JDK suppliers as well. The installation of the Java runtime is not covered in this manual and may differ from platform to platform. Recommendations regarding the Oracle JDK can be found on link:http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html[Oracle's website]. 
+Before you proceed, please check if a correct version of the Java runtime is installed by running:
+
+[source,bash]
+java -version
+echo $JAVA_HOME
+
+If your organization not already has an Elasticsearch cluster installed it's time to install it now. {etm} needs an Elasticsearch cluster formed of nodes with version 5.0 or compatible. The installation of Elasticsearch is coverd at the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.0/_installation.html[Elastic.co's website]. Don't forget to read the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.0/important-settings.html[important settings]! 
+{etm} does not require a specific Elasticsearch cluster name and can join any Elasticsearch cluster. {etm} indici and aliasses will be prefixed with abbreviation 'etm-'.  
+
