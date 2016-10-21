@@ -9,6 +9,7 @@ applicationName = 'etm'
 
 distributions {
     main {
+    	baseName 'etm'
         contents {
             exclude '**/com.ibm.mq.allclient.jar'
             exclude '**/config-manager-proxy-S900-FP03.jar'
@@ -19,6 +20,10 @@ distributions {
             }
         }
     }
+}
+
+tasks.withType(Tar){
+    compression = Compression.GZIP
 }
 
 startScripts {

@@ -42,10 +42,80 @@ image::images/etm-overview.png["{etm} overview",link="./images/etm-overview.png"
 {etm} is written in Java and hence needs a Java 8 runtime installed on your machine. It is recommended that you use the Oracle JDK version 1.8, but {etm} might run with other JDK suppliers as well. The installation of the Java runtime is not covered in this manual and may differ from platform to platform. Recommendations regarding the Oracle JDK can be found on link:http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html[Oracle's website]. 
 Before you proceed, please check if a correct version of the Java runtime is installed by running:
 
-[source,bash]
+[source,bash,subs=attributes+]
+----
 java -version
 echo $JAVA_HOME
+----
 
 If your organization not already has an Elasticsearch cluster installed it's time to install it now. {etm} needs an Elasticsearch cluster formed of nodes with version 5.0 or compatible. The installation of Elasticsearch is coverd at the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.0/_installation.html[Elastic.co's website]. Don't forget to read the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.0/important-settings.html[important settings]! 
-{etm} does not require a specific Elasticsearch cluster name and can join any Elasticsearch cluster. {etm} indici and aliasses will be prefixed with abbreviation 'etm-'.  
+{etm} does not require a specific Elasticsearch cluster name and can join any Elasticsearch cluster, but out of the box it is trying to connect to a cluster with the name 'Enterprise Telemetry Monitor'. {etm} indici and aliasses will be prefixed with abbreviation ''etm_''.
+  
+
+Once Elasticsearch is up and running, when can then download and run {etm}. The binaries can be downloaded from link:http://www.jecstar.com/downloads[www.jecstar.com/downloads]. Depending on your operation (or personal
+preference) you can download a .zip or .tgz file. In this example we choose the .tgz file, so let's download the binary to our machine:
+
+[source,bash,subs=attributes+]
+----
+curl -LO http://www.jecstar.com/downloads/etm-{project-version}.tgz
+----
+
+Then extract the archive with the following commando:
+
+[source,bash,subs=attributes+]
+----
+tar -zxvf etm-{project-version}.tgz
+----
+
+This wil extract the archive to the directory etm-{project-version}. We then change to the bin directory of {etm} to fire it up for the first time:
+
+[source,bash,subs=attributes+]
+----
+cd etm-{project-version}/bin
+----
+
+And now we are ready we can start {etm} with the following command:
+
+[source,bash,subs=attributes+]
+----
+./etm console
+----
+
+IMPORTANT: By default {etm} tries to connect to an Elasticsearch cluster with the name ''Enterprise Telemetry Monitor'' and a node at 127.0.0.1:9300. If you have left your Elasticsearch cluster name untouched you should change that name, or change the {etm} configuration to match the Elasticsearch configuration.
+
+If everything goes well the console will output the following:
+
+[source,bash,subs=attributes+]
+----
+Running Enterprise Telemetry Monitor...
+Enterprise Telemetry Monitor started. 
+----
+
+As mentioned above, one of the most common mistakes is a mismatch between the {etm} configuration and the Elasticsearch cluster. If your console prints something like
+
+[source,bash,subs=attributes+]
+----
+Running Enterprise Telemetry Monitor...
+NoNodeAvailableException[None of the configured nodes are available: [{#transport#-1}{v1hSCl1dQou7b93zEVw0gA}{127.0.0.1}{127.0.0.1:9300}]]
+        at org.elasticsearch.client.transport.TransportClientNodesService.ensureNodesAreAvailable(TransportClientNodesService.java:314)
+        at org.elasticsearch.client.transport.TransportClientNodesService.execute(TransportClientNodesService.java:228)
+        at org.elasticsearch.client.transport.support.TransportProxyClient.execute(TransportProxyClient.java:63)
+        at org.elasticsearch.client.transport.TransportClient.doExecute(TransportClient.java:326)
+        at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403)
+        at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:80)
+        at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:54)
+        at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:62)
+        at com.jecstar.etm.launcher.ElasticsearchIndextemplateCreator.createTemplates(ElasticsearchIndextemplateCreator.java:54)
+        at com.jecstar.etm.launcher.Launcher.launch(Launcher.java:57)
+        at com.jecstar.etm.launcher.Startup.main(Startup.java:32)
+----
+
+your {etm} configuration cannot find the Elasticsearch cluster. Please contact your Elasticsearch administrator for the correct Elasticsearch connection parameters, and change the setting in the etm.yml file which can be found in the config directory.
+
+
+
+When everything is ok, you can access {etm} with a browser by browsing to the following address link:http://127.0.0.1:8080/gui/search/[]. During installation an administrative account is created with the username ''admin'' and the password ''password''.
+
+CAUTION: Don't forget to change these default credentials! It is recommended to create a new administrative account and remove the default one as soon as possible.
+
 
