@@ -140,7 +140,7 @@ public class Launcher {
 			return;
 		}
 		TransportClient transportClient = new PreBuiltTransportClient(Settings.builder()
-				.put("cluster.name", configuration.clusterName)
+				.put("cluster.name", configuration.elasticsearch.clusterName)
 				.put("client.transport.sniff", true).build());
 		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
 		for (String host : hosts) {

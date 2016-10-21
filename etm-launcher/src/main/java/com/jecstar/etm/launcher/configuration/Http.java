@@ -13,7 +13,7 @@ public class Http {
 	public int maxConcurrentRequests = 100;
 	public int maxQueuedRequests = 100;
 	
-	public String sslProtocol = "TLS";
+	public String sslProtocol = "TLSv1.2";
 	public File sslKeystoreLocation;
 	public String sslKeystoreType = "PKCS12";
 	public String sslKeystorePassword;
