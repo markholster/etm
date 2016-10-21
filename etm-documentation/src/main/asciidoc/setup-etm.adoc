@@ -3,8 +3,37 @@ This section explains in detail the steps to download, configure and run an {etm
 
 For the storage of the events {etm} relies on an link:http://www.elastic.co/downloads[Elasticsearch 5.0] or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of {etm} and need to be installed, configured and managed separately.
 
-=== Installation on Linux
+=== Installation with .tgz
+The .tgz archive for {etm} can be downloaded and installed as follow:
 
-=== Installation on Windows
+[source,bash,subs=attributes+]
+----
+wget http://www.jecstar.com/downloads/etm-{project-version}.tgz
+wget http://www.jecstar.com/downloads/etm-{project-version}.tgz.sha512
+cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
+tar -zxvf etm-{project-version}.tgz
+cd etm-{project-version}/bin
+./etm ## <2>
+----
+<1> Checks the sha512 hash of the downloaded file. If not ok, this command will fail.
+<2> This command does not actually start {etm} but shows the options that are available with the etm script.
+
+=== Installation with .zip
+The .zip archive for {etm} can be downloaded and installed as follow:
+
+[source,bash,subs=attributes+]
+----
+wget http://www.jecstar.com/downloads/etm-{project-version}.zip
+wget http://www.jecstar.com/downloads/etm-{project-version}.zip.sha512
+cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
+unzip etm-{project-version}.tgz 
+cd etm-{project-version}/bin
+./etm ## <2>
+----
+<1> Checks the sha512 hash of the downloaded file. If not ok, this command will fail.
+<2> This command does not actually start {etm} but shows the options that are available with the etm script.
 
 === Configuring {etm}
+Once {etm} is downloaded and installed we are ready to configure the node properly. Part of the configuration is managed in a configuration file, but most of the options are available in the gui. We will first explain the configuration that is done in the configuration file, and finally run and configure {etm} with the gui.
+
+=== etm.yml

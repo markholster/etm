@@ -20,7 +20,7 @@ asciidoctor {
   			 'toc': 'right',
     		 'toc-title': 'Table of Contents',
     		 'source-highlighter': 'coderay',
-    		 'stylesheet': 'github.css',
+       		 'stylesheet': 'github.css',
     		 'stylesdir': 'stylesheets',
     		 
     		 'etm': 'Enterprise Telemetry Monitor'
