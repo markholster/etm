@@ -1,0 +1,10 @@
+== Setup {etm}
+This section explains in detail the steps to download, configure and run an {etm} installation. Because {etm} is a pure Java application it should be able to run on any machine with a proper Java runtime installed. At a minimum a link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[Java 8] runtime should be availabe. It is recommended to install JDK from Oracle's site, but {etm} might run with other JDK suppliers as well.
+
+For the storage of the events {etm} relies on an link:http://www.elastic.co/downloads[Elasticsearch 5.0] or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of {etm} and need to be installed, configured and managed separately.
+
+=== Installation on Linux
+
+=== Installation on Windows
+
+=== Configuring {etm}

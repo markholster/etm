@@ -4,3 +4,4 @@ Enterprise Telemetry Monitor
 :revdate: {docdate}
 
 include::getting-started.adoc[]
+include::setup-etm.adoc[]
