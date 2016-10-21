@@ -22,8 +22,17 @@ distributions {
     }
 }
 
-tasks.withType(Tar){
+tasks.withType(Tar) { task ->
     compression = Compression.GZIP
+    task.doLast {
+        ant.checksum(file: task.archivePath, algorithm: 'SHA-512')
+    }
+}
+
+tasks.withType(Zip) { task ->
+    task.doLast {
+        ant.checksum(file: task.archivePath, algorithm: 'SHA-512')
+    }
 }
 
 startScripts {
