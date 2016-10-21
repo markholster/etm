@@ -25,13 +25,13 @@ distributions {
 tasks.withType(Tar) { task ->
     compression = Compression.GZIP
     task.doLast {
-        ant.checksum(file: task.archivePath, algorithm: 'SHA-512')
+        ant.checksum(file: task.archivePath, algorithm: 'SHA-512', fileext: '.sha512')
     }
 }
 
 tasks.withType(Zip) { task ->
     task.doLast {
-        ant.checksum(file: task.archivePath, algorithm: 'SHA-512')
+        ant.checksum(file: task.archivePath, algorithm: 'SHA-512', fileext: '.sha512')
     }
 }
 
