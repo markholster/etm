@@ -201,7 +201,7 @@ public class DestinationReader implements Runnable {
 	
 	private void connect() {
 		if (log.isDebugLevelEnabled()) {
-			log.logDebugMessage("Connecting to queuemanager");
+			log.logDebugMessage("Connecting to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
 		}
 		try {
 			Hashtable<String, Object> connectionProperties = new Hashtable<String, Object>();
