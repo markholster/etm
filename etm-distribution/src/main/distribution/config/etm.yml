@@ -2,10 +2,13 @@
 #
 # The binding address of ETM. By default ETM will bind to all ipv4 interfaces
 bindingAddress: 0.0.0.0
+
 # The name of the ETM Cluster. When running multiple clusters it is advised to change this name. For example etm-dev for a development cluster.
 clusterName: Enterprise Telemetry Monitor
+
 # The name of this node. Although it is not required, it is strongly recommended to give each node in a cluster an unique name.
 instanceName: Node_1
+
 # The Elasticsearch configuration options. 
 elasticsearch:
 # The name of the Elasticsearch cluster to connect to. 
@@ -40,6 +43,7 @@ http:
   sslTruststorePassword: null
 # The truststore type
   sslTruststoreType: JKS
+
 # The IBM MQ configuration options.  
 ibmMq:
 # Should the MQ processor be enabled. Set this option to true if you want to process events from a queue or topic. This option can only be enabled if the correct MQ jar files are added to the Node's classpath.
@@ -56,6 +60,7 @@ ibmMq:
 #      nrOfListeners: 1
 #      messagesType: auto
   queueManagers: []
+
 # The logging options.  
 logging:
 # Set a specific logger to a specific level. For example

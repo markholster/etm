@@ -38,8 +38,63 @@ Once {etm} is downloaded and installed we are ready to configure the node proper
 
 [[section_node-configuration]]
 ==== Node configuration
-Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. 
+Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.
 
-==== IBM Message Queue integration
+===== General configuration in etm.yml
+General configuration options have no indentation in the etm.yml file. The following options are available:
+
+.General configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|bindingAddress|0.0.0.0|The interface adres to bind {etm} to.
+|clusterName|Enterprise Telemetry Monitor|The name of the {etm} cluster. When running multiple {etm} clusters it is recommended to give them a separate name.
+|instanceName|Node_1|The name of the Node. When running multiple nodes in a cluster, it is recommended to give them a separate name.
+|======================= 
+
+All other configuration sections are identified with the name of the section without indentation. Configration options in that section have an indentation of 2 spaces.
+
+===== Elasticsearch section in etm.yml
+The ''elasticsearch'' section contains all options that are necessary to connect to an Elasticsearch cluster:
+
+.Elasticsearch configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|clusterName|elasticsearch|The name of the Elasticsearch cluster to connect to.
+|connectAddresses|127.0.0.1:9300|A comma separated list of Elasticsearch nodes to connect to. When high availablilty is a demand of your production environment you should provide at least 2 addresses.
+|=======================
+
+===== Http section in etm.yml
+The ''http'' section contains all options that are necessary to start the gui and rest processor:
+
+.Http configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|guiEnabled|true|Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the ''/gui'' context on your server and can be accessed by browsing to \http://<bindingAddress>:<httpPort>/gui
+|restProcessorEnabled|true|Should the rest processor be enabled? Set this value to false if you don't want this node to act as a processor that can process events with a REST api. The REST api is bound to the ''/rest/processor/'' context and can be access from \http://<bindingAddress>:<httpPort>/rest/processor/ 
+|httpPort|8080|The port to bind the http listener to.
+|httpsPort|8443|The port to bind the secure https listener to. The listener will not start unless the sslKeystore is properly configured.
+|maxConcurrentRequests|100|The maximum number of request that can be processed in parallel at any given moment. This is the number of request to the gui and rest processor combined. If the number exceeds the maximum, the requests will be queued.
+|maxQueuedRequests|100|The maximum number of requests that can be queued. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
+|sslProtocol|TLSv1.2|The ssl protocol that needs to be used on the secure https listener. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
+|sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your server.
+|sslKeystorePassword||The password of the ssl keystore. When provided, make sure the configuration is will not be readable for everyone but allow only the etm process can read it.
+|sslKeystoreType|PKCS12|The ssl keystore type.
+|sslKeystoreLocation||The location of you ssl truststore. The trust store contains certificates of machines that are allowed to connect to this Node. When not provided, everybody is allowed to access this Node although a a username and password are still necessary to login.
+|sslKeystorePassword||The password of the ssl truststore. When provided, make sure the configuration is will not be readable for everyone but allow only the etm process can read it.
+|sslKeystoreType|JSK|The ssl truststore type.
+|=======================
+
+===== IBM MQ section in etm.yml
+The ''ibmMq'' section contains all options that are necessary to process {etm} events from a IBM MQ queue or topic. To make use of this feature you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}.
+
+.IBM MQ configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|enabled|false|Should the IBM MQ processor be enabled? Set this value to true to process messages from defined IBM MQ queue's and/or topics.
+|=======================
 
 ==== IBM Integration Bus integration
