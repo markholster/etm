@@ -33,17 +33,20 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	private final LogConfiguration configuration;
 	private final LogBulkProcessorWrapper logBulkProcessorWrapper;
+	private String logLevel;
+	private int logLevelAsInt;
 
 	public EtmLogger(String loggerName, LogConfiguration configuration, LogBulkProcessorWrapper logBulkProcessorWrapper) {
 		this.name = loggerName;
 		this.configuration = configuration;
+		this.logLevel = this.configuration.getLogLevel(getName());
+		this.logLevelAsInt = determineLevelAsInteger(this.logLevel);
 		this.logBulkProcessorWrapper = logBulkProcessorWrapper;
 	}
 	
 	@Override
 	public boolean isTraceEnabled() {
-		String logLevel = this.configuration.getLogLevel(getName());
-		return LocationAwareLogger.TRACE_INT >= determineLevelAsInteger(logLevel);
+		return LocationAwareLogger.TRACE_INT >= this.logLevelAsInt;
 	}
 
 	@Override
@@ -91,8 +94,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isDebugEnabled() {
-		String logLevel = this.configuration.getLogLevel(getName());
-		return LocationAwareLogger.DEBUG_INT >= determineLevelAsInteger(logLevel);
+		return LocationAwareLogger.DEBUG_INT >= this.logLevelAsInt;
 	}
 
 	@Override
@@ -140,8 +142,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isInfoEnabled() {
-		String logLevel = this.configuration.getLogLevel(getName());
-		return LocationAwareLogger.INFO_INT >= determineLevelAsInteger(logLevel);
+		return LocationAwareLogger.INFO_INT >= this.logLevelAsInt;
 	}
 
 	@Override
@@ -189,8 +190,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isWarnEnabled() {
-		String logLevel = this.configuration.getLogLevel(getName());
-		return LocationAwareLogger.WARN_INT >= determineLevelAsInteger(logLevel);
+		return LocationAwareLogger.WARN_INT >= this.logLevelAsInt;
 	}
 
 	@Override
@@ -238,8 +238,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public boolean isErrorEnabled() {
-		String logLevel = this.configuration.getLogLevel(getName());
-		return LocationAwareLogger.ERROR_INT >= determineLevelAsInteger(logLevel);
+		return LocationAwareLogger.ERROR_INT >= this.logLevelAsInt;
 	}
 
 	@Override
@@ -287,42 +286,42 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	@Override
 	public void log(Marker marker, String fqcn, int level, String message, Object[] argArray, Throwable t) {
-        String logLevel;
+        String requestedLogLevel;
         switch (level) {
         case LocationAwareLogger.TRACE_INT:
         	if (!isTraceEnabled()) {
         		return;
         	}
-            logLevel = LEVEL_TRACE;
+            requestedLogLevel = LEVEL_TRACE;
             break;
         case LocationAwareLogger.DEBUG_INT:
         	if (!isDebugEnabled()) {
         		return;
         	}
-            logLevel = LEVEL_DEBUG;
+            requestedLogLevel = LEVEL_DEBUG;
             break;
         case LocationAwareLogger.INFO_INT:
         	if (!isInfoEnabled()) {
         		return;
         	}
-            logLevel = LEVEL_INFO;
+            requestedLogLevel = LEVEL_INFO;
             break;
         case LocationAwareLogger.WARN_INT:
         	if (!isWarnEnabled()) {
         		return;
         	}        	
-            logLevel = LEVEL_WARNING;
+            requestedLogLevel = LEVEL_WARNING;
             break;
         case LocationAwareLogger.ERROR_INT:
         	if (!isErrorEnabled()) {
         		return;
         	}        	
-            logLevel = LEVEL_ERROR;
+            requestedLogLevel = LEVEL_ERROR;
             break;
         default:
             throw new IllegalStateException("Level number " + level + " is not recognized.");
         }
-        log(fqcn, logLevel, message, t);
+        log(fqcn, requestedLogLevel, message, t);
 	}
 	
 	

@@ -2,7 +2,6 @@ package com.jecstar.etm.launcher.slf4j;
 
 import java.net.InetAddress;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 
 public class LogConfiguration {
 
@@ -50,15 +49,16 @@ public class LogConfiguration {
 		if (specificLevel != null) {
 			return specificLevel;
 		}
-		int ix = loggerName.lastIndexOf(".");
-		if (ix == -1) {
-			return getRootLogLevel();
+		int ix = loggerName.lastIndexOf("$");
+		if (ix != -1) {
+			return getLogLevel(loggerName.substring(0, ix));
 		}
-		Entry<String, String> entry = getLoggers().floorEntry(loggerName.substring(0, ix));
-		if (entry != null) {
-			return entry.getValue();
+		ix = loggerName.lastIndexOf(".");
+		if (ix != -1) {
+			return getLogLevel(loggerName.substring(0, ix));
 		}
 		return getRootLogLevel();
 	}
-
+	
+	// TODO create a method to update the loglevel of a logger on the fly.
 }

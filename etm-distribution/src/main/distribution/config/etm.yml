@@ -1,6 +1,6 @@
 # The binding address of ETM. By default ETM will bind to all ipv4 interfaces
 bindingAddress: 0.0.0.0
-# The name of the ETM Cluster. When running multiple clusters it is advised to change this name. For example etm-dev for a development cluster
+# The name of the ETM Cluster. When running multiple clusters it is advised to change this name. For example etm-dev for a development cluster.
 clusterName: Enterprise Telemetry Monitor
 # The name of this node. Although it is not required, it is strongly recommended to give each node in a cluster an unique name.
 instanceName: Node_1
@@ -45,6 +45,11 @@ ibmMq:
   queueManagers: []
 # The logging options.  
 logging:
+  # Set a specific logger to a specific level. For example
+  # loggers:
+  #   com.jecstar.etm: DEBUG
+  #   com.jecstar.etm.gui: INFO
+  # will log all classes of ETM in DEBUG level, with the exception of the classes in the gui component. They are logged in INFO level. 
   loggers: {}
   # The level of the root logger. Can be one of TRACE, DEBUG, INFO, WARNING, ERROR
   rootLogger: INFO

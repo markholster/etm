@@ -2,7 +2,6 @@ package com.jecstar.etm.slf4j;
 
 import java.net.InetAddress;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
@@ -129,15 +128,14 @@ public interface Configuration {
 		if (specificLevel != null) {
 			return specificLevel;
 		}
-		int ix = loggerName.lastIndexOf(".");
-		if (ix == -1) {
-			return getRootLogLevel();
+		int ix = loggerName.lastIndexOf("$");
+		if (ix != -1) {
+			return getLogLevel(loggerName.substring(0, ix));
 		}
-		Entry<String, String> entry = getLoggers().floorEntry(loggerName.substring(0, ix));
-		if (entry != null) {
-			return entry.getValue();
+		ix = loggerName.lastIndexOf(".");
+		if (ix != -1) {
+			return getLogLevel(loggerName.substring(0, ix));
 		}
 		return getRootLogLevel();
 	}
-
 }

@@ -38,7 +38,7 @@ Once {etm} is downloaded and installed we are ready to configure the node proper
 
 [[section_node-configuration]]
 ==== Node configuration
-Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probaly need to tune some configuration options. 
+Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. 
 
 ==== IBM Message Queue integration
 
