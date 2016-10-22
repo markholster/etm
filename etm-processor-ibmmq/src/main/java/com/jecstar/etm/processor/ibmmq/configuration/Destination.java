@@ -7,7 +7,7 @@ public class Destination {
 	private String name;
 	private String type = "queue";
 	private int nrOfListeners = 1;
-	private String messagesType = "auto"; // iibevent, etmevent  
+	private String messagesType = "auto"; // iibevent, etmevent, clone  
 	
 	private int maxMessageSize = 1024 * 1024 * 4;
 	private int commitSize = 500;
@@ -55,7 +55,8 @@ public class Destination {
 	public void setMessagesType(String messagesType) {
 		if (!"auto".equalsIgnoreCase(messagesType) 
 				&& !"iibevent".equalsIgnoreCase(messagesType)
-				&& !"etmevent".equalsIgnoreCase(messagesType)) {
+				&& !"etmevent".equalsIgnoreCase(messagesType)
+				&& !"clone".equalsIgnoreCase(messagesType)) {
 			throw new IllegalArgumentException("'" + messagesType + "' is an invalid messages type.");
 		}
 		this.messagesType = messagesType;
