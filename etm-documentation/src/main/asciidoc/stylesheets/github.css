@@ -280,7 +280,7 @@ a:hover, a:focus { text-decoration: underline; }
 
 *:not(pre) > code { font-size: 0.86667em; padding: 1px 5px 1px 5px; white-space: nowrap; background-color: transparent; border: 1px solid #dddddd; -webkit-border-radius: 3px; border-radius: 3px; text-shadow: none; }
 
-pre, pre > code { line-height: 1.6; color: white; font-family: Consolas, "Liberation Mono", Courier, monospace; font-weight: normal; }
+pre, pre > code { line-height: 1.6; color: black; font-family: Consolas, "Liberation Mono", Courier, monospace; font-weight: normal; }
 
 kbd.keyseq { color: #666666; }
 
@@ -377,7 +377,7 @@ table.tableblock #preamble > .sectionbody > .paragraph:first-of-type p { font-si
 
 .exampleblock > .content > :last-child > :last-child, .exampleblock > .content .olist > ol > li:last-child > :last-child, .exampleblock > .content .ulist > ul > li:last-child > :last-child, .exampleblock > .content .qlist > ol > li:last-child > :last-child, .sidebarblock > .content > :last-child > :last-child, .sidebarblock > .content .olist > ol > li:last-child > :last-child, .sidebarblock > .content .ulist > ul > li:last-child > :last-child, .sidebarblock > .content .qlist > ol > li:last-child > :last-child { margin-bottom: 0; }
 
-.literalblock > .content pre, .listingblock > .content pre { background: #333333; border-width: 2px; border-style: solid; border-color: #dddddd; -webkit-border-radius: 3px; border-radius: 3px; padding: 0.66667em; word-wrap: break-word; }
+.literalblock > .content pre, .listingblock > .content pre { background: #eeeeee; border-width: 1px; border-style: solid; border-color: #cccccc; -webkit-border-radius: 3px; border-radius: 3px; padding: 0.66667em; word-wrap: break-word; }
 .literalblock > .content pre.nowrap, .listingblock > .content pre.nowrap { overflow-x: auto; white-space: pre; word-wrap: normal; }
 .literalblock > .content pre > code, .listingblock > .content pre > code { display: block; }
 @media only screen { .literalblock > .content pre, .listingblock > .content pre { font-size: 0.69333em; } }
@@ -615,7 +615,7 @@ span.icon > [class^="icon-"], span.icon > [class*=" icon-"] { cursor: default; }
 .admonitionblock td.icon .icon-caution:before { content: "\f06d"; color: #bf3400; }
 .admonitionblock td.icon .icon-important:before { content: "\f06a"; color: #bf0000; }
 
-.conum { display: inline-block; color: white !important; background-color: #333333; -webkit-border-radius: 100px; border-radius: 100px; text-align: center; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 20px; font-family: Arial, sans-serif; font-style: normal; position: relative; top: -2px; letter-spacing: -1px; }
+.conum { display: inline-block; color: white !important; background-color: black; -webkit-border-radius: 100px; border-radius: 100px; text-align: center; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 20px; font-family: Arial, sans-serif; font-style: normal; position: relative; top: -2px; letter-spacing: -1px; }
 .conum * { color: white !important; }
 .conum:after { content: attr(data-value); }
 .conum:not([data-value]):empty { display: none; }

@@ -33,12 +33,44 @@ cd etm-{project-version}/bin
 <1> Checks the sha512 hash of the downloaded file. If not ok, this command will fail.
 <2> This command does not actually start {etm} but shows the options that are available with the etm script.
 
+=== Integration with IBM MQ and/or IBM Integration Bus
+{etm} is capable of providing deep integration with IBM MQ and or IBM Integration Bus. To make use of any of these integrations the classpath of {etm} needs to be extended. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}. 
+
+To make use of the IBM MQ integration you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory. This integration makes it possible to process events from any IBM MQ Destination. For further configuration see the <<IBM MQ section in etm.yml>>.
+
+The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}. To make use of this integration you need to copy a file named ''configmanagerproxy.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory when you are running IIB version 9.x. If you are running IIB version 10.x the file is named ''integrationapi.jar''.
+Also, for both versions of IBM Integration Bus the file ''ibmjsseprovider2.jar'' needs to be copied as well. All files can be found in your Ibm Integration Bus installation.
+
 === Configuring {etm}
 Once {etm} is downloaded and installed we are ready to configure the node properly. Part of the configuration is managed in a configuration file, but most of the options are available in the gui. We will first explain the configuration that is done in the configuration file, and finally run and configure {etm} with the gui.
 
 [[section_node-configuration]]
 ==== Node configuration
 Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.
+
+Indentation in the etm.yml configuration file is necessary to create nested properties. See the following example for an explanation on how to create lists an key-value mappings.
+
+[source,yaml]
+----
+property1: value1 <1>
+object1: <2>
+  sub-property1: value2 <3>
+list1:
+- listproperty1: value3 <4>
+  listproperty2: value4
+- listproperty1: value5    
+  listproperty2: value4
+map1:
+  key1: value1 <5>
+  key2: value2  
+----
+<1> This is just a general property with the name ''property1'' and a value of ''value1''. 
+<2> A new object with the name ''object1'' is created. An object itself has no direct value, but has (sub)properties with an indentation of 2 spaces.
+<3> The property ''sub-poroperty1'' is added to the object ''object1''
+<4> A new list is created. A list is actually an object as well because it has no direct value bus has (sub)properties with an indentation of 2 spaces. In this case the list doesn't contain single values but objects. Each object starts with a ''-''.
+<5> A new map is created. Just like the list, a map is actually an object. In this case the map contains of simple key/value string pairs.
+
+A detailed specification of the yaml syntax can be found on the link:http://yaml.org/[yaml website].
 
 ===== General configuration in etm.yml
 General configuration options have no indentation in the etm.yml file. The following options are available:
@@ -50,6 +82,10 @@ General configuration options have no indentation in the etm.yml file. The follo
 |bindingAddress|0.0.0.0|The interface adres to bind {etm} to.
 |clusterName|Enterprise Telemetry Monitor|The name of the {etm} cluster. When running multiple {etm} clusters it is recommended to give them a separate name.
 |instanceName|Node_1|The name of the Node. When running multiple nodes in a cluster, it is recommended to give them a separate name.
+|elasticsearch||The elasticsearch configuration. See <<Elasticsearch section in etm.yml>> to view the nested options.
+|http||The http configuration. See <<Http section in etm.yml>> to view the nested options.
+|ibmMq||The IBM MQ configuration. See <<IBM MQ section in etm.yml>> to view the nested options.
+|logging||The logging configuration. See <<Logging section in etm.yml>> to view the nested options.
 |======================= 
 
 All other configuration sections are identified with the name of the section without indentation. Configration options in that section have an indentation of 2 spaces.
@@ -88,13 +124,52 @@ The ''http'' section contains all options that are necessary to start the gui an
 |=======================
 
 ===== IBM MQ section in etm.yml
-The ''ibmMq'' section contains all options that are necessary to process {etm} events from a IBM MQ queue or topic. To make use of this feature you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}.
+The ''ibmMq'' section contains all options that are necessary to process {etm} events from a IBM MQ queue or topic. Make sure to add the MQ libraries to the classpath of the Node. See the <<Integration with IBM MQ and/or IBM Integration Bus>> section.
 
 .IBM MQ configuration options
 [options="header"]
 |=======================
 |Name|Default value|Description
-|enabled|false|Should the IBM MQ processor be enabled? Set this value to true to process messages from defined IBM MQ queue's and/or topics.
+|enabled|false|Should the IBM MQ processor be enabled? Set this value to true to process events from defined IBM MQ queue's and/or topics.
+|queueManagers||A list of QueueManagers to connect to. See <<ibmmq-queuemanager-options>> to view the nested options.
 |=======================
 
-==== IBM Integration Bus integration
+[[ibmmq-queuemanager-options]]
+.QueueManager options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|name|QMGR|The name of the QueueManager.
+|host|127.0.0.1|The hostname or ip-address the QueueManager is running on.
+|port|1414|The port the QueueManager is listening on.
+|channel||The channel to use to setup the connection to the QueueManager.
+|destinations||A list of destinations to listen on. See <<ibmmq-destination-options>> to view the nested options.
+|=======================
+
+[[ibmmq-destination-options]]
+.Destination options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|name||The name of the Queue or Topic to connect to.
+|type|queue|The destination type. Can be one of ''queue'' or ''destination''.
+|nrOfListeners|1|The number of listeners to connect to the destination. In most cases 1 will be enough because the processor processes the events asynchronous.
+|channel||The channel to use to setup the connection to the QueueManager.
+|messagesType|auto|Can be one of ''auto'' which auto detect the message type but is the slowest, ''iibevent'' which is capable of handling link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events],  ''etmevent'' which is capable of handling events generated in the {etm} format or ''clone'' which assumes the message read is a clone of the original message.
+|maxMessageSize|4194304|The maximum message size in bytes that can be read. Depending on the get options the message will be ignored or truncated.
+|commitSize|500|The maximum number of messages processed before a MQCMIT is executed.
+|commitInterval|10000|The maximum number of milliseconds the processor can read messages without executing a MQCMIT.
+|destinationGetOptions|MQGMO_WAIT + MQGMO_FAIL_IF_QUIESCING + MQGMO_CONVERT + MQGMO_SYNCPOINT + MQGMO_LOGICAL_ORDER + MQGMO_ALL_SEGMENTS_AVAILABLE + MQGMO_COMPLETE_MSG|The MQ Get options.
+|destinationOpenOptions|MQOO_INQUIRE + MQOO_FAIL_IF_QUIESCING + MQOO_INPUT_SHARED|The MQ Open options.
+|=======================
+
+===== Logging section in etm.yml
+The ''logging'' section contains all options to configure the loggers and log levels. Log levels can be one of TRACE, DEBUG, INFO, WARNING or ERROR
+
+.Logging configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|rootLogger|INFO|The root logging level. If no specific logger is configured, this value will be used.
+|loggers||A map with string key/value pairs. The key is the name of the logger and the value is the log level to be used for that specific logger.
+|=======================
