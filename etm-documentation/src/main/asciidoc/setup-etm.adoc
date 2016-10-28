@@ -41,11 +41,7 @@ To make use of the IBM MQ integration you need to copy a file named ''com.ibm.mq
 The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}. To make use of this integration you need to copy a file named ''configmanagerproxy.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory when you are running IIB version 9.x. If you are running IIB version 10.x the file is named ''integrationapi.jar''.
 Also, for both versions of IBM Integration Bus the file ''ibmjsseprovider2.jar'' needs to be copied as well. All files can be found in your Ibm Integration Bus installation.
 
-=== Configuring {etm}
-Once {etm} is downloaded and installed we are ready to configure the node properly. Part of the configuration is managed in a configuration file, but most of the options are available in the gui. We will first explain the configuration that is done in the configuration file, and finally run and configure {etm} with the gui.
-
-[[section_node-configuration]]
-==== Node configuration
+=== Node configuration
 Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.
 
 Indentation in the etm.yml configuration file is necessary to create nested properties. See the following example for an explanation on how to create lists an key-value mappings.
@@ -72,7 +68,7 @@ map1:
 
 A detailed specification of the yaml syntax can be found on the link:http://yaml.org/[yaml website].
 
-===== General configuration in etm.yml
+==== General configuration in etm.yml
 General configuration options have no indentation in the etm.yml file. The following options are available:
 
 .General configuration options
@@ -90,7 +86,7 @@ General configuration options have no indentation in the etm.yml file. The follo
 
 All other configuration sections are identified with the name of the section without indentation. Configration options in that section have an indentation of 2 spaces.
 
-===== Elasticsearch section in etm.yml
+==== Elasticsearch section in etm.yml
 The ''elasticsearch'' section contains all options that are necessary to connect to an Elasticsearch cluster:
 
 .Elasticsearch configuration options
@@ -101,7 +97,7 @@ The ''elasticsearch'' section contains all options that are necessary to connect
 |connectAddresses|127.0.0.1:9300|A comma separated list of Elasticsearch nodes to connect to. When high availablilty is a demand of your production environment you should provide at least 2 addresses.
 |=======================
 
-===== Http section in etm.yml
+==== Http section in etm.yml
 The ''http'' section contains all options that are necessary to start the gui and rest processor:
 
 .Http configuration options
@@ -123,7 +119,7 @@ The ''http'' section contains all options that are necessary to start the gui an
 |sslKeystoreType|JSK|The ssl truststore type.
 |=======================
 
-===== IBM MQ section in etm.yml
+==== IBM MQ section in etm.yml
 The ''ibmMq'' section contains all options that are necessary to process {etm} events from a IBM MQ queue or topic. Make sure to add the MQ libraries to the classpath of the Node. See the <<Integration with IBM MQ and/or IBM Integration Bus>> section.
 
 .IBM MQ configuration options
@@ -163,7 +159,7 @@ The ''ibmMq'' section contains all options that are necessary to process {etm} e
 |destinationOpenOptions|MQOO_INQUIRE + MQOO_FAIL_IF_QUIESCING + MQOO_INPUT_SHARED|The MQ Open options.
 |=======================
 
-===== Logging section in etm.yml
+==== Logging section in etm.yml
 The ''logging'' section contains all options to configure the loggers and log levels. Log levels can be one of TRACE, DEBUG, INFO, WARNING or ERROR
 
 .Logging configuration options

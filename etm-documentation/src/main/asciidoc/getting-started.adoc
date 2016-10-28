@@ -81,7 +81,7 @@ And now we are ready we can start {etm} with the following command:
 ./etm console
 ----
 
-IMPORTANT: By default {etm} tries to connect to an Elasticsearch cluster with the name ''elasticsearch'' and a node at 127.0.0.1:9300. If you have changed your Elasticsearch cluster name to something else you should change the {etm} configuration to match the Elasticsearch configuration. How to change the cluster name can be found in the <<section_node-configuration>> section.
+IMPORTANT: By default {etm} tries to connect to an Elasticsearch cluster with the name ''elasticsearch'' and a node at 127.0.0.1:9300. If you have changed your Elasticsearch cluster name to something else you should change the {etm} configuration to match the Elasticsearch configuration. How to change the cluster name can be found in the <<Node configuration>> section.
 
 If everything goes well the console will output the following:
 

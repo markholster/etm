@@ -5,3 +5,4 @@ Enterprise Telemetry Monitor
 
 include::getting-started.adoc[]
 include::setup-etm.adoc[]
+include::administrating-etm.adoc[]
