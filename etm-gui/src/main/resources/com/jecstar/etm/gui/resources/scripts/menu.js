@@ -68,8 +68,8 @@ function buildMenu(currentContext) {
 						$('<a>').addClass('dropdown-item').attr('href', '../settings/groups.html').text('Groups'),
 						$('<div>').addClass('dropdown-divider'),
 						$('<a>').addClass('dropdown-item').attr('href', '../settings/cluster.html').text('Cluster'),
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/endpoints.html').text('Endpoints'),
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers')
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers'),
+						$('<a>').addClass('dropdown-item').attr('href', '../settings/endpoints.html').text('Endpoints')
 				);
 			}
 			if ($.inArray('iib_admin', menu.submenus) != -1) {
