@@ -1,8 +1,9 @@
+apply plugin: 'application'
+
 dependencies {
     compile project(":etm-launcher")
 }
 
-apply plugin: 'application'
 
 mainClassName = 'com.jecstar.etm.launcher.Startup'
 applicationName = 'etm'

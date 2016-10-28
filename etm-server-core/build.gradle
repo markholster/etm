@@ -1,3 +1,5 @@
+apply plugin: "java"
+
 dependencies {
     compile project(":etm-domain")
     compile dep_jacksonDatabind, dep_saxonHE, dep_slf4jApi

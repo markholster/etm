@@ -1,9 +1,9 @@
-def version_jackson = "2.7.4"
+def version_jackson = "2.8.4"
 def version_resteasy = "3.1.0.Beta2"
 
 ext {
-    dep_disruptor = "com.lmax:disruptor:3.3.5"
-    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.0.0-rc1"
+    dep_disruptor = "com.lmax:disruptor:3.3.6"
+    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.0.0"
     dep_htmlunitDriver = "org.seleniumhq.selenium:htmlunit-driver:2.21"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:" + version_jackson
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.2.0"
@@ -11,10 +11,10 @@ ext {
     dep_metricsCore = "io.dropwizard.metrics:metrics-core:3.1.2"
     dep_resteasyJaxrs = "org.jboss.resteasy:resteasy-jaxrs:" + version_resteasy
     dep_resteasyJacksonProvider = "org.jboss.resteasy:resteasy-jackson2-provider:" + version_resteasy
-    dep_log4jToSlf4j = "org.apache.logging.log4j:log4j-to-slf4j:2.6.2"
-    dep_poiOoxml = "org.apache.poi:poi-ooxml:3.14"
-    dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-5"
-    dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:3.0.0-beta3"
+    dep_log4jToSlf4j = "org.apache.logging.log4j:log4j-to-slf4j:2.7"
+    dep_poiOoxml = "org.apache.poi:poi-ooxml:3.15"
+    dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-10"
+    dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:3.0.1"
     dep_slf4jApi = "org.slf4j:slf4j-api:1.7.21"
     dep_undertowServlet = "io.undertow:undertow-servlet:1.4.3.Final"
     dep_snakeyaml = "org.yaml:snakeyaml:1.17"
@@ -22,17 +22,10 @@ ext {
 
 allprojects {
     apply plugin: "eclipse"
-    apply plugin: "java"
-
-    version = "2.0.0-SNAPSHOT"
+    version "2.0.0-SNAPSHOT"
+    group "com.jecstar.etm"
     
     repositories {
         mavenCentral()
     };
-
-    jar {
-        manifest {
-            attributes("Implementation-Version": version)
-        }
-    }
 }
