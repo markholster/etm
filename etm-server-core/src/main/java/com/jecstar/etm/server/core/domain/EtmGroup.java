@@ -12,6 +12,8 @@ public class EtmGroup {
 	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
 
 	private String filterQuery = null;
+
+	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
 	
 	
 	public EtmGroup(String name) {
@@ -30,7 +32,14 @@ public class EtmGroup {
 	public void setFilterQuery(String filterQuery) {
 		this.filterQuery = filterQuery;
 	}
-
+	
+	public QueryOccurrence getFilterQueryOccurrence() {
+		return this.filterQueryOccurrence ;
+	}
+	
+	public void setFilterQueryOccurrence(QueryOccurrence filterQueryOccurrence) {
+		this.filterQueryOccurrence = filterQueryOccurrence;
+	}
 	
 	public Set<EtmPrincipalRole> getRoles() {
 		return Collections.unmodifiableSet(this.roles);

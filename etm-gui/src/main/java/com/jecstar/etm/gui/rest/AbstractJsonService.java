@@ -15,6 +15,7 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.QueryOccurrence;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 public class AbstractJsonService extends JsonConverter {
@@ -27,39 +28,45 @@ public class AbstractJsonService extends JsonConverter {
     	return (EtmPrincipal)this.securityContext.getUserPrincipal();
     }
     
-    protected List<QueryStringQueryBuilder> getEtmPrincipalFilterQueries() {
-    	List<QueryStringQueryBuilder> result = new ArrayList<>();
+    protected List<FilterQuery> getEtmPrincipalFilterQueries() {
+    	List<FilterQuery> result = new ArrayList<>();
     	String filterQuery = getEtmPrincipal().getFilterQuery();
     	if (filterQuery != null && filterQuery.trim().length() > 0) {
-    		result.add(new QueryStringQueryBuilder(filterQuery.trim())
+    		result.add(new FilterQuery(getEtmPrincipal().getFilterQueryOccurrence(), 
+    			new QueryStringQueryBuilder(filterQuery.trim())
     				.allowLeadingWildcard(true)
     				.analyzeWildcard(true)
     				.locale(getEtmPrincipal().getLocale())
     				.lowercaseExpandedTerms(false)
-    				.timeZone(getEtmPrincipal().getTimeZone().getID()));
+    				.timeZone(getEtmPrincipal().getTimeZone().getID())));
     	}
     	Set<EtmGroup> groups = getEtmPrincipal().getGroups();
     	for (EtmGroup group : groups) {
     		if (group.getFilterQuery() != null && group.getFilterQuery().trim().length() > 0) {
-        		result.add(new QueryStringQueryBuilder(group.getFilterQuery().trim())
+        		result.add(new FilterQuery(group.getFilterQueryOccurrence(),
+        			new QueryStringQueryBuilder(group.getFilterQuery().trim())
         				.allowLeadingWildcard(true)
         				.analyzeWildcard(true)
         				.locale(getEtmPrincipal().getLocale())
         				.lowercaseExpandedTerms(false)
-        				.timeZone(getEtmPrincipal().getTimeZone().getID()));    			
+        				.timeZone(getEtmPrincipal().getTimeZone().getID())));
     		}
     	}
     	return result;
     }
     
     protected QueryBuilder addEtmPrincipalFilterQuery(QueryBuilder queryBuilder) {
-    	List<QueryStringQueryBuilder> filterQueries = getEtmPrincipalFilterQueries();
+    	List<FilterQuery> filterQueries = getEtmPrincipalFilterQueries();
     	if (filterQueries == null || filterQueries.isEmpty()) {
     		return queryBuilder;
     	}
     	BoolQueryBuilder filteredQuery = new BoolQueryBuilder().must(queryBuilder);
-    	for (QueryStringQueryBuilder filterQuery : filterQueries) {
-    		filteredQuery.filter(filterQuery);
+    	for (FilterQuery filterQuery : filterQueries) {
+    		if (QueryOccurrence.MUST.equals(filterQuery.getQueryOccurence())) {
+    			filteredQuery.filter(filterQuery.getQuery());
+    		} else if (QueryOccurrence.MUST_NOT.equals(filterQuery.getQueryOccurence())) {
+    			filteredQuery.mustNot(filterQuery.getQuery());
+    		}
     	}
     	return filteredQuery;
     }

@@ -21,6 +21,7 @@ public class EtmPrincipal implements Principal {
 	private Set<EtmGroup> groups = new HashSet<EtmGroup>();
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
+	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
 	private int historySize = DEFAULT_HISTORY_SIZE;
 
 	
@@ -158,6 +159,14 @@ public class EtmPrincipal implements Principal {
 	
 	public void setFilterQuery(String filterQuery) {
 		this.filterQuery = filterQuery;
+	}
+	
+	public QueryOccurrence getFilterQueryOccurrence() {
+		return this.filterQueryOccurrence;
+	}
+	
+	public void setFilterQueryOccurrence(QueryOccurrence filterQueryOccurrence) {
+		this.filterQueryOccurrence = filterQueryOccurrence;
 	}
 	
 	public int getHistorySize() {
