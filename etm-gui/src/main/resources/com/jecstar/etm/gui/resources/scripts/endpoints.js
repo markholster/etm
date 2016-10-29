@@ -161,14 +161,14 @@ function buildEndpointPage() {
 		}
 		var card = $('<div>').addClass('card card-block etm-field-card');
 		card.append(
-				$('<fieldset>').addClass('form-group').append(
-						$('<a href="#">').addClass('pull-right').text('Remove this field').click(function (event) {event.preventDefault(); removeField($(this))}),
-						$('<label>').text('Field'),
-						localParserFieldSelect
+				$('<div>').addClass('row').append($('<a href="#">').addClass('pull-right').text('Remove this field').click(function (event) {event.preventDefault(); removeField($(this))})),
+				$('<div>').addClass('form-group row').append(
+						$('<label>').addClass('col-sm-3 col-form-label').text('Field'),
+						$('<div>').addClass('col-sm-9').append(localParserFieldSelect)
 				),
-				$('<fieldset>').addClass('form-group').append(
-						$('<label>').text('Collection key'),
-						inputKey
+				$('<div>').addClass('form-group row').append(
+						$('<label>').addClass('col-sm-3 col-form-label').text('Collection key'),
+						$('<div>').addClass('col-sm-9').append(inputKey)
 				),
 				$('<fieldset>').addClass('form-group').append(
 						$('<a href="#">').addClass('pull-right').text('Add parser').click(function (event) {event.preventDefault(); addParserRow($(this))}),

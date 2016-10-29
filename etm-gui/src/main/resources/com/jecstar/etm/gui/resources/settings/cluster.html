@@ -44,71 +44,102 @@ body { padding-top: 60px; }
 	      <div class="row">
             <div class=col-sm-12>
 		      <form id="cluster_form">
-		        <fieldset class="form-group">
-				  <label for="input-shards-per-index">Shards per index</label>
-				  <input id="input-shards-per-index" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-replicas-per-index">Replicas per index</label>
-				  <input id="input-replicas-per-index" type="number" class="form-control" min="0" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-max-event-indices">Max event indices</label>
-				  <input id="input-max-event-indices" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-max-metrics-indices">Max metrics indices</label>
-				  <input id="input-max-metrics-indices" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-wait-for-active-shards">Wait for active shards</label>
-				  <input id="input-wait-for-active-shards" type="number" class="form-control" min="-1" required="required" />
-				</fieldset>				
-		        <fieldset class="form-group">
-				  <label for="input-retries-on-conflict">Retries on conflict</label>
-				  <input id="input-retries-on-conflict" type="number" class="form-control" min="0" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-query-timeout">Query timeout</label>
-				  <input id="input-query-timeout" type="number" class="form-control" min="1000" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-search-export-max-rows">Search export max rows</label>
-				  <input id="input-search-export-max-rows" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-search-max-templates">Max search templates</label>
-				  <input id="input-search-max-templates" type="number" class="form-control" min="0" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-search-max-history-size">Max search history size</label>
-				  <input id="input-search-max-history-size" type="number" class="form-control" min="0" required="required" />
-				</fieldset>								
-
-		        <fieldset class="form-group">
-				  <label for="input-enhancing-handler-count">Enhancing handler count</label>
-				  <input id="input-enhancing-handler-count" type="number" class="form-control" min="0" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-persisting-handler-count">Persisting handler count</label>
-				  <input id="input-persisting-handler-count" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-event-buffer-size">Event buffer size</label>
-				  <input id="input-event-buffer-size" type="number" class="form-control" min="2" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-persisting-bulk-count">Persisting bulk count</label>
-				  <input id="input-persisting-bulk-count" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-persisting-bulk-size">Persisting bulk size</label>
-				  <input id="input-persisting-bulk-size" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-persisting-bulk-time">Persisting bulk time</label>
-				  <input id="input-persisting-bulk-time" type="number" class="form-control" min="1" required="required" />
-				</fieldset>
+		        <div class="form-group row">
+				  <label for="input-shards-per-index" class="col-sm-3 col-form-label">Shards per index</label>
+				  <div class="col-sm-9">
+				    <input id="input-shards-per-index" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-replicas-per-index" class="col-sm-3 col-form-label">Replicas per index</label>
+				  <div class="col-sm-9">
+				    <input id="input-replicas-per-index" type="number" class="form-control" min="0" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-max-event-indices" class="col-sm-3 col-form-label">Max event indices</label>
+				  <div class="col-sm-9">
+				    <input id="input-max-event-indices" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-max-metrics-indices" class="col-sm-3 col-form-label">Max metrics indices</label>
+				  <div class="col-sm-9">
+				    <input id="input-max-metrics-indices" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-wait-for-active-shards" class="col-sm-3 col-form-label">Wait for active shards</label>
+				  <div class="col-sm-9">
+				    <input id="input-wait-for-active-shards" type="number" class="form-control" min="-1" required="required" />
+				  </div>
+				</div>				
+		        <div class="form-group row">
+				  <label for="input-retries-on-conflict" class="col-sm-3 col-form-label">Retries on conflict</label>
+				  <div class="col-sm-9">
+				    <input id="input-retries-on-conflict" type="number" class="form-control" min="0" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-query-timeout" class="col-sm-3 col-form-label">Query timeout</label>
+				  <div class="col-sm-9">
+				    <input id="input-query-timeout" type="number" class="form-control" min="1000" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-search-export-max-rows" class="col-sm-3 col-form-label">Search export max rows</label>
+				  <div class="col-sm-9">
+				    <input id="input-search-export-max-rows" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-search-max-templates" class="col-sm-3 col-form-label">Max search templates</label>
+				  <div class="col-sm-9">
+				    <input id="input-search-max-templates" type="number" class="form-control" min="0" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-search-max-history-size" class="col-sm-3 col-form-label">Max search history size</label>
+				  <div class="col-sm-9">
+				    <input id="input-search-max-history-size" type="number" class="form-control" min="0" required="required" />
+				  </div>
+				</div>								
+		        <div class="form-group row">
+				  <label for="input-enhancing-handler-count" class="col-sm-3 col-form-label">Enhancing handler count</label>
+				  <div class="col-sm-9">
+				    <input id="input-enhancing-handler-count" type="number" class="form-control" min="0" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-persisting-handler-count" class="col-sm-3 col-form-label">Persisting handler count</label>
+				  <div class="col-sm-9">
+				    <input id="input-persisting-handler-count" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-event-buffer-size" class="col-sm-3 col-form-label">Event buffer size</label>
+				  <div class="col-sm-9">
+				    <input id="input-event-buffer-size" type="number" class="form-control" min="2" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-persisting-bulk-count" class="col-sm-3 col-form-label">Persisting bulk count</label>
+				  <div class="col-sm-9">
+				    <input id="input-persisting-bulk-count" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-persisting-bulk-size" class="col-sm-3 col-form-label">Persisting bulk size</label>
+				  <div class="col-sm-9">
+				    <input id="input-persisting-bulk-size" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-persisting-bulk-time" class="col-sm-3 col-form-label">Persisting bulk time</label>
+				  <div class="col-sm-9">
+				    <input id="input-persisting-bulk-time" type="number" class="form-control" min="1" required="required" />
+				  </div>
+				</div>
 		        <div class="modal-footer">
                   <input type="submit" id="btn-save-cluster" class="btn btn-primary" value="Save" />
 		        </div>

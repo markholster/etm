@@ -3,9 +3,9 @@ function buildParserPage() {
 	$('#input-parser-type').change(function() {
 		$('#grp-fixed_position, #grp-fixed_value, #grp-jsonpath, #grp-xpath,#grp-xslt').hide();
 		// Disable all input fields otherwise form validation will fail.
-		$('#grp-fixed_position > input, #grp-fixed_value > input, #grp-jsonpath > input, #grp-xpath > input ,#grp-xslt > textarea').attr('disabled', 'disabled');
-		$('#grp-' +$(this).val() + ' > input').removeAttr('disabled'); 
-		$('#grp-' +$(this).val() + ' > textarea').removeAttr('disabled');
+		$('#grp-fixed_position input, #grp-fixed_value input, #grp-jsonpath input, #grp-xpath input ,#grp-xslt textarea').attr('disabled', 'disabled');
+		$('#grp-' +$(this).val() + ' input').removeAttr('disabled'); 
+		$('#grp-' +$(this).val() + ' textarea').removeAttr('disabled');
 		$('#grp-' +$(this).val()).show(); 
 	});
 

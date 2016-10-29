@@ -223,20 +223,26 @@ body { padding-top: 60px; }
           <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
         </div>
         <div class="modal-body">
-            <div class="form-group">
-                <label for="table-settings-sort-field">Sort field</label>
+            <div class="form-group row">
+              <label for="table-settings-sort-field" class="col-sm-3 col-form-label">Sort field</label>
+              <div class="col-sm-9">
                 <input id="table-settings-sort-field" type="text" class="form-control" />
+              </div>
             </div>
-            <div class="form-group">
-                <label for="table-settings-sort-order">Sort order</label>
+            <div class="form-group row">
+              <label for="table-settings-sort-order" class="col-sm-3 col-form-label">Sort order</label>
+              <div class="col-sm-9">
                 <select id="table-settings-sort-order" class="form-control custom-select" >
                   <option value="asc">Ascending</option>
                   <option value="desc">Descending</option>
                 </select>
+              </div>  
             </div>
-            <div class="form-group">
-                <label for="table-settings-results-per-page">Results per page</label>
+            <div class="form-group row">
+              <label for="table-settings-results-per-page" class="col-sm-3 col-form-label">Results per page</label>
+              <div class="col-sm-9">
                 <input id="table-settings-results-per-page" type="number" min="1" step="1" max="500" class="form-control" />
+              </div>
             </div>
             <div class="card card-block">
                 <div class="card-title"><h5>Columns</h5></div>
@@ -263,26 +269,37 @@ body { padding-top: 60px; }
         </div>
         <div class="modal-body">
           <p>Select the options you desire, and click on the link below to download the results.</p> 
-          <fieldset class="form-group">
-            <label for="input-download-include-payload">Include payload</label>
-            <input id="input-download-include-payload" type="checkbox" checked="checked" />
-          </fieldset>
-          <fieldset class="form-group">
-            <label for="input-download-start-row">Start row</label>
-            <!-- disable the field, as scrolling in elasticsearch always starts at ix=0 -->
-            <input id="input-download-start-row" type="number" min="1" class="form-control" value="1" disabled="disabled"/>
-          </fieldset>
-          <fieldset class="form-group">
-            <label for="input-download-number-of-rows">Number of rows</label>
-            <input id="input-download-number-of-rows" type="number" min="1" class="form-control" value="10" />
-          </fieldset>
-          <fieldset class="form-group">
-            <label for="sel-download-type">File type</label>
-            <select id="sel-download-type" class="form-control custom-select">
+          <div class="form-group row">
+            <label for="sel-download-include-payload" class="col-sm-3 col-form-label">Include payload</label>
+            <div class="col-sm-9">
+              <select id="sel-download-include-payload" class="form-control custom-select">
+	            <option value="true">Yes</option>
+	            <option value="false">No</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="input-download-start-row" class="col-sm-3 col-form-label">Start row</label>
+            <div class="col-sm-9">
+              <!-- disable the field, as scrolling in elasticsearch always starts at ix=0 -->
+              <input id="input-download-start-row" type="number" min="1" class="form-control" value="1" disabled="disabled"/>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="input-download-number-of-rows" class="col-sm-3 col-form-label">Number of rows</label>
+            <div class="col-sm-9">
+              <input id="input-download-number-of-rows" type="number" min="1" class="form-control" value="10" />
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="sel-download-type" class="col-sm-3 col-form-label">File type</label>
+            <div class="col-sm-9">
+              <select id="sel-download-type" class="form-control custom-select">
             	<option value="csv">Comma separated file (csv)</option>
             	<option value="xlsx">Microsoft Excel (xlsx)</option>
-            </select>
-          </fieldset>
+              </select>
+            </div>  
+          </div>
           <div class="modal-footer">
             <button id="btn-download-results" type="button" class="btn btn-primary">Download</button>
           </div>          
@@ -386,7 +403,7 @@ body { padding-top: 60px; }
     	q.start_ix = Number($('#input-download-start-row').val()) - 1;
     	q.max_results = Number($('#input-download-number-of-rows').val());
     	q.fileType = $('#sel-download-type').val();
-    	q.includePayload = $('#input-download-include-payload').is(":checked") ? true : false;
+    	q.includePayload = $('#sel-download-include-payload').val() == 'true' ? true : false;
 	    window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
 	});
     

@@ -51,17 +51,21 @@ body { padding-top: 60px; }
 	      <div class="row">
             <div class=col-sm-12>
 		      <form id="endpoint_form">
-		        <fieldset class="form-group">
-				  <label for="input-endpoint-name">Endpoint name</label>
-				  <input id="input-endpoint-name" type="text" class="form-control" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="sel-detect-payload-format">Detect payload format</label>
-		          <select id="sel-detect-payload-format" class="form-control custom-select">
-		          	<option value="true">Yes</option>
-		          	<option value="false" selected="selected">No</option>
-		          </select>
-				</fieldset>
+		        <div class="form-group row">
+				  <label for="input-endpoint-name" class="col-sm-3 col-form-label">Endpoint name</label>
+				  <div class="col-sm-9">
+				    <input id="input-endpoint-name" type="text" class="form-control" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="sel-detect-payload-format" class="col-sm-3 col-form-label">Detect payload format</label>
+		          <div class="col-sm-9">
+  		            <select id="sel-detect-payload-format" class="form-control custom-select">
+		          	  <option value="true">Yes</option>
+		          	  <option value="false" selected="selected">No</option>
+		            </select>
+		          </div>  
+				</div>
 	            <div class="card card-block">
 	                <div class="card-title"><h6>Payload extraction<a id="link-add-field" href="#" class="pull-right">Add field</a></h6></div>
 	                <div id="field-columns">

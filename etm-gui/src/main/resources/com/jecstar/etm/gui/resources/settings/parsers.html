@@ -51,44 +51,66 @@ body { padding-top: 60px; }
 	      <div class="row">
             <div class=col-sm-12>
 		      <form id="parser_form">
-		        <fieldset class="form-group">
-				  <label for="input-parser-name">Name</label>
-				  <input id="input-parser-name" type="text" class="form-control" placeholder="Descriptive name of the parser" required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-parser-type">Type</label>
-				  <select id="input-parser-type" class="form-control custom-select">
-				    <option value="fixed_position">Fixed position</option>
-				    <option value="fixed_value">Fixed value</option>
-				    <option value="jsonpath">JsonPath</option>
-				    <option value="xpath">XPath</option>
-				    <option value="xslt">XSLT</option>
-				  </select>
-				</fieldset>
-				<fieldset id="grp-fixed_position" class="form-group">
-				  <label for="input-fixed_position-line">Line</label>
-				  <input id="input-fixed_position-line" type="number" min="1" class="form-control" required="required" value="1"/>
-				  <label for="input-fixed_position-start-ix">Start position</label>
-				  <input id="input-fixed_position-start-ix" type="number" min="1" class="form-control" required="required" value="1"/>
-				  <label for="input-fixed_position-end-ix">End position (excluded)</label>
-				  <input id="input-fixed_position-end-ix" type="number" min="2" class="form-control" required="required" value="2"/>
-				</fieldset>
-				<fieldset id="grp-fixed_value" class="form-group" style="display: none;">
-					<label for="input-fixed-value">Fixed value</label>
-					<input id="input-fixed-value" type="text" class="form-control" required="required" disabled="disabled" />
-				</fieldset>
-				<fieldset id="grp-jsonpath" class="form-group" style="display: none;">
-					<label for="input-jsonpath-expression">JsonPath expression</label>
-					<input id="input-jsonpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
-				</fieldset>
-				<fieldset id="grp-xpath" class="form-group" style="display: none;">
-					<label for="input-xpath-expression">XPath expression</label>
-					<input id="input-xpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
-				</fieldset>
-				<fieldset id="grp-xslt" class="form-group" style="display: none;">
+		        <div class="form-group row">
+				  <label for="input-parser-name" class="col-sm-3 col-form-label">Name</label>
+				  <div class="col-sm-9">
+				    <input id="input-parser-name" type="text" class="form-control" placeholder="Descriptive name of the parser" required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-parser-type" class="col-sm-3 col-form-label">Type</label>
+				  <div class="col-sm-9">
+                    <select id="input-parser-type" class="form-control custom-select">
+	    			  <option value="fixed_position">Fixed position</option>
+		    		  <option value="fixed_value">Fixed value</option>
+			    	  <option value="jsonpath">JsonPath</option>
+				      <option value="xpath">XPath</option>
+				      <option value="xslt">XSLT</option>
+				    </select>
+				  </div>  
+				</div>
+				<div id="grp-fixed_position">
+				  <div class="form-group row">
+				  	<label for="input-fixed_position-line" class="col-sm-3 col-form-label">Line</label>
+				  	<div class="col-sm-9">
+				  	  <input id="input-fixed_position-line" type="number" min="1" class="form-control" required="required" value="1"/>
+				    </div>
+				  </div>
+				  <div class="form-group row">
+				  	<label for="input-fixed_position-start-ix" class="col-sm-3 col-form-label">Start position</label>
+				  	<div class="col-sm-9">
+				  	  <input id="input-fixed_position-start-ix" type="number" min="1" class="form-control" required="required" value="1"/>
+				    </div>
+				  </div>
+				  <div class="form-group row">
+				  	<label for="input-fixed_position-end-ix" class="col-sm-3 col-form-label">End position (excluded)</label>
+				  	<div class="col-sm-9">
+				  	  <input id="input-fixed_position-end-ix" type="number" min="2" class="form-control" required="required" value="2"/>
+				    </div>
+				  </div>
+				</div>
+				<div id="grp-fixed_value" class="form-group row" style="display: none;">
+				  <label for="input-fixed-value" class="col-sm-3 col-form-label">Fixed value</label>
+				  <div class="col-sm-9">
+				    <input id="input-fixed-value" type="text" class="form-control" required="required" disabled="disabled" />
+				  </div>
+				</div>
+				<div id="grp-jsonpath" class="form-group row" style="display: none;">
+				  <label for="input-jsonpath-expression" class="col-sm-3 col-form-label">JsonPath expression</label>
+				  <div class="col-sm-9">
+				    <input id="input-jsonpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
+				  </div>
+				</div>
+				<div id="grp-xpath" class="form-group row" style="display: none;">
+				  <label for="input-xpath-expression" class="col-sm-3 col-form-label">XPath expression</label>
+				  <div class="col-sm-9">  
+				    <input id="input-xpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
+				  </div>
+				</div>
+				<div id="grp-xslt" class="form-group" style="display: none;">
 					<label for="input-xslt-template">XSLT template</label>
 					<textarea id="input-xslt-template" class="form-control" rows="10" required="required" disabled="disabled"></textarea>
-				</fieldset>
+				</div>
 		        <div class="modal-footer">
                   <input type="submit" id="btn-confirm-remove-parser" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
                   <input type="submit" id="btn-confirm-save-parser" class="btn btn-primary" value="Save" disabled="disabled" />
