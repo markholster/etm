@@ -4,6 +4,7 @@ import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 
 public enum ExpressionParserField {
 	
+	// TODO allow transaction ID to be extracted.
 	NAME(new TelemetryEventTagsJsonImpl().getNameTag()), 
 	CORRELATION_DATA(new TelemetryEventTagsJsonImpl().getCorrelationDataTag() + "."), 
 	EXTRACTED_DATA(new TelemetryEventTagsJsonImpl().getExtractedDataTag() + ".");

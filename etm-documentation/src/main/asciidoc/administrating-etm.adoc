@@ -107,26 +107,33 @@ To manage your cluster settings browse to http://localhost:8080/gui/settings/clu
 When changing any of these properties no restart is required. All settings will be automatically applied within 30 seconds. For some settings a hot-restart of the processor is required. This may cause a little latency peek in the Processor.
 
 === Parsers
-To add, modify or delete parsers browse to http://localhost:8080/gui/settings/parsers.html or select the menu option ''Settings -> Parsers''. Parsers are used to extract information from an event so it can be categorized and/or enhanced with custom values based on the content of an event.
+To add, modify or delete parsers browse to http://localhost:8080/gui/settings/parsers.html or select the menu option ''Settings -> Parsers''. Parsers are used to extract information from an event so it can be categorized and/or enhanced with custom values based on the payload of an event.
 
 A parser describes a way of extracting data from an event, nothing more nothing less. 
 
 ==== Fixed position parser
-The fixed position parser extract information from the content of an event at a fixed position. This parser can be useful if you are dealing with content that has a static layout like good old COBOL records.
+The fixed position parser extract information from the payload of an event at a fixed position. This parser can be useful if you are dealing with payload that has a static layout like good old COBOL records.
 
 ==== Fixed value parser
-The Fixed value parser provides a fixed value no matter what content it is feeded with. Strictly speaking this is not a parser, but always provides the same value.
+The Fixed value parser provides a fixed value no matter what payload it is feeded with. Strictly speaking this is not a parser, but always provides the same value.
 
 ==== JsonPath parser
-The JsonPath parser is capable of extracting data from json content. There's no formal standard describing the Json path standard, but {etm} is following http://goessner.net/articles/JsonPath/[Stefan Goessner's JsonPath implementation].
+The JsonPath parser is capable of extracting data from json payload. There's no formal standard describing the Json path standard, but {etm} is following http://goessner.net/articles/JsonPath/[Stefan Goessner's JsonPath implementation].
 
 ==== XPath parser
-The XPath parser can extract data from XML based content. XPath 2.0, 3,0 & 3.1 queries are supported to extract data from any XML and/or Soap events.
+The XPath parser can extract data from XML based payload. XPath 2.0, 3,0 & 3.1 queries are supported to extract data from any XML and/or Soap events.
 
 ==== XSLT parser
-The XLST parser can extract data from XML based content. All XSLT 2.0 compatible templates are supported to extract data from any XML and/or Soap events.
+The XLST parser can extract data from XML based payload. All XSLT 2.0 compatible templates are supported to extract data from any XML and/or Soap events.
  
 === Endpoints
+To add, modify or delete endpoint configurations browse to http://localhost:8080/gui/settings/endpoints.html or select the menu option ''Settings -> Endpoints''. Endpoint configurations can be used to enhance events before they are stored on disk. Configuration of this enhancements can be done per endpoint, or globally.
+
+To create a new endpoint configuration just type the name of the endpoint it should apply to in the ''Endpoint name'' field. {etm} is provided with a simple payload format detection algorithm which is capable of detecting the most basic payload formats. If you want to apply this algorith to the events set the option ''Detect payload format'' to ''Yes''.
+
+If you want additional fields to be enhanced click on the ''Add field'' link. Then select the field you want to enhance. If the field is a collection, you should provide a key for the field. Finally add one ore more <<Parsers>> to apply to the event's payload. The order of the parsers is the order in which the are executed. If a parser doesn't have a result, or cannot be applied the next parser is tried. This will be repeated untill a parser has a result. That result will be added to the event, and further processing of other parser for that field is stopped.
+
+When you want to enter a global enhancement configuration you can select the endpoint configuration with the name ''*'' (an asterisk). This endpoint configuration is the only configuration that cannot be deleted. When changing an endpoint configuration it will be applied within 60 seconds.
 
 === IIB Nodes
 
