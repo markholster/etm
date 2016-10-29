@@ -109,7 +109,22 @@ When changing any of these properties no restart is required. All settings will 
 === Parsers
 To add, modify or delete parsers browse to http://localhost:8080/gui/settings/parsers.html or select the menu option ''Settings -> Parsers''. Parsers are used to extract information from an event so it can be categorized and/or enhanced with custom values based on the content of an event.
 
-A parser describes a way of extracting data from an event. Not where, when or in what order a list of parsers should be applied to an event.
+A parser describes a way of extracting data from an event, nothing more nothing less. 
+
+==== Fixed position parser
+The fixed position parser extract information from the content of an event at a fixed position. This parser can be useful if you are dealing with content that has a static layout like good old COBOL records.
+
+==== Fixed value parser
+The Fixed value parser provides a fixed value no matter what content it is feeded with. Strictly speaking this is not a parser, but always provides the same value.
+
+==== JsonPath parser
+The JsonPath parser is capable of extracting data from json content. There's no formal standard describing the Json path standard, but {etm} is following http://goessner.net/articles/JsonPath/[Stefan Goessner's JsonPath implementation].
+
+==== XPath parser
+The XPath parser can extract data from XML based content. XPath 2.0, 3,0 & 3.1 queries are supported to extract data from any XML and/or Soap events.
+
+==== XSLT parser
+The XLST parser can extract data from XML based content. All XSLT 2.0 compatible templates are supported to extract data from any XML and/or Soap events.
  
 === Endpoints
 
