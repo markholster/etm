@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.QueryOccurrence;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 
@@ -24,6 +25,8 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		sb.append("{");
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getSearchHistorySizeTag(), etmPrincipal.getHistorySize(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), true, sb, !added) || added;
@@ -47,6 +50,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		sb.append("{");
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmGroup.getName(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true, sb, !added) || added;
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles().stream().map(c -> c.getRoleName()).collect(Collectors.toSet()), true, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
@@ -62,6 +66,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		principal.setPasswordHash(this.converter.getString(this.tags.getPasswordHashTag(), valueMap));
 		principal.setName(this.converter.getString(this.tags.getNameTag(), valueMap));
 		principal.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
+		principal.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
 		principal.setHistorySize(this.converter.getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE));
 		String value = this.converter.getString(this.tags.getLocaleTag(), valueMap);
 		if (value != null) {
@@ -81,6 +86,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 	public EtmGroup readGroup(Map<String, Object> valueMap) {
 		EtmGroup group = new EtmGroup(this.converter.getString(this.tags.getNameTag(), valueMap));
 		group.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
+		group.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
 			group.addRoles(roles.stream().map(c -> EtmPrincipalRole.fromRoleName(c)).collect(Collectors.toSet()));

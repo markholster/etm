@@ -15,6 +15,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	}
 	
 	@Override
+	public String getFilterQueryOccurrenceTag() {
+		return "filter_query_occurrence";
+	}
+	
+	@Override
 	public String getSearchHistorySizeTag() {
 		return "search_history_size";
 	}
