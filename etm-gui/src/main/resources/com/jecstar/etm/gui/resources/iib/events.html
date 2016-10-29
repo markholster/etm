@@ -44,30 +44,36 @@ body { padding-top: 60px; }
         <div id="events_box">    
           <div class="row">
             <div class=col-sm-12>
-			  <fieldset class="form-group">
-				<label for="sel-node">IIB Node</label>
-	          	<select id="sel-node" class="form-control custom-select">
-	          	  <option selected="selected"></option>
-	          	</select>
-			  </fieldset>
-			  <fieldset class="form-group">
-				<label for="sel-server">IIB Server</label>
-	          	<select id="sel-server" class="form-control custom-select" disabled="disabled">
-	          	  <option selected="selected"></option>
-	          	</select>
-			  </fieldset>
-			  <fieldset class="form-group">
-				<label for="sel-container">Container</label>
-	          	<select id="sel-container" class="form-control custom-select" disabled="disabled">
-	          	  <option selected="selected"></option>
-	          	  <optgroup id="sel-container-application-group" label="Applications">
-	          	  </optgroup>
-	          	  <optgroup id="sel-container-library-group" label="Libraries">
-	          	  </optgroup>
-	          	  <optgroup id="sel-container-flow-group" label="Message flows">
-	          	  </optgroup>	          	  
-	          	</select>
-			  </fieldset>
+			  <div class="form-group row">
+				<label for="sel-node" class="col-sm-3 col-form-label">IIB Node</label>
+	          	<div class="col-sm-9">
+	          	  <select id="sel-node" class="form-control custom-select">
+	          	    <option selected="selected"></option>
+	          	  </select>
+	          	</div>  
+			  </div>
+			  <div class="form-group row">
+				<label for="sel-server" class="col-sm-3 col-form-label">IIB Server</label>
+	          	<div class="col-sm-9">
+	          	  <select id="sel-server" class="form-control custom-select" disabled="disabled">
+	          	    <option selected="selected"></option>
+	          	  </select>
+	          	</div>  
+			  </div>
+			  <div class="form-group row">
+				<label for="sel-container" class="col-sm-3 col-form-label">Container</label>
+	          	<div class="col-sm-9">
+	          	  <select id="sel-container" class="form-control custom-select" disabled="disabled">
+	          	    <option selected="selected"></option>
+	          	    <optgroup id="sel-container-application-group" label="Applications">
+	          	    </optgroup>
+	          	    <optgroup id="sel-container-library-group" label="Libraries">
+	          	    </optgroup>
+	          	    <optgroup id="sel-container-flow-group" label="Message flows">
+	          	    </optgroup>	          	  
+	          	  </select>
+	            </div>	  
+			  </div>
 	        </div>
 	      </div>  
 	      <hr />
