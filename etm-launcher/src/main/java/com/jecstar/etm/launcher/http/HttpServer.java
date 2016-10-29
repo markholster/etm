@@ -36,6 +36,7 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
+import io.undertow.UndertowOptions;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.InMemorySingleSignOnManager;
 import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
@@ -90,6 +91,7 @@ public class HttpServer {
 				try {
 					sslContext = createSslContext(this.configuration);
 					builder.addHttpsListener(this.configuration.getHttpsPort(), this.configuration.bindingAddress, sslContext);
+					builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
 					if (log.isInfoLevelEnabled()) {
 						log.logInfoMessage("Binding https listener to '" + this.configuration.bindingAddress + ":" + this.configuration.getHttpsPort() + "'");
 					}
