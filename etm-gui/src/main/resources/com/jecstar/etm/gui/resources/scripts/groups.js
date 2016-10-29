@@ -46,6 +46,7 @@ function buildGroupPage() {
 		}
 		$('#input-group-name').val(groupData.name);
 		$('#input-filter-query').val(groupData.filter_query);
+		$('#sel-filter-query-occurrence').val(groupData.filter_query_occurrence);
 		$('#group-roles-container > label > input').prop('checked', false);
 		if (groupData.roles) {
 			$.each(groupData.roles, function(index, role) {
@@ -180,6 +181,7 @@ function buildGroupPage() {
 		var groupData = {
 			name: $('#input-group-name').val(),
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
+			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),		
 			roles: []
 		}
 		$('#group-roles-container > label > input:checked').each(function () {
@@ -191,6 +193,7 @@ function buildGroupPage() {
 	function resetValues() {
 		$('#input-group-name').val('')
 		$('#input-filter-query').val('')
+		$('#sel-filter-query-occurrence').val('MUST')
 		$('#group-roles-container > label > input').prop('checked', false);
 		enableOrDisableButtons();
 	}

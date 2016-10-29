@@ -53,47 +53,74 @@ body { padding-top: 60px; }
 	      <div class="row">
             <div class=col-sm-12>
 		      <form id="user_form">
-		        <fieldset class="form-group">
-				  <label for="input-user-id">Id</label>
-				  <input id="input-user-id" type="text" class="form-control" placeholder="Unique ID of the user..." required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-user-name">Name</label>
-				  <input id="input-user-name" type="text" class="form-control" />
-				</fieldset>
-		        <fieldset class="form-group">
+		        <div class="form-group row">
+				  <label for="input-user-id" class="col-sm-2 col-form-label">Id</label>
+				  <div class="col-sm-10">
+				  	<input id="input-user-id" type="text" class="form-control" placeholder="Unique ID of the user..." required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-user-name" class="col-sm-2 col-form-label">Name</label>
+				  <div class="col-sm-10">
+				    <input id="input-user-name" type="text" class="form-control" />
+				  </div>
+				</div>
+		        <div class="form-group">
 		          <a id="lnk-add-group" class="pull-right" href="#">Add group</a>
 		          <label>Groups</label>
 		          <ol id="list-groups">
 		          </ol>
-				</fieldset>				
-		        <fieldset class="form-group">
-				  <label for="input-filter-query">Filter query</label>
-				  <input id="input-filter-query" type="text" class="form-control" />
-				</fieldset>				
-		        <fieldset class="form-group">
-		          <label for="sel-locale">Locale</label>
-		          <select id="sel-locale" class="form-control custom-select"></select>
-				</fieldset>				
-		        <fieldset class="form-group">
-            	  <label for="sel-time-zone">Time zone</label>
-            	  <select id="sel-time-zone" class="form-control custom-select"></select>				
-            	</fieldset>
-		        <fieldset class="form-group">
-		          <label for="input-search-history-size">Search history size</label>
-		          <input id="input-search-history-size" type="number" class="form-control" min="0" value="5"/>
-		        </fieldset>
-            	<fieldset class="form-group" id="user-roles-container">
-            		<label>User roles</label><br/>
-            	</fieldset>		
-		        <fieldset class="form-group">
-		          <label for="input-new-password1">New password</label>
-		          <input id="input-new-password1" type="password" class="form-control" required="required" />
-		        </fieldset>        
-		        <fieldset class="form-group">
-		          <label for="input-new-password2">Retype password</label>
-		          <input id="input-new-password2" type="password" class="form-control" required="required" />
-		        </fieldset>
+				</div>				
+		        <div class="form-group row">
+				  <label for="input-filter-query" class="col-sm-2 col-form-label">Filter query</label>
+				  <div class="col-sm-10">
+				    <input id="input-filter-query" type="text" class="form-control" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+            	  <label for="sel-filter-query-occurrence" class="col-sm-2 col-form-label">Filter query occurrence</label>
+            	  <div class="col-sm-10">
+            	    <select id="sel-filter-query-occurrence" class="form-control custom-select">
+            	    	<option value="MUST">Must</option>
+            	    	<option value="MUST_NOT">Must not</option>
+            	    </select>				
+            	  </div>
+            	</div>								
+		        <div class="form-group row">
+		          <label for="sel-locale" class="col-sm-2 col-form-label">Locale</label>
+		          <div class="col-sm-10">
+		            <select id="sel-locale" class="form-control custom-select"></select>
+				  </div>
+				</div>				
+		        <div class="form-group row">
+            	  <label for="sel-time-zone" class="col-sm-2 col-form-label">Time zone</label>
+            	  <div class="col-sm-10">
+            	    <select id="sel-time-zone" class="form-control custom-select"></select>				
+            	  </div>
+            	</div>
+		        <div class="form-group row">
+		          <label for="input-search-history-size" class="col-sm-2 col-form-label">Search history size</label>
+		          <div class="col-sm-10">
+		            <input id="input-search-history-size" type="number" class="form-control" min="0" value="5"/>
+		          </div>
+		        </div>
+            	<div class="form-group row">
+            		<label class="col-sm-2 col-form-label">User roles</label>
+            		<div class="col-sm-10" id="user-roles-container">
+            		</div>
+            	</div>		
+		        <div class="form-group row">
+		          <label for="input-new-password1" class="col-sm-2 col-form-label">New password</label>
+		          <div class="col-sm-10">
+		            <input id="input-new-password1" type="password" class="form-control" required="required" />
+		          </div>
+		        </div>        
+		        <div class="form-group row">
+		          <label for="input-new-password2" class="col-sm-2 col-form-label">Retype password</label>
+		          <div class="col-sm-10">
+		            <input id="input-new-password2" type="password" class="form-control" required="required" />
+		          </div>
+		        </div>
 		        <div class="modal-footer">
                   <input type="submit" id="btn-confirm-remove-user" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
                   <input type="submit" id="btn-confirm-save-user" class="btn btn-primary" value="Save" disabled="disabled" />

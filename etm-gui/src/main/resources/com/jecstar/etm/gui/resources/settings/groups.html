@@ -53,17 +53,32 @@ body { padding-top: 60px; }
 	      <div class="row">
             <div class=col-sm-12>
 		      <form id="group_form">
-		        <fieldset class="form-group">
-				  <label for="input-group-name">Name</label>
-				  <input id="input-group-name" type="text" class="form-control" placeholder="Unique name of the group..." required="required" />
-				</fieldset>
-		        <fieldset class="form-group">
-				  <label for="input-filter-query">Filter query</label>
-				  <input id="input-filter-query" type="text" class="form-control" />
-				</fieldset>				
-            	<fieldset class="form-group" id="group-roles-container">
-            		<label>Roles</label><br/>
-            	</fieldset>		
+		        <div class="form-group row">
+				  <label for="input-group-name" class="col-sm-2 col-form-label">Name</label>
+				  <div class="col-sm-10">
+				  	<input id="input-group-name" type="text" class="form-control" placeholder="Unique name of the group..." required="required" />
+				  </div>
+				</div>
+		        <div class="form-group row">
+				  <label for="input-filter-query" class="col-sm-2 col-form-label">Filter query</label>
+				  <div class="col-sm-10">
+				    <input id="input-filter-query" type="text" class="form-control" />
+				  </div>
+				</div>				
+		        <div class="form-group row">
+            	  <label for="sel-filter-query-occurrence" class="col-sm-2 col-form-label">Filter query occurrence</label>
+            	  <div class="col-sm-10">
+            	    <select id="sel-filter-query-occurrence" class="form-control custom-select">
+            	    	<option value="MUST">Must</option>
+            	    	<option value="MUST_NOT">Must not</option>
+            	    </select>				
+            	  </div>
+            	</div>
+            	<div class="form-group row">
+            		<label class="col-sm-2 col-form-label">Roles</label>
+            		<div class="col-sm-10" id="group-roles-container">
+            		</div>
+            	</div>		
 		        <div class="modal-footer">
                   <input type="submit" id="btn-confirm-remove-group" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
                   <input type="submit" id="btn-confirm-save-group" class="btn btn-primary" value="Save" disabled="disabled" />
