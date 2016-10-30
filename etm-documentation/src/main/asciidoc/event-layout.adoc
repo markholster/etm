@@ -1,0 +1,39 @@
+== Event layout
+The heart of {etm} is based on event data. The event structure is flexible but has a common base for some predefined event types. Event types are fixed and cannot be created. The content of these types however can be extended with custom information. This information can be used to query or monitor your events.
+
+=== Common event data
+All event types have a common set of attributes. This section describes these attributes.
+
+.Common event attributes
+[options="header"]
+|=======================
+|Name|Default value|Description
+|id|Generated UUID|The unique id of the event. When two or more events with the same id are processed they are mostly merged, but some attributes will be overwritten. Make sure your events are only reusing event id's when they functionally are the same. Be aware that processing event with an id that is processed about 1000 times before will cause major performance degradation.
+|correlation id||The id of the event this event is correlated to. Use this attribute for request/reply correlation. Also make sure you don't correlate more that 1000 events to a single event otherwise you will experience a major performance degradation.
+|correlationData|Empty map|A map that can be filled by any of the configured <<Parsers>>. The field has no processing functionality whatsoever.
+|endpoints||The endpoints this event has passed. See <<event-endpoint-attributes>> to view the nested attributes.
+|extractedData|Empty map|A map that can be filled by any of the configured <<Parsers>>. The field has no processing functionality whatsoever.
+|=======================
+
+[[event-endpoint-attributes]]
+.Endpoint attributes
+[options="header"]
+|=======================
+|Name|Default value|Description
+|id|Generated UUID|The unique id of the event. When two or more events with the same id are processed they are mostly merged, but some attributes will be overwritten. Make sure your events are only reusing event id's when they functionally are the same. Be aware that processing event with an id that is processed about 1000 times before will cause major performance degradation.
+|correlation id||The id of the event this event is correlated to. Use this attribute for request/reply correlation. Also make sure you don't correlate more that 1000 events to a single event otherwise you will experience a major performance degradation.
+|correlationData|Empty map|A map that can be filled by any of the configured <<Parsers>>. The field has no processing functionality whatsoever.
+|endpoints||The endpoints this event has passed.
+|destinations||A list of destinations to listen on. See <<ibmmq-destination-options>> to view the nested options.
+|=======================
+
+=== Business event
+
+=== Http event
+
+=== Log event
+
+=== Messaging event
+
+=== SQL event
+

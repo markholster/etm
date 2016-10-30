@@ -169,3 +169,4 @@ The ''logging'' section contains all options to configure the loggers and log le
 |rootLogger|INFO|The root logging level. If no specific logger is configured, this value will be used.
 |loggers||A map with string key/value pairs. The key is the name of the logger and the value is the log level to be used for that specific logger.
 |=======================
+

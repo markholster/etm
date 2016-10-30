@@ -117,4 +117,3 @@ When everything is configured well, you can access {etm} with a browser by brows
 
 CAUTION: Don't forget to change these default credentials! It is recommended to create a new administrative account and remove the default one as soon as possible.
 
-

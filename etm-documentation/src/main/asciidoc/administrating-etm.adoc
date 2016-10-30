@@ -146,3 +146,4 @@ To add, modify or delete IIB Nodes browse to http://localhost:8080/gui/iib/event
 NOTE: Enabling or disabling IIB monitoring events can take some time on your IIB Node. Please be patient while applying your settings. This is not something {etm} has any influence on.
 
 {etm} is not changing any monitoring configuration when for example an IIB Node is removed from the configuration. Monitoring events will still be emitted if not disabled before removing the configuration. The same goes for undeploying an IIB application or flow. You also need to make sure the emitted events are picked up by one of the configured processors. 
+
