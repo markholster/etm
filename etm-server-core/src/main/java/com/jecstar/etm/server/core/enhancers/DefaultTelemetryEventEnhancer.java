@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import com.jecstar.etm.domain.Endpoint;
+import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
@@ -81,9 +82,15 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	}
 	
 	private void enchanceId(final TelemetryEvent<?> event) {
-		if (event.id == null) {
-			event.id = UUID.randomUUID().toString();
+		if (event.id != null) {
+			return;
 		}
+		// Check if the id needs to be set by a parsers. 
+		setWhenCurrentValueEmpty(event, ExpressionParserField.ID.getJsonTag(), this.fields.get(ExpressionParserField.ID.getJsonTag()));
+		if (event.id != null) {
+			return;
+		}
+		event.id = UUID.randomUUID().toString();
 	}
 	
 	private void enchancePayloadFormat(final TelemetryEvent<?> event) {
@@ -161,15 +168,55 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		if (key == null) {
 			return;
 		}
-		if (ExpressionParserField.NAME.getJsonTag().equals(key) && event.name == null ) {
+		if (ExpressionParserField.ID.getJsonTag().equals(key) && event.id == null ) {
+			event.id= parseValue(parsers, event.payload);
+		} else if (ExpressionParserField.CORRELATION_ID.getJsonTag().equals(key) && event.correlationId == null ) {
+			event.correlationId= parseValue(parsers, event.payload);
+		} else if (ExpressionParserField.NAME.getJsonTag().equals(key) && event.name == null ) {
 			event.name = parseValue(parsers, event.payload);
 		} else if (key.startsWith(ExpressionParserField.CORRELATION_DATA.getJsonTag())) {
 			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.CORRELATION_DATA, event.correlationData);
 		} else if (key.startsWith(ExpressionParserField.EXTRACTED_DATA.getJsonTag())) {
 			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.EXTRACTED_DATA, event.extractedData);
+		} else if (ExpressionParserField.WRITER_TRANSACTION_ID.getJsonTag().equals(key)) {
+			// transaction id can be on several levels. Add them to every position when the current value is not set.
+			setWritingTransactionIdOnEndpoints(parseValue(parsers, event.payload), event.endpoints);
+		} else if (ExpressionParserField.READER_TRANSACTION_ID.getJsonTag().equals(key)) {
+			// transaction id can be on several levels. Add them to every position when the current value is not set.
+			setReadingTransactionIdOnEndpoints(parseValue(parsers, event.payload), event.endpoints);
 		}
 	}
 	
+	private void setWritingTransactionIdOnEndpoints(String transactionId, List<Endpoint> endpoints) {
+		if (transactionId == null) {
+			return;
+		}
+		if (endpoints == null || endpoints.size() < 1) {
+			return;
+		}
+		for (Endpoint endpoint : endpoints) {
+			if (endpoint.writingEndpointHandler.transactionId == null) {
+				endpoint.writingEndpointHandler.transactionId = transactionId;
+			}
+		}
+	}
+	
+	private void setReadingTransactionIdOnEndpoints(String transactionId, List<Endpoint> endpoints) {
+		if (transactionId == null) {
+			return;
+		}
+		if (endpoints == null || endpoints.size() < 1) {
+			return;
+		}
+		for (Endpoint endpoint : endpoints) {
+			for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
+				if (handler.transactionId == null) {
+					handler.transactionId = transactionId;
+				}
+			}
+		}
+	}
+
 	private void putInMapWhenCurrentValueEmpty(TelemetryEvent<?> event, String key, List<ExpressionParser> parsers, ExpressionParserField field, Map<String, Object> container) {
 		String dataKey = field.getCollectionKeyName(key);
 		if (!container.containsKey(dataKey)) {

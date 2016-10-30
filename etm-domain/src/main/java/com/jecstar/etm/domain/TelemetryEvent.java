@@ -137,8 +137,12 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	
 	public long getCalculatedHash() {
 		long hash = 7;
-		for (int i = 0; i < this.id.length(); i++) {
-		    hash = hash * 31 + this.id.charAt(i);
+		if (this.id != null) {
+			for (int i = 0; i < this.id.length(); i++) {
+			    hash = hash * 31 + this.id.charAt(i);
+			}
+		} else {
+			
 		}
 		for (Endpoint endpoint : this.endpoints) {
 			hash = hash * 31 + endpoint.getCalculatedHash();

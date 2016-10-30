@@ -44,13 +44,15 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			sb.append("]");			
 			added = endpointAdded || added;
 		}
-		if (added) {
-			sb.append(", ");
+		if (event.id != null) {
+			if (added) {
+				sb.append(", ");
+			}
+			sb.append("\"" + getTags().getEventHashesTag() + "\": [");
+			sb.append(event.getCalculatedHash());
+			sb.append("]");
+			added = true;
 		}
-		sb.append("\"" + getTags().getEventHashesTag() + "\": [");
-		sb.append(event.getCalculatedHash());
-		sb.append("]");
-		added = true;
 		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), event.metadata, sb, !added) || added;
