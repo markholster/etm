@@ -151,7 +151,7 @@ The ''ibmMq'' section contains all options that are necessary to process {etm} e
 |type|queue|The destination type. Can be one of ''queue'' or ''destination''.
 |nrOfListeners|1|The number of listeners to connect to the destination. In most cases 1 will be enough because the processor processes the events asynchronous.
 |channel||The channel to use to setup the connection to the QueueManager.
-|messagesType|auto|Can be one of ''auto'' which auto detect the message type but is the slowest, ''iibevent'' which is capable of handling link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events],  ''etmevent'' which is capable of handling events generated in the {etm} format or ''clone'' which assumes the message read is a clone of the original message.
+|messagesType|auto|Can be one of ''auto'' which auto detect the message type but is the slowest, ''iibevent'' which is capable of handling http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events],  ''etmevent'' which is capable of handling events generated in the {etm} format or ''clone'' which assumes the message read is a clone of the original message.
 |maxMessageSize|4194304|The maximum message size in bytes that can be read. Depending on the get options the message will be ignored or truncated.
 |commitSize|500|The maximum number of messages processed before a MQCMIT is executed.
 |commitInterval|10000|The maximum number of milliseconds the processor can read messages without executing a MQCMIT.
