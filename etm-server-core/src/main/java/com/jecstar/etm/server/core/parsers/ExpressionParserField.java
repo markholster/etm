@@ -10,7 +10,8 @@ public enum ExpressionParserField {
 	WRITER_TRANSACTION_ID(new TelemetryEventTagsJsonImpl().getEndpointsTag() + "." + new TelemetryEventTagsJsonImpl().getWritingEndpointHandlerTag() + "." + new TelemetryEventTagsJsonImpl().getEndpointHandlerTransactionIdTag()),
 	READER_TRANSACTION_ID(new TelemetryEventTagsJsonImpl().getEndpointsTag() + "." + new TelemetryEventTagsJsonImpl().getReadingEndpointHandlerTag() + "." + new TelemetryEventTagsJsonImpl().getEndpointHandlerTransactionIdTag()),
 	CORRELATION_DATA(new TelemetryEventTagsJsonImpl().getCorrelationDataTag() + "."), 
-	EXTRACTED_DATA(new TelemetryEventTagsJsonImpl().getExtractedDataTag() + ".");
+	EXTRACTED_DATA(new TelemetryEventTagsJsonImpl().getExtractedDataTag() + "."),
+	METADATA(new TelemetryEventTagsJsonImpl().getMetadataTag() + ".");
 	
 	private final String jsonTag;
 

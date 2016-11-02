@@ -178,6 +178,8 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.CORRELATION_DATA, event.correlationData);
 		} else if (key.startsWith(ExpressionParserField.EXTRACTED_DATA.getJsonTag())) {
 			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.EXTRACTED_DATA, event.extractedData);
+		} else if (key.startsWith(ExpressionParserField.METADATA.getJsonTag())) {
+			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.METADATA, event.metadata);
 		} else if (ExpressionParserField.WRITER_TRANSACTION_ID.getJsonTag().equals(key)) {
 			// transaction id can be on several levels. Add them to every position when the current value is not set.
 			setWritingTransactionIdOnEndpoints(parseValue(parsers, event.payload), event.endpoints);
