@@ -13,8 +13,15 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.domain.writers.json.JsonWriter;
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 public class JsonConverter extends JsonWriter {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(JsonConverter.class);
 	
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	
@@ -102,6 +109,9 @@ public class JsonConverter extends JsonWriter {
 		try {
 			return ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(stringDate)), ZoneOffset.UTC);
 		} catch (NumberFormatException nfe) {
+			if (log.isDebugLevelEnabled()) {
+				log.logDebugMessage("'" + stringDate + "' could not be converted to a long. ZonedDateTime could not be determined."); 
+			}
 			return null;
 		}
 	}

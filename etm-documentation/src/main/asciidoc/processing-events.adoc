@@ -44,8 +44,8 @@ For example:
 ----
 curl -H 'Content-Type: application/json' -XPOST 'http://localhost:8080/rest/processor/event/_bulk' -d'
 [ 
-  { "type" : "log", "data" : { "payload" : "My first BULK event nr 1!" }},
-  { "type" : "log", "data" : { "payload" : "My first BULK event nr 2!" }}
+  { "type" : "log", "data" : { "payload" : "My first bulk event!" }},
+  { "type" : "log", "data" : { "payload" : "My second bulk event!" }}
 ]'
 ----
 
@@ -59,4 +59,12 @@ will add 2 events in a single POST action. Again you will receive
 to let you know the events are successfully received.
 
 === IBM MQ processor
+The rest IBM MQ processor is disabled by default. Follow the instructions in the section <<IBM MQ section in etm.yml>> to enable a processor that receives messages from one or more queues or topics. 
 
+Contrary to the rest processor the IBM MQ processor can handle different content types. Depending on the value of the option ''messagesType'' defined in the <<ibmmq-destination-options>> the processing is as follow:
+
+[horizontal]
+auto:: The IBM MQ processor will try to determine with type of message is received. This is the most flexible option, but also the slowest. If you expect a high load please define a specific format per IBM MQ endpoint.
+iibevent:: The event must be a xml document formatted as a http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Event] message.
+etmevent:: The event must be a json object with the layout described in the <<Add a single event>> section. 
+clone:: The received MQ message is a clone of the original message. When using this setting the event type will always be ''messaging'', and the IBM MQ MQMD header is used to determine several event attributes.
