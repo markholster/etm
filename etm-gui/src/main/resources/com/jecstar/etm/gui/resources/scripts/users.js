@@ -116,6 +116,7 @@ function buildUserPage() {
 			resetValues();
 			return;
 		}
+		$('#list-groups').empty();
 		$('#input-user-id').val(userData.id);
 		$('#input-user-name').val(userData.name);
 		$('#input-filter-query').val(userData.filter_query);

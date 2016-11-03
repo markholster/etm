@@ -1,0 +1,18 @@
+== Searching events
+So, you've set up your {etm} nodes and your processors are handling thousands of events per second. Now it's time to take advantage of the performance and simplicity {etm} has to offer.
+
+To search through all events browse to http://localhost:8080/gui/search/ or select the menu option ''Search''. The first time you enter this page it looks similar to the image below.
+
+.Search overview
+image::images/etm-search-overview.png["Search overview",link="./images/etm-search-overview.png"]
+
+=== Search area
+The left part of the search screen shows an input field in which you can enter your search terms. Also you can (un)check the event types you want to be in- or excluded from the search. 
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax
+
+=== Search template area
+
+=== Search history area
+
+=== Search results area

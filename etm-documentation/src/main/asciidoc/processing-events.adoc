@@ -68,3 +68,4 @@ auto:: The IBM MQ processor will try to determine with type of message is receiv
 iibevent:: The event must be a xml document formatted as a http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Event] message.
 etmevent:: The event must be a json object with the layout described in the <<Add a single event>> section. 
 clone:: The received MQ message is a clone of the original message. When using this setting the event type will always be ''messaging'', and the IBM MQ MQMD header is used to determine several event attributes.
+
