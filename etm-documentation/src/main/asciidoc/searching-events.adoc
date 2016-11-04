@@ -6,13 +6,130 @@ To search through all events browse to http://localhost:8080/gui/search/ or sele
 .Search overview
 image::images/etm-search-overview.png["Search overview",link="./images/etm-search-overview.png"]
 
-=== Search area
+
+=== Search widget
 The left part of the search screen shows an input field in which you can enter your search terms. Also you can (un)check the event types you want to be in- or excluded from the search. 
 
-https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax
+In the query input field you can enter the terms you are searching for. See the section <<Query syntax>> for the query syntax that can be used. The input field provides a basic form of auto completion by hitting the arrow down button on your keyboard. All available attributes for the selected event types will be show in a drop down box.
 
-=== Search template area
+=== Query syntax
+The query syntax is quite extensive and at the base you can provide a serie of terms and operators. By default the ''payload'' attribute is searched for, but other options are available. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
 
-=== Search history area
+==== Event attribute names
+Searching for specific event attribute can be done with the following syntax:
+----
+<attribute-name>: value
+----
 
-=== Search results area
+for example this query will search for events where the ''name'' attribute contains ''MyEventName''
+----
+name: MyEventName
+----
+
+Also values can be combined. If you ommit the OR operator it will be applied as default.
+----
+name: (MyEventName OR MyOtherName)
+name: (MyEventName MyOtherName)
+----
+
+When searching for an exact match the term must be quoted.
+----
+name: "My Name Should Be An Exact Match!"
+----
+
+There are 2 reserved keywords, ''\_missing_'' and ''\_exists_'' which take an event attribute as parameter. ''\_missing_'' queries for events that don't contain the provided attribute and ''\_exists_'' does the opposite.
+
+==== Wildcards
+Wildcards can be applied to terms, using ''?'' to replace a single character and ''*'' to replace zero or more characters.
+
+The following query will search for events of which the name contains a term that starts with ''My*''.
+----
+name: My*
+----
+
+CAUTION: Starting a term with a wildcard will be very inefficient and may consume a lot of memory. Try to prevent such queries at any cost because all terms in the index need to be examined.
+
+==== Fuzziness
+Sometimes the data in events contains human misspellings. Those misspellings won't match any of the previous mentioned search methods, but with a so called fuzzy search you are still be able to match them. Use the fuzzy operator ''~'' in your query to match terms that are like the given term in the query.
+----
+name: MyEventNmae~
+----
+
+Fuzzy queries use the https://en.wikipedia.org/wiki/Damerau-Levenshtein_distance[Damerau-Levenshtein distance] to find all terms with a maximum of 2 differences. The edit distance can be added to the query:
+----
+name: MyEvntNmae~4
+----
+
+==== Proximity searches
+A proximity search allows the specified terms to be close to each other but not necessary next to each other. For example
+----
+name: "My Name"~5
+----
+
+searches for the ''My'' and ''Name'' terms with a term distance of 5. 
+
+==== Ranges
+Ranges can be specified to numeric and date attributes. Inclusive ranges are specified with square brackets ''[min TO max]'' and exclusive ranges with curly brackets ''{min TO max}''.
+
+All events of 2017 can be queried as follow
+----
+endpoints.writing_endpoint_handler.handling_time: [2017-01-01 TO 2017-12-31]
+----
+
+Or all events with a payload length between 1000 and 2000 chars
+----
+payload_length: [1000 TO 2000]
+----
+
+Wildcards can also be applied
+----
+payload_length: [1000 TO *]
+----
+
+And even curly brackets and square brackets can be combined in a single range
+----
+payload_length: [10 TO 50}
+----
+
+For queries without an upper or lower bound the mathematical syntax can be used
+----
+payload_length:>1000
+payload_length:>=1000
+payload_length:<1000
+payload_length:<=1000
+----
+
+==== Boolean operators
+By default all provided terms are optional unless they are quoted. This behaviour can be changed by adding the boolean operators ''+'' and ''-''. For example
+----
+name: My +name -must not be +empty
+----
+
+states that we are searching for an event with a name that must contain the terms ''name'' and ''empty'', must not contain the term ''must'' and may contain the terms ''My'', ''not'' and ''be''. 
+
+==== Grouping
+Terms can be grouped by using parentheses. This is in particular useful if you want to combine multiple ''AND'' and ''OR'' operators
+----
+name: (My AND name) OR (must AND be) OR empty
+----
+
+==== Reserved characters
+The reserved characters are: + - = && || > < ! ( ) { } [ ] ^ " ~ * ? : \ /
+If you want to use any of these characters in your term(s) you have to escape them by a leading backslash. For example
+----
+name: \(DemoName\) 
+----
+searches for an event with the name ''(DemoName)''.
+
+=== Search template widget
+On the top right of the search screen you see your search template. By default three most common templates are provided for you, but of course you can change or delete them as you like. To create an search template just fill in a query in the <<Search widget>>, enter a template name and hit the ''Save'' button. If a template with exactly the same name already exist you will see a warning message which asks you to confirm the overwrite of an existing template. All settings regarding the query, like results per page, result columns etc will be stored in your search template.
+
+To use a search template just click on the name in the Search template widget. All setting stored with the search template will be restored to your current search context. 
+
+To delete a search template click on the red cross behind the name and confirm the deletion of the template. If you accidently removed the wrong template just hit the ''Save'' button again and the search template will be available again. Note that if you changed anything in the search context between the removal and the save of the search template that will be saved as well.
+
+Your {etm} administrator may set a limit on the number of templates that you can store. If the limit is reached a message will be shown in the Search template widget.
+
+=== Search history widget
+
+=== Search results widget
