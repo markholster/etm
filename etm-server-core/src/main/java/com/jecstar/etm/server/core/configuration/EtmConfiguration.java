@@ -8,7 +8,6 @@ import java.util.List;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.util.ObjectUtils;
 
-//TODO document this class and the different properties. 
 public class EtmConfiguration {
 	//License configuration
 	public static final String CONFIG_KEY_LICENSE 							= "license";

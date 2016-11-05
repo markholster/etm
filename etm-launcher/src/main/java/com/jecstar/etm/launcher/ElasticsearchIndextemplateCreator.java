@@ -34,9 +34,16 @@ import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
 
 public class ElasticsearchIndextemplateCreator implements ConfigurationChangeListener {
+	
+	/**
+	 * The <code>LogWrapper</code> for this class.
+	 */
+	private static final LogWrapper log = LogFactory.getLogger(ElasticsearchIndextemplateCreator.class);
 	
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	private final MetricConverterTags metricTags = new MetricConverterTagsJsonImpl();
@@ -82,7 +89,9 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {
 		} catch (IOException e) {
-			// TODO putting painless scripts failed.
+			if (log.isFatalLevelEnabled()) {
+				log.logFatalMessage("Failed to create painless scripts. Cluster will not be usable.", e);
+			}
 		}
 		
 		try {
@@ -131,7 +140,6 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	}
 
 	private String createEventMapping(String name) {
-		// TODO moet dit misschien met een path_match i.p.v. een match? 
 		return "{ \"" + name + "\": " 
 				+ "{\"dynamic_templates\": ["
 				+ "{ \"" + this.eventTags.getPayloadTag() + "\": { \"match\": \"" + this.eventTags.getPayloadTag() + "\", \"mapping\": {\"index\": \"analyzed\"}}}"

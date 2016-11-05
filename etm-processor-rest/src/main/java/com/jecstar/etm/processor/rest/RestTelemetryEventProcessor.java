@@ -96,8 +96,9 @@ public class RestTelemetryEventProcessor {
 				String eventType = (String) event.get("type");
 				CommandType commandType = TelemetryCommand.CommandType.valueOfStringType(eventType);
 				if (commandType == null) {
-					//TODO add error in response?
-					continue;
+					if (log.isErrorLevelEnabled()) {
+						log.logErrorMessage("'" + eventType + "' is an unknown event type. SKipping event in bulk.");
+					}
 				}
 				Map<String, Object> eventData = (Map<String, Object>) event.get("data");
 				process(commandType, eventData);

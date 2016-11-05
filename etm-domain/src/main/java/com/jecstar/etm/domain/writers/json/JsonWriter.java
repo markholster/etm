@@ -93,7 +93,6 @@ public class JsonWriter {
 			buffer.append(", ");
 		}
 		buffer.append(escapeToJson(hostAddressTag, true) + ": " + escapeToJson(elementValue.getHostAddress(), true));
-		// TODO documenteer dat de getHostName heel lang duurt is als er geen gebruikt wordt gemaakt van een meegegeven hostname.
 		buffer.append(", " + escapeToJson(hostNameTag, true) + ": " + escapeToJson(elementValue.getHostName(), true));
 		return true;
 	}

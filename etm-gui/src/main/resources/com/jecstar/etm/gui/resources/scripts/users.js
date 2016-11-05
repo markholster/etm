@@ -193,8 +193,8 @@ function buildUserPage() {
 	function enableOrDisableButtons() {
 		var userId = $('#input-user-id').val();
 		if (userId) {
-			$('#btn-confirm-save-user').removeAttr('disabled');
 			if (isUserExistent(userId)) {
+				$('#btn-confirm-save-user').removeAttr('disabled');
 				$('#btn-confirm-remove-user').removeAttr('disabled');
 				$('#input-new-password1, #input-new-password2').removeAttr('required');
 			} else {

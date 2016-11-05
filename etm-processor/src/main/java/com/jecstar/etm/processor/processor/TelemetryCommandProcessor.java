@@ -268,13 +268,17 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (this.started && event.isAnyChanged(
 				EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
-				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT)) {
-			// TODO check for more options that need a restart, like changing the buffer size.
-			// Configuration changed in such a way that the DisruptorEnvironment needs to be recreated/restarted.
+				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT,
+				EtmConfiguration.CONFIG_KEY_EVENT_BUFFER_SIZE)) {
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Detected a change in the configuration that needs a restart of the command processor.");
+			}
 			try {
 				hotRestart();
 			} catch (IllegalStateException e) {
-				
+				if (log.isErrorLevelEnabled()) {
+					log.logErrorMessage("Failed to restart the command processor. Your processor is in an unknow state. Please restart the processor node.", e);
+				}				
 			}
 		}
 	}

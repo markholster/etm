@@ -54,7 +54,6 @@ public class QueryExporter {
 	
 	public File exportToFile(ScrollableSearch scrollableSearch, String fileType, int maxRows, SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
 		try {
-			// TODO, documenteer dat de temp dir nodig is: java.io.tmpdir o.i.d.
 			File outputFile = File.createTempFile("etm-", "-download");
 			outputFile.deleteOnExit();
 		    if ("csv".equalsIgnoreCase(fileType)) {

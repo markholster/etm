@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
@@ -222,14 +223,14 @@ public class TransactionOverviewTest extends AbstractIntegrationTest {
 	    // Cytoscape renders 3 canvas elements. Make sure they are all present.
 	    assertSame(3, canvasElements.size());
 	    // Now click on the event reader
-// TODO Onderstaande werkt niet met marionette driver...
 //	    WebElement canvas = canvasElements.get(0);
 //	    
 //	    // Calculate the clich point in the canvas.
 //	    // The canvas consits of a grid with 3 columns. We have to click on the center of the 3th cell. 
 //	    int clickPointXOffset = (canvas.getRect().width / 6) * 5;
 //	    int clickPointYOffset = (canvas.getRect().height / 3) * 2;
-//	    
+	    
+// TODO Onderstaande werkt niet met marionette driver...
 //	    // Move to the event reader in the canvas and send a click event.
 //	    new Actions(this.driver).moveToElement(canvas, clickPointXOffset, clickPointYOffset).click().perform();
 //	    // And wait for the detail table to show.
