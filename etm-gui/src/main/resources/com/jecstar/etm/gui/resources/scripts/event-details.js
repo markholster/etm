@@ -143,6 +143,26 @@ function showEvent(scrollTo, type, id) {
 					}
 				} else {
 					$tabHeader.text('Http request');
+					if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
+						var response_times = $endpoints.map(function () {
+							if (this.writing_endpoint_handler) {
+								return this.writing_endpoint_handler.response_time
+							}
+						}).get();
+						if (response_times) {
+							appendToContainerInRow($eventTab, 'Highest writer response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+						}
+						response_times = $endpoints.map(function () {
+							if (this.reading_endpoint_handlers) {
+								return $(this.reading_endpoint_handlers).map(function () {
+									return this.response_time;
+								}).get();
+							}
+						}).get();
+						if (response_times) {
+							appendToContainerInRow($eventTab, 'Highest reader response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+						}
+					}					
 					if (data.source.correlations && !correlated) {
 						$.each(data.source.correlations, function (index, correlation_id) {
 							addCorrelationTab(scrollTo, data.type, correlation_id, 'response-tab' + index, 'Http response');
@@ -207,6 +227,26 @@ function showEvent(scrollTo, type, id) {
 					}
 				} else {
 					$tabHeader.text('Sql query');
+					if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
+						var response_times = $endpoints.map(function () {
+							if (this.writing_endpoint_handler) {
+								return this.writing_endpoint_handler.response_time
+							}
+						}).get();
+						if (response_times) {
+							appendToContainerInRow($eventTab, 'Highest writer response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+						}
+						response_times = $endpoints.map(function () {
+							if (this.reading_endpoint_handlers) {
+								return $(this.reading_endpoint_handlers).map(function () {
+									return this.response_time;
+								}).get();
+							}
+						}).get();
+						if (response_times) {
+							appendToContainerInRow($eventTab, 'Highest reader response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+						}
+					}										
 					if (data.source.correlations && !correlated) {
 						$.each(data.source.correlations, function (index, correlation_id) {
 							addCorrelationTab(scrollTo, data.type, correlation_id, 'response-tab' + index, 'Sql result');
