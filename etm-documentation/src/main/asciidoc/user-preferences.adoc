@@ -1,1 +1,16 @@
 == User preferences
+To change your personal preferences browse to http://localhost:8080/gui/preferences/ or select the menu option ''Preferences''.
+
+The following settings can be changed:
+.User attributes
+[options="header"]
+|=======================
+|Name|Description
+|Id|The unique ID of the user. This id is also used for logging in to the {etm} Gui and is a read-only field.
+|Name|Your full name. 
+|Locale|The locale you want to use.
+|Time zone|The time zone you are in. Time based properties will be converted to the selected time zone.
+|Search history size|The number of queries that need to be remembered.
+|======================= 
+
+And finally you can change your password by entering your current password, and a new password twice.
