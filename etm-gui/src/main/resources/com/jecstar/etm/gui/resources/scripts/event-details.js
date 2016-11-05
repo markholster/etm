@@ -645,7 +645,7 @@ function showEvent(scrollTo, type, id) {
 		if ('business' == event.type) {
 			return event.name ? event.name : '?';
 		} else if ('http' == event.type) {
-			if ('incomming' == event.direction) {
+			if ('incoming' == event.direction) {
 				return 'Received ' + ("RESPONSE" == event.sub_type ? 'http response' : 'http ' + event.payload);
 			} else {
 				return 'Send ' + ("RESPONSE" == event.sub_type ? 'http response' : 'http ' + event.payload);
@@ -654,26 +654,26 @@ function showEvent(scrollTo, type, id) {
 			return event.payload;
 		} else if ('messaging' == event.type) {
 			if ('REQUEST' == event.sub_type) {
-				if ('incomming' == event.direction) {
+				if ('incoming' == event.direction) {
 					return 'Received request message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
 					return 'Send request message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			} else if ('RESPONSE' == event.sub_type) {
-				if ('incomming' == event.direction) {
+				if ('incoming' == event.direction) {
 					return 'Received response message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
 					return 'Send response message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			} else {
-				if ('incomming' == event.direction) {
+				if ('incoming' == event.direction) {
 					return 'Received fire-forget message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
 					return 'Send fire-forget message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			}
 		} else if ('sql' == event.type) {
-			if ('incomming' == event.direction) {
+			if ('incoming' == event.direction) {
 				return 'Received ' + ("RESULTSET" == event.sub_type ? 'sql resultset' : event.payload);
 			} else {
 				return 'Send ' + ("RESULTSET" == event.sub_type ? 'sql resultset' : event.payload);

@@ -16,6 +16,7 @@ public class DisruptorEnvironment {
 	private final PersistingEventHandler[] persistingEventHandlers;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ThreadFactory threadFactory, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
+		// TODO Waitstrategy moet configureerbaar gemaakt worden.
 		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), threadFactory, ProducerType.MULTI, new SleepingWaitStrategy());
 		this.disruptor.setDefaultExceptionHandler(new TelemetryCommandExceptionHandler(metricRegistry));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();

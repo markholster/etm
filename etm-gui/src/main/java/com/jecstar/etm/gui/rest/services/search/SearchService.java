@@ -182,7 +182,7 @@ public class SearchService extends AbstractJsonService {
 						names.put(mappingMetadataCursor.key, values);
 					}
 				} catch (IOException e) {
-					// TODO logging.
+					// Error will never been thrown. See mappingMetaData.getSourceAsMap() sources for detailes.
 				}
 			}
 			
@@ -436,7 +436,7 @@ public class SearchService extends AbstractJsonService {
 							for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
 								if (isWithinTransaction(readingEndpointHandler, applicationName, transactionId)) {
 									event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
-									event.direction = "incomming";
+									event.direction = "incoming";
 									event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
 								}
 							}
