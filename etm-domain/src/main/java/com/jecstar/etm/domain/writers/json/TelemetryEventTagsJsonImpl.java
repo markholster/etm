@@ -60,11 +60,6 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	}
 	
 	@Override
-	public String getPackagingTag() {
-		return "packaging";
-	}
-
-	@Override
 	public String getPayloadTag() {
 		return "payload";
 	}

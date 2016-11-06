@@ -14,3 +14,4 @@ The following settings can be changed:
 |======================= 
 
 And finally you can change your password by entering your current password, and a new password twice.
+
