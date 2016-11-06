@@ -12,12 +12,12 @@ buildscript {
 apply plugin: 'org.asciidoctor.convert'
 
 asciidoctor {
-//  backends 'html5', 'pdf'
+  backends 'html5', 'pdf'
   sourceDir = file('src/main/asciidoc')
   sources {
     include 'etm.adoc'
   }
-  attributes 'author': 'Milo Jacobs & Mark Holster',
+  attributes 'author': 'Milo Jacobs &amp; Mark Holster',
   			 'email': 'info@jecstar.com',
   			 'toc': 'right',
     		 'toc-title': 'Table of Contents',
