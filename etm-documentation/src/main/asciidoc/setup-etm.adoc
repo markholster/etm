@@ -51,7 +51,7 @@ Although {etm} best performs on linux like systems it can be run under windows a
 To make use of the IBM MQ integration you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory. This integration makes it possible to process events from any IBM MQ Destination. For further configuration see the <<IBM MQ section in etm.yml>>.
 
 The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}. To make use of this integration you need to copy a file named ''configmanagerproxy.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory when you are running IIB version 9.x. If you are running IIB version 10.x the file is named ''integrationapi.jar''.
-Also, for both versions of IBM Integration Bus the file ''ibmjsseprovider2.jar'' needs to be copied as well. All files can be found in your Ibm Integration Bus installation.
+Also, for both versions of IBM Integration Bus the file ''ibmjsseprovider2.jar'' needs to be copied as well. All files can be found in your IBM Integration Bus installation.
 
 === Node configuration
 Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.
@@ -87,7 +87,7 @@ General configuration options have no indentation in the etm.yml file. The follo
 [options="header"]
 |=======================
 |Name|Default value|Description
-|bindingAddress|0.0.0.0|The interface adres to bind {etm} to.
+|bindingAddress|0.0.0.0|The interface address to bind {etm} to.
 |clusterName|Enterprise Telemetry Monitor|The name of the {etm} cluster. When running multiple {etm} clusters it is recommended to give them a separate name.
 |instanceName|Node_1|The name of the Node. When running multiple nodes in a cluster, it is recommended to give them a separate name.
 |elasticsearch||The elasticsearch configuration. See <<Elasticsearch section in etm.yml>> to view the nested options.
@@ -96,7 +96,7 @@ General configuration options have no indentation in the etm.yml file. The follo
 |logging||The logging configuration. See <<Logging section in etm.yml>> to view the nested options.
 |======================= 
 
-All other configuration sections are identified with the name of the section without indentation. Configration options in that section have an indentation of 2 spaces.
+All other configuration sections are identified with the name of the section without indentation. Configuration options in that section have an indentation of 2 spaces.
 
 ==== Elasticsearch section in etm.yml
 The ''elasticsearch'' section contains all options that are necessary to connect to an Elasticsearch cluster:
@@ -106,7 +106,7 @@ The ''elasticsearch'' section contains all options that are necessary to connect
 |=======================
 |Name|Default value|Description
 |clusterName|elasticsearch|The name of the Elasticsearch cluster to connect to.
-|connectAddresses|127.0.0.1:9300|A comma separated list of Elasticsearch nodes to connect to. When high availablilty is a demand of your production environment you should provide at least 2 addresses.
+|connectAddresses|127.0.0.1:9300|A comma separated list of Elasticsearch nodes to connect to. When high availability is a demand of your production environment you should provide at least 2 addresses.
 |=======================
 
 ==== Http section in etm.yml

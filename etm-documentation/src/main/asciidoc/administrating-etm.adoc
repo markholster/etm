@@ -1,9 +1,9 @@
 == Administrating {etm}
-Apart from the <<Node configuration>> {etm} can be configured with a browser. At least one Node with the ''guiEnabled'' to ''true'' should be available. 
+Apart from the <<Node configuration>> {etm} can be configured with a browser. At least one Node should be configured with the ''guiEnabled'' option set to ''true''. 
 
 === License registration
 One of the first things you need to do as administrator is entering your license key. Without a proper license no events will be processed. When your license is expired or not entered you will be able to access all features of {etm}. The only part that is disabled is the processing of events.
-To enter your license or view the state of your current license, open a browser and browse to http://localhost:8080/gui/settings/license.html (Of course your server name and port may be different). If you are already logged in to {etm} you can access the license page through the menu optiosn ''Settings -> License''.
+To enter your license or view the state of your current license, open a browser and browse to http://localhost:8080/gui/settings/license.html (Of course your server name and port may be different). If you are already logged in to {etm} you can access the license page through the menu options ''Settings -> License''.
 Paste your license key in the input field and hit the ''Apply'' button. If you entered a valid license, the Owner and Expiration Date will become visible.
 
 A correctly applied license looks something like this:
@@ -12,35 +12,35 @@ A correctly applied license looks something like this:
 image::images/etm-license.png["{etm} license",link="./images/etm-license.png"]
 
 === Users
-To add, create or modify users browse to http://localhost:8080/gui/settings/users.html or select the menu option ''Settings -> Users''. The top drop-down bar allows you to select a user to modify, delete or copy. It is highly recommended to remove the default administrator user! At least change the password of the user.
+To add, create or modify users browse to http://localhost:8080/gui/settings/users.html or select the menu option ''Settings -> Users''. The top drop-down field allows you to select a user to modify, delete or copy. It is highly recommended to remove the default administrator user for security reasons! You should at least change the password of the default administrator user.
 
 Each user can have the following attributes:
 .User attributes
 [options="header"]
 |=======================
 |Name|Description
-|Id|The unique ID of the user. This id is also used for logging in to the {etm} Gui.
+|Id|The unique id of the user. This id is also used for logging in to the {etm} Gui.
 |Name|The (full) name of the user. 
-|Groups|The groups to apply to the user. This field will only be available if at least one group is created. See <<Groups>> for more information.
+|Groups|The groups the user belongs to. This field will only be available if at least one group is created. See <<Groups>> for more information.
 |Filter query|The filter query that needs to be applied to the user. See <<Filter query>> for more information.
 |Filter query occurrence|The occurrence of the filter query. See <<Filter query>> for more information.
 |Locale|The locale of the user.
 |Time zone|The time zone the user is in. Time based properties will be converted to the selected time zone.
 |Search history size|The number of queries that need to be remembered.
-|User roles|The roles the user has. See <<User roles>> for a detailed description.
+|User roles|The roles the user should have. See <<User roles>> for a detailed description.
 |New password|The new password for the user. This field is mandatory when adding a new user.
-|Retype password|Retype the new password in this field to make sure you didn't enter a typo in the New password field.
+|Retype password|Retype the new password in this field to make sure you didn't enter a typo in the ''New password'' field.
 |======================= 
 
 ==== User roles
 Each user can have one or more roles. Depending on the roles the user has, he or she can or can't access some parts of the {etm} Gui.
 
 [horizontal]
-Admin:: If checked the user can access all parts of {etm} without any restrictions.
+Admin:: When checked the user can access all pages of {etm} without any restrictions.
 Searcher:: With this role the user can search for events.
 Controller:: When a user has the controller role he or she can access the dashboard.
 Processor:: With this role the user can add events by posting to the rest processor. By default the rest processor hasn't any access restrictions so everybody can use it. If security is applied to the rest processor only users with the Processor role can use the rest processor.
-Iib-admin:: With this role the user can manage the creation if IIB Monitoring Event from the Settings menu. See <<Integration with IBM MQ and/or IBM Integration Bus>> to enable this integration.
+Iib-admin:: With this role the user can manage the creation if IIB Monitoring Event from the ''Settings'' menu. See <<Integration with IBM MQ and/or IBM Integration Bus>> to enable this integration.
 
 ==== Filter query
 Imagine you have stored a gazillion events in {etm}. Some of them might contain passwords or other sensitive data and you don't want this data to be visible to everyone with a Searcher role. This is were the Filter query is your best friend. When an Filter query is applied to a user (or group) it is attached to every query the user executes. For example, when we configure
@@ -65,7 +65,7 @@ name: BobsEventName AND endpoints.writing_endpoint_handler.application.name: "En
 ----
 
 This way we can prevent Bob of seeing any events that are not generated by the application "Enterprise Telemetry Monitor".
-The above example assumed the value ''Must'' was selected in the Filter query occurrence options field. If the value is changed to ''Must not'' {etm} would hav executed the following query:
+The above example assumed the value ''Must'' was selected in the Filter query occurrence options field. If the value is changed to ''Must not'' {etm} would have executed the following query:
 
 [source]
 ----
@@ -77,7 +77,7 @@ In this case Bob can see all events, but not the ones generated by the applicati
 === Groups
 To add, create or modify groups browse to http://localhost:8080/gui/settings/groups.html or select the menu option ''Settings -> Groups''. Groups are a convenient way of managing some user attributes that should be applied to several users. You can, for example, create an administration group that has the Administration role selected. When a user is added to that role the Administration role is also applied to that user.
 
-When a user is added to multiple groups he has the roles and Filter queries of all groups combined.
+When a user is added to multiple groups he or she has the roles and Filter queries of all groups combined.
 
 === Cluster
 To manage your cluster settings browse to http://localhost:8080/gui/settings/cluster.html or select the menu option ''Settings -> cluster''. On the cluster settings page you can adjust several settings that help you keep your cluster performing the way you want. By default most of the settings should be fine, but if you want to make optimal use of each CPU cycle your cluster has to offer you have the option to tune it on this page.
@@ -89,12 +89,12 @@ To manage your cluster settings browse to http://localhost:8080/gui/settings/clu
 |Shards per index|Each day at 00:00 UTC a new Elasticsearch index is created. This option sets the number of https://www.elastic.co/guide/en/elasticsearch/reference/5.x/_basic_concepts.html#_shards_amp_replicas[shards] in each new index.
 |Replicas per index|The number of https://www.elastic.co/guide/en/elasticsearch/reference/5.x/_basic_concepts.html#_shards_amp_replicas[replica's] each Elasticsearch index should have. Leave this value to zero if you have only one Elasticsearch instance in your cluster.
 |Max event indices|The number of event indices to keep. Each day at 00:00 UTC a new Elasticsearch index is created. This means that setting this value to 10 will keep your events at least 9 days, depending on your local time zone.
-|Max metrics indices|The number of metrics indices to keep. Each {etm} node generates metrices to the metrics index of the current day. This index cannot be queries, but is useful to monitor your {etm} cluster health.
+|Max metrics indices|The number of metrics indices to keep. Each {etm} node generates metrics to the metrics index of the current day. This index cannot be queries, but is useful to monitor your {etm} cluster health.
 |Wait for active shards|The number of Elasticsearch shards that need to be active before performing any query. Leave this value to 1 if you have only one Elasticsearch instance in your cluster, or have not configured any Replicas.
 |Retries on conflict|The number of retries before an insert or update query will fail.
 |Query timeout|The timeout in milliseconds for queries to Elasticsearch.
 |Search export max rows|The maximum number of rows that can be exported from the search page. If you set this value to high it might lead to a very high memory consumption of your {etm} Node.
-|Max search templates|The maximum number of search templates a user may have stored.
+|Max search templates|The maximum number of search templates a user may store.
 |Max search history size|The maximum number of queries that are kept in the users query history. An individual user may configure a lower number for him/herself.
 |Enhancing handler count|The number of threads that will be used by the event enhancer in the Processor.
 |Persisting handler count|The number of threads that will be used by the event persister in the Processor. 
@@ -104,7 +104,7 @@ To manage your cluster settings browse to http://localhost:8080/gui/settings/clu
 |Persisting bulk time|The maximum number of millisecond that events can be buffered before flushed to an Elasticsearch node.
 |======================= 
 
-When changing any of these properties no restart is required. All settings will be automatically applied within 30 seconds. For some settings a hot-restart of the processor is required. This may cause a little latency peek in the Processor.
+When changing any of these properties no restart is required. All settings will be automatically applied within 60 seconds. For some settings a hot-restart of the processor is required. This may cause a little latency peek in the Processor.
 
 === Parsers
 To add, modify or delete parsers browse to http://localhost:8080/gui/settings/parsers.html or select the menu option ''Settings -> Parsers''. Parsers are used to extract information from an event so it can be categorized and/or enhanced with custom values based on the payload of an event.
@@ -129,7 +129,7 @@ The XLST parser can extract data from XML based payload. All XSLT 2.0 compatible
 === Endpoints
 To add, modify or delete endpoint configurations browse to http://localhost:8080/gui/settings/endpoints.html or select the menu option ''Settings -> Endpoints''. Endpoint configurations can be used to enhance events before they are stored on disk. Configuration of this enhancements can be done per endpoint, or globally.
 
-To create a new endpoint configuration just type the name of the endpoint it should apply to in the ''Endpoint name'' field. {etm} is provided with a simple payload format detection algorithm which is capable of detecting the most basic payload formats. If you want to apply this algorith to the events set the option ''Detect payload format'' to ''Yes''.
+To create a new endpoint configuration just type the name of the endpoint it should apply to in the ''Endpoint name'' field. {etm} is provided with a simple payload format detection algorithm which is capable of detecting the most basic payload formats. If you want to apply this algorithm to the events set the option ''Detect payload format'' to ''Yes''.
 
 If you want additional fields to be enhanced click on the ''Add field'' link. Then select the field you want to enhance. If the field is a collection, you should provide a key for the field. Finally add one ore more <<Parsers>> to apply to the event's payload. The order of the parsers is the order in which the are executed. If a parser doesn't have a result, or cannot be applied the next parser is tried. This will be repeated until a parser has a result. That result will be added to the event, and further processing of other parser for that field is stopped.
 

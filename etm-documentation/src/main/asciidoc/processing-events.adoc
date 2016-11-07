@@ -36,7 +36,7 @@ As a response you will receive the following message
 telling you the event is successfully received and will be available in {etm} from now on.
 
 ==== Adding events in bulk
-Although adding a single event takes only a few milliseconds there will be some overhead of setting up a connection. When you expect a high load it might be useful to add events in bulk. This can be done by posting the to http://127.0.0.1:8080/rest/processor/event/_bulk. The data send to this enpoint needs to be a json array of objects with the same layout as the object explained in the section <<Add a single event>>. 
+Although adding a single event takes only a few milliseconds there will be some overhead of setting up a connection. When you expect a high load it might be useful to add events in bulk. This can be done by posting the to http://127.0.0.1:8080/rest/processor/event/_bulk. The data send to this endpoint needs to be a json array of objects with the same layout as the object explained in the section <<Add a single event>>. 
 
 For example:
 

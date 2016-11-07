@@ -1,5 +1,5 @@
 == Getting started
-{etm} is a highly scalable event processor. The goal of {etm} is to gain near realtime insights in the information flows inside and between your enterprise applications. It is generally used to help organizations in monitoring their complex application landscapes. 
+{etm} is a highly scalable event processor. The goal of {etm} is to gain near realtime insights in the information flows inside and between your enterprise applications. It is generally used to help organizations in monitoring their complex application landscape. 
 
 A few sample usecases that {etm} could be used for:
 
@@ -34,7 +34,7 @@ The Graphical User Interface of {etm}. You can access {etm} with (almost) any mo
 .Elasticsearch
 The database that is used by {etm}. This database is not provided with the product, but needs to be setup separately if not already available in your organization. More information can be found on the link:https://www.elastic.co/products/elasticsearch[Elasticsearch website].
 
-In short a simple setup could be something like the image below; Application 1 and Ibm Integration Bus provide Event to the Processor. The processor is enhancing and saving the Events to the Elasticsarch database. Users are able to query and monitoring events with a browsers on any device.
+In short a simple setup could be something like the image below; Application 1 and IBM Integration Bus provide Event to the Processor. The processor is enhancing and saving the Events to the Elasticsarch database. Users are able to query and monitoring events with a browsers on any device.
 
 .{etm} overview
 image::images/etm-overview.png["{etm} overview",link="./images/etm-overview.png"]
@@ -61,7 +61,7 @@ preference) you can download a .zip or .tgz file. In this example we choose the 
 curl -LO http://www.jecstar.com/downloads/etm-{project-version}.tgz
 ----
 
-Then extract the archive with the following commando:
+Then extract the archive with the following command:
 
 [source,bash,subs=attributes+]
 ----
@@ -94,7 +94,7 @@ Enterprise Telemetry Monitor started.
 
 As mentioned above, one of the most common mistakes is a mismatch between the {etm} configuration and the Elasticsearch cluster. If your console prints something like
 
-[source,bash,subs=attributes+]
+[source,java,subs=attributes+]
 ----
 Running Enterprise Telemetry Monitor...
 NoNodeAvailableException[None of the configured nodes are available: [{#transport#-1}{v1hSCl1dQou7b93zEVw0gA}{127.0.0.1}{127.0.0.1:9300}]]

@@ -7,7 +7,7 @@ To search through all events browse to http://localhost:8080/gui/search/ or sele
 image::images/etm-search-overview.png["Search overview",link="./images/etm-search-overview.png"]
 
 === Query syntax
-The query syntax is quite extensive and at the base you can provide a serie of terms and operators. By default the ''payload'' attribute is searched for, but other options are available. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
+The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default the ''payload'' attribute is searched for, but other options are available. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
 
 ==== Event attribute names
 Searching for specific event attribute can be done with the following syntax:
@@ -20,7 +20,7 @@ for example this query will search for events where the ''name'' attribute conta
 name: MyEventName
 ----
 
-Also values can be combined. If you ommit the OR operator it will be applied as default.
+Also values can be combined. If you omit the OR operator it will be applied as default.
 ----
 name: (MyEventName OR MyOtherName)
 name: (MyEventName MyOtherName)
@@ -94,7 +94,7 @@ payload_length:<=1000
 ----
 
 ==== Boolean operators
-By default all provided terms are optional unless they are quoted. This behaviour can be changed by adding the boolean operators ''+'' and ''-''. For example
+By default all provided terms are optional unless they are quoted. This behavior can be changed by adding the boolean operators ''+'' and ''-''. For example
 ----
 name: My +name -must not be +empty
 ----
@@ -168,7 +168,7 @@ If you want to export your search results you can download them as .csv or .xlsx
 
 When clicking the Download button your export will be presented as downloadable file.
 
-To prevent a large file stored in memory {etm} writes the export file to disk before it is offered as download. The directory referenced by the java.io.tmpdir system property will be used to store the export temporarely. Make sure the {etm} process has access to that directory.
+To prevent a large file stored in memory {etm} writes the export file to disk before it is offered as download. The directory referenced by the java.io.tmpdir system property will be used to store the export temporarily. Make sure the {etm} process has access to that directory.
 
 ==== Inspecting found events
 If any of the columns in the result table is configured as link you can inspect the details of an event. By clicking on that link all data of that event and the events correlated will be shown. Depending on the event type the layout of this screen may differ; for 'http' and 'messaging' events a request and reply tab may be visible. If an transaction id is present with the event an ''Event chain'' tab is shown that shows the complete event chain in a graphical way! If you are allowed to view these events you can click on the desired items in the image to show more details of that specific event.

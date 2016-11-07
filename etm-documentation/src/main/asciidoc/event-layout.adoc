@@ -89,7 +89,7 @@ The log event can be used when an application wants to log something. {etm} can 
 |=======================
 |Name|Default value|Description
 |log_level||The log level, for example DEBUG or ERROR.
-|stack_trace||A strack trace that belongs to the payload that is logged.
+|stack_trace||A stack trace that belongs to the payload that is logged.
 |=======================
 
 === Messaging event
