@@ -15,6 +15,7 @@ public class EtmGroup {
 
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
 	
+	private boolean alwaysShowCorrelatedEvents = false;
 	
 	public EtmGroup(String name) {
 		this.name = name;
@@ -23,7 +24,6 @@ public class EtmGroup {
 	public String getName() {
 		return this.name;
 	}
-	
 	
 	public String getFilterQuery() {
 		return this.filterQuery;
@@ -41,6 +41,14 @@ public class EtmGroup {
 		this.filterQueryOccurrence = filterQueryOccurrence;
 	}
 	
+	public boolean isAlwaysShowCorrelatedEvents() {
+		return this.alwaysShowCorrelatedEvents;
+	}
+
+	public void setAlwaysShowCorrelatedEvents(boolean alwaysShowCorrelatedEvents) {
+		this.alwaysShowCorrelatedEvents = alwaysShowCorrelatedEvents;
+	}
+
 	public Set<EtmPrincipalRole> getRoles() {
 		return Collections.unmodifiableSet(this.roles);
 	}

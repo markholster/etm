@@ -51,12 +51,14 @@ import org.elasticsearch.search.sort.SortOrder;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
 @Path("/search")
@@ -329,17 +331,17 @@ public class SearchService extends AbstractJsonService {
 	@Path("/event/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
-		return getEvent(eventType, eventId, true, null, null);
+		return getEvent(eventType, eventId, true, null, null, true);
 	}
 	
 	@GET
 	@Path("/event/{type}/{id}/endpoints")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEventChainEndpoint(@PathParam("type") String eventType, @PathParam("id") String eventId) {
-		return getEvent(eventType, eventId, false, new String[] {this.eventTags.getEndpointsTag() + ".*"}, null);
+		return getEvent(eventType, eventId, false, new String[] {this.eventTags.getEndpointsTag() + ".*"}, null, false);
 	}
 	
-	private String getEvent(String eventType, String eventId, boolean fetchAll, String[] includes, String[] excludes) {
+	private String getEvent(String eventType, String eventId, boolean fetchAll, String[] includes, String[] excludes, boolean includeCorrelationWhenPossible) {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
 				.addIds(eventId);
 		SearchRequestBuilder builder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
@@ -366,12 +368,94 @@ public class SearchService extends AbstractJsonService {
 		addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
 		result.append(", \"source\": " + searchHit.getSourceAsString());
 		result.append("}");
-		
-		// TODO this is the place to allow (or not) the user to see the correlated when returned. We have to think about it, because it would not be visible in the search results.
-		
+		if (includeCorrelationWhenPossible && showCorrelatedEvent(getEtmPrincipal())) {
+			String correlatedEvent = getCorrelatedEvent(searchHit);
+			if (correlatedEvent != null) {
+				result.append(", \"correlated_event\": " + correlatedEvent);
+			}
+		}
 		result.append("}");
 		return result.toString();
-		
+	}
+	
+	private boolean showCorrelatedEvent(EtmPrincipal etmPrincipal) {
+		boolean showCorrelatedEvent = etmPrincipal.isAlwaysShowCorrelatedEvents();
+		Iterator<EtmGroup> it = etmPrincipal.getGroups().iterator();
+		while ((!showCorrelatedEvent) && it.hasNext()) {
+			showCorrelatedEvent = it.next().isAlwaysShowCorrelatedEvents();
+		}
+		return showCorrelatedEvent;
+	}
+	
+	private String getCorrelatedEvent(SearchHit hit) {
+		Map<String, Object> valueMap = hit.getSource();
+		SearchResponse response = null;
+		SearchRequestBuilder builder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
+				.setFrom(0)
+				.setSize(1)
+				.setFetchSource(true)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		if (ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_HTTP.equals(hit.getType())) {
+			HttpEventType httpEventType = HttpEventType.safeValueOf(getString(this.eventTags.getHttpEventTypeTag(), valueMap));
+			if ( httpEventType == null) {
+				return null;
+			}
+			if (HttpEventType.RESPONSE.equals(httpEventType)) {
+				String requestId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
+				IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_HTTP).addIds(requestId);
+				response = builder.setQuery(idsQueryBuilder).get();
+			} else {
+				BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder()
+						.must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), hit.getId()))
+						.must(new TermQueryBuilder(this.eventTags.getHttpEventTypeTag(), HttpEventType.RESPONSE.name()));
+				response = builder.setQuery(boolQueryBuilder).get();								
+			}
+		} else if (ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING.equals(hit.getType())) {
+			MessagingEventType messagingEventType = MessagingEventType.safeValueOf(getString(this.eventTags.getMessagingEventTypeTag(), valueMap));
+			if ( messagingEventType == null) {
+				return null;
+			}
+			if (MessagingEventType.RESPONSE.equals(messagingEventType)) {
+				String requestId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
+				IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING).addIds(requestId);
+				response = builder.setQuery(idsQueryBuilder).get();
+			} else if (MessagingEventType.REQUEST.equals(messagingEventType)) {
+				BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder()
+						.must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), hit.getId()))
+						.must(new TermQueryBuilder(this.eventTags.getMessagingEventTypeTag(), MessagingEventType.RESPONSE.name()));
+				response = builder.setQuery(boolQueryBuilder).get();				
+			}			
+		} else if (ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_SQL.equals(hit.getType())) {
+			SqlEventType sqlEventType = SqlEventType.safeValueOf(getString(this.eventTags.getSqlEventTypeTag(), valueMap));
+			if ( sqlEventType == null) {
+				return null;
+			}
+			if (SqlEventType.RESULTSET.equals(sqlEventType)) {
+				String requestId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
+				IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_SQL).addIds(requestId);
+				response = builder.setQuery(idsQueryBuilder).get();
+			} else {
+				BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder()
+					.must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), hit.getId()))
+					.must(new TermQueryBuilder(this.eventTags.getSqlEventTypeTag(), SqlEventType.RESULTSET.name()));
+				response = builder.setQuery(boolQueryBuilder).get();
+			}
+		} 
+		if (response == null) {
+			return null;
+		}
+		if (response.getHits().hits().length == 0) {
+			return null;
+		}
+		SearchHit searchHit = response.getHits().getAt(0);
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
+		addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
+		addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
+		result.append(", \"source\": " + searchHit.getSourceAsString());
+		result.append("}");
+		return result.toString();
 	}
 	
 	@GET

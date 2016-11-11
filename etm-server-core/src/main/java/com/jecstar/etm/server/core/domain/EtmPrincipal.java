@@ -22,11 +22,13 @@ public class EtmPrincipal implements Principal {
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
+	private boolean alwaysShowCorrelatedEvents = false;
 	private int historySize = DEFAULT_HISTORY_SIZE;
 
 	
 	// State properties. DO NOT CHANGE!!
 	public boolean forceReload = false;
+
 	
 	public EtmPrincipal(String id) {
 		this.id = id;
@@ -167,6 +169,14 @@ public class EtmPrincipal implements Principal {
 	
 	public void setFilterQueryOccurrence(QueryOccurrence filterQueryOccurrence) {
 		this.filterQueryOccurrence = filterQueryOccurrence;
+	}
+	
+	public boolean isAlwaysShowCorrelatedEvents() {
+		return this.alwaysShowCorrelatedEvents;
+	}
+
+	public void setAlwaysShowCorrelatedEvents(boolean alwaysShowCorrelatedEvents) {
+		this.alwaysShowCorrelatedEvents = alwaysShowCorrelatedEvents;
 	}
 	
 	public int getHistorySize() {
