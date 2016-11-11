@@ -359,11 +359,16 @@ public class SearchService extends AbstractJsonService {
 		SearchHit searchHit = response.getHits().getAt(0);
 		StringBuilder result = new StringBuilder();
 		result.append("{");
+		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
+		result.append(", \"event\": {");
 		addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
 		addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
 		addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
-		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, false);
 		result.append(", \"source\": " + searchHit.getSourceAsString());
+		result.append("}");
+		
+		// TODO this is the place to allow (or not) the user to see the correlated when returned. We have to think about it, because it would not be visible in the search results.
+		
 		result.append("}");
 		return result.toString();
 		

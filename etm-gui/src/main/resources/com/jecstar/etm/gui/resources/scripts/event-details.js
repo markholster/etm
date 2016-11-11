@@ -18,7 +18,7 @@ function showEvent(scrollTo, type, id) {
 	    contentType: 'application/json',
 	    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
 	    success: function(data) {
-	        if (!data) {
+	        if (!data || !data.event) {
 	            return;
 	        }
 	        addContent(data);
@@ -51,15 +51,16 @@ function showEvent(scrollTo, type, id) {
 	}
 
 	function addContent(data) {
-		$('#event-card-title').text('Event ' + data.id);
-		$('#event-tab-header').text(capitalize(data.type));
+		var event = data.event;
+		$('#event-card-title').text('Event ' + event.id);
+		$('#event-tab-header').text(capitalize(event.type));
 		$eventTab = $('#event-tab');
-		if (data.source) {
-			if (data.source.name) {
-				$('#event-card-title').text(data.source.name);
+		if (event.source) {
+			if (event.source.name) {
+				$('#event-card-title').text(event.source.name);
 			}
-			writeEventDataToTab($eventTab, $('#event-tab-header'), data, false);
-			var $endpoints = $(data.source.endpoints);
+			writeEventDataToTab($eventTab, $('#event-tab-header'), event, false);
+			var $endpoints = $(event.source.endpoints);
 			if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 				createEndpointsTab($endpoints, data.time_zone);
 				// Check if a transaction id is present
@@ -82,7 +83,7 @@ function showEvent(scrollTo, type, id) {
 					}
 				});
 				if (hasTransactionId) {
-					createEventChainTab(data.id, data.type, data.time_zone);
+					createEventChainTab(event.id, event.type, data.time_zone);
 				}
 			}
 		}
@@ -296,7 +297,7 @@ function showEvent(scrollTo, type, id) {
 		    contentType: 'application/json',
 		    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
 		    success: function(correlation_data) {
-		        if (!correlation_data) {
+		        if (!correlation_data || !correlation_data.event) {
 		            return;
 		        }
 				$('#event-tabs').children().eq(0).after(
@@ -317,7 +318,7 @@ function showEvent(scrollTo, type, id) {
 						.attr('aria-expanded', 'false')
 						.addClass('tab-pane fade')
 				);
-		        writeEventDataToTab($('#' + tabType), $('#' + tabType + '-header'), correlation_data, true);
+		        writeEventDataToTab($('#' + tabType), $('#' + tabType + '-header'), correlation_data.event, true);
 		    }
 		});
 	}
@@ -941,11 +942,11 @@ function showEvent(scrollTo, type, id) {
 									    async: false,
 									    url: '../rest/search/event/' + encodeURIComponent(eventType) + '/' + encodeURIComponent(eventId) + '/endpoints',
 									    success: function(data) {
-									        if (!data || !data.source) {
+									        if (!data || !data.event || !data.event.source) {
 									        	eventMap[eventId] = "";
 									            return;
 									        }
-									        eventMap[eventId] = eventData = data;
+									        eventMap[eventId] = eventData = data.event;
 									    }
 									});									
 								}
