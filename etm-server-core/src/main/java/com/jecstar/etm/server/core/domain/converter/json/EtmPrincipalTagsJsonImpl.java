@@ -20,6 +20,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	}
 	
 	@Override
+	public String getAlwaysShowCorrelatedEventTag() {
+		return "always_show_correlated_event";
+	}
+	
+	@Override
 	public String getSearchHistorySizeTag() {
 		return "search_history_size";
 	}

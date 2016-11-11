@@ -121,6 +121,7 @@ function buildUserPage() {
 		$('#input-user-name').val(userData.name);
 		$('#input-filter-query').val(userData.filter_query);
 		$('#sel-filter-query-occurrence').val(userData.filter_query_occurrence);
+		$('#sel-always-show-correlated-event').val(userData.always_show_correlated_event ? 'true' : 'false');
 		$('#sel-locale').val(userData.locale);
 		$('#sel-time-zone').val(userData.time_zone);
 		$('#input-search-history-size').val(userData.search_history_size);
@@ -292,6 +293,7 @@ function buildUserPage() {
 			name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
 			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),
+			always_show_correlated_event: $('#sel-always-show-correlated-event').val() == 'true' ? true : false,
 			locale: $('#sel-locale').val(),
 			time_zone: $('sel-time-zone').val(),
 			search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,
@@ -315,9 +317,10 @@ function buildUserPage() {
 
 	function resetValues() {
 		$('#input-user-id').val('');
-		$('#input-user-name').val('')
-		$('#input-filter-query').val('')
-		$('#sel-filter-query-occurrence').val('MUST')
+		$('#input-user-name').val('');
+		$('#input-filter-query').val('');
+		$('#sel-filter-query-occurrence').val('MUST');
+		$('#sel-always-show-correlated-event').val('false');
 		$('#sel-locale').val(defaultLocale);
 		$('#sel-time-zone').val(defaultTimeZone);
 		$('#user-roles-container > label > input').prop('checked', false);
