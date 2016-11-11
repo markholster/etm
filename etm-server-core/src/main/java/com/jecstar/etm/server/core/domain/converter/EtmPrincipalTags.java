@@ -5,7 +5,7 @@ public interface EtmPrincipalTags {
 	String getIdTag();
 	String getFilterQueryTag();
 	String getFilterQueryOccurrenceTag();
-	String getAlwaysShowCorrelatedEventTag();
+	String getAlwaysShowCorrelatedEventsTag();
 	String getSearchHistorySizeTag();
 	String getLocaleTag();
 	String getNameTag();

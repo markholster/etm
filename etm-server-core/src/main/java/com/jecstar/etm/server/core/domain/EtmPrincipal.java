@@ -102,7 +102,7 @@ public class EtmPrincipal implements Principal {
 	}
 	
 	public Set<EtmGroup> getGroups() {
-		return Collections.unmodifiableSet(this.groups);
+		return this.groups;
 	}
 	
 	public void addGroup(EtmGroup group) {

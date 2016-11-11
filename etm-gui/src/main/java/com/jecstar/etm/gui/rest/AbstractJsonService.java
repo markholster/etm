@@ -55,6 +55,20 @@ public class AbstractJsonService extends JsonConverter {
     	return result;
     }
     
+    protected boolean hasFilterQueries() {
+    	String filterQuery = getEtmPrincipal().getFilterQuery();
+    	if (filterQuery != null && filterQuery.trim().length() > 0) {
+    		return true;
+    	}
+    	Set<EtmGroup> groups = getEtmPrincipal().getGroups();
+    	for (EtmGroup group : groups) {
+    		if (group.getFilterQuery() != null && group.getFilterQuery().trim().length() > 0) {
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+    
     protected QueryBuilder addEtmPrincipalFilterQuery(QueryBuilder queryBuilder) {
     	List<FilterQuery> filterQueries = getEtmPrincipalFilterQueries();
     	if (filterQueries == null || filterQueries.isEmpty()) {

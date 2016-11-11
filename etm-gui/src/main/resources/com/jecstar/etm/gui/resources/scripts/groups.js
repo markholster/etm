@@ -47,7 +47,7 @@ function buildGroupPage() {
 		$('#input-group-name').val(groupData.name);
 		$('#input-filter-query').val(groupData.filter_query);
 		$('#sel-filter-query-occurrence').val(groupData.filter_query_occurrence);
-		$('#sel-always-show-correlated-event').val(groupData.always_show_correlated_event ? 'true' : 'false');
+		$('#sel-always-show-correlated-events').val(groupData.always_show_correlated_events ? 'true' : 'false');
 		$('#group-roles-container > label > input').prop('checked', false);
 		if (groupData.roles) {
 			$.each(groupData.roles, function(index, role) {
@@ -183,7 +183,7 @@ function buildGroupPage() {
 			name: $('#input-group-name').val(),
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
 			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),		
-			always_show_correlated_event: $('#sel-always-show-correlated-event').val() == 'true' ? true : false,
+			always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,
 			roles: []
 		}
 		$('#group-roles-container > label > input:checked').each(function () {

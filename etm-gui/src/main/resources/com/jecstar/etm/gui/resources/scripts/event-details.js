@@ -51,16 +51,39 @@ function showEvent(scrollTo, type, id) {
 	}
 
 	function addContent(data) {
-		var event = data.event;
-		$('#event-card-title').text('Event ' + event.id);
-		$('#event-tab-header').text(capitalize(event.type));
+		$('#event-card-title').text('Event ' + data.event.id);
+		$('#event-tab-header').text(capitalize(data.event.type));
 		$eventTab = $('#event-tab');
-		if (event.source) {
-			if (event.source.name) {
-				$('#event-card-title').text(event.source.name);
+		if (data.event.source) {
+			if (data.event.source.name) {
+				$('#event-card-title').text(data.event.source.name);
 			}
-			writeEventDataToTab($eventTab, $('#event-tab-header'), event, false);
-			var $endpoints = $(event.source.endpoints);
+			writeEventDataToTab($eventTab, $('#event-tab-header'), data.event);
+			if (data.correlated_events) {
+				$.each(data.correlated_events, function(index, correlated_event) {
+					$('#event-tabs').children().eq(0).after(
+						$('<li>').addClass('nav-item').append(
+							$('<a>').attr('id',  'correlation-header-' + index)
+								.attr('aria-expanded', 'false')
+								.attr('role', 'tab')
+								.attr('data-toggle', 'tab')
+								.attr('href', '#' + 'correlation-' + index)
+								.addClass('nav-link')
+								.text('Correlating event ' + index)
+						)
+					);
+					$('#tabcontents').children().eq(0).after(
+						$('<div>').attr('id', 'correlation-' + index)
+							.attr('aria-labelledby', 'correlation-header' + index)
+							.attr('role', 'tabpanel')
+							.attr('aria-expanded', 'false')
+							.addClass('tab-pane fade')
+					);
+					writeEventDataToTab($('#correlation-' + index), $('#correlation-header-' + index), correlated_event);
+				}); 
+				
+			}
+			var $endpoints = $(data.event.source.endpoints);
 			if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 				createEndpointsTab($endpoints, data.time_zone);
 				// Check if a transaction id is present
@@ -83,29 +106,25 @@ function showEvent(scrollTo, type, id) {
 					}
 				});
 				if (hasTransactionId) {
-					createEventChainTab(event.id, event.type, data.time_zone);
+					createEventChainTab(data.event.id, data.event.type, data.time_zone);
 				}
 			}
 		}
 	}
 	
-	function writeEventDataToTab(tab, tabHeader, data, correlated) {
+	function writeEventDataToTab(tab, tabHeader, data) {
 		$eventTab = $(tab);
 		$tabHeader = $(tabHeader);
-		if (correlated && data.id) {
-			var dataLink = $('<a href="#">')
-				.text(data.id)
-				.addClass('form-control-static')
-				.attr('style', 'display: inline-block;')
-				.click(function (event) {
-					showEvent(scrollTo, data.type, data.id);
-			}); 
-			appendElementToContainerInRow($eventTab, 'Id', dataLink);
-		} else {
-			appendToContainerInRow($eventTab, 'Id', data.id);
-		}
+		var dataLink = $('<a href="#">')
+			.text(data.id)
+			.addClass('form-control-static')
+			.attr('style', 'display: inline-block;')
+			.click(function (event) {
+				showEvent(scrollTo, data.type, data.id);
+		}); 
+		appendElementToContainerInRow($eventTab, 'Id', dataLink);
 		appendToContainerInRow($eventTab, 'Name', data.source.name);
-		if (!correlated && data.source.correlation_id) {
+		if (data.source.correlation_id) {
 			var dataLink = $('<a href="#">')
 				.text(data.source.correlation_id)
 				.addClass('form-control-static')
@@ -114,8 +133,6 @@ function showEvent(scrollTo, type, id) {
 					showEvent(scrollTo, data.type, data.source.correlation_id);
 			}); 
 			appendElementToContainerInRow($eventTab, 'Correlation id', dataLink);
-		} else {
-			appendToContainerInRow($eventTab, 'Correlation id', data.source.correlation_id);
 		}
 		
 		appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
@@ -139,9 +156,6 @@ function showEvent(scrollTo, type, id) {
 				// http type known, determine request or response.
 				if ('RESPONSE' === data.source.http_type) {
 					$tabHeader.text('Http response');
-					if (data.source.correlation_id && !correlated) {
-						addCorrelationTab(scrollTo, data.type, data.source.correlation_id, 'request-tab', 'Http request');
-					}
 				} else {
 					$tabHeader.text('Http request');
 					if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
@@ -164,11 +178,6 @@ function showEvent(scrollTo, type, id) {
 							appendToContainerInRow($eventTab, 'Highest reader response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
 						}
 					}					
-					if (data.source.correlations && !correlated) {
-						$.each(data.source.correlations, function (index, correlation_id) {
-							addCorrelationTab(scrollTo, data.type, correlation_id, 'response-tab' + index, 'Http response');
-						});
-					}
 				}
 			}
 		} else if ('messaging' === data.type) {
@@ -180,9 +189,6 @@ function showEvent(scrollTo, type, id) {
 				// messaging type known, determine request or response.
 				if ('RESPONSE' === data.source.messaging_type) {
 					$tabHeader.text('Response message');
-					if (data.source.correlation_id && !correlated) {
-						addCorrelationTab(scrollTo, data.type, data.source.correlation_id, 'request-tab', 'Request message');
-					}
 				} else if ('REQUEST' === data.source.messaging_type) {
 					$tabHeader.text('Request message');
 					if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
@@ -205,11 +211,6 @@ function showEvent(scrollTo, type, id) {
 							appendToContainerInRow($eventTab, 'Highest reader response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
 						}
 					}
-					if (data.source.correlations && !correlated) {
-						$.each(data.source.correlations, function (index, correlation_id) {
-							addCorrelationTab(scrollTo, data.type, correlation_id, 'response-tab' + index, 'Response message');
-						});
-					}
 				} else {
 					$tabHeader.text('Fire-forget message');
 				}
@@ -223,9 +224,6 @@ function showEvent(scrollTo, type, id) {
 				// sql type known, determine query or result.
 				if ('RESULTSET' === data.source.sql_type) {
 					$tabHeader.text('Sql result');
-					if (data.source.correlation_id && !correlated) {
-						addCorrelationTab(scrollTo, data.type, data.source.correlation_id, 'request-tab', 'Sql query');
-					}
 				} else {
 					$tabHeader.text('Sql query');
 					if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
@@ -248,11 +246,6 @@ function showEvent(scrollTo, type, id) {
 							appendToContainerInRow($eventTab, 'Highest reader response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
 						}
 					}										
-					if (data.source.correlations && !correlated) {
-						$.each(data.source.correlations, function (index, correlation_id) {
-							addCorrelationTab(scrollTo, data.type, correlation_id, 'response-tab' + index, 'Sql result');
-						});
-					}
 				}
 			}		
 		}
@@ -288,7 +281,6 @@ function showEvent(scrollTo, type, id) {
 	    		)
 			);
 	    }
-		
 	}
 	
 	function addCorrelationTab(scrollTo, type, id, tabType, tabName) {

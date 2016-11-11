@@ -20,8 +20,8 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	}
 	
 	@Override
-	public String getAlwaysShowCorrelatedEventTag() {
-		return "always_show_correlated_event";
+	public String getAlwaysShowCorrelatedEventsTag() {
+		return "always_show_correlated_events";
 	}
 	
 	@Override
