@@ -9,7 +9,7 @@ All event types have a common set of attributes. This section describes these at
 |=======================
 |Name|Default value|Description
 |id|Generated UUID|The unique id of the event. When two or more events with the same id are processed they are mostly merged, but some attributes will be overwritten. Make sure your events are only reusing event id's when they functionally are the same. Be aware that processing event with an id that is processed about 1000 times before will cause major performance degradation.
-|correlation_id||The id of the event this event is correlated to. Use this attribute for request/reply correlation. Also make sure you don't correlate more that 1000 events to a single event otherwise you will experience a major performance degradation.
+|correlation_id||The id of the event this event is correlated to. Use this attribute for request/reply correlation. Also make sure you don't correlate more that 1000 events to a single event otherwise you will experience a major performance degradation. If a request is correlated by more than 10 other events only the first 10 events will be shown in the event detail screen.
 |correlation_data|Empty map|A map that can be filled by any of the configured <<Parsers>>. The field has no processing functionality whatsoever.
 |endpoints||The endpoints this event has passed. See <<event-endpoint-attributes>> to view the nested attributes.
 |extracted_data|Empty map|A map that can be filled by any of the configured <<Parsers>>. The field has no processing functionality whatsoever.

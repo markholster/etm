@@ -364,6 +364,9 @@ public class SearchService extends AbstractJsonService {
 			// Try to find event that correlate to this event.
 			List<String> correlations = getArray(this.eventTags.getCorrelationsTag(), valueMap);
 			if (correlations != null && !correlations.isEmpty()) {
+				if (correlations.size() > 10) {
+					correlations = correlations.subList(0, 10);
+				}
 				for (String correlatedId : correlations) {
 					SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedId);					
 					if (correlatedEvent != null) {
