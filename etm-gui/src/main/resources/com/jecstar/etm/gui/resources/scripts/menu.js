@@ -10,7 +10,7 @@ function buildMenu(currentContext) {
 	        $.each(data.items, function(index, item) {
 	        	addToMenu(currentContext, item, data.license_expired, data.license_almost_expired);
 	        });
-	        
+	        addToMenu(currentContext, {name: "sign-out"});
 	    }
 	});
 	
@@ -95,8 +95,8 @@ function buildMenu(currentContext) {
 					),
 					$dropdown
 			);
-			
-			
+		} else if ('sign-out' == menu.name) {
+			$li.append(createMenuLink('../logout?source=' + window.location.href , 'fa-sign-out', 'Sign out'));
 		}
 		$('#etm_mainmenu').append($li);
 	}

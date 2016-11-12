@@ -136,7 +136,7 @@ public class HttpServer {
 			}
 		}
 	}
-	
+
 	public void start() {
 		if (!this.started) {
 			this.server.start();
@@ -184,6 +184,12 @@ public class HttpServer {
 	                .setLoadOnStartup(1)
 	                .addMapping("/application.wadl");	
 		di.addServlet(resteasyWadlServlet);
+
+		// Add the logout servlet
+		ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
+                .setAsyncSupported(false)
+                .addMapping("/logout");
+		di.addServlet(logoutServlet);
 		return di;
 	}
 	
@@ -220,6 +226,12 @@ public class HttpServer {
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
 		di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
 		di.setDeploymentName("GUI - " + di.getContextPath());
+		
+		// Add the logout servlet.
+		ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
+                .setAsyncSupported(false)
+                .addMapping("/logout");
+		di.addServlet(logoutServlet);
 		return di;
 	}
 
