@@ -12,7 +12,7 @@ import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.domain.converter.json.BusinessTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;

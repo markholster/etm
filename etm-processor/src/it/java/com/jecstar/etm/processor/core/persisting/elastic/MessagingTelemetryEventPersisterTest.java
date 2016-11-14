@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor.persisting.elastic;
+package com.jecstar.etm.processor.core.persisting.elastic;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -23,6 +23,7 @@ import com.jecstar.etm.domain.builders.EndpointBuilder;
 import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.processor.AbstractIntegrationTest;
+import com.jecstar.etm.processor.core.persisting.elastic.MessagingTelemetryEventPersister;
 import com.jecstar.etm.server.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
 
 public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTest {

@@ -13,7 +13,7 @@ import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.builders.EndpointBuilder;
 import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
-import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 

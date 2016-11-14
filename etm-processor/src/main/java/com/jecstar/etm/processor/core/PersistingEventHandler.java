@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor;
+package com.jecstar.etm.processor.core;
 
 import java.io.Closeable;
 
@@ -7,11 +7,11 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.processor.processor.persisting.elastic.BusinessTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.elastic.HttpTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.elastic.LogTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.elastic.MessagingTelemetryEventPersister;
-import com.jecstar.etm.processor.processor.persisting.elastic.SqlTelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.elastic.BusinessTelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.elastic.HttpTelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.elastic.MessagingTelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.elastic.SqlTelemetryEventPersister;
 import com.jecstar.etm.server.core.domain.converter.json.BusinessTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;

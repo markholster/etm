@@ -10,13 +10,13 @@ import com.ibm.mq.MQMessage;
 import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.CMQC;
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
 import com.jecstar.etm.processor.ibmmq.handler.ClonedMessageHandler;
 import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.HandlerResult;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
-import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 

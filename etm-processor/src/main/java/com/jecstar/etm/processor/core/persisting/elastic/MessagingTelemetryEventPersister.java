@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor.persisting.elastic;
+package com.jecstar.etm.processor.core.persisting.elastic;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import org.elasticsearch.script.ScriptService.ScriptType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.writers.json.MessagingTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.processor.processor.persisting.TelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 

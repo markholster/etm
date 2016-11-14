@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor.persisting.elastic;
+package com.jecstar.etm.processor.core.persisting.elastic;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;

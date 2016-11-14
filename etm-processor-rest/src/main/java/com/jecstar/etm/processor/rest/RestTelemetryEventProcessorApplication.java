@@ -5,7 +5,7 @@ import java.util.Set;
 
 import javax.ws.rs.core.Application;
 
-import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 
 public class RestTelemetryEventProcessorApplication extends Application {
 

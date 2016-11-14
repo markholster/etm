@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor.persisting;
+package com.jecstar.etm.processor.core.persisting;
 
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.domain.writers.TelemetryEventWriter;

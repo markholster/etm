@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.processor;
+package com.jecstar.etm.processor.core;
 
 import java.time.ZonedDateTime;
 

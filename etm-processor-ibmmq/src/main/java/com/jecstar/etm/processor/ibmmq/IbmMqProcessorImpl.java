@@ -4,10 +4,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
-import com.jecstar.etm.processor.processor.TelemetryCommandProcessor;
 
 public class IbmMqProcessorImpl implements IbmMqProcessor {
 
