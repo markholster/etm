@@ -1,6 +1,8 @@
 package com.jecstar.etm.processor.elastic;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +48,9 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 		while (it.hasNext()) {
 			ActionRequest<?> action = it.next();
 			if (isBlacklisted(action)) {
+				if (log.isDebugLevelEnabled()) {
+					log.logDebugMessage("Event with id '" + getEventId(action) + " is currently blacklisted and will not be persisted.");
+				}
 				it.remove();
 			}
 		}
@@ -58,22 +63,31 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 				addToBlacklist(itemResponse.getId());
 			}
 		}
+		if (response.hasFailures() && log.isErrorLevelEnabled()) {
+			log.logErrorMessage(buildFailureMessage(response));
+		}
 		this.metricContext.remove(executionId).stop();
 	}
-
+	
 	@Override
 	public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+		if (log.isErrorLevelEnabled()) {
+			log.logErrorMessage("Failure in bulk execution", failure);
+		}
 		this.metricContext.remove(executionId).stop();
 	}
 
-
 	private boolean isBlacklisted(ActionRequest<?> action) {
+		return this.blacklistedIds.containsKey(getEventId(action));
+	}
+	
+	private String getEventId(ActionRequest<?> action) {
         if (action instanceof IndexRequest) {
-        	return this.blacklistedIds.containsKey(((IndexRequest) action).id());
+        	return ((IndexRequest) action).id();
         }  else if (action instanceof UpdateRequest) {
-        	return this.blacklistedIds.containsKey(((UpdateRequest) action).id());
+        	return ((UpdateRequest) action).id();
         } else if (action instanceof DeleteRequest) {
-        	return this.blacklistedIds.containsKey(((DeleteRequest) action).id());
+        	return ((DeleteRequest) action).id();
         } else {
             throw new IllegalArgumentException("No support for request [" + action + "]");
         }
@@ -101,6 +115,49 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 				iterator.remove();
 			}
 		}
+	}
+	
+	private String buildFailureMessage(BulkResponse bulkResponse) {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("failure in bulk execution:");
+        BulkItemResponse[] responses = bulkResponse.getItems();
+        for (int i = 0; i < responses.length; i++) {
+            BulkItemResponse response = responses[i];
+            if (response.isFailed()) {
+                buffer.append("\n[").append(i)
+                        .append("]: index [").append(response.getIndex()).append("], type [").append(response.getType()).append("], id [").append(response.getId())
+                        .append("], message [").append(getFailureMessage(response)).append("]");
+                if (log.isDebugLevelEnabled() && response.getFailure() != null) {
+                	log.logDebugMessage("Error persisting event with id '" + response.getId() + "'.", response.getFailure().getCause());
+                }
+             }
+        }
+        return buffer.toString();		
+	}
+	
+	private String getFailureMessage(BulkItemResponse response) {
+		if (response.getFailure() == null) {
+			return null;
+		}
+		Throwable cause = response.getFailure().getCause();
+		if (cause != null) {
+			List<Throwable> causes = new ArrayList<>();
+			Throwable rootCause = getRootCause(cause, causes);
+			return rootCause.getMessage();
+		}
+		return response.getFailureMessage();
+	}
+
+	private Throwable getRootCause(Throwable cause, List<Throwable> causes) {
+		if (causes.contains(cause)) {
+			return causes.get(causes.size() - 1);
+		}
+		causes.add(cause);
+		Throwable parent = cause.getCause();
+		if (parent == null) {
+			return cause;
+		}
+		return getRootCause(parent, causes);
 	}
 
 
