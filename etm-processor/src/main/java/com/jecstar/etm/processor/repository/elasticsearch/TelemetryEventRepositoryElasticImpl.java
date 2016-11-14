@@ -90,7 +90,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		        .retryOnConflict(5);
 		this.bulkRequest.add(updateRequest);
 		
-		if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && event.correlationId != null && customAchmeaDetermineEventCorrelation(event)) {
+		if (TelemetryEventType.MESSAGE_RESPONSE.equals(event.type) && event.correlationId != null) {
 			indexRequest = new IndexRequest(index, this.eventIndexType, event.correlationId)
 					.consistencyLevel(WriteConsistencyLevel.valueOf(this.etmConfiguration.getWriteConsistency().name()))
 			        .source("{ \"response_handling_time\": " + event.creationTime.getTime() + ", \"child_correlation_ids\": [\"" + escapeToJson(event.id) + "\"] }");
@@ -102,23 +102,10 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 			        .retryOnConflict(5);
 			this.bulkRequest.add(updateRequest);
 		}
-	
-		
 		if (this.bulkRequest.numberOfActions() >= this.etmConfiguration.getPersistingBulkSize()) {
 			executeBulk();
 		}
 	}
-	
-	/**
-	 * Achmea maatwerk -> Sommige responses correleren allemaal aan hetzelfde event. Dat wordt takke traag dus kiezen we ervoor om hier de correlatie van zulke berichten uit te schakelen.
-	 */
-	private boolean customAchmeaDetermineEventCorrelation(TelemetryEvent event) {
-		String companyName = this.etmConfiguration.getLicense().getOwner();
-		if (!companyName.startsWith("Achmea")) {
-			return true;
-		}
-		return !"MG0W02CB".equals(event.name);
-    }
 	
 	/**
 	 * Gives the name of the elastic index of the given
@@ -131,6 +118,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		
 	}
 	
+	@SuppressWarnings("rawtypes")
 	private void executeBulk() {
 		if (this.bulkRequest != null && this.bulkRequest.numberOfActions() > 0) {
 			clealupBlacklist();
