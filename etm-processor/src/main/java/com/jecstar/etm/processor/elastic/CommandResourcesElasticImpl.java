@@ -3,11 +3,8 @@ package com.jecstar.etm.processor.elastic;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.ByteSizeUnit;
@@ -15,8 +12,6 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandlingTimeComparator;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
@@ -43,7 +38,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 
 	private final Client elasticClient;
 	private final EtmConfiguration etmConfiguration;
-	private final BulkProcessorMetricLogger bulkProcessorMetricLogger;
+	private final BulkProcessorListener bulkProcessorListener;
 	
 	private final EndpointHandlingTimeComparator endpointComparater = new EndpointHandlingTimeComparator();
 	private final EndpointConfigurationConverterJsonImpl endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
@@ -59,7 +54,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	public CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
 		this.elasticClient = elasticClient;
 		this.etmConfiguration = etmConfiguration;
-		this.bulkProcessorMetricLogger = new BulkProcessorMetricLogger(metricRegistry);
+		this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
 		this.bulkProcessor = createBulkProcessor();
 		this.etmConfiguration.addConfigurationChangeListener(this);
 		
@@ -132,7 +127,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	}
 	
 	private BulkProcessor createBulkProcessor() {
-		return BulkProcessor.builder(this.elasticClient, this.bulkProcessorMetricLogger)
+		return BulkProcessor.builder(this.elasticClient, this.bulkProcessorListener)
 				.setBulkActions(this.etmConfiguration.getPersistingBulkCount() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkCount())
 				.setBulkSize(new ByteSizeValue(this.etmConfiguration.getPersistingBulkSize() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkSize(), ByteSizeUnit.BYTES))
 				.setFlushInterval(this.etmConfiguration.getPersistingBulkTime() <= 0 ? null : TimeValue.timeValueMillis(this.etmConfiguration.getPersistingBulkTime()))
@@ -151,31 +146,6 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		}
 	}
 	
-	private class BulkProcessorMetricLogger implements BulkProcessor.Listener {
-		
-		private final Timer bulkTimer;
-		private Map<Long, Context> metricContext = new ConcurrentHashMap<Long, Context>();
-		
-		private BulkProcessorMetricLogger(final MetricRegistry metricRegistry) {
-			this.bulkTimer = metricRegistry.timer("event-processor.persisting-repository-bulk-update");
-		}
-		
-		@Override
-		public void beforeBulk(long executionId, BulkRequest request) {
-			this.metricContext.put(executionId, this.bulkTimer.time());
-		}
-		
-		@Override
-		public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-			this.metricContext.remove(executionId).stop();
-		}
-		
-		@Override
-		public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-			this.metricContext.remove(executionId).stop();
-		}
-	}
-
 	/**
 	 * Class to store in de endpoint cache to make sure the 
 	 * 
