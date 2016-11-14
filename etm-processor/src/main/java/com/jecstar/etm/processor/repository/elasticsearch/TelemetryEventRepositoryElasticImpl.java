@@ -6,14 +6,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 
+import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.WriteConsistencyLevel;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -41,6 +45,9 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryEventRepositoryElasticImpl.class);
 	
+	private static final int MAX_MODIFICATIONS_BEFORE_BLACKLISTING = 100;
+	private static final int BLACKLIST_TIME = 60 * 60 * 1000; // Blacklist potential dangerous events for an hour.
+	
 	private final DateFormat indexDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private final String eventIndexType = "event";
 	
@@ -56,6 +63,7 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	
 	private BulkRequestBuilder bulkRequest;
 	
+	private Map<String, Long> blacklistedIds = new HashMap<String, Long>();
 	private final Map<String, EndpointConfigResult> endpointCache = new HashMap<String, EndpointConfigResult>();
 	
 	public TelemetryEventRepositoryElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration) {
@@ -125,7 +133,20 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	
 	private void executeBulk() {
 		if (this.bulkRequest != null && this.bulkRequest.numberOfActions() > 0) {
+			clealupBlacklist();
+			Iterator<ActionRequest> it = this.bulkRequest.request().requests().iterator();
+			while (it.hasNext()) {
+				ActionRequest<?> action = it.next();
+				if (isBlacklisted(action)) {
+					it.remove();
+				}
+			}			
 			BulkResponse bulkResponse = this.bulkRequest.get();
+			for (BulkItemResponse itemResponse : bulkResponse.getItems()) {
+				if (itemResponse.getVersion() > MAX_MODIFICATIONS_BEFORE_BLACKLISTING) {
+					addToBlacklist(itemResponse.getId());
+				}
+			}			
 			if (bulkResponse.hasFailures()) {
 				if (log.isErrorLevelEnabled()) {
 					log.logErrorMessage(buildFailureMessage(bulkResponse));
@@ -265,5 +286,39 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 		executeBulk();
 	}
 
+	private boolean isBlacklisted(ActionRequest<?> action) {
+        if (action instanceof IndexRequest) {
+        	return this.blacklistedIds.containsKey(((IndexRequest) action).id());
+        }  else if (action instanceof UpdateRequest) {
+        	return this.blacklistedIds.containsKey(((UpdateRequest) action).id());
+        } else if (action instanceof DeleteRequest) {
+        	return this.blacklistedIds.containsKey(((DeleteRequest) action).id());
+        } else {
+            throw new IllegalArgumentException("No support for request [" + action + "]");
+        }
+	}
 
+	
+	private void addToBlacklist(String id) {
+		if (!this.blacklistedIds.containsKey(id)) {
+			this.blacklistedIds.put(id, System.currentTimeMillis());
+			if (log.isInfoLevelEnabled()) {
+				log.logInfoMessage("Event id '" + id + "' blacklisted for " + (BLACKLIST_TIME / 1000) + " seconds.");
+			}
+		}
+	}
+	
+	private void clealupBlacklist() {
+		final long startTime = System.currentTimeMillis();
+		Iterator<Entry<String, Long>> iterator = this.blacklistedIds.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Entry<String, Long> entry = iterator.next();
+			if (startTime > (entry.getValue() + BLACKLIST_TIME)) {
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Event id '" + entry.getKey() + "' no longer blacklisted.");
+				}				
+				iterator.remove();
+			}
+		}
+	}
 }
