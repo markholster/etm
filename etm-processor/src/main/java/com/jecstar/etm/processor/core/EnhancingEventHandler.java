@@ -8,6 +8,7 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.lmax.disruptor.EventHandler;
@@ -22,13 +23,15 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private final EndpointConfiguration endpointConfiguration;
 	
 	private final DefaultTelemetryEventEnhancer defaultTelemetryEventEnhancer = new DefaultTelemetryEventEnhancer();
+	private final CustomAchmeaEnhancements achmeaEnhancements;
 	private final Timer timer;
 	
-	public EnhancingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
+	public EnhancingEventHandler(final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration, final CommandResources commandResources, final MetricRegistry metricRegistry) {
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.commandResources = commandResources;
 		this.endpointConfiguration = new EndpointConfiguration();
+		this.achmeaEnhancements = new CustomAchmeaEnhancements(etmConfiguration);
 		this.timer = metricRegistry.timer("event-processor.enhancing");
 	}
 
@@ -48,6 +51,7 @@ public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 			enhanceTelemetryEvent(command.logTelemetryEvent);
 			break;
 		case MESSAGING_EVENT:
+			this.achmeaEnhancements.enhanceMessagingEvent(command.messagingTelemetryEvent);
 			enhanceTelemetryEvent(command.messagingTelemetryEvent);
 			break;
 		case SQL_EVENT:
