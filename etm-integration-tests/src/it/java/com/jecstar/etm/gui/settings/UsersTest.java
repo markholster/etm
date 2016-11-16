@@ -43,7 +43,17 @@ public class UsersTest extends AbstractIntegrationTest{
 		// And make sure the error box contains the correct error.
 		findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT);
 		
-		// TODO add test for removing user.
+		// Now try to remove the user
+		findById("btn-confirm-remove-user").click();
+		// Wait for the confirmation button to show up
+		waitForShow("modal-user-remove");
+		findById("btn-remove-user").click();
+		waitForHide("modal-user-remove");
+		
+		// An error box should be shows.
+		waitForShow("users_errorBox");
+		// And make sure the error box contains the correct error.
+		findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT);
 	}
 
 }
