@@ -12,7 +12,6 @@ import java.util.UUID;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Actions;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
@@ -34,14 +33,13 @@ import com.jecstar.etm.domain.writers.json.HttpTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writers.json.MessagingTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writers.json.SqlTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.gui.AbstractIntegrationTest;
 
 /**
  * Class testing the event overview.
  * 
  * @author Mark Holster
  */
-public class TransactionOverviewTest extends AbstractIntegrationTest {
+public class TransactionOverviewTest extends AbstractSearchIntegrationTest {
 	
 	private final TelemetryEventWriter<String, HttpTelemetryEvent> httpEventWriter = new HttpTelemetryEventWriterJsonImpl(); 
 	private final TelemetryEventWriter<String, LogTelemetryEvent> logEventWriter = new LogTelemetryEventWriterJsonImpl(); 
@@ -214,12 +212,12 @@ public class TransactionOverviewTest extends AbstractIntegrationTest {
 	    // Wait for the endpoints tab to show up.
 	    waitForShow("endpoint-tab-header");
 	    // And select the endpoint tab
-	    this.driver.findElement(By.id("endpoint-tab-header")).click();
+	    findById("endpoint-tab-header").click();
 	    // Wait for the tab content to show up.
 	    waitForShow("endpoint-overview");
 	    
 	    // Now select the canvas elements.
-	    List<WebElement> canvasElements = this.driver.findElement(By.id("endpoint-overview")).findElements(By.tagName("canvas"));
+	    List<WebElement> canvasElements = findById("endpoint-overview").findElements(By.tagName("canvas"));
 	    // Cytoscape renders 3 canvas elements. Make sure they are all present.
 	    assertSame(3, canvasElements.size());
 	    // Now click on the event reader
@@ -236,7 +234,7 @@ public class TransactionOverviewTest extends AbstractIntegrationTest {
 //	    // And wait for the detail table to show.
 //	    waitForShow("transaction-detail-table");
 //	    // Make sure 6 events are in the transaction (and 1 for the table header). 
-//	    List<WebElement> tableRows = this.driver.findElement(By.id("transaction-detail-table")).findElements(By.tagName("tr"));
+//	    List<WebElement> tableRows = findById"transaction-detail-table").findElements(By.tagName("tr"));
 //	    assertSame(6 + 1, tableRows.size());
 	}
 

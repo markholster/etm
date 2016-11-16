@@ -9,14 +9,12 @@ import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 
-import com.jecstar.etm.gui.AbstractIntegrationTest;
-
 /**
  * Class testing the usage of the search templates in the GUI.
  * 
  * @author Mark Holster
  */
-public class SearchTemplateTest extends AbstractIntegrationTest {
+public class SearchTemplateTest extends AbstractSearchIntegrationTest {
 
 	@Test
 	public void testTemplateManagement() {
@@ -28,70 +26,70 @@ public class SearchTemplateTest extends AbstractIntegrationTest {
 		getSecurePage(this.httpHost + "/gui/search/index.html", "query-string");
 		
 	    // Check if certain fields are disabled.
-	    assertFalse("Search button is enabled when search string is not provided", this.driver.findElement(By.id("btn-search")).isEnabled());
-	    assertFalse("Template name input is enabled when search string is not provided", this.driver.findElement(By.id("template-name")).isEnabled());
-	    assertFalse("Template save button is enabled when search string is not provided", this.driver.findElement(By.id("btn-save-template")).isEnabled());
+	    assertFalse("Search button is enabled when search string is not provided", findById("btn-search").isEnabled());
+	    assertFalse("Template name input is enabled when search string is not provided", findById("template-name").isEnabled());
+	    assertFalse("Template save button is enabled when search string is not provided", findById("btn-save-template").isEnabled());
 	    
 	    // Fill in the query field.
-	    this.driver.findElement(By.id("query-string")).sendKeys(templateQuery);
+	    findById("query-string").sendKeys(templateQuery);
 	    // Make sure the search button and template name field are enabled now.
-	    assertTrue("Search button is not enabled when search string is provided", this.driver.findElement(By.id("btn-search")).isEnabled());
-	    assertTrue("Template name input is not enabled when search string is provided", this.driver.findElement(By.id("template-name")).isEnabled());
+	    assertTrue("Search button is not enabled when search string is provided", findById("btn-search").isEnabled());
+	    assertTrue("Template name input is not enabled when search string is provided", findById("template-name").isEnabled());
 	    // Make sure the template save button is still disabled because the template name is still empty.
-	    assertFalse("Template save button is enabled when template name is not provided", this.driver.findElement(By.id("btn-save-template")).isEnabled());
+	    assertFalse("Template save button is enabled when template name is not provided", findById("btn-save-template").isEnabled());
 	    
 	    // Execute the query and wait for the result table. This table is created with Javascript, so not present before the query is executed.
-	    this.driver.findElement(By.id("btn-search")).click();
+	    findById("btn-search").click();
 	    waitForShow("search_result_table");
 	    
 	    // Fill the name of the search template.
-	    this.driver.findElement(By.id("template-name")).sendKeys(templateName);
+	    findById("template-name").sendKeys(templateName);
 	    // Make sure the template save button is enabled now.
-	    assertTrue("Template save button is enabled when template name is not provided", this.driver.findElement(By.id("btn-save-template")).isEnabled());
+	    assertTrue("Template save button is enabled when template name is not provided", findById("btn-save-template").isEnabled());
 	    // Save the template and make sure the template is available afterwards.
-	    this.driver.findElement(By.id("btn-save-template")).click();
+	    findById("btn-save-template").click();
 	    waitFor(d -> d.findElement(By.id("list-template-links")).findElement(By.xpath("./li/a[text()='" + templateName + "']")) != null);
 	    
 	    // Now let's check the template is working. First we need to change the query field contents
-	    this.driver.findElement(By.id("query-string")).sendKeys("This value should be changed with the value of the template");
+	    findById("query-string").sendKeys("This value should be changed with the value of the template");
 	    // Select the template.
-	    this.driver.findElement(By.id("list-template-links")).findElement(By.xpath("./li/a[text()='" + templateName + "']")).click();
+	    findById("list-template-links").findElement(By.xpath("./li/a[text()='" + templateName + "']")).click();
 	    // Now make sure the query field contains the template values.
-	    assertEquals(templateQuery, this.driver.findElement(By.id("query-string")).getAttribute("value"));
+	    assertEquals(templateQuery, findById("query-string").getAttribute("value"));
 	    
 	    
 	    // Check if updating the template works like expected.
-	    assertFalse(this.driver.findElement(By.id("modal-template-overwrite")).isDisplayed());
+	    assertFalse(findById("modal-template-overwrite").isDisplayed());
 	    // We update the query field with a new query
-	    this.driver.findElement(By.id("query-string")).clear();
-	    this.driver.findElement(By.id("query-string")).sendKeys(updatedTemplateQuery);
+	    findById("query-string").clear();
+	    findById("query-string").sendKeys(updatedTemplateQuery);
 	    // Set the template name to the existing template
-	    this.driver.findElement(By.id("template-name")).clear();
-	    this.driver.findElement(By.id("template-name")).sendKeys(templateName);
+	    findById("template-name").clear();
+	    findById("template-name").sendKeys(templateName);
 	    // And hit the save button
-	    this.driver.findElement(By.id("btn-save-template")).click();
+	    findById("btn-save-template").click();
 	    // The confirmation window should be shown
 	    waitForShow("modal-template-overwrite");
 	    // Confirm the overwrite and check the result
-	    this.driver.findElement(By.id("btn-overwrite-template")).click();
+	    findById("btn-overwrite-template").click();
 	    // The confirmation window should be hidden again.
 	    waitForHide("modal-template-overwrite");
 	    // And if we select the template, the updated query should be used.
-	    this.driver.findElement(By.id("list-template-links")).findElement(By.xpath("./li/a[text()='" + templateName + "']")).click();
-	    assertEquals(updatedTemplateQuery, this.driver.findElement(By.id("query-string")).getAttribute("value"));
+	    findById("list-template-links").findElement(By.xpath("./li/a[text()='" + templateName + "']")).click();
+	    assertEquals(updatedTemplateQuery, findById("query-string").getAttribute("value"));
 	    
 	    // Finally, remove the template.
-	    assertFalse(this.driver.findElement(By.id("modal-template-remove")).isDisplayed());
-	    this.driver.findElement(By.id("list-template-links")).findElement(By.xpath("./li[a[text()='" + templateName + "']]/a[@class='fa fa-times pull-right text-danger']")).click();
+	    assertFalse(findById("modal-template-remove").isDisplayed());
+	    findById("list-template-links").findElement(By.xpath("./li[a[text()='" + templateName + "']]/a[@class='fa fa-times pull-right text-danger']")).click();
 	    // The confirmation window should be shown
 	    waitForShow("modal-template-remove");
 	    // Confirm the removal and check the result
-	    this.driver.findElement(By.id("btn-remove-template")).click();
+	    findById("btn-remove-template").click();
 	    // The confirmation window should be hidden again.
 	    waitForHide("modal-template-remove");
 	    // The template should be removed.
 	    try {
-	    	this.driver.findElement(By.id("list-template-links")).findElement(By.xpath("./li/a[text()='" + templateName + "']"));
+	    	findById("list-template-links").findElement(By.xpath("./li/a[text()='" + templateName + "']"));
 	    	fail("Template '" + templateName + "' not removed.");
 	    } catch (NoSuchElementException e) {}
 	    
