@@ -76,7 +76,9 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		endpointConfiguration.initialize();
 		endpoints.sort(this.endpointComparater);
 		for (Endpoint endpoint : endpoints) {
-			mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
+			if (endpoint.name != null) {
+				mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
+			}
 		}
 		mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT));
 	}
