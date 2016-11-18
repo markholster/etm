@@ -1,5 +1,5 @@
 @echo off
-
+TITLE ${applicationName} ${applicationVersion}
 set ERROR_CODE=0
 
 :init
