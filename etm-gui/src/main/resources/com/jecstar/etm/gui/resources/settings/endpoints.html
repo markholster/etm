@@ -142,13 +142,15 @@ body { padding-top: 60px; }
         } else {
             $('#endpoints_errorBox').text('Error saving endpoint configuration: ' +  thrownError).show('fast');
         }
+        $('html,body').animate({scrollTop: 0},'fast');
     }).ajaxComplete(function(event, jqXHR, settings) {
         var contentType = jqXHR.getResponseHeader("Content-Type");
         if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
             // assume that our login has expired - reload our current page
             window.location.reload();
             return;
-        }          
+        }
+        $('html,body').animate({scrollTop: 0},'fast');
     });
   	buildMenu('settings');
   	buildEndpointPage();

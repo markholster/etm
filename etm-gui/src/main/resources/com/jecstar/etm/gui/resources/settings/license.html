@@ -83,6 +83,7 @@ body { padding-top: 60px; }
         } else {
             $('#license_errorBox').text('Error saving license: ' +  thrownError).show('fast');
         }
+        $('html,body').animate({scrollTop: 0},'fast');
     }).ajaxComplete(function(event, jqXHR, settings) {
         var contentType = jqXHR.getResponseHeader("Content-Type");
         if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
@@ -90,6 +91,7 @@ body { padding-top: 60px; }
             window.location.reload();
             return;
         }          
+        $('html,body').animate({scrollTop: 0},'fast');
     });
   	buildMenu('settings');
     $('#license-key').on('input', enableOrDisableApplyButton);
