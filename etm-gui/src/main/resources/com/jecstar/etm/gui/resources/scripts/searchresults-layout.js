@@ -40,7 +40,7 @@ var tableLayout = {
         } else {
             result = tableLayout.formatValue(values[0], tableColumn, timeZone);
         }
-        if (tableColumn.link && (typeof result === "undefined" || result == null || result.trim().length == 0)) {
+        if (tableColumn.link && (typeof result === "undefined" || result == null || (!$.isNumeric(result) && result.trim().length == 0))) {
             result = '?';
         }
         return result;
