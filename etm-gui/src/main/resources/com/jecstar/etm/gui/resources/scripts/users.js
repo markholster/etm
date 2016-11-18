@@ -142,14 +142,14 @@ function buildUserPage() {
 	});
 	
 	$('#btn-confirm-save-user').click(function(event) {
-		event.preventDefault();
 		$('#input-new-password1, #input-new-password2').parent().removeClass('has-danger');
 		if (!document.getElementById('user_form').checkValidity()) {
-			return;
+			return false;
 		}
 		if (!checkOrInvalidateFormInCaseOfPasswordMismatch()) {
-			return;
+			return false;
 		}
+		event.preventDefault();
 		var userId = $('#input-user-id').val();
 		if (isUserExistent(userId)) {
 			$('#overwrite-user-id').text(userId);
@@ -194,8 +194,8 @@ function buildUserPage() {
 	function enableOrDisableButtons() {
 		var userId = $('#input-user-id').val();
 		if (userId) {
+			$('#btn-confirm-save-user').removeAttr('disabled');
 			if (isUserExistent(userId)) {
-				$('#btn-confirm-save-user').removeAttr('disabled');
 				$('#btn-confirm-remove-user').removeAttr('disabled');
 				$('#input-new-password1, #input-new-password2').removeAttr('required');
 			} else {
@@ -278,7 +278,6 @@ function buildUserPage() {
 	function checkOrInvalidateFormInCaseOfPasswordMismatch() {
         var new1 = $('#input-new-password1').val();
         var new2 = $('#input-new-password2').val();
-        
         if (new1 !== new2) {
             $('#input-new-password1, #input-new-password2').parent().addClass('has-danger');
             $("#users_errorBox").text('The new password didn\'t match the retyped password').show('fast');
