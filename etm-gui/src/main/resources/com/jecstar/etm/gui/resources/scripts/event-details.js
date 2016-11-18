@@ -2,6 +2,7 @@ var cyEndpoints;
 var cyEventChain;
 var transactionMap = {};
 var eventMap = {};
+var clipboards = [];
 
 function showEvent(scrollTo, type, id) {
 	$('#search-container').hide();
@@ -48,6 +49,10 @@ function showEvent(scrollTo, type, id) {
 		}).forEach(function (element) {$(element).remove();});
 		transactionMap = {};
 		eventMap = {};
+		$.each(clipboards, function(index, clipboard) {
+			clipboard.destroy();
+		}); 
+		clipboards = [];
 	}
 
 	function addContent(data) {
@@ -257,17 +262,28 @@ function showEvent(scrollTo, type, id) {
 	    }
 	    
 	    $eventTab.append($('<br/>'));
-	    var payloadCode = $('<code>').text(data.source.payload);
+	    var payloadCode = $('<code>').text(indentCode(data.source.payload, data.source.payload_format));
+	    $clipboard = $('<a>').attr('href', "#").addClass('pull-right').text('Copy raw content to clipboard');
 	    $eventTab.append(
 	    		$('<div>').addClass('row').append(
 	    				$('<div>').addClass('col-sm-12').append(
-	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append(payloadCode)
+	    						$('<pre>').attr('style', 'white-space: pre-wrap; background-color: #eceeef;').append(
+	    								$clipboard,
+	    								payloadCode
+	    						)
 	    				)
 	    		)
 	    );
+	    clipboards.push(new Clipboard($clipboard[0], {
+	        text: function(trigger) {
+	            return data.source.payload;
+	        }
+	    }));
 	    if (typeof(Worker) !== "undefined") {
 	    	var worker = new Worker('../scripts/highlight-worker.js');
-	    	worker.onmessage = function(event) { payloadCode.html(event.data);}
+	    	worker.onmessage = function(event) { 
+	    		payloadCode.html(event.data);
+	    	}
 	    	worker.postMessage(payloadCode.text());
 	    } else {
 	    	hljs.highlightBlock(payloadCode);
@@ -280,6 +296,17 @@ function showEvent(scrollTo, type, id) {
 	    				)
 	    		)
 			);
+	    }
+	    
+	    function indentCode(code, format) {
+	    	if ('HTML' == format || 'SOAP' == format || 'XML' == format) {
+	    		return vkbeautify.xml(code, 4);
+	    	} else if ('SQL' == format) {
+	    		return vkbeautify.sql(code, 4);
+	    	} else if ('JSON' == format) {
+	    		return vkbeautify.json(code, 4);
+	    	}
+	    	return code;
 	    }
 	}
 	
