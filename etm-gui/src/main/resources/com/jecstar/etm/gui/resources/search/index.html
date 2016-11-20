@@ -337,6 +337,7 @@ body { padding-top: 60px; }
         } else {
             $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
         }
+        $('html,body').animate({scrollTop: 0},'fast');
     }).ajaxComplete(function(event, jqXHR, settings) {
         var contentType = jqXHR.getResponseHeader("Content-Type");
         if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
