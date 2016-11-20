@@ -262,13 +262,13 @@ function showEvent(scrollTo, type, id) {
 	    }
 	    
 	    $eventTab.append($('<br/>'));
+	    $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw payload to clipboard');
 	    var payloadCode = $('<code>').text(indentCode(data.source.payload, data.source.payload_format));
-	    $clipboard = $('<a>').attr('href', "#").addClass('pull-right').text('Copy raw content to clipboard');
 	    $eventTab.append(
-	    		$('<div>').addClass('row').append(
+	    		$('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
 	    				$('<div>').addClass('col-sm-12').append(
-	    						$('<pre>').attr('style', 'white-space: pre-wrap; background-color: #eceeef;').append(
-	    								$clipboard,
+	    						$clipboard,
+	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append(
 	    								payloadCode
 	    						)
 	    				)
