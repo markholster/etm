@@ -24,6 +24,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.w3c.dom.NodeList;
 
+import com.ibm.mq.MQMessage;
 import com.ibm.mq.constants.CMQC;
 import com.ibm.mq.constants.MQConstants;
 import com.ibm.mq.headers.CCSID;
@@ -49,7 +50,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class IIBEventHandler {
+public class IIBEventHandler extends AbstractEventHandler {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -77,10 +78,10 @@ public class IIBEventHandler {
 	}
 
 	@SuppressWarnings("unchecked")
-	public HandlerResult handleMessage(byte[] messageId, byte[] message) {
-		try (Reader reader = new InputStreamReader(new ByteArrayInputStream(message));) {
+	public HandlerResult handleMessage(MQMessage message) {
+		try (Reader reader = new InputStreamReader(new ByteArrayInputStream(getContent(message).getBytes()));) {
 			Event event = ((JAXBElement<Event>) this.unmarshaller.unmarshal(reader)).getValue();
-			return process(messageId, event);
+			return process(message.messageId, event);
 		} catch (JAXBException | IOException e) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Unable to unmarshall event.", e);

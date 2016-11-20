@@ -73,25 +73,23 @@ public class DestinationReader implements Runnable {
 				if (!continueProcessing) {
 					continue;
 				}
-				byte[] byteContent = new byte[message.getMessageLength()];
-				message.readFully(byteContent);
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Read message with id '" + byteArrayToString(message.messageId) + "'.");
 				}
 				HandlerResult result = null;
 				if ("etmevent".equalsIgnoreCase(this.destination.getMessagesType())) {
-					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
+					result = this.etmEventHandler.handleMessage(message);
 				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessagesType())) {
-					result = this.iibEventHandler.handleMessage(message.messageId, byteContent);
+					result = this.iibEventHandler.handleMessage(message);
 				} else if ("clone".equalsIgnoreCase(this.destination.getMessagesType())) {
-					result = this.clonedMessageEventHandler.handleMessage(message, byteContent);
+					result = this.clonedMessageEventHandler.handleMessage(message);
 				} else {
-					result = this.etmEventHandler.handleMessage(message.messageId, byteContent);
+					result = this.etmEventHandler.handleMessage(message);
 					if (HandlerResult.PARSE_FAILURE.equals(result)) {
-						result = this.iibEventHandler.handleMessage(message.messageId, byteContent);
+						result = this.iibEventHandler.handleMessage(message);
 					}
 					if (HandlerResult.PARSE_FAILURE.equals(result)) {
-						result = this.clonedMessageEventHandler.handleMessage(message, byteContent);
+						result = this.clonedMessageEventHandler.handleMessage(message);
 					}
 				}
 				if (!HandlerResult.PROCESSED.equals(result)) {

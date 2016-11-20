@@ -167,7 +167,7 @@ The ''ibmMq'' section contains all options that are necessary to process {etm} e
 |maxMessageSize|4194304|The maximum message size in bytes that can be read. Depending on the get options the message will be ignored or truncated.
 |commitSize|500|The maximum number of messages processed before a MQCMIT is executed.
 |commitInterval|10000|The maximum number of milliseconds the processor can read messages without executing a MQCMIT.
-|destinationGetOptions|MQGMO_WAIT + MQGMO_FAIL_IF_QUIESCING + MQGMO_CONVERT + MQGMO_SYNCPOINT + MQGMO_LOGICAL_ORDER + MQGMO_ALL_SEGMENTS_AVAILABLE + MQGMO_COMPLETE_MSG|The MQ Get options.
+|destinationGetOptions|MQGMO_WAIT + MQGMO_FAIL_IF_QUIESCING + MQGMO_SYNCPOINT + MQGMO_LOGICAL_ORDER + MQGMO_ALL_SEGMENTS_AVAILABLE + MQGMO_COMPLETE_MSG|The MQ Get options.
 |destinationOpenOptions|MQOO_INQUIRE + MQOO_FAIL_IF_QUIESCING + MQOO_INPUT_SHARED|The MQ Open options.
 |=======================
 

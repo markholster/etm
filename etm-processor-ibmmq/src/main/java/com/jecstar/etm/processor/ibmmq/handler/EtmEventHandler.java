@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ibm.mq.MQMessage;
 import com.jecstar.etm.domain.BusinessTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.LogTelemetryEvent;
@@ -21,7 +22,7 @@ import com.jecstar.etm.server.core.domain.converter.json.SqlTelemetryEventConver
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class EtmEventHandler {
+public class EtmEventHandler extends AbstractEventHandler {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -50,9 +51,9 @@ public class EtmEventHandler {
 	}
 
 	@SuppressWarnings("unchecked")
-	public HandlerResult handleMessage(byte[] messageId, byte[] messageContent) {
+	public HandlerResult handleMessage(MQMessage message) {
 		try {
-			Map<String, Object> event = this.objectMapper.readValue(messageContent, HashMap.class);
+			Map<String, Object> event = this.objectMapper.readValue(getContent(message), HashMap.class);
 			String eventType = (String) event.get("type");
 			CommandType commandType = TelemetryCommand.CommandType.valueOfStringType(eventType);
 			if (commandType == null) {
@@ -62,7 +63,7 @@ public class EtmEventHandler {
 			process(commandType, eventData);
 		} catch (IOException e) {
 			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Message with id '" + byteArrayToString(messageId) + "' seems to have an invalid format", e);
+				log.logDebugMessage("Message with id '" + byteArrayToString(message.messageId) + "' seems to have an invalid format", e);
 			}
 			return HandlerResult.PARSE_FAILURE;
 		}
