@@ -39,6 +39,9 @@
 .rowContentMargins {
     margin: 0.9375rem 0.9375rem 0rem 0.9375rem;
 }
+.event-selected {
+	font-weight: bold;
+}
 body { padding-top: 60px; }
 </style>
 </head>
@@ -581,6 +584,8 @@ body { padding-top: 60px; }
                         .text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
                         .click(function (event) {
                             showEvent($(window).scrollTop(), searchResult.type, searchResult.id);
+                            $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
+                        	$(event.target).parent().parent().addClass('event-selected');
                         })
                 )    
             } else {
