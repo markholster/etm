@@ -93,6 +93,8 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 		default:
 			throw new IllegalArgumentException("'" + command.commandType.name() + "' not implemented.");
 		}
+		// Set to NO-OP at this point to clear the memory taken in the heap.
+		command.initializeToNoop();
 	}
 
 	@Override
