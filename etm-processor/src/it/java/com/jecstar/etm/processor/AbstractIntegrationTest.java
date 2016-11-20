@@ -72,4 +72,5 @@ public abstract class AbstractIntegrationTest {
 		} while (System.currentTimeMillis() - startTime < 10_000);
 		throw new NoSuchEventException(index, type, id, version);
 	}
+	
 }

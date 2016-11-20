@@ -1,6 +1,7 @@
 package com.jecstar.etm.processor.core.persisting.elastic;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.time.ZonedDateTime;
@@ -220,7 +221,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 	 * Test the merging of fields. 
 	 */
 	@Test
-	public void testMergingOfField() throws InterruptedException {
+	public void testMergingOfFields() throws InterruptedException {
 		final String eventId = UUID.randomUUID().toString();
 		final String eventName = "Test case " + this.getClass().getName() + " - testMergingOfFields()"; 
 		final String payload = "Test case " + this.getClass().getName();
@@ -399,6 +400,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		assertEquals(event.id, 3000, endpoint.writingEndpointHandler.responseTime.longValue());
 	}
 	
+	/**
+	 * Test if persisting an event twice doesn't lead to merged endpoints etc. The hash of the events should be equals and hence the merging part in the scripts should be skipped.
+	 * @throws InterruptedException
+	 */
 	@Test
 	public void testPersistMessageTwice() throws InterruptedException {
 		final String requestId = UUID.randomUUID().toString();
@@ -435,6 +440,80 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
 		MessagingTelemetryEvent event_v2 = this.messagingEventConverter.read(getResponse.getSourceAsMap());
 		assertEquals(event_v1.getCalculatedHash(), event_v2.getCalculatedHash());
+	}
+	
+	/**
+	 * Normally the response time is calculated based on the applications that read and/or write the requests and responses. If no applications are provided with an endpoint 
+	 * in the request and reply messages the response time should also be set.
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void testSetResponseTimeWithoutApplicationsRequestBeforeResponse() throws InterruptedException {
+		final String requestId = UUID.randomUUID().toString();
+		final String responseId = UUID.randomUUID().toString();
+		final ZonedDateTime timestamp = ZonedDateTime.now();
+		final EndpointHandlerBuilder endpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(timestamp);
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+				.setId(requestId)
+				.setPayload("Test case " + this.getClass().getName())
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.addOrMergeEndpoint(new EndpointBuilder().setWritingEndpointHandler(endpointHandler))
+				.setMessagingEventType(MessagingEventType.REQUEST);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
+		
+		endpointHandler.setHandlingTime(timestamp.plusSeconds(1));
+		builder
+			.setId(responseId)
+			.setCorrelationId(requestId)
+			.addOrMergeEndpoint(new EndpointBuilder().setWritingEndpointHandler(endpointHandler))
+			.setMessagingEventType(MessagingEventType.RESPONSE);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		// wait for the request to be updated with the response time
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
+		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertNotNull(requestEvent.endpoints.get(0).writingEndpointHandler.responseTime);
+		long responsetTime = requestEvent.endpoints.get(0).writingEndpointHandler.responseTime;
+		assertEquals(requestId, 1000L, responsetTime);
+	}
+	
+	/**
+	 * Normally the response time is calculated based on the applications that read and/or write the requests and responses. If no applications are provided with an endpoint 
+	 * in the request and reply messages the response time should also be set.
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void testSetResponseTimeWithoutApplicationsResponseBeforeRequest() throws InterruptedException {
+		final String requestId = UUID.randomUUID().toString();
+		final String responseId = UUID.randomUUID().toString();
+		final ZonedDateTime timestamp = ZonedDateTime.now();
+		final EndpointHandlerBuilder endpointHandler = new EndpointHandlerBuilder()
+				.setHandlingTime(timestamp.plusSeconds(1));
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+				.setId(responseId)
+				.setCorrelationId(requestId)
+				.setPayload("Test case " + this.getClass().getName())
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.addOrMergeEndpoint(new EndpointBuilder().setWritingEndpointHandler(endpointHandler))
+				.setMessagingEventType(MessagingEventType.RESPONSE);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
+		
+		endpointHandler.setHandlingTime(timestamp);
+		builder
+			.setId(requestId)
+			.addOrMergeEndpoint(new EndpointBuilder().setWritingEndpointHandler(endpointHandler))
+			.setMessagingEventType(MessagingEventType.REQUEST);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		// wait for the request to be updated with the response time
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
+		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		assertNotNull(requestId, requestEvent.endpoints.get(0).writingEndpointHandler.responseTime);
+		long responsetTime = requestEvent.endpoints.get(0).writingEndpointHandler.responseTime;
+		assertEquals(requestId, 1000L, responsetTime);
 	}
 	
 }

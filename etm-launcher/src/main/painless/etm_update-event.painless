@@ -44,6 +44,60 @@ boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {
 	return true;
 }
 
+boolean updateResponseTimeInReaders(List endpoints, String applicationName, long handlingTime) {
+	if (endpoints == null) {
+		return false;
+	}
+	boolean updated = false;
+	for (Map endpoint : endpoints) {
+		if (endpoint.get("reading_endpoint_handlers") != null) {
+			List readerEndpointHandlers = (List)endpoint.get("reading_endpoint_handlers");
+			for (Map readingEndpointHandler : readerEndpointHandlers) {
+				if (applicationName == null && (readingEndpointHandler.get("application") == null || ((Map)readingEndpointHandler.get("application")).get("name") == null)) {
+					long responseTime = handlingTime - (long)readingEndpointHandler.get("handling_time");
+					if (responseTime >= 0) {
+					    readingEndpointHandler.put("response_time", responseTime);
+						updated = true;				
+					}
+				} else if (applicationName != null && readingEndpointHandler.get("application") != null && applicationName.equals(((Map)readingEndpointHandler.get("application")).get("name"))) {
+					long responseTime = handlingTime - (long)readingEndpointHandler.get("handling_time");
+					if (responseTime >= 0) {
+					    readingEndpointHandler.put("response_time", responseTime);
+						updated = true;				
+					}
+				}
+			}
+		}
+	}
+	return updated;
+}
+
+boolean updateResponseTimeInWriters(List endpoints, String applicationName, long handlingTime) {
+	if (endpoints == null) {
+		return false;
+	}
+	boolean updated = false;
+	for (Map endpoint : endpoints) {
+		Map writingEndpointHandler = endpoint.get("writing_endpoint_handler");
+		if (writingEndpointHandler != null) {
+			if (applicationName == null && (writingEndpointHandler.get("application") == null || ((Map)writingEndpointHandler.get("application")).get("name") == null)) {
+				long responseTime = handlingTime - (long)writingEndpointHandler.get("handling_time");
+				if (responseTime >=0) {
+				    writingEndpointHandler.put("response_time", responseTime);
+					updated = true;			
+				}	
+			} else if (applicationName != null && writingEndpointHandler.get("application") != null && applicationName.equals(((Map)writingEndpointHandler.get("application")).get("name"))) {
+				long responseTime = handlingTime - (long)writingEndpointHandler.get("handling_time");
+				if (responseTime >=0) {
+				    writingEndpointHandler.put("response_time", responseTime);
+					updated = true;			
+				}	
+			}
+		}
+	}
+	return updated;
+}
+
 Map inputSource = (Map)params.get("source");
 Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
 
@@ -147,21 +201,14 @@ if (tempForCorrelations != null) {
 		while (it.hasNext()) {
 			Map dataForReader = (Map)it.next();
 			String appName = (String)dataForReader.get("name");
-			for (int j=0; j < targetEndpoints.size(); j++) {
-				Map targetEndpoint = (Map)targetEndpoints.get(j);
-				if (targetEndpoint.get("reading_endpoint_handlers") != null) {
-					List readerEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
-					for (int k=0; k < readerEndpointHandlers.size(); k++) {
-						Map readingEndpointHandler = (Map)readerEndpointHandlers.get(k);
-						if (readingEndpointHandler.get("application") != null &&
-						    ((Map)readingEndpointHandler.get("application")).get("name") != null &&  
-						    ((String)((Map)readingEndpointHandler.get("application")).get("name")).equals(appName)) {
-						    
-						    readingEndpointHandler.put("response_time", ((long)dataForReader.get("handling_time") - (long)readingEndpointHandler.get("handling_time")));
-						    it.remove();
-						}
-					}
-				}
+			long handlingTime = (long)dataForReader.get("handling_time");
+			boolean updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);
+			if (!updated && appName == null) {
+				// When the appName == null also update the writers
+				updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);
+			}
+			if (updated) {
+				it.remove();
 			}
 		}
 		if (dataForReaders.isEmpty()) {
@@ -174,17 +221,14 @@ if (tempForCorrelations != null) {
 		while (it.hasNext()) {
 			Map dataForWriter = (Map)it.next();
 			String appName = (String)dataForWriter.get("name");
-			for (int j=0; j < targetEndpoints.size(); j++) {
-				Map targetEndpoint = (Map)targetEndpoints.get(j);
-				Map writingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
-				if (writingEndpointHandler != null &&
-					writingEndpointHandler.get("application") != null &&
-					((Map)writingEndpointHandler.get("application")).get("name") != null &&  
-					((String)((Map)writingEndpointHandler.get("application")).get("name")).equals(appName)) {
-					
-					writingEndpointHandler.put("response_time", ((long)dataForWriter.get("handling_time") - (long)writingEndpointHandler.get("handling_time")));
-					it.remove();
-				}
+			long handlingTime = (long)dataForWriter.get("handling_time");
+			boolean updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);
+			if (!updated && appName == null) {
+				// When the appName == null also update the readers
+				updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);
+			}
+			if (updated) {
+				it.remove();
 			}			
 		}
 		if (dataForWriters.isEmpty()) {

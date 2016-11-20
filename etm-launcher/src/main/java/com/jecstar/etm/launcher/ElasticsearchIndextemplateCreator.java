@@ -61,31 +61,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.ETM_EVENT_TEMPLATE_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
 				creatEtmEventIndexTemplate(true, 5, 0);
-				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-					.setScriptLang("painless")
-					.setId("etm_update-search-template")
-					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateSearchTemplateScript()).endObject().bytes())
-					.get();
-				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-					.setScriptLang("painless")
-					.setId("etm_remove-search-template")
-					.setSource(JsonXContent.contentBuilder().startObject().field("script", createRemoveSearchTemplateScript()).endObject().bytes())
-					.get();
-				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-					.setScriptLang("painless")
-					.setId("etm_update-search-history")
-					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateSearchHistoryScript()).endObject().bytes())
-					.get();
-				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-					.setScriptLang("painless")
-					.setId("etm_update-event")
-					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateEventScript()).endObject().bytes())
-					.get();
-				new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-					.setScriptLang("painless")
-					.setId("etm_update-request-with-response")
-					.setSource(JsonXContent.contentBuilder().startObject().field("script", createUpdateRequestWithResponseScript()).endObject().bytes())
-					.get();
+				insertPainlessScripts();
 			}
 		} catch (IndexTemplateAlreadyExistsException e) {
 		} catch (IOException e) {
@@ -126,6 +102,29 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		} catch (IndexTemplateAlreadyExistsException e) {}
 	}
 	
+	private void insertPainlessScripts() throws IOException {
+		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
+				.setId("etm_update-search-template").setSource(JsonXContent.contentBuilder().startObject()
+						.field("script", createUpdateSearchTemplateScript()).endObject().bytes())
+				.get();
+		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
+				.setId("etm_remove-search-template").setSource(JsonXContent.contentBuilder().startObject()
+						.field("script", createRemoveSearchTemplateScript()).endObject().bytes())
+				.get();
+		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
+				.setId("etm_update-search-history").setSource(JsonXContent.contentBuilder().startObject()
+						.field("script", createUpdateSearchHistoryScript()).endObject().bytes())
+				.get();
+		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
+				.setId("etm_update-event").setSource(JsonXContent.contentBuilder().startObject()
+						.field("script", createUpdateEventScript()).endObject().bytes())
+				.get();
+		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
+				.setId("etm_update-request-with-response").setSource(JsonXContent.contentBuilder().startObject()
+						.field("script", createUpdateRequestWithResponseScript()).endObject().bytes())
+				.get();
+	}
+
 	private void creatEtmEventIndexTemplate(boolean create, int shardsPerIndex, int replicasPerIndex) {
 		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_EVENT_TEMPLATE_NAME)
 		.setCreate(create)
@@ -177,6 +176,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 			.setSource(this.etmPrincipalConverter.writePrincipal(adminUser))
 			.get();	
 	}
+	
 	
 	private String createUpdateSearchTemplateScript() {
 		return  "if (params.template != null) {\n" + 
@@ -279,6 +279,60 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"	}\n" + 
 				"	targetSource.put(entityName, targetEntity);	\n" + 
 				"	return true;\n" + 
+				"}\n" + 
+				"\n" + 
+				"boolean updateResponseTimeInReaders(List endpoints, String applicationName, long handlingTime) {\n" + 
+				"	if (endpoints == null) {\n" + 
+				"		return false;\n" + 
+				"	}\n" + 
+				"	boolean updated = false;\n" + 
+				"	for (Map endpoint : endpoints) {\n" + 
+				"		if (endpoint.get(\"reading_endpoint_handlers\") != null) {\n" + 
+				"			List readerEndpointHandlers = (List)endpoint.get(\"reading_endpoint_handlers\");\n" + 
+				"			for (Map readingEndpointHandler : readerEndpointHandlers) {\n" + 
+				"				if (applicationName == null && (readingEndpointHandler.get(\"application\") == null || ((Map)readingEndpointHandler.get(\"application\")).get(\"name\") == null)) {\n" + 
+				"					long responseTime = handlingTime - (long)readingEndpointHandler.get(\"handling_time\");\n" + 
+				"					if (responseTime >= 0) {\n" + 
+				"					    readingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"						updated = true;				\n" + 
+				"					}\n" + 
+				"				} else if (applicationName != null && readingEndpointHandler.get(\"application\") != null && applicationName.equals(((Map)readingEndpointHandler.get(\"application\")).get(\"name\"))) {\n" + 
+				"					long responseTime = handlingTime - (long)readingEndpointHandler.get(\"handling_time\");\n" + 
+				"					if (responseTime >= 0) {\n" + 
+				"					    readingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"						updated = true;				\n" + 
+				"					}\n" + 
+				"				}\n" + 
+				"			}\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	return updated;\n" + 
+				"}\n" + 
+				"\n" + 
+				"boolean updateResponseTimeInWriters(List endpoints, String applicationName, long handlingTime) {\n" + 
+				"	if (endpoints == null) {\n" + 
+				"		return false;\n" + 
+				"	}\n" + 
+				"	boolean updated = false;\n" + 
+				"	for (Map endpoint : endpoints) {\n" + 
+				"		Map writingEndpointHandler = endpoint.get(\"writing_endpoint_handler\");\n" + 
+				"		if (writingEndpointHandler != null) {\n" + 
+				"			if (applicationName == null && (writingEndpointHandler.get(\"application\") == null || ((Map)writingEndpointHandler.get(\"application\")).get(\"name\") == null)) {\n" + 
+				"				long responseTime = handlingTime - (long)writingEndpointHandler.get(\"handling_time\");\n" + 
+				"				if (responseTime >=0) {\n" + 
+				"				    writingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"					updated = true;			\n" + 
+				"				}	\n" + 
+				"			} else if (applicationName != null && writingEndpointHandler.get(\"application\") != null && applicationName.equals(((Map)writingEndpointHandler.get(\"application\")).get(\"name\"))) {\n" + 
+				"				long responseTime = handlingTime - (long)writingEndpointHandler.get(\"handling_time\");\n" + 
+				"				if (responseTime >=0) {\n" + 
+				"				    writingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"					updated = true;			\n" + 
+				"				}	\n" + 
+				"			}\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	return updated;\n" + 
 				"}\n" + 
 				"\n" + 
 				"Map inputSource = (Map)params.get(\"source\");\n" + 
@@ -384,21 +438,14 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"		while (it.hasNext()) {\n" + 
 				"			Map dataForReader = (Map)it.next();\n" + 
 				"			String appName = (String)dataForReader.get(\"name\");\n" + 
-				"			for (int j=0; j < targetEndpoints.size(); j++) {\n" + 
-				"				Map targetEndpoint = (Map)targetEndpoints.get(j);\n" + 
-				"				if (targetEndpoint.get(\"reading_endpoint_handlers\") != null) {\n" + 
-				"					List readerEndpointHandlers = (List)targetEndpoint.get(\"reading_endpoint_handlers\");\n" + 
-				"					for (int k=0; k < readerEndpointHandlers.size(); k++) {\n" + 
-				"						Map readingEndpointHandler = (Map)readerEndpointHandlers.get(k);\n" + 
-				"						if (readingEndpointHandler.get(\"application\") != null &&\n" + 
-				"						    ((Map)readingEndpointHandler.get(\"application\")).get(\"name\") != null &&  \n" + 
-				"						    ((String)((Map)readingEndpointHandler.get(\"application\")).get(\"name\")).equals(appName)) {\n" + 
-				"						    \n" + 
-				"						    readingEndpointHandler.put(\"response_time\", ((long)dataForReader.get(\"handling_time\") - (long)readingEndpointHandler.get(\"handling_time\")));\n" + 
-				"						    it.remove();\n" + 
-				"						}\n" + 
-				"					}\n" + 
-				"				}\n" + 
+				"			long handlingTime = (long)dataForReader.get(\"handling_time\");\n" + 
+				"			boolean updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);\n" + 
+				"			if (!updated && appName == null) {\n" + 
+				"				// When the appName == null also update the writers\n" + 
+				"				updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);\n" + 
+				"			}\n" + 
+				"			if (updated) {\n" + 
+				"				it.remove();\n" + 
 				"			}\n" + 
 				"		}\n" + 
 				"		if (dataForReaders.isEmpty()) {\n" + 
@@ -411,17 +458,14 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"		while (it.hasNext()) {\n" + 
 				"			Map dataForWriter = (Map)it.next();\n" + 
 				"			String appName = (String)dataForWriter.get(\"name\");\n" + 
-				"			for (int j=0; j < targetEndpoints.size(); j++) {\n" + 
-				"				Map targetEndpoint = (Map)targetEndpoints.get(j);\n" + 
-				"				Map writingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
-				"				if (writingEndpointHandler != null &&\n" + 
-				"					writingEndpointHandler.get(\"application\") != null &&\n" + 
-				"					((Map)writingEndpointHandler.get(\"application\")).get(\"name\") != null &&  \n" + 
-				"					((String)((Map)writingEndpointHandler.get(\"application\")).get(\"name\")).equals(appName)) {\n" + 
-				"					\n" + 
-				"					writingEndpointHandler.put(\"response_time\", ((long)dataForWriter.get(\"handling_time\") - (long)writingEndpointHandler.get(\"handling_time\")));\n" + 
-				"					it.remove();\n" + 
-				"				}\n" + 
+				"			long handlingTime = (long)dataForWriter.get(\"handling_time\");\n" + 
+				"			boolean updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);\n" + 
+				"			if (!updated && appName == null) {\n" + 
+				"				// When the appName == null also update the readers\n" + 
+				"				updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);\n" + 
+				"			}\n" + 
+				"			if (updated) {\n" + 
+				"				it.remove();\n" + 
 				"			}			\n" + 
 				"		}\n" + 
 				"		if (dataForWriters.isEmpty()) {\n" + 
@@ -436,7 +480,92 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	}
 	
 	private String createUpdateRequestWithResponseScript() {
-		return "Map inputSource = (Map)params.get(\"source\");\n" + 
+		return "boolean setResponseTimeOnReadingEndpointHandlers(List readingEndpointHandlers, String applicationName, long writerHandlingTime) {\n" + 
+				"	if (readingEndpointHandlers == null) {\n" + 
+				"		return false;\n" + 
+				"	}\n" + 
+				"	boolean readerUpdated = false;\n" + 
+				"	for (Map readingEndpointHandler : readingEndpointHandlers) {\n" + 
+				"		if (applicationName == null && (readingEndpointHandler.get(\"application\") == null || ((Map)readingEndpointHandler.get(\"application\")).get(\"name\") == null)) {\n" + 
+				"			long responseTime = writerHandlingTime - (long)readingEndpointHandler.get(\"handling_time\");\n" + 
+				"			if (responseTime >=0) {\n" + 
+				"				readingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"				readerUpdated = true;\n" + 
+				"			}\n" + 
+				"		} else if (applicationName != null && readingEndpointHandler.get(\"application\") != null && applicationName.equals(((Map)readingEndpointHandler.get(\"application\")).get(\"name\"))) {\n" + 
+				"			long responseTime = writerHandlingTime - (long)readingEndpointHandler.get(\"handling_time\");\n" + 
+				"			if (responseTime >=0) {\n" + 
+				"				readingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"				readerUpdated = true;\n" + 
+				"			}\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	return readerUpdated;\n" + 
+				"}\n" + 
+				"\n" + 
+				"boolean setResponseTimeOnWritingEndpointHandlers(List endpoints, String applicationName, long readerHandlingTime) {\n" + 
+				"	if (endpoints == null) {\n" + 
+				"		return false;\n" + 
+				"	}\n" + 
+				"	boolean writerUpdated = false;\n" + 
+				"	for (Map endpoint : endpoints) {\n" + 
+				"		Map writingEndpointHandler = (Map)endpoint.get(\"writing_endpoint_handler\");\n" + 
+				"		if (applicationName == null && writingEndpointHandler != null && ( writingEndpointHandler.get(\"application\") == null || ((Map)writingEndpointHandler.get(\"application\")).get(\"name\") == null)) {\n" + 
+				"			long responseTime = readerHandlingTime - (long)writingEndpointHandler.get(\"handling_time\");\n" + 
+				"		    if (responseTime >= 0) {\n" + 
+				"		    	writingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"				writerUpdated = true;\n" + 
+				"			}\n" + 
+				"		} else if (applicationName != null && writingEndpointHandler != null && writingEndpointHandler.get(\"application\") != null && applicationName.equals(((Map)writingEndpointHandler.get(\"application\")).get(\"name\"))) {\n" + 
+				"			long responseTime = readerHandlingTime - (long)writingEndpointHandler.get(\"handling_time\");\n" + 
+				"		    if (responseTime >= 0) {\n" + 
+				"		    	writingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"				writerUpdated = true;\n" + 
+				"			}\n" + 
+				"		}\n" + 
+				"	}\n" + 
+				"	return writerUpdated;\n" + 
+				"}\n" + 
+				"\n" + 
+				"void addDataForReaders(Map source, long handlingTime, String applicationName) {\n" + 
+				"	Map tempCorrelation = (Map)source.get(\"temp_for_correlations\");\n" + 
+				"	if (tempCorrelation == null) {\n" + 
+				"		tempCorrelation = new HashMap();\n" + 
+				"		source.put(\"temp_for_correlations\", tempCorrelation);\n" + 
+				"	}\n" + 
+				"	List dataForReaders = tempCorrelation.get(\"data_for_readers\");\n" + 
+				"	if (dataForReaders == null) {\n" + 
+				"		dataForReaders = new ArrayList();\n" + 
+				"		tempCorrelation.put(\"data_for_readers\", dataForReaders);\n" + 
+				"	}        			\n" + 
+				"	Map reader = new HashMap();\n" + 
+				"	if (applicationName != null) {\n" + 
+				"		reader.put(\"name\", applicationName);\n" + 
+				"	}\n" + 
+				"	reader.put(\"handling_time\", handlingTime);\n" + 
+				"	dataForReaders.add(reader);\n" + 
+				"}\n" + 
+				"\n" + 
+				"void addDataForWriter(Map source, long handlingTime, String applicationName) {\n" + 
+				"	Map tempCorrelation = (Map)source.get(\"temp_for_correlations\");\n" + 
+				"	if (tempCorrelation == null) {\n" + 
+				"		tempCorrelation = new HashMap();\n" + 
+				"		source.put(\"temp_for_correlations\", tempCorrelation);\n" + 
+				"	}\n" + 
+				"	List dataForWriters = tempCorrelation.get(\"data_for_writers\");\n" + 
+				"	if (dataForWriters == null) {\n" + 
+				"		dataForWriters = new ArrayList();\n" + 
+				"		tempCorrelation.put(\"data_for_writers\", dataForWriters);\n" + 
+				"	}        			\n" + 
+				"	Map writer = new HashMap();\n" + 
+				"	if (applicationName != null) {\n" + 
+				"		writer.put(\"name\", applicationName);\n" + 
+				"	}\n" + 
+				"	writer.put(\"handling_time\", handlingTime);\n" + 
+				"	dataForWriters.add(writer);\n" + 
+				"}\n" + 
+				"\n" + 
+				"Map inputSource = (Map)params.get(\"source\");\n" + 
 				"Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" + 
 				"\n" + 
 				"List correlations = (List)targetSource.get(\"correlations\");\n" + 
@@ -455,83 +584,73 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"	for (Map inputEndpoint : inputEndpoints) {\n" + 
 				"		Map inputWritingEndpointHandler = (Map)inputEndpoint.get(\"writing_endpoint_handler\");\n" + 
 				"        if (inputWritingEndpointHandler != null && \n" + 
+				"        	(inputWritingEndpointHandler.get(\"application\") == null || ((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") == null)) { \n" + 
+				"			// This is a writer on an endpoint without an application defined. Update the response time on target readers + writers without an application defined. \n" + 
+				"			long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" + 
+				"        	boolean readerFound = false;\n" + 
+				"        	if (targetEndpoints != null) {\n" + 
+				"        		for (Map targetEndpoint : targetEndpoints) {\n" + 
+				"        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"reading_endpoint_handlers\"), null, writerHandlingTime) || readerFound;\n" + 
+				"        		}  \n" + 
+				"        	}\n" + 
+				"        	boolean writerFound = false;\n" + 
+				"        	if (!readerFound && targetEndpoints != null) {\n" + 
+				"        		for (Map targetEndpoint : targetEndpoints) {\n" + 
+				"        			Map targetWritingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
+				"					if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get(\"application\") == null) {\n" + 
+				"        				long responseTime = writerHandlingTime - (long)targetWritingEndpointHandler.get(\"handling_time\");\n" + 
+				"        				if (responseTime >=0 ) {\n" + 
+				"	        				targetWritingEndpointHandler.put(\"response_time\", responseTime);\n" + 
+				"							writerFound = true;\n" + 
+				"						}\n" + 
+				"					}        			 \n" + 
+				"        		}  \n" + 
+				"        	}\n" + 
+				"        	if (!readerFound && !writerFound) {\n" + 
+				"        		addDataForReaders(targetSource, writerHandlingTime, null);\n" + 
+				"        	}\n" + 
+				"        } else if (inputWritingEndpointHandler != null && \n" + 
 				"        	inputWritingEndpointHandler.get(\"application\") != null && \n" + 
 				"        	((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" + 
-				"        	\n" + 
+				"        	// This is a writer on an endpoint with an application defined. Update the response time on target readers with the same application defined. \n" + 
 				"        	String writerAppName = (String)((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\");\n" + 
 				"        	long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" + 
 				"        	// The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.\n" + 
 				"        	boolean readerFound = false;\n" + 
 				"        	if (targetEndpoints != null) {\n" + 
 				"        		for (Map targetEndpoint : targetEndpoints) {\n" + 
-				"        			List targetReadingEndpointHandlers = (List)targetEndpoint.get(\"reading_endpoint_handlers\");\n" + 
-				"					if (targetReadingEndpointHandlers != null) {\n" + 
-				"        				for (Map targetReadingEndpointHandler : targetReadingEndpointHandlers) {\n" + 
-				"        					if (targetReadingEndpointHandler.get(\"application\") != null &&\n" + 
-				"        						((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\") != null &&\n" + 
-				"        						((String)((Map)targetReadingEndpointHandler.get(\"application\")).get(\"name\")).equals(writerAppName)) {\n" + 
-				"        					readerFound = true;\n" + 
-				"        					targetReadingEndpointHandler.put(\"response_time\", (writerHandlingTime - (long)targetReadingEndpointHandler.get(\"handling_time\")));\n" + 
-				"        					}\n" + 
-				"        				}\n" + 
-				"					}        			 \n" + 
+				"        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"reading_endpoint_handlers\"), writerAppName, writerHandlingTime) || readerFound;\n" + 
 				"        		}  \n" + 
 				"        	}\n" + 
 				"        	if (!readerFound) {\n" + 
-				"        		Map tempCorrelation = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
-				"        		if (tempCorrelation == null) {\n" + 
-				"					tempCorrelation = new HashMap();\n" + 
-				"					targetSource.put(\"temp_for_correlations\", tempCorrelation);\n" + 
-				"        		}\n" + 
-				"        		List dataForReaders = tempCorrelation.get(\"data_for_readers\");\n" + 
-				"        		if (dataForReaders == null) {\n" + 
-				"        			dataForReaders = new ArrayList();\n" + 
-				"        			tempCorrelation.put(\"data_for_readers\", dataForReaders);\n" + 
-				"				}        			\n" + 
-				"    			Map reader = new HashMap();\n" + 
-				"    			reader.put(\"name\", writerAppName);\n" + 
-				"    			reader.put(\"handling_time\", writerHandlingTime);\n" + 
-				"    			dataForReaders.add(reader);\n" + 
+				"        		addDataForReaders(targetSource, writerHandlingTime, writerAppName);\n" + 
 				"        	}\n" + 
 				"        }\n" + 
 				"        List inputReadingEndpointHandlers = (List)inputEndpoint.get(\"reading_endpoint_handlers\");\n" + 
 				"        if (inputReadingEndpointHandlers != null) {\n" + 
 				"        	for (Map inputReadingEndpointHandler : inputReadingEndpointHandlers) {\n" + 
-				"        		if (inputReadingEndpointHandler.get(\"application\") != null && \n" + 
+				"        		if (inputReadingEndpointHandler.get(\"application\") == null || ((Map)inputReadingEndpointHandler.get(\"application\")).get(\"name\") == null) {\n" + 
+				"        			// This is a reader on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.\n" + 
+				"		        	long readerHandlingTime = (long)inputReadingEndpointHandler.get(\"handling_time\");\n" + 
+				"        			boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, null, readerHandlingTime);\n" + 
+				"        			boolean readerFound = false;\n" + 
+				"        			if (!writerFound && targetEndpoints != null) {\n" + 
+				"		        		for (Map targetEndpoint : targetEndpoints) {\n" + 
+				"		        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"reading_endpoint_handlers\"), null, readerHandlingTime) || readerFound;\n" + 
+				"		        		}  \n" + 
+				"        			}\n" + 
+				"        			if (!readerFound && !writerFound) {\n" + 
+				"        				addDataForWriter(targetSource, readerHandlingTime, null);\n" + 
+				"        			}\n" + 
+				"        		} else if (inputReadingEndpointHandler.get(\"application\") != null && \n" + 
 				"        			((Map)inputReadingEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" + 
-				"        			\n" + 
+				"        			// This is a reader on an endpoint with an application defined. Update the response time on target writer with the same application defined. \n" + 
 				"		        	String readerAppName = (String)((Map)inputReadingEndpointHandler.get(\"application\")).get(\"name\");\n" + 
 				"		        	long readerHandlingTime = (long)inputReadingEndpointHandler.get(\"handling_time\");\n" + 
 				"        			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.\n" + 
-				"        			boolean writerFound = false;\n" + 
-				"        			if (targetEndpoints != null) {\n" + 
-				"        				for (Map targetEndpoint : targetEndpoints) {\n" + 
-				"        					Map targetWritingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
-				"		        			if (targetWritingEndpointHandler != null && \n" + 
-				"		        				targetWritingEndpointHandler.get(\"application\") != null && \n" + 
-				"		        				((Map)targetWritingEndpointHandler.get(\"application\")).get(\"name\") != null && \n" + 
-				"		        				((String)((Map)targetWritingEndpointHandler.get(\"application\")).get(\"name\")).equals(readerAppName)) {\n" + 
-				"		        			\n" + 
-				"		        				writerFound = true;\n" + 
-				"		        				targetWritingEndpointHandler.put(\"response_time\", (readerHandlingTime - (long)targetWritingEndpointHandler.get(\"handling_time\")));\n" + 
-				"		        			}\n" + 
-				"        				}\n" + 
-				"        			}\n" + 
+				"        			boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, readerAppName, readerHandlingTime);\n" + 
 				"		        	if (!writerFound) {\n" + 
-				"		        		Map tempCorrelation = (Map)targetSource.get(\"temp_for_correlations\");\n" + 
-				"		        		if (tempCorrelation == null) {\n" + 
-				"							tempCorrelation = new HashMap();\n" + 
-				"							targetSource.put(\"temp_for_correlations\", tempCorrelation);\n" + 
-				"		        		}\n" + 
-				"		        		List dataForWriters = tempCorrelation.get(\"data_for_writers\");\n" + 
-				"		        		if (dataForWriters == null) {\n" + 
-				"		        			dataForWriters = new ArrayList();\n" + 
-				"		        			tempCorrelation.put(\"data_for_writers\", dataForWriters);\n" + 
-				"						}        			\n" + 
-				"		    			Map writer = new HashMap();\n" + 
-				"		    			writer.put(\"name\", readerAppName);\n" + 
-				"		    			writer.put(\"handling_time\", readerHandlingTime);\n" + 
-				"		    			dataForWriters.add(writer);\n" + 
+				"		        		addDataForWriter(targetSource, readerHandlingTime, readerAppName);\n" + 
 				"		        	}\n" + 
 				"        		}\n" + 
 				"        	}\n" + 
