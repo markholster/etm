@@ -5,12 +5,17 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService.ScriptType;
 
+import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
@@ -75,6 +80,18 @@ public abstract class AbstractElasticTelemetryEventPersister {
     		return ActiveShardCount.NONE;
     	}
     	return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
+    }
+    
+    protected void setCorrelationOnParent(TelemetryEvent<?> event) {
+    	if (event.correlationId == null || event.correlationId.equals(event.id)) {
+    		return;
+    	}
+		Map<String, Object> parameters =  new HashMap<>();
+		parameters.put("correlating_id", event.id);
+		bulkProcessor.add(createUpdateRequest(event.correlationId)
+				.script(new Script("etm_update-event-with-correlation", ScriptType.STORED, "painless", parameters))
+				.upsert("{}")
+				.scriptedUpsert(true));
     }
 
 }

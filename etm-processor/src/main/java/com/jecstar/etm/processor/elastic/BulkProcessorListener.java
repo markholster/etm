@@ -30,7 +30,7 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(PersistenceEnvironmentElasticImpl.class);
 
-	private static final int MAX_MODIFICATIONS_BEFORE_BLACKLISTING = 100;
+	private static final int MAX_MODIFICATIONS_BEFORE_BLACKLISTING = 500;
 	private static final int BLACKLIST_TIME = 60 * 60 * 1000; // Blacklist potential dangerous events for an hour.
 	
 	private final Timer bulkTimer;

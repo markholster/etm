@@ -1,8 +1,6 @@
 package com.jecstar.etm.processor.core.persisting.elastic;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -514,6 +512,64 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		assertNotNull(requestId, requestEvent.endpoints.get(0).writingEndpointHandler.responseTime);
 		long responsetTime = requestEvent.endpoints.get(0).writingEndpointHandler.responseTime;
 		assertEquals(requestId, 1000L, responsetTime);
+	}
+	
+	/**
+	 * A fire-forget message that correlates another fire-forget message should
+	 * be visible on both events. So the correlating event should have the
+	 * correlation id set and the correlated event should have the id of the
+	 * correlation event in it's correlations list.
+	 * @throws InterruptedException 
+	 */
+	@Test
+	public void testAlwaysCorrelateFirstBeforeSecond() throws InterruptedException {
+		final String firstId = UUID.randomUUID().toString();
+		final String secondId = UUID.randomUUID().toString();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+				.setId(firstId)
+				.setPayload("Test case " + this.getClass().getName())
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setMessagingEventType(MessagingEventType.FIRE_FORGET);
+		// Persist a fire-forget message.
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", firstId, 1L);
+		
+		// Persist a second fire-forget message correlating the first fire-forget message.
+		builder.setId(secondId).setCorrelationId(firstId);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", firstId, 2L);
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		
+		// Make sure the second event is referenced in the first event.
+		assertTrue(firstId, event.correlations.contains(secondId));
+	}
+	
+	@Test
+	public void testAlwaysCorrelateSecondBeforeFirst() throws InterruptedException {
+		final String firstId = UUID.randomUUID().toString();
+		final String secondId = UUID.randomUUID().toString();
+		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+		MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+				.setId(secondId)
+				.setCorrelationId(firstId)
+				.setPayload("Test case " + this.getClass().getName())
+				.setPayloadFormat(PayloadFormat.TEXT)
+				.setMessagingEventType(MessagingEventType.FIRE_FORGET);
+		// Persist a fire-forget message.
+		persister.persist(builder.build(), this.messagingEventConverter);
+		waitFor(persister.getElasticIndexName(), "messaging", firstId, 1L);
+		
+		// Persist a second fire-forget message correlating the first fire-forget message.
+		builder.setId(firstId).setCorrelationId(null);
+		persister.persist(builder.build(), this.messagingEventConverter);
+		
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", firstId, 2L);
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		
+		// Make sure the second event is referenced in the first event.
+		assertTrue(firstId, event.correlations.contains(secondId));
 	}
 	
 }

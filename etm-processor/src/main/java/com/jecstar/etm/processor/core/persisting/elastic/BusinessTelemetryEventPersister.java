@@ -20,6 +20,7 @@ public class BusinessTelemetryEventPersister extends AbstractElasticTelemetryEve
 	public void persist(BusinessTelemetryEvent event, BusinessTelemetryEventWriterJsonImpl writer) {
 		IndexRequest indexRequest = createIndexRequest(event.id).source(writer.write(event));
 		bulkProcessor.add(indexRequest);
+		setCorrelationOnParent(event);
 	}
 
 	@Override

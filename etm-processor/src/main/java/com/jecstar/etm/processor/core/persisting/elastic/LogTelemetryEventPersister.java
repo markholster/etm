@@ -20,6 +20,7 @@ public class LogTelemetryEventPersister extends AbstractElasticTelemetryEventPer
 	public void persist(LogTelemetryEvent event, LogTelemetryEventWriterJsonImpl writer) {
 		IndexRequest indexRequest = createIndexRequest(event.id).source(writer.write(event));
 		bulkProcessor.add(indexRequest);
+		setCorrelationOnParent(event);
 	}
 
 	@Override

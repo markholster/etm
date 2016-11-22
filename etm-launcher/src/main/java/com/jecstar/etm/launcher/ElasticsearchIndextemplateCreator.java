@@ -104,25 +104,29 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	
 	private void insertPainlessScripts() throws IOException {
 		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
-				.setId("etm_update-search-template").setSource(JsonXContent.contentBuilder().startObject()
-						.field("script", createUpdateSearchTemplateScript()).endObject().bytes())
-				.get();
+			.setId("etm_update-search-template").setSource(JsonXContent.contentBuilder().startObject()
+					.field("script", createUpdateSearchTemplateScript()).endObject().bytes())
+			.get();
 		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
-				.setId("etm_remove-search-template").setSource(JsonXContent.contentBuilder().startObject()
-						.field("script", createRemoveSearchTemplateScript()).endObject().bytes())
-				.get();
+			.setId("etm_remove-search-template").setSource(JsonXContent.contentBuilder().startObject()
+					.field("script", createRemoveSearchTemplateScript()).endObject().bytes())
+			.get();
 		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
-				.setId("etm_update-search-history").setSource(JsonXContent.contentBuilder().startObject()
-						.field("script", createUpdateSearchHistoryScript()).endObject().bytes())
-				.get();
+			.setId("etm_update-search-history").setSource(JsonXContent.contentBuilder().startObject()
+					.field("script", createUpdateSearchHistoryScript()).endObject().bytes())
+			.get();
 		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
-				.setId("etm_update-event").setSource(JsonXContent.contentBuilder().startObject()
-						.field("script", createUpdateEventScript()).endObject().bytes())
-				.get();
+			.setId("etm_update-event").setSource(JsonXContent.contentBuilder().startObject()
+					.field("script", createUpdateEventScript()).endObject().bytes())
+			.get();
 		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
-				.setId("etm_update-request-with-response").setSource(JsonXContent.contentBuilder().startObject()
-						.field("script", createUpdateRequestWithResponseScript()).endObject().bytes())
-				.get();
+			.setId("etm_update-event-with-correlation").setSource(JsonXContent.contentBuilder().startObject()
+					.field("script", createUpdateEventWithCorrelationScript()).endObject().bytes())
+			.get();
+		new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE).setScriptLang("painless")
+			.setId("etm_update-request-with-response").setSource(JsonXContent.contentBuilder().startObject()
+					.field("script", createUpdateRequestWithResponseScript()).endObject().bytes())
+			.get();
 	}
 
 	private void creatEtmEventIndexTemplate(boolean create, int shardsPerIndex, int replicasPerIndex) {
@@ -232,6 +236,20 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"        params.ctx._source.search_history.remove(0);\n" +
 				"    }\n" +
 				"}\n";		
+	}
+	
+	private String createUpdateEventWithCorrelationScript() {
+		return "String correlatingId = (String)params.get(\"correlating_id\");\n" + 
+				"Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" + 
+				"\n" + 
+				"List correlations = (List)targetSource.get(\"correlations\");\n" + 
+				"if (correlations == null) {\n" + 
+				"	correlations = new ArrayList();\n" + 
+				"	targetSource.put(\"correlations\", correlations);\n" + 
+				"}\n" + 
+				"if (!correlations.contains(correlatingId)) {\n" + 
+				"	correlations.add(correlatingId);\n" + 
+				"}";
 	}
 	
 	private String createUpdateEventScript() {

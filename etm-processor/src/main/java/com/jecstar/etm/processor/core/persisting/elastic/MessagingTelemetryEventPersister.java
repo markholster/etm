@@ -36,6 +36,8 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
 					.script(new Script("etm_update-request-with-response", ScriptType.STORED, "painless", parameters))
 					.upsert("{}")
 					.scriptedUpsert(true));
+		} else {
+			setCorrelationOnParent(event);
 		}
 	}
 
