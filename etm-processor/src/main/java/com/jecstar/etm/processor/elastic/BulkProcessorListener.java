@@ -16,6 +16,7 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
@@ -38,12 +39,19 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 	
 	public BulkProcessorListener(final MetricRegistry metricRegistry) {
 		this.bulkTimer = metricRegistry.timer("event-processor.persisting-repository-bulk-update");
+		Gauge<Integer> blacklistGauge = new Gauge<Integer>() {
+
+			@Override
+			public Integer getValue() {
+				return BulkProcessorListener.this.blacklistedIds.size();
+			}};
+		metricRegistry.register("event-processor.blacklist-size", blacklistGauge);
 	}
 	
 	@Override
 	public void beforeBulk(long executionId, BulkRequest request) {
 		this.metricContext.put(executionId, this.bulkTimer.time());
-		clealupBlacklist();
+		cleanupBlacklist();
 		Iterator<ActionRequest<?>> it = request.requests().iterator();
 		while (it.hasNext()) {
 			ActionRequest<?> action = it.next();
@@ -103,7 +111,7 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 		}
 	}
 	
-	private void clealupBlacklist() {
+	private void cleanupBlacklist() {
 		final long startTime = System.currentTimeMillis();
 		Iterator<Entry<String, Long>> iterator = this.blacklistedIds.entrySet().iterator();
 		while (iterator.hasNext()) {
