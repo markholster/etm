@@ -39,6 +39,8 @@ public class PersistingEventHandler implements EventHandler<TelemetryEvent>, Clo
 		final Context timerContext = this.timer.time();
 		try {
 			this.telemetryEventRepository.persistTelemetryEvent(event);
+			// Initialize the event to help the GC process reclaiming unused space. Otherwise the event will be kept on the ringbuffer untill it is overwritten with the new event. 
+			event.initialize();
 		} finally {
 			timerContext.stop();
 		}
