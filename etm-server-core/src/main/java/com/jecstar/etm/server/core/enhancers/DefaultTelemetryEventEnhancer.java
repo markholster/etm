@@ -137,7 +137,9 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 			return PayloadFormat.HTML;
 		} else if (trimmed.startsWith("<?xml ")) {
 			return PayloadFormat.XML;
-		} else if (trimmed.startsWith("{") && payload.endsWith("}")) {
+		} else if (trimmed.startsWith("<") && trimmed.endsWith(">")) {
+			return PayloadFormat.XML;
+		} else if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
 			return PayloadFormat.JSON;
 		} else if (trimmed.startsWith("select")
 				   || trimmed.startsWith("insert")
