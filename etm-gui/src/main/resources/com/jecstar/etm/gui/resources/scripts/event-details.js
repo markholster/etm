@@ -262,8 +262,8 @@ function showEvent(scrollTo, type, id) {
 	    }
 	    
 	    $eventTab.append($('<br/>'));
-	    $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw payload to clipboard');
 	    var payloadCode = $('<code>').text(indentCode(data.source.payload, data.source.payload_format));
+	    $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw payload to clipboard');
 	    $eventTab.append(
 	    		$('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
 	    				$('<div>').addClass('col-sm-12').append(
@@ -281,12 +281,10 @@ function showEvent(scrollTo, type, id) {
 	    }));
 	    if (typeof(Worker) !== "undefined") {
 	    	var worker = new Worker('../scripts/highlight-worker.js');
-	    	worker.onmessage = function(event) { 
-	    		payloadCode.html(event.data);
+	    	worker.onmessage = function(result) { 
+	    		payloadCode.html(result.data);
 	    	}
-	    	worker.postMessage(payloadCode.text());
-	    } else {
-	    	hljs.highlightBlock(payloadCode);
+	    	worker.postMessage([payloadCode.text(), data.source.payload_format]);
 	    }
 	    if ('log' === data.type && "undefined" != typeof data.source.stack_trace) {
 	    	$eventTab.append(
