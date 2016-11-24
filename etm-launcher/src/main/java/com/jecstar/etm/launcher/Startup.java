@@ -12,7 +12,6 @@ import org.yaml.snakeyaml.Yaml;
 
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
-import com.jecstar.etm.launcher.slf4j.LogBulkProcessorWrapper;
 import com.jecstar.etm.launcher.slf4j.LogConfiguration;
 
 public class Startup {
@@ -28,8 +27,9 @@ public class Startup {
 			LogConfiguration.rootLogLevel = configuration.logging.rootLogger;
 			LogConfiguration.applicationInstance = configuration.instanceName;
 			LogConfiguration.hostAddress = InetAddress.getByName(configuration.bindingAddress);
-			EtmLoggerFactory.initialize(new LogBulkProcessorWrapper());
-			new Launcher().launch(commandLineParameters, configuration);
+			InternalBulkProcessorWrapper bulkProcessorWrapper = new InternalBulkProcessorWrapper();
+			EtmLoggerFactory.initialize(bulkProcessorWrapper);
+			new Launcher().launch(commandLineParameters, configuration, bulkProcessorWrapper);
 		} catch (FileNotFoundException e) {
 			System.err.println("Configuration file not found: " + e.getMessage());
 			return;

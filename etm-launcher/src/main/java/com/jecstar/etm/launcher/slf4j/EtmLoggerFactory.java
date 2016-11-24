@@ -7,6 +7,7 @@ import org.elasticsearch.client.Client;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 
+import com.jecstar.etm.launcher.InternalBulkProcessorWrapper;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 public class EtmLoggerFactory implements ILoggerFactory {
@@ -14,9 +15,9 @@ public class EtmLoggerFactory implements ILoggerFactory {
 	private final ConcurrentMap<String, Logger> loggerMap;
 	private final LogConfiguration logConfiguration;
 
-	private static LogBulkProcessorWrapper bulkProcessorWrapper;
+	private static InternalBulkProcessorWrapper bulkProcessorWrapper;
 	
-	public static void initialize(LogBulkProcessorWrapper bulkProcessorWrapper) {
+	public static void initialize(InternalBulkProcessorWrapper bulkProcessorWrapper) {
 		EtmLoggerFactory.bulkProcessorWrapper = bulkProcessorWrapper;
 	}
 
@@ -41,12 +42,6 @@ public class EtmLoggerFactory implements ILoggerFactory {
 			Logger newInstance = new EtmLogger(name, this.logConfiguration, bulkProcessorWrapper);
 			Logger oldInstance = loggerMap.putIfAbsent(name, newInstance);
 			return oldInstance == null ? newInstance : oldInstance;
-		}
-	}
-
-	public static void close() {
-		if (bulkProcessorWrapper != null) {
-			bulkProcessorWrapper.close();
 		}
 	}
 

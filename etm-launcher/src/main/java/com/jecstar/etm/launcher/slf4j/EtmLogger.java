@@ -18,6 +18,7 @@ import com.jecstar.etm.domain.builders.ApplicationBuilder;
 import com.jecstar.etm.domain.builders.EndpointBuilder;
 import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
+import com.jecstar.etm.launcher.InternalBulkProcessorWrapper;
 
 public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
@@ -32,16 +33,16 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	private static final String FQCN = EtmLogger.class.getName();
 
 	private final LogConfiguration configuration;
-	private final LogBulkProcessorWrapper logBulkProcessorWrapper;
+	private final InternalBulkProcessorWrapper internalBulkProcessorWrapper;
 	private String logLevel;
 	private int logLevelAsInt;
 
-	public EtmLogger(String loggerName, LogConfiguration configuration, LogBulkProcessorWrapper logBulkProcessorWrapper) {
+	public EtmLogger(String loggerName, LogConfiguration configuration, InternalBulkProcessorWrapper internalBulkProcessorWrapper) {
 		this.name = loggerName;
 		this.configuration = configuration;
 		this.logLevel = this.configuration.getLogLevel(getName());
 		this.logLevelAsInt = determineLevelAsInteger(this.logLevel);
-		this.logBulkProcessorWrapper = logBulkProcessorWrapper;
+		this.internalBulkProcessorWrapper = internalBulkProcessorWrapper;
 	}
 	
 	@Override
@@ -371,7 +372,7 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 					)
 			)
 			.build();
-		this.logBulkProcessorWrapper.persist(logTelemetryEvent);
+		this.internalBulkProcessorWrapper.persist(logTelemetryEvent);
 	}
 	
 }
