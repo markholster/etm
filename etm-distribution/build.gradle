@@ -15,7 +15,8 @@ distributions {
             exclude '**/com.ibm.mq.allclient.jar'
             exclude '**/config-manager-proxy-S900-FP03.jar'
             exclude '**/ibmjsseprovider2.jar'
-            exclude '**/integration-api-10.0.0.0.jar'
+            exclude '**/integration-api-*.jar'
+            exclude '**/etm-distribution-*.jar'
             into ('config') { 
             	from { 'src/main/distribution/config' }
             }
