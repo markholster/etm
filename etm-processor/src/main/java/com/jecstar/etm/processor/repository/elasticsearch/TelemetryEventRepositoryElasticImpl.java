@@ -63,8 +63,8 @@ public class TelemetryEventRepositoryElasticImpl extends AbstractJsonConverter i
 	
 	private BulkRequestBuilder bulkRequest;
 	
-	private Map<String, Long> blacklistedIds = new HashMap<String, Long>();
-	private final Map<String, EndpointConfigResult> endpointCache = new HashMap<String, EndpointConfigResult>();
+	private Map<String, Long> blacklistedIds = new HashMap<>();
+	private final Map<String, EndpointConfigResult> endpointCache = new LruCache<>(100);
 	
 	public TelemetryEventRepositoryElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration) {
 		this.elasticClient = elasticClient;
