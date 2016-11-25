@@ -279,7 +279,8 @@ function showEvent(scrollTo, type, id) {
 	            return data.source.payload;
 	        }
 	    }));
-	    if (typeof(Worker) !== "undefined") {
+	    if (typeof(Worker) !== "undefined" && data.source.payload_length <= 1048576) {
+	    	// Only highlight for payload ~< 1 MiB
 	    	var worker = new Worker('../scripts/highlight-worker.js');
 	    	worker.onmessage = function(result) { 
 	    		payloadCode.html(result.data);
