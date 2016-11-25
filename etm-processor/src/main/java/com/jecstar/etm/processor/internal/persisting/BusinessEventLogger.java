@@ -25,7 +25,7 @@ public class BusinessEventLogger {
 	public static void logEtmStartup() {
 		BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder().setPayload(BUSINESS_EVENT_ETM_STARTED)
 				.setPayloadFormat(PayloadFormat.JSON)
-				.setName("Enterprise Telemetry Monitor started")
+				.setName("Enterprise Telemetry Monitor node started")
 				.addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
 				.build();
 		BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);
@@ -34,7 +34,7 @@ public class BusinessEventLogger {
 	public static void logEtmShutdown() {
 		BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder().setPayload(BUSINESS_EVENT_ETM_STOPPED)
 				.setPayloadFormat(PayloadFormat.JSON)
-				.setName("Enterprise Telemetry Monitor stopped")
+				.setName("Enterprise Telemetry Monitor node stopped")
 				.addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
 				.build();
 		BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);
