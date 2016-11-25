@@ -17,6 +17,7 @@ import com.jecstar.etm.processor.ibmmq.handler.ClonedMessageHandler;
 import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.HandlerResult;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
+import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -103,6 +104,7 @@ public class DestinationReader implements Runnable {
 				if (log.isFatalLevelEnabled()) {
 					log.logFatalMessage("Error detected while processing message with id '" + byteArrayToString(message.messageId) + "'. Stopping reader to prevent further unexpected behaviour.", e);
 				}
+				BusinessEventLogger.logMqProcessorEmergencyShutdown(e);
 				this.stop = true;
 			} catch (Exception e) {
 				if (log.isWarningLevelEnabled()) {

@@ -3,7 +3,6 @@ package com.jecstar.etm.launcher;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.time.ZonedDateTime;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -20,20 +19,16 @@ import org.jboss.netty.logging.Slf4JLoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
-import com.jecstar.etm.domain.PayloadFormat;
-import com.jecstar.etm.domain.builders.ApplicationBuilder;
-import com.jecstar.etm.domain.builders.BusinessTelemetryEventBuilder;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.retention.IndexCleaner;
-import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
+import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
+import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -44,9 +39,6 @@ public class Launcher {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(Launcher.class);
-	
-	private static final String BUSINESS_EVENT_ETM_STARTED = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><etm><action>started</action></etm>";
-	private static final String BUSINESS_EVENT_ETM_STOPPED = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><etm><action>stopped</action></etm>";
 	
 	private ElasticsearchIndextemplateCreator indexTemplateCreator;
 	private TelemetryCommandProcessor processor;
@@ -63,11 +55,11 @@ public class Launcher {
 		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
 		try {
 			initializeElasticsearchClient(configuration);
-			EtmLoggerFactory.setClient(this.elasticClient);
+			this.bulkProcessorWrapper.setClient(this.elasticClient);
 			this.indexTemplateCreator = new ElasticsearchIndextemplateCreator(this.elasticClient);
 			this.indexTemplateCreator.createTemplates();
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
-			EtmLoggerFactory.setConfiguration(etmConfiguration);
+			this.bulkProcessorWrapper.setConfiguration(etmConfiguration);
 			this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
@@ -88,19 +80,7 @@ public class Launcher {
 			if (log.isInfoLevelEnabled()) {
 				log.logInfoMessage("Enterprise Telemetry Monitor started.");
 			}
-			this.bulkProcessorWrapper.persist(new BusinessTelemetryEventBuilder().setPayload(BUSINESS_EVENT_ETM_STARTED).setPayloadFormat(PayloadFormat.XML).setName("Enterprise Telemetry Monitor started")
-					.addOrMergeEndpoint(new EndpointBuilder().setName(configuration.instanceName)
-					.setWritingEndpointHandler(new EndpointHandlerBuilder()
-							.setHandlingTime(ZonedDateTime.now())
-							.setApplication(new ApplicationBuilder()
-									.setName("Enterprise Telemetry Monitor")
-									.setVersion(System.getProperty("app.version"))
-									.setInstance(configuration.instanceName)
-									.setPrincipal(System.getProperty("user.name"))
-									.setHostAddress(InetAddress.getByName(configuration.bindingAddress))
-							)
-					)
-			).build());
+			BusinessEventLogger.logEtmStartup();
 		} catch (Exception e) {
 			if (!commandLineParameters.isQuiet()) {
 				e.printStackTrace();
@@ -138,19 +118,7 @@ public class Launcher {
 				}
 				if (Launcher.this.bulkProcessorWrapper != null) {
 					try { 
-						Launcher.this.bulkProcessorWrapper.persist(new BusinessTelemetryEventBuilder().setPayload(BUSINESS_EVENT_ETM_STOPPED).setPayloadFormat(PayloadFormat.XML).setName("Enterprise Telemetry Monitor stopped")
-								.addOrMergeEndpoint(new EndpointBuilder().setName(configuration.instanceName)
-								.setWritingEndpointHandler(new EndpointHandlerBuilder()
-										.setHandlingTime(ZonedDateTime.now())
-										.setApplication(new ApplicationBuilder()
-												.setName("Enterprise Telemetry Monitor")
-												.setVersion(System.getProperty("app.version"))
-												.setInstance(configuration.instanceName)
-												.setPrincipal(System.getProperty("user.name"))
-												.setHostAddress(InetAddress.getByName(configuration.bindingAddress))
-										)
-								)
-						).build());										
+						BusinessEventLogger.logEtmShutdown();
 						Launcher.this.bulkProcessorWrapper.close(); 
 					} catch (Throwable t) {}
 				}

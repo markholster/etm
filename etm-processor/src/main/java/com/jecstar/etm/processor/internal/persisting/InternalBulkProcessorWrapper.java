@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher;
+package com.jecstar.etm.processor.internal.persisting;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -22,6 +22,13 @@ import com.jecstar.etm.processor.core.persisting.elastic.BusinessTelemetryEventP
 import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
+/**
+ * Bulk processor for ETM internal logging. Used for persisting events without
+ * placing them on the ringbuffer. This is in particular useful for logging- and
+ * business events.
+ * 
+ * @author Mark Holster
+ */
 public class InternalBulkProcessorWrapper implements Closeable {
 
 	private static final LogTelemetryEventWriterJsonImpl logWriter = new LogTelemetryEventWriterJsonImpl();
@@ -36,7 +43,7 @@ public class InternalBulkProcessorWrapper implements Closeable {
 	private List<TelemetryEvent<?>> startupBuffer = new ArrayList<>();
 	
 	private boolean open = true;
-
+	
 	public void setConfiguration(EtmConfiguration configuration) {
 		this.configuration = configuration;
 		if (this.bulkProcessor != null) {

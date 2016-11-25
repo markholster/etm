@@ -1,5 +1,7 @@
 package com.jecstar.etm.domain.builders;
 
+import java.time.ZonedDateTime;
+
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandler;
 
@@ -41,6 +43,13 @@ public class EndpointBuilder {
 
 	public EndpointBuilder addReadingEndpointHandler(EndpointHandlerBuilder readingEndpointHandlerBuilder) {
 		this.endpoint.readingEndpointHandlers.add(readingEndpointHandlerBuilder.build());
+		return this;
+	}
+	
+	public EndpointBuilder setWritingTimeToNow() {
+		if (this.endpoint.writingEndpointHandler != null) {
+			this.endpoint.writingEndpointHandler.handlingTime = ZonedDateTime.now();
+		}
 		return this;
 	}
 }

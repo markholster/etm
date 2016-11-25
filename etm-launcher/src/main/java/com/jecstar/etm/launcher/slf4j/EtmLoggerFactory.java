@@ -3,12 +3,10 @@ package com.jecstar.etm.launcher.slf4j;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.elasticsearch.client.Client;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 
-import com.jecstar.etm.launcher.InternalBulkProcessorWrapper;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 
 public class EtmLoggerFactory implements ILoggerFactory {
 
@@ -19,13 +17,6 @@ public class EtmLoggerFactory implements ILoggerFactory {
 	
 	public static void initialize(InternalBulkProcessorWrapper bulkProcessorWrapper) {
 		EtmLoggerFactory.bulkProcessorWrapper = bulkProcessorWrapper;
-	}
-
-	public static void setClient(Client elasticClient) {
-		bulkProcessorWrapper.setClient(elasticClient);
-	}
-	public static void setConfiguration(EtmConfiguration etmConfiguration) {
-		bulkProcessorWrapper.setConfiguration(etmConfiguration);
 	}
 	
 	public EtmLoggerFactory() {

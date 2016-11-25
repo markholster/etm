@@ -7,12 +7,18 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.ZonedDateTime;
 
 import org.yaml.snakeyaml.Yaml;
 
+import com.jecstar.etm.domain.builders.ApplicationBuilder;
+import com.jecstar.etm.domain.builders.EndpointBuilder;
+import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import com.jecstar.etm.launcher.slf4j.LogConfiguration;
+import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
+import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 
 public class Startup {
 
@@ -29,6 +35,17 @@ public class Startup {
 			LogConfiguration.hostAddress = InetAddress.getByName(configuration.bindingAddress);
 			InternalBulkProcessorWrapper bulkProcessorWrapper = new InternalBulkProcessorWrapper();
 			EtmLoggerFactory.initialize(bulkProcessorWrapper);
+			BusinessEventLogger.initialize(bulkProcessorWrapper, new EndpointBuilder().setName(configuration.instanceName)
+					.setWritingEndpointHandler(new EndpointHandlerBuilder()
+							.setHandlingTime(ZonedDateTime.now())
+							.setApplication(new ApplicationBuilder()
+									.setName("Enterprise Telemetry Monitor")
+									.setVersion(System.getProperty("app.version"))
+									.setInstance(configuration.instanceName)
+									.setPrincipal(System.getProperty("user.name"))
+									.setHostAddress(InetAddress.getByName(configuration.bindingAddress))
+							)
+					));
 			new Launcher().launch(commandLineParameters, configuration, bulkProcessorWrapper);
 		} catch (FileNotFoundException e) {
 			System.err.println("Configuration file not found: " + e.getMessage());

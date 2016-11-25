@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 import org.slf4j.Marker;
 import org.slf4j.helpers.FormattingTuple;
@@ -18,7 +17,7 @@ import com.jecstar.etm.domain.builders.ApplicationBuilder;
 import com.jecstar.etm.domain.builders.EndpointBuilder;
 import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
-import com.jecstar.etm.launcher.InternalBulkProcessorWrapper;
+import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 
 public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
@@ -355,7 +354,6 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 		}
 		LogTelemetryEvent logTelemetryEvent = new LogTelemetryEventBuilder()
 			.setName(getName())
-			.setId(UUID.randomUUID().toString())
 		    .setLogLevel(logLevel)
 			.setPayload(payload)
 			.setStackTrace(stackTrace)
