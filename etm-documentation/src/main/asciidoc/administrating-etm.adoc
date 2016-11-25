@@ -44,7 +44,7 @@ Processor:: With this role the user can add events by posting to the rest proces
 Iib-admin:: With this role the user can manage the creation if IIB Monitoring Event from the ''Settings'' menu. See <<Integration with IBM MQ and/or IBM Integration Bus>> to enable this integration.
 
 ==== Filter query
-Imagine you have stored a gazillion events in {etm}. Some of them might contain passwords or other sensitive data and you don't want this data to be visible to everyone with a Searcher role. This is were the Filter query is your best friend. When an Filter query is applied to a user (or group) it is attached to every query the user executes. For example, when we configure
+Imagine you have stored a gazillion events in {etm}. Some of them might contain credentials or other sensitive data and you don't want this data to be visible to everyone with a Searcher role. This is were the Filter query is your best friend. When an Filter query is applied to a user (or group) it is attached to every query the user executes. For example, when we configure
 
 [source]
 ----
@@ -125,7 +125,7 @@ The JsonPath parser is capable of extracting data from json payload. There's no 
 The XPath parser can extract data from XML based payload. XPath 2.0, 3,0 & 3.1 queries are supported to extract data from any XML and/or Soap events.
 
 ==== XSLT parser
-The XLST parser can extract data from XML based payload. All XSLT 2.0 compatible templates are supported to extract data from any XML and/or Soap events.
+The XSLT parser can extract data from XML based payload. All XSLT 2.0 compatible templates are supported to extract data from any XML and/or Soap events.
  
 === Endpoints
 To add, modify or delete endpoint configurations browse to http://localhost:8080/gui/settings/endpoints.html or select the menu option ''Settings -> Endpoints''. Endpoint configurations can be used to enhance events before they are stored on disk. Configuration of this enhancements can be done per endpoint, or globally.

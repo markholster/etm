@@ -93,7 +93,7 @@ The log event can be used when an application wants to log something. {etm} can 
 |=======================
 
 === Messaging event
-The messaging event can be used when an application sends or receives a message over a messaging system suck as IBM MQ or ActiveMQ. Besides the <<Common event data>> attributes the messaging event has the following attributes: 
+The messaging event can be used when an application sends or receives a message over a messaging system such as IBM MQ or ActiveMQ. Besides the <<Common event data>> attributes the messaging event has the following attributes: 
 
 .Messaging event attributes
 [options="header"]

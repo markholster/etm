@@ -40,7 +40,7 @@ In short a simple setup could be something like the image below; Application 1 a
 image::images/etm-overview.png["{etm} overview",link="./images/etm-overview.png"]
 
 === Installation
-{etm} is written in Java and hence needs a Java 8 runtime installed on your machine. It is recommended that you use the Oracle JDK version 1.8, but {etm} might run with other JDK suppliers as well. The installation of the Java runtime is not covered in this manual and may differ from platform to platform. Recommendations regarding the Oracle JDK can be found on link:http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html[Oracle's website]. 
+{etm} is written in Java and needs a Java 8 runtime installed on your machine. It is recommended that you use the Oracle JDK version 1.8, but {etm} might run with other JDK suppliers as well. The installation of the Java runtime is not covered in this manual and may differ from platform to platform. Recommendations regarding the Oracle JDK can be found on link:http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html[Oracle's website]. 
 Before you proceed, please check if a correct version of the Java runtime is installed by running:
 
 [source,bash,subs=attributes+]
@@ -53,7 +53,7 @@ Don\'t forget to read the link:https://www.elastic.co/guide/en/elasticsearch/ref
 {etm} does not require a specific Elasticsearch cluster name and can join any Elasticsearch cluster, but out of the box it is trying to connect to a cluster with the name 'elasticsearch'. {etm} indici and aliases will be prefixed with abbreviation ''etm_''.
   
 
-Once Elasticsearch is up and running, when can then download and run {etm}. The binaries can be downloaded from link:http://www.jecstar.com/downloads[www.jecstar.com/downloads]. Depending on your operation (or personal
+Once Elasticsearch is up and running you can download and run {etm}. The binaries can be downloaded from link:http://www.jecstar.com/downloads[www.jecstar.com/downloads]. Depending on your operation (or personal
 preference) you can download a .zip or .tgz file. In this example we choose the .tgz file, so let's download the binary to our machine:
 
 [source,bash,subs=attributes+]
@@ -68,14 +68,14 @@ Then extract the archive with the following command:
 tar -zxvf etm-{project-version}.tgz
 ----
 
-This wil extract the archive to the directory etm-{project-version}. We then change to the bin directory of {etm} to fire it up for the first time:
+This will extract the archive to the directory etm-{project-version}. We then change to the bin directory of {etm} to fire it up for the first time:
 
 [source,bash,subs=attributes+]
 ----
 cd etm-{project-version}/bin
 ----
 
-And now we are ready we can start {etm} with the following command:
+You are now ready to start {etm} with the following command:
 
 [source,bash,subs=attributes+]
 ----

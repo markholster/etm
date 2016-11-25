@@ -6,6 +6,81 @@ To search through all events browse to http://localhost:8080/gui/search/ or sele
 .Search overview
 image::images/etm-search-overview.png["Search overview",link="./images/etm-search-overview.png"]
 
+=== Search widget
+The left part of the search screen shows an input field in which you can enter your search terms. Also you can (un)check the event types you want to be in- or excluded from the search. 
+
+In the query input field you can enter the terms you are searching for. See the section <<Query syntax>> for the query syntax that can be used. The input field provides a basic form of auto completion by hitting the arrow down button on your keyboard. All available attributes for the selected event types will be show in a drop down box.
+
+=== Search template widget
+On the top right of the search screen you see your search templates. By default three most common templates are provided for you, but of course you can change or delete them as you like. To create an search template just fill in a query in the <<Search widget>>, enter a template name and hit the ''Save'' button. If a template with exactly the same name already exist you will see a warning message which asks you to confirm the overwrite of an existing template. All settings regarding the query, like results per page, result columns etc will be stored in your search template.
+
+To use a search template just click on the name in the Search template widget. All setting stored with the search template will be restored to your current search context. 
+
+To delete a search template click on the red cross behind the name and confirm the deletion of the template. If you accidently removed the wrong template just hit the ''Save'' button again and the search template will be available again. Note that if you changed anything in the search context between the removal and the save of the search template that will be saved as well.
+
+Your {etm} administrator may set a limit on the number of templates that you can store. If the limit is reached a message will be shown in the Search template widget.
+
+=== Search history widget
+Under the <<Search template widget>> you'll find the Search history widget. This widget is a read-only widget and stores your last executed queries. By default your last 5 queries will be stored, but this value can be adjusted in your <<User preferences>> screen. Keep in mind that an {etm} administrator is capable of setting a maximum number of queries that can be visible in your Search history widget.
+
+The content of this widget is not bound to any session, so if you login via any other machine you will always see the same history. 
+
+=== Search results widget
+As soon as a query is executed the Search result widget will show up. This widget will show you the events that match your query. The default layout of the Search result widget may look like this:
+
+.Search result
+image::images/etm-search-result.png["Search result",link="./images/etm-search-result.png"]
+
+The sorting order can be adjusted by clicking on the column header and auto-scrolling through the results will kick in as soon as your browser hit the end of the page. The top of the result table is showing the number of events that match the query and the ones that are shown. 
+
+==== Editing the result table layout
+By default only the lowest handling time of any of the writing event handlers and the name of the event will be shown. This may be a good starting point for most of the queries, but is most likely not covering all of your needs. Fortunately all table settings can be adjusted by clicking on the edit table icon in the result table header. This is the right most icon next to the download icon. The following screen will show up when you click on the button:
+
+.Edit search result table
+image::images/etm-edit-search-result-table.png["Edit search result table",link="./images/etm-edit-search-result-table.png"]
+
+This screen enables you to change sort settings and the number of results per page that should be retrieved. Also an option is given to alter the column layout of the result table. Columns can be added, deleted an re-arranged. Per column the following options are available:
+
+.Column attributes
+[options="header"]
+|=======================
+|Name|Description
+|Name|The name of the column in the result table.
+|Field|The event attribute that should be retrieved.
+|Format|The format the result should have. Time values are stored as milliseconds since January 1st 1970. This is kind of hard to read so you it's easier to convert this value to an ISO timestamp.
+|Multiselect|Some attributes may occur more than ones in a single event. An event can have a writing event handler per endpoint. So if you want to show the handling time of a writing event handler of an event with multiple endpoints {etm} has to pick one. This option tells which value should be selected in case of a multi-occurrence attribute.  
+|Link|A checkbox that should be checked if the value should be clickable. If a value is clickable it will be presented as a link in the result table. When clicking this link the details of the event will be shown.
+|======================= 
+
+When clicking on the apply button the query will be automatically executed again and the results are then presented in the way you desired. The layout of your result table will also be stored in a search template and in the queries stored in the <<Search history widget>>.
+
+==== Downloading results
+If you want to export your search results you can download them as .csv or .xlsx file. By clicking the download icon in the result table header a screen will be shown that gives you some download options. You can select to include the payload in the download and change the number of rows you want to be exported. Besides the payload the columns that are configured in the result table will be included. Be aware that an {etm} administrator can set a maximum number of rows that can be exported. 
+
+When clicking the Download button your export will be presented as downloadable file.
+
+To prevent a large file stored in memory {etm} writes the export file to disk before it is offered as download. The directory referenced by the java.io.tmpdir system property will be used to store the export temporarily. Make sure the {etm} process has access to that directory.
+
+==== Inspecting found events
+If any of the columns in the result table is configured as link you can inspect the details of an event. By clicking on that link all data of that event and the events correlated will be shown. Depending on the event type the layout of this screen may differ; for 'http' and 'messaging' events a request and reply tab may be visible. If an transaction id is present with the event an ''Event chain'' tab is shown that shows the complete event chain in a graphical way! If you are allowed to view these events you can click on the desired items in the image to show more details of that specific event. When the payload format of the event is set to 'XML', 'SOAP', 'JSON' or 'SQL' the payload will be formatted to make it more readable. You can copy the raw unformatted content by clicking on 'Copy raw payload to clipboard' on the top left of the payload details. You can navigate back to the search results by clicking the 'Back' button or link. The last selected event will be formatted bold in the search result widget to quickly indicate where you left scrolling your results.
+
+[NOTE]
+Although you may not have access right to see all events the Event chain tab will always show all the event that belong to that chain. This may help you greatly reduce time on finding issues in your application landscape.
+
+Lets consider the following event chain:
+
+.Event chain
+image::images/etm-event-chain.png["Event chain",link="./images/etm-event-chain.png"]
+
+This chain shows an incoming http request on the 'Gui application'. The 'Gui application' transforms the http request to an messaging requests and send it to endpoint 'BACKEND.QUEUE.1'. On that queue the application 'My Backend' receives the request and handles it. As you can see a thick red arrow show that handling this request takes 84% of the total chain time. When you are experiencing performance issues the 'My Backend' application is a good place to start your investigation. 
+
+By clicking on 'ShoppingCardReqest' you will see everything that happened within that transaction:
+
+.Transaction overview
+image::images/etm-transaction-overview.png["Transaction overview",link="./images/etm-transaction-overview.png"]
+ 
+As we can see the query that selected the shopping card from the database took about 300 milliseconds. Depending on your needs that might or might not be an issue. Nevertheless {etm} will give you a quick inside in what is happening where an what applications and components take most of the execution time of an entire application chain. That is awesome isn't it?
+
 === Query syntax
 The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default the ''payload'' attribute is searched for, but other options are available. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
 
@@ -114,80 +189,4 @@ If you want to use any of these characters in your term(s) you have to escape th
 name: \(DemoName\) 
 ----
 searches for an event with the name ''(DemoName)''.
-
-=== Search widget
-The left part of the search screen shows an input field in which you can enter your search terms. Also you can (un)check the event types you want to be in- or excluded from the search. 
-
-In the query input field you can enter the terms you are searching for. See the section <<Query syntax>> for the query syntax that can be used. The input field provides a basic form of auto completion by hitting the arrow down button on your keyboard. All available attributes for the selected event types will be show in a drop down box.
-
-=== Search template widget
-On the top right of the search screen you see your search templates. By default three most common templates are provided for you, but of course you can change or delete them as you like. To create an search template just fill in a query in the <<Search widget>>, enter a template name and hit the ''Save'' button. If a template with exactly the same name already exist you will see a warning message which asks you to confirm the overwrite of an existing template. All settings regarding the query, like results per page, result columns etc will be stored in your search template.
-
-To use a search template just click on the name in the Search template widget. All setting stored with the search template will be restored to your current search context. 
-
-To delete a search template click on the red cross behind the name and confirm the deletion of the template. If you accidently removed the wrong template just hit the ''Save'' button again and the search template will be available again. Note that if you changed anything in the search context between the removal and the save of the search template that will be saved as well.
-
-Your {etm} administrator may set a limit on the number of templates that you can store. If the limit is reached a message will be shown in the Search template widget.
-
-=== Search history widget
-Under the <<Search template widget>> you'll find the Search history widget. This widget is a read-only widget and stores your last executed queries. By default your last 5 queries will be stored, but this value can be adjusted in your <<User preferences>> screen. Keep in mind that an {etm} administrator is capable of setting a maximum number of queries that can be visible in your Search history widget.
-
-The content of this widget is not bound to any session, so if you login via any other machine you will always see the same history. 
-
-=== Search results widget
-As soon as a query is executed the Search result widget will show up. This widget will show you the events that match your query. The default layout of the Search result widget may look like this:
-
-.Search result
-image::images/etm-search-result.png["Search result",link="./images/etm-search-result.png"]
-
-The sorting order can be adjusted by clicking on the column header and auto-scrolling through the results will kick in as soon as your browser hit the end of the page. The top of the result table is showing the number of events that match the query and the ones that are shown. 
-
-==== Editing the result table layout
-By default only the lowest handling time of any of the writing event handlers and the name of the event will be shown. This may be a good starting point for most of the queries, but is most likely not covering all of your needs. Fortunately all table settings can be adjusted by clicking on the edit table icon in the result table header. This is the right most icon next to the download icon. The following screen will show up when you click on the button:
-
-.Edit search result table
-image::images/etm-edit-search-result-table.png["Edit search result table",link="./images/etm-edit-search-result-table.png"]
-
-This screen enables you to change sort settings and the number of results per page that should be retrieved. Also an option is given to alter the column layout of the result table. Columns can be added, deleted an re-arranged. Per column the following options are available:
-
-.Column attributes
-[options="header"]
-|=======================
-|Name|Description
-|Name|The name of the column in the result table.
-|Field|The event attribute that should be retrieved.
-|Format|The format the result should have. Time values are stored as milliseconds since January 1st 1970. This is kind of hard to read so you it's easier to convert this value to an ISO timestamp.
-|Multiselect|Some attributes may occur more than ones in a single event. An event can have a writing event handler per endpoint. So if you want to show the handling time of a writing event handler of an event with multiple endpoints {etm} has to pick one. This option tells which value should be selected in case of a multi-occurrence attribute.  
-|Link|A checkbox that should be checked if the value should be clickable. If a value is clickable it will be presented as a link in the result table. When clicking this link the details of the event will be shown.
-|======================= 
-
-When clicking on the apply button the query will be automatically executed again and the results are then presented in the way you desired. The layout of your result table will also be stored in a search template and in the queries stored in the <<Search history widget>>.
-
-==== Downloading results
-If you want to export your search results you can download them as .csv or .xlsx file. By clicking the download icon in the result table header a screen will be shown that gives you some download options. You can select to include the payload in the download and change the number of rows you want to be exported. Besides the payload the columns that are configured in the result table will be included. Be aware that an {etm} administrator can set a maximum number of rows that can be exported. 
-
-When clicking the Download button your export will be presented as downloadable file.
-
-To prevent a large file stored in memory {etm} writes the export file to disk before it is offered as download. The directory referenced by the java.io.tmpdir system property will be used to store the export temporarily. Make sure the {etm} process has access to that directory.
-
-==== Inspecting found events
-If any of the columns in the result table is configured as link you can inspect the details of an event. By clicking on that link all data of that event and the events correlated will be shown. Depending on the event type the layout of this screen may differ; for 'http' and 'messaging' events a request and reply tab may be visible. If an transaction id is present with the event an ''Event chain'' tab is shown that shows the complete event chain in a graphical way! If you are allowed to view these events you can click on the desired items in the image to show more details of that specific event. When the payload format of the event is set to 'XML', 'SOAP', 'JSON' or 'SQL' the payload will be formatted to make it more readable. You can copy the raw unformatted content by clicking on 'Copy raw payload to clipboard' on the top left of the payload details. You can navigate back to the search results by clicking the 'Back' button or link. The last selected event will be formatted bold in the search result widget to quickly indicate where you left scrolling your results.
-
-[NOTE]
-Although you may not have access right to see all events the Event chain tab will always show all the event that belong to that chain. This may help you greatly reduce time on finding issues in your application landscape.
-
-Lets consider the following event chain:
-
-.Event chain
-image::images/etm-event-chain.png["Event chain",link="./images/etm-event-chain.png"]
-
-This chain shows an incoming http request on the 'Gui application'. The 'Gui application' transforms the http request to an messaging requests and send it to endpoint 'BACKEND.QUEUE.1'. On that queue the application 'My Backend' receives the request and handles it. As you can see a thick red arrow show that handling this request takes 84% of the total chain time. When you are experiencing performance issues the 'My Backend' application is a good place to start your investigation. 
-
-By clicking on 'ShoppingCardReqest' you will see everything that happened within that transaction:
-
-.Transaction overview
-image::images/etm-transaction-overview.png["Transaction overview",link="./images/etm-transaction-overview.png"]
- 
-As we can see the query that selected the shopping card from the database took about 300 milliseconds. Depending on your needs that might or might not be an issue. Nevertheless {etm} will give you a quick inside in what is happening where an what applications and components take most of the execution time of an entire application chain. That is awesome isn't it?
-
 
