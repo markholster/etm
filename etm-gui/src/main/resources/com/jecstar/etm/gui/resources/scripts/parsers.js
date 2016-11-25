@@ -162,9 +162,9 @@ function buildParserPage() {
 			type: $('#input-parser-type').val()
 		}
 		if ('fixed_position' == parserData.type) {
-			parserData['line'] = $('#input-fixed_position-line').val() - 1;
-			parserData['start_ix'] = $('#input-fixed_position-start-ix').val() - 1;
-			parserData['end_ix'] = $('#input-fixed_position-end-ix').val() - 1;
+			parserData['line'] = Number($('#input-fixed_position-line').val()) - 1;
+			parserData['start_ix'] = Number($('#input-fixed_position-start-ix').val()) - 1;
+			parserData['end_ix'] = Number($('#input-fixed_position-end-ix').val()) - 1;
 		} else if ('fixed_value' == parserData.type) {
 			parserData['value'] = $('#input-fixed-value').val();
 		} else if ('jsonpath' == parserData.type) {

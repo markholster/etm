@@ -320,6 +320,7 @@ function buildUserPage() {
 		$('#input-filter-query').val('');
 		$('#sel-filter-query-occurrence').val('MUST');
 		$('#sel-always-show-correlated-event').val('false');
+		$('#input-search-history-size').val(5);
 		$('#sel-locale').val(defaultLocale);
 		$('#sel-time-zone').val(defaultTimeZone);
 		$('#user-roles-container > label > input').prop('checked', false);

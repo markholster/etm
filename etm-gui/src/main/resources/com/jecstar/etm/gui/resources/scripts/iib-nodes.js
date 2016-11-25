@@ -150,7 +150,7 @@ function buildNodePage() {
 	function resetValues() {
 		$('#input-node-name').val('');
 		$('#input-host').val('');
-		$('#input-port').val('1414');
+		$('#input-port').val(1414);
 		$('#input-queue-manager').val('');
 		$('#input-channel').val('');
 		enableOrDisableButtons();
