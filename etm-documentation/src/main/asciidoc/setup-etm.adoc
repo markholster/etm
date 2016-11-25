@@ -118,7 +118,7 @@ The ''http'' section contains all options that are necessary to start the gui an
 |Name|Default value|Description
 |guiEnabled|true|Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the ''/gui'' context on your server and can be accessed by browsing to \http://<bindingAddress>:<httpPort>/gui
 |restProcessorEnabled|true|Should the rest processor be enabled? Set this value to false if you don't want this node to act as a processor that can process events with a REST api. The REST api is bound to the ''/rest/processor/'' context and can be access from \http://<bindingAddress>:<httpPort>/rest/processor/ 
-|httpPort|8080|The port to bind the http listener to.
+|httpPort|8080|The port to bind the http listener to. To disable the http listener set the value to zero or lower.
 |httpsPort|8443|The port to bind the secure https listener to. The listener will not start unless the sslKeystore is properly configured.
 |maxConcurrentRequests|100|The maximum number of request that can be processed in parallel at any given moment. This is the number of request to the gui and rest processor combined. If the number exceeds the maximum, the requests will be queued.
 |maxQueuedRequests|100|The maximum number of requests that can be queued. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.

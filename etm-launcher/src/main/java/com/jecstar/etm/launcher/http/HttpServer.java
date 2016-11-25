@@ -239,7 +239,7 @@ public class HttpServer {
 		KeyStore keyStore = loadKeyStore(configuration.http.sslKeystoreLocation, configuration.http.sslKeystoreType, configuration.http.sslKeystorePassword);
 		KeyStore trustStore = loadKeyStore(configuration.http.sslTruststoreLocation, configuration.http.sslTruststoreType, configuration.http.sslTruststorePassword);
 		KeyManager[] keyManagers = buildKeyManagers(keyStore, configuration.http.sslKeystorePassword);
-		TrustManager[] trustManagers = buildTrustManagers(configuration.http.sslTruststoreLocation == null ? null : trustStore, configuration.http.sslTruststorePassword);
+		TrustManager[] trustManagers = buildTrustManagers(trustStore, configuration.http.sslTruststorePassword);
 		if (keyManagers == null || trustManagers == null) {
 			return null;
 		}
@@ -251,6 +251,9 @@ public class HttpServer {
 	private KeyStore loadKeyStore(final File location, String type, final String storePassword)
 			throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException {
 		try (final InputStream stream = location == null ? null : new FileInputStream(location);) {
+			if (stream == null) {
+				return null;
+			}
 			KeyStore loadedKeystore = KeyStore.getInstance(type);
 			loadedKeystore.load(stream, storePassword == null ? null : storePassword.toCharArray());
 			return loadedKeystore;
