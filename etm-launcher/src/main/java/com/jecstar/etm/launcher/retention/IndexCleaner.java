@@ -8,6 +8,7 @@ import java.util.SortedMap;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 
+import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -65,6 +66,7 @@ public class IndexCleaner implements Runnable {
 						log.logInfoMessage("Removing index '" + indices.get(i) + "'.");
 					}		
 					this.client.admin().indices().prepareDelete(indices.get(i)).get();
+					BusinessEventLogger.logIndexRemoval(indices.get(i));
 					if (Thread.currentThread().isInterrupted()) {
 						return;
 					}

@@ -11,6 +11,7 @@ public class BusinessEventLogger {
 	private static final String BUSINESS_EVENT_ETM_STARTED = "{\"component\": \"etm\", \"action\": \"started\"}";
 	private static final String BUSINESS_EVENT_ETM_STOPPED = "{\"component\": \"etm\", \"action\": \"stopped\"}";
 	private static final String BUSINESS_EVENT_IBM_MQ_PROCESSOR_EMERGENCY_SHUTDOWN = "{\"component\": \"ibm mq processor\", \"action\": \"emergency shutdown\", \"reason\": \"{0}\"}";
+	private static final String BUSINESS_EVENT_REMOVED_INDEX = "{\"component\": \"index cleaner\", \"action\": \"removed index\", \"index\": \"{0}\"}";
 	private static final JsonWriter jsonWriter = new JsonWriter();
 	
 	private static InternalBulkProcessorWrapper internalBulkProcessorWrapper;
@@ -42,7 +43,16 @@ public class BusinessEventLogger {
 	public static void logMqProcessorEmergencyShutdown(Error e) {
 		BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder().setPayload(BUSINESS_EVENT_IBM_MQ_PROCESSOR_EMERGENCY_SHUTDOWN.replace("{0}", jsonWriter.escapeToJson(e.getMessage(), false)))
 				.setPayloadFormat(PayloadFormat.JSON)
-				.setName("IBM MQ processor emergency shutdown.")
+				.setName("IBM MQ processor emergency shutdown")
+				.addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
+				.build();
+		BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);
+	}
+	
+	public static void logIndexRemoval(String indexName) {
+		BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder().setPayload(BUSINESS_EVENT_REMOVED_INDEX.replace("{0}", jsonWriter.escapeToJson(indexName, false)))
+				.setPayloadFormat(PayloadFormat.JSON)
+				.setName("Index removed")
 				.addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
 				.build();
 		BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);
