@@ -11,6 +11,9 @@
 <link rel="stylesheet" href="../styles/font-awesome.min.css">
 <link rel="stylesheet" href="../styles/spinner.css">
 <link rel="stylesheet" href="../styles/nv.d3.min.css">
+<style type="text/css">
+body { padding-top: 60px; }
+</style>
 </head>
 <body>
    <nav class="navbar navbar-full navbar-dark navbar-fixed-top" style="background-color: #777;">
@@ -30,6 +33,68 @@
        </ul>
      </div>
   </nav>
+  
+  <div class="container-fluid" style="margin-top: 1em;">
+  	<div class="row">
+   	  <div class="col-md-6">
+   	    <div class="card card-block">
+   	      <h5 class="card-title">Graphs</h5>
+   	      <div class="card-text">
+            <div id="graphs_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+            <div id="graphs_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+            <div id="graphs_box">
+              <div class="row">
+                <div class=col-sm-12>
+	              <select id="sel-graph" class="form-control custom-select">
+	          	    <option selected="selected"></option>
+	              </select>
+	            </div>
+	          </div>  
+	          <hr />
+		      <div class="row">
+	            <div class=col-sm-12>
+			      <form id="graph_form">
+			        <div class="form-group row">
+					  <label for="input-graph-name" class="col-sm-3 col-form-label">Name</label>
+					  <div class="col-sm-9">
+					    <input id="input-graph-name" type="text" class="form-control" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="sel-graph-type" class="col-sm-3 col-form-label">Type</label>
+			          <div class="col-sm-9">
+	  		            <select id="sel-graph-type" class="form-control custom-select">
+			          	  <option value="bar">Bar chart</option>
+			          	  <option value="line">Line chart</option>
+			          	  <option value="pie">Pie chart</option>
+			          	  <option value="number">Single number</option>
+			            </select>
+			          </div>  
+					</div>
+			        <div class="modal-footer">
+	                  <input type="submit" id="btn-confirm-remove-graph" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
+	                  <input type="submit" id="btn-preview-graph" class="btn btn-primary" value="Preview" disabled="disabled" />
+	                  <input type="submit" id="btn-confirm-save-graph" class="btn btn-primary" value="Save" disabled="disabled" />
+			        </div>
+			      </form>
+			    </div>      
+	          </div>
+            </div>
+   	      </div>
+   	    </div>
+   	  </div>
+   	  <div class="col-md-6">
+   	    <div class="card card-block">
+   	      <h5 class="card-title">Preview</h5>
+   	      <div class="card-text">
+            <div id="preview_box">
+            </div>
+   	      </div>
+   	    </div>
+   	  </div>  
+   	</div>	
+  </div>  
+    
     
   <script src="../scripts/tether.min.js"></script>
   <script src="../scripts/jquery.min.js"></script>
