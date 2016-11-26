@@ -22,26 +22,18 @@ function buildMenu(currentContext) {
 		if ('search' == menu.name) {
 			$li.append(createMenuLink('../search/', 'fa-search', 'Search'));
 		} else if ('dashboard' == menu.name) {
-// Disable temporarely for the 2.0.0 release.			
-//			$drowDown = $('<div>').addClass('dropdown-menu');
-//			$.each(menu.dashboards, function(index, dashboard) {
-//				$drowDown.append(
-//						$('<a>').addClass('dropdown-item').attr('href', '../dashboard/index.html?name=' + encodeURIComponent(menu.name)).text(menu.name)
-//				);
-//			});
-//			if (menu.dashboards) {
-//				$drowDown.append($('<div>').addClass('dropdown-divider'));
-//			}
-//			$drowDown.append(
-//					$('<a>').addClass('dropdown-item').attr('href', '../dashboard/index.html?new=true').text('New dashboard')
-//			);
-//			$li.addClass('dropdown').append(
-//					$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
-//							$('<span>').addClass('fa fa-dashboard fa-lg hidden-sm-down').html('&nbsp;'), 
-//							'Dashboards'
-//					),
-//					$drowDown
-//			);			
+			var $drowdown = $('<div>').addClass('dropdown-menu');
+			$drowdown.append(
+					$('<a>').addClass('dropdown-item').attr('href', '../dashboard/graphs.html').text('Graphs'),
+					$('<a>').addClass('dropdown-item').attr('href', '../dashboard/dashboards.html').text('Dashboards')
+			);
+			$li.addClass('dropdown').append(
+			$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
+					$('<span>').addClass('fa fa-dashboard fa-lg hidden-sm-down').html('&nbsp;'), 
+					'Vizualizations'
+					),
+					$drowdown
+			);			
 		} else if ('preferences' == menu.name) {
 			$li.append(createMenuLink('../preferences/', 'fa-user', 'Preferences'));
 		} else if ('settings' == menu.name) {
