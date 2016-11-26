@@ -37,6 +37,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.UndertowOptions;
+import io.undertow.predicate.Predicates;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.InMemorySingleSignOnManager;
 import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
@@ -44,6 +45,9 @@ import io.undertow.security.impl.SingleSignOnManager;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.handlers.encoding.ContentEncodingRepository;
+import io.undertow.server.handlers.encoding.EncodingHandler;
+import io.undertow.server.handlers.encoding.GzipEncodingProvider;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.servlet.Servlets;
@@ -124,7 +128,12 @@ public class HttpServer {
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {
-				HttpHandler httpHandler = manager.start();
+				EncodingHandler httpHandler = new EncodingHandler(new ContentEncodingRepository()
+					      .addEncodingHandler("gzip", 
+					          new GzipEncodingProvider(), 50,
+					          Predicates.parse("max-content-size[5]")))
+					      .setNext(manager.start());
+				
 				root.addPrefixPath(di.getContextPath(), new SessionAttachmentHandler(httpHandler, manager.getDeployment().getSessionManager(), manager.getDeployment().getServletContext().getSessionConfig()));
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
