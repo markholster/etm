@@ -46,6 +46,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.encoding.ContentEncodingRepository;
+import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
@@ -129,11 +130,9 @@ public class HttpServer {
 			manager.deploy();
 			try {
 				EncodingHandler httpHandler = new EncodingHandler(new ContentEncodingRepository()
-					      .addEncodingHandler("gzip", 
-					          new GzipEncodingProvider(), 50,
-					          Predicates.parse("max-content-size[5]")))
-					      .setNext(manager.start());
-				
+					.addEncodingHandler("gzip", new GzipEncodingProvider(), 100, Predicates.maxContentSize(1024))
+					.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(1024)))
+					.setNext(manager.start());
 				root.addPrefixPath(di.getContextPath(), new SessionAttachmentHandler(httpHandler, manager.getDeployment().getSessionManager(), manager.getDeployment().getServletContext().getSessionConfig()));
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
