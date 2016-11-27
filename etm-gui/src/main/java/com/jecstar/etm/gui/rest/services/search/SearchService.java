@@ -1,7 +1,6 @@
 package com.jecstar.etm.gui.rest.services.search;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,15 +25,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
@@ -48,12 +42,11 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -61,7 +54,7 @@ import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
 @Path("/search")
-public class SearchService extends AbstractJsonService {
+public class SearchService extends AbstractIndexMetadataService {
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
@@ -153,41 +146,7 @@ public class SearchService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getKeywords(@PathParam("indexName") String indexName) {
 		StringBuilder result = new StringBuilder();
-		Map<String, List<String>> names = new HashMap<String, List<String>>();
-		GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(SearchService.client, GetMappingsAction.INSTANCE, indexName).get();
-		ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
-		Iterator<ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>>> mappingsIterator = mappings.iterator();
-		while (mappingsIterator.hasNext()) {
-			ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor = mappingsIterator.next();
-			Iterator<ObjectObjectCursor<String, MappingMetaData>> mappingMetaDataIterator = mappingsCursor.value.iterator();
-			while (mappingMetaDataIterator.hasNext()) {
-				ObjectObjectCursor<String, MappingMetaData> mappingMetadataCursor = mappingMetaDataIterator.next();
-				if ("_default_".equals(mappingMetadataCursor.key)) {
-					continue;
-				}
-				MappingMetaData mappingMetaData = mappingMetadataCursor.value;
-				List<String> values = new ArrayList<String>();
-				values.add("_exists_");
-				values.add("_missing_");
-				try {
-					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
-					addKeywordProperties(values, "", valueMap);
-					if (names.containsKey(mappingMetadataCursor.key)) {
-						List<String> currentValues = names.get(mappingMetadataCursor.key);
-						for (String value : values) {
-							if (!currentValues.contains(value)) {
-								currentValues.add(value);
-							}
-						}
-					} else {
-						names.put(mappingMetadataCursor.key, values);
-					}
-				} catch (IOException e) {
-					// Error will never been thrown. See mappingMetaData.getSourceAsMap() sources for detailes.
-				}
-			}
-			
-		}
+		Map<String, List<String>> names = getIndexFields(SearchService.client, indexName);
 		result.append("{ \"keywords\":[");
 		Set<Entry<String, List<String>>> entries = names.entrySet();
 		if (entries != null) {
@@ -1018,34 +977,5 @@ public class SearchService extends AbstractJsonService {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
-	private void addKeywordProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
-		valueMap = getObject("properties", valueMap);
-		if (valueMap == null) {
-			return;
-		}
-		// Remove temp fields that are used for correlating events.
-		valueMap.remove("temp_for_correlations");
-		// Remove event hashes field. It is used for internal handling of events.
-		valueMap.remove("event_hashes");
-		for (Entry<String, Object> entry : valueMap.entrySet()) {
-			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
-			String name = determinePropertyForKeywordName(prefix, entry.getKey());
-			if (entryValues.containsKey("properties")) {
-				addKeywordProperties(names, name, entryValues);
-			} else {
-				if (!names.contains(name)) {
-					names.add(name);
-				}
-			}
-		}
-	}
-	
-	private String determinePropertyForKeywordName(String prefix, String name) {
-		if (prefix.length() == 0) {
-			return name;
-		}
-		return prefix + "." + name;
-	}
 
 }

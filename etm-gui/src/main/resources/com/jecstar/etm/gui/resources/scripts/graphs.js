@@ -1,0 +1,150 @@
+function buildGraphsPage() {
+	
+	var graphMap = {};
+	
+	$('#sel-graph').change(function(event) {
+		event.preventDefault();
+		var graphData = graphMap[$(this).val()];
+		if ('undefined' == typeof graphData) {
+			resetValues();
+			return;
+		}
+		setValuesFromData(graphData);
+		enableOrDisableButtons();
+	});
+	
+	$('#sel-graph-type').change(function (event) {
+		event.preventDefault();
+	})
+	
+	$.ajax({
+	    type: 'GET',
+	    contentType: 'application/json',
+	    url: '../rest/dashboard/graphs',
+	    success: function(data) {
+	        if (!data) {
+	            return;
+	        }
+	        $graphSelect = $('#sel-graph');
+	        $.each(data.graphs, function(index, graph) {
+	        	$graphSelect.append($('<option>').attr('value', graph.name).text(graph.name));
+	        	graphMap[graph.name] = graph;
+	        });
+	        sortSelectOptions($graphSelect)
+	        $graphSelect.val('');
+	    }
+	});
+	
+	$('#btn-confirm-save-graph').click(function(event) {
+		if (!document.getElementById('graph_form').checkValidity()) {
+			return;
+		}
+		event.preventDefault();
+		var graphName = $('#input-graph-name').val();
+		if (isGraphExistent(graphName)) {
+			$('#overwrite-graph-name').text(graphName);
+			$('#modal-graph-overwrite').modal();
+		} else {
+			saveGraph();
+		}
+	});
+	
+	$('#btn-save-graph').click(function(event) {
+		saveGraph();
+	});
+	
+	$('#btn-confirm-remove-graph').click(function(event) {
+		event.preventDefault();
+		$('#remove-graph-name').text($('#input-graph-name').val());
+        $('#modal-graph-remove').modal();
+	});	
+
+	$('#btn-remove-graph').click(function(event) {
+		removeGraph($('#input-graph-name').val());
+	});
+
+	
+	$('#input-graph-name').on('input', enableOrDisableButtons);
+	
+	function enableOrDisableButtons() {
+		var graphName = $('#input-graph-name').val();
+		if (graphName) {
+			$('#btn-confirm-save-graph').removeAttr('disabled');
+			if (isGraphExistent(graphName)) {
+				$('#btn-confirm-remove-graph').removeAttr('disabled');
+			} else {
+				$('#btn-confirm-remove-graph').attr('disabled', 'disabled');
+			}
+		} else {
+			$('#btn-confirm-save-graph, #btn-confirm-remove-graph').attr('disabled', 'disabled');
+		}
+	}
+	
+	function isGraphExistent(name) {
+		return "undefined" != typeof graphMap[name];
+	}
+	
+	function saveGraph() {
+//		var endpointData = createEndpointData();
+//		$.ajax({
+//            type: 'PUT',
+//            contentType: 'application/json',
+//            url: '../rest/settings/endpoint/' + encodeURIComponent(endpointData.name),
+//            data: JSON.stringify(endpointData),
+//            success: function(data) {
+//                if (!data) {
+//                    return;
+//                }
+//        		if (!isEndpointExistent(getEndpointNameById(endpointData.name))) {
+//        			$endpointSelect = $('#sel-endpoint');
+//        			$endpointSelect.append($('<option>').attr('value', endpointData.name).text(endpointData.name));
+//        			sortSelectOptions($endpointSelect);
+//        		}
+//        		endpointMap[endpointData.name] = endpointData;
+//        		$('#endpoints_infoBox').text('Endpoint \'' + getEndpointNameById(endpointData.name) + '\' saved.').show('fast').delay(5000).hide('fast');
+//        		enableOrDisableButtons();
+//            }
+//        }).always(function () {
+//        	$('#modal-graph-overwrite').modal('hide');
+//        });    		
+	}
+	
+	function removeGraph(graphName) {
+//		$.ajax({
+//            type: 'DELETE',
+//            contentType: 'application/json',
+//            url: '../rest/settings/endpoint/' + encodeURIComponent(getEndpointIdByName(endpointName)),
+//            success: function(data) {
+//                if (!data) {
+//                    return;
+//                }
+//        		delete endpointMap[getEndpointIdByName(endpointName)];
+//        		$("#sel-endpoint > option").filter(function(i){
+//     		       return $(this).attr("value") == getEndpointIdByName(endpointName);
+//        		}).remove();
+//        		$('#endpoints_infoBox').text('Endpoint \'' + endpointName + '\' removed.').show('fast').delay(5000).hide('fast');
+//        		enableOrDisableButtons();
+//            }
+//        }).always(function () {
+//        	$('#modal-graph-remove').modal('hide');
+//        });    		
+	}
+	
+	function resetValues() {
+		document.getElementById("graph_form").reset();
+		enableOrDisableButtons();
+	}
+	
+	function setValuesFromData(graphData) {
+	}
+	
+	function sortSelectOptions($select) {
+		var options = $select.children('option');
+		options.detach().sort(function(a,b) {
+		    var at = $(a).text();
+		    var bt = $(b).text();         
+		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
+		});
+		options.appendTo($select);
+	}
+}

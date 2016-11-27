@@ -1,31 +1,17 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
-import javax.ws.rs.POST;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
-import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
 @Path("/dashboard")
 public class DashboardService extends AbstractJsonService {
@@ -38,6 +24,19 @@ public class DashboardService extends AbstractJsonService {
 		DashboardService.etmConfiguration = etmConfiguration;
 	}
 	
+	@GET
+	@Path("/graphs")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getParsers() {
+		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, etmPrincipal.getId())
+			.setFetchSource(true)
+			.get();
+		if (!getResponse.isExists()) {
+			return null;
+		}
+		return getResponse.getSourceAsString();
+	}
 	
 //	@POST
 //	@Path("/chart")
