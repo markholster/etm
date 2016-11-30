@@ -388,7 +388,14 @@ body { padding-top: 60px; }
         } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
             executeQuery(createQuery(false));
         }
-    }).autocompleteFieldQuery({queryKeywords: queryKeywords});
+    }).autocompleteFieldQuery(
+    		{
+    			queryKeywords: queryKeywords, 
+    			keywordGroupFilter: function(keywords, indiciToShow) {
+    		    	return $.uniqueSort($('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get());
+    		    }
+    		}
+    );
     
     $('#btn-search').click(function() {
     	var queryParams = createQuery(false);

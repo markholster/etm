@@ -157,6 +157,7 @@ public class SearchService extends AbstractIndexMetadataService {
 				}
 				first = false;
 				result.append("{");
+				result.append("\"index\": " + escapeToJson(indexName, true) + ",");
 				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
 				result.append("\"names\": [" + entry.getValue().stream().map(n -> escapeToJson(n, true)).collect(Collectors.joining(", ")) + "]");
 				result.append("}");

@@ -1,6 +1,43 @@
 function buildGraphsPage() {
-	
 	var graphMap = {};
+	var keywords = [];
+	$.when(
+		$.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/dashboard/keywords/etm_event_all',
+	        success: function(data) {
+	            if (!data || !data.keywords) {
+	                return;
+	            }
+	            keywords = $.merge(keywords, data.keywords);
+	        }
+	    }),
+	    $.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/dashboard/keywords/etm_metrics_all',
+	        success: function(data) {
+	            if (!data || !data.keywords) {
+	                return;
+	            }
+	            keywords = $.merge(keywords, data.keywords);
+	        }
+	    })
+	).done(function () {
+        $('#input-graph-query').bind('keydown', function( event ) {
+            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                event.stopPropagation();
+            }
+        }).autocompleteFieldQuery(
+        		{
+        			queryKeywords: keywords,
+        			keywordIndexFilter: function(keywords) {
+        				return [$('#sel-data-source').val()];
+        			}
+        		});       		
+	});    
+	
 	
 	$('#sel-graph').change(function(event) {
 		event.preventDefault();

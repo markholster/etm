@@ -1,20 +1,27 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
 @Path("/dashboard")
-public class DashboardService extends AbstractJsonService {
+public class DashboardService extends AbstractIndexMetadataService {
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
@@ -22,6 +29,32 @@ public class DashboardService extends AbstractJsonService {
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
 		DashboardService.client = client;
 		DashboardService.etmConfiguration = etmConfiguration;
+	}
+	
+	@GET
+	@Path("/keywords/{indexName}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getKeywords(@PathParam("indexName") String indexName) {
+		StringBuilder result = new StringBuilder();
+		Map<String, List<String>> names = getIndexFields(DashboardService.client, indexName);
+		result.append("{ \"keywords\":[");
+		Set<Entry<String, List<String>>> entries = names.entrySet();
+		if (entries != null) {
+			boolean first = true;
+			for (Entry<String, List<String>> entry : entries) {
+				if (!first) {
+					result.append(", ");
+				}
+				first = false;
+				result.append("{");
+				result.append("\"index\": " + escapeToJson(indexName, true) + ",");
+				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
+				result.append("\"names\": [" + entry.getValue().stream().map(n -> escapeToJson(n, true)).collect(Collectors.joining(", ")) + "]");
+				result.append("}");
+			}
+		}
+		result.append("]}");
+		return result.toString();
 	}
 	
 	@GET

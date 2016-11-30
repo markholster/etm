@@ -16,7 +16,7 @@ function buildUserPage() {
 	                if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
 	                    event.stopPropagation();
 	                }
-	            }).autocompleteFieldQuery({queryKeywords: data.keywords, keywordGroupSelector: 'all'});       
+	            }).autocompleteFieldQuery({queryKeywords: data.keywords});       
 	        }
 	    }),
 	    $.ajax({

@@ -99,7 +99,15 @@ $('#table-settings-sort-field').bind('keydown', function( event ) {
     } else if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
         event.stopPropagation();
     }
-}).autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'});
+}).autocompleteFieldQuery(
+{
+	queryKeywords: queryKeywords, 
+	mode: 'field',
+	keywordGroupFilter: function(keywords, indiciToShow) {
+    	return $.uniqueSort($('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get());
+    }
+});
+		
 
 $('#link-edit-table').click(function (event) {
     event.preventDefault();
@@ -159,7 +167,15 @@ $('#link-edit-table').click(function (event) {
                          event.stopPropagation();
                      }
                  })
-                .autocompleteFieldQuery({queryKeywords: queryKeywords, mode: 'field'})),
+                 .autocompleteFieldQuery(
+                		 {
+                		 	queryKeywords: queryKeywords, 
+                		 	mode: 'field',
+                		 	keywordGroupFilter: function(keywords, indiciToShow) {
+                		     	return $.uniqueSort($('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get());
+                		    }
+                		 }
+                )),
             $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm custom-select')
                 .append($('<option>').attr('value', 'plain').text('Plain'))
                 .append($('<option>').attr('value', 'isotimestamp').text('ISO Timestamp'))
