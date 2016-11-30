@@ -45,7 +45,7 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 			public Integer getValue() {
 				return BulkProcessorListener.this.blacklistedIds.size();
 			}};
-		metricRegistry.register("event-processor.blacklist-size", blacklistGauge);
+		metricRegistry.register("event-processor.blacklist_size", blacklistGauge);
 	}
 	
 	@Override
