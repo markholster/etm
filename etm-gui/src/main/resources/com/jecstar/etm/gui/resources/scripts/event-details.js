@@ -63,7 +63,7 @@ function showEvent(scrollTo, type, id) {
 			if (data.event.source.name) {
 				$('#event-card-title').text(data.event.source.name);
 			}
-			writeEventDataToTab($eventTab, $('#event-tab-header'), data.event);
+			writeEventDataToTab($eventTab, $('#event-tab-header'), data.event, data.time_zone);
 			if (data.correlated_events) {
 				$.each(data.correlated_events, function(index, correlated_event) {
 					$('#event-tabs').children().eq(0).after(
@@ -84,7 +84,7 @@ function showEvent(scrollTo, type, id) {
 							.attr('aria-expanded', 'false')
 							.addClass('tab-pane fade')
 					);
-					writeEventDataToTab($('#correlation-' + index), $('#correlation-header-' + index), correlated_event);
+					writeEventDataToTab($('#correlation-' + index), $('#correlation-header-' + index), correlated_event, data.time_zone);
 				}); 
 				
 			}
@@ -117,7 +117,7 @@ function showEvent(scrollTo, type, id) {
 		}
 	}
 	
-	function writeEventDataToTab(tab, tabHeader, data) {
+	function writeEventDataToTab(tab, tabHeader, data, timeZone) {
 		$eventTab = $(tab);
 		$tabHeader = $(tabHeader);
 		var dataLink = $('<a href="#">')
@@ -147,15 +147,15 @@ function showEvent(scrollTo, type, id) {
 				if (this.writing_endpoint_handler) {
 					return this.writing_endpoint_handler.handling_time
 				}
-			}).get();
-			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			}).get();			
+			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		}
 		if ('log' === data.type) {
 			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
 		} else if ('http' === data.type) {
 			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
 			if (data.source.expiry) {
-				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			}
 			if (data.source.http_type) {
 				// http type known, determine request or response.
@@ -188,7 +188,7 @@ function showEvent(scrollTo, type, id) {
 		} else if ('messaging' === data.type) {
 			appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
 			if (data.source.expiry) {
-				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			}
 			if (data.source.messaging_type) {
 				// messaging type known, determine request or response.
@@ -223,7 +223,7 @@ function showEvent(scrollTo, type, id) {
 		} else if ('sql' === data.type) {
 			appendToContainerInRow($eventTab, 'Sql type', data.source.sql_type);
 			if (data.source.expiry) {
-				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			}
 			if (data.source.sql_type) {
 				// sql type known, determine query or result.
@@ -308,39 +308,7 @@ function showEvent(scrollTo, type, id) {
 	    	return code;
 	    }
 	}
-	
-	function addCorrelationTab(scrollTo, type, id, tabType, tabName) {
-		$.ajax({
-		    type: 'GET',
-		    contentType: 'application/json',
-		    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
-		    success: function(correlation_data) {
-		        if (!correlation_data || !correlation_data.event) {
-		            return;
-		        }
-				$('#event-tabs').children().eq(0).after(
-					$('<li>').addClass('nav-item').append(
-						$('<a>').attr('id',  tabType + '-header')
-							.attr('aria-expanded', 'false')
-							.attr('role', 'tab')
-							.attr('data-toggle', 'tab')
-							.attr('href', '#' + tabType)
-							.addClass('nav-link')
-							.text(tabName)
-					)
-				);
-				$('#tabcontents').children().eq(0).after(
-					$('<div>').attr('id', tabType)
-						.attr('aria-labelledby', tabType + '-header')
-						.attr('role', 'tabpanel')
-						.attr('aria-expanded', 'false')
-						.addClass('tab-pane fade')
-				);
-		        writeEventDataToTab($('#' + tabType), $('#' + tabType + '-header'), correlation_data.event, true);
-		    }
-		});
-	}
-	
+		
 	function appendToContainerInRow(container, name, value) {
 		appendElementToContainerInRow(container, name, $('<p>').addClass('form-control-static').text(value));
 	}
