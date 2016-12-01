@@ -324,12 +324,16 @@ public class SearchService extends AbstractIndexMetadataService {
 			// Try to find event that correlate to this event.
 			List<String> correlations = getArray(this.eventTags.getCorrelationsTag(), valueMap);
 			if (correlations != null && !correlations.isEmpty()) {
-				if (correlations.size() > 10) {
-					correlations = correlations.subList(0, 10);
-				}
-				for (String correlatedId : correlations) {
-					SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedId);					
+				int added = 0;
+				for (int i = 0; i < correlations.size() &&  added <= 10; i++) {
+					String correlationId = correlations.get(i);
+					if (eventId.equals(correlationId)) {
+						// An event correlates to itself.
+						continue;
+					}
+					SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlationId);					
 					if (correlatedEvent != null) {
+						added++;
 						if (!correlationAdded) {
 							result.append(", \"correlated_events\": [");
 						} else {
