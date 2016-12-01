@@ -306,7 +306,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			Map<String, Object> valueMap = searchHit.getSource();
 			String correlatedToId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
 			boolean correlationAdded = false;
-			if (correlatedToId != null) {
+			if (correlatedToId != null && !correlatedToId.equals(eventId)) {
 				SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedToId);
 				if (correlatedEvent != null) {
 					if (!correlationAdded) {
