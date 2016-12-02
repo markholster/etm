@@ -1,8 +1,13 @@
 package com.jecstar.etm.gui.rest;
 
+import java.text.DateFormatSymbols;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
@@ -93,4 +98,29 @@ public class AbstractJsonService extends JsonConverter {
     	}
     	return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
     }
+    
+    protected String getD3Formatter() {
+    	EtmPrincipal etmPrincipal = getEtmPrincipal();
+    	NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
+    	DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols(etmPrincipal.getLocale());
+    	DateFormatSymbols dateFormatSymbols = DateFormatSymbols.getInstance(etmPrincipal.getLocale());
+    	StringBuilder result = new StringBuilder();
+    	result.append("{");
+    	addStringElementToJsonBuffer("decimal", "" + decimalFormatSymbols.getDecimalSeparator(), result, true);
+    	addStringElementToJsonBuffer("thousands", "" + decimalFormatSymbols.getGroupingSeparator(), result, false);
+    	result.append(",\"grouping\": [" + numberFormat.getMaximumFractionDigits() + "]");
+    	result.append(",\"currency\": [\"" + numberFormat.getCurrency().getSymbol() + "\", \"\"]");
+    	// TODO dateTime and time should be dynamic and based on the locale.
+    	addStringElementToJsonBuffer("dateTime", "%a %b %e %X %Y", result, false);
+    	addStringElementToJsonBuffer("date", "%m/%d/%Y", result, false);
+    	addStringElementToJsonBuffer("time", "%H:%M:%S", result, false);
+    	result.append(",\"periods\": [\"" + Arrays.stream(dateFormatSymbols.getAmPmStrings()).collect(Collectors.joining("\",\"")) + "\"]" );
+    	result.append(",\"days\": [\"" + Arrays.stream(dateFormatSymbols.getWeekdays()).collect(Collectors.joining("\",\"")) + "\"]");
+    	result.append(",\"shortDays\": [\"" + Arrays.stream(dateFormatSymbols.getShortWeekdays()).collect(Collectors.joining("\",\"")) + "\"]");
+    	result.append(",\"months\": [\"" + Arrays.stream(dateFormatSymbols.getMonths()).collect(Collectors.joining("\",\"")) + "\"]");
+    	result.append(",\"shortMonths\": [\"" + Arrays.stream(dateFormatSymbols.getShortMonths()).collect(Collectors.joining("\",\"")) + "\"]");
+    	result.append("}");
+    	return result.toString();
+    }
+
 }

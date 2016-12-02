@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -176,10 +177,12 @@ public class SettingsService extends AbstractJsonService {
 				.setStore(true)
 				.setDocs(true)
 				.get();
-		NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
+		Locale locale = getEtmPrincipal().getLocale();
+		NumberFormat numberFormat = NumberFormat.getInstance(locale);
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		result.append("\"totals\": {");
+		result.append("\"d3_formatter\": " + getD3Formatter());
+		result.append(",\"totals\": {");
 		addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount(), result, true);	
 		addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount()), result, false);	
 		addLongElementToJsonBuffer("size_in_bytes", indicesStatsResponse.getTotal().store.getSizeInBytes(), result, false);	
