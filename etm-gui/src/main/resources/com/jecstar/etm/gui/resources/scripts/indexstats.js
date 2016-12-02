@@ -59,6 +59,31 @@ function buildIndexStatsPage() {
 	        nv.utils.windowResize(chart.update);
 	        return chart;
 	    });
+	    nv.addGraph(function() {
+		  var chart = nv.models.lineChart()
+		    .useInteractiveGuideline(true)
+		    .duration(250)
+		    .showLegend(true)
+		    .showYAxis(true)
+		    .showXAxis(true)
+		  ;
+		
+		  chart.xAxis 
+		    .axisLabel('Index')
+		  	.tickFormat(function(d) {return data.indices[d].name.substring(10)});
+		
+		  chart.yAxis
+		      .axisLabel('Time')
+		      .tickFormat(function(d) {return numberFormatter(d)});
+		
+		  d3.select('#performance_chart svg')   
+		      .datum(getLineChartDataForPerformance(data.indices))
+		      .call(chart);
+		
+		  nv.utils.windowResize(function() { chart.update() });
+		  return chart;
+	    });
+	    
 	}
 	
 	function getBarChartDataForCounts(indices) {
@@ -85,5 +110,24 @@ function buildIndexStatsPage() {
 			sizePerIndex[0].values.push({ label: value.name.substring(10), value: value.size_in_bytes})
 		});
 		return sizePerIndex;
+	}
+	
+	function getLineChartDataForPerformance(indices) {
+		search = []
+		index = []
+		$.each(indices, function(ix, value){
+			search.push({ x: ix, y: value.average_search_time ? value.average_search_time : 0 });
+			index.push({ x: ix, y: value.average_index_time ? value.average_index_time : 0 });
+		});
+		return [
+		    {
+		      values: search,
+		      key: 'Search'
+		    },
+		    {
+		      values: index,
+		      key: 'Index'
+		    }
+		  ];
 	}
 }

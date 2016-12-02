@@ -176,6 +176,8 @@ public class SettingsService extends AbstractJsonService {
 				.clear()
 				.setStore(true)
 				.setDocs(true)
+				.setIndexing(true)
+				.setSearch(true)
 				.get();
 		Locale locale = getEtmPrincipal().getLocale();
 		NumberFormat numberFormat = NumberFormat.getInstance(locale);
@@ -200,6 +202,21 @@ public class SettingsService extends AbstractJsonService {
 			addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(entry.getValue().getTotal().docs.getCount()), result, false);	
 			addLongElementToJsonBuffer("size_in_bytes", entry.getValue().getTotal().store.getSizeInBytes(), result, false);	
 			addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(entry.getValue().getTotal().store.getSizeInBytes()), result, false);			
+
+			long count = entry.getValue().getTotal().indexing.getTotal().getIndexCount();
+			if (count != 0) {
+				long averageIndexTime = entry.getValue().getTotal().indexing.getTotal().getIndexTime().millis() / count;
+				addLongElementToJsonBuffer("average_index_time", averageIndexTime, result, false);	
+				addStringElementToJsonBuffer("average_index_time_as_string", numberFormat.format(averageIndexTime), result, false);	
+			}
+			
+			count = entry.getValue().getTotal().search.getTotal().getQueryCount();
+			if (count != 0) {
+				long averageSearchTime = entry.getValue().getTotal().search.getTotal().getQueryTimeInMillis() / count;
+				addLongElementToJsonBuffer("average_search_time", averageSearchTime, result, false);	
+				addStringElementToJsonBuffer("average_search_time_as_string", numberFormat.format(averageSearchTime), result, false);	
+			}
+			
 			result.append("}");
 			firstEntry = false;
 		}
