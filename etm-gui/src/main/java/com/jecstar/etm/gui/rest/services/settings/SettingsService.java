@@ -22,6 +22,7 @@ import javax.ws.rs.core.MediaType;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
+import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
@@ -161,6 +162,26 @@ public class SettingsService extends AbstractJsonService {
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		return "{\"status\":\"success\"}";
+	}
+
+	@GET
+	@Path("/indicesstats")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getIndexStatistics() {
+		IndicesStatsResponse indicesStatsResponse = client.admin().indices().prepareStats("etm_event_*")
+				.clear()
+				.setStore(true)
+				.setDocs(true)
+				.get();
+		try {
+			XContentBuilder builder = XContentFactory.jsonBuilder();
+			builder.startObject();
+			indicesStatsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
+			builder.endObject();
+			return builder.string();
+		} catch (IOException e) {
+			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		}
 	}
 	
 	@GET
