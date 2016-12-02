@@ -12,7 +12,7 @@ function buildIndexStatsPage() {
 	});
 	
 	function setStatisticsData(data) {
-		$("#text-total-documents").text(data.totals.document_count_as_string);
+		$("#text-total-events").text(data.totals.document_count_as_string);
 		$("#text-total-size").text(data.totals.size_in_bytes_as_string);
 
 		data.indices.sort(function(a, b) {
