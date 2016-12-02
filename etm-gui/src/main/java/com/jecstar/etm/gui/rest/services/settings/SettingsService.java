@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.DELETE;
@@ -22,6 +24,7 @@ import javax.ws.rs.core.MediaType;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
+import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
@@ -173,15 +176,32 @@ public class SettingsService extends AbstractJsonService {
 				.setStore(true)
 				.setDocs(true)
 				.get();
-		try {
-			XContentBuilder builder = XContentFactory.jsonBuilder();
-			builder.startObject();
-			indicesStatsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
-			builder.endObject();
-			return builder.string();
-		} catch (IOException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+		NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		result.append("\"totals\": {");
+		addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount(), result, true);	
+		addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount()), result, false);	
+		addLongElementToJsonBuffer("size_in_bytes", indicesStatsResponse.getTotal().store.getSizeInBytes(), result, false);	
+		addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(indicesStatsResponse.getTotal().store.getSizeInBytes()), result, false);	
+		result.append("}, \"indices\": [");
+		Map<String, IndexStats> indices = indicesStatsResponse.getIndices();
+		boolean firstEntry = true;
+		for (Entry<String, IndexStats> entry : indices.entrySet()) {
+			if (!firstEntry) {
+				result.append(",");
+			}
+			result.append("{");
+			addStringElementToJsonBuffer("name", entry.getKey(), result, true);
+			addLongElementToJsonBuffer("document_count", entry.getValue().getTotal().docs.getCount(), result, false);	
+			addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(entry.getValue().getTotal().docs.getCount()), result, false);	
+			addLongElementToJsonBuffer("size_in_bytes", entry.getValue().getTotal().store.getSizeInBytes(), result, false);	
+			addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(entry.getValue().getTotal().store.getSizeInBytes()), result, false);			
+			result.append("}");
+			firstEntry = false;
 		}
+		result.append("]}");
+		return result.toString();
 	}
 	
 	@GET
