@@ -5,9 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>Enterprise Telemetry Monitor - Login</title>
-    <link rel="stylesheet" href="../styles/bootstrap.min.css">
   </head>
   <body>
+  <script type="text/javascript">
+  (function(){
+	function endsWith(value, valueToTest) {
+		var d = value.length - valueToTest.length;
+		return d >= 0 && value.lastIndexOf(valueToTest) === d;
+	}	  
+	  
+  	var path = '../';
+	if (endsWith(window.location.pathname, "/gui/index.html") || endsWith(window.location.pathname, "/gui/")) {
+		path = './';
+	}
+  	var styles = document.createElement('link');
+  	styles.rel = 'stylesheet';
+  	styles.type = 'text/css';
+  	styles.media = 'screen';
+  	styles.href =  path + 'styles/bootstrap.min.css';
+  	document.getElementsByTagName('head')[0].appendChild(styles);
+  })();
+  </script>
     <div class="container" style="margin-top:0.5em;">
         <div class="jumbotron">
             <h4>ETM requires you to login. Please fill in your username and password below.</h4>

@@ -151,7 +151,7 @@ $(document).ajaxStart(function () {
         return;
     }          
 });
-buildMenu('dashboard');
+buildMenu('dashboard', '../');
 
 var queryParams = {};
 window.location.search.substr(1).split("&").forEach(function(item) {

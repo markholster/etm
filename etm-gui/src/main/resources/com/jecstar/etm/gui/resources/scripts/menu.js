@@ -1,8 +1,8 @@
-function buildMenu(currentContext) {
+function buildMenu(currentContext, path) {
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
-	    url: '../rest/user/menu',
+	    url: path + 'rest/user/menu',
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -20,12 +20,12 @@ function buildMenu(currentContext) {
 			$li.addClass('active');
 		}
 		if ('search' == menu.name) {
-			$li.append(createMenuLink('../search/', 'fa-search', 'Search'));
+			$li.append(createMenuLink(path + 'search/', 'fa-search', 'Search'));
 		} else if ('dashboard' == menu.name) {
 			var $drowdown = $('<div>').addClass('dropdown-menu');
 			$drowdown.append(
-					$('<a>').addClass('dropdown-item').attr('href', '../dashboard/graphs.html').text('Graphs'),
-					$('<a>').addClass('dropdown-item').attr('href', '../dashboard/dashboards.html').text('Dashboards')
+					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/graphs.html').text('Graphs'),
+					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboards.html').text('Dashboards')
 			);
 			$li.addClass('dropdown').append(
 			$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
@@ -35,9 +35,9 @@ function buildMenu(currentContext) {
 					$drowdown
 			);			
 		} else if ('preferences' == menu.name) {
-			$li.append(createMenuLink('../preferences/', 'fa-user', 'Preferences'));
+			$li.append(createMenuLink(path + 'preferences/', 'fa-user', 'Preferences'));
 		} else if ('settings' == menu.name) {
-			var $license = $('<a>').addClass('dropdown-item').attr('href', '../settings/license.html');
+			var $license = $('<a>').addClass('dropdown-item').attr('href', path + 'settings/license.html');
 			var licenseClass = '';
 			if (licenseExpired) {
 				$license.addClass('alert-danger').append(
@@ -56,12 +56,12 @@ function buildMenu(currentContext) {
 			var $dropdown = $('<div>').addClass('dropdown-menu');
 			if ($.inArray('admin', menu.submenus) != -1) {
 				$dropdown.append(
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/users.html').text('Users'),
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/groups.html').text('Groups'),
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/users.html').text('Users'),
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/groups.html').text('Groups'),
 						$('<div>').addClass('dropdown-divider'),
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/cluster.html').text('Cluster'),
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/parsers.html').text('Parsers'),
-						$('<a>').addClass('dropdown-item').attr('href', '../settings/endpoints.html').text('Endpoints')
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/cluster.html').text('Cluster'),
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/parsers.html').text('Parsers'),
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/endpoints.html').text('Endpoints')
 				);
 			}
 			if ($.inArray('iib_admin', menu.submenus) != -1) {
@@ -69,8 +69,8 @@ function buildMenu(currentContext) {
 					$dropdown.append($('<div>').addClass('dropdown-divider'));
 				}
 				$dropdown.append(
-					$('<a>').addClass('dropdown-item').attr('href', '../iib/nodes.html').text('IIB Nodes'),
-					$('<a>').addClass('dropdown-item').attr('href', '../iib/events.html').text('IIB Events')				
+					$('<a>').addClass('dropdown-item').attr('href', path + 'iib/nodes.html').text('IIB Nodes'),
+					$('<a>').addClass('dropdown-item').attr('href', path + 'iib/events.html').text('IIB Events')				
 				);
 			}
 			if ($.inArray('admin', menu.submenus) != -1) {
@@ -88,7 +88,7 @@ function buildMenu(currentContext) {
 					$dropdown
 			);
 		} else if ('sign-out' == menu.name) {
-			$li.append(createMenuLink('../logout?source=' + window.location.href , 'fa-sign-out', 'Sign out'));
+			$li.append(createMenuLink(path + 'logout?source=' + window.location.href , 'fa-sign-out', 'Sign out'));
 		}
 		$('#etm_mainmenu').append($li);
 	}

@@ -213,7 +213,7 @@ public class HttpServer {
 			deployment.setSecurityEnabled(true);
 			di.addSecurityConstraint(new SecurityConstraint()
 						.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
-						.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
+						.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/").addUrlPattern("/index.html").addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
 			di.addSecurityConstraint(new SecurityConstraint()
 					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName())
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
