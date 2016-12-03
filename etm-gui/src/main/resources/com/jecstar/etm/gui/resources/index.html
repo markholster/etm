@@ -37,8 +37,27 @@ body { padding-top: 60px; }
   
   <div class="container-fluid" style="margin-top: 1em;">
     <div class="card card-block">
-      <h5 class="card-title">Enterprise Telemetry Monitor</h5>
-      <div class="card-text">
+      <img class="card-img" src="images/jecstar.svg" alt="Jecstar Innovation Logo" style="opacity: 0.1; filter: alpha(opacity=50); margin:0px auto;display:block;">
+      <div class="card-img-overlay">
+	      <h5 class="card-title">Enterprise Telemetry Monitor</h5>
+		    <div class="card-text">
+				<p>
+					Welcome at <a href="http://www.jecstar.com">Jecstar's</a>
+					Enterprise Telemetry Monitor! Enterprise Telemetry Monitor is a
+					highly scalable event processor. The goal of Enterprise Telemetry
+					Monitor is to gain near realtime insights in the information flows
+					inside and between your enterprise applications. It is generally
+					used to help organizations in monitoring their complex application
+					landscape.
+				</p>
+				<p>
+					Enterprise Telemetry Monitor is currently maintaining
+					<b id="event-count"></b> events for you. Depending on the
+					privileges the Enterprise Telemetry Monitor administrators have
+					given to you, you may search, inspect, correlate or monitor those
+					events. Go ahead and click on any of the menu items to get insight
+					into the data of your business.</p>
+	        </div>
       </div>
     </div>
   </div>
@@ -71,6 +90,17 @@ body { padding-top: 60px; }
         $('html,body').animate({scrollTop: 0},'fast');
     });
   	buildMenu('', './');
+	$.ajax({
+	    type: 'GET',
+	    contentType: 'application/json',
+	    url: 'rest/user/eventstats',
+	    success: function(data) {
+	        if (!data) {
+	            return;
+	        }
+	        $('#event-count').text(data.event_count_as_string);
+	    }
+	});
   </script>
   
 </body>

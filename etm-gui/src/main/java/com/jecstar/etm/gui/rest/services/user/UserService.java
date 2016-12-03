@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.user;
 
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,8 +18,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 
@@ -241,5 +244,21 @@ public class UserService extends AbstractJsonService {
 		return result.toString();
 	}
 	
+	@GET
+	@Path("/eventstats")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getEvents() {
+		StringBuilder result = new StringBuilder();
+		NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
+		SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
+			.setSize(0).setQuery(QueryBuilders.matchAllQuery())
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		result.append("{");
+		addLongElementToJsonBuffer("event_count", searchResponse.getHits().getTotalHits(), result, true);
+		addStringElementToJsonBuffer("event_count_as_string", numberFormat.format(searchResponse.getHits().getTotalHits()), result, false);
+		result.append("}");
+		return result.toString();
+	}
 	
 }
