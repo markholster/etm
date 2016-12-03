@@ -21,7 +21,7 @@ public class OperatingSystemMetricSet implements MetricSet {
 	@Override
 	public Map<String, Metric> getMetrics() {
 		final Map<String, Metric> gauges = new HashMap<String, Metric>();
-        gauges.put("os.cpu.system-load-average", new Gauge<Double>() {
+        gauges.put("os.cpu.system_load_average", new Gauge<Double>() {
             @Override
             public Double getValue() {
                 return os.getSystemLoadAverage();
