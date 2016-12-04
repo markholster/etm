@@ -50,9 +50,28 @@ function buildGraphsPage() {
 		enableOrDisableButtons();
 	});
 	
-	$('#sel-graph-type').change(function (event) {
+	$('#sel-graph-type').change(function(event) {
 		event.preventDefault();
-	})
+		if ('bar' == $(this).val()) {
+			showBarFields();
+		} else if ('line' == $(this).val()) {
+			showLineFields();
+		} else if ('number' == $(this).val()) {
+			showNumberFields();
+		} else if ('pie' == $(this).val()) {
+			showPieFields();
+		}
+		
+	});
+	
+	$('#sel-number-aggregator').change(function(event) {
+		event.preventDefault();
+		if ('count' == $(this).val()) {
+			$('#input-number-field').parent().parent().hide();
+		} else {
+			$('#input-number-field').parent().parent().show();
+		}
+	});
 	
 	$.ajax({
 	    type: 'GET',
@@ -106,14 +125,14 @@ function buildGraphsPage() {
 	function enableOrDisableButtons() {
 		var graphName = $('#input-graph-name').val();
 		if (graphName) {
-			$('#btn-confirm-save-graph').removeAttr('disabled');
+			$('#btn-confirm-save-graph, #btn-preview-graph').removeAttr('disabled');
 			if (isGraphExistent(graphName)) {
 				$('#btn-confirm-remove-graph').removeAttr('disabled');
 			} else {
 				$('#btn-confirm-remove-graph').attr('disabled', 'disabled');
 			}
 		} else {
-			$('#btn-confirm-save-graph, #btn-confirm-remove-graph').attr('disabled', 'disabled');
+			$('#btn-confirm-save-graph, #btn-preview-graph, #btn-confirm-remove-graph').attr('disabled', 'disabled');
 		}
 	}
 	
@@ -173,6 +192,34 @@ function buildGraphsPage() {
 	}
 	
 	function setValuesFromData(graphData) {
+	}
+	
+	function showBarFields() {
+		$("#bar-fields").show();
+		$("#line-fields").hide();
+		$("#number-fields").hide();
+		$("#pie-fields").hide();
+	}
+	
+	function showLineFields() {
+		$("#bar-fields").hide();
+		$("#line-fields").show();
+		$("#number-fields").hide();
+		$("#pie-fields").hide();
+	}
+	
+	function showNumberFields() {
+		$("#bar-fields").hide();
+		$("#line-fields").hide();
+		$("#number-fields").show();
+		$("#pie-fields").hide();
+	}
+	
+	function showPieFields() {
+		$("#bar-fields").hide();
+		$("#line-fields").hide();
+		$("#number-fields").hide();
+		$("#pie-fields").show();
 	}
 	
 	function sortSelectOptions($select) {

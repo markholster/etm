@@ -68,8 +68,8 @@ body { padding-top: 60px; }
 	  		            <select id="sel-graph-type" class="form-control form-control-sm custom-select">
 			          	  <option value="bar">Bar chart</option>
 			          	  <option value="line">Line chart</option>
+			          	  <option value="number">Number</option>
 			          	  <option value="pie">Pie chart</option>
-			          	  <option value="number">Single number</option>
 			            </select>
 			          </div>  
 					</div>
@@ -85,9 +85,37 @@ body { padding-top: 60px; }
 			        <div class="form-group row">
 					  <label for="input-graph-query" class="col-sm-3 col-form-label col-form-label-sm">Query</label>
 					  <div class="col-sm-9">
-					    <input id="input-graph-query" type="text" class="form-control form-control-sm" />
+					    <input id="input-graph-query" type="text" class="form-control form-control-sm" value="*"/>
 					  </div>
-					</div>			        
+					</div>
+					<hr />
+					<div id="number-fields" style="display: none;">
+					  <div class="form-group row">
+					    <label for="sel-number-aggregator" class="col-sm-3 col-form-label col-form-label-sm">Aggregator</label>
+					    <div class="col-sm-9">
+					      <select id="sel-number-aggregator" class="form-control form-control-sm custom-select">
+					        <option value="average">Average</option>
+					        <option value="count">Count</option>
+					        <option value="max">Max</option>
+					        <option value="median">Median</option>
+					        <option value="min">Min</option>
+					        <option value="sum">Sum</option>
+					      </select>
+					    </div>  
+ 					  </div>
+                      <div class="form-group row">
+					    <label for="input-number-field" class="col-sm-3 col-form-label col-form-label-sm">Field</label>
+					    <div class="col-sm-9">
+					      <input id="input-number-field" type="text" class="form-control form-control-sm" required="required" />
+					    </div>
+					  </div>
+                      <div class="form-group row">
+					    <label for="input-number-label" class="col-sm-3 col-form-label col-form-label-sm">Label</label>
+					    <div class="col-sm-9">
+					      <input id="input-number-label" type="text" class="form-control form-control-sm" />
+					    </div>
+					  </div>					  
+					</div>
 					<div class="modal-footer">
 	                  <input type="submit" id="btn-confirm-remove-graph" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
 	                  <input type="submit" id="btn-preview-graph" class="btn btn-primary" value="Preview" disabled="disabled" />
