@@ -103,8 +103,8 @@ $('#table-settings-sort-field').bind('keydown', function( event ) {
 {
 	queryKeywords: queryKeywords, 
 	mode: 'field',
-	keywordGroupFilter: function(keywords, indiciToShow) {
-    	return $.uniqueSort($('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get());
+	keywordGroupFilter: function(index, group) {
+		return $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get().indexOf(group) == -1;
     }
 });
 		
@@ -171,8 +171,8 @@ $('#link-edit-table').click(function (event) {
                 		 {
                 		 	queryKeywords: queryKeywords, 
                 		 	mode: 'field',
-                		 	keywordGroupFilter: function(keywords, indiciToShow) {
-                		     	return $.uniqueSort($('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get());
+                			keywordGroupFilter: function(index, group) {
+                				return $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get().indexOf(group) == -1;
                 		    }
                 		 }
                 )),

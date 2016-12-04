@@ -6,28 +6,34 @@
 	    var queryForFields = ['_exists_', '_missing_'];
 		
         var settings = $.extend({
-            keywordIndexFilter: function(keywords) {
-            	return $.uniqueSort($.map(keywords, function(n,i) {return n.index}));
+            keywordIndexFilter: function(index) {
+            	return false;
             },
-            keywordGroupFilter: function(keywords, indiciToShow) {
-            	return $.uniqueSort($.map(keywords, function(n,i) {return n.type}));
+            keywordGroupFilter: function(index, group) {
+            	return false;
             },
+            keywordFilter: function(index, group, keyword) {
+            	return false;
+            },            
             filter: function(keywords) {
             	if (keywords == null) {
             		return null;
             	}
-            	var indiciToShow = this.keywordIndexFilter(keywords);
-	            var groupsToShow = this.keywordGroupFilter(keywords, indiciToShow);
 	            var values = [];
 	            
-            	$.each(keywords, function(index, keywordGroup) {
-            		if (indiciToShow && indiciToShow.indexOf(keywordGroup.index) == -1) {
+            	$.each(keywords, function(ix, keywordGroup) {
+            		if (settings.keywordIndexFilter(keywordGroup.index)) {
             			return true;
             		}
-            		if (groupsToShow && groupsToShow.indexOf(keywordGroup.type) == -1) {
+            		if (settings.keywordGroupFilter(keywordGroup.index, keywordGroup.type)) {
             			return true;
             		}
-	                $.merge(values, keywordGroup.names);    
+            		$.each(keywordGroup.keywords, function(ix2, keyword) {
+            			if (settings.keywordFilter(keywordGroup.index, keywordGroup.type, keyword)) {
+            				return true;
+            			}
+            			values.push(keyword.name);
+            		});
 	            })
 	            if ('field' === this.mode) {
 	            	$.each(queryForFields, function(index, fieldName) {

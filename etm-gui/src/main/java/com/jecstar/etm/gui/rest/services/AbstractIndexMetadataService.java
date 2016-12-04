@@ -28,8 +28,8 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 	 * @param indexName The name of the index to find the keywords for.
 	 * @return
 	 */
-	protected Map<String, List<String>> getIndexFields(Client client, String indexName) {
-		Map<String, List<String>> names = new HashMap<String, List<String>>();
+	protected Map<String, List<Keyword>> getIndexFields(Client client, String indexName) {
+		Map<String, List<Keyword>> names = new HashMap<String, List<Keyword>>();
 		GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(client, GetMappingsAction.INSTANCE, indexName).get();
 		ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
 		Iterator<ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>>> mappingsIterator = mappings.iterator();
@@ -42,21 +42,21 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 					continue;
 				}
 				MappingMetaData mappingMetaData = mappingMetadataCursor.value;
-				List<String> values = new ArrayList<String>();
-				values.add("_exists_");
-				values.add("_missing_");
+				List<Keyword> foundKeywords = new ArrayList<Keyword>();
+				foundKeywords.add(Keyword.EXISTS);
+				foundKeywords.add(Keyword.MISSING);
 				try {
 					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
-					addFieldProperties(values, "", valueMap);
+					addFieldProperties(foundKeywords, "", valueMap);
 					if (names.containsKey(mappingMetadataCursor.key)) {
-						List<String> currentValues = names.get(mappingMetadataCursor.key);
-						for (String value : values) {
-							if (!currentValues.contains(value)) {
-								currentValues.add(value);
+						List<Keyword> currentKeywords = names.get(mappingMetadataCursor.key);
+						for (Keyword value : foundKeywords) {
+							if (!currentKeywords.contains(value)) {
+								currentKeywords.add(value);
 							}
 						}
 					} else {
-						names.put(mappingMetadataCursor.key, values);
+						names.put(mappingMetadataCursor.key, foundKeywords);
 					}
 				} catch (IOException e) {
 					// Error will never been thrown. See mappingMetaData.getSourceAsMap() sources for detailes.
@@ -68,7 +68,7 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addFieldProperties(List<String> names, String prefix, Map<String, Object> valueMap) {
+	private void addFieldProperties(List<Keyword> keywords, String prefix, Map<String, Object> valueMap) {
 		valueMap = getObject("properties", valueMap);
 		if (valueMap == null) {
 			return;
@@ -81,10 +81,11 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
 			String name = determinePropertyForFieldName(prefix, entry.getKey());
 			if (entryValues.containsKey("properties")) {
-				addFieldProperties(names, name, entryValues);
+				addFieldProperties(keywords, name, entryValues);
 			} else {
-				if (!names.contains(name)) {
-					names.add(name);
+				Keyword keyword = new Keyword(name, (String) entryValues.get("type"));
+				if (!keywords.contains(keyword)) {
+					keywords.add(keyword);
 				}
 			}
 		}

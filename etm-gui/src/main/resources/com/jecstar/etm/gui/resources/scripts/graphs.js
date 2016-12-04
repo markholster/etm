@@ -30,12 +30,40 @@ function buildGraphsPage() {
                 event.stopPropagation();
             }
         }).autocompleteFieldQuery(
-        		{
-        			queryKeywords: keywords,
-        			keywordIndexFilter: function(keywords) {
-        				return [$('#sel-data-source').val()];
+        	{
+        		queryKeywords: keywords,
+        		keywordIndexFilter: function(index) {
+        			return index != $('#sel-data-source').val();
+        		}
+        	}
+        );
+
+        $('#input-number-field').bind('keydown', function( event ) {
+            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                event.stopPropagation();
+            }
+        }).autocompleteFieldQuery(
+        	{
+        		queryKeywords: keywords,
+        		mode: 'field',
+        		keywordIndexFilter: function(index) {
+        			return index != $('#sel-data-source').val();
+        		},
+        		keywordFilter: function(index, group, keyword) {
+        			var agg = $('#sel-number-aggregator').val();
+        			if ('average' == agg || 'sum' == agg || 'median' == agg) {
+        				return !keyword.number;
+        			} else if ('min' == agg || 'max' == agg) {
+        				return !keyword.number && !keyword.date;
+        			} else {
+        				return true;
         			}
-        		});       		
+        		}
+        	}
+        );
+
+        
+        
 	});    
 	
 	
@@ -62,6 +90,10 @@ function buildGraphsPage() {
 			showPieFields();
 		}
 		
+	});
+	
+	$('#sel-data-source').change(function(event) {
+		$('#input-number-field').val('');
 	});
 	
 	$('#sel-number-aggregator').change(function(event) {

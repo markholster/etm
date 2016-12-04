@@ -16,6 +16,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
+import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -36,12 +37,12 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getKeywords(@PathParam("indexName") String indexName) {
 		StringBuilder result = new StringBuilder();
-		Map<String, List<String>> names = getIndexFields(DashboardService.client, indexName);
+		Map<String, List<Keyword>> names = getIndexFields(DashboardService.client, indexName);
 		result.append("{ \"keywords\":[");
-		Set<Entry<String, List<String>>> entries = names.entrySet();
+		Set<Entry<String, List<Keyword>>> entries = names.entrySet();
 		if (entries != null) {
 			boolean first = true;
-			for (Entry<String, List<String>> entry : entries) {
+			for (Entry<String, List<Keyword>> entry : entries) {
 				if (!first) {
 					result.append(", ");
 				}
@@ -49,7 +50,16 @@ public class DashboardService extends AbstractIndexMetadataService {
 				result.append("{");
 				result.append("\"index\": " + escapeToJson(indexName, true) + ",");
 				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
-				result.append("\"names\": [" + entry.getValue().stream().map(n -> escapeToJson(n, true)).collect(Collectors.joining(", ")) + "]");
+				result.append("\"keywords\": [" + entry.getValue().stream().map(n -> {
+					StringBuilder kw = new StringBuilder();
+					kw.append("{");
+					addStringElementToJsonBuffer("name", n.getName(), kw, true);
+					addStringElementToJsonBuffer("type", n.getType(), kw, false);
+					addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+					addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+					kw.append("}");
+					return kw.toString();
+				}).collect(Collectors.joining(", ")) + "]");
 				result.append("}");
 			}
 		}
