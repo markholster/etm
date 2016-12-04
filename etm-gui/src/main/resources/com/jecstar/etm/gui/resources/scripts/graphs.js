@@ -61,9 +61,6 @@ function buildGraphsPage() {
         		}
         	}
         );
-
-        
-        
 	});    
 	
 	
@@ -89,7 +86,7 @@ function buildGraphsPage() {
 		} else if ('pie' == $(this).val()) {
 			showPieFields();
 		}
-		
+		enableOrDisableButtons();
 	});
 	
 	$('#sel-data-source').change(function(event) {
@@ -150,21 +147,31 @@ function buildGraphsPage() {
 	$('#btn-remove-graph').click(function(event) {
 		removeGraph($('#input-graph-name').val());
 	});
-
 	
-	$('#input-graph-name').on('input', enableOrDisableButtons);
+	$('#graph_form :input').on('input', enableOrDisableButtons);
+	$('#graph_form :input').on('autocomplete:selected', enableOrDisableButtons);
 	
 	function enableOrDisableButtons() {
-		var graphName = $('#input-graph-name').val();
-		if (graphName) {
-			$('#btn-confirm-save-graph, #btn-preview-graph').removeAttr('disabled');
-			if (isGraphExistent(graphName)) {
-				$('#btn-confirm-remove-graph').removeAttr('disabled');
-			} else {
-				$('#btn-confirm-remove-graph').attr('disabled', 'disabled');
-			}
+		//  First remove the required constraints to check if all other fields are valid.
+		$('#input-graph-name').removeAttr('required');
+		if (document.getElementById('graph_form').checkValidity()) {
+			// All input fields seem valid so we can generate a preview.
+			$('#btn-preview-graph').removeAttr('disabled');
 		} else {
-			$('#btn-confirm-save-graph, #btn-preview-graph, #btn-confirm-remove-graph').attr('disabled', 'disabled');
+			$('#btn-preview-graph').attr('disabled', 'disabled');
+		}
+		// Now reset the required constraints and validate the form again.
+		$('#input-graph-name').attr('required', 'required');
+		if (document.getElementById('graph_form').checkValidity()) {
+			$('#btn-confirm-save-graph').removeAttr('disabled');
+		} else {
+			$('#btn-confirm-save-graph').attr('disabled', 'disabled');
+		}
+		var graphName = $('#input-graph-name').val();
+		if (graphName && isGraphExistent(graphName)) {
+			$('#btn-confirm-remove-graph').removeAttr('disabled');
+		} else {
+			$('#btn-confirm-remove-graph').attr('disabled', 'disabled');
 		}
 	}
 	
@@ -219,7 +226,7 @@ function buildGraphsPage() {
 	}
 	
 	function resetValues() {
-		document.getElementById("graph_form").reset();
+		document.getElementById('graph_form').reset();
 		enableOrDisableButtons();
 	}
 	
@@ -227,31 +234,49 @@ function buildGraphsPage() {
 	}
 	
 	function showBarFields() {
-		$("#bar-fields").show();
-		$("#line-fields").hide();
-		$("#number-fields").hide();
-		$("#pie-fields").hide();
+		hideLineFields();
+		hideNumberFields();
+		hidePieFields();
+		$('#bar-fields').show();
+	}
+	
+	function hideBarFields() {
+		$('#bar-fields').hide();
 	}
 	
 	function showLineFields() {
-		$("#bar-fields").hide();
-		$("#line-fields").show();
-		$("#number-fields").hide();
-		$("#pie-fields").hide();
+		hideBarFields();
+		hideNumberFields();
+		hidePieFields();
+		$('#line-fields').show();
+	}
+	
+	function hideLineFields() {
+		$('#line-fields').show();
 	}
 	
 	function showNumberFields() {
-		$("#bar-fields").hide();
-		$("#line-fields").hide();
-		$("#number-fields").show();
-		$("#pie-fields").hide();
+		hideBarFields();
+		hideLineFields();
+		hidePieFields();
+		$('#input-number-field').attr('required', 'required');
+		$('#number-fields').show();
+	}
+	
+	function hideNumberFields() {
+		$('#input-number-field').removeAttr('required');
+		$('#number-fields').hide();
 	}
 	
 	function showPieFields() {
-		$("#bar-fields").hide();
-		$("#line-fields").hide();
-		$("#number-fields").hide();
-		$("#pie-fields").show();
+		hideBarFields();
+		hideLineFields();
+		hideNumberFields();
+		$('#pie-fields').show();
+	}
+	
+	function hidePieFields() {
+		$('#pie-fields').hide();
 	}
 	
 	function sortSelectOptions($select) {
