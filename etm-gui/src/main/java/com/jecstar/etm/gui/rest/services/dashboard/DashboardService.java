@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -7,13 +8,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.metrics.avg.Avg;
+import org.elasticsearch.search.aggregations.metrics.max.Max;
+import org.elasticsearch.search.aggregations.metrics.min.Min;
+import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.elasticsearch.search.aggregations.metrics.sum.Sum;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
@@ -81,6 +93,97 @@ public class DashboardService extends AbstractIndexMetadataService {
 		return getResponse.getSourceAsString();
 	}
 	
+	@POST
+	@Path("/graphdata")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getGraphData(String json) {
+		Map<String, Object> valueMap = toMap(json);
+		String type = getString("type", valueMap);
+		if ("number".equals(type)) {
+			return getNumberData(valueMap);
+		} else {
+			throw new RuntimeException("Unknown type: '" + type + "'.");
+		}
+	}
+
+	private String getNumberData(Map<String, Object> valueMap) {
+		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
+		String index = getString("data_source", valueMap);
+		SearchRequestBuilder searchRequest = client.prepareSearch(index)
+			.setFetchSource(false)
+			.setSize(0)
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(getString("query", valueMap, "*"))
+				.allowLeadingWildcard(true)
+				.analyzeWildcard(true)
+				.locale(etmPrincipal.getLocale())
+				.lowercaseExpandedTerms(false)
+				.timeZone(etmPrincipal.getTimeZone().getID());
+		if (ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL.equals(index)) {
+			queryStringBuilder.defaultField("payload");
+			searchRequest.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder));
+		} else {
+			searchRequest.setQuery(queryStringBuilder);
+		}
+		Map<String, Object> numberData = getObject("number", valueMap);
+		String aggregator = getString("aggregator", numberData);
+		String field = getString("field", numberData);
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		addStringElementToJsonBuffer("type", "number", result, true);
+		addStringElementToJsonBuffer("aggregator", aggregator, result, false);
+		if ("average".equals(aggregator)) {
+			String label = getString("label", numberData, "Average of " + field);
+			searchRequest.addAggregation(AggregationBuilders.avg(label).field(field));
+			SearchResponse searchResponse = searchRequest.get();
+			Avg avg = searchResponse.getAggregations().get(label);
+			addStringElementToJsonBuffer("label", label, result, false);
+			addDoubleElementToJsonBuffer("value", avg.getValue(), result, false);
+			addStringElementToJsonBuffer("value_as_string", numberFormat.format(avg.getValue()), result, false);
+		} else if ("count".equals(aggregator)) {
+			SearchResponse searchResponse = searchRequest.get();
+			addStringElementToJsonBuffer("label", getString("label", numberData, "Count"), result, false);
+			addLongElementToJsonBuffer("value", searchResponse.getHits().getTotalHits(), result, false);			
+			addStringElementToJsonBuffer("value_as_string", numberFormat.format(searchResponse.getHits().getTotalHits()), result, false);
+		} else if ("max".equals(aggregator)) {
+			String label = getString("label", numberData, "Max of " + field);
+			searchRequest.addAggregation(AggregationBuilders.max(label).field(field));			
+			SearchResponse searchResponse = searchRequest.get();
+			Max max = searchResponse.getAggregations().get(label);
+			addStringElementToJsonBuffer("label", label, result, false);
+			addDoubleElementToJsonBuffer("value", max.getValue(), result, false);
+			addStringElementToJsonBuffer("value_as_string", numberFormat.format(max.getValue()), result, false);
+		} else if ("median".equals(aggregator)) {
+			String label = getString("label", numberData, "Median of " + field);
+			searchRequest.addAggregation(AggregationBuilders.percentiles(label).field(field).percentiles(50));			
+			SearchResponse searchResponse = searchRequest.get();
+			Percentiles percentiles = searchResponse.getAggregations().get(label);
+			addStringElementToJsonBuffer("label", label, result, false);
+			addDoubleElementToJsonBuffer("value", percentiles.percentile(50), result, false);
+			addStringElementToJsonBuffer("value_as_string", numberFormat.format(percentiles.percentile(50)), result, false);
+		} else if ("min".equals(aggregator)) {
+			String label = getString("label", numberData, "Min of " + field);
+			searchRequest.addAggregation(AggregationBuilders.min(label).field(field));			
+			SearchResponse searchResponse = searchRequest.get();
+			Min min = searchResponse.getAggregations().get(label);
+			addStringElementToJsonBuffer("label", label, result, false);
+			addDoubleElementToJsonBuffer("value", min.getValue(), result, false);
+			addStringElementToJsonBuffer("value_as_string", numberFormat.format(min.getValue()), result, false);
+		} else if ("sum".equals(aggregator)) {
+			String label = getString("label", numberData, "Sum of " + field);
+			searchRequest.addAggregation(AggregationBuilders.sum(label).field(field));			
+			SearchResponse searchResponse = searchRequest.get();
+			Sum sum = searchResponse.getAggregations().get(label);
+			addStringElementToJsonBuffer("label", label, result, false);
+			addDoubleElementToJsonBuffer("value", sum.getValue(), result, false);
+			addStringElementToJsonBuffer("value_as_string", numberFormat.format(sum.getValue()), result, false);
+		}
+		result.append("}");
+		return result.toString();
+	}
+	
+	
 //	@POST
 //	@Path("/chart")
 //	@Produces(MediaType.APPLICATION_JSON)
@@ -124,7 +227,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 //		InternalAggregation aggregation = searchResponse.getAggregations().get(getString("name", xAxisAggregationValues));
 //		try {
 //            XContentBuilder builder = XContentFactory.jsonBuilder();
-//            builder.startObject();
+//            builder.startObject();93
 //            aggregation.toXContent(builder, ToXContent.EMPTY_PARAMS);
 //            builder.endObject();
 //            return builder.string();

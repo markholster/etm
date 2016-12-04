@@ -96,10 +96,13 @@ function buildGraphsPage() {
 	$('#sel-number-aggregator').change(function(event) {
 		event.preventDefault();
 		if ('count' == $(this).val()) {
+			$('#input-number-field').removeAttr('required');
 			$('#input-number-field').parent().parent().hide();
 		} else {
+			$('#input-number-field').attr('required', 'required');
 			$('#input-number-field').parent().parent().show();
 		}
+		enableOrDisableButtons();
 	});
 	
 	$.ajax({
@@ -142,7 +145,12 @@ function buildGraphsPage() {
 		event.preventDefault();
 		$('#remove-graph-name').text($('#input-graph-name').val());
         $('#modal-graph-remove').modal();
-	});	
+	});
+	
+	$('#btn-preview-graph').click(function(event) {
+		event.preventDefault();
+		preview();
+	});
 
 	$('#btn-remove-graph').click(function(event) {
 		removeGraph($('#input-graph-name').val());
@@ -225,12 +233,59 @@ function buildGraphsPage() {
 //        });    		
 	}
 	
+	function preview() {
+		var graphData = createGraphData();
+        $.ajax({
+            type: 'POST',
+            contentType: 'application/json',
+            url: '../rest/dashboard/graphdata',
+            data: JSON.stringify(graphData),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+                $('#preview_box').empty();
+        		if ('bar' == data.type) {
+        		} else if ('line' == data.type) {
+        		} else if ('number' == data.type) {
+        			$('#preview_box').append($('<h1>').text(data.value_as_string),$('<h4>').text(data.label));
+        		} else if ('pie' == data.type) {
+        		}
+            }
+        });
+	}
+	
 	function resetValues() {
 		document.getElementById('graph_form').reset();
 		enableOrDisableButtons();
 	}
 	
 	function setValuesFromData(graphData) {
+	}
+	
+	function createGraphData() {
+		var graphData = {
+			name: $('#input-graph-name').val() ? $('#input-graph-name').val() : null,
+			type: $('#sel-graph-type').val(),
+			data_source: $('#sel-data-source').val(),
+			query: $('#input-graph-query').val() ? $('#input-graph-query').val() : null
+		};
+		if ('bar' == graphData.type) {
+
+		} else if ('line' == graphData.type) {
+			
+		} else if ('number' == graphData.type) {
+			graphData.number = {
+				aggregator: $('#sel-number-aggregator').val(),
+				label: $('#input-number-label').val() ? $('#input-number-label').val() : null
+			};
+			if ('count' != graphData.number.aggregator) {
+				graphData.number.field = $('#input-number-field').val();
+			}
+		} else if ('pie' == graphData.type) {
+			
+		}
+		return graphData;
 	}
 	
 	function showBarFields() {
