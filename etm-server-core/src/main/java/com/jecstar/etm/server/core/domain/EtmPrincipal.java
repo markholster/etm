@@ -198,6 +198,6 @@ public class EtmPrincipal implements Principal {
 	}
 	
 	public DateFormat getISO8601DateFormat() {
-		return new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ", getLocale());
+		return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", getLocale());
 	}
 }

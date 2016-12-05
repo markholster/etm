@@ -53,7 +53,7 @@ public class JsonWriter {
 	}
 	
 	public boolean addDoubleElementToJsonBuffer(String elementName, Double elementValue, StringBuilder buffer, boolean firstElement) {
-		if (elementValue == null) {
+		if (elementValue == null || elementValue.isNaN()) {
 			return false;
 		}
 		if (!firstElement) {

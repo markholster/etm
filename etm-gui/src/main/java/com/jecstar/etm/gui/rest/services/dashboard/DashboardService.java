@@ -148,7 +148,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 			Percentiles percentiles = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
 			addDoubleElementToJsonBuffer("value", percentiles.percentile(50), result, false);
-			addStringElementToJsonBuffer("value_as_string", format.format(percentiles.percentile(50)), result, false);
+			addStringElementToJsonBuffer("value_as_string", Double.isNaN(percentiles.percentile(50)) ? "?" : format.format(percentiles.percentile(50)), result, false);
 		} else {
 			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(aggregator, field, label);
 			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
@@ -156,7 +156,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 			NumericMetricsAggregation.SingleValue sv = (SingleValue) aggregation;
 			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
 			addDoubleElementToJsonBuffer("value", sv.value(), result, false);
-			addStringElementToJsonBuffer("value_as_string", format.format(sv.value()), result, false);				
+			addStringElementToJsonBuffer("value_as_string", Double.isNaN(sv.value()) ? "?" : format.format(sv.value()), result, false);				
 		}
 		result.append("}");
 		return result.toString();
