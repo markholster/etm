@@ -35,12 +35,11 @@
             			values.push(keyword.name);
             		});
 	            })
-	            if ('field' === this.mode) {
+	            if ('field' === settings.mode) {
 	            	$.each(queryForFields, function(index, fieldName) {
-	                       var ix = $.inArray(fieldName, values);
-	                       if (ix >= 0) {
-	                    	   values.splice(ix,1);
-	                       }
+	            		 while ((ix = $.inArray(fieldName, values)) !== -1) {
+	            			 values.splice(ix,1);
+	                     }
 	                })
 	            }
 	            return $.uniqueSort(values.sort());	            

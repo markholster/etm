@@ -1,6 +1,9 @@
 package com.jecstar.etm.server.core.domain;
 
 import java.security.Principal;
+import java.text.DateFormat;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -188,5 +191,13 @@ public class EtmPrincipal implements Principal {
 			this.historySize =  0;
 		}
 		this.historySize = historySize;
+	}
+	
+	public NumberFormat getNumberFormat() {
+		return NumberFormat.getInstance(getLocale());
+	}
+	
+	public DateFormat getISO8601DateFormat() {
+		return new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss.SSSZ", getLocale());
 	}
 }

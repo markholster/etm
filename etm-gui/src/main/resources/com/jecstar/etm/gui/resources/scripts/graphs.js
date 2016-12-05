@@ -55,6 +55,8 @@ function buildGraphsPage() {
         				return !keyword.number;
         			} else if ('min' == agg || 'max' == agg) {
         				return !keyword.number && !keyword.date;
+        			} else if ('cardinality' == agg) {
+        				return false;
         			} else {
         				return true;
         			}
@@ -264,6 +266,21 @@ function buildGraphsPage() {
 	}
 	
 	function createGraphData() {
+		
+		function findFieldType(indexName, fieldName) {
+			var fieldType = null;
+			$.each(keywords, function(index, keywordGroup) {
+				if (indexName == keywordGroup.index) {
+					var result = $.grep(keywordGroup.keywords, function(e){ return e.name == fieldName; });
+					if (result.length >= 1) {
+						fieldType = result[0].type;
+						return true;
+					}
+				}
+			});
+			return fieldType;
+		}
+		
 		var graphData = {
 			name: $('#input-graph-name').val() ? $('#input-graph-name').val() : null,
 			type: $('#sel-graph-type').val(),
@@ -280,7 +297,8 @@ function buildGraphsPage() {
 				label: $('#input-number-label').val() ? $('#input-number-label').val() : null
 			};
 			if ('count' != graphData.number.aggregator) {
-				graphData.number.field = $('#input-number-field').val();
+				graphData.number.field = $('#input-number-field').val(),
+				graphData.number.field_type = findFieldType(graphData.data_source, graphData.number.field);
 			}
 		} else if ('pie' == graphData.type) {
 			
