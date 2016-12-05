@@ -22,6 +22,7 @@ import org.elasticsearch.search.SearchHit;
 
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -89,16 +90,20 @@ public class QueryExporter {
 					if (!first) {
 						writer.append(csvSeparator);
 					}
+					first = false;
 					String field = parameters.getFields().get(j);
+					if (Keyword.TYPE.getName().equals(field)) {
+						writer.append(escapeToQuotedCsvField(searchHit.getType()));
+						continue;
+					} 
 					List<Object> values = collectValuesFromPath(field, sourceValues);
 					if (values.isEmpty()) {
 						writer.append(escapeToQuotedCsvField(null));
-						break;
+						continue;
 					}
 					Map<String, Object> fieldLayout = parameters.getFieldsLayout().get(j);
 					Object value = selectValue(values, fieldLayout);
 					writer.append(escapeToQuotedCsvField(formatValue(value, fieldLayout, etmPrincipal)));
-					first = false;
 				}
 			}
 		}
@@ -139,16 +144,21 @@ public class QueryExporter {
 				cellIx = 0;
 				for (int j = 0; j < parameters.getFields().size(); j++ ) {
 					String field = parameters.getFields().get(j);
+					if (Keyword.TYPE.getName().equals(field)) {
+						XSSFCell cell = row.createCell(cellIx++);
+						cell.setCellValue(searchHit.getType());
+						continue;
+					}
 					List<Object> values = collectValuesFromPath(field, sourceValues);
 					if (values.isEmpty()) {
 						cellIx++;
-						break;
+						continue;
 					}
 					Map<String, Object> fieldLayout = parameters.getFieldsLayout().get(j);
 					Object value = selectValue(values, fieldLayout);
 					if (value == null) {
 						cellIx++;
-						break;
+						continue;
 					}
 					String format = this.converter.getString("format", fieldLayout, "plain");
 					// When changed also change the searchresults-layout.js with the same functionality.

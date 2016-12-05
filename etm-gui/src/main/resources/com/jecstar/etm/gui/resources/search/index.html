@@ -588,7 +588,7 @@ body { padding-top: 60px; }
                     $('<a>')
                         .attr('href', '#')
                         .attr('id', searchResult.id)
-                        .text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
+                        .text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
                         .click(function (event) {
                             showEvent($(window).scrollTop(), searchResult.type, searchResult.id);
                             $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
@@ -596,7 +596,7 @@ body { padding-top: 60px; }
                         })
                 )    
             } else {
-                $td.text(tableLayout.getValueFromSource(searchResult.source, field, timeZone))
+                $td.text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
             }
             $tr.append($td);
         });    

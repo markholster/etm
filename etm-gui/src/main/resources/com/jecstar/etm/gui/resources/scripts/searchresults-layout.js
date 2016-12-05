@@ -18,11 +18,15 @@ var tableLayout = {
             return item.field;
         })
     },
-    getValueFromSource: function(source, tableColumn, timeZone) {
+    getValueFromSearchResult: function(searchResult, tableColumn, timeZone) {
         var fieldParts = tableColumn.field.split("\.");
         var values = [];
         var result = '';
-        tableLayout.retrieveValuesFromSource(source, fieldParts, values);
+        if ('_type' == tableColumn.field) {
+        	values.push(searchResult.type);
+        } else {
+        	tableLayout.retrieveValuesFromSource(searchResult.source, fieldParts, values);
+        }
         if (values.length == 0) {
             result = ''
         } else if (values.length == 1) {
