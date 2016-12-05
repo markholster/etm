@@ -45,6 +45,7 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 				List<Keyword> foundKeywords = new ArrayList<Keyword>();
 				foundKeywords.add(Keyword.EXISTS);
 				foundKeywords.add(Keyword.MISSING);
+				foundKeywords.add(Keyword.TYPE);
 				try {
 					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
 					addFieldProperties(foundKeywords, "", valueMap);
