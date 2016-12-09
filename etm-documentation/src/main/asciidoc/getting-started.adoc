@@ -114,7 +114,7 @@ NoNodeAvailableException[None of the configured nodes are available: [{#transpor
 your {etm} configuration cannot find the Elasticsearch cluster. Please contact your Elasticsearch administrator for the correct Elasticsearch connection parameters, and change the setting in the etm.yml file which can be found in the config directory.
 
 
-When everything is configured well, you can access {etm} with a browser by browsing to link:http://127.0.0.1:8080/gui/search/[]. During installation an administrative account is created with the username ''admin'' and the password ''password''.
+When everything is configured well, you can access {etm} with a browser by browsing to link:http://127.0.0.1:8080/gui/[]. During installation an administrative account is created with the username ''admin'' and the password ''password''.
 
 CAUTION: Don't forget to change these default credentials! It is recommended to create a new administrative account and remove the default one as soon as possible.
 
