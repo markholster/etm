@@ -9,14 +9,16 @@
   <body>
   <script type="text/javascript">
   (function(){
-	function endsWith(value, valueToTest) {
-		var d = value.length - valueToTest.length;
-		return d >= 0 && value.lastIndexOf(valueToTest) === d;
-	}	  
-	  
-  	var path = '../';
-	if (endsWith(window.location.pathname, "/gui/index.html") || endsWith(window.location.pathname, "/gui/")) {
-		path = './';
+	var contextRoot = '/gui/';  
+	var ix = window.location.pathname.indexOf(contextRoot);
+  	var path = './';
+	if (ix != -1) {
+		var requestPath = window.location.pathname.substring(ix + contextRoot.length);
+		var match = requestPath.match(/\//g);
+		var additions = match ? match.length : 0;
+		for (i = 0; i < additions; i++) {
+		    path += '../';
+		}
 	}
   	var styles = document.createElement('link');
   	styles.rel = 'stylesheet';
