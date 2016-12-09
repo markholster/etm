@@ -37,32 +37,12 @@ function buildGraphsPage() {
         		}
         	}
         );
-
-        $('#input-number-field').bind('keydown', function( event ) {
-            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                event.stopPropagation();
-            }
-        }).autocompleteFieldQuery(
-        	{
-        		queryKeywords: keywords,
-        		mode: 'field',
-        		keywordIndexFilter: function(index) {
-        			return index != $('#sel-data-source').val();
-        		},
-        		keywordFilter: function(index, group, keyword) {
-        			var agg = $('#sel-number-aggregator').val();
-        			if ('average' == agg || 'sum' == agg || 'median' == agg || 'percentile' == agg || 'percentile_rank' == agg) {
-        				return !keyword.number;
-        			} else if ('min' == agg || 'max' == agg) {
-        				return !keyword.number && !keyword.date;
-        			} else if ('cardinality' == agg) {
-        				return false;
-        			} else {
-        				return true;
-        			}
-        		}
-        	}
-        );
+        
+        addMetricsAggregatorsBlock($('#bar-fields'),'bar', 0);
+        addMetricsAggregatorsBlock($('#number-fields'),'number', 0);
+        
+    	$('#graph_form :input').on('input', enableOrDisableButtons);
+    	$('#graph_form :input').on('autocomplete:selected', enableOrDisableButtons);
 	});    
 	
 	
@@ -93,26 +73,6 @@ function buildGraphsPage() {
 	
 	$('#sel-data-source').change(function(event) {
 		$('#input-number-field').val('');
-	});
-	
-	$('#sel-number-aggregator').change(function(event) {
-		event.preventDefault();
-		if ('count' == $(this).val()) {
-			$('#input-number-field').removeAttr('required').parent().parent().hide();
-		} else {
-			$('#input-number-field').attr('required', 'required').parent().parent().show();
-		}
-		if ('percentile' == $(this).val()) {
-			$('#input-number-percentile').attr('required', 'required').parent().parent().show();
-		} else {
-			$('#input-number-percentile').removeAttr('required').parent().parent().hide();
-		}
-		if ('percentile_rank' == $(this).val()) {
-			$('#input-number-percentile-rank').attr('required', 'required').parent().parent().show();
-		} else {
-			$('#input-number-percentile-rank').removeAttr('required').parent().parent().hide();
-		}
-		enableOrDisableButtons();
 	});
 	
 	$.ajax({
@@ -166,9 +126,116 @@ function buildGraphsPage() {
 		removeGraph($('#input-graph-name').val());
 	});
 	
-	$('#graph_form :input').on('input', enableOrDisableButtons);
-	$('#graph_form :input').on('autocomplete:selected', enableOrDisableButtons);
 	
+
+	
+	function addMetricsAggregatorsBlock(parent, graphType, ix) {
+		$(parent).append(
+			$('<div>').addClass('form-group row').append(
+				$('<label>').attr('for', 'sel-' + graphType + '-aggregator-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Aggregator'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<select>').attr('id', 'sel-' + graphType + '-aggregator-' + ix).addClass('form-control form-control-sm custom-select')
+					.change(function(event) {
+						event.preventDefault();
+						if ('count' == $(this).val()) {
+							$('#input-' + graphType + '-field-' + ix).removeAttr('required').parent().parent().hide();
+						} else {
+							$('#input-' + graphType + '-field-' + ix).attr('required', 'required').parent().parent().show();
+						}
+						if ('percentile' == $(this).val()) {
+							$('#input-' + graphType + '-percentile-' + ix).attr('required', 'required').parent().parent().show();
+						} else {
+							$('#input-' + graphType + '-percentile-' + ix).removeAttr('required').parent().parent().hide();
+						}
+						if ('percentile_rank' == $(this).val()) {
+							$('#input-' + graphType + '-percentile-rank-' + ix).attr('required', 'required').parent().parent().show();
+						} else {
+							$('#input-' + graphType + '-percentile-rank-' + ix).removeAttr('required').parent().parent().hide();
+						}
+						enableOrDisableButtons();
+					})
+					.append(
+						$('<option>').attr('value', 'average').text('Average'),
+						$('<option>').attr('value', 'count').text('Count'),
+						$('<option>').attr('value', 'max').text('Max'),
+						$('<option>').attr('value', 'median').text('Median'),
+						$('<option>').attr('value', 'min').text('Min'),
+						$('<option>').attr('value', 'percentile').text('Percentile'),
+						$('<option>').attr('value', 'percentile_rank').text('Percentile rank'),
+						$('<option>').attr('value', 'sum').text('Sum'),
+						$('<option>').attr('value', 'caridnality').text('Unique count')
+					)
+				)
+			),
+			$('<div>').addClass('form-group row').append(
+				$('<label>').attr('for', 'input-' + graphType + '-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<input>').attr('id', 'input-' + graphType + '-field-' + ix).attr('type', 'text').addClass('form-control form-control-sm')
+					.bind('keydown', function( event ) {
+			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+			                event.stopPropagation();
+			            }
+			        }).autocompleteFieldQuery(
+			        	{
+			        		queryKeywords: keywords,
+			        		mode: 'field',
+			        		keywordIndexFilter: function(index) {
+			        			return index != $('#sel-data-source').val();
+			        		},
+			        		keywordFilter: function(index, group, keyword) {
+			        			var agg = $('#sel-' + graphType + '-aggregator-' + ix).val();
+			        			if ('average' == agg || 'sum' == agg || 'median' == agg || 'percentile' == agg || 'percentile_rank' == agg) {
+			        				return !keyword.number;
+			        			} else if ('min' == agg || 'max' == agg) {
+			        				return !keyword.number && !keyword.date;
+			        			} else if ('cardinality' == agg) {
+			        				return false;
+			        			} else {
+			        				return true;
+			        			}
+			        		}
+			        	}
+			        )
+				)
+			),
+			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
+				$('<label>').attr('for', 'input-' + graphType + '-percentile-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Percentile'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<input>').attr('id', 'input-' + graphType + '-percentile-' + ix).attr('type', 'number').addClass('form-control form-control-sm').attr('step', 'any').attr('min', '0').attr('max', '100').attr('value', '95')
+				)
+			),
+			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
+				$('<label>').attr('for', 'input-' + graphType + '-percentile-rank-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Rank'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<input>').attr('id', 'input-' + graphType + '-percentile-rank-' + ix).attr('type', 'number').addClass('form-control form-control-sm').attr('step', 'any')
+				)
+			),
+			$('<div>').addClass('form-group row').append(
+				$('<label>').attr('for', 'input-' + graphType + '-label-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Label'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<input>').attr('id', 'input-' + graphType + '-label-' + ix).attr('type', 'text').addClass('form-control form-control-sm')
+				)
+			)
+		);
+	}
+	
+	function getMetricsAggregatorsBlock(graphType, ix) {
+		var metricData = {
+			aggregator: $('#sel-' + graphType + '-aggregator-' + ix).val(),
+			label: $('#input-' + graphType + '-label-' + ix).val() ? $('#input-' + graphType + '-label-' + ix).val() : null
+		};
+		if ('count' != metricData.aggregator) {
+			metricData.field = $('#input-' + graphType + '-field-' + ix).val(),
+			metricData.field_type = findFieldType($('#sel-data-source').val(), metricData.field);
+		}
+		if ('percentile' == metricData.aggregator) {
+			metricData.percentile_data = Number($('#input-' + graphType + '-percentile-' + ix).val());
+		} else if ('percentile_rank' == metricData.aggregator) {
+			metricData.percentile_data = Number($('#input-' + graphType + '-percentile-rank-' + ix).val());
+		}
+		return metricData;
+	}
+
 	function enableOrDisableButtons() {
 		//  First remove the required constraints to check if all other fields are valid.
 		$('#input-graph-name').removeAttr('required');
@@ -273,22 +340,21 @@ function buildGraphsPage() {
 	function setValuesFromData(graphData) {
 	}
 	
-	function createGraphData() {
-		
-		function findFieldType(indexName, fieldName) {
-			var fieldType = null;
-			$.each(keywords, function(index, keywordGroup) {
-				if (indexName == keywordGroup.index) {
-					var result = $.grep(keywordGroup.keywords, function(e){ return e.name == fieldName; });
-					if (result.length >= 1) {
-						fieldType = result[0].type;
-						return true;
-					}
+	function findFieldType(indexName, fieldName) {
+		var fieldType = null;
+		$.each(keywords, function(index, keywordGroup) {
+			if (indexName == keywordGroup.index) {
+				var result = $.grep(keywordGroup.keywords, function(e){ return e.name == fieldName; });
+				if (result.length >= 1) {
+					fieldType = result[0].type;
+					return true;
 				}
-			});
-			return fieldType;
-		}
-		
+			}
+		});
+		return fieldType;
+	}
+	
+	function createGraphData() {
 		var graphData = {
 			name: $('#input-graph-name').val() ? $('#input-graph-name').val() : null,
 			type: $('#sel-graph-type').val(),
@@ -300,20 +366,7 @@ function buildGraphsPage() {
 		} else if ('line' == graphData.type) {
 			
 		} else if ('number' == graphData.type) {
-			graphData.number = {
-				aggregator: $('#sel-number-aggregator').val(),
-				label: $('#input-number-label').val() ? $('#input-number-label').val() : null
-			};
-			if ('count' != graphData.number.aggregator) {
-				graphData.number.field = $('#input-number-field').val(),
-				graphData.number.field_type = findFieldType(graphData.data_source, graphData.number.field);
-			}
-			if ('percentile' == graphData.number.aggregator) {
-				graphData.number.percentile_data = Number($('#input-number-percentile').val());
-			} else if ('percentile_rank' == graphData.number.aggregator) {
-				graphData.number.percentile_data = Number($('#input-number-percentile-rank').val());
-			}
-			
+			graphData.number = getMetricsAggregatorsBlock(graphData.type, 0);
 		} else if ('pie' == graphData.type) {
 			
 		}
@@ -324,10 +377,14 @@ function buildGraphsPage() {
 		hideLineFields();
 		hideNumberFields();
 		hidePieFields();
+		$('[id^=input-bar-field-]').attr('required', 'required');
+		$('[id^=input-bar-percentile-] :visible').attr('required', 'required');
 		$('#bar-fields').show();
 	}
 	
 	function hideBarFields() {
+		$('[id^=input-bar-field-]').removeAttr('required');
+		$('[id^=input-bar-percentile-] :visible').removeAttr('required');
 		$('#bar-fields').hide();
 	}
 	
@@ -346,12 +403,14 @@ function buildGraphsPage() {
 		hideBarFields();
 		hideLineFields();
 		hidePieFields();
-		$('#input-number-field').attr('required', 'required');
+		$('[id^=input-number-field-]').attr('required', 'required');
+		$('[id^=input-number-percentile-] :visible').attr('required', 'required');
 		$('#number-fields').show();
 	}
 	
 	function hideNumberFields() {
-		$('#input-number-field').removeAttr('required');
+		$('[id^=input-number-field-]').removeAttr('required');
+		$('[id^=input-number-percentile-] :visible').removeAttr('required');
 		$('#number-fields').hide();
 	}
 	
