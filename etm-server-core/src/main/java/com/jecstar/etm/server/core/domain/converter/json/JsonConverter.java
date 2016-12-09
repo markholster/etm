@@ -95,10 +95,14 @@ public class JsonConverter extends JsonWriter {
 	}
 	
 	public Double getDouble(String tag, Map<String, Object> valueMap) {
+		return getDouble(tag, valueMap, null);
+	}
+	
+	public Double getDouble(String tag, Map<String, Object> valueMap, Double defaultValue) {
 		if (valueMap.get(tag) != null) {
 			return ((Number)valueMap.get(tag)).doubleValue();
 		}
-		return null;
+		return defaultValue;
 	}
 	
 	public ZonedDateTime getZonedDateTime(String tag, Map<String, Object> valueMap) {

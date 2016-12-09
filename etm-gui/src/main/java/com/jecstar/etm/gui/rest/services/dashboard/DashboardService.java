@@ -23,10 +23,14 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation.SingleValue;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
@@ -102,72 +106,106 @@ public class DashboardService extends AbstractIndexMetadataService {
 		String type = getString("type", valueMap);
 		if ("number".equals(type)) {
 			return getNumberData(valueMap);
+		} else if ("bar".equals(type)) {
+			return getBarData(valueMap);
 		} else {
 			throw new RuntimeException("Unknown type: '" + type + "'.");
 		}
+	}
+	
+	private String getBarData(Map<String, Object> valueMap) {
+		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		String index = getString("data_source", valueMap);
+		String query = getString("query", valueMap, "*");
+		SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
+		Map<String, Object> barData = getObject("bar", valueMap);
+		Map<String, Object> xAxisData = getObject("x_axis", barData);
+		Map<String, Object> yAxisData = getObject("y_axis", barData);
+		
+		Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData);
+		String bucketAggregator = getString("aggregator", bucketAggregatorData);
+		String bucketField = getString("field", bucketAggregatorData);
+		String bucketFieldType = getString("field_type", bucketAggregatorData);
+		String bucketLabel = getString("label", bucketAggregatorData);
+		Format bucketFormat = "date".equals(bucketFieldType) ? etmPrincipal.getISO8601DateFormat() : etmPrincipal.getNumberFormat();
+
+		// First create the bucket aggregator
+		AggregationBuilder bucketAggregatorBuilder = createBucketAggregationBuilder(etmPrincipal, bucketAggregator, bucketField, bucketLabel);
+		// And add every y-axis aggregator as sub aggregator
+		List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
+		for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
+			String metricAggregator = getString("aggregator", metricsAggregatorData);
+			String metricField = getString("field", metricsAggregatorData);
+			String metricLabel = getString("label", metricsAggregatorData);
+			Double metricPercentileDate = getDouble("percentile_data", metricsAggregatorData);
+			AggregationBuilder subAggregation = createMetricAggregationBuilder(etmPrincipal, metricAggregator, metricField, metricLabel, metricPercentileDate);
+			subAggregation.setMetaData(metricsAggregatorData);
+			bucketAggregatorBuilder.subAggregation(subAggregation);
+		}
+		// Start building the response
+		StringBuilder result = new StringBuilder();
+		result.append("{");
+		result.append("\"d3_formatter\": " + getD3Formatter());
+		addStringElementToJsonBuffer("type", "bar", result, false);
+		
+		SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
+		Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
+		if (aggregation instanceof Histogram) {
+			Histogram histogram = (Histogram) aggregation;
+			for(org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : histogram.getBuckets()) {
+				String key = bucket.getKeyAsString();
+				if (bucket.getKey() instanceof DateTime) {
+					DateTime dateTime = (DateTime) bucket.getKey();
+					key = bucketFormat.format(dateTime.getMillis());  
+				}
+				System.out.println(key);
+			}
+		} else {
+			// TODO gooi exceptie
+		}
+		
+		result.append("}");
+		return result.toString();
 	}
 
 	private String getNumberData(Map<String, Object> valueMap) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		String index = getString("data_source", valueMap);
-		SearchRequestBuilder searchRequest = client.prepareSearch(index)
-			.setFetchSource(false)
-			.setSize(0)
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(getString("query", valueMap, "*"))
-				.allowLeadingWildcard(true)
-				.analyzeWildcard(true)
-				.locale(etmPrincipal.getLocale())
-				.lowercaseExpandedTerms(false)
-				.timeZone(etmPrincipal.getTimeZone().getID());
-		if (ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL.equals(index)) {
-			queryStringBuilder.defaultField("payload");
-			searchRequest.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder));
-		} else {
-			searchRequest.setQuery(queryStringBuilder);
-		}
+		String query = getString("query", valueMap, "*");
+		SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
+
 		Map<String, Object> numberData = getObject("number", valueMap);
 		String aggregator = getString("aggregator", numberData);
 		String field = getString("field", numberData);
 		String fieldType = getString("field_type", numberData);
+		String label = getString("label", numberData);
 		Double percentileDate = getDouble("percentile_data", numberData);
+		
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		addStringElementToJsonBuffer("type", "number", result, true);
 		addStringElementToJsonBuffer("aggregator", aggregator, result, false);
 		
-		
 		Format format = "date".equals(fieldType) ? etmPrincipal.getISO8601DateFormat() : etmPrincipal.getNumberFormat();
-		String label = getString("label", numberData);
-		if ("count".equals(aggregator)) {
-			SearchResponse searchResponse = searchRequest.get();
-			addStringElementToJsonBuffer("label", getString("label", numberData, "Count"), result, false);
-			addLongElementToJsonBuffer("value", searchResponse.getHits().getTotalHits(), result, false);			
-			addStringElementToJsonBuffer("value_as_string", format.format(searchResponse.getHits().getTotalHits()), result, false);			
-		} else if ("median".equals(aggregator)) {
-			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, null);
-			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
+
+		AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
+		SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
+		if ("median".equals(aggregator)) {
 			Percentiles percentiles = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
 			addDoubleElementToJsonBuffer("value", percentiles.percentile(50), result, false);
 			addStringElementToJsonBuffer("value_as_string", Double.isNaN(percentiles.percentile(50)) ? "?" : format.format(percentiles.percentile(50)), result, false);
 		} else if ("percentile".equals(aggregator)) {
-			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
-			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
 			Percentiles percentiles = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
 			addDoubleElementToJsonBuffer("value", percentiles.percentile(percentileDate), result, false);
 			addStringElementToJsonBuffer("value_as_string", Double.isNaN(percentiles.percentile(percentileDate)) ? "?" : format.format(percentiles.percentile(percentileDate)), result, false);
 		} else if ("percentile_rank".equals(aggregator)) {
-			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
-			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
 			PercentileRanks ranks = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
 			addDoubleElementToJsonBuffer("value", ranks.percent(percentileDate), result, false);
 			addStringElementToJsonBuffer("value_as_string", Double.isNaN(ranks.percent(percentileDate)) ? "?" : format.format(ranks.percent(percentileDate)) + "%", result, false);
 		} else {
-			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, null);
-			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
 			Aggregation aggregation = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 			NumericMetricsAggregation.SingleValue sv = (SingleValue) aggregation;
 			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
@@ -178,6 +216,26 @@ public class DashboardService extends AbstractIndexMetadataService {
 		return result.toString();
 	}
 	
+	private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, String index, String query) {
+		SearchRequestBuilder searchRequest = client.prepareSearch(index)
+				.setFetchSource(false)
+				.setSize(0)
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(query)
+				.allowLeadingWildcard(true)
+				.analyzeWildcard(true)
+				.locale(etmPrincipal.getLocale())
+				.lowercaseExpandedTerms(false)
+				.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+		if (ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL.equals(index)) {
+			queryStringBuilder.defaultField("payload");
+			searchRequest.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder));
+		} else {
+			searchRequest.setQuery(queryStringBuilder);
+		}		
+		return searchRequest;
+	}
+	
 	private AggregationBuilder createMetricAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, String label, Double percentileData) {
 		if ("average".equals(type)) {
 			String internalLabel = label != null ? label : "Average of " + field;
@@ -186,6 +244,9 @@ public class DashboardService extends AbstractIndexMetadataService {
 			// TODO beschrijven dat dit niet een precieze waarde is: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html
 			String internalLabel = label != null ? label : "Unique count of " + field;
 			return AggregationBuilders.cardinality(internalLabel).field(field);
+		} else if ("count".equals(type)) {
+			String internalLabel = label != null ? label : "Count";
+			return AggregationBuilders.count(internalLabel).field("_type");
 		} else if ("max".equals(type)) {
 			String internalLabel = label != null ? label : "Max of " + field;
 			return AggregationBuilders.max(internalLabel).field(field);			
@@ -219,7 +280,13 @@ public class DashboardService extends AbstractIndexMetadataService {
 		throw new IllegalArgumentException("'" + type + "' is an invalid metric aggregator.");
 	}
 	
-	
+	private AggregationBuilder createBucketAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, String label) {
+		if ("date_histogram".equals(type)) {
+			String internalLabel = label != null ? label : "Date of " + field;
+			return AggregationBuilders.dateHistogram(internalLabel).field(field).dateHistogramInterval(DateHistogramInterval.DAY);		
+		}
+		throw new IllegalArgumentException("'" + type + "' is an invalid bucket aggregator.");
+	}
 	
 	
 //	@POST
