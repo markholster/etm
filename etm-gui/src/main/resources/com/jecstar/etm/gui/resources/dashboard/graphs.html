@@ -99,6 +99,8 @@ body { padding-top: 60px; }
 					        <option value="max">Max</option>
 					        <option value="median">Median</option>
 					        <option value="min">Min</option>
+					        <option value="percentile">Percentile</option>
+					        <option value="percentile_rank">Percentile rank</option>
 					        <option value="sum">Sum</ofption>
 					        <option value="cardinality">Unique count</option>
 					      </select>
@@ -108,6 +110,18 @@ body { padding-top: 60px; }
 					    <label for="input-number-field" class="col-sm-3 col-form-label col-form-label-sm">Field</label>
 					    <div class="col-sm-9">
 					      <input id="input-number-field" type="text" class="form-control form-control-sm" />
+					    </div>
+					  </div>
+                      <div class="form-group row" style="display: none;">
+					    <label for="input-number-percentile" class="col-sm-3 col-form-label col-form-label-sm">Percentile</label>
+					    <div class="col-sm-9">
+					      <input id="input-number-percentile" type="number" class="form-control form-control-sm" step="any" min="0" max="100" value="95" />
+					    </div>
+					  </div>
+                      <div class="form-group row" style="display: none;">
+					    <label for="input-number-percentile-rank" class="col-sm-3 col-form-label col-form-label-sm">Rank</label>
+					    <div class="col-sm-9">
+					      <input id="input-number-percentile-rank" type="number" class="form-control form-control-sm" step="any" />
 					    </div>
 					  </div>
                       <div class="form-group row">

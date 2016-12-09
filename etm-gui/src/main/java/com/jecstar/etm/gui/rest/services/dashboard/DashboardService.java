@@ -25,6 +25,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation.SingleValue;
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
@@ -129,6 +130,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		String aggregator = getString("aggregator", numberData);
 		String field = getString("field", numberData);
 		String fieldType = getString("field_type", numberData);
+		Double percentileDate = getDouble("percentile_data", numberData);
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		addStringElementToJsonBuffer("type", "number", result, true);
@@ -143,14 +145,28 @@ public class DashboardService extends AbstractIndexMetadataService {
 			addLongElementToJsonBuffer("value", searchResponse.getHits().getTotalHits(), result, false);			
 			addStringElementToJsonBuffer("value_as_string", format.format(searchResponse.getHits().getTotalHits()), result, false);			
 		} else if ("median".equals(aggregator)) {
-			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(aggregator, field, label);
+			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, null);
 			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
 			Percentiles percentiles = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
 			addDoubleElementToJsonBuffer("value", percentiles.percentile(50), result, false);
 			addStringElementToJsonBuffer("value_as_string", Double.isNaN(percentiles.percentile(50)) ? "?" : format.format(percentiles.percentile(50)), result, false);
+		} else if ("percentile".equals(aggregator)) {
+			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
+			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
+			Percentiles percentiles = searchResponse.getAggregations().get(aggregatorBuilder.getName());
+			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
+			addDoubleElementToJsonBuffer("value", percentiles.percentile(percentileDate), result, false);
+			addStringElementToJsonBuffer("value_as_string", Double.isNaN(percentiles.percentile(percentileDate)) ? "?" : format.format(percentiles.percentile(percentileDate)), result, false);
+		} else if ("percentile_rank".equals(aggregator)) {
+			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
+			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
+			PercentileRanks ranks = searchResponse.getAggregations().get(aggregatorBuilder.getName());
+			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
+			addDoubleElementToJsonBuffer("value", ranks.percent(percentileDate), result, false);
+			addStringElementToJsonBuffer("value_as_string", Double.isNaN(ranks.percent(percentileDate)) ? "?" : format.format(ranks.percent(percentileDate)) + "%", result, false);
 		} else {
-			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(aggregator, field, label);
+			AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, null);
 			SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
 			Aggregation aggregation = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 			NumericMetricsAggregation.SingleValue sv = (SingleValue) aggregation;
@@ -162,7 +178,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		return result.toString();
 	}
 	
-	private AggregationBuilder createMetricAggregationBuilder(String type, String field, String label) {
+	private AggregationBuilder createMetricAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, String label, Double percentileData) {
 		if ("average".equals(type)) {
 			String internalLabel = label != null ? label : "Average of " + field;
 			return AggregationBuilders.avg(internalLabel).field(field);
@@ -179,6 +195,23 @@ public class DashboardService extends AbstractIndexMetadataService {
 		} else if ("min".equals(type)) {
 			String internalLabel = label != null ? label : "Min of " + field;
 			return AggregationBuilders.min(internalLabel).field(field);			
+		} else if ("percentile".equals(type)) {
+			String internalLabel = label;
+			if (internalLabel == null) {
+				if (percentileData == 1) {
+					internalLabel = "1st percentile of " + field;
+				} else if (percentileData == 2) {
+					internalLabel = "2nd percentile of " + field;
+				} else if (percentileData == 3) {
+					internalLabel = "3rd percentile of " + field;
+				} else {
+					internalLabel = etmPrincipal.getNumberFormat().format(percentileData) + "th percentile of " + field;
+				}
+			}
+			return AggregationBuilders.percentiles(internalLabel).field(field).percentiles(percentileData);			
+		} else if ("percentile_rank".equals(type)) {
+			String internalLabel = label != null ? label : "Percentile rank " + etmPrincipal.getNumberFormat().format(percentileData) + " of " + field;
+			return AggregationBuilders.percentileRanks(internalLabel).field(field).values(percentileData);
 		} else if ("sum".equals(type)) {
 			String internalLabel = label != null ? label : "Sum of " + field;
 			return AggregationBuilders.sum(internalLabel).field(field);

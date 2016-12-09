@@ -96,7 +96,7 @@ public class JsonConverter extends JsonWriter {
 	
 	public Double getDouble(String tag, Map<String, Object> valueMap) {
 		if (valueMap.get(tag) != null) {
-			return ((Double)valueMap.get(tag)).doubleValue();
+			return ((Number)valueMap.get(tag)).doubleValue();
 		}
 		return null;
 	}

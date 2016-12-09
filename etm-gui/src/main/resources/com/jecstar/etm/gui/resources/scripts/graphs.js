@@ -51,7 +51,7 @@ function buildGraphsPage() {
         		},
         		keywordFilter: function(index, group, keyword) {
         			var agg = $('#sel-number-aggregator').val();
-        			if ('average' == agg || 'sum' == agg || 'median' == agg) {
+        			if ('average' == agg || 'sum' == agg || 'median' == agg || 'percentile' == agg || 'percentile_rank' == agg) {
         				return !keyword.number;
         			} else if ('min' == agg || 'max' == agg) {
         				return !keyword.number && !keyword.date;
@@ -98,11 +98,19 @@ function buildGraphsPage() {
 	$('#sel-number-aggregator').change(function(event) {
 		event.preventDefault();
 		if ('count' == $(this).val()) {
-			$('#input-number-field').removeAttr('required');
-			$('#input-number-field').parent().parent().hide();
+			$('#input-number-field').removeAttr('required').parent().parent().hide();
 		} else {
-			$('#input-number-field').attr('required', 'required');
-			$('#input-number-field').parent().parent().show();
+			$('#input-number-field').attr('required', 'required').parent().parent().show();
+		}
+		if ('percentile' == $(this).val()) {
+			$('#input-number-percentile').attr('required', 'required').parent().parent().show();
+		} else {
+			$('#input-number-percentile').removeAttr('required').parent().parent().hide();
+		}
+		if ('percentile_rank' == $(this).val()) {
+			$('#input-number-percentile-rank').attr('required', 'required').parent().parent().show();
+		} else {
+			$('#input-number-percentile-rank').removeAttr('required').parent().parent().hide();
 		}
 		enableOrDisableButtons();
 	});
@@ -300,6 +308,12 @@ function buildGraphsPage() {
 				graphData.number.field = $('#input-number-field').val(),
 				graphData.number.field_type = findFieldType(graphData.data_source, graphData.number.field);
 			}
+			if ('percentile' == graphData.number.aggregator) {
+				graphData.number.percentile_data = Number($('#input-number-percentile').val());
+			} else if ('percentile_rank' == graphData.number.aggregator) {
+				graphData.number.percentile_data = Number($('#input-number-percentile-rank').val());
+			}
+			
 		} else if ('pie' == graphData.type) {
 			
 		}
