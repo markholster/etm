@@ -23,6 +23,7 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregator;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
@@ -34,6 +35,8 @@ import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
+import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
+import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -147,9 +150,11 @@ public class DashboardService extends AbstractIndexMetadataService {
 		result.append("{");
 		result.append("\"d3_formatter\": " + getD3Formatter());
 		addStringElementToJsonBuffer("type", "bar", result, false);
+		result.append(",\"data\": [");
 		
 		SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
 		Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
+		BarLayout barLayout = new BarLayout();
 		if (aggregation instanceof Histogram) {
 			Histogram histogram = (Histogram) aggregation;
 			for(org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : histogram.getBuckets()) {
@@ -158,12 +163,18 @@ public class DashboardService extends AbstractIndexMetadataService {
 					DateTime dateTime = (DateTime) bucket.getKey();
 					key = bucketFormat.format(dateTime.getMillis());  
 				}
+				for(Aggregation subAggregation : bucket.getAggregations()) {
+					Map<String, Object> metricsAggregatorData = subAggregation.getMetaData();
+					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
+					barLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
+				}
 				System.out.println(key);
 			}
 		} else {
 			// TODO gooi exceptie
 		}
 		
+		result.append("]");
 		result.append("}");
 		return result.toString();
 	}
@@ -190,28 +201,10 @@ public class DashboardService extends AbstractIndexMetadataService {
 
 		AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
 		SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
-		if ("median".equals(aggregator)) {
-			Percentiles percentiles = searchResponse.getAggregations().get(aggregatorBuilder.getName());
-			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
-			addDoubleElementToJsonBuffer("value", percentiles.percentile(50), result, false);
-			addStringElementToJsonBuffer("value_as_string", Double.isNaN(percentiles.percentile(50)) ? "?" : format.format(percentiles.percentile(50)), result, false);
-		} else if ("percentile".equals(aggregator)) {
-			Percentiles percentiles = searchResponse.getAggregations().get(aggregatorBuilder.getName());
-			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
-			addDoubleElementToJsonBuffer("value", percentiles.percentile(percentileDate), result, false);
-			addStringElementToJsonBuffer("value_as_string", Double.isNaN(percentiles.percentile(percentileDate)) ? "?" : format.format(percentiles.percentile(percentileDate)), result, false);
-		} else if ("percentile_rank".equals(aggregator)) {
-			PercentileRanks ranks = searchResponse.getAggregations().get(aggregatorBuilder.getName());
-			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
-			addDoubleElementToJsonBuffer("value", ranks.percent(percentileDate), result, false);
-			addStringElementToJsonBuffer("value_as_string", Double.isNaN(ranks.percent(percentileDate)) ? "?" : format.format(ranks.percent(percentileDate)) + "%", result, false);
-		} else {
-			Aggregation aggregation = searchResponse.getAggregations().get(aggregatorBuilder.getName());
-			NumericMetricsAggregation.SingleValue sv = (SingleValue) aggregation;
-			addStringElementToJsonBuffer("label", aggregatorBuilder.getName(), result, false);
-			addDoubleElementToJsonBuffer("value", sv.value(), result, false);
-			addStringElementToJsonBuffer("value_as_string", Double.isNaN(sv.value()) ? "?" : format.format(sv.value()), result, false);				
-		}
+		Aggregation aggregation = searchResponse.getAggregations().get(aggregatorBuilder.getName());
+		AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(aggregation);
+		aggregationValue.appendToJsonBuffer(this, format, result, false);
+		
 		result.append("}");
 		return result.toString();
 	}
@@ -232,6 +225,20 @@ public class DashboardService extends AbstractIndexMetadataService {
 			searchRequest.setQuery(queryStringBuilder);
 		}		
 		return searchRequest;
+	}
+	
+	private AggregationValue<?> getMetricAggregationValueFromAggregator(Aggregation aggregation) {
+		if (aggregation instanceof Percentiles) {
+			Percentiles percentiles = (Percentiles) aggregation;
+			return new DoubleAggregationValue(((Percentiles) aggregation).getName(), percentiles.iterator().next().getValue());
+		} else if (aggregation instanceof PercentileRanks) {
+			PercentileRanks percentileRanks = (PercentileRanks) aggregation;
+			return new DoubleAggregationValue(((Percentiles) aggregation).getName(), percentileRanks.iterator().next().getValue()).setPercentage(true);
+		} else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
+			NumericMetricsAggregation.SingleValue singleValue = (SingleValue) aggregation;
+			return new DoubleAggregationValue(singleValue.getName(), singleValue.value());
+		}
+		throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");
 	}
 	
 	private AggregationBuilder createMetricAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, String label, Double percentileData) {
