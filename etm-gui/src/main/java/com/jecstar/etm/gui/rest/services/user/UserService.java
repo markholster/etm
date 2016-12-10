@@ -23,7 +23,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.IIBApi;
@@ -102,7 +102,7 @@ public class UserService extends AbstractJsonService {
 			Map<String, Object> scriptParams = new HashMap<String, Object>();
 			scriptParams.put("history_size", newHistorySize);
 			UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-					.setScript(new Script("etm_update-search-history", ScriptType.STORED, "painless", scriptParams))
+					.setScript(new Script(ScriptType.STORED, "painless", "etm_update-search-history", scriptParams))
 					.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 					.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())

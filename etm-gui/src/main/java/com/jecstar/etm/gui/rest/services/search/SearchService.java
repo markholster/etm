@@ -36,11 +36,12 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
@@ -119,7 +120,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		scriptParams.put("template", template);
 		scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-				.setScript(new Script("etm_update-search-template", ScriptType.STORED, "painless", scriptParams))
+				.setScript(new Script(ScriptType.STORED, "painless", "etm_update-search-template", scriptParams))
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -134,7 +135,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		Map<String, Object> scriptParams = new HashMap<String, Object>();
 		scriptParams.put("name", templateName);
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-			.setScript(new Script("etm_remove-search-template", ScriptType.STORED, "painless", scriptParams))
+			.setScript(new Script(ScriptType.STORED, "painless", "etm_remove-search-template", scriptParams))
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -226,9 +227,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			.allowLeadingWildcard(true)
 			.analyzeWildcard(true)
 			.defaultField("payload")
-			.locale(etmPrincipal.getLocale())
-			.lowercaseExpandedTerms(false)
-			.timeZone(etmPrincipal.getTimeZone().getID());
+			.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
 		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
 			.setFetchSource(parameters.getFields().toArray(new String[parameters.getFields().size()]), null)
@@ -258,7 +257,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		scriptParams.put("query", query);
 		scriptParams.put("history_size", history_size);
 		SearchService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-				.setScript(new Script("etm_update-search-history", ScriptType.STORED, "painless", scriptParams))
+				.setScript(new Script(ScriptType.STORED, "painless", "etm_update-search-history", scriptParams))
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -389,7 +388,8 @@ public class SearchService extends AbstractIndexMetadataService {
 	}
 	
 	private SearchHit getEvent(String eventType, String eventId, boolean fetchAll, String[] includes, String[] excludes) {
-		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
+		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
+				.types(eventType)
 				.addIds(eventId);
 		SearchRequestBuilder builder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setQuery(addEtmPrincipalFilterQuery(idsQueryBuilder))
@@ -409,7 +409,8 @@ public class SearchService extends AbstractIndexMetadataService {
 	}
 	
 	private SearchHit conditionallyGetEvent(String eventType, String eventId) {
-		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
+		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
+				.types(eventType)
 				.addIds(eventId);
 		SearchRequestBuilder builder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setQuery(alwaysShowCorrelatedEvents(getEtmPrincipal()) ? idsQueryBuilder : addEtmPrincipalFilterQuery(idsQueryBuilder))
@@ -556,7 +557,8 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Path("/event/{type}/{id}/chain")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEventChain(@PathParam("type") String eventType, @PathParam("id") String eventId) {
-		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder(eventType)
+		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
+				.types(eventType)
 				.addIds(eventId);
 		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
 		SearchResponse response =  client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
@@ -907,12 +909,12 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (MessagingEventType.REQUEST.equals(messagingEventType)) {
 				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), id));
 			} else if (MessagingEventType.RESPONSE.equals(messagingEventType) && correlationId != null) {
-				queryBuilder = new IdsQueryBuilder("messaging").addIds(correlationId);
+				queryBuilder = new IdsQueryBuilder().types("messaging").addIds(correlationId);
 			}
 		} else if ("http".equals("type")) {
 			HttpEventType httpEventType = HttpEventType.safeValueOf(subType);
 			if (HttpEventType.RESPONSE.equals(httpEventType) && correlationId != null) {
-				queryBuilder = new IdsQueryBuilder("http").addIds(correlationId);
+				queryBuilder = new IdsQueryBuilder().types("http").addIds(correlationId);
 			} else {
 				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), id));
 			}

@@ -20,7 +20,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
-import org.elasticsearch.indices.IndexTemplateAlreadyExistsException;
 
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
@@ -63,7 +62,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				creatEtmEventIndexTemplate(true, 5, 0);
 				insertPainlessScripts();
 			}
-		} catch (IndexTemplateAlreadyExistsException e) {
+		} catch (IllegalArgumentException e) {
 		} catch (IOException e) {
 			if (log.isFatalLevelEnabled()) {
 				log.logFatalMessage("Failed to create painless scripts. Cluster will not be usable.", e);
@@ -83,7 +82,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 					.addAlias(new Alias(ElasticSearchLayout.ETM_METRICS_INDEX_ALIAS_ALL))
 					.get();
 			}
-		} catch (IndexTemplateAlreadyExistsException e) {}
+		} catch (IllegalArgumentException e) {}
 		
 		try {
 			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.CONFIGURATION_INDEX_NAME).get();
@@ -99,7 +98,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				insertDefaultEtmConfiguration(elasticClient);
 				insertAdminUser(elasticClient);
 			}
-		} catch (IndexTemplateAlreadyExistsException e) {}
+		} catch (IllegalArgumentException e) {}
 	}
 	
 	private void insertPainlessScripts() throws IOException {
@@ -136,7 +135,8 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		.setSettings(Settings.builder()
 			.put("index.number_of_shards", shardsPerIndex)
 			.put("index.number_of_replicas", replicasPerIndex)
-			.put("index.translog.durability", "async"))
+			.put("index.translog.durability", "async")
+		)
 		.addMapping("_default_", createEventMapping("_default_"))
 		.addAlias(new Alias(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL))
 		.get();

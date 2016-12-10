@@ -41,8 +41,6 @@ public class AbstractJsonService extends JsonConverter {
     			new QueryStringQueryBuilder(filterQuery.trim())
     				.allowLeadingWildcard(true)
     				.analyzeWildcard(true)
-    				.locale(getEtmPrincipal().getLocale())
-    				.lowercaseExpandedTerms(false)
     				.timeZone(getEtmPrincipal().getTimeZone().getID())));
     	}
     	Set<EtmGroup> groups = getEtmPrincipal().getGroups();
@@ -52,8 +50,6 @@ public class AbstractJsonService extends JsonConverter {
         			new QueryStringQueryBuilder(group.getFilterQuery().trim())
         				.allowLeadingWildcard(true)
         				.analyzeWildcard(true)
-        				.locale(getEtmPrincipal().getLocale())
-        				.lowercaseExpandedTerms(false)
         				.timeZone(getEtmPrincipal().getTimeZone().getID())));
     		}
     	}

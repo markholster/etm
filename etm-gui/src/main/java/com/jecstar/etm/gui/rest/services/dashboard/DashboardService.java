@@ -224,8 +224,6 @@ public class DashboardService extends AbstractIndexMetadataService {
 		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(query)
 				.allowLeadingWildcard(true)
 				.analyzeWildcard(true)
-				.locale(etmPrincipal.getLocale())
-				.lowercaseExpandedTerms(false)
 				.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
 		if (ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL.equals(index)) {
 			queryStringBuilder.defaultField("payload");

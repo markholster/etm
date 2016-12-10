@@ -13,7 +13,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService.ScriptType;
+import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
@@ -89,7 +89,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
 		Map<String, Object> parameters =  new HashMap<>();
 		parameters.put("correlating_id", event.id);
 		bulkProcessor.add(createUpdateRequest(event.correlationId)
-				.script(new Script("etm_update-event-with-correlation", ScriptType.STORED, "painless", parameters))
+				.script(new Script(ScriptType.STORED, "painless", "etm_update-event-with-correlation", parameters))
 				.upsert("{}")
 				.scriptedUpsert(true));
     }
