@@ -183,7 +183,7 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metric-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metric-field-' + ix).attr('type', 'text').attr('required', 'required').addClass('form-control form-control-sm')
+					$('<input>').attr('id', 'input-' + graphType + '-metric-field-' + ix).attr('type', 'text').attr('data-required', 'required').addClass('form-control form-control-sm')
 					.bind('keydown', function( event ) {
 			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
 			                event.stopPropagation();
@@ -214,13 +214,13 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metric-percentile-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Percentile'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-' + ix).attr('type', 'number').attr('required', 'required').addClass('form-control form-control-sm').attr('step', 'any').attr('min', '0').attr('max', '100').attr('value', '95')
+					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-' + ix).attr('type', 'number').attr('data-required', 'required').addClass('form-control form-control-sm').attr('step', 'any').attr('min', '0').attr('max', '100').attr('value', '95')
 				)
 			),
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metric-percentile-rank-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Rank'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-rank-' + ix).attr('type', 'number').attr('required', 'required').addClass('form-control form-control-sm').attr('step', 'any')
+					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-rank-' + ix).attr('type', 'number').attr('data-required', 'required').addClass('form-control form-control-sm').attr('step', 'any')
 				)
 			),
 			$('<div>').addClass('form-group row').append(
@@ -279,9 +279,9 @@ function buildGraphsPage() {
 					.change(function(event) {
 						event.preventDefault();
 						if ('filter' == $(this).val()) {
-							$('#input-' + graphType + '-bucket_field-' + ix).removeAttr('required').parent().parent().hide();
+							$('#input-' + graphType + '-bucket_field-' + ix).parent().parent().hide();
 						} else {
-							$('#input-' + graphType + '-bucket_field-' + ix).attr('required', 'required').parent().parent().show();
+							$('#input-' + graphType + '-bucket_field-' + ix).parent().parent().show();
 						}						
 						enableOrDisableButtons();
 					})
@@ -299,7 +299,7 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'input-' + graphType + '-bucket_field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-bucket_field-' + ix).attr('type', 'text').attr('required', 'required').addClass('form-control form-control-sm')
+					$('<input>').attr('id', 'input-' + graphType + '-bucket_field-' + ix).attr('type', 'text').attr('data-required', 'required').addClass('form-control form-control-sm')
 					.bind('keydown', function( event ) {
 			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
 			                event.stopPropagation();
@@ -356,7 +356,8 @@ function buildGraphsPage() {
 	function enableOrDisableButtons() {
 		//  First remove the required constraints to check if all other fields are valid.
 		$('#input-graph-name').removeAttr('required');
-		$hiddenRequiredElements = $(':input[required]:hidden');
+		$hiddenRequiredElements = $('#graph_form :input[data-required]:visible').attr('required', 'required');
+		$hiddenRequiredElements = $('#graph_form :input[data-required]:hidden');
 		// Remove required constraints on all hidden input fields.
 		$hiddenRequiredElements.removeAttr('required');
 		if (document.getElementById('graph_form').checkValidity()) {
@@ -378,8 +379,6 @@ function buildGraphsPage() {
 		} else {
 			$('#btn-confirm-remove-graph').attr('disabled', 'disabled');
 		}
-		// Restore the required constraints on hidden required elements.
-		$hiddenRequiredElements.attr('required', 'required');
 	}
 	
 	function isGraphExistent(name) {
