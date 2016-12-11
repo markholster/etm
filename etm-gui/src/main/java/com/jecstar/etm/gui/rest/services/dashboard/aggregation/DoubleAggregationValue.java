@@ -6,7 +6,10 @@ import com.jecstar.etm.domain.writers.json.JsonWriter;
 
 public class DoubleAggregationValue extends AbstractAggregationValue<Double> {
 
+	private static final Double DEFAULT_MISSING_VALUE = 0d;
 	private final Double value;
+	
+	private Double missingValue = DEFAULT_MISSING_VALUE;
 
 	public DoubleAggregationValue(String label, Double value) {
 		super(label);
@@ -15,12 +18,34 @@ public class DoubleAggregationValue extends AbstractAggregationValue<Double> {
 
 	@Override
 	public Double getValue() {
-		return this.value;
+		if (hasValidValue()) {
+			return this.value;
+		}
+		if (isValidValue(this.missingValue)) {
+			return this.missingValue;
+		}
+		return null;
+	}
+	
+	@Override
+	public Double getMissingValue() {
+		return this.missingValue;
+	}
+	
+	@Override
+	public void setMissingValue(Double missingValue) {
+		this.missingValue = missingValue;
 	}
 
 	@Override
 	public String getValueAsString(Format format) {
-		return Double.isNaN(getValue()) ? "?" : format.format(getValue());
+		if (hasValidValue()) {
+			return format.format(getValue());
+		}
+		if (isValidValue(this.missingValue)) {
+			return format.format(this.missingValue);
+		}
+		return "?";
 	}
 
 	@Override
@@ -30,7 +55,11 @@ public class DoubleAggregationValue extends AbstractAggregationValue<Double> {
 
 	@Override
 	public boolean hasValidValue() {
-		return this.value != null && !Double.isNaN(this.value) && !Double.isInfinite(this.value);
+		return isValidValue(this.value);
+	}
+	
+	private boolean isValidValue(Double value) {
+		return value != null && !Double.isNaN(value) && !Double.isInfinite(value);
 	}
 
 }

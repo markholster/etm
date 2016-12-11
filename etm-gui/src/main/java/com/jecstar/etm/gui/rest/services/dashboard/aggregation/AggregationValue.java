@@ -16,9 +16,26 @@ public interface AggregationValue<T> {
 	/**
 	 * Gives the value.
 	 * 
-	 * @return The value.
+	 * @return The original value is that is a valid value. Otherwise the
+	 *         missingValue is returned when that is a valid value.
+	 *         <code>null</code> is returned when both values are not valid.
 	 */
 	T getValue();
+
+	/**
+	 * Set the value to be used when the instance has an invalid value.
+	 * 
+	 * @param t
+	 *            The value to be used when the instance has an invalid value.
+	 */
+	void setMissingValue(T t);
+
+	/**
+	 * Give the value to be used when the instance has an invalid value
+	 * 
+	 * @return The value to be used when the instance has an invalid value
+	 */
+	T getMissingValue();
 
 	/**
 	 * Gives a string representation of the value.

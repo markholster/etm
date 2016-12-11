@@ -12,9 +12,6 @@ public class BarLayout {
 	private Map<String, Map<String, AggregationValue<?>>> values = new HashMap<>();
 	
 	public void addValueToSerie(String seriesName, String key, AggregationValue<?> value) {
-		if (!value.hasValidValue()) {
-			return;
-		}
 		if (!this.values.containsKey(seriesName)) {
 			this.values.put(seriesName, new HashMap<String, AggregationValue<?>>());
 		}
