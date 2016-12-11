@@ -41,9 +41,6 @@ function buildGraphsPage() {
         addMetricsAggregatorsBlock($('#bar-y-axes'),'bar', 0);
         addBucketAggregatorsBlock($('#bar-x-axes'),'bar', 0)
         addMetricsAggregatorsBlock($('#number-fields'),'number', 0);
-        
-    	$('#graph_form :input').on('input', enableOrDisableButtons);
-    	$('#graph_form :input').on('autocomplete:selected', enableOrDisableButtons);
 	});    
 	
 	
@@ -154,19 +151,19 @@ function buildGraphsPage() {
 					.change(function(event) {
 						event.preventDefault();
 						if ('count' == $(this).val()) {
-							$('#input-' + graphType + '-metric-field-' + ix).removeAttr('required').parent().parent().hide();
+							$('#input-' + graphType + '-metric-field-' + ix).parent().parent().hide();
 						} else {
-							$('#input-' + graphType + '-metric-field-' + ix).attr('required', 'required').parent().parent().show();
+							$('#input-' + graphType + '-metric-field-' + ix).parent().parent().show();
 						}
 						if ('percentile' == $(this).val()) {
-							$('#input-' + graphType + '-metric-percentile-' + ix).attr('required', 'required').parent().parent().show();
+							$('#input-' + graphType + '-metric-percentile-' + ix).parent().parent().show();
 						} else {
-							$('#input-' + graphType + '-metric-percentile-' + ix).removeAttr('required').parent().parent().hide();
+							$('#input-' + graphType + '-metric-percentile-' + ix).parent().parent().hide();
 						}
 						if ('percentile_rank' == $(this).val()) {
-							$('#input-' + graphType + '-metric-percentile-rank-' + ix).attr('required', 'required').parent().parent().show();
+							$('#input-' + graphType + '-metric-percentile-rank-' + ix).parent().parent().show();
 						} else {
-							$('#input-' + graphType + '-metric-percentile-rank-' + ix).removeAttr('required').parent().parent().hide();
+							$('#input-' + graphType + '-metric-percentile-rank-' + ix).parent().parent().hide();
 						}
 						enableOrDisableButtons();
 					})
@@ -186,7 +183,7 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metric-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metric-field-' + ix).attr('type', 'text').addClass('form-control form-control-sm')
+					$('<input>').attr('id', 'input-' + graphType + '-metric-field-' + ix).attr('type', 'text').attr('required', 'required').addClass('form-control form-control-sm')
 					.bind('keydown', function( event ) {
 			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
 			                event.stopPropagation();
@@ -217,13 +214,13 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metric-percentile-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Percentile'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-' + ix).attr('type', 'number').addClass('form-control form-control-sm').attr('step', 'any').attr('min', '0').attr('max', '100').attr('value', '95')
+					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-' + ix).attr('type', 'number').attr('required', 'required').addClass('form-control form-control-sm').attr('step', 'any').attr('min', '0').attr('max', '100').attr('value', '95')
 				)
 			),
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metric-percentile-rank-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Rank'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-rank-' + ix).attr('type', 'number').addClass('form-control form-control-sm').attr('step', 'any')
+					$('<input>').attr('id', 'input-' + graphType + '-metric-percentile-rank-' + ix).attr('type', 'number').attr('required', 'required').addClass('form-control form-control-sm').attr('step', 'any')
 				)
 			),
 			$('<div>').addClass('form-group row').append(
@@ -245,10 +242,14 @@ function buildGraphsPage() {
 					$(this).next().remove();
 					// Remove the link itself.
 					$(this).remove();
+					enableOrDisableButtons();
 				}),
 				$('<br>')
 			);
 		}
+    	$('#graph_form :input').on('input', enableOrDisableButtons);
+    	$('#graph_form :input').on('autocomplete:selected', enableOrDisableButtons);
+		enableOrDisableButtons();
 	}
 	
 	function getMetricsAggregatorsBlock(graphType, ix) {
@@ -298,7 +299,7 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'input-' + graphType + '-bucket_field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-bucket_field-' + ix).attr('type', 'text').addClass('form-control form-control-sm')
+					$('<input>').attr('id', 'input-' + graphType + '-bucket_field-' + ix).attr('type', 'text').attr('required', 'required').addClass('form-control form-control-sm')
 					.bind('keydown', function( event ) {
 			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
 			                event.stopPropagation();
@@ -334,7 +335,10 @@ function buildGraphsPage() {
 					$('<input>').attr('id', 'input-' + graphType + '-bucket_label-' + ix).attr('type', 'text').addClass('form-control form-control-sm')
 				)
 			)			
-		)		
+		)
+    	$('#graph_form :input').on('input', enableOrDisableButtons);
+    	$('#graph_form :input').on('autocomplete:selected', enableOrDisableButtons);
+		enableOrDisableButtons();
 	}
 	
 	function getBucketAggregatorsBlock(graphType, ix) {
@@ -352,6 +356,9 @@ function buildGraphsPage() {
 	function enableOrDisableButtons() {
 		//  First remove the required constraints to check if all other fields are valid.
 		$('#input-graph-name').removeAttr('required');
+		$hiddenRequiredElements = $(':input[required]:hidden');
+		// Remove required constraints on all hidden input fields.
+		$hiddenRequiredElements.removeAttr('required');
 		if (document.getElementById('graph_form').checkValidity()) {
 			// All input fields seem valid so we can generate a preview.
 			$('#btn-preview-graph').removeAttr('disabled');
@@ -371,6 +378,8 @@ function buildGraphsPage() {
 		} else {
 			$('#btn-confirm-remove-graph').attr('disabled', 'disabled');
 		}
+		// Restore the required constraints on hidden required elements.
+		$hiddenRequiredElements.attr('required', 'required');
 	}
 	
 	function isGraphExistent(name) {
@@ -521,14 +530,10 @@ function buildGraphsPage() {
 		hideLineFields();
 		hideNumberFields();
 		hidePieFields();
-		$('[id^=input-bar-field-]').attr('required', 'required');
-		$('[id^=input-bar-percentile-] :visible').attr('required', 'required');
 		$('#bar-fields').show();
 	}
 	
 	function hideBarFields() {
-		$('[id^=input-bar-field-]').removeAttr('required');
-		$('[id^=input-bar-percentile-] :visible').removeAttr('required');
 		$('#bar-fields').hide();
 	}
 	
@@ -547,14 +552,10 @@ function buildGraphsPage() {
 		hideBarFields();
 		hideLineFields();
 		hidePieFields();
-		$('[id^=input-number-field-]').attr('required', 'required');
-		$('[id^=input-number-percentile-] :visible').attr('required', 'required');
 		$('#number-fields').show();
 	}
 	
 	function hideNumberFields() {
-		$('[id^=input-number-field-]').removeAttr('required');
-		$('[id^=input-number-percentile-] :visible').removeAttr('required');
 		$('#number-fields').hide();
 	}
 	
