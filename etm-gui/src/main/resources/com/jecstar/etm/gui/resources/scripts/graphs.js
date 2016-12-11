@@ -275,14 +275,19 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-aggregator-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Aggregator'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<select>').attr('id', 'sel-' + graphType + '-bucket_aggregator-' + ix).addClass('form-control form-control-sm custom-select')
+					$('<select>').attr('id', 'sel-' + graphType + '-bucket-aggregator-' + ix).addClass('form-control form-control-sm custom-select')
 					.change(function(event) {
 						event.preventDefault();
 						if ('filter' == $(this).val()) {
-							$('#input-' + graphType + '-bucket_field-' + ix).parent().parent().hide();
+							$('#input-' + graphType + '-bucket-field-' + ix).parent().parent().hide();
 						} else {
-							$('#input-' + graphType + '-bucket_field-' + ix).parent().parent().show();
-						}						
+							$('#input-' + graphType + '-bucket-field-' + ix).parent().parent().show();
+						}			
+						if ('date_histogram' == $(this).val()) {
+							$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().show();
+						} else {
+							$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().hide();
+						}			
 						enableOrDisableButtons();
 					})
 					.append(
@@ -297,9 +302,9 @@ function buildGraphsPage() {
 				)
 			),
 			$('<div>').addClass('form-group row').append(
-				$('<label>').attr('for', 'input-' + graphType + '-bucket_field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
+				$('<label>').attr('for', 'input-' + graphType + '-bucket-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-bucket_field-' + ix).attr('type', 'text').attr('data-required', 'required').addClass('form-control form-control-sm')
+					$('<input>').attr('id', 'input-' + graphType + '-bucket-field-' + ix).attr('type', 'text').attr('data-required', 'required').addClass('form-control form-control-sm')
 					.bind('keydown', function( event ) {
 			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
 			                event.stopPropagation();
@@ -312,7 +317,7 @@ function buildGraphsPage() {
 			        			return index != $('#sel-data-source').val();
 			        		},
 			        		keywordFilter: function(index, group, keyword) {
-			        			var agg = $('#sel-' + graphType + '-bucket_aggregator-' + ix).val();
+			        			var agg = $('#sel-' + graphType + '-bucket-aggregator-' + ix).val();
 			        			if ('date_histogram' == agg || 'date_range' == agg) {
 			        				return !keyword.date;
 			        			} else if ('histogram' == agg || 'range' == agg) {
@@ -330,11 +335,22 @@ function buildGraphsPage() {
 				)
 			),
 			$('<div>').addClass('form-group row').append(
-				$('<label>').attr('for', 'input-' + graphType + '-bucket_label-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Label'),
+				$('<label>').attr('for', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Interval'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-bucket_label-' + ix).attr('type', 'text').addClass('form-control form-control-sm')
+					$('<select>').attr('id', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('form-control form-control-sm custom-select')
+					.append(
+						$('<option>').attr('value', 'seconds').text('Seconds'),
+						$('<option>').attr('value', 'minutes').text('Minutes'),
+						$('<option>').attr('value', 'hours').text('Hours'),
+						$('<option>').attr('value', 'days').text('Days'),
+						$('<option>').attr('value', 'weeks').text('Weeks'),
+						$('<option>').attr('value', 'months').text('Months'),
+						$('<option>').attr('value', 'quarters').text('Quarters'),
+						$('<option>').attr('value', 'years').text('Years')
+					)
+					.val('days')
 				)
-			)			
+			)
 		)
     	$('#graph_form :input').on('input', enableOrDisableButtons);
     	$('#graph_form :input').on('autocomplete:selected', enableOrDisableButtons);
@@ -343,12 +359,14 @@ function buildGraphsPage() {
 	
 	function getBucketAggregatorsBlock(graphType, ix) {
 		var xAxisData = {
-			aggregator: $('#sel-' + graphType + '-bucket_aggregator-' + ix).val(),
-			label: $('#input-' + graphType + '-bucket_label-' + ix).val() ? $('#input-' + graphType + '-bucket_label-' + ix).val() : null
+			aggregator: $('#sel-' + graphType + '-bucket-aggregator-' + ix).val(),
 		};
 		if ('filter' != xAxisData.aggregator) {
-			xAxisData.field = $('#input-' + graphType + '-bucket_field-' + ix).val(),
+			xAxisData.field = $('#input-' + graphType + '-bucket-field-' + ix).val(),
 			xAxisData.field_type = findFieldType($('#sel-data-source').val(), xAxisData.field);
+		}
+		if ('date_histogram' == xAxisData.aggregator) {
+			xAxisData.interval = $('#sel-' + graphType + '-bucket-date-interval-' + ix).val();
 		}
 		return xAxisData;		
 	}

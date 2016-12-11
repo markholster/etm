@@ -23,7 +23,6 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation.SingleValue;
@@ -128,11 +127,13 @@ public class DashboardService extends AbstractIndexMetadataService {
 		String bucketAggregator = getString("aggregator", bucketAggregatorData);
 		String bucketField = getString("field", bucketAggregatorData);
 		String bucketFieldType = getString("field_type", bucketAggregatorData);
-		String bucketLabel = getString("label", bucketAggregatorData);
 		Format bucketFormat = "date".equals(bucketFieldType) ? etmPrincipal.getISO8601DateFormat() : etmPrincipal.getNumberFormat();
+		if ("date_histogram".equals(bucketAggregator)) {
+			bucketFormat = Interval.safeValueOf(getString("interval", bucketAggregatorData)).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
+		}
 
 		// First create the bucket aggregator
-		AggregationBuilder bucketAggregatorBuilder = createBucketAggregationBuilder(etmPrincipal, bucketAggregator, bucketField, bucketLabel);
+		AggregationBuilder bucketAggregatorBuilder = createBucketAggregationBuilder(etmPrincipal, bucketAggregator, bucketField, bucketAggregatorData);
 		// And add every y-axis aggregator as sub aggregator
 		List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
 		for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
@@ -281,14 +282,14 @@ public class DashboardService extends AbstractIndexMetadataService {
 		throw new IllegalArgumentException("'" + type + "' is an invalid metric aggregator.");
 	}
 	
-	private AggregationBuilder createBucketAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, String label) {
+	private AggregationBuilder createBucketAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, Map<String, Object> metadata) {
 		if ("date_histogram".equals(type)) {
-			String internalLabel = label != null ? label : "Date of " + field;
-			return AggregationBuilders.dateHistogram(internalLabel).field(field).dateHistogramInterval(DateHistogramInterval.DAY);		
+			String internalLabel = "Date of " + field;
+			Interval interval = Interval.safeValueOf(getString("interval", metadata));
+			return AggregationBuilders.dateHistogram(internalLabel).field(field).dateHistogramInterval(interval.getDateHistogramInterval());		
 		}
 		throw new IllegalArgumentException("'" + type + "' is an invalid bucket aggregator.");
 	}
-	
 	
 //	@POST
 //	@Path("/chart")
