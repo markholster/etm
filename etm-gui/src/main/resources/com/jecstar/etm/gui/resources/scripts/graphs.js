@@ -40,6 +40,8 @@ function buildGraphsPage() {
         
         addMetricsAggregatorsBlock($('#bar-y-axes'),'bar', 0);
         addBucketAggregatorsBlock($('#bar-x-axes'),'bar', 0)
+        addMetricsAggregatorsBlock($('#line-y-axes'),'line', 0);
+        addBucketAggregatorsBlock($('#line-x-axes'),'line', 0)
         addMetricsAggregatorsBlock($('#number-fields'),'number', 0);
 	});    
 	
@@ -134,6 +136,18 @@ function buildGraphsPage() {
 			}
 		})
 		addMetricsAggregatorsBlock($('#bar-y-axes'),'bar', highestIx + 1);
+	});
+	
+	$('#lnk-add-line-y-axis-aggregator').click(function(event) {
+		event.preventDefault();
+		var highestIx = 0;
+		$('[id^=sel-line-metric-aggregator-]').each(function(index) {
+			var currentIx = Number($(this).attr('id').split('-')[4]);
+			if (currentIx > highestIx) {
+				highestIx = currentIx;
+			}
+		})
+		addMetricsAggregatorsBlock($('#line-y-axes'),'line', highestIx + 1);
 	});
 	
 	
@@ -468,14 +482,13 @@ function buildGraphsPage() {
         		        var chart = nv.models.multiBarChart()
         		            .x(function(d) { return d.label })
         		            .y(function(d) { return d.value })
-        		            .reduceXTicks(true)
-        		            .rotateLabels(0)
+        		            .staggerLabels(true)
+        		            .wrapLabels(true)
         		            .showControls(data.data.length > 1)
         		            .groupSpacing(0.1) 
         		            .duration(250)
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-//        		        chart.xAxis.tickFormat(d3.format(',f'));
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(data.data)
         		        	.call(chart);
@@ -483,6 +496,44 @@ function buildGraphsPage() {
         		        return chart;
         		    });
         		} else if ('line' == data.type) {
+        			formatter = d3.locale(data.d3_formatter);
+        			numberFormatter = formatter.numberFormat(',f');
+        			function formatLineData(lineData) {
+        				var formattedData = [];
+        				$.each(lineData, function(index, serie) {
+        					var serieData = {
+        						key: serie.key,
+        						values: []
+        					};
+        					$.each(serie.values, function(serieIndex, point) {
+        						serieData.values.push(
+        							{
+        								x: serieIndex,
+        								y: point.value
+        							}
+        						);
+        					});
+        					formattedData.push(serieData);
+        				});
+        				return formattedData;
+        			}
+        		    nv.addGraph(function() {
+        		    	var i = 1
+        		        var chart = nv.models.lineChart()
+						    .showYAxis(true)
+						    .showXAxis(true)       
+        		            .useInteractiveGuideline(true)  
+        		            .showLegend(data.data.length > 1)
+        		            .duration(250)
+        		            ;
+        		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+       		            chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+        		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
+        		        	.datum(formatLineData(data.data))
+        		        	.call(chart);
+        		        	nv.utils.windowResize(chart.update);
+        		        return chart;
+        		    });
         		} else if ('number' == data.type) {
         			$('#preview_box').append($('<h1>').text(data.value_as_string),$('<h4>').text(data.label));
         		} else if ('pie' == data.type) {
@@ -534,7 +585,18 @@ function buildGraphsPage() {
 				graphData.bar.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, barIx));
 			});
 		} else if ('line' == graphData.type) {
-			
+			graphData.line = {
+				y_axis: {
+					aggregators: []
+				},
+				x_axis: {
+					aggregator: getBucketAggregatorsBlock(graphData.type, 0)
+				}
+			}
+			$('[id^=sel-line-metric-aggregator-]').each(function(index) {
+				var barIx = $(this).attr('id').split('-')[4];
+				graphData.line.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, barIx));
+			});			
 		} else if ('number' == graphData.type) {
 			graphData.number = getMetricsAggregatorsBlock(graphData.type, 0);
 		} else if ('pie' == graphData.type) {
@@ -562,7 +624,7 @@ function buildGraphsPage() {
 	}
 	
 	function hideLineFields() {
-		$('#line-fields').show();
+		$('#line-fields').hide();
 	}
 	
 	function showNumberFields() {

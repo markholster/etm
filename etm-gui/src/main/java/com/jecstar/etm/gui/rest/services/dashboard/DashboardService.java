@@ -108,20 +108,23 @@ public class DashboardService extends AbstractIndexMetadataService {
 		if ("number".equals(type)) {
 			return getNumberData(valueMap);
 		} else if ("bar".equals(type)) {
-			return getBarData(valueMap);
+			return getBarOrLineData(type, valueMap);
+		} else if ("line".equals(type)) {
+			return getBarOrLineData(type, valueMap);
 		} else {
 			throw new RuntimeException("Unknown type: '" + type + "'.");
 		}
 	}
 	
-	private String getBarData(Map<String, Object> valueMap) {
+	private String getBarOrLineData(String type, Map<String, Object> valueMap) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		BarOrLineLayout barOrLineLayout = new BarOrLineLayout();
 		String index = getString("data_source", valueMap);
 		String query = getString("query", valueMap, "*");
 		SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
-		Map<String, Object> barData = getObject("bar", valueMap);
-		Map<String, Object> xAxisData = getObject("x_axis", barData);
-		Map<String, Object> yAxisData = getObject("y_axis", barData);
+		Map<String, Object> barOrLineData = getObject(type, valueMap);
+		Map<String, Object> xAxisData = getObject("x_axis", barOrLineData);
+		Map<String, Object> yAxisData = getObject("y_axis", barOrLineData);
 		
 		Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData);
 		String bucketAggregator = getString("aggregator", bucketAggregatorData);
@@ -131,7 +134,6 @@ public class DashboardService extends AbstractIndexMetadataService {
 		if ("date_histogram".equals(bucketAggregator)) {
 			bucketFormat = Interval.safeValueOf(getString("interval", bucketAggregatorData)).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
 		}
-
 		// First create the bucket aggregator
 		AggregationBuilder bucketAggregatorBuilder = createBucketAggregationBuilder(etmPrincipal, bucketAggregator, bucketField, bucketAggregatorData);
 		// And add every y-axis aggregator as sub aggregator
@@ -149,12 +151,11 @@ public class DashboardService extends AbstractIndexMetadataService {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"d3_formatter\": " + getD3Formatter());
-		addStringElementToJsonBuffer("type", "bar", result, false);
+		addStringElementToJsonBuffer("type", type, result, false);
 		result.append(",\"data\": ");
 		
 		SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
 		Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
-		BarLayout barLayout = new BarLayout();
 		if (aggregation instanceof Histogram) {
 			Histogram histogram = (Histogram) aggregation;
 			for(org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : histogram.getBuckets()) {
@@ -165,13 +166,13 @@ public class DashboardService extends AbstractIndexMetadataService {
 				}
 				for(Aggregation subAggregation : bucket.getAggregations()) {
 					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
-					barLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
+					barOrLineLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
 				}
 			}
 		} else {
 			// TODO gooi exceptie
 		}
-		barLayout.appendAsArrayToJsonBuffer(this, result, true);
+		barOrLineLayout.appendAsArrayToJsonBuffer(this, result, true);
 		result.append("}");
 		return result.toString();
 	}
