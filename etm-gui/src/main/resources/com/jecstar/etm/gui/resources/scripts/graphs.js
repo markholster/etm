@@ -403,6 +403,26 @@ function buildGraphsPage() {
                 }
                 $('#preview_box').empty();
         		if ('bar' == data.type) {
+        			formatter = d3.locale(data.d3_formatter);
+        			numberFormatter = formatter.numberFormat(',f');
+        		    nv.addGraph(function() {
+        		        var chart = nv.models.multiBarChart()
+        		            .x(function(d) { return d.label })
+        		            .y(function(d) { return d.value })
+        		            .reduceXTicks(true)
+        		            .rotateLabels(0)
+        		            .showControls(data.data.length > 1)
+        		            .groupSpacing(0.1) 
+        		            .duration(250)
+        		            ;
+        		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+//        		        chart.xAxis.tickFormat(d3.format(',f'));
+        		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
+        		        	.datum(data.data)
+        		        	.call(chart);
+        		        	nv.utils.windowResize(chart.update);
+        		        return chart;
+        		    });
         		} else if ('line' == data.type) {
         		} else if ('number' == data.type) {
         			$('#preview_box').append($('<h1>').text(data.value_as_string),$('<h4>').text(data.label));
@@ -451,7 +471,6 @@ function buildGraphsPage() {
 				}
 			}
 			graphData.bar.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, 0));
-			alert(JSON.stringify(graphData));
 		} else if ('line' == graphData.type) {
 			
 		} else if ('number' == graphData.type) {

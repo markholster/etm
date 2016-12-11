@@ -24,8 +24,13 @@ public class DoubleAggregationValue extends AbstractAggregationValue<Double> {
 	}
 
 	@Override
-	public void addValueToBuffer(JsonWriter jsonWriter, StringBuilder buffer, boolean firstElement) {
+	public void appendValueToJsonBuffer(JsonWriter jsonWriter, StringBuilder buffer, boolean firstElement) {
 		jsonWriter.addDoubleElementToJsonBuffer("value", getValue(), buffer, firstElement);
+	}
+
+	@Override
+	public boolean hasValidValue() {
+		return this.value != null && !Double.isNaN(this.value) && !Double.isInfinite(this.value);
 	}
 
 }

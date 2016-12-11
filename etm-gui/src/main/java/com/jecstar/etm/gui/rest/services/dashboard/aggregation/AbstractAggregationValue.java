@@ -21,7 +21,7 @@ public abstract class AbstractAggregationValue<T> implements AggregationValue<T>
 	@Override
 	public void appendToJsonBuffer(JsonWriter jsonWriter, Format format, StringBuilder buffer, boolean firstElement) {
 		jsonWriter.addStringElementToJsonBuffer("label", getLabel(), buffer, firstElement);
-		addValueToBuffer(jsonWriter, buffer, false); 
+		appendValueToJsonBuffer(jsonWriter, buffer, false); 
 		jsonWriter.addStringElementToJsonBuffer("value_as_string", getValueAsString(format) + (isPercentage() ? "%" : ""), buffer, false);
 	}
 	

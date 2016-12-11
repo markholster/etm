@@ -24,8 +24,13 @@ public class LongAggregationValue extends AbstractAggregationValue<Long> {
 	}
 
 	@Override
-	public void addValueToBuffer(JsonWriter jsonWriter, StringBuilder buffer, boolean firstElement) {
+	public void appendValueToJsonBuffer(JsonWriter jsonWriter, StringBuilder buffer, boolean firstElement) {
 		jsonWriter.addLongElementToJsonBuffer("value", getValue(), buffer, firstElement);
+	}
+
+	@Override
+	public boolean hasValidValue() {
+		return this.value != null;
 	}
 
 }

@@ -23,7 +23,6 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.Aggregator;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
@@ -150,7 +149,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		result.append("{");
 		result.append("\"d3_formatter\": " + getD3Formatter());
 		addStringElementToJsonBuffer("type", "bar", result, false);
-		result.append(",\"data\": [");
+		result.append(",\"data\": ");
 		
 		SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
 		Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
@@ -164,17 +163,14 @@ public class DashboardService extends AbstractIndexMetadataService {
 					key = bucketFormat.format(dateTime.getMillis());  
 				}
 				for(Aggregation subAggregation : bucket.getAggregations()) {
-					Map<String, Object> metricsAggregatorData = subAggregation.getMetaData();
 					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
 					barLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
 				}
-				System.out.println(key);
 			}
 		} else {
 			// TODO gooi exceptie
 		}
-		
-		result.append("]");
+		barLayout.appendAsArrayToJsonBuffer(this, result, true);
 		result.append("}");
 		return result.toString();
 	}
