@@ -127,8 +127,25 @@ function buildGraphsPage() {
 		removeGraph($('#input-graph-name').val());
 	});
 	
+	$('#lnk-add-bar-y-axis-aggregator').click(function(event) {
+		event.preventDefault();
+		var highestIx = 0;
+		$('[id^=sel-bar-metric-aggregator-]').each(function(index) {
+			var currentIx = Number($(this).attr('id').split('-')[4]);
+			if (currentIx > highestIx) {
+				highestIx = currentIx;
+			}
+		})
+		addMetricsAggregatorsBlock($('#bar-y-axes'),'bar', highestIx + 1);
+	});
+	
 	
 	function addMetricsAggregatorsBlock(parent, graphType, ix) {
+		if (ix > 0)  {
+			$(parent).append(
+				$('<hr>').attr('style', 'border-top: dashed 1px;')
+			);
+		}
 		$(parent).append(
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-metric-aggregator-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Aggregator'),
@@ -216,6 +233,22 @@ function buildGraphsPage() {
 				)
 			)
 		);
+		if (ix > 0)  {
+			$(parent).append(
+				$('<a>').attr('href', '#').addClass('pull-right').text('Remove aggregator').click(function(event) {
+					event.preventDefault();
+					// Remove till the <hr>
+					$(this).prevUntil('hr').remove();
+					// remove the <hr>
+					$(this).prev().remove();
+					// remove the <br>
+					$(this).next().remove();
+					// Remove the link itself.
+					$(this).remove();
+				}),
+				$('<br>')
+			);
+		}
 	}
 	
 	function getMetricsAggregatorsBlock(graphType, ix) {
@@ -470,7 +503,10 @@ function buildGraphsPage() {
 					aggregator: getBucketAggregatorsBlock(graphData.type, 0)
 				}
 			}
-			graphData.bar.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, 0));
+			$('[id^=sel-bar-metric-aggregator-]').each(function(index) {
+				var barIx = $(this).attr('id').split('-')[4];
+				graphData.bar.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, barIx));
+			});
 		} else if ('line' == graphData.type) {
 			
 		} else if ('number' == graphData.type) {

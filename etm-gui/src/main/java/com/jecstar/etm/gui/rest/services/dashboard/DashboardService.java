@@ -284,7 +284,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 	private AggregationBuilder createBucketAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, String label) {
 		if ("date_histogram".equals(type)) {
 			String internalLabel = label != null ? label : "Date of " + field;
-			return AggregationBuilders.dateHistogram(internalLabel).field(field).dateHistogramInterval(DateHistogramInterval.HOUR);		
+			return AggregationBuilders.dateHistogram(internalLabel).field(field).dateHistogramInterval(DateHistogramInterval.DAY);		
 		}
 		throw new IllegalArgumentException("'" + type + "' is an invalid bucket aggregator.");
 	}
