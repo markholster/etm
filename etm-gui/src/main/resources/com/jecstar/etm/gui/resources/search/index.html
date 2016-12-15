@@ -403,7 +403,6 @@ body { padding-top: 60px; }
         executeQuery(queryParams);
     });
     
-    
     $('#link-request-download').click(function(event) {
     	event.preventDefault();
     	$('#modal-download-results').modal();
@@ -437,6 +436,14 @@ body { padding-top: 60px; }
         var query = createQuery(true);
         query.start_ix = tableLayout.current_ix + tableLayout.results_per_page; 
         executeQuery(query, true);
+    });
+
+    $('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function(event) {
+		event.preventDefault();
+//		intialize();
+		$('#event-container').hide();
+		$('#search-container').show();
+		$('html,body').animate({scrollTop: scrollTo},'fast');
     });
     
     function isInViewport(elem) {

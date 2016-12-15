@@ -26,15 +26,6 @@ function showEvent(scrollTo, type, id) {
 	    }
 	});
 	
-	$('#btn-back-to-results, #link-back-to-results')
-		.unbind('click')
-		.click(function(event) {
-			event.preventDefault();
-			intialize();
-			$('#event-container').hide();
-			$('#search-container').show();
-			$('html,body').animate({scrollTop: scrollTo},'fast');
-    });
 	$('#event-container').show();
 
 	function intialize() {
