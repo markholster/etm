@@ -432,6 +432,13 @@ body { padding-top: 60px; }
         sortResultTable($(this).attr('data-event-field'));
     });
     
+    $('#result_card').on('click', '#search_result_table tfoot a', function(event) {
+        event.preventDefault();
+        var query = createQuery(true);
+        query.start_ix = tableLayout.current_ix + tableLayout.results_per_page; 
+        executeQuery(query, true);
+    });
+    
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
     		return false;
@@ -546,12 +553,7 @@ body { padding-top: 60px; }
                                     return $('<tfoot>')
                                         .append($('<tr>')
                                             .append($('<td>').addClass('text-xs-center').attr('colspan', $(tableLayout.fields).length)
-                                                .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more').click(function (event) {
-                                                    event.preventDefault();
-                                                    var query = createQuery(true);
-                                                    query.start_ix = tableLayout.current_ix + tableLayout.results_per_page; 
-                                                    executeQuery(query, true);
-                                                }))
+                                                .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
                                             )
                                         )
                                 }
