@@ -426,7 +426,11 @@ body { padding-top: 60px; }
         $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
    	    $(event.target).parent().parent().addClass('event-selected');
     });
-
+    
+    $('#result_card').on('click', '#search_result_table thead th', function(event) {
+    	event.preventDefault();
+        sortResultTable($(this).attr('data-event-field'));
+    });
     
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
@@ -524,7 +528,7 @@ body { padding-top: 60px; }
                                 .append(function () {
                                     var $tr = $('<tr>');
                                     $(tableLayout.fields).each(function (index, tableColumn) {
-                                        var $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name)
+                                        var $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name).attr('data-event-field', tableColumn.field)
                                         if (tableColumn.field === tableLayout.sort_field) {
                                             if ('asc' === tableLayout.sort_order) {
                                                 $th.addClass('headerSortAsc')
@@ -532,10 +536,6 @@ body { padding-top: 60px; }
                                                 $th.addClass('headerSortDesc')
                                             }
                                         }
-                                        $th.click(function (event) {
-                                            event.preventDefault();
-                                            sortResultTable(tableColumn.field);
-                                        });
                                         $tr.append($th)
                                     });    
                                     return $tr;
