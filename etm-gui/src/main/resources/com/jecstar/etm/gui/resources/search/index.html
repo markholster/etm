@@ -403,6 +403,7 @@ body { padding-top: 60px; }
         executeQuery(queryParams);
     });
     
+    
     $('#link-request-download').click(function(event) {
     	event.preventDefault();
     	$('#modal-download-results').modal();
@@ -418,6 +419,14 @@ body { padding-top: 60px; }
     	q.includePayload = $('#sel-download-include-payload').val() == 'true' ? true : false;
 	    window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
 	});
+
+    $('#result_card').on('click', '#search_result_table tbody a', function(event) {
+    	event.preventDefault();
+        showEvent($(window).scrollTop(), $(this).attr('data-event-type'), $(this).attr('id'));
+        $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
+   	    $(event.target).parent().parent().addClass('event-selected');
+    });
+
     
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
@@ -588,12 +597,8 @@ body { padding-top: 60px; }
                     $('<a>')
                         .attr('href', '#')
                         .attr('id', searchResult.id)
+                        .attr('data-event-type', searchResult.type)
                         .text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
-                        .click(function (event) {
-                            showEvent($(window).scrollTop(), searchResult.type, searchResult.id);
-                            $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
-                        	$(event.target).parent().parent().addClass('event-selected');
-                        })
                 )    
             } else {
                 $td.text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
