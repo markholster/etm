@@ -440,10 +440,18 @@ body { padding-top: 60px; }
 
     $('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function(event) {
 		event.preventDefault();
-//		intialize();
 		$('#event-container').hide();
 		$('#search-container').show();
-		$('html,body').animate({scrollTop: scrollTo},'fast');
+		$('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))},'fast');
+    });
+    
+    $('#event-container').on('click', "a[data-link-type='show-event']", function(event) {
+    	showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-type'), $(this).attr('data-event-id'))
+    });
+    
+    $('#event-container').on('click', "a[data-link-type='toggle-detail-map']", function(event) {
+    	event.preventDefault();
+    	$('#' + $(this).attr('data-panel-id')).collapse('toggle');
     });
     
     function isInViewport(elem) {

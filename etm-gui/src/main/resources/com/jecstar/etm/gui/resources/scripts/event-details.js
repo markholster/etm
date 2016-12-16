@@ -26,6 +26,8 @@ function showEvent(scrollTo, type, id) {
 	    }
 	});
 	
+	$('#btn-back-to-results, #link-back-to-results').attr('data-scroll-to', scrollTo);
+	
 	$('#event-container').show();
 
 	function intialize() {
@@ -115,9 +117,10 @@ function showEvent(scrollTo, type, id) {
 			.text(data.id)
 			.addClass('form-control-static')
 			.attr('style', 'display: inline-block;')
-			.click(function (event) {
-				showEvent(scrollTo, data.type, data.id);
-		}); 
+			.attr('data-link-type', 'show-event')
+			.attr('data-scroll-to', scrollTo)
+			.attr('data-event-type', data.type)
+			.attr('data-event-id', data.id);
 		appendElementToContainerInRow($eventTab, 'Id', dataLink);
 		appendToContainerInRow($eventTab, 'Name', data.source.name);
 		if (data.source.correlation_id) {
@@ -125,9 +128,10 @@ function showEvent(scrollTo, type, id) {
 				.text(data.source.correlation_id)
 				.addClass('form-control-static')
 				.attr('style', 'display: inline-block;')
-				.click(function (event) {
-					showEvent(scrollTo, data.type, data.source.correlation_id);
-			}); 
+				.attr('data-link-type', 'show-event')
+				.attr('data-scroll-to', scrollTo)
+				.attr('data-event-type', data.type)
+				.attr('data-event-id', data.source.correlation_id);
 			appendElementToContainerInRow($eventTab, 'Correlation id', dataLink);
 		}
 		
@@ -327,10 +331,14 @@ function showEvent(scrollTo, type, id) {
 		var panelId = generateUUID();
 		$detailMap = $('<div>').addClass('panel panel-default').append(
 				$('<div>').addClass('panel-heading clearfix').append(
-						$('<div>').addClass('pull-left').append($('<a>').addClass('font-weight-bold').attr('href', '#').text(capitalize(name)).click(function (event) {
-							event.preventDefault();
-							$('#' + panelId).collapse('toggle');
-						}))
+						$('<div>').addClass('pull-left').append(
+							$('<a>')
+								.addClass('font-weight-bold')
+								.attr('href', '#')
+								.attr('data-link-type', 'toggle-detail-map')
+								.attr('data-panel-id', panelId)
+								.text(capitalize(name))
+						)
 				),
 				$('<div>').attr('id', panelId).addClass('panel-collapse collapse').append(
 						$('<div>').addClass('panel-body').append(
@@ -638,9 +646,10 @@ function showEvent(scrollTo, type, id) {
 			        	$.each(transaction_data.events, function(index, event) {
 			        		$link = $('<a href="#">')
 								.text(event.id)
-								.click(function (clickEvent) {
-									showEvent(scrollTo, event.type, event.id);
-							}); 
+								.attr('data-link-type', 'show-event')
+								.attr('data-scroll-to', scrollTo)
+								.attr('data-event-type', event.type)
+								.attr('data-event-id', event.id);
 			        		$tbody.append(
 			        			$('<tr>').append(
 			        				event.id == id ? $('<td>').attr('style' ,'padding: 0.1rem;').text(event.id) : $('<td>').attr('style' ,'padding: 0.1rem;').append($link),
