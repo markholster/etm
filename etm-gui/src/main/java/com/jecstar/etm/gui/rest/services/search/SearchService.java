@@ -34,6 +34,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -228,8 +229,11 @@ public class SearchService extends AbstractIndexMetadataService {
 			.analyzeWildcard(true)
 			.defaultField("payload")
 			.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+		boolQueryBuilder.must(queryStringBuilder);
+		boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
 		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
-			.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder))
+			.setQuery(addEtmPrincipalFilterQuery(boolQueryBuilder))
 			.setFetchSource(parameters.getFields().toArray(new String[parameters.getFields().size()]), null)
 			.setFrom(parameters.getStartIndex())
 			.setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())

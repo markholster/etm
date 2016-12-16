@@ -5,6 +5,11 @@ import com.jecstar.etm.domain.writers.TelemetryEventTags;
 public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 
 	@Override
+	public String getTimestampTag() {
+		return "timestamp";
+	}
+	
+	@Override
 	public String getIdTag() {
 		return "id";
 	}

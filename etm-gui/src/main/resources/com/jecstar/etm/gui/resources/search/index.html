@@ -386,7 +386,7 @@ body { padding-top: 60px; }
                 $(this).autocomplete( "search", "" );
             }
         } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
-            executeQuery(createQuery(false));
+			startNewQuery();
         }
     }).autocompleteFieldQuery(
     		{
@@ -398,9 +398,7 @@ body { padding-top: 60px; }
     );
     
     $('#btn-search').click(function() {
-    	var queryParams = createQuery(false);
-    	queryParams.start_ix = 0;
-        executeQuery(queryParams);
+    	startNewQuery();
     });
     
     $('#link-request-download').click(function(event) {
@@ -454,6 +452,13 @@ body { padding-top: 60px; }
     	$('#' + $(this).attr('data-panel-id')).collapse('toggle');
     });
     
+    function startNewQuery() {
+    	tableLayout.timestamp = new Date().getTime();
+    	var queryParams = createQuery(false);
+    	queryParams.start_ix = 0;
+        executeQuery(queryParams);
+    }
+    
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
     		return false;
@@ -498,7 +503,8 @@ body { padding-top: 60px; }
             max_results: tableLayout.results_per_page,
             sort_field: tableLayout.sort_field,
             sort_order: tableLayout.sort_order,
-            fieldsLayout: tableLayout.fields
+            fieldsLayout: tableLayout.fields,
+            timestamp: tableLayout.timestamp
         };
         return query;
     }

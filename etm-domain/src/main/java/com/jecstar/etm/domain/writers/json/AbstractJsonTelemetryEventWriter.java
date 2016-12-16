@@ -29,6 +29,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 		final StringBuilder sb = new StringBuilder();
 		boolean added = false;
 		sb.append("{");
+		added = this.jsonWriter.addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;

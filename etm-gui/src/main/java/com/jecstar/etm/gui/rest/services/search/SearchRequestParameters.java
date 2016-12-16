@@ -24,6 +24,7 @@ public class SearchRequestParameters {
 	private Integer maxResults;
 	private String sortField;
 	private String sortOrder;
+	private Long notAfterTimestamp;
 	private List<String> types;
 	private List<String> fields;
 	private List<Map<String, Object>> fieldsLayout;
@@ -71,6 +72,10 @@ public class SearchRequestParameters {
 		this.fields = this.converter.getArray("fields", requestValues);
 		if (this.fields == null) {
 			this.fields = new ArrayList<String>(2);
+		}
+		this.notAfterTimestamp = this.converter.getLong("timestamp", requestValues);
+		if (this.notAfterTimestamp == null) {
+			this.notAfterTimestamp = System.currentTimeMillis();
 		}
 		this.fieldsLayout = this.converter.getArray("fieldsLayout", requestValues);
 	}
@@ -138,7 +143,11 @@ public class SearchRequestParameters {
 	}
 	
 	public List<Map<String, Object>> getFieldsLayout() {
-		return fieldsLayout;
+		return this.fieldsLayout;
+	}
+	
+	public Long getNotAfterTimestamp() {
+		return this.notAfterTimestamp;
 	}
 	
 	

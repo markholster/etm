@@ -6,6 +6,7 @@ var tableLayout = {
     results_per_page: 50,
     sort_field: 'endpoints.writing_endpoint_handler.handling_time',
     sort_order: 'desc',
+    timestamp: null,
     current_ix: 0,
     current_query: null,
     getFieldNames: function () {
@@ -278,6 +279,7 @@ $('#btn-apply-table-settings').click(function () {
     }
     tableLayout.fields = fields;
     if (changed) {
+    	tableLayout.timestamp = new Date().getTime();
         executeQuery(createQuery(true));    
     }
     $('#modal-table-settings').modal('hide');

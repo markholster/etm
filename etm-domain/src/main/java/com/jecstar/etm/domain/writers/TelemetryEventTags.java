@@ -3,6 +3,7 @@ package com.jecstar.etm.domain.writers;
 public interface TelemetryEventTags {
 
 	// TelemetryEvent attributes.
+	String getTimestampTag();
 	String getIdTag();
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
