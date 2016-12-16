@@ -494,6 +494,12 @@ function buildGraphsPage() {
         		        	var caluclatedBottomMargin = Number(data.data[0].max_label_length) * 7;
         		        	chart.margin({bottom: caluclatedBottomMargin});
         		        }
+        		        data.data.sort(function(a, b){
+        				    if (a.key < b.key) return -1;
+        				    if (b.key < a.key) return 1;
+        				    return 0;
+        				});
+
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(data.data)
         		        	.call(chart);
@@ -519,6 +525,11 @@ function buildGraphsPage() {
         						);
         					});
         					formattedData.push(serieData);
+        				});
+        				formattedData.sort(function(a, b){
+        				    if (a.key < b.key) return -1;
+        				    if (b.key < a.key) return 1;
+        				    return 0;
         				});
         				return formattedData;
         			}
