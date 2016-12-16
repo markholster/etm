@@ -228,10 +228,10 @@ public class DashboardService extends AbstractIndexMetadataService {
 	private AggregationValue<?> getMetricAggregationValueFromAggregator(Aggregation aggregation) {
 		if (aggregation instanceof Percentiles) {
 			Percentiles percentiles = (Percentiles) aggregation;
-			return new DoubleAggregationValue(((Percentiles) aggregation).getName(), percentiles.iterator().next().getValue());
+			return new DoubleAggregationValue(percentiles.getName(), percentiles.iterator().next().getValue());
 		} else if (aggregation instanceof PercentileRanks) {
 			PercentileRanks percentileRanks = (PercentileRanks) aggregation;
-			return new DoubleAggregationValue(((Percentiles) aggregation).getName(), percentileRanks.iterator().next().getValue()).setPercentage(true);
+			return new DoubleAggregationValue(percentileRanks.getName(), percentileRanks.iterator().next().getPercent()).setPercentage(true);
 		} else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
 			NumericMetricsAggregation.SingleValue singleValue = (SingleValue) aggregation;
 			return new DoubleAggregationValue(singleValue.getName(), singleValue.value());
