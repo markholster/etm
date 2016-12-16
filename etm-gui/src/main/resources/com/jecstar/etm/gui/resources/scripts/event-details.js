@@ -265,13 +265,15 @@ function showEvent(scrollTo, type, id) {
 	    						$clipboard,
 	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append(
 	    								payloadCode
-	    						)
+	    						),
+	    						$('<pre>').attr('style', 'display: none').text(data.source.payload)
+	    						
 	    				)
 	    		)
 	    );
 	    clipboards.push(new Clipboard($clipboard[0], {
 	        text: function(trigger) {
-	            return data.source.payload;
+	            return $(trigger).next().next().text();
 	        }
 	    }));
 	    if (typeof(Worker) !== "undefined" && data.source.payload_length <= 1048576) {
