@@ -12,9 +12,9 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 
 public enum Interval {
 
-	SECONDS("yyyy-MM-dd'T'HH:mm:ssXXX", DateHistogramInterval.SECOND), 
-	MINUTES("yyyy-MM-dd'T'HH:mmXXX", DateHistogramInterval.MINUTE), 
-	HOURS("yyyy-MM-dd'T'HH:mmXXX", DateHistogramInterval.HOUR), 
+	SECONDS("yyyy-MM-dd'T'HH:mm:ss", DateHistogramInterval.SECOND), 
+	MINUTES("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.MINUTE), 
+	HOURS("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.HOUR), 
 	DAYS("yyyy-MM-dd", DateHistogramInterval.DAY), 
 	WEEKS("yyyy-YY", DateHistogramInterval.WEEK), 
 	MONTHS("yyyy-MM", DateHistogramInterval.MONTH), 

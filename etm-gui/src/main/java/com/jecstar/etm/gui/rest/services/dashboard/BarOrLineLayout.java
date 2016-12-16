@@ -40,6 +40,7 @@ public class BarOrLineLayout {
 			if (!firstSerie) {
 				buffer.append(",");
 			}
+			int labelLength = 0;
 			buffer.append("{");
 			jsonWriter.addStringElementToJsonBuffer("key", serie.getKey(), buffer, true);
 			buffer.append(",\"values\": [");
@@ -53,6 +54,9 @@ public class BarOrLineLayout {
 				if (!firstItem) {
 					buffer.append(",");
 				}
+				if (key.length() > labelLength) {
+					labelLength = key.length();
+				}
 				buffer.append("{");
 				AggregationValue<?> aggregationValue = serie.getValue().get(key);
 				jsonWriter.addStringElementToJsonBuffer("label", key, buffer, true);
@@ -61,6 +65,7 @@ public class BarOrLineLayout {
 				firstItem = false;
 			}
 			buffer.append("]");
+			buffer.append(", \"max_label_length\": " + labelLength);
 			buffer.append("}");
 			firstSerie = false;
 		}

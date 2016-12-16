@@ -202,4 +202,10 @@ public class EtmPrincipal implements Principal {
 		dateFormat.setTimeZone(getTimeZone());
 		return dateFormat;
 	}
+	
+	public DateFormat getDateFormat(String format) {
+		SimpleDateFormat dateFormat = new SimpleDateFormat(format, getLocale());
+		dateFormat.setTimeZone(getTimeZone());
+		return dateFormat;
+	}
 }

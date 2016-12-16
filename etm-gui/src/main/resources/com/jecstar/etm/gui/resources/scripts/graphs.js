@@ -484,11 +484,16 @@ function buildGraphsPage() {
         		            .y(function(d) { return d.value })
         		            .staggerLabels(true)
         		            .wrapLabels(true)
+        		            .rotateLabels(-90)
         		            .showControls(data.data.length > 1)
         		            .groupSpacing(0.1) 
         		            .duration(250)
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+        		        if (data.data && data.data && data.data.length > 0) {
+        		        	var caluclatedBottomMargin = Number(data.data[0].max_label_length) * 7;
+        		        	chart.margin({bottom: caluclatedBottomMargin});
+        		        }
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(data.data)
         		        	.call(chart);

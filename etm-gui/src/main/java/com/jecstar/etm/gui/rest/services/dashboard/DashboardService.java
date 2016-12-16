@@ -41,6 +41,8 @@ import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
 @Path("/dashboard")
 public class DashboardService extends AbstractIndexMetadataService {
+	
+	private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
@@ -130,7 +132,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		String bucketAggregator = getString("aggregator", bucketAggregatorData);
 		String bucketField = getString("field", bucketAggregatorData);
 		String bucketFieldType = getString("field_type", bucketAggregatorData);
-		Format bucketFormat = "date".equals(bucketFieldType) ? etmPrincipal.getISO8601DateFormat() : etmPrincipal.getNumberFormat();
+		Format bucketFormat = "date".equals(bucketFieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
 		if ("date_histogram".equals(bucketAggregator)) {
 			bucketFormat = Interval.safeValueOf(getString("interval", bucketAggregatorData)).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
 		}
@@ -195,7 +197,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		addStringElementToJsonBuffer("type", "number", result, true);
 		addStringElementToJsonBuffer("aggregator", aggregator, result, false);
 		
-		Format format = "date".equals(fieldType) ? etmPrincipal.getISO8601DateFormat() : etmPrincipal.getNumberFormat();
+		Format format = "date".equals(fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
 
 		AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
 		SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
