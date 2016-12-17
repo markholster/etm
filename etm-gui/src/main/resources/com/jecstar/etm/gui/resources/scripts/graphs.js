@@ -344,7 +344,7 @@ function buildGraphsPage() {
 	
 	function getMetricsAggregatorsBlock(graphType, ix) {
 		var metricData = {
-			ix: ix,
+			id: 'metric_' + ix,
 			aggregator: $('#sel-' + graphType + '-metrics-aggregator-' + ix).val(),
 			label: $('#input-' + graphType + '-metrics-label-' + ix).val() ? $('#input-' + graphType + '-metrics-label-' + ix).val() : null
 		};
@@ -535,13 +535,13 @@ function buildGraphsPage() {
 			if (!label) {
 				label = $(this).children('option:selected').text();
 			}
-			options.push({ ix: ix, label: label});
+			options.push({ id: 'metric_' + ix, label: label});
 		});
 		$('[id^=sel-' + graphType + '-bucket-term-order-by-]').each(function(index) {
 			$element = $(this).empty();
 			$.each(options, function(index, item) {
 				$element.append(
-					$('<option>').attr('value', 'metric: ' + item.ix).text('Metric: ' + item.label)
+					$('<option>').attr('value', item.id).text('Metric: ' + item.label)
 				)
 			});
 			$element.append($('<option>').attr('value', 'term').text('Term'));

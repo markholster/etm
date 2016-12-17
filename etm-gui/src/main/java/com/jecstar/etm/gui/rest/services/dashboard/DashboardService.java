@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
 import java.text.Format;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -143,10 +144,11 @@ public class DashboardService extends AbstractIndexMetadataService {
 		List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
 		for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
 			String metricAggregator = getString("aggregator", metricsAggregatorData);
+			String metricId = getString("id", metricsAggregatorData);
 			String metricField = getString("field", metricsAggregatorData);
 			String metricLabel = getString("label", metricsAggregatorData);
 			Double metricPercentileDate = getDouble("percentile_data", metricsAggregatorData);
-			AggregationBuilder subAggregation = createMetricAggregationBuilder(etmPrincipal, metricAggregator, metricField, metricLabel, metricPercentileDate);
+			AggregationBuilder subAggregation = createMetricAggregationBuilder(etmPrincipal, metricAggregator, metricId, metricField, metricLabel, metricPercentileDate);
 			subAggregation.setMetaData(metricsAggregatorData);
 			bucketAggregatorBuilder.subAggregation(subAggregation);
 		}
@@ -204,6 +206,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		String field = getString("field", numberData);
 		String fieldType = getString("field_type", numberData);
 		String label = getString("label", numberData);
+		String id = getString("id", numberData);
 		Double percentileDate = getDouble("percentile_data", numberData);
 		
 		StringBuilder result = new StringBuilder();
@@ -213,7 +216,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		
 		Format format = "date".equals(fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
 
-		AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, field, label, percentileDate);
+		AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, id, field, label, percentileDate);
 		SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
 		Aggregation aggregation = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 		AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(aggregation);
@@ -242,39 +245,42 @@ public class DashboardService extends AbstractIndexMetadataService {
 	}
 	
 	private AggregationValue<?> getMetricAggregationValueFromAggregator(Aggregation aggregation) {
+		Map<String, Object> metadata = aggregation.getMetaData();
 		if (aggregation instanceof Percentiles) {
 			Percentiles percentiles = (Percentiles) aggregation;
-			return new DoubleAggregationValue(percentiles.getName(), percentiles.iterator().next().getValue());
+			return new DoubleAggregationValue(metadata.get("label").toString(), percentiles.iterator().next().getValue());
 		} else if (aggregation instanceof PercentileRanks) {
 			PercentileRanks percentileRanks = (PercentileRanks) aggregation;
-			return new DoubleAggregationValue(percentileRanks.getName(), percentileRanks.iterator().next().getPercent()).setPercentage(true);
+			return new DoubleAggregationValue(metadata.get("label").toString(), percentileRanks.iterator().next().getPercent()).setPercentage(true);
 		} else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
 			NumericMetricsAggregation.SingleValue singleValue = (SingleValue) aggregation;
-			return new DoubleAggregationValue(singleValue.getName(), singleValue.value());
+			return new DoubleAggregationValue(metadata.get("label").toString(), singleValue.value());
 		}
 		throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");
 	}
 	
-	private AggregationBuilder createMetricAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, String label, Double percentileData) {
+	private AggregationBuilder createMetricAggregationBuilder(EtmPrincipal etmPrincipal, String type, String id, String field, String label, Double percentileData) {
+		Map<String, Object> metadata = new HashMap<>();
+		AggregationBuilder builder = null;
 		if ("average".equals(type)) {
-			String internalLabel = label != null ? label : "Average of " + field;
-			return AggregationBuilders.avg(internalLabel).field(field);
+			metadata.put("label", label != null ? label : "Average of " + field);
+			builder = AggregationBuilders.avg(id).field(field);
 		} else if ("cardinality".equals(type)) {
 			// TODO beschrijven dat dit niet een precieze waarde is: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html
-			String internalLabel = label != null ? label : "Unique count of " + field;
-			return AggregationBuilders.cardinality(internalLabel).field(field);
+			metadata.put("label", label != null ? label : "Unique count of " + field);
+			builder = AggregationBuilders.cardinality(id).field(field);
 		} else if ("count".equals(type)) {
-			String internalLabel = label != null ? label : "Count";
-			return AggregationBuilders.count(internalLabel).field("_type");
+			metadata.put("label", label != null ? label : "Count");
+			builder = AggregationBuilders.count(id).field("_type");
 		} else if ("max".equals(type)) {
-			String internalLabel = label != null ? label : "Max of " + field;
-			return AggregationBuilders.max(internalLabel).field(field);			
+			metadata.put("label", label != null ? label : "Max of " + field);
+			builder = AggregationBuilders.max(id).field(field);			
 		} else if ("median".equals(type)) {
-			String internalLabel = label != null ? label : "Median of " + field;
-			return AggregationBuilders.percentiles(internalLabel).field(field).percentiles(50);			
+			metadata.put("label", label != null ? label : "Median of " + field);
+			builder = AggregationBuilders.percentiles(id).field(field).percentiles(50);			
 		} else if ("min".equals(type)) {
-			String internalLabel = label != null ? label : "Min of " + field;
-			return AggregationBuilders.min(internalLabel).field(field);			
+			metadata.put("label", label != null ? label : "Min of " + field);
+			builder = AggregationBuilders.min(id).field(field);			
 		} else if ("percentile".equals(type)) {
 			String internalLabel = label;
 			if (internalLabel == null) {
@@ -288,15 +294,20 @@ public class DashboardService extends AbstractIndexMetadataService {
 					internalLabel = etmPrincipal.getNumberFormat().format(percentileData) + "th percentile of " + field;
 				}
 			}
-			return AggregationBuilders.percentiles(internalLabel).field(field).percentiles(percentileData);			
+			metadata.put("label", internalLabel);
+			builder = AggregationBuilders.percentiles(id).field(field).percentiles(percentileData);			
 		} else if ("percentile_rank".equals(type)) {
-			String internalLabel = label != null ? label : "Percentile rank " + etmPrincipal.getNumberFormat().format(percentileData) + " of " + field;
-			return AggregationBuilders.percentileRanks(internalLabel).field(field).values(percentileData);
+			metadata.put("label", label != null ? label : "Percentile rank " + etmPrincipal.getNumberFormat().format(percentileData) + " of " + field);
+			builder = AggregationBuilders.percentileRanks(id).field(field).values(percentileData);
 		} else if ("sum".equals(type)) {
-			String internalLabel = label != null ? label : "Sum of " + field;
-			return AggregationBuilders.sum(internalLabel).field(field);
+			metadata.put("label", label != null ? label : "Sum of " + field);
+			builder = AggregationBuilders.sum(id).field(field);
 		}
-		throw new IllegalArgumentException("'" + type + "' is an invalid metric aggregator.");
+		if (builder == null) {
+			throw new IllegalArgumentException("'" + type + "' is an invalid metric aggregator.");
+		}
+		builder.setMetaData(metadata);
+		return builder;
 	}
 	
 	private AggregationBuilder createBucketAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, Map<String, Object> metadata) {
@@ -312,8 +323,8 @@ public class DashboardService extends AbstractIndexMetadataService {
 			Terms.Order termsOrder = null;
 			if ("term".equals(orderBy)) {
 				termsOrder = Terms.Order.term("asc".equals(order));
-			} else if (orderBy.startsWith("metric: ")) {
-				
+			} else if (orderBy.startsWith("metric_")) {
+				termsOrder = Terms.Order.aggregation(orderBy, "asc".equals(order));
 			} else {
 				throw new IllegalArgumentException("'" + orderBy + "' is an invalid term order.");
 			}
