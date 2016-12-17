@@ -141,6 +141,14 @@ function buildGraphsPage() {
 			}
 		})
 		addMetricsAggregatorsBlock($('#' + graphType + '-y-axes'), graphType, highestIx + 1);
+		updateBucketTermAggregatorsOrderBySelector(graphType);
+	});
+	
+	// Handle the name change of an metric label name on the y-axis
+	$('#graph_form').on('input', "input[data-element-type='metric-aggregator-label']", function(event) {
+		event.preventDefault();
+		var graphType = $(this).attr('data-graph-type');
+		updateBucketTermAggregatorsOrderBySelector(graphType);
 	});
 	
 	// Handle the addition of a sub aggregator on the x-axis
@@ -188,7 +196,16 @@ function buildGraphsPage() {
 			$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().show();
 		} else {
 			$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().hide();
-		}			
+		}
+		if ('term' == $(this).val()) {
+			$('#sel-' + graphType + '-bucket-term-order-by-' + ix).parent().parent().show();
+			$('#sel-' + graphType + '-bucket-term-order-' + ix).parent().parent().show();
+			$('#sel-' + graphType + '-bucket-term-top-' + ix).parent().parent().show();
+		} else {
+			$('#sel-' + graphType + '-bucket-term-order-by-' + ix).parent().parent().hide();
+			$('#sel-' + graphType + '-bucket-term-order-' + ix).parent().parent().hide();
+			$('#sel-' + graphType + '-bucket-term-top-' + ix).parent().parent().hide();
+		}
 		enableOrDisableButtons();
 	});
 	
@@ -210,6 +227,9 @@ function buildGraphsPage() {
 		$(this).next().remove();
 		// Remove the link itself.
 		$(this).remove();
+		// Remove the option form the term order by select.
+		var graphType = $(this).attr('data-graph-type');
+		updateBucketTermAggregatorsOrderBySelector(graphType);
 		enableOrDisableButtons();
 	});
 	
@@ -302,13 +322,20 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metrics-label-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Label'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metrics-label-' + ix).attr('type', 'text').addClass('form-control form-control-sm')
+					$('<input>').attr('id', 'input-' + graphType + '-metrics-label-' + ix)
+					.attr('type', 'text')
+					.attr('data-graph-type', graphType)
+					.attr('data-element-type', 'metric-aggregator-label')
+					.addClass('form-control form-control-sm')
 				)
 			)
 		);
 		if (ix > 0)  {
 			$(parent).append(
-				$('<a>').attr('href', '#').addClass('pull-right').attr('data-element-type', 'remove-metrics-aggregator').text('Remove aggregator'),
+				$('<a>').attr('href', '#').addClass('pull-right')
+					.attr('data-element-type', 'remove-metrics-aggregator')
+					.attr('data-graph-type', graphType)
+					.text('Remove aggregator'),
 				$('<br>')
 			);
 		}
@@ -317,6 +344,7 @@ function buildGraphsPage() {
 	
 	function getMetricsAggregatorsBlock(graphType, ix) {
 		var metricData = {
+			ix: ix,
 			aggregator: $('#sel-' + graphType + '-metrics-aggregator-' + ix).val(),
 			label: $('#input-' + graphType + '-metrics-label-' + ix).val() ? $('#input-' + graphType + '-metrics-label-' + ix).val() : null
 		};
@@ -392,6 +420,7 @@ function buildGraphsPage() {
 			        )
 				)
 			),
+			// The date interval field used for the Date histogram aggregator
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Interval'),
 				$('<div>').addClass('col-sm-9').append(
@@ -408,7 +437,39 @@ function buildGraphsPage() {
 					)
 					.val('days')
 				)
-			)
+			),
+			// Term fields
+			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
+				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Order by'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<select>').attr('id', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('form-control form-control-sm custom-select')
+					.append(
+						$('<option>').attr('value', 'term').text('Term')
+					)
+					.val('term')
+				)
+			),
+			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
+				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-order-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Order'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<select>').attr('id', 'sel-' + graphType + '-bucket-term-order-' + ix).addClass('form-control form-control-sm custom-select')
+					.append(
+						$('<option>').attr('value', 'asc').text('Ascending'),
+						$('<option>').attr('value', 'desc').text('Descending')
+					)
+					.val('desc')
+				)
+			),
+			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
+				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-top-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Top'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<input>').attr('id', 'sel-' + graphType + '-bucket-term-top-' + ix).addClass('form-control form-control-sm')
+					.attr('type', 'number')
+					.attr('data-required', 'required')
+					.attr('min', '1').
+					val(5)
+				)
+			)			
 		)
 		if (ix > 0)  {
 			$(parent).append(
@@ -429,6 +490,10 @@ function buildGraphsPage() {
 		}
 		if ('date_histogram' == xAxisData.aggregator) {
 			xAxisData.interval = $('#sel-' + graphType + '-bucket-date-interval-' + ix).val();
+		} else if ('term' == xAxisData.aggregator) {
+			xAxisData.order_by = $('#sel-' + graphType + '-bucket-term-order-by-' + ix).val();
+			xAxisData.order = $('#sel-' + graphType + '-bucket-term-order-' + ix).val();
+			xAxisData.top = Number($('#sel-' + graphType + '-bucket-term-top-' + ix).val());
 		}
 		return xAxisData;		
 	}
@@ -459,6 +524,30 @@ function buildGraphsPage() {
 		} else {
 			$('#btn-confirm-remove-graph').attr('disabled', 'disabled');
 		}
+	}
+	
+	function updateBucketTermAggregatorsOrderBySelector(graphType) {
+		// First create all the options 
+		var options = [];
+		$('#' + graphType + '-y-axes').find('[id^=sel-' + graphType + '-metrics-aggregator-]').each(function (index) {
+			var ix = $(this).attr('id').split('-')[4];
+			var label = $('#input-' + graphType + '-metrics-label-' + ix).val();
+			if (!label) {
+				label = $(this).children('option:selected').text();
+			}
+			options.push({ ix: ix, label: label});
+		});
+		$('[id^=sel-' + graphType + '-bucket-term-order-by-]').each(function(index) {
+			$element = $(this).empty();
+			$.each(options, function(index, item) {
+				$element.append(
+					$('<option>').attr('value', 'metric: ' + item.ix).text('Metric: ' + item.label)
+				)
+			});
+			$element.append($('<option>').attr('value', 'term').text('Term'));
+			sortSelectOptions($(this));
+		});
+		
 	}
 	
 	function isGraphExistent(name) {
@@ -648,6 +737,9 @@ function buildGraphsPage() {
 				var barIx = $(this).attr('id').split('-')[4];
 				graphData.bar.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, barIx));
 			});
+			if ($('[id=sel-bar-bucket-aggregator-1]').length) {
+				graphData.bar.x_axis.sub_aggregator = getBucketAggregatorsBlock(graphData.type, 1);
+			}
 		} else if ('line' == graphData.type) {
 			graphData.line = {
 				y_axis: {
@@ -661,6 +753,10 @@ function buildGraphsPage() {
 				var barIx = $(this).attr('id').split('-')[4];
 				graphData.line.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, barIx));
 			});			
+			// Check for a sub aggregator on the x-axis
+			if ($('[id=sel-line-bucket-aggregator-1]').length) {
+				graphData.line.x_axis.sub_aggregator = getBucketAggregatorsBlock(graphData.type, 1);
+			}
 		} else if ('number' == graphData.type) {
 			graphData.number = getMetricsAggregatorsBlock(graphData.type, 0);
 		} else if ('pie' == graphData.type) {

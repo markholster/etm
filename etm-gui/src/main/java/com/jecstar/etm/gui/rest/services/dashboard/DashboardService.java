@@ -24,6 +24,7 @@ import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation.SingleValue;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
@@ -171,6 +172,19 @@ public class DashboardService extends AbstractIndexMetadataService {
 					barOrLineLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
 				}
 			}
+		} else if (aggregation instanceof Terms) {
+			Terms terms = (Terms) aggregation;
+			for (org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket bucket : terms.getBuckets()) {
+				String key = bucket.getKeyAsString();
+				if (bucket.getKey() instanceof DateTime) {
+					DateTime dateTime = (DateTime) bucket.getKey();
+					key = bucketFormat.format(dateTime.getMillis());  
+				}
+				for(Aggregation subAggregation : bucket.getAggregations()) {
+					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
+					barOrLineLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
+				}				
+			}
 		} else {
 			// TODO gooi exceptie
 		}
@@ -290,6 +304,20 @@ public class DashboardService extends AbstractIndexMetadataService {
 			String internalLabel = "Date of " + field;
 			Interval interval = Interval.safeValueOf(getString("interval", metadata));
 			return AggregationBuilders.dateHistogram(internalLabel).field(field).dateHistogramInterval(interval.getDateHistogramInterval());		
+		} else if ("term".equals(type)) {
+			String orderBy = getString("order_by", metadata, "term");
+			String order = getString("order", metadata);
+			int top = getInteger("top", metadata, 5);
+			String internalLabel = "Top " + top + " of " + field;
+			Terms.Order termsOrder = null;
+			if ("term".equals(orderBy)) {
+				termsOrder = Terms.Order.term("asc".equals(order));
+			} else if (orderBy.startsWith("metric: ")) {
+				
+			} else {
+				throw new IllegalArgumentException("'" + orderBy + "' is an invalid term order.");
+			}
+			return AggregationBuilders.terms(internalLabel).field(field).order(termsOrder).size(top);
 		}
 		throw new IllegalArgumentException("'" + type + "' is an invalid bucket aggregator.");
 	}
