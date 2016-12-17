@@ -150,7 +150,68 @@ function buildGraphsPage() {
 		addMetricsAggregatorsBlock($('#line-y-axes'),'line', highestIx + 1);
 	});
 	
+	// Add the metric aggregator change handling.
+	$('#graph_form').on('change', "select[data-element-type='metric-aggregator-selector']", function(event) {
+		event.preventDefault();
+		var graphType = $(this).attr('data-graph-type');
+		var ix = $(this).attr('data-aggregator-index');
+		if ('count' == $(this).val()) {
+			$('#input-' + graphType + '-metric-field-' + ix).parent().parent().hide();
+		} else {
+			$('#input-' + graphType + '-metric-field-' + ix).parent().parent().show();
+		}
+		if ('percentile' == $(this).val()) {
+			$('#input-' + graphType + '-metric-percentile-' + ix).parent().parent().show();
+		} else {
+			$('#input-' + graphType + '-metric-percentile-' + ix).parent().parent().hide();
+		}
+		if ('percentile_rank' == $(this).val()) {
+			$('#input-' + graphType + '-metric-percentile-rank-' + ix).parent().parent().show();
+		} else {
+			$('#input-' + graphType + '-metric-percentile-rank-' + ix).parent().parent().hide();
+		}
+		enableOrDisableButtons();
+	});
 	
+	// Add the bucket aggregator change handling.
+	$('#graph_form').on('change', "select[data-element-type='bucket-aggregator-selector']", function(event) {
+		event.preventDefault();
+		var graphType = $(this).attr('data-graph-type');
+		var ix = $(this).attr('data-aggregator-index');
+		if ('filter' == $(this).val()) {
+			$('#input-' + graphType + '-bucket-field-' + ix).parent().parent().hide();
+		} else {
+			$('#input-' + graphType + '-bucket-field-' + ix).parent().parent().show();
+		}			
+		if ('date_histogram' == $(this).val()) {
+			$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().show();
+		} else {
+			$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().hide();
+		}			
+		enableOrDisableButtons();
+	});
+	
+	// Add the autocomplete handling.
+	$('#graph_form').on('keydown', "input[data-element-type='autocomplete-input']", function(event) {
+        if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+            event.stopPropagation();
+        }
+	});
+	
+	// Add the remove aggregator handling.
+	$('#graph_form').on('click', "a[data-element-type='remove-aggregator']", function(event) {
+		event.preventDefault();
+		// Remove till the <hr>
+		$(this).prevUntil('hr').remove();
+		// remove the <hr>
+		$(this).prev().remove();
+		// remove the <br>
+		$(this).next().remove();
+		// Remove the link itself.
+		$(this).remove();
+		enableOrDisableButtons();
+	});
+
 	function addMetricsAggregatorsBlock(parent, graphType, ix) {
 		if (ix > 0)  {
 			$(parent).append(
@@ -161,26 +222,11 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-metric-aggregator-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Aggregator'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<select>').attr('id', 'sel-' + graphType + '-metric-aggregator-' + ix).addClass('form-control form-control-sm custom-select')
-					.change(function(event) {
-						event.preventDefault();
-						if ('count' == $(this).val()) {
-							$('#input-' + graphType + '-metric-field-' + ix).parent().parent().hide();
-						} else {
-							$('#input-' + graphType + '-metric-field-' + ix).parent().parent().show();
-						}
-						if ('percentile' == $(this).val()) {
-							$('#input-' + graphType + '-metric-percentile-' + ix).parent().parent().show();
-						} else {
-							$('#input-' + graphType + '-metric-percentile-' + ix).parent().parent().hide();
-						}
-						if ('percentile_rank' == $(this).val()) {
-							$('#input-' + graphType + '-metric-percentile-rank-' + ix).parent().parent().show();
-						} else {
-							$('#input-' + graphType + '-metric-percentile-rank-' + ix).parent().parent().hide();
-						}
-						enableOrDisableButtons();
-					})
+					$('<select>').attr('id', 'sel-' + graphType + '-metric-aggregator-' + ix)
+					.attr('data-element-type', 'metric-aggregator-selector')
+					.attr('data-graph-type', graphType)
+					.attr('data-aggregator-index', ix)
+					.addClass('form-control form-control-sm custom-select')
 					.append(
 						$('<option>').attr('value', 'average').text('Average'),
 						$('<option>').attr('value', 'count').text('Count'),
@@ -197,12 +243,11 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'input-' + graphType + '-metric-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-metric-field-' + ix).attr('type', 'text').attr('data-required', 'required').addClass('form-control form-control-sm')
-					.bind('keydown', function( event ) {
-			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-			                event.stopPropagation();
-			            }
-			        }).autocompleteFieldQuery(
+					$('<input>').attr('id', 'input-' + graphType + '-metric-field-' + ix).attr('type', 'text')
+					.attr('data-required', 'required')
+					.attr('data-element-type', 'autocomplete-input')
+					.addClass('form-control form-control-sm')
+			        .autocompleteFieldQuery(
 			        	{
 			        		queryKeywords: keywords,
 			        		mode: 'field',
@@ -246,18 +291,7 @@ function buildGraphsPage() {
 		);
 		if (ix > 0)  {
 			$(parent).append(
-				$('<a>').attr('href', '#').addClass('pull-right').text('Remove aggregator').click(function(event) {
-					event.preventDefault();
-					// Remove till the <hr>
-					$(this).prevUntil('hr').remove();
-					// remove the <hr>
-					$(this).prev().remove();
-					// remove the <br>
-					$(this).next().remove();
-					// Remove the link itself.
-					$(this).remove();
-					enableOrDisableButtons();
-				}),
+				$('<a>').attr('href', '#').addClass('pull-right').attr('data-element-type', 'remove-aggregator').text('Remove aggregator'),
 				$('<br>')
 			);
 		}
@@ -289,21 +323,11 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-aggregator-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Aggregator'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<select>').attr('id', 'sel-' + graphType + '-bucket-aggregator-' + ix).addClass('form-control form-control-sm custom-select')
-					.change(function(event) {
-						event.preventDefault();
-						if ('filter' == $(this).val()) {
-							$('#input-' + graphType + '-bucket-field-' + ix).parent().parent().hide();
-						} else {
-							$('#input-' + graphType + '-bucket-field-' + ix).parent().parent().show();
-						}			
-						if ('date_histogram' == $(this).val()) {
-							$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().show();
-						} else {
-							$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().hide();
-						}			
-						enableOrDisableButtons();
-					})
+					$('<select>').attr('id', 'sel-' + graphType + '-bucket-aggregator-' + ix)
+					.addClass('form-control form-control-sm custom-select')
+					.attr('data-element-type', 'bucket-aggregator-selector')
+					.attr('data-graph-type', graphType)
+					.attr('data-aggregator-index', ix)
 					.append(
 						$('<option>').attr('value', 'date_histogram').text('Date histogram'),
 						$('<option>').attr('value', 'date_range').text('Date range'),
@@ -318,12 +342,12 @@ function buildGraphsPage() {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'input-' + graphType + '-bucket-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<input>').attr('id', 'input-' + graphType + '-bucket-field-' + ix).attr('type', 'text').attr('data-required', 'required').addClass('form-control form-control-sm')
-					.bind('keydown', function( event ) {
-			            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-			                event.stopPropagation();
-			            }
-			        }).autocompleteFieldQuery(
+					$('<input>').attr('id', 'input-' + graphType + '-bucket-field-' + ix)
+					.attr('type', 'text')
+					.attr('data-required', 'required')
+					.attr('data-element-type', 'autocomplete-input')
+					.addClass('form-control form-control-sm')
+					.autocompleteFieldQuery(
 			        	{
 			        		queryKeywords: keywords,
 			        		mode: 'field',
