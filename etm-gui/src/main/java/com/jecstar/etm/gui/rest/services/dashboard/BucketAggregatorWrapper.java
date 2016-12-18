@@ -49,6 +49,10 @@ public class BucketAggregatorWrapper {
 			String internalLabel = this.field;
 			Double interval = this.jsonConverter.getDouble("interval", this.jsonData, 1D);
 			builder = AggregationBuilders.histogram(internalLabel).field(this.field).interval(interval);
+		} else if ("significant_term".equals(this.aggregatorType)) {
+			String internalLabel = "Unusual terms of " + this.field;
+			int top = this.jsonConverter.getInteger("top", this.jsonData, 5);
+			builder = AggregationBuilders.significantTerms(internalLabel).field(this.field).size(top);
 		} else if ("term".equals(this.aggregatorType)) {
 			String orderBy = this.jsonConverter.getString("order_by", this.jsonData, "term");
 			String order = this.jsonConverter.getString("order", this.jsonData);

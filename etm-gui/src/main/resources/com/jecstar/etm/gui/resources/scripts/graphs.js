@@ -206,6 +206,11 @@ function buildGraphsPage() {
 		} else {
 			$('#input-' + graphType + '-bucket-histogram-interval-' + ix).parent().parent().hide();
 		}
+		if ('significant_term' == $(this).val()) {
+			$('#sel-' + graphType + '-bucket-significant-term-top-' + ix).parent().parent().show();
+		} else {
+			$('#sel-' + graphType + '-bucket-significant-term-top-' + ix).parent().parent().hide();
+		}
 		if ('term' == $(this).val()) {
 			$('#sel-' + graphType + '-bucket-term-order-by-' + ix).parent().parent().show();
 			$('#sel-' + graphType + '-bucket-term-order-' + ix).parent().parent().show();
@@ -387,10 +392,7 @@ function buildGraphsPage() {
 					.attr('data-aggregator-index', ix)
 					.append(
 						$('<option>').attr('value', 'date_histogram').text('Date histogram'),
-						$('<option>').attr('value', 'date_range').text('Date range'),
-						$('<option>').attr('value', 'filter').text('Filter'),
 						$('<option>').attr('value', 'histogram').text('Histogram'),
-						$('<option>').attr('value', 'range').text('Range'),
 						$('<option>').attr('value', 'significant_term').text('Significant term'),
 						$('<option>').attr('value', 'term').text('Term')
 					)
@@ -457,7 +459,18 @@ function buildGraphsPage() {
 					.addClass('form-control form-control-sm')
 					.attr('step', 'any').attr('min', '1')
 				)
-			),			
+			),
+			// Significat term fields
+			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
+				$('<label>').attr('for', 'sel-' + graphType + '-bucket-significant-term-top-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Top'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<input>').attr('id', 'sel-' + graphType + '-bucket-significant-term-top-' + ix).addClass('form-control form-control-sm')
+					.attr('type', 'number')
+					.attr('data-required', 'required')
+					.attr('min', '1').
+					val(5)
+				)
+			),
 			// Term fields
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Order by'),
@@ -512,6 +525,8 @@ function buildGraphsPage() {
 			xAxisData.interval = $('#sel-' + graphType + '-bucket-date-interval-' + ix).val();
 		} else if ('histogram' == xAxisData.aggregator) {
 			xAxisData.interval = Number($('#input-' + graphType + '-bucket-histogram-interval-' + ix).val())
+		} else if ('significant_term' == xAxisData.aggregator) {
+			xAxisData.top = Number($('#sel-' + graphType + '-bucket-significant-term-top-' + ix).val());
 		} else if ('term' == xAxisData.aggregator) {
 			xAxisData.order_by = $('#sel-' + graphType + '-bucket-term-order-by-' + ix).val();
 			xAxisData.order = $('#sel-' + graphType + '-bucket-term-order-' + ix).val();
