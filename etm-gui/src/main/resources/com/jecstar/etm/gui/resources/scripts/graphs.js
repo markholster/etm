@@ -40,6 +40,7 @@ function buildGraphsPage() {
         
         addMetricsAggregatorsBlock($('#bar-y-axes'),'bar', 0);
         addBucketAggregatorsBlock($('#bar-x-axes'),'bar', 0);
+        updateBucketTermAggregatorsOrderBySelector('bar');
         addMetricsAggregatorsBlock($('#line-y-axes'),'line', 0);
         addBucketAggregatorsBlock($('#line-x-axes'),'line', 0);
         addMetricsAggregatorsBlock($('#number-fields'),'number', 0);

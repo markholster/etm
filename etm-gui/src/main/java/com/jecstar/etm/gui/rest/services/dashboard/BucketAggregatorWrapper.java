@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
 import java.text.Format;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.elasticsearch.search.aggregations.AggregationBuilder;
@@ -11,6 +12,8 @@ import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 public class BucketAggregatorWrapper {
+	
+	public static final String AGGREGATOR_BASE = "bucket";
 	
 	private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	private final Map<String, Object> jsonData;
@@ -36,6 +39,7 @@ public class BucketAggregatorWrapper {
 	
 	
 	private AggregationBuilder createBucketAggregationBuilder() {
+		Map<String, Object> metadata = new HashMap<>();
 		AggregationBuilder builder = null;
 		if ("date_histogram".equals(this.aggregatorType)) {
 			String internalLabel = "Date of " + this.field;
@@ -59,6 +63,8 @@ public class BucketAggregatorWrapper {
 		if (builder == null)  {
 			throw new IllegalArgumentException("'" + this.aggregatorType + "' is an invalid bucket aggregator.");
 		}
+		metadata.put("aggregator_base", AGGREGATOR_BASE);
+		builder.setMetaData(metadata);
 		return builder;
 	}
 	

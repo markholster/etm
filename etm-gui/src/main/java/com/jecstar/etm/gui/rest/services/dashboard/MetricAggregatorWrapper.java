@@ -12,6 +12,8 @@ import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 public class MetricAggregatorWrapper {
 
+	public static final String AGGREGATOR_BASE = "metric";
+	
 	private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	private final Map<String, Object> jsonData;
 	private final JsonConverter jsonConverter = new JsonConverter();
@@ -83,6 +85,7 @@ public class MetricAggregatorWrapper {
 		if (builder == null) {
 			throw new IllegalArgumentException("'" + this.aggregatorType + "' is an invalid metric aggregator.");
 		}
+		metadata.put("aggregator_base", AGGREGATOR_BASE);
 		builder.setMetaData(metadata);
 		return builder;
 	}

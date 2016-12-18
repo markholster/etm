@@ -1,7 +1,5 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
-import java.text.Format;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,9 +21,8 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation.Bucket;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation.SingleValue;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
@@ -146,6 +143,9 @@ public class DashboardService extends AbstractIndexMetadataService {
 		for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
 			rootForMetricAggregators.subAggregation(new MetricAggregatorWrapper(etmPrincipal, metricsAggregatorData).getAggregationBuilder());
 		}
+		SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
+		Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
+
 		// Start building the response
 		StringBuilder result = new StringBuilder();
 		result.append("{");
@@ -153,33 +153,35 @@ public class DashboardService extends AbstractIndexMetadataService {
 		addStringElementToJsonBuffer("type", type, result, false);
 		result.append(",\"data\": ");
 		
-		SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
-		Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
-		if (aggregation instanceof Histogram) {
-			Histogram histogram = (Histogram) aggregation;
-			for(org.elasticsearch.search.aggregations.bucket.histogram.Histogram.Bucket bucket : histogram.getBuckets()) {
+		
+		if (aggregation instanceof MultiBucketsAggregation) {
+			MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+			for(Bucket bucket : multiBucketsAggregation.getBuckets()) {
 				String key = bucket.getKeyAsString();
 				if (bucket.getKey() instanceof DateTime) {
 					DateTime dateTime = (DateTime) bucket.getKey();
 					key = bucketAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
 				}
 				for(Aggregation subAggregation : bucket.getAggregations()) {
-					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
-					barOrLineLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
+					if (subAggregation instanceof MultiBucketsAggregation) {
+						// A sub aggregation on the x-axis.
+						MultiBucketsAggregation subBucketsAggregation = (MultiBucketsAggregation) subAggregation;
+						for(Bucket subBucket : subBucketsAggregation.getBuckets()) { 
+							String subKey = subBucket.getKeyAsString();
+							if (subBucket.getKey() instanceof DateTime) {
+								DateTime dateTime = (DateTime) subBucket.getKey();
+								subKey = bucketAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
+							}
+							for(Aggregation metricAggregation : subBucket.getAggregations()) {
+								AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(metricAggregation);
+								barOrLineLayout.addValueToSerie(subKey + ": " + aggregationValue.getLabel(), key, aggregationValue);								
+							}
+						}
+					} else {
+						AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
+						barOrLineLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
+					}
 				}
-			}
-		} else if (aggregation instanceof Terms) {
-			Terms terms = (Terms) aggregation;
-			for (org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket bucket : terms.getBuckets()) {
-				String key = bucket.getKeyAsString();
-				if (bucket.getKey() instanceof DateTime) {
-					DateTime dateTime = (DateTime) bucket.getKey();
-					key = bucketAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
-				}
-				for(Aggregation subAggregation : bucket.getAggregations()) {
-					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
-					barOrLineLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
-				}				
 			}
 		} else {
 			// TODO gooi exceptie
