@@ -124,6 +124,9 @@ public class DashboardService extends AbstractIndexMetadataService {
 	private String getBarOrLineData(String type, Map<String, Object> valueMap) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		BarOrLineLayout barOrLineLayout = new BarOrLineLayout();
+		if ("bar".equals(type)) {
+			barOrLineLayout.setAddMissingKeys(true);
+		}
 		String index = getString("data_source", valueMap);
 		String query = getString("query", valueMap, "*");
 		SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);

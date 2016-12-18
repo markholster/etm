@@ -30,4 +30,18 @@ public class LongAggregationKey implements AggregationKey {
 	public int getLength() {
 		return getKeyAsString().length();
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof LongAggregationKey) {
+			LongAggregationKey other = (LongAggregationKey) obj;
+			return this.key.equals(other.key);
+		}
+		return super.equals(obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.key.hashCode();
+	}
 }

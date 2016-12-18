@@ -30,4 +30,18 @@ public class DateTimeAggregationKey implements AggregationKey {
 	public int getLength() {
 		return getKeyAsString().length();
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof DateTimeAggregationKey) {
+			DateTimeAggregationKey other = (DateTimeAggregationKey) obj;
+			return this.epochtime == other.epochtime;
+		}
+		return super.equals(obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Long.hashCode(this.epochtime);
+	}
 }

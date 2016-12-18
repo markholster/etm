@@ -30,4 +30,18 @@ public class DoubleAggregationKey implements AggregationKey {
 	public int getLength() {
 		return getKeyAsString().length();
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof DoubleAggregationKey) {
+			DoubleAggregationKey other = (DoubleAggregationKey) obj;
+			return this.key.equals(other);
+		}
+		return super.equals(obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.key.hashCode();
+	}
 }

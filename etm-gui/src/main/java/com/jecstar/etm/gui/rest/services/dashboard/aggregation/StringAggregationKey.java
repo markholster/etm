@@ -23,4 +23,18 @@ public class StringAggregationKey implements AggregationKey {
 		return this.key.length();
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof StringAggregationKey) {
+			StringAggregationKey other = (StringAggregationKey) obj;
+			return this.key.equals(other);
+		}
+		return super.equals(obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.key.hashCode();
+	}
+	
 }
