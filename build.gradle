@@ -17,7 +17,7 @@ ext {
     dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-14"
     dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:3.0.1"
     dep_slf4jApi = "org.slf4j:slf4j-api:1.7.21"
-    dep_undertowServlet = "io.undertow:undertow-servlet:1.4.6.Final"
+    dep_undertowServlet = "io.undertow:undertow-servlet:1.4.7.Final"
     dep_snakeyaml = "org.yaml:snakeyaml:1.17"
 }
 
