@@ -45,6 +45,10 @@ public class BucketAggregatorWrapper {
 			String internalLabel = "Date of " + this.field;
 			Interval interval = Interval.safeValueOf(this.jsonConverter.getString("interval", this.jsonData));
 			builder = AggregationBuilders.dateHistogram(internalLabel).field(this.field).dateHistogramInterval(interval.getDateHistogramInterval());		
+		} else if ("histogram".equals(this.aggregatorType)) {
+			String internalLabel = this.field;
+			Double interval = this.jsonConverter.getDouble("interval", this.jsonData, 1D);
+			builder = AggregationBuilders.histogram(internalLabel).field(this.field).interval(interval);
 		} else if ("term".equals(this.aggregatorType)) {
 			String orderBy = this.jsonConverter.getString("order_by", this.jsonData, "term");
 			String order = this.jsonConverter.getString("order", this.jsonData);

@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
+import java.text.Format;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,8 +33,13 @@ import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
+import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
+import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DateTimeAggregationKey;
+import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
+import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationKey;
+import com.jecstar.etm.gui.rest.services.dashboard.aggregation.StringAggregationKey;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -158,24 +164,16 @@ public class DashboardService extends AbstractIndexMetadataService {
 		if (aggregation instanceof MultiBucketsAggregation) {
 			MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
 			for(Bucket bucket : multiBucketsAggregation.getBuckets()) {
-				String key = bucket.getKeyAsString();
-				if (bucket.getKey() instanceof DateTime) {
-					DateTime dateTime = (DateTime) bucket.getKey();
-					key = bucketAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
-				}
+				AggregationKey key = getFormattedBucketKey(bucket, bucketAggregatorWrapper.getBucketFormat());
 				for(Aggregation subAggregation : bucket.getAggregations()) {
 					if (subAggregation instanceof MultiBucketsAggregation) {
 						// A sub aggregation on the x-axis.
 						MultiBucketsAggregation subBucketsAggregation = (MultiBucketsAggregation) subAggregation;
 						for(Bucket subBucket : subBucketsAggregation.getBuckets()) { 
-							String subKey = subBucket.getKeyAsString();
-							if (subBucket.getKey() instanceof DateTime) {
-								DateTime dateTime = (DateTime) subBucket.getKey();
-								subKey = bucketSubAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
-							}
+							AggregationKey subKey = getFormattedBucketKey(subBucket, bucketSubAggregatorWrapper.getBucketFormat());
 							for(Aggregation metricAggregation : subBucket.getAggregations()) {
 								AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(metricAggregation);
-								barOrLineLayout.addValueToSerie(subKey + ": " + aggregationValue.getLabel(), key, aggregationValue);								
+								barOrLineLayout.addValueToSerie(subKey.getKeyAsString() + ": " + aggregationValue.getLabel(), key, aggregationValue);								
 							}
 						}
 					} else {
@@ -190,6 +188,18 @@ public class DashboardService extends AbstractIndexMetadataService {
 		barOrLineLayout.appendAsArrayToJsonBuffer(this, result, true);
 		result.append("}");
 		return result.toString();
+	}
+	
+	private AggregationKey getFormattedBucketKey(Bucket bucket, Format format) {
+		if (bucket.getKey() instanceof DateTime) {
+			DateTime dateTime = (DateTime) bucket.getKey();
+			return new DateTimeAggregationKey(dateTime.getMillis(), format);
+		} else if (bucket.getKey() instanceof Double) {
+			return new DoubleAggregationKey((Double) bucket.getKey(), format);
+		} else if (bucket.getKey() instanceof Long) {
+			return new LongAggregationKey((Long) bucket.getKey(), format);
+		}
+		return new StringAggregationKey(bucket.getKeyAsString());
 	}
 
 	private String getNumberData(Map<String, Object> valueMap) {

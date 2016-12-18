@@ -201,6 +201,11 @@ function buildGraphsPage() {
 		} else {
 			$('#sel-' + graphType + '-bucket-date-interval-' + ix).parent().parent().hide();
 		}
+		if ('histogram' == $(this).val()) {
+			$('#input-' + graphType + '-bucket-histogram-interval-' + ix).parent().parent().show();
+		} else {
+			$('#input-' + graphType + '-bucket-histogram-interval-' + ix).parent().parent().hide();
+		}
 		if ('term' == $(this).val()) {
 			$('#sel-' + graphType + '-bucket-term-order-by-' + ix).parent().parent().show();
 			$('#sel-' + graphType + '-bucket-term-order-' + ix).parent().parent().show();
@@ -442,6 +447,17 @@ function buildGraphsPage() {
 					.val('days')
 				)
 			),
+			// Histogram fields
+			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
+				$('<label>').attr('for', 'input-' + graphType + '-bucket-histogram-interval-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Interval'),
+				$('<div>').addClass('col-sm-9').append(
+					$('<input>').attr('id', 'input-' + graphType + '-bucket-histogram-interval-' + ix)
+					.attr('type', 'number')
+					.attr('data-required', 'required')
+					.addClass('form-control form-control-sm')
+					.attr('step', 'any').attr('min', '1')
+				)
+			),			
 			// Term fields
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Order by'),
@@ -494,6 +510,8 @@ function buildGraphsPage() {
 		}
 		if ('date_histogram' == xAxisData.aggregator) {
 			xAxisData.interval = $('#sel-' + graphType + '-bucket-date-interval-' + ix).val();
+		} else if ('histogram' == xAxisData.aggregator) {
+			xAxisData.interval = Number($('#input-' + graphType + '-bucket-histogram-interval-' + ix).val())
 		} else if ('term' == xAxisData.aggregator) {
 			xAxisData.order_by = $('#sel-' + graphType + '-bucket-term-order-by-' + ix).val();
 			xAxisData.order = $('#sel-' + graphType + '-bucket-term-order-' + ix).val();
