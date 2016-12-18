@@ -1,5 +1,5 @@
 def version_jackson = "2.8.5"
-def version_resteasy = "3.1.0.CR3"
+def version_resteasy = "3.1.0.Final"
 
 ext {
     dep_disruptor = "com.lmax:disruptor:3.3.6"

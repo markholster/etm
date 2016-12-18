@@ -36,7 +36,7 @@ public abstract class AbstractIntegrationTest {
 		TransportClient transportClient = new PreBuiltTransportClient(Settings.builder()
 				.put("cluster.name", "Enterprise Telemetry Monitor")
 				.put("client.transport.sniff", false).build());
-		transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLocalHost(), 9300));
+		transportClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300));
 		this.client = transportClient;
 		this.bulkProcessor = BulkProcessor.builder(this.client,  createBuilkListener())
 			.setBulkActions(1)
