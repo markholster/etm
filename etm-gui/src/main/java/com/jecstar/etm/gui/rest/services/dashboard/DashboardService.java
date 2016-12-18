@@ -127,14 +127,15 @@ public class DashboardService extends AbstractIndexMetadataService {
 		
 		Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData);
 		BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData);
+		BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
 		// First create the bucket aggregator
 		AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();
 		AggregationBuilder rootForMetricAggregators = bucketAggregatorBuilder;
 		// Check for the presence of a sub aggregator
 		Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData);
 		if (!bucketSubAggregatorData.isEmpty()) {
-			BucketAggregatorWrapper bucketSubAggregator = new BucketAggregatorWrapper(etmPrincipal, bucketSubAggregatorData);
-			rootForMetricAggregators = bucketSubAggregator.getAggregationBuilder();
+			bucketSubAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketSubAggregatorData);
+			rootForMetricAggregators = bucketSubAggregatorWrapper.getAggregationBuilder();
 			bucketAggregatorBuilder.subAggregation(rootForMetricAggregators);
 		}
 		
@@ -170,7 +171,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 							String subKey = subBucket.getKeyAsString();
 							if (subBucket.getKey() instanceof DateTime) {
 								DateTime dateTime = (DateTime) subBucket.getKey();
-								subKey = bucketAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
+								subKey = bucketSubAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
 							}
 							for(Aggregation metricAggregation : subBucket.getAggregations()) {
 								AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(metricAggregation);

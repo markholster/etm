@@ -40,10 +40,11 @@ function buildGraphsPage() {
         
         addMetricsAggregatorsBlock($('#bar-y-axes'),'bar', 0);
         addBucketAggregatorsBlock($('#bar-x-axes'),'bar', 0);
-        updateBucketTermAggregatorsOrderBySelector('bar');
         addMetricsAggregatorsBlock($('#line-y-axes'),'line', 0);
         addBucketAggregatorsBlock($('#line-x-axes'),'line', 0);
         addMetricsAggregatorsBlock($('#number-fields'),'number', 0);
+        updateBucketTermAggregatorsOrderBySelector('bar');
+        updateBucketTermAggregatorsOrderBySelector('line');
 	});    
 	
 	
@@ -157,6 +158,7 @@ function buildGraphsPage() {
 		event.preventDefault();
 		var graphType = $(this).attr('data-graph-type');
 		addBucketAggregatorsBlock($('#' + graphType + '-x-axes'), graphType, 1);
+		updateBucketTermAggregatorsOrderBySelector(graphType);
 		$(this).hide();
 	});
 	
@@ -180,6 +182,7 @@ function buildGraphsPage() {
 		} else {
 			$('#input-' + graphType + '-metrics-percentile-rank-' + ix).parent().parent().hide();
 		}
+		updateBucketTermAggregatorsOrderBySelector(graphType);
 		enableOrDisableButtons();
 	});
 	
