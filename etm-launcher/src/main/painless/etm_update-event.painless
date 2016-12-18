@@ -1,0 +1,242 @@
+Map findEndpointByName(List endpoints, String name) {
+	if (endpoints == null) {
+		return null;
+	}
+	for (Map endpoint : endpoints) {
+		String endpointName = (String)endpoint.get("name");
+		if (endpointName != null && endpointName.equals(name)) {
+			return endpoint;
+		}
+	}
+	return null;
+}
+
+boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {
+	Object sourceEntity = inputSource.get(entityName);
+	Object targetEntity = targetSource.get(entityName);
+	if (sourceEntity == null) {
+		return false;
+	}
+	if (sourceEntity instanceof List) {
+		// merge a list, adding all source items to the target list
+		if (targetEntity == null) {
+			targetEntity = sourceEntity;
+		} else {
+			((List)targetEntity).addAll((List)sourceEntity);
+		}
+	} else if (sourceEntity instanceof Map) {
+		// merge a map, adding all items to the map if the target map didn't contain them.
+		if (targetEntity == null) {
+			targetEntity = sourceEntity;
+		} else {
+			Map original = (Map)targetEntity;
+			targetEntity = new HashMap((Map)sourceEntity);
+			((Map)targetEntity).putAll(original);
+		}	
+	} else {
+		// Not a collection, add the value of the target is not null.
+		if (targetEntity != null) {
+			return false;
+		}
+		targetEntity = sourceEntity;
+	}
+	targetSource.put(entityName, targetEntity);	
+	return true;
+}
+
+boolean updateResponseTimeInReaders(List endpoints, String applicationName, long handlingTime) {
+	if (endpoints == null) {
+		return false;
+	}
+	boolean updated = false;
+	for (Map endpoint : endpoints) {
+		if (endpoint.get("reading_endpoint_handlers") != null) {
+			List readerEndpointHandlers = (List)endpoint.get("reading_endpoint_handlers");
+			for (Map readingEndpointHandler : readerEndpointHandlers) {
+				if (applicationName == null && (readingEndpointHandler.get("application") == null || ((Map)readingEndpointHandler.get("application")).get("name") == null)) {
+					long responseTime = handlingTime - (long)readingEndpointHandler.get("handling_time");
+					if (responseTime >= 0) {
+					    readingEndpointHandler.put("response_time", responseTime);
+						updated = true;				
+					}
+				} else if (applicationName != null && readingEndpointHandler.get("application") != null && applicationName.equals(((Map)readingEndpointHandler.get("application")).get("name"))) {
+					long responseTime = handlingTime - (long)readingEndpointHandler.get("handling_time");
+					if (responseTime >= 0) {
+					    readingEndpointHandler.put("response_time", responseTime);
+						updated = true;				
+					}
+				}
+			}
+		}
+	}
+	return updated;
+}
+
+boolean updateResponseTimeInWriters(List endpoints, String applicationName, long handlingTime) {
+	if (endpoints == null) {
+		return false;
+	}
+	boolean updated = false;
+	for (Map endpoint : endpoints) {
+		Map writingEndpointHandler = endpoint.get("writing_endpoint_handler");
+		if (writingEndpointHandler != null) {
+			if (applicationName == null && (writingEndpointHandler.get("application") == null || ((Map)writingEndpointHandler.get("application")).get("name") == null)) {
+				long responseTime = handlingTime - (long)writingEndpointHandler.get("handling_time");
+				if (responseTime >=0) {
+				    writingEndpointHandler.put("response_time", responseTime);
+					updated = true;			
+				}	
+			} else if (applicationName != null && writingEndpointHandler.get("application") != null && applicationName.equals(((Map)writingEndpointHandler.get("application")).get("name"))) {
+				long responseTime = handlingTime - (long)writingEndpointHandler.get("handling_time");
+				if (responseTime >=0) {
+				    writingEndpointHandler.put("response_time", responseTime);
+					updated = true;			
+				}	
+			}
+		}
+	}
+	return updated;
+}
+
+Map inputSource = (Map)params.get("source");
+Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
+
+// Check if we have handled this message before. Each message has an unique hashcode. We keep track of this hashcode in the elasticsearch db. 
+// If the provided hashcode is already stored with the document we assume a duplicate offering for storage and quit processing.   
+long inputHash = ((List)inputSource.get("event_hashes")).get(0);
+List targetHashes = (List)targetSource.get("event_hashes");
+if (targetHashes != null) {
+	if (targetHashes.indexOf(inputHash) != -1) {
+		return false;
+	}
+	targetHashes.add(inputHash);
+}
+
+Map tempForCorrelations = (Map)targetSource.get("temp_for_correlations");
+boolean correlatedBeforeInserted = false;
+if (targetSource.get("payload") == null &&
+    targetSource.get("correlations") != null) {
+    // The correlation to this event is stored before the event itself is stored. Merge the entire event.
+    correlatedBeforeInserted = true;
+    List correlations = (List)targetSource.get("correlations");
+    
+    targetSource = inputSource;
+    targetSource.put("correlations", correlations);
+    if (tempForCorrelations != null) {
+	    targetSource.put("temp_for_correlations", tempForCorrelations);
+    }
+    ((Map)params.get("ctx")).put("_source", targetSource);
+}
+
+// Merge several fields
+if (!correlatedBeforeInserted) {
+	for (String field : inputSource.keySet()) {
+		if (!"id".equals(field) 
+		    && !"endpoints".equals(field)
+		    && !"event_hashes".equals(field)
+		   ) {
+				mergeEntity(targetSource, inputSource, field);		
+		}
+	}
+}
+
+// Merge the endpoints.
+List inputEndpoints = (List)inputSource.get("endpoints");
+List targetEndpoints = (List)targetSource.get("endpoints");
+if (inputEndpoints != null && !correlatedBeforeInserted) {
+    // Merge endpoints
+    for (Map inputEndpoint : inputEndpoints) {
+        // Try to find if an endpoint with a given name is present.
+        Map targetEndpoint = findEndpointByName(targetEndpoints, (String)inputEndpoint.get("name"));
+        if (targetEndpoint == null) {
+            // This endpoint was not present.
+            if (targetEndpoints == null) {
+            	targetEndpoints = new ArrayList();
+                targetSource.put("endpoints", targetEndpoints);
+            }
+            targetEndpoints.add(inputEndpoint);
+        } else {
+        	Map targetWritingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
+        	Map inputWritingEndpointHandler = (Map)inputEndpoint.get("writing_endpoint_handler");
+            // Endpoint was present. Set writing handler to target if target has no writing handler currently.
+            if (inputWritingEndpointHandler != null) { 
+            	targetEndpoint.put("writing_endpoint_handler", inputWritingEndpointHandler);
+            }
+            List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers"); 
+            if (inputReadingEndpointHandlers != null) {
+                // Add reading endpoint handlers to target.
+                List targetReadingEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
+                if (targetReadingEndpointHandlers == null) {
+                	targetReadingEndpointHandlers = new ArrayList();
+                    targetEndpoint.put("reading_endpoint_handlers", targetReadingEndpointHandlers);
+                }
+                targetReadingEndpointHandlers.addAll(inputReadingEndpointHandlers);
+            }
+        }
+    }
+ }
+ 
+// Recalculate latencies
+if (targetEndpoints != null) {
+    for (Map targetEndpont : targetEndpoints) {
+    	Map targetWritingEndpointHandler = (Map)targetEndpont.get("writing_endpoint_handler");
+    	if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get("handling_time") != null) {
+    	    long writeTime = (long)targetWritingEndpointHandler.get("handling_time");
+    	    List readingEndpointHandlers = (List)targetEndpont.get("reading_endpoint_handlers");
+    	    if (readingEndpointHandlers != null) {
+    	    	for (Map readingEndpointHandler : readingEndpointHandlers) {
+    	    		if (readingEndpointHandler.get("handling_time") != null) {
+    	    			readingEndpointHandler.put("latency",  ((long)readingEndpointHandler.get("handling_time")) - writeTime);
+    	    		}
+    	    	}
+    	    }
+    	}
+    }
+}
+// Check for response times to be updated
+if (tempForCorrelations != null) {
+	List dataForReaders = (List)tempForCorrelations.get("data_for_readers");
+	if (dataForReaders != null && targetEndpoints != null) {
+		Iterator it = dataForReaders.iterator();
+		while (it.hasNext()) {
+			Map dataForReader = (Map)it.next();
+			String appName = (String)dataForReader.get("name");
+			long handlingTime = (long)dataForReader.get("handling_time");
+			boolean updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);
+			if (!updated && appName == null) {
+				// When the appName == null also update the writers
+				updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);
+			}
+			if (updated) {
+				it.remove();
+			}
+		}
+		if (dataForReaders.isEmpty()) {
+			tempForCorrelations.remove("data_for_readers");
+		}
+	}
+	List dataForWriters = (List)tempForCorrelations.get("data_for_writers");
+	if (dataForWriters != null && targetEndpoints != null) {
+		Iterator it = dataForWriters.iterator();
+		while (it.hasNext()) {
+			Map dataForWriter = (Map)it.next();
+			String appName = (String)dataForWriter.get("name");
+			long handlingTime = (long)dataForWriter.get("handling_time");
+			boolean updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);
+			if (!updated && appName == null) {
+				// When the appName == null also update the readers
+				updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);
+			}
+			if (updated) {
+				it.remove();
+			}			
+		}
+		if (dataForWriters.isEmpty()) {
+			tempForCorrelations.remove("data_for_writers");
+		}
+	}
+	
+	if (tempForCorrelations.isEmpty()) {
+		targetSource.remove("temp_for_correlations");
+	}
+}

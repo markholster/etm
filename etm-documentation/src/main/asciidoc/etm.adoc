@@ -1,0 +1,13 @@
+Enterprise Telemetry Monitor
+============================
+:revnumber: {project-version} 
+:revdate: {docdate}
+
+include::getting-started.adoc[]
+include::setup-etm.adoc[]
+include::administrating-etm.adoc[]
+include::event-layout.adoc[]
+include::processing-events.adoc[]
+include::searching-events.adoc[]
+include::user-preferences.adoc[]
+include::error-codes.adoc[]

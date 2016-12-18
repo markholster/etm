@@ -1,0 +1,11 @@
+String correlatingId = (String)params.get("correlating_id");
+Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
+
+List correlations = (List)targetSource.get("correlations");
+if (correlations == null) {
+	correlations = new ArrayList();
+	targetSource.put("correlations", correlations);
+}
+if (!correlations.contains(correlatingId)) {
+	correlations.add(correlatingId);
+}

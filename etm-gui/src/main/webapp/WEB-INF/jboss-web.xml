@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<jboss-web>
-  <context-root>/etm</context-root>
-  <security-domain>etm</security-domain>
-</jboss-web>

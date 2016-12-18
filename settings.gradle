@@ -1,0 +1,13 @@
+include 'etm-domain',
+        'etm-server-core', 
+        'etm-processor', 
+        'etm-processor-rest', 
+        'etm-processor-ibmmq', 
+        'etm-gui', 
+        'etm-slf4j', 
+        'etm-launcher',
+        'etm-license-generator',
+        'etm-integration-tests', 
+        'etm-license-generator',
+        'etm-distribution',
+        'etm-documentation'

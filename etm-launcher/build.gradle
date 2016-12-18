@@ -1,0 +1,14 @@
+apply plugin: "java"
+
+dependencies {
+    compile project(":etm-gui"), 
+    		project(":etm-processor-rest"), 
+    		project(":etm-processor-ibmmq"),  
+    		dep_log4jToSlf4j, 
+    		dep_resteasyJaxrs, 
+    		dep_resteasyJacksonProvider, 
+    		dep_resteasyWadl,
+    		dep_snakeyaml, 
+    		dep_undertowServlet
+    testCompile dep_junit
+}

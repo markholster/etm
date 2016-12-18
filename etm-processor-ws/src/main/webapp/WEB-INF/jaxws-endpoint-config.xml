@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<jaxws-config xmlns="urn:jboss:jbossws-jaxws-config:4.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="urn:jboss:jbossws-jaxws-config:4.0 http://www.jboss.org/schema/jbossas/jbossws-jaxws-config_4_0.xsd">
-	<endpoint-config>
-		<config-name>EtmEndpointConfig</config-name>
-	</endpoint-config>
-</jaxws-config>

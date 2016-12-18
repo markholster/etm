@@ -1,0 +1,29 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'org.asciidoctor:asciidoctor-gradle-plugin:1.5.3'
+        classpath 'org.asciidoctor:asciidoctorj-pdf:1.5.0-alpha.11'
+    }
+}
+
+apply plugin: 'org.asciidoctor.convert'
+
+asciidoctor {
+  backends 'html5', 'pdf'
+  sourceDir = file('src/main/asciidoc')
+  sources {
+    include 'etm.adoc'
+  }
+  attributes 'author': 'Milo Jacobs &amp; Mark Holster',
+  			 'email': 'info@jecstar.com',
+  			 'toc': 'right',
+    		 'toc-title': 'Table of Contents',
+    		 'source-highlighter': 'coderay',
+       		 'stylesheet': 'github.css',
+    		 'stylesdir': 'stylesheets',
+    		 
+    		 'etm': 'Enterprise Telemetry Monitor'
+}

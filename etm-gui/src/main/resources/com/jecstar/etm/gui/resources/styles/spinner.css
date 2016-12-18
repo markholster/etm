@@ -1,0 +1,33 @@
+.spinner_line {
+  margin-top: 1em;
+  width: 2.5em;
+  height: 0.25em;
+  background: #ffffff;
+  opacity: 0.7;
+  -webkit-animation: spin 1.5s infinite ease-in-out;
+  animation: spin 1.5s infinite ease-in-out;
+}
+
+.spinner_line_2 {
+  margin-top: -0.25em;
+  -webkit-animation-delay: 0.1s; 
+  animation-delay: 0.1s; 
+}
+
+.spinner_line_3 {
+  margin-top: -0.25em;
+  -webkit-animation-delay: 0.2s; 
+  animation-delay: 0.2s; 
+}
+
+.spinner_line_4 {
+  margin-top: -0.25em;
+  -webkit-animation-delay: 0.3s; 
+  animation-delay: 0.3s; 
+}
+
+@keyframes spin { 
+  100% { 
+    transform: rotate(360deg); 
+  } 
+}

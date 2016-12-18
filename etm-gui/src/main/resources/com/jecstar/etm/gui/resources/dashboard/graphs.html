@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+
+<title>Jecstar - Enterprise Telemetry Monitor</title>
+
+<link rel="stylesheet" href="../styles/bootstrap.min.css">
+<link rel="stylesheet" href="../styles/font-awesome.min.css">
+<link rel="stylesheet" href="../styles/jquery-ui.min.css">
+<link rel="stylesheet" href="../styles/autocomplete.css">
+<link rel="stylesheet" href="../styles/spinner.css">
+<link rel="stylesheet" href="../styles/nv.d3.min.css">
+<style type="text/css">
+body { padding-top: 60px; }
+</style>
+</head>
+<body>
+   <nav class="navbar navbar-full navbar-dark navbar-fixed-top" style="background-color: #777;">
+     <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#collapsing_navbar">&#9776;</button>
+     <div class="pull-left">
+     <!-- This needs to be on 1 line because otherwise the menu will be screwed in konqueror and android browsers -->
+       <img src="../images/jecstar.svg" style="max-height: 2.4em; max-width: 2.4em;" />&nbsp;<a class="navbar-brand pull-right" href="http://www.jecstar.com" target="_blank">Jecstar</a>
+     </div>
+     <div id="spinner" class="pull-right" style="display: none;">
+       <div class="spinner_line"></div>
+       <div class="spinner_line spinner_line_2"></div>
+       <div class="spinner_line spinner_line_3"></div>
+       <div class="spinner_line spinner_line_4"></div>
+     </div>
+     <div class="collapse navbar-toggleable-xs" id="collapsing_navbar">
+       <ul id="etm_mainmenu" class="nav navbar-nav">
+       </ul>
+     </div>
+  </nav>
+  
+  <div class="container-fluid" style="margin-top: 1em;">
+  	<div class="row">
+   	  <div class="col-md-6">
+   	    <div class="card card-block">
+   	      <h5 class="card-title">Graphs</h5>
+   	      <div class="card-text">
+            <div id="graphs_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+            <div id="graphs_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+            <div id="graphs_box">
+              <div class="row">
+                <div class=col-sm-12>
+	              <select id="sel-graph" class="form-control form-control-sm custom-select">
+	          	    <option selected="selected"></option>
+	              </select>
+	            </div>
+	          </div>  
+	          <hr />
+		      <div class="row">
+	            <div class=col-sm-12>
+			      <form id="graph_form">
+			        <div class="form-group row">
+					  <label for="input-graph-name" class="col-sm-3 col-form-label col-form-label-sm">Name</label>
+					  <div class="col-sm-9">
+					    <input id="input-graph-name" type="text" class="form-control form-control-sm" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="sel-graph-type" class="col-sm-3 col-form-label col-form-label-sm">Type</label>
+			          <div class="col-sm-9">
+	  		            <select id="sel-graph-type" class="form-control form-control-sm custom-select">
+			          	  <option value="bar">Bar chart</option>
+			          	  <option value="line">Line chart</option>
+			          	  <option value="number">Number</option>
+<!-- 
+			          	  <option value="pie">Pie chart</option>
+ -->
+			            </select>
+			          </div>  
+					</div>
+			        <div class="form-group row">
+					  <label for="sel-data-source" class="col-sm-3 col-form-label col-form-label-sm">Data source</label>
+			          <div class="col-sm-9">
+	  		            <select id="sel-data-source" class="form-control form-control-sm custom-select">
+			          	  <option value="etm_event_all">Events</option>
+			          	  <option value="etm_metrics_all">Metrics</option>
+			            </select>
+			          </div>  
+					</div>
+			        <div class="form-group row">
+					  <label for="input-graph-query" class="col-sm-3 col-form-label col-form-label-sm">Query</label>
+					  <div class="col-sm-9">
+					    <input id="input-graph-query" type="text" class="form-control form-control-sm" value="*"/>
+					  </div>
+					</div>
+					<hr />
+
+					<div id="bar-fields">
+					  <p><b>Y-axis</b><a href="#" data-element-type="add-y-axis-metrics-aggregator" data-graph-type="bar" class="pull-right">Add aggregator</a></p>
+					  <div id="bar-y-axes"></div>
+					  <hr />
+					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="bar" class="pull-right">Add sub aggregator</a></p>
+					  <div id="bar-x-axes"></div>
+					</div>
+
+					<div id="line-fields" style="display: none;">
+					  <p><b>Y-axis</b><a data-element-type="add-y-axis-metrics-aggregator" data-graph-type="line" href="#" class="pull-right">Add aggregator</a></p>
+					  <div id="line-y-axes"></div>
+					  <hr />
+					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="line" class="pull-right">Add sub aggregator</a></p>
+					  <div id="line-x-axes"></div>
+					</div>
+
+					<div id="number-fields" style="display: none;">
+					</div>
+					
+					<div class="modal-footer">
+	                  <input type="submit" id="btn-confirm-remove-graph" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
+	                  <input type="submit" id="btn-preview-graph" class="btn btn-primary" value="Preview" formnovalidate="formnovalidate" disabled="disabled" />
+	                  <input type="submit" id="btn-confirm-save-graph" class="btn btn-primary" value="Save" disabled="disabled" />
+			        </div>
+			      </form>
+			    </div>      
+	          </div>
+            </div>
+   	      </div>
+   	    </div>
+   	  </div>
+   	  <div class="col-md-6">
+   	    <div class="card card-block">
+   	      <h5 class="card-title">Preview</h5>
+   	      <div class="card-text">
+            <div id="preview_box" style="text-align: center;">
+            </div>
+   	      </div>
+   	    </div>
+   	  </div>  
+   	</div>	
+
+    <div class="modal fade" id="modal-graph-overwrite" tabindex="-1" role="dialog" aria-labelledby="graph-overwrite-modal-label" aria-hidden="true">
+       <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+             <h4 class="modal-title" id="graph-overwrite-modal-label">Graph already exists</h4>
+           </div>
+           <div class="modal-body">
+            A graph with the name '<i id="overwrite-graph-name"></i>' already exists. Do you want to overwrite that graph?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            <button id="btn-save-graph" type="button" class="btn btn-primary">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal fade" id="modal-graph-remove" tabindex="-1" role="dialog" aria-labelledby="graph-remove-modal-label" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="graph-remove-modal-label">Confirm removal</h4>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to remove the graph '<i id="remove-graph-name"></i>' ?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            <button id="btn-remove-graph" type="button" class="btn btn-primary">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>  
+  </div>  
+    
+    
+  <script src="../scripts/tether.min.js"></script>
+  <script src="../scripts/jquery.min.js"></script>
+  <script src="../scripts/jquery-ui.min.js"></script>
+  <script src="../scripts/bootstrap.min.js"></script>
+  <script src="../scripts/autocomplete_fields.js"></script>
+  <script src="../scripts/menu.js"></script>
+  <script src="../scripts/d3.min.js"></script>
+  <script src="../scripts/nv.d3.min.js"></script>  
+  <script src="../scripts/graphs.js"></script>
+  <script>
+    $(document).ajaxStart(function () {
+        $('.errorBox').hide('fast');
+        $('#spinner').show('fast');
+    }).ajaxStop(function () {
+        $('#spinner').hide('fast');
+    }).ajaxError(function(event, jqXHR, settings, thrownError) {
+        if ("undefined" != typeof jqXHR.responseJSON) {
+            $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+        } else {
+            $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+        }
+        $('html,body').animate({scrollTop: 0},'fast');
+    }).ajaxComplete(function(event, jqXHR, settings) {
+        var contentType = jqXHR.getResponseHeader("Content-Type");
+        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+            // assume that our login has expired - reload our current page
+            window.location.reload();
+            return;
+        }          
+    });
+    buildMenu('dashboard', '../');
+    buildGraphsPage();
+  </script>    
+</body>
+</html>
