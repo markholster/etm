@@ -13,23 +13,23 @@ import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 public class BucketAggregatorWrapper {
 	
 	private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-	private final JsonConverter jsonConverter = new JsonConverter();
-	private final String bucketAggregatorType;
-	private final String bucketField;
-	private final String bucketFieldType;
-	private final Format bucketFormat;
 	private final Map<String, Object> jsonData;
+	private final JsonConverter jsonConverter = new JsonConverter();
+	private final String aggregatorType;
+	private final String field;
+	private final String fieldType;
+	private final Format fieldFormat;
 	private final AggregationBuilder aggregationBuilder;
 
 	public BucketAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData) {
 		this.jsonData = jsonData;
-		this.bucketAggregatorType = this.jsonConverter.getString("aggregator", jsonData);
-		this.bucketField = this.jsonConverter.getString("field", jsonData);
-		this.bucketFieldType = this.jsonConverter.getString("field_type", jsonData);
-		if ("date_histogram".equals(this.bucketAggregatorType)) {
-			this.bucketFormat = Interval.safeValueOf(this.jsonConverter.getString("interval", jsonData)).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
+		this.aggregatorType = this.jsonConverter.getString("aggregator", jsonData);
+		this.field = this.jsonConverter.getString("field", jsonData);
+		this.fieldType = this.jsonConverter.getString("field_type", jsonData);
+		if ("date_histogram".equals(this.aggregatorType)) {
+			this.fieldFormat = Interval.safeValueOf(this.jsonConverter.getString("interval", jsonData)).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
 		} else {
-			this.bucketFormat = "date".equals(this.bucketFieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
+			this.fieldFormat = "date".equals(this.fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
 		}
 		this.aggregationBuilder = createBucketAggregationBuilder();
 	}
@@ -37,15 +37,15 @@ public class BucketAggregatorWrapper {
 	
 	private AggregationBuilder createBucketAggregationBuilder() {
 		AggregationBuilder builder = null;
-		if ("date_histogram".equals(this.bucketAggregatorType)) {
-			String internalLabel = "Date of " + this.bucketField;
+		if ("date_histogram".equals(this.aggregatorType)) {
+			String internalLabel = "Date of " + this.field;
 			Interval interval = Interval.safeValueOf(this.jsonConverter.getString("interval", this.jsonData));
-			builder = AggregationBuilders.dateHistogram(internalLabel).field(this.bucketField).dateHistogramInterval(interval.getDateHistogramInterval());		
-		} else if ("term".equals(this.bucketAggregatorType)) {
+			builder = AggregationBuilders.dateHistogram(internalLabel).field(this.field).dateHistogramInterval(interval.getDateHistogramInterval());		
+		} else if ("term".equals(this.aggregatorType)) {
 			String orderBy = this.jsonConverter.getString("order_by", this.jsonData, "term");
 			String order = this.jsonConverter.getString("order", this.jsonData);
 			int top = this.jsonConverter.getInteger("top", this.jsonData, 5);
-			String internalLabel = "Top " + top + " of " + this.bucketField;
+			String internalLabel = "Top " + top + " of " + this.field;
 			Terms.Order termsOrder = null;
 			if ("term".equals(orderBy)) {
 				termsOrder = Terms.Order.term("asc".equals(order));
@@ -54,10 +54,10 @@ public class BucketAggregatorWrapper {
 			} else {
 				throw new IllegalArgumentException("'" + orderBy + "' is an invalid term order.");
 			}
-			builder = AggregationBuilders.terms(internalLabel).field(this.bucketField).order(termsOrder).size(top);
+			builder = AggregationBuilders.terms(internalLabel).field(this.field).order(termsOrder).size(top);
 		}
 		if (builder == null)  {
-			throw new IllegalArgumentException("'" + this.bucketAggregatorType + "' is an invalid bucket aggregator.");
+			throw new IllegalArgumentException("'" + this.aggregatorType + "' is an invalid bucket aggregator.");
 		}
 		return builder;
 	}
@@ -67,7 +67,7 @@ public class BucketAggregatorWrapper {
 	}
 	
 	public Format getBucketFormat() {
-		return this.bucketFormat;
+		return this.fieldFormat;
 	}
 
 }

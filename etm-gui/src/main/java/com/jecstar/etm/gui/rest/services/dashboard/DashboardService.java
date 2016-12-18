@@ -144,13 +144,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		// And add every y-axis aggregator as sub aggregator
 		List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
 		for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
-			String metricAggregator = getString("aggregator", metricsAggregatorData);
-			String metricId = getString("id", metricsAggregatorData);
-			String metricField = getString("field", metricsAggregatorData);
-			String metricLabel = getString("label", metricsAggregatorData);
-			Double metricPercentileDate = getDouble("percentile_data", metricsAggregatorData);
-			AggregationBuilder subAggregation = createMetricAggregationBuilder(etmPrincipal, metricAggregator, metricId, metricField, metricLabel, metricPercentileDate);
-			rootForMetricAggregators.subAggregation(subAggregation);
+			rootForMetricAggregators.subAggregation(new MetricAggregatorWrapper(etmPrincipal, metricsAggregatorData).getAggregationBuilder());
 		}
 		// Start building the response
 		StringBuilder result = new StringBuilder();
@@ -202,25 +196,18 @@ public class DashboardService extends AbstractIndexMetadataService {
 		SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
 
 		Map<String, Object> numberData = getObject("number", valueMap);
-		String aggregator = getString("aggregator", numberData);
-		String field = getString("field", numberData);
-		String fieldType = getString("field_type", numberData);
-		String label = getString("label", numberData);
-		String id = getString("id", numberData);
-		Double percentileDate = getDouble("percentile_data", numberData);
-		
+		MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, numberData);
+
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		addStringElementToJsonBuffer("type", "number", result, true);
-		addStringElementToJsonBuffer("aggregator", aggregator, result, false);
+		addStringElementToJsonBuffer("aggregator", metricAggregatorWrapper.getAggregatorType(), result, false);
 		
-		Format format = "date".equals(fieldType) ? etmPrincipal.getDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS") : etmPrincipal.getNumberFormat();
-
-		AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, id, field, label, percentileDate);
+		AggregationBuilder aggregatorBuilder = metricAggregatorWrapper.getAggregationBuilder();
 		SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
 		Aggregation aggregation = searchResponse.getAggregations().get(aggregatorBuilder.getName());
 		AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(aggregation);
-		aggregationValue.appendToJsonBuffer(this, format, result, false);
+		aggregationValue.appendToJsonBuffer(this, metricAggregatorWrapper.getFieldFormat(), result, false);
 		
 		result.append("}");
 		return result.toString();
@@ -257,57 +244,6 @@ public class DashboardService extends AbstractIndexMetadataService {
 			return new DoubleAggregationValue(metadata.get("label").toString(), singleValue.value());
 		}
 		throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");
-	}
-	
-	private AggregationBuilder createMetricAggregationBuilder(EtmPrincipal etmPrincipal, String type, String id, String field, String label, Double percentileData) {
-		Map<String, Object> metadata = new HashMap<>();
-		AggregationBuilder builder = null;
-		if ("average".equals(type)) {
-			metadata.put("label", label != null ? label : "Average of " + field);
-			builder = AggregationBuilders.avg(id).field(field);
-		} else if ("cardinality".equals(type)) {
-			// TODO beschrijven dat dit niet een precieze waarde is: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html
-			metadata.put("label", label != null ? label : "Unique count of " + field);
-			builder = AggregationBuilders.cardinality(id).field(field);
-		} else if ("count".equals(type)) {
-			metadata.put("label", label != null ? label : "Count");
-			builder = AggregationBuilders.count(id).field("_type");
-		} else if ("max".equals(type)) {
-			metadata.put("label", label != null ? label : "Max of " + field);
-			builder = AggregationBuilders.max(id).field(field);			
-		} else if ("median".equals(type)) {
-			metadata.put("label", label != null ? label : "Median of " + field);
-			builder = AggregationBuilders.percentiles(id).field(field).percentiles(50);			
-		} else if ("min".equals(type)) {
-			metadata.put("label", label != null ? label : "Min of " + field);
-			builder = AggregationBuilders.min(id).field(field);			
-		} else if ("percentile".equals(type)) {
-			String internalLabel = label;
-			if (internalLabel == null) {
-				if (percentileData == 1) {
-					internalLabel = "1st percentile of " + field;
-				} else if (percentileData == 2) {
-					internalLabel = "2nd percentile of " + field;
-				} else if (percentileData == 3) {
-					internalLabel = "3rd percentile of " + field;
-				} else {
-					internalLabel = etmPrincipal.getNumberFormat().format(percentileData) + "th percentile of " + field;
-				}
-			}
-			metadata.put("label", internalLabel);
-			builder = AggregationBuilders.percentiles(id).field(field).percentiles(percentileData);			
-		} else if ("percentile_rank".equals(type)) {
-			metadata.put("label", label != null ? label : "Percentile rank " + etmPrincipal.getNumberFormat().format(percentileData) + " of " + field);
-			builder = AggregationBuilders.percentileRanks(id).field(field).values(percentileData);
-		} else if ("sum".equals(type)) {
-			metadata.put("label", label != null ? label : "Sum of " + field);
-			builder = AggregationBuilders.sum(id).field(field);
-		}
-		if (builder == null) {
-			throw new IllegalArgumentException("'" + type + "' is an invalid metric aggregator.");
-		}
-		builder.setMetaData(metadata);
-		return builder;
 	}
 	
 //	@POST
