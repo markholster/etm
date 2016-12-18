@@ -34,12 +34,16 @@ public class JsonConverter extends JsonWriter {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	public Map<String, Object> getObject(String tag, Map<String, Object> valueMap) {
+		return getObject(tag, valueMap, Collections.emptyMap());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
 		if (valueMap.containsKey(tag)) {
 			return (Map<String, Object>) valueMap.get(tag);
 		}
-		return Collections.emptyMap();
+		return defaultValue;
 	}
 	
 	@SuppressWarnings("unchecked")

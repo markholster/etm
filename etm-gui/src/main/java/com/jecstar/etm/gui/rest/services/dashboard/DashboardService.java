@@ -44,8 +44,6 @@ import com.jecstar.etm.server.core.domain.EtmPrincipal;
 @Path("/dashboard")
 public class DashboardService extends AbstractIndexMetadataService {
 	
-	private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	
@@ -131,15 +129,18 @@ public class DashboardService extends AbstractIndexMetadataService {
 		Map<String, Object> yAxisData = getObject("y_axis", barOrLineData);
 		
 		Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData);
-		String bucketAggregator = getString("aggregator", bucketAggregatorData);
-		String bucketField = getString("field", bucketAggregatorData);
-		String bucketFieldType = getString("field_type", bucketAggregatorData);
-		Format bucketFormat = "date".equals(bucketFieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
-		if ("date_histogram".equals(bucketAggregator)) {
-			bucketFormat = Interval.safeValueOf(getString("interval", bucketAggregatorData)).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
-		}
+		BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData);
 		// First create the bucket aggregator
-		AggregationBuilder bucketAggregatorBuilder = createBucketAggregationBuilder(etmPrincipal, bucketAggregator, bucketField, bucketAggregatorData);
+		AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();
+		AggregationBuilder rootForMetricAggregators = bucketAggregatorBuilder;
+		// Check for the presence of a sub aggregator
+		Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData);
+		if (!bucketSubAggregatorData.isEmpty()) {
+			BucketAggregatorWrapper bucketSubAggregator = new BucketAggregatorWrapper(etmPrincipal, bucketSubAggregatorData);
+			rootForMetricAggregators = bucketSubAggregator.getAggregationBuilder();
+			bucketAggregatorBuilder.subAggregation(rootForMetricAggregators);
+		}
+		
 		// And add every y-axis aggregator as sub aggregator
 		List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
 		for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
@@ -149,8 +150,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 			String metricLabel = getString("label", metricsAggregatorData);
 			Double metricPercentileDate = getDouble("percentile_data", metricsAggregatorData);
 			AggregationBuilder subAggregation = createMetricAggregationBuilder(etmPrincipal, metricAggregator, metricId, metricField, metricLabel, metricPercentileDate);
-			subAggregation.setMetaData(metricsAggregatorData);
-			bucketAggregatorBuilder.subAggregation(subAggregation);
+			rootForMetricAggregators.subAggregation(subAggregation);
 		}
 		// Start building the response
 		StringBuilder result = new StringBuilder();
@@ -167,7 +167,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 				String key = bucket.getKeyAsString();
 				if (bucket.getKey() instanceof DateTime) {
 					DateTime dateTime = (DateTime) bucket.getKey();
-					key = bucketFormat.format(dateTime.getMillis());  
+					key = bucketAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
 				}
 				for(Aggregation subAggregation : bucket.getAggregations()) {
 					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
@@ -180,7 +180,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 				String key = bucket.getKeyAsString();
 				if (bucket.getKey() instanceof DateTime) {
 					DateTime dateTime = (DateTime) bucket.getKey();
-					key = bucketFormat.format(dateTime.getMillis());  
+					key = bucketAggregatorWrapper.getBucketFormat().format(dateTime.getMillis());  
 				}
 				for(Aggregation subAggregation : bucket.getAggregations()) {
 					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
@@ -214,7 +214,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		addStringElementToJsonBuffer("type", "number", result, true);
 		addStringElementToJsonBuffer("aggregator", aggregator, result, false);
 		
-		Format format = "date".equals(fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
+		Format format = "date".equals(fieldType) ? etmPrincipal.getDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS") : etmPrincipal.getNumberFormat();
 
 		AggregationBuilder aggregatorBuilder = createMetricAggregationBuilder(etmPrincipal, aggregator, id, field, label, percentileDate);
 		SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
@@ -308,29 +308,6 @@ public class DashboardService extends AbstractIndexMetadataService {
 		}
 		builder.setMetaData(metadata);
 		return builder;
-	}
-	
-	private AggregationBuilder createBucketAggregationBuilder(EtmPrincipal etmPrincipal, String type, String field, Map<String, Object> metadata) {
-		if ("date_histogram".equals(type)) {
-			String internalLabel = "Date of " + field;
-			Interval interval = Interval.safeValueOf(getString("interval", metadata));
-			return AggregationBuilders.dateHistogram(internalLabel).field(field).dateHistogramInterval(interval.getDateHistogramInterval());		
-		} else if ("term".equals(type)) {
-			String orderBy = getString("order_by", metadata, "term");
-			String order = getString("order", metadata);
-			int top = getInteger("top", metadata, 5);
-			String internalLabel = "Top " + top + " of " + field;
-			Terms.Order termsOrder = null;
-			if ("term".equals(orderBy)) {
-				termsOrder = Terms.Order.term("asc".equals(order));
-			} else if (orderBy.startsWith("metric_")) {
-				termsOrder = Terms.Order.aggregation(orderBy, "asc".equals(order));
-			} else {
-				throw new IllegalArgumentException("'" + orderBy + "' is an invalid term order.");
-			}
-			return AggregationBuilders.terms(internalLabel).field(field).order(termsOrder).size(top);
-		}
-		throw new IllegalArgumentException("'" + type + "' is an invalid bucket aggregator.");
 	}
 	
 //	@POST
