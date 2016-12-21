@@ -570,6 +570,7 @@ function buildGraphsPage() {
 			options.push({ id: 'metric_' + ix, label: label});
 		});
 		$('[id^=sel-' + graphType + '-bucket-term-order-by-]').each(function(index) {
+			var currentValue = $(this).val();
 			$element = $(this).empty();
 			$.each(options, function(index, item) {
 				$element.append(
@@ -578,6 +579,9 @@ function buildGraphsPage() {
 			});
 			$element.append($('<option>').attr('value', 'term').text('Term'));
 			sortSelectOptions($(this));
+			if ($(this).children("option[value='" + currentValue + "']").length) {
+				$(this).val(currentValue);
+			}
 		});
 		
 	}
@@ -654,7 +658,7 @@ function buildGraphsPage() {
         		            .staggerLabels(true)
         		            .wrapLabels(true)
         		            .rotateLabels(-90)
-        		            .showControls(data.data.length > 1)
+        		            .showControls(true)
         		            .groupSpacing(0.1) 
         		            .duration(250)
         		            ;
@@ -710,10 +714,6 @@ function buildGraphsPage() {
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
         		        chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
-        		        if (data.data && data.data && data.data.length > 0) {
-        		        	var caluclatedBottomMargin = Number(data.data[0].max_label_length) * 7;
-        		        	// chart.margin({bottom: caluclatedBottomMargin});
-        		        }
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(formatLineData(data.data))
         		        	.call(chart);
