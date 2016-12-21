@@ -253,7 +253,7 @@ function showEvent(scrollTo, type, id) {
 	    	$eventTab.append(createDetailMap('metadata', data.source.metadata));
 	    }
 	    if ("undefined" != typeof data.source.extracted_data) {
-	    	$eventTab.append(createDetailMap('extracts', data.source.extracted_data));
+	    	$eventTab.append(createDetailMap('extracted data', data.source.extracted_data));
 	    }
 	    
 	    $eventTab.append($('<br/>'));

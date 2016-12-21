@@ -78,8 +78,6 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 		valueMap.remove("temp_for_correlations");
 		// Remove event hashes field. It is used for internal handling of events.
 		valueMap.remove("event_hashes");
-		// Remove the timestamp field. It is used for internal handling.
-		valueMap.remove("timestamp");
 		for (Entry<String, Object> entry : valueMap.entrySet()) {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
 			String name = determinePropertyForFieldName(prefix, entry.getKey());
