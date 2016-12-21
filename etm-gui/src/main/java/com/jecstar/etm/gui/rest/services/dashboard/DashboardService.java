@@ -116,6 +116,8 @@ public class DashboardService extends AbstractIndexMetadataService {
 			return getBarOrLineData(type, valueMap);
 		} else if ("line".equals(type)) {
 			return getBarOrLineData(type, valueMap);
+		} else if ("stacked_area".equals(type)) {
+			return getBarOrLineData(type, valueMap);
 		} else {
 			throw new RuntimeException("Unknown type: '" + type + "'.");
 		}
@@ -124,7 +126,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 	private String getBarOrLineData(String type, Map<String, Object> valueMap) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		BarOrLineLayout barOrLineLayout = new BarOrLineLayout();
-		if ("bar".equals(type)) {
+		if ("bar".equals(type) || "stacked_area".equals(type)) {
 			barOrLineLayout.setAddMissingKeys(true);
 		}
 		String index = getString("data_source", valueMap);

@@ -69,6 +69,7 @@ body { padding-top: 60px; }
 			          	  <option value="bar">Bar chart</option>
 			          	  <option value="line">Line chart</option>
 			          	  <option value="number">Number</option>
+			          	  <option value="stacked_area">Stacked area</option>
 <!-- 
 			          	  <option value="pie">Pie chart</option>
  -->
@@ -92,23 +93,31 @@ body { padding-top: 60px; }
 					</div>
 					<hr />
 
-					<div id="bar-fields">
+					<div id="bar-fields" data-field-group="bar">
 					  <p><b>Y-axis</b><a href="#" data-element-type="add-y-axis-metrics-aggregator" data-graph-type="bar" class="pull-right">Add aggregator</a></p>
-					  <div id="bar-y-axes"></div>
+					  <div id="bar-y-axis"></div>
 					  <hr />
 					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="bar" class="pull-right">Add sub aggregator</a></p>
-					  <div id="bar-x-axes"></div>
+					  <div id="bar-x-axis"></div>
 					</div>
 
-					<div id="line-fields" style="display: none;">
+					<div id="line-fields" data-field-group="line" style="display: none;">
 					  <p><b>Y-axis</b><a data-element-type="add-y-axis-metrics-aggregator" data-graph-type="line" href="#" class="pull-right">Add aggregator</a></p>
-					  <div id="line-y-axes"></div>
+					  <div id="line-y-axis"></div>
 					  <hr />
 					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="line" class="pull-right">Add sub aggregator</a></p>
-					  <div id="line-x-axes"></div>
+					  <div id="line-x-axis"></div>
 					</div>
 
-					<div id="number-fields" style="display: none;">
+					<div id="number-fields" data-field-group="number" style="display: none;">
+					</div>
+					
+					<div id="stacked_area-fields" data-field-group="stacked_area" style="display: none;">
+					  <p><b>Y-axis</b><a data-element-type="add-y-axis-metrics-aggregator" data-graph-type="line" href="#" class="pull-right">Add aggregator</a></p>
+					  <div id="stacked_area-y-axis"></div>
+					  <hr />
+					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="stacked_area" class="pull-right">Add sub aggregator</a></p>
+					  <div id="stacked_area-x-axis"></div>
 					</div>
 					
 					<div class="modal-footer">

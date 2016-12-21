@@ -38,13 +38,16 @@ function buildGraphsPage() {
         	}
         );
         
-        addMetricsAggregatorsBlock($('#bar-y-axes'),'bar', 0);
-        addBucketAggregatorsBlock($('#bar-x-axes'),'bar', 0);
-        addMetricsAggregatorsBlock($('#line-y-axes'),'line', 0);
-        addBucketAggregatorsBlock($('#line-x-axes'),'line', 0);
+        addMetricsAggregatorsBlock($('#bar-y-axis'),'bar', 0);
+        addBucketAggregatorsBlock($('#bar-x-axis'),'bar', 0);
+        addMetricsAggregatorsBlock($('#line-y-axis'),'line', 0);
+        addBucketAggregatorsBlock($('#line-x-axis'),'line', 0);
         addMetricsAggregatorsBlock($('#number-fields'),'number', 0);
+        addMetricsAggregatorsBlock($('#stacked_area-y-axis'),'stacked_area', 0);
+        addBucketAggregatorsBlock($('#stacked_area-x-axis'),'stacked_area', 0);
         updateBucketTermAggregatorsOrderBySelector('bar');
         updateBucketTermAggregatorsOrderBySelector('line');
+        updateBucketTermAggregatorsOrderBySelector('stacked_area');
 	});    
 	
 	
@@ -61,15 +64,7 @@ function buildGraphsPage() {
 	
 	$('#sel-graph-type').change(function(event) {
 		event.preventDefault();
-		if ('bar' == $(this).val()) {
-			showBarFields();
-		} else if ('line' == $(this).val()) {
-			showLineFields();
-		} else if ('number' == $(this).val()) {
-			showNumberFields();
-		} else if ('pie' == $(this).val()) {
-			showPieFields();
-		}
+		showFieldGroup($(this).val());
 		enableOrDisableButtons();
 	});
 	
@@ -142,7 +137,7 @@ function buildGraphsPage() {
 				highestIx = currentIx;
 			}
 		})
-		addMetricsAggregatorsBlock($('#' + graphType + '-y-axes'), graphType, highestIx + 1);
+		addMetricsAggregatorsBlock($('#' + graphType + '-y-axis'), graphType, highestIx + 1);
 		updateBucketTermAggregatorsOrderBySelector(graphType);
 	});
 	
@@ -157,7 +152,7 @@ function buildGraphsPage() {
 	$('#graph_form').on('click', "a[data-element-type='add-x-axis-bucket-aggregator']", function(event) {
 		event.preventDefault();
 		var graphType = $(this).attr('data-graph-type');
-		addBucketAggregatorsBlock($('#' + graphType + '-x-axes'), graphType, 1);
+		addBucketAggregatorsBlock($('#' + graphType + '-x-axis'), graphType, 1);
 		updateBucketTermAggregatorsOrderBySelector(graphType);
 		$(this).hide();
 	});
@@ -247,7 +242,7 @@ function buildGraphsPage() {
 		enableOrDisableButtons();
 	});
 	
-	// Add the remove metrics aggregator handling.
+	// Add the remove bucket aggregator handling.
 	$('#graph_form').on('click', "a[data-element-type='remove-bucket-aggregator']", function(event) {
 		event.preventDefault();
 		// Remove till the <hr>
@@ -566,7 +561,7 @@ function buildGraphsPage() {
 	function updateBucketTermAggregatorsOrderBySelector(graphType) {
 		// First create all the options 
 		var options = [];
-		$('#' + graphType + '-y-axes').find('[id^=sel-' + graphType + '-metrics-aggregator-]').each(function (index) {
+		$('#' + graphType + '-y-axis').find('[id^=sel-' + graphType + '-metrics-aggregator-]').each(function (index) {
 			var ix = $(this).attr('id').split('-')[4];
 			var label = $('#input-' + graphType + '-metrics-label-' + ix).val();
 			if (!label) {
@@ -683,37 +678,13 @@ function buildGraphsPage() {
         		} else if ('line' == data.type) {
         			formatter = d3.locale(data.d3_formatter);
         			numberFormatter = formatter.numberFormat(',f');
-        			function formatLineData(lineData) {
-        				var formattedData = [];
-        				$.each(lineData, function(index, serie) {
-        					var serieData = {
-        						key: serie.key,
-        						values: []
-        					};
-        					$.each(serie.values, function(serieIndex, point) {
-        						serieData.values.push(
-        							{
-        								x: serieIndex,
-        								y: point.value
-        							}
-        						);
-        					});
-        					formattedData.push(serieData);
-        				});
-        				formattedData.sort(function(a, b){
-        				    if (a.key < b.key) return -1;
-        				    if (b.key < a.key) return 1;
-        				    return 0;
-        				});
-        				return formattedData;
-        			}
         		    nv.addGraph(function() {
         		    	var i = 1
         		        var chart = nv.models.lineChart()
 						    .showYAxis(true)
 						    .showXAxis(true)       
         		            .useInteractiveGuideline(true)  
-        		            .showLegend(data.data.length > 1)
+        		            .showLegend(true)
         		            .duration(250)
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
@@ -727,9 +698,56 @@ function buildGraphsPage() {
         		} else if ('number' == data.type) {
         			$('#preview_box').append($('<h1>').text(data.value_as_string),$('<h4>').text(data.label));
         		} else if ('pie' == data.type) {
+        		} else if ('stacked_area' == data.type) {
+        			formatter = d3.locale(data.d3_formatter);
+        			numberFormatter = formatter.numberFormat(',f');
+        		    nv.addGraph(function() {
+        		        var chart = nv.models.stackedAreaChart()
+        		            .useInteractiveGuideline(true)
+        		            .duration(250)
+        		            .showControls(true)
+        		            .clipEdge(true);
+        		            ;
+        		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+        		        chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+        		        if (data.data && data.data && data.data.length > 0) {
+        		        	var caluclatedBottomMargin = Number(data.data[0].max_label_length) * 7;
+        		        	// chart.margin({bottom: caluclatedBottomMargin});
+        		        }
+        		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
+        		        	.datum(formatLineData(data.data))
+        		        	.call(chart);
+        		        nv.utils.windowResize(chart.update);
+        		        return chart;
+        		    });
         		}
             }
         });
+        
+		function formatLineData(lineData) {
+			var formattedData = [];
+			$.each(lineData, function(index, serie) {
+				var serieData = {
+					key: serie.key,
+					values: []
+				};
+				$.each(serie.values, function(serieIndex, point) {
+					serieData.values.push(
+						{
+							x: serieIndex,
+							y: point.value
+						}
+					);
+				});
+				formattedData.push(serieData);
+			});
+			formattedData.sort(function(a, b){
+			    if (a.key < b.key) return -1;
+			    if (b.key < a.key) return 1;
+			    return 0;
+			});
+			return formattedData;
+		}
 	}
 	
 	function resetValues() {
@@ -762,88 +780,42 @@ function buildGraphsPage() {
 			query: $('#input-graph-query').val() ? $('#input-graph-query').val() : null
 		};
 		if ('bar' == graphData.type) {
-			graphData.bar = {
-				y_axis: {
-					aggregators: []
-				},
-				x_axis: {
-					aggregator: getBucketAggregatorsBlock(graphData.type, 0)
-				}
-			}
-			$('[id^=sel-bar-metrics-aggregator-]').each(function(index) {
-				var barIx = $(this).attr('id').split('-')[4];
-				graphData.bar.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, barIx));
-			});
-			if ($('[id=sel-bar-bucket-aggregator-1]').length) {
-				graphData.bar.x_axis.sub_aggregator = getBucketAggregatorsBlock(graphData.type, 1);
-			}
+			graphData.bar = createBarOrLineData(graphData.type);
 		} else if ('line' == graphData.type) {
-			graphData.line = {
-				y_axis: {
-					aggregators: []
-				},
-				x_axis: {
-					aggregator: getBucketAggregatorsBlock(graphData.type, 0)
-				}
-			}
-			$('[id^=sel-line-metrics-aggregator-]').each(function(index) {
-				var barIx = $(this).attr('id').split('-')[4];
-				graphData.line.y_axis.aggregators.push(getMetricsAggregatorsBlock(graphData.type, barIx));
-			});			
-			// Check for a sub aggregator on the x-axis
-			if ($('[id=sel-line-bucket-aggregator-1]').length) {
-				graphData.line.x_axis.sub_aggregator = getBucketAggregatorsBlock(graphData.type, 1);
-			}
+			graphData.line = createBarOrLineData(graphData.type);
 		} else if ('number' == graphData.type) {
 			graphData.number = getMetricsAggregatorsBlock(graphData.type, 0);
 		} else if ('pie' == graphData.type) {
 			
+		} else if ('stacked_area' == graphData.type) {
+			graphData.stacked_area = createBarOrLineData(graphData.type);
 		}
 		return graphData;
+		
+		function createBarOrLineData(type) {
+			var data = {
+				y_axis: {
+					aggregators: []
+				},
+				x_axis: {
+					aggregator: getBucketAggregatorsBlock(graphData.type, 0)
+				}
+			}
+			$('[id^=sel-' + type + '-metrics-aggregator-]').each(function(index) {
+				var barIx = $(this).attr('id').split('-')[4];
+				data.y_axis.aggregators.push(getMetricsAggregatorsBlock(type, barIx));
+			});			
+			// Check for a sub aggregator on the x-axis
+			if ($('[id=sel-' + type + '-bucket-aggregator-1]').length) {
+				data.x_axis.sub_aggregator = getBucketAggregatorsBlock(type, 1);
+			}
+			return data;
+		}  
 	}
 	
-	function showBarFields() {
-		hideLineFields();
-		hideNumberFields();
-		hidePieFields();
-		$('#bar-fields').show();
-	}
-	
-	function hideBarFields() {
-		$('#bar-fields').hide();
-	}
-	
-	function showLineFields() {
-		hideBarFields();
-		hideNumberFields();
-		hidePieFields();
-		$('#line-fields').show();
-	}
-	
-	function hideLineFields() {
-		$('#line-fields').hide();
-	}
-	
-	function showNumberFields() {
-		hideBarFields();
-		hideLineFields();
-		hidePieFields();
-		$('#number-fields').show();
-	}
-	
-	function hideNumberFields() {
-		$('#number-fields').hide();
-	}
-	
-	function showPieFields() {
-		hideBarFields();
-		hideLineFields();
-		hideNumberFields();
-		$('#pie-fields').show();
-	}
-	
-	function hidePieFields() {
-		$('#pie-fields').hide();
+	function showFieldGroup(groupName) {
+		$('div[data-field-group]').hide();
+		$('div[data-field-group="' + groupName + '"]').show();
 	}
 	
 	function sortSelectOptions($select) {
