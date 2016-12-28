@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -40,7 +41,6 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregation
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.StringAggregationKey;
-import com.jecstar.etm.gui.rest.services.search.SearchService;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -95,48 +95,69 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@Path("/graphs")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getParsers() {
-		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 				.setFetchSource("graphs", null)
 				.get();
 		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
-			return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + "}";
+			return "{\"max_graphs\": " + etmConfiguration.getMaxGraphCount() + "}";
 		}
 		// Hack the max search history into the result. Dunno how to do this better.
 		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
-		addIntegerElementToJsonBuffer("max_search_templates", etmConfiguration.getMaxSearchTemplateCount(), result, false);
+		addIntegerElementToJsonBuffer("max_graphs", etmConfiguration.getMaxGraphCount(), result, false);
 		result.append("}");
 		return result.toString();
+	}
+	
+	@PUT
+	@Path("/graph/{graphName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addGraph(@PathParam("graphName") String graphName, String json) {
+		// Execute a dry run on all data.
+		getGraphData(json, true);
+		// Data seems ok, now store the graph.
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+				.setFetchSource("graphs", null)
+				.get();
+		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+			// TODO afmaken.
+		}
+		Map<String, Object> valueMap = toMap(json);
+		return null;
 	}
 	
 	@POST
 	@Path("/graphdata")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getGraphData(String json) {
+		return getGraphData(json, false);
+	}
+	
+	private String getGraphData(String json, boolean dryRun) {
 		Map<String, Object> valueMap = toMap(json);
 		String type = getString("type", valueMap);
 		if ("number".equals(type)) {
-			return getNumberData(valueMap);
+			return getNumberData(valueMap, dryRun);
 		} else if ("bar".equals(type)) {
-			return getBarOrLineData(type, valueMap, true);
+			return getMultiBucketData(type, valueMap, true, dryRun);
 		} else if ("line".equals(type)) {
-			return getBarOrLineData(type, valueMap, true);
+			return getMultiBucketData(type, valueMap, true, dryRun);
 		} else if ("stacked_area".equals(type)) {
-			return getBarOrLineData(type, valueMap, true);
+			return getMultiBucketData(type, valueMap, true, dryRun);
 		} else {
 			throw new RuntimeException("Unknown type: '" + type + "'.");
-		}
+		}		
 	}
 	
-	private String getBarOrLineData(String type, Map<String, Object> valueMap, boolean addMissingKeys) {
+	private String getMultiBucketData(String type, Map<String, Object> valueMap, boolean addMissingKeys, boolean dryRun) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
-		BarOrLineLayout barOrLineLayout = new BarOrLineLayout();
-		barOrLineLayout.setAddMissingKeys(addMissingKeys);
+		MultiBucketResult multiBucketResult = new MultiBucketResult();
+		multiBucketResult.setAddMissingKeys(addMissingKeys);
 		String index = getString("data_source", valueMap);
 		String query = getString("query", valueMap, "*");
 		SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
-		Map<String, Object> barOrLineData = getObject(type, valueMap);
-		Map<String, Object> xAxisData = getObject("x_axis", barOrLineData);
-		Map<String, Object> yAxisData = getObject("y_axis", barOrLineData);
+		Map<String, Object> graphData = getObject(type, valueMap);
+		Map<String, Object> xAxisData = getObject("x_axis", graphData);
+		Map<String, Object> yAxisData = getObject("y_axis", graphData);
 		
 		Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData);
 		BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData);
@@ -157,6 +178,9 @@ public class DashboardService extends AbstractIndexMetadataService {
 		for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
 			rootForMetricAggregators.subAggregation(new MetricAggregatorWrapper(etmPrincipal, metricsAggregatorData).getAggregationBuilder());
 		}
+		if (dryRun) {
+			return null;
+		}
 		SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
 		Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
 
@@ -167,32 +191,30 @@ public class DashboardService extends AbstractIndexMetadataService {
 		addStringElementToJsonBuffer("type", type, result, false);
 		result.append(",\"data\": ");
 		
-		
-		if (aggregation instanceof MultiBucketsAggregation) {
-			MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
-			for(Bucket bucket : multiBucketsAggregation.getBuckets()) {
-				AggregationKey key = getFormattedBucketKey(bucket, bucketAggregatorWrapper.getBucketFormat());
-				for(Aggregation subAggregation : bucket.getAggregations()) {
-					if (subAggregation instanceof MultiBucketsAggregation) {
-						// A sub aggregation on the x-axis.
-						MultiBucketsAggregation subBucketsAggregation = (MultiBucketsAggregation) subAggregation;
-						for(Bucket subBucket : subBucketsAggregation.getBuckets()) { 
-							AggregationKey subKey = getFormattedBucketKey(subBucket, bucketSubAggregatorWrapper.getBucketFormat());
-							for(Aggregation metricAggregation : subBucket.getAggregations()) {
-								AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(metricAggregation);
-								barOrLineLayout.addValueToSerie(subKey.getKeyAsString() + ": " + aggregationValue.getLabel(), key, aggregationValue);								
-							}
+		if (!(aggregation instanceof MultiBucketsAggregation)) {
+			throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid multi bucket aggregation.");
+		}
+		MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+		for(Bucket bucket : multiBucketsAggregation.getBuckets()) {
+			AggregationKey key = getFormattedBucketKey(bucket, bucketAggregatorWrapper.getBucketFormat());
+			for(Aggregation subAggregation : bucket.getAggregations()) {
+				if (subAggregation instanceof MultiBucketsAggregation) {
+					// A sub aggregation on the x-axis.
+					MultiBucketsAggregation subBucketsAggregation = (MultiBucketsAggregation) subAggregation;
+					for(Bucket subBucket : subBucketsAggregation.getBuckets()) { 
+						AggregationKey subKey = getFormattedBucketKey(subBucket, bucketSubAggregatorWrapper.getBucketFormat());
+						for(Aggregation metricAggregation : subBucket.getAggregations()) {
+							AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(metricAggregation);
+							multiBucketResult.addValueToSerie(subKey.getKeyAsString() + ": " + aggregationValue.getLabel(), key, aggregationValue);								
 						}
-					} else {
-						AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
-						barOrLineLayout.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
 					}
+				} else {
+					AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
+					multiBucketResult.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
 				}
 			}
-		} else {
-			// TODO gooi exceptie
 		}
-		barOrLineLayout.appendAsArrayToJsonBuffer(this, result, true);
+		multiBucketResult.appendAsArrayToJsonBuffer(this, result, true);
 		result.append("}");
 		return result.toString();
 	}
@@ -209,7 +231,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		return new StringAggregationKey(bucket.getKeyAsString());
 	}
 
-	private String getNumberData(Map<String, Object> valueMap) {
+	private String getNumberData(Map<String, Object> valueMap, boolean dryRun) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		String index = getString("data_source", valueMap);
 		String query = getString("query", valueMap, "*");
@@ -217,7 +239,9 @@ public class DashboardService extends AbstractIndexMetadataService {
 
 		Map<String, Object> numberData = getObject("number", valueMap);
 		MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, numberData);
-
+		if (dryRun) {
+			return null;
+		}
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		addStringElementToJsonBuffer("type", "number", result, true);

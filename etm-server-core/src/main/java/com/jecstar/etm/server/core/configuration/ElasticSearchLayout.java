@@ -16,6 +16,7 @@ public class ElasticSearchLayout {
 	public static final String ETM_EVENT_INDEX_TYPE_SQL = "sql";
 	
 	public static final String CONFIGURATION_INDEX_NAME = "etm_configuration";
+	public static final String CONFIGURATION_INDEX_TYPE_GRAPH = "graph";
 	public static final String CONFIGURATION_INDEX_TYPE_LICENSE = "license";
 	public static final String CONFIGURATION_INDEX_TYPE_LICENSE_ID = "default_configuration";
 	public static final String CONFIGURATION_INDEX_TYPE_PARSER = "parser";

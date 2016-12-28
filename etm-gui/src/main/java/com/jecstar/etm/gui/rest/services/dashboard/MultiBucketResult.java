@@ -14,7 +14,7 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationValue;
 
-public class BarOrLineLayout {
+public class MultiBucketResult {
 
 	public enum SortOrder {ASC, DESC}
 	
@@ -32,12 +32,12 @@ public class BarOrLineLayout {
 		this.keys.add(key);
 	}
 	
-	public BarOrLineLayout setSortOrder(SortOrder sortOrder) {
+	public MultiBucketResult setSortOrder(SortOrder sortOrder) {
 		this.sortOrder = sortOrder;
 		return this;
 	}
 	
-	public BarOrLineLayout setAddMissingKeys(boolean addMissingKeys) {
+	public MultiBucketResult setAddMissingKeys(boolean addMissingKeys) {
 		this.addMissingKeys = addMissingKeys;
 		return this;
 	}

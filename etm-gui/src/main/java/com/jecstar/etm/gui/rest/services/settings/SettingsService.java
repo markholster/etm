@@ -504,10 +504,12 @@ public class SettingsService extends AbstractJsonService {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
 			}
 		}
-		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+		BulkRequestBuilder bulkDelete = client.prepareBulk()
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.get();
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId));
+		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, userId));
+		bulkDelete.get();
 		return "{\"status\":\"success\"}";
 	}
 
