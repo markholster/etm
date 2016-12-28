@@ -1,7 +1,10 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
 import java.text.Format;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -118,11 +121,35 @@ public class DashboardService extends AbstractIndexMetadataService {
 		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 				.setFetchSource("graphs", null)
 				.get();
-		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
-			// TODO afmaken.
-		}
+		List<Map<String, Object>> currentGraphs = new ArrayList<>();
 		Map<String, Object> valueMap = toMap(json);
-		return null;
+		valueMap.put("name", graphName);
+		if (!getResponse.isSourceEmpty()) {
+			currentGraphs = getArray("graphs", getResponse.getSourceAsMap());
+		}
+		ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();
+		boolean updated = false;
+		while (iterator.hasNext()) {
+			Map<String, Object> graph = iterator.next();
+			if (graphName.equals(getString("name", graph))) {
+				iterator.set(valueMap);
+				updated = true;
+				break;
+			}
+		}
+		if (!updated) {
+			currentGraphs.add(valueMap);
+		}
+		Map<String, Object> source = new HashMap<>();
+		source.put("graphs", currentGraphs);
+		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.setDoc(source)
+			.setDocAsUpsert(true)
+			.get();
+		return "{\"status\":\"success\"}";
 	}
 	
 	@POST

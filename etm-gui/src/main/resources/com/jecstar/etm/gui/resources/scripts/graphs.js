@@ -68,10 +68,6 @@ function buildGraphsPage() {
 		enableOrDisableButtons();
 	});
 	
-	$('#sel-data-source').change(function(event) {
-		$('#input-number-field').val('');
-	});
-	
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -258,7 +254,7 @@ function buildGraphsPage() {
 		enableOrDisableButtons();
 	});
 
-	function addMetricsAggregatorsBlock(parent, graphType, ix) {
+	function addMetricsAggregatorsBlock(parent, graphType, ix, aggregatorData) {
 		if (ix > 0)  {
 			$(parent).append(
 				$('<hr>').attr('style', 'border-top: dashed 1px;')
@@ -348,29 +344,43 @@ function buildGraphsPage() {
 				$('<br>')
 			);
 		}
+		if (aggregatorData) {
+			$('#sel-' + graphType + '-metrics-aggregator-' + ix).val(aggregatorData.aggregator).trigger('change');
+			if (aggregatorData.label) {
+				$('#input-' + graphType + '-metrics-label-' + ix).val(aggregatorData.label);
+			}
+			if ('count' != aggregatorData.aggregator) {
+				$('#input-' + graphType + '-metrics-field-' + ix).val(aggregatorData.field);
+			} 
+			if ('percentile' == aggregatorData.aggregator) {
+				$('#input-' + graphType + '-metrics-percentile-' + ix).val(aggregatorData.percentile_data);
+			} else if ('percentile_rank' == aggregatorData.aggregator) {
+				$('#input-' + graphType + '-metrics-percentile-rank-' + ix).val(aggregatorData.percentile_data);
+			}
+		}
 		enableOrDisableButtons();
 	}
 	
 	function getMetricsAggregatorsBlock(graphType, ix) {
-		var metricData = {
+		var aggregatorData = {
 			id: 'metric_' + ix,
 			aggregator: $('#sel-' + graphType + '-metrics-aggregator-' + ix).val(),
 			label: $('#input-' + graphType + '-metrics-label-' + ix).val() ? $('#input-' + graphType + '-metrics-label-' + ix).val() : null
 		};
-		if ('count' != metricData.aggregator) {
-			metricData.field = $('#input-' + graphType + '-metrics-field-' + ix).val(),
-			metricData.field_type = findFieldType($('#sel-data-source').val(), metricData.field);
+		if ('count' != aggregatorData.aggregator) {
+			aggregatorData.field = $('#input-' + graphType + '-metrics-field-' + ix).val(),
+			aggregatorData.field_type = findFieldType($('#sel-data-source').val(), aggregatorData.field);
 		}
-		if ('percentile' == metricData.aggregator) {
-			metricData.percentile_data = Number($('#input-' + graphType + '-metrics-percentile-' + ix).val());
-		} else if ('percentile_rank' == metricData.aggregator) {
-			metricData.percentile_data = Number($('#input-' + graphType + '-metrics-percentile-rank-' + ix).val());
+		if ('percentile' == aggregatorData.aggregator) {
+			aggregatorData.percentile_data = Number($('#input-' + graphType + '-metrics-percentile-' + ix).val());
+		} else if ('percentile_rank' == aggregatorData.aggregator) {
+			aggregatorData.percentile_data = Number($('#input-' + graphType + '-metrics-percentile-rank-' + ix).val());
 		}
-		return metricData;
+		return aggregatorData;
 	}
 
 	
-	function addBucketAggregatorsBlock(parent, graphType, ix) {
+	function addBucketAggregatorsBlock(parent, graphType, ix, aggregatorData) {
 		if (ix > 0)  {
 			$(parent).append(
 				$('<hr>').attr('style', 'border-top: dashed 1px;')
@@ -435,13 +445,12 @@ function buildGraphsPage() {
 						$('<option>').attr('value', 'seconds').text('Seconds'),
 						$('<option>').attr('value', 'minutes').text('Minutes'),
 						$('<option>').attr('value', 'hours').text('Hours'),
-						$('<option>').attr('value', 'days').text('Days'),
+						$('<option>').attr('value', 'days').attr('selected', 'selected').text('Days'),
 						$('<option>').attr('value', 'weeks').text('Weeks'),
 						$('<option>').attr('value', 'months').text('Months'),
 						$('<option>').attr('value', 'quarters').text('Quarters'),
 						$('<option>').attr('value', 'years').text('Years')
 					)
-					.val('days')
 				)
 			),
 			// Histogram fields
@@ -505,29 +514,46 @@ function buildGraphsPage() {
 				$('<br>')
 			);
 		}
+		if (aggregatorData) {
+			$('#sel-' + graphType + '-bucket-aggregator-' + ix).val(aggregatorData.aggregator).trigger('change');
+			if ('filter' != aggregatorData.aggregator) {
+				$('#input-' + graphType + '-bucket-field-' + ix).val(aggregatorData.field);
+			}
+			if ('date_histogram' == aggregatorData.aggregator) {
+				$('#sel-' + graphType + '-bucket-date-interval-' + ix).val(aggregatorData.interval);
+			} else if ('histogram' == aggregatorData.aggregator) {
+				$('#input-' + graphType + '-bucket-histogram-interval-' + ix).val(aggregatorData.interval);
+			} else if ('significant_term' == aggregatorData.aggregator) {
+				$('#sel-' + graphType + '-bucket-significant-term-top-' + ix).val(aggregatorData.top);
+			} else if ('term' == aggregatorData.aggregator) {
+				$('#sel-' + graphType + '-bucket-term-order-by-' + ix).val(aggregatorData.order_by);
+				$('#sel-' + graphType + '-bucket-term-order-' + ix).val(aggregatorData.order);
+				$('#sel-' + graphType + '-bucket-term-top-' + ix).val(aggregatorData.top);
+			}
+		}
 		enableOrDisableButtons();
 	}
 	
 	function getBucketAggregatorsBlock(graphType, ix) {
-		var xAxisData = {
+		var aggregatorData = {
 			aggregator: $('#sel-' + graphType + '-bucket-aggregator-' + ix).val(),
 		};
-		if ('filter' != xAxisData.aggregator) {
-			xAxisData.field = $('#input-' + graphType + '-bucket-field-' + ix).val(),
-			xAxisData.field_type = findFieldType($('#sel-data-source').val(), xAxisData.field);
+		if ('filter' != aggregatorData.aggregator) {
+			aggregatorData.field = $('#input-' + graphType + '-bucket-field-' + ix).val(),
+			aggregatorData.field_type = findFieldType($('#sel-data-source').val(), aggregatorData.field);
 		}
-		if ('date_histogram' == xAxisData.aggregator) {
-			xAxisData.interval = $('#sel-' + graphType + '-bucket-date-interval-' + ix).val();
-		} else if ('histogram' == xAxisData.aggregator) {
-			xAxisData.interval = Number($('#input-' + graphType + '-bucket-histogram-interval-' + ix).val())
-		} else if ('significant_term' == xAxisData.aggregator) {
-			xAxisData.top = Number($('#sel-' + graphType + '-bucket-significant-term-top-' + ix).val());
-		} else if ('term' == xAxisData.aggregator) {
-			xAxisData.order_by = $('#sel-' + graphType + '-bucket-term-order-by-' + ix).val();
-			xAxisData.order = $('#sel-' + graphType + '-bucket-term-order-' + ix).val();
-			xAxisData.top = Number($('#sel-' + graphType + '-bucket-term-top-' + ix).val());
+		if ('date_histogram' == aggregatorData.aggregator) {
+			aggregatorData.interval = $('#sel-' + graphType + '-bucket-date-interval-' + ix).val();
+		} else if ('histogram' == aggregatorData.aggregator) {
+			aggregatorData.interval = Number($('#input-' + graphType + '-bucket-histogram-interval-' + ix).val());
+		} else if ('significant_term' == aggregatorData.aggregator) {
+			aggregatorData.top = Number($('#sel-' + graphType + '-bucket-significant-term-top-' + ix).val());
+		} else if ('term' == aggregatorData.aggregator) {
+			aggregatorData.order_by = $('#sel-' + graphType + '-bucket-term-order-by-' + ix).val();
+			aggregatorData.order = $('#sel-' + graphType + '-bucket-term-order-' + ix).val();
+			aggregatorData.top = Number($('#sel-' + graphType + '-bucket-term-top-' + ix).val());
 		}
-		return xAxisData;		
+		return aggregatorData;		
 	}
 	
 	function enableOrDisableButtons() {
@@ -591,28 +617,28 @@ function buildGraphsPage() {
 	}
 	
 	function saveGraph() {
-//		var endpointData = createEndpointData();
-//		$.ajax({
-//            type: 'PUT',
-//            contentType: 'application/json',
-//            url: '../rest/settings/endpoint/' + encodeURIComponent(endpointData.name),
-//            data: JSON.stringify(endpointData),
-//            success: function(data) {
-//                if (!data) {
-//                    return;
-//                }
-//        		if (!isEndpointExistent(getEndpointNameById(endpointData.name))) {
-//        			$endpointSelect = $('#sel-endpoint');
-//        			$endpointSelect.append($('<option>').attr('value', endpointData.name).text(endpointData.name));
-//        			sortSelectOptions($endpointSelect);
-//        		}
-//        		endpointMap[endpointData.name] = endpointData;
-//        		$('#endpoints_infoBox').text('Endpoint \'' + getEndpointNameById(endpointData.name) + '\' saved.').show('fast').delay(5000).hide('fast');
-//        		enableOrDisableButtons();
-//            }
-//        }).always(function () {
-//        	$('#modal-graph-overwrite').modal('hide');
-//        });    		
+		var graphData = createGraphData();
+		$.ajax({
+            type: 'PUT',
+            contentType: 'application/json',
+            url: '../rest/dashboard/graph/' + encodeURIComponent(graphData.name),
+            data: JSON.stringify(graphData),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+        		if (!isGraphExistent(graphData.name)) {
+        			$graphSelect = $('#sel-graph');
+        			$graphSelect.append($('<option>').attr('value', graphData.name).text(graphData.name));
+        			sortSelectOptions($graphSelect);
+        		}
+        		graphMap[graphData.name] = graphData;
+        		$('#graphs_infoBox').text('Graph \'' + graphData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+        		enableOrDisableButtons();
+            }
+        }).always(function () {
+        	$('#modal-graph-overwrite').modal('hide');
+        });    		
 	}
 	
 	function removeGraph(graphName) {
@@ -752,10 +778,44 @@ function buildGraphsPage() {
 	
 	function resetValues() {
 		document.getElementById('graph_form').reset();
+		$('#sel-graph-type').trigger("change");
 		enableOrDisableButtons();
 	}
 	
 	function setValuesFromData(graphData) {
+		$('#input-graph-name').val(graphData.name);
+		$('#sel-data-source').val(graphData.data_source);
+		$('#sel-graph-type').val(graphData.type).trigger("change");
+		$('#input-graph-query').val(graphData.query ? graphData.query : '*');
+		if ('bar' == graphData.type) {
+			setMultiBucketData(graphData.type, graphData.bar);
+		} else if ('line' == graphData.type) {
+			setMultiBucketData(graphData.type, graphData.line);
+		} else if ('number' == graphData.type) {
+			setNumberAggregatorData(graphData.number);
+		} else if ('pie' == graphData.type) {
+			
+		} else if ('stacked_area' == graphData.type) {
+			setMultiBucketData(graphData.type, graphData.stacked_area);
+		}
+
+		function setMultiBucketData(type, data) {
+			$('#' + type + '-y-axis, #' + type + '-x-axis').empty();
+			$.each(data.y_axis.aggregators, function(index, aggregator) {
+				addMetricsAggregatorsBlock($('#' + type + '-y-axis'), type, index, aggregator);
+			})
+	        addBucketAggregatorsBlock($('#' + type + '-x-axis'), type, 0, data.x_axis.aggregator);
+			if (data.x_axis.sub_aggregator) {
+				$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").hide();
+				addBucketAggregatorsBlock($('#' + type + '-x-axis'), type, 1, data.x_axis.sub_aggregator);
+			}
+			updateBucketTermAggregatorsOrderBySelector(type);
+		}
+		
+		function setNumberAggregatorData(data) {
+			$('#number-fields').empty();
+			addMetricsAggregatorsBlock($('#number-fields'),'number', 0, data);
+		}
 	}
 	
 	function findFieldType(indexName, fieldName) {
@@ -780,19 +840,19 @@ function buildGraphsPage() {
 			query: $('#input-graph-query').val() ? $('#input-graph-query').val() : null
 		};
 		if ('bar' == graphData.type) {
-			graphData.bar = createBarOrLineData(graphData.type);
+			graphData.bar = createMultiBucketData(graphData.type);
 		} else if ('line' == graphData.type) {
-			graphData.line = createBarOrLineData(graphData.type);
+			graphData.line = createMultiBucketData(graphData.type);
 		} else if ('number' == graphData.type) {
 			graphData.number = getMetricsAggregatorsBlock(graphData.type, 0);
 		} else if ('pie' == graphData.type) {
 			
 		} else if ('stacked_area' == graphData.type) {
-			graphData.stacked_area = createBarOrLineData(graphData.type);
+			graphData.stacked_area = createMultiBucketData(graphData.type);
 		}
 		return graphData;
 		
-		function createBarOrLineData(type) {
+		function createMultiBucketData(type) {
 			var data = {
 				y_axis: {
 					aggregators: []
