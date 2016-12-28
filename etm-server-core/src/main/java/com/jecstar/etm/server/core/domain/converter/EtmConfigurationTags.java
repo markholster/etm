@@ -24,6 +24,7 @@ public interface EtmConfigurationTags {
 	String getMaxSearchResultDownloadRowsTag();
 	String getMaxSearchHistoryCountTag();
 	String getMaxSearchTemplateCountTag();
-
+	String getMaxGraphCountTag();
+	String getMaxDashboardCountTag();
 
 }

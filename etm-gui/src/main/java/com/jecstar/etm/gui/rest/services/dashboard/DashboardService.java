@@ -40,6 +40,7 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregation
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.StringAggregationKey;
+import com.jecstar.etm.gui.rest.services.search.SearchService;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -94,14 +95,17 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@Path("/graphs")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getParsers() {
-		EtmPrincipal etmPrincipal = getEtmPrincipal();
-		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, etmPrincipal.getId())
-			.setFetchSource(true)
-			.get();
-		if (!getResponse.isExists()) {
-			return null;
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+				.setFetchSource("graphs", null)
+				.get();
+		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+			return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + "}";
 		}
-		return getResponse.getSourceAsString();
+		// Hack the max search history into the result. Dunno how to do this better.
+		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
+		addIntegerElementToJsonBuffer("max_search_templates", etmConfiguration.getMaxSearchTemplateCount(), result, false);
+		result.append("}");
+		return result.toString();
 	}
 	
 	@POST
@@ -113,22 +117,20 @@ public class DashboardService extends AbstractIndexMetadataService {
 		if ("number".equals(type)) {
 			return getNumberData(valueMap);
 		} else if ("bar".equals(type)) {
-			return getBarOrLineData(type, valueMap);
+			return getBarOrLineData(type, valueMap, true);
 		} else if ("line".equals(type)) {
-			return getBarOrLineData(type, valueMap);
+			return getBarOrLineData(type, valueMap, true);
 		} else if ("stacked_area".equals(type)) {
-			return getBarOrLineData(type, valueMap);
+			return getBarOrLineData(type, valueMap, true);
 		} else {
 			throw new RuntimeException("Unknown type: '" + type + "'.");
 		}
 	}
 	
-	private String getBarOrLineData(String type, Map<String, Object> valueMap) {
+	private String getBarOrLineData(String type, Map<String, Object> valueMap, boolean addMissingKeys) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		BarOrLineLayout barOrLineLayout = new BarOrLineLayout();
-		if ("bar".equals(type) || "stacked_area".equals(type)) {
-			barOrLineLayout.setAddMissingKeys(true);
-		}
+		barOrLineLayout.setAddMissingKeys(addMissingKeys);
 		String index = getString("data_source", valueMap);
 		String query = getString("query", valueMap, "*");
 		SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);

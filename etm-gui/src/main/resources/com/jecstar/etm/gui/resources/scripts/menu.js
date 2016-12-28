@@ -30,7 +30,7 @@ function buildMenu(currentContext, path) {
 			$li.addClass('dropdown').append(
 			$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
 					$('<span>').addClass('fa fa-dashboard fa-lg hidden-sm-down').html('&nbsp;'), 
-					'Vizualizations'
+					'Visualizations'
 					),
 					$drowdown
 			);			

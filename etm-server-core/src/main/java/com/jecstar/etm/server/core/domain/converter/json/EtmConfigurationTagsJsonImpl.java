@@ -88,5 +88,15 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	public String getMaxSearchTemplateCountTag() {
 		return "max_search_template_count";
 	}
+	
+	@Override
+	public String getMaxGraphCountTag() {
+		return "max_graph_count";
+	}
+	
+	@Override
+	public String getMaxDashboardCountTag() {
+		return "max_dashboard_count";
+	}
 
 }

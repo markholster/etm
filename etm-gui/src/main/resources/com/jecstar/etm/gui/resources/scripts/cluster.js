@@ -47,6 +47,8 @@ function buildClusterPage() {
 		$("#input-search-export-max-rows").val(data.max_search_result_download_rows);
 		$("#input-search-max-templates").val(data.max_search_template_count);
 		$("#input-search-max-history-size").val(data.max_search_history_count);
+		$("#input-visualization-max-graph-count").val(data.max_graph_count);
+		$("#input-visualization-max-dashboard-count").val(data.max_dashboard_count);
 		$("#input-enhancing-handler-count").val(data.enhancing_handler_count);
 		$("#input-persisting-handler-count").val(data.persisting_handler_count);
 		$("#input-event-buffer-size").val(data.event_buffer_size);
@@ -67,6 +69,8 @@ function buildClusterPage() {
 		  max_search_result_download_rows : Number($("#input-search-export-max-rows").val()),
 		  max_search_template_count : Number($("#input-search-max-templates").val()),
 		  max_search_history_count : Number($("#input-search-max-history-size").val()),
+		  max_graph_count : Number($("#input-visualization-max-graph-count").val()),
+		  max_dashboard_count : Number($("#input-visualization-max-dashboard-count").val()),
 		  enhancing_handler_count : Number($("#input-enhancing-handler-count").val()),
 		  persisting_handler_count : Number($("#input-persisting-handler-count").val()),
 		  event_buffer_size : Number($("#input-event-buffer-size").val()),

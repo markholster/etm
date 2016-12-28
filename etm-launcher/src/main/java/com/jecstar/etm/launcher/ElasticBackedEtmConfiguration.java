@@ -126,6 +126,18 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	@Override
+	public int getMaxGraphCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxGraphCount();
+	}
+	
+	@Override
+	public int getMaxDashboardCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxDashboardCount();
+	}
+	
+	@Override
 	public boolean isLicenseExpired() {
 		reloadConfigurationWhenNecessary();
 		return super.isLicenseExpired();

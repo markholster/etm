@@ -19,7 +19,6 @@ public class ElasticSearchLayout {
 	public static final String CONFIGURATION_INDEX_TYPE_LICENSE = "license";
 	public static final String CONFIGURATION_INDEX_TYPE_LICENSE_ID = "default_configuration";
 	public static final String CONFIGURATION_INDEX_TYPE_PARSER = "parser";
-	public static final String CONFIGURATION_INDEX_TYPE_GRAPH = "graph";
 	public static final String CONFIGURATION_INDEX_TYPE_ENDPOINT = "endpoint";
 	public static final String CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT = "default_configuration";
 	public static final String CONFIGURATION_INDEX_TYPE_NODE = "node";
