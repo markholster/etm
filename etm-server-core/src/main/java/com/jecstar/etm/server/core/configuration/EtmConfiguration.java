@@ -62,7 +62,7 @@ public class EtmConfiguration {
 	private int maxSearchHistoryCount = 10;
 	
 	// Visualization options
-	private int maxGraphCount = 25;
+	private int maxGraphCount = 100;
 	private int maxDashboardCount = 10;
 	
 	// Other stuff.		
