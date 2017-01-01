@@ -183,7 +183,7 @@ public class UserService extends AbstractJsonService {
 			}
 			result.append("{");
 			added = addStringElementToJsonBuffer("name", "dashboard", result, true) || added;
-			GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+			GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 					.setFetchSource(new String[] {"dashboards"}, null)
 					.get();
 			if (!getResponse.isSourceEmpty()) {
@@ -193,13 +193,13 @@ public class UserService extends AbstractJsonService {
 					boolean first = true;
 					for (Map<String, Object> dashboardValues : dashboards) {
 						String name = getString("name", dashboardValues);
-						if (name == null) {
+						if (name == null || name.trim().length() < 1) {
 							continue;
 						}
 						if (!first) {
 							result.append(",");
 						}
-						result.append("\"" + name + "\"");
+						result.append(escapeToJson(name, true));
 						first = false;
 					}
 					result.append("]");

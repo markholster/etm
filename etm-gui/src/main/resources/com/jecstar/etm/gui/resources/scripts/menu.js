@@ -25,7 +25,17 @@ function buildMenu(currentContext, path) {
 			var $drowdown = $('<div>').addClass('dropdown-menu');
 			$drowdown.append(
 					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/graphs.html').text('Graphs')
-//					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboards.html').text('Dashboards')
+			);
+			if (menu.dashboards) {
+				$drowdown.append($('<div>').addClass('dropdown-divider'));
+				menu.dashboards.sort();
+				$.each(menu.dashboards, function(index, dashboardName) {
+					$drowdown.append($('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboard.html?name=' + dashboardName).text(dashboardName))
+				});
+			}
+			$drowdown.append(
+				$('<div>').addClass('dropdown-divider'),
+				$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboard.html?new=true').text('Add dashboard')
 			);
 			$li.addClass('dropdown').append(
 			$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
