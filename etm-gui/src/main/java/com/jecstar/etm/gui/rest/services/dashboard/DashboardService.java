@@ -97,14 +97,14 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/graphs")
 	@Produces(MediaType.APPLICATION_JSON)	
-	public String getParsers() {
+	public String getGraphs() {
 		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 				.setFetchSource("graphs", null)
 				.get();
 		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
 			return "{\"max_graphs\": " + etmConfiguration.getMaxGraphCount() + "}";
 		}
-		// Hack the max search history into the result. Dunno how to do this better.
+		// Hack the max search graphs into the result. Dunno how to do this better.
 		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
 		addIntegerElementToJsonBuffer("max_graphs", etmConfiguration.getMaxGraphCount(), result, false);
 		result.append("}");
