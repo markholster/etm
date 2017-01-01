@@ -2,12 +2,12 @@ function loadDashboard(name) {
 	var currentDashboard;
 	var currentGraph;
 	
-	$('#lnk-edit-dashboard').click(function (event) {
+	$('#btn-save-dashboard-settings').click(function (event) {
+		if (!document.getElementById('dashboard-settings_form').checkValidity()) {
+			return;
+		}
 		event.preventDefault();
-		showSettings(currentDashboard);
-	});
-	
-	$('#btn-apply-dashboard-settings').click(function (event) {
+		
 		if (!currentDashboard) {
 			currentDashboard = {
 			};
@@ -58,10 +58,157 @@ function loadDashboard(name) {
 			currentDashboard.rows.push(jsonRow);
 		});
 		
-		$('#modal-dashboard-settings').modal('hide');
-		// TODO update dashboard via rest.
+		$('#dashboard-settings').hide();
+		$('#dashboard-container').show();
 		buildPage(currentDashboard);
 	});
+	
+	
+	$('#dashboard-container').on("mouseover mouseout", 'div[data-col-id]', function(event) {
+		$(this).find("a[data-link-action='edit-graph']").toggleClass('invisible');
+		$(this).find(".card").toggleClass('selectedColumn');
+		if ('false' == $(this).attr('data-col-bordered')) {
+			$(this).find(".card").toggleClass('noBorder');
+		}
+	});
+	
+	$('#dashboard-container').on("mouseover mouseout", "div[id='dasboard-heading']", function(event) {
+		$(this).find("a[id='lnk-edit-dashboard']").toggleClass('invisible');
+	});
+	
+	$('#dashboard-container').on("click", "a[data-link-action='edit-graph']", function(event) {
+    	event.preventDefault();
+    	editGraph($(this).parent().parent().parent().attr('data-col-id'));
+	});
+
+	$('#dashboard-settings').on('click', 'a[data-row-action]', function(event) {
+		event.preventDefault();
+		if ('row-up' == $(this).attr('data-row-action')) {
+			moveRowUp($(this).parent().parent().parent().parent());
+		} else if ('row-down' == $(this).attr('data-row-action')) {
+			moveRowDown($(this).parent().parent().parent().parent());
+		} else if ('row-remove' == $(this).attr('data-row-action')) {
+			removeRow($(this).parent().parent().parent().parent());
+		} else if ('row-add' == $(this).attr('data-row-action')) {
+			$('#dashboard-settings-columns').append(createColumnSettingsRow());
+			updateRowActions('#dashboard-settings-columns .actionRow');
+		}
+
+	    function moveRowUp(row) {
+	        $(row).after($(row).prev());
+	        updateRowActions('#dashboard-settings-columns .actionRow');
+	    }
+
+	    function moveRowDown(row) {
+	        $(row).before($(row).next());
+	        updateRowActions('#dashboard-settings-columns .actionRow');
+	    }
+	    
+		function removeRow(row) {
+	        $(row).remove();
+	        updateRowActions('#dashboard-settings-columns .actionRow');
+	    }
+	});
+
+	function updateRowActions(selector) {
+        $(selector).each(function (index, row) {
+            if ($('#dashboard-settings-columns').children().length > 2) {
+                if (index == 0) {
+                    $(row).find('.fa-arrow-up').hide();
+                } else {
+                    $(row).find('.fa-arrow-up').show();
+                }
+                if (index >= $('#dashboard-settings-columns').children().length -2) {
+                    $(row).find('.fa-arrow-down').hide();
+                } else {
+                    $(row).find('.fa-arrow-down').show();
+                }
+            } else {
+                $(row).find('.fa-arrow-up').hide();
+                $(row).find('.fa-arrow-down').hide();
+            }
+        });			
+	}	
+	
+	function createColumnSettingsRow(rowData) {
+        var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
+        $(row).append(
+            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(
+            		$('<input>').attr('type', 'number').attr('min', '1').attr('max', '12').attr('name', 'row-cols').addClass('form-control form-control-sm').val(1)
+            ),
+            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(
+            		$('<input>').attr('type', 'number').attr('min', '1').attr('max', '50').attr('name', 'row-height').addClass('form-control form-control-sm').val(16)
+            )
+        );
+        var actionDiv = $('<div>').addClass('col-sm-2').append(
+            $('<div>').addClass('row actionRow').append(
+                $('<div>').addClass('col-sm-1').append($('<a href="#">').attr('data-row-action', 'row-up').addClass('fa fa-arrow-up')),
+                $('<div>').addClass('col-sm-1').append($('<a href="#">').attr('data-row-action', 'row-down').addClass('fa fa-arrow-down')),
+                $('<div>').addClass('col-sm-1').append($('<a href="#">').attr('data-row-action', 'row-remove').addClass('fa fa-times text-danger'))
+            )
+        );
+        $(row).append($(actionDiv));
+        if (rowData) {
+        	$(row).attr('data-row-id', rowData.id);
+        	$(row).children().each(function (index, child) {
+                if (0 === index) {
+                    $(child).find('input').val(rowData.cols.length);
+                } else if (1 === index) {
+                    $(child).find('input').val(rowData.height);
+                } 
+            }); 
+        }
+        return row;        
+    }
+	
+	function showSettings(dashboardData) {
+		$('#dashboard-settings-columns').empty();
+		$('#dashboard-settings-columns').append(
+		    $('<div>').addClass('row').append(
+		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Columns'), 
+		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Height'), 
+		    	$('<div>').addClass('col-sm-2 font-weight-bold')
+		        	.append($('<a href="#">').text('Add row')
+		        		.attr('data-row-action', 'row-add')	
+		            )        
+		        )
+		    );			
+		if (dashboardData) {
+			$('#input-dashboard-name').val(dashboardData.name);
+			if (dashboardData.rows) {
+				$.each(dashboardData.rows, function(ix, row) {
+					$('#dashboard-settings-columns').append(createColumnSettingsRow(row));
+				});
+				updateRowActions('#dashboard-settings-columns .actionRow');
+			}
+		} else {
+			$('#input-dashboard-name').val('My New Dashboard');
+			$('#dashboard-settings-columns').append(createColumnSettingsRow());
+		}
+		$('#dashboard-container').hide();
+		$('#dashboard-settings').show();
+	}
+	
+	function createCell(col) {
+		var cellContainer = $('<div>').attr('data-col-id', col.id).attr('data-col-bordered', col.bordered).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
+		var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
+		cellContainer.append(card);
+		if (!col.bordered) {
+			card.addClass('noBorder');
+		}
+		card.append(
+		  $('<h5>').addClass('card-title').text(col.title).append(
+		    $('<a>').attr('href', '#').attr('data-link-action', 'edit-graph').addClass('fa fa-pencil-square-o pull-right invisible')
+		  )
+		);
+		return cellContainer;
+	}
+	
+	
+	
+	
+// OLD STUFF
+	
 	
 	$('#btn-apply-graph-settings').click(function (event) {
 		currentGraph.title = $("#input-graph-title").val();
@@ -72,6 +219,11 @@ function loadDashboard(name) {
 		
 		// TODO update data via rest.
 		$('#modal-graph-settings').modal('hide');
+	});	
+	
+	$('#lnk-edit-dashboard').click(function (event) {
+		event.preventDefault();
+		showSettings(currentDashboard);
 	});
 	
 	if (name) {
@@ -128,108 +280,10 @@ function loadDashboard(name) {
 		showSettings();
 	}
 	
-	function showSettings(dashboardData) {
-		$('#dashboard-settings-columns').empty();
-		$('#dashboard-settings-columns').append(
-		    $('<div>').addClass('row').append(
-		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Columns'), 
-		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Height'), 
-		    	$('<div>').addClass('col-sm-2 font-weight-bold')
-		        	.append($('<a href="#">').text('Add row')
-		        		.attr('id', 'link-add-dashboard-row')	
-		        		.click(function (event) {
-		        			event.preventDefault(); 
-		                	$('#dashboard-settings-columns').append(createRow());
-		                    updateRowActions();
-		        		})
-		            )        
-		        )
-		    );			
-		if (dashboardData) {
-			$('#input-dashboard-name').val(dashboardData.name);
-			if (dashboardData.rows) {
-				$.each(dashboardData.rows, function(ix, row) {
-					$('#dashboard-settings-columns').append(createRow(row));
-				});
-				updateRowActions();
-			}
-		} else {
-			$('#input-dashboard-name').val('My New Dashboard');
-			$('#dashboard-settings-columns').append(createRow());
-		}
-		$('#modal-dashboard-settings').modal();
-		
-		function createRow(rowData) {
-	        var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
-	        $(row).append(
-	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(
-	            		$('<input>').attr('type', 'number').attr('min', '1').attr('max', '12').attr('name', 'row-cols').addClass('form-control form-control-sm').val(1)
-	            ),
-	            $('<div>').addClass('col-sm-5').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append(
-	            		$('<input>').attr('type', 'number').attr('min', '1').attr('max', '50').attr('name', 'row-height').addClass('form-control form-control-sm').val(16)
-	            )
-	        );
-	        var actionDiv = $('<div>').addClass('col-sm-2').append(
-	            $('<div>').addClass('row actionRow').append(
-	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
-	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
-	                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeRow(row)}))
-	            )
-	        );
-	        $(row).append($(actionDiv));
-	        if (rowData) {
-	        	$(row).attr('data-row-id', rowData.id);
-	        	$(row).children().each(function (index, child) {
-	                if (0 === index) {
-	                    $(child).find('input').val(rowData.cols.length);
-	                } else if (1 === index) {
-	                    $(child).find('input').val(rowData.height);
-	                } 
-	            }); 
-	        }
-	        return row;        
-	    }
-		
-		function updateRowActions() {
-	        $('#dashboard-settings-columns .actionRow').each(function (index, row) {
-	            if ($('#dashboard-settings-columns').children().length > 2) {
-	                if (index == 0) {
-	                    $(row).find('.fa-arrow-up').hide();
-	                } else {
-	                    $(row).find('.fa-arrow-up').show();
-	                }
-	                if (index >= $('#dashboard-settings-columns').children().length -2) {
-	                    $(row).find('.fa-arrow-down').hide();
-	                } else {
-	                    $(row).find('.fa-arrow-down').show();
-	                }
-	            } else {
-	                $(row).find('.fa-arrow-up').hide();
-	                $(row).find('.fa-arrow-down').hide();
-	            }
-	        });			
-		}
-		
-		function removeRow(row) {
-	        $(row).remove();
-	        updateRowActions();
-	    }
-	    
-	    function moveRowUp(row) {
-	        $(row).after($(row).prev());
-	        updateRowActions();
-	    }
-
-	    function moveRowDown(row) {
-	        $(row).before($(row).next());
-	        updateRowActions();
-	    }
-	}
-	
-	function buildPage() {
-		$('#dashboard-name').text(currentDashboard.name);
+	function buildPage(dashboardData) {
+		$('#dashboard-name').text(dashboardData.name);
 		var graphContainer = $('#graph-container').empty();
-		$.each(currentDashboard.rows, function(rowIx, row) {
+		$.each(dashboardData.rows, function(rowIx, row) {
 			var rowContainer = $('<div>').addClass('row').attr('data-row-id', row.id).attr('style', 'height: ' + row.height + 'rem; padding-bottom: 15px;');
 			if (rowIx != 0) {
 				var oldStyle = $(rowContainer).attr('style');
@@ -259,31 +313,6 @@ function loadDashboard(name) {
 		});
 	}
 	
-	function createCell(col) {
-		var cellContainer = $('<div>').attr('data-col-id', col.id).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
-		var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
-		cellContainer.append(card);
-		if (!col.bordered) {
-			card.addClass('noBorder');
-		}
-		card.append(
-		  $('<h5>').addClass('card-title').text(col.title).append(
-		    $('<a>').attr('href', '#').addClass('fa fa-pencil-square-o pull-right invisible').attr('name', 'edit-graph').click(function (event) {
-		    	event.preventDefault();
-		    	editGraph(col.id);
-		    }) 
-		  )
-		);
-		cellContainer.on("mouseover mouseout", function() {
-			cellContainer.find("a[name='edit-graph']").toggleClass('invisible');
-			card.toggleClass('selectedColumn');
-			if (!col.bordered) {
-				card.toggleClass('noBorder');
-			}
-		});	
-		return cellContainer;
-	}
-	
 	function editGraph(cellId) {
 		for (rowIx=0; rowIx < currentDashboard.rows.length; rowIx++) {
 			for (colIx=0; colIx < currentDashboard.rows[rowIx].cols.length; colIx++) {
@@ -296,70 +325,6 @@ function loadDashboard(name) {
 		$('#sel-graph-border').val(currentGraph.bordered ? 'true' : 'false');
 		$('#sel-graph-legend').val(currentGraph.showLegend ? 'true' : 'false');
 		$('#modal-graph-settings').modal();
-	}
-	
-	function renderLineChart(svgContainer, config, data) {
-        nv.addGraph(function() {
-      	  var chart = nv.models.lineChart()
-            .x(function(d) { return d[0] })
-            .y(function(d) { return d[1] })
-      	  	.useInteractiveGuideline(true)
-      	  	.duration(0)
-      	  	.showLegend(config.showLegend);
-
-          chart.xAxis
-            .axisLabel(config.x_axis.label)
-            .tickFormat(function(d) { return d3.time.format('%Y-%m-%d %H:%M')(new Date(d)) });
-          chart.yAxis
-          	.axisLabel(config.y_axis.label)
-
-      	  d3.select(svgContainer.get(0))   
-      	  	.append("svg")
-      	    .datum(createData(config, data))
-      	    .call(chart);
-
-      	  nv.utils.windowResize(function() { chart.update() });
-      	  return chart;
-      });	
-        
-      function createData(config, data) {
-    	  var result = [];
-    	  var xBuckets = data[config.x_axis.agg.name].buckets;
-    	  var xSubAggs = config.x_axis.agg.aggs;
-    	  
-    	  $.each(xBuckets, function(xBucketIx, xBucket) {
-    		  var x = xBucket.key;
-    		  var seriesName = config.y_axis.agg.name;
-    		  if ("undefined" !== typeof xSubAggs) {
-    			  var xSubAgg = xSubAggs[0];
-    			  var xSubBuckets = xBucket[xSubAgg.name].buckets;
-    			  $.each(xSubBuckets, function(xSubBucketIx, xSubBucket) {
-    				  seriesName = xSubBucket.key;
-    				  var y = "count" == config.y_axis.agg.name ? xSubBucket.doc_count : xSubBucket[config.y_axis.agg.name].value;
-    				  addToResult(result, seriesName, config.area, x, y);
-    			  });
-    		  } else {
-    			  var y = "count" == config.y_axis.agg.name ? xBucket.doc_count : xBucket[config.y_axis.agg.name].value;
-    			  addToResult(result, seriesName, config.area, x, y);
-    		  }
-    	  });
-    	  return result;
-      }
-      
-      function addToResult(result, serieName, area, x, y) {
-		  var serie = $.grep(result, function(n,i) {
-			  return n.key === serieName;
-		  });
-		  if ("undefined" !== typeof serie && serie.length > 0) {
-			  serie[0].values.push([x, y]);
-		  } else {
-			  result.push({
-				 key: serieName,
-				 values: [[x,y]],
-				 area: area
-			  });
-		  }
-      }
 	}
 	
 	// TODO deze functie moet gebruikt worden tijdens het opslaan van een grafiek. Het ID moet dan geset worden naar een unieke waarde

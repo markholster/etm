@@ -35,7 +35,7 @@ function buildMenu(currentContext, path) {
 			}
 			$drowdown.append(
 				$('<div>').addClass('dropdown-divider'),
-				$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboard.html?new=true').text('Add dashboard')
+				$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboard.html?new=true').text('New dashboard')
 			);
 			$li.addClass('dropdown').append(
 			$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(

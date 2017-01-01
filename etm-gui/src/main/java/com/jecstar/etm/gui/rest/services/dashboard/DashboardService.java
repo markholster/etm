@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -139,6 +140,37 @@ public class DashboardService extends AbstractIndexMetadataService {
 		}
 		if (!updated) {
 			currentGraphs.add(valueMap);
+		}
+		Map<String, Object> source = new HashMap<>();
+		source.put("graphs", currentGraphs);
+		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.setDoc(source)
+			.setDocAsUpsert(true)
+			.get();
+		return "{\"status\":\"success\"}";
+	}
+	
+	@DELETE
+	@Path("/graph/{graphName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String deleteGraph(@PathParam("graphName") String graphName) {
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+				.setFetchSource("graphs", null)
+				.get();
+		List<Map<String, Object>> currentGraphs = new ArrayList<>();
+		if (!getResponse.isSourceEmpty()) {
+			currentGraphs = getArray("graphs", getResponse.getSourceAsMap());
+		}
+		ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();
+		while (iterator.hasNext()) {
+			Map<String, Object> graph = iterator.next();
+			if (graphName.equals(getString("name", graph))) {
+				iterator.remove();
+				break;
+			}
 		}
 		Map<String, Object> source = new HashMap<>();
 		source.put("graphs", currentGraphs);

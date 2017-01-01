@@ -642,24 +642,24 @@ function buildGraphsPage() {
 	}
 	
 	function removeGraph(graphName) {
-//		$.ajax({
-//            type: 'DELETE',
-//            contentType: 'application/json',
-//            url: '../rest/settings/endpoint/' + encodeURIComponent(getEndpointIdByName(endpointName)),
-//            success: function(data) {
-//                if (!data) {
-//                    return;
-//                }
-//        		delete endpointMap[getEndpointIdByName(endpointName)];
-//        		$("#sel-endpoint > option").filter(function(i){
-//     		       return $(this).attr("value") == getEndpointIdByName(endpointName);
-//        		}).remove();
-//        		$('#endpoints_infoBox').text('Endpoint \'' + endpointName + '\' removed.').show('fast').delay(5000).hide('fast');
-//        		enableOrDisableButtons();
-//            }
-//        }).always(function () {
-//        	$('#modal-graph-remove').modal('hide');
-//        });    		
+		$.ajax({
+            type: 'DELETE',
+            contentType: 'application/json',
+            url: '../rest/dashboard/graph/' + encodeURIComponent(graphName),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+        		delete graphMap[graphName];
+        		$("#sel-graph > option").filter(function(i){
+     		       return $(this).attr("value") == graphName;
+        		}).remove();
+        		$('#graphs_infoBox').text('Graph \'' + graphName + '\' removed.').show('fast').delay(5000).hide('fast');
+        		enableOrDisableButtons();
+            }
+        }).always(function () {
+        	$('#modal-graph-remove').modal('hide');
+        });    		
 	}
 	
 	function preview() {
