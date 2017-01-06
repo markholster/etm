@@ -138,6 +138,7 @@ function loadDashboard(name) {
 		currentGraph.bordered = $('#sel-graph-border').val() == 'true' ? true : false;
 		currentGraph.graph = $('#sel-graph').val();
 		currentGraph.query = $('#input-graph-query').val();
+		currentGraph.refresh_rate = $('#input-refresh-rate').val() ? Number($('#input-refresh-rate').val()) : null;
 		
 		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
 		
@@ -275,6 +276,7 @@ function loadDashboard(name) {
 		$('#sel-graph-border').val(currentGraph.bordered ? 'true' : 'false');
 		$('#sel-graph').val(currentGraph.graph);
 		$('#input-graph-query').val(currentGraph.query);
+		$('#input-refresh-rate').val(currentGraph.refresh_rate);
 		$('#modal-graph-settings').modal();
 	}
 
