@@ -1,6 +1,63 @@
 function loadDashboard(name) {
+	var graphMap = {};
+	var keywords = [];
 	var currentDashboard;
 	var currentGraph;
+
+	$.when(
+		$.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/dashboard/keywords/etm_event_all',
+	        success: function(data) {
+	            if (!data || !data.keywords) {
+	                return;
+	            }
+	            keywords = $.merge(keywords, data.keywords);
+	        }
+	    }),
+	    $.ajax({
+	        type: 'GET',
+	        contentType: 'application/json',
+	        url: '../rest/dashboard/keywords/etm_metrics_all',
+	        success: function(data) {
+	            if (!data || !data.keywords) {
+	                return;
+	            }
+	            keywords = $.merge(keywords, data.keywords);
+	        }
+	    }),
+		$.ajax({
+		    type: 'GET',
+		    contentType: 'application/json',
+		    url: '../rest/dashboard/graphs',
+		    success: function(data) {
+		        if (!data) {
+		            return;
+		        }
+		        $graphSelect = $('#sel-graph');
+		        $.each(data.graphs, function(index, graph) {
+		        	$graphSelect.append($('<option>').attr('value', graph.name).text(graph.name));
+		        	graphMap[graph.name] = graph;
+		        });
+		        sortSelectOptions($graphSelect)
+		        $graphSelect.val('');
+		    }
+		})	    
+	).done(function () {
+        $('#input-graph-query').bind('keydown', function( event ) {
+            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                event.stopPropagation();
+            }
+        }).autocompleteFieldQuery(
+        	{
+        		queryKeywords: keywords,
+        		keywordIndexFilter: function(index) {
+        			return index != currentGraph.data_source;
+        		}
+        	}
+        );
+	});    
 	
 	$('#btn-save-dashboard-settings').click(function (event) {
 		if (!document.getElementById('dashboard-settings_form').checkValidity()) {
@@ -63,7 +120,6 @@ function loadDashboard(name) {
 		buildPage(currentDashboard);
 	});
 	
-	
 	$('#dashboard-container').on("mouseover mouseout", 'div[data-col-id]', function(event) {
 		$(this).find("a[data-link-action='edit-graph']").toggleClass('invisible');
 		$(this).find(".card").toggleClass('selectedColumn');
@@ -72,15 +128,32 @@ function loadDashboard(name) {
 		}
 	});
 	
-	$('#dashboard-container').on("mouseover mouseout", "div[id='dasboard-heading']", function(event) {
-		$(this).find("a[id='lnk-edit-dashboard']").toggleClass('invisible');
-	});
-	
 	$('#dashboard-container').on("click", "a[data-link-action='edit-graph']", function(event) {
     	event.preventDefault();
     	editGraph($(this).parent().parent().parent().attr('data-col-id'));
 	});
+	
+	$('#btn-apply-graph-settings').click(function (event) {
+		currentGraph.title = $("#input-graph-title").val();
+		currentGraph.bordered = $('#sel-graph-border').val() == 'true' ? true : false;
+		currentGraph.graph = $('#sel-graph').val();
+		currentGraph.query = $('#input-graph-query').val();
+		
+		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
+		
+		// TODO update data via rest.
+		$('#modal-graph-settings').modal('hide');
+	});	
 
+	$('#sel-graph').on("change", function(event) {
+		event.preventDefault();
+		var graphData = graphMap[$(this).val()];
+		if ('undefined' !== typeof graphData) {
+			currentGraph.data_source = graphData.data_source;
+			$('#input-graph-query').val(graphData.query);
+		}
+	});
+	
 	$('#dashboard-settings').on('click', 'a[data-row-action]', function(event) {
 		event.preventDefault();
 		if ('row-up' == $(this).attr('data-row-action')) {
@@ -109,7 +182,7 @@ function loadDashboard(name) {
 	        updateRowActions('#dashboard-settings-columns .actionRow');
 	    }
 	});
-
+	
 	function updateRowActions(selector) {
         $(selector).each(function (index, row) {
             if ($('#dashboard-settings-columns').children().length > 2) {
@@ -188,6 +261,23 @@ function loadDashboard(name) {
 		$('#dashboard-container').hide();
 		$('#dashboard-settings').show();
 	}
+
+	function editGraph(cellId) {
+		for (rowIx=0; rowIx < currentDashboard.rows.length; rowIx++) {
+			for (colIx=0; colIx < currentDashboard.rows[rowIx].cols.length; colIx++) {
+				if (currentDashboard.rows[rowIx].cols[colIx].id == cellId) {
+					currentGraph = currentDashboard.rows[rowIx].cols[colIx];
+				}
+			}
+		}
+		
+		$('#input-graph-title').val(currentGraph.title);
+		$('#sel-graph-border').val(currentGraph.bordered ? 'true' : 'false');
+		$('#sel-graph').val(currentGraph.graph);
+		$('#input-graph-query').val(currentGraph.query);
+		$('#modal-graph-settings').modal();
+	}
+
 	
 	function createCell(col) {
 		var cellContainer = $('<div>').attr('data-col-id', col.id).attr('data-col-bordered', col.bordered).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
@@ -204,24 +294,21 @@ function loadDashboard(name) {
 		return cellContainer;
 	}
 	
-	
-	
+	function sortSelectOptions($select) {
+		var options = $select.children('option');
+		options.detach().sort(function(a,b) {
+		    var at = $(a).text();
+		    var bt = $(b).text();         
+		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
+		});
+		options.appendTo($select);
+	}
 	
 // OLD STUFF
 	
 	
-	$('#btn-apply-graph-settings').click(function (event) {
-		currentGraph.title = $("#input-graph-title").val();
-		currentGraph.bordered = $('#sel-graph-border').val() == 'true' ? true : false;
-		currentGraph.showLegend = $('#sel-graph-legend').val() == 'true' ? true : false;
-
-		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
-		
-		// TODO update data via rest.
-		$('#modal-graph-settings').modal('hide');
-	});	
 	
-	$('#lnk-edit-dashboard').click(function (event) {
+	$('#dashboard-name').click(function (event) {
 		event.preventDefault();
 		showSettings(currentDashboard);
 	});
@@ -294,37 +381,23 @@ function loadDashboard(name) {
 				rowContainer.append(cell);
 				// Now load the data.
 				// TODO controleer of de col ook data heeft om op te halen...
-			    $.ajax({
-			        type: 'POST',
-			        contentType: 'application/json',
-			        url: '../rest/dashboard/chart',
-			        data: JSON.stringify(col),
-			        success: function(data) {
-			            if (!data) {
-			                return;
-			            }
-			            if ('line' == col.type) {
-			            	renderLineChart(cell, col, data);
-			            }
-			        }
-			    });							
+//			    $.ajax({
+//			        type: 'POST',
+//			        contentType: 'application/json',
+//			        url: '../rest/dashboard/chart',
+//			        data: JSON.stringify(col),
+//			        success: function(data) {
+//			            if (!data) {
+//			                return;
+//			            }
+//			            if ('line' == col.type) {
+//			            	renderLineChart(cell, col, data);
+//			            }
+//			        }
+//			    });							
 			});
 			graphContainer.append(rowContainer);
 		});
-	}
-	
-	function editGraph(cellId) {
-		for (rowIx=0; rowIx < currentDashboard.rows.length; rowIx++) {
-			for (colIx=0; colIx < currentDashboard.rows[rowIx].cols.length; colIx++) {
-				if (currentDashboard.rows[rowIx].cols[colIx].id == cellId) {
-					currentGraph = currentDashboard.rows[rowIx].cols[colIx];
-				}
-			}
-		}
-		$('#input-graph-title').val(currentGraph.title);
-		$('#sel-graph-border').val(currentGraph.bordered ? 'true' : 'false');
-		$('#sel-graph-legend').val(currentGraph.showLegend ? 'true' : 'false');
-		$('#modal-graph-settings').modal();
 	}
 	
 	// TODO deze functie moet gebruikt worden tijdens het opslaan van een grafiek. Het ID moet dan geset worden naar een unieke waarde

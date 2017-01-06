@@ -9,6 +9,8 @@
 
 <link rel="stylesheet" href="../styles/bootstrap.min.css">
 <link rel="stylesheet" href="../styles/font-awesome.min.css">
+<link rel="stylesheet" href="../styles/jquery-ui.min.css">
+<link rel="stylesheet" href="../styles/autocomplete.css">
 <link rel="stylesheet" href="../styles/spinner.css">
 <link rel="stylesheet" href="../styles/nv.d3.min.css">
 <style type="text/css">
@@ -42,7 +44,7 @@ body { padding-top: 60px; }
   </nav>
   
   <div id="dashboard-container" class="container-fluid" style="margin-top: 1em;">
-  	<div id="dasboard-heading" class="text-xs-center"><h3><span id="dashboard-name"></span><a id="lnk-edit-dashboard" href="#" class="fa fa-pencil-square-o pull-right invisible"></a></h3></div>
+  	<div id="dasboard-heading" class="text-xs-center"><h3><a id="dashboard-name" href="#"></a></h3></div>
   	<div id="graph-container">
   	</div>
   </div>
@@ -89,29 +91,33 @@ body { padding-top: 60px; }
         <div class="modal-body">
           <form id="graph_form">
 	          <div class="form-group row">
-	            <label for="input-graph-title" class="col-sm-3 col-form-label">Graph title</label>
+	            <label for="input-graph-title" class="col-sm-3 col-form-label col-form-label-sm">Graph title</label>
 	            <div class="col-sm-9">
-	            	<input id="input-graph-title" type="text" class="form-control" />
+	            	<input id="input-graph-title" type="text" class="form-control form-control-sm" />
 				</div>
 	          </div>
 	          <div class="form-group row">
-	            <label for="sel-graph-border" class="col-sm-3 col-form-label">Border</label>
+	            <label for="sel-graph" class="col-sm-3 col-form-label col-form-label-sm">Graph</label>
 	            <div class="col-sm-9">
-	            	<select id="sel-graph-border" class="form-control custom-select">
+	            	<select id="sel-graph" class="form-control form-control-sm custom-select">
+	            	</select>
+	            </div>	
+	          </div>
+	          <div class="form-group row">
+	            <label for="input-graph-query" class="col-sm-3 col-form-label col-form-label-sm">Graph query</label>
+	            <div class="col-sm-9">
+	            	<input id="input-graph-query" type="text" class="form-control form-control-sm" />
+				</div>
+	          </div>
+	          <div class="form-group row">
+	            <label for="sel-graph-border" class="col-sm-3 col-form-label col-form-label-sm">Border</label>
+	            <div class="col-sm-9">
+	            	<select id="sel-graph-border" class="form-control form-control-sm custom-select">
 	            		<option value="true">Yes</option>
 	            		<option value="false">No</option>
 	            	</select>
 	            </div>	
 	          </div>
-	          <div class="form-group row">
-	            <label for="sel-graph-legend" class="col-sm-3 col-form-label">Show legend</label>
-	            <div class="col-sm-9">
-	            	<select id="sel-graph-legend" class="form-control custom-select">
-	            		<option value="true">Yes</option>
-	            		<option value="false">No</option>
-	            	</select>
-	            </div>	
-	          </div>	          	          
               <div class="modal-footer">
 	          	<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 	            <button id="btn-apply-graph-settings" type="button" class="btn btn-primary">Apply</button>
@@ -125,10 +131,12 @@ body { padding-top: 60px; }
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/tether.min.js"></script>
   <script src="../scripts/jquery.min.js"></script>
+  <script src="../scripts/jquery-ui.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
   <script src="../scripts/menu.js"></script>
   <script src="../scripts/d3.min.js"></script>
   <script src="../scripts/nv.d3.min.js"></script>
+  <script src="../scripts/autocomplete_fields.js"></script>
   <script src="../scripts/dashboard.js"></script>
   
 <script>

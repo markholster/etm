@@ -713,7 +713,7 @@ function buildGraphsPage() {
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(data.data)
         		        	.call(chart);
-        		        	nv.utils.windowResize(chart.update);
+        		        nv.utils.windowResize(chart.update);
         		        return chart;
         		    });
         		} else if ('line' == data.type) {
