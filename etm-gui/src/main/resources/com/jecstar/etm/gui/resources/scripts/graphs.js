@@ -45,9 +45,6 @@ function buildGraphsPage() {
         addMetricsAggregatorsBlock($('#number-fields'),'number', 0);
         addMetricsAggregatorsBlock($('#stacked_area-y-axis'),'stacked_area', 0);
         addBucketAggregatorsBlock($('#stacked_area-x-axis'),'stacked_area', 0);
-        updateBucketTermAggregatorsOrderBySelector('bar');
-        updateBucketTermAggregatorsOrderBySelector('line');
-        updateBucketTermAggregatorsOrderBySelector('stacked_area');
 	});    
 	
 	
@@ -149,7 +146,6 @@ function buildGraphsPage() {
 		event.preventDefault();
 		var graphType = $(this).attr('data-graph-type');
 		addBucketAggregatorsBlock($('#' + graphType + '-x-axis'), graphType, 1);
-		updateBucketTermAggregatorsOrderBySelector(graphType);
 		$(this).hide();
 	});
 	
@@ -464,7 +460,7 @@ function buildGraphsPage() {
 					.attr('step', 'any').attr('min', '1')
 				)
 			),
-			// Significat term fields
+			// Significant term fields
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-significant-term-top-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Top'),
 				$('<div>').addClass('col-sm-9').append(
@@ -480,9 +476,21 @@ function buildGraphsPage() {
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Order by'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<select>').attr('id', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('form-control form-control-sm custom-select')
-					.append(
-						$('<option>').attr('value', 'term').text('Term')
-					)
+					.append(function () {
+						var optionArray = [];
+						optionArray.push($('<option>').attr('value', 'term').text('Term'))
+						$.each(getTermAggregatorsOrderByOptions(graphType), function(index, item) {
+							optionArray.push(
+								$('<option>').attr('value', item.id).text('Metric: ' + item.label)
+							)
+						})
+						optionArray.sort(function(a,b) {
+						    var at = $(a).text();
+						    var bt = $(b).text();         
+						    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
+						});
+						return optionArray;
+					})
 					.val('term')
 				)
 			),
@@ -586,19 +594,10 @@ function buildGraphsPage() {
 	
 	function updateBucketTermAggregatorsOrderBySelector(graphType) {
 		// First create all the options 
-		var options = [];
-		$('#' + graphType + '-y-axis').find('[id^=sel-' + graphType + '-metrics-aggregator-]').each(function (index) {
-			var ix = $(this).attr('id').split('-')[4];
-			var label = $('#input-' + graphType + '-metrics-label-' + ix).val();
-			if (!label) {
-				label = $(this).children('option:selected').text();
-			}
-			options.push({ id: 'metric_' + ix, label: label});
-		});
 		$('[id^=sel-' + graphType + '-bucket-term-order-by-]').each(function(index) {
 			var currentValue = $(this).val();
 			$element = $(this).empty();
-			$.each(options, function(index, item) {
+			$.each(getTermAggregatorsOrderByOptions(graphType), function(index, item) {
 				$element.append(
 					$('<option>').attr('value', item.id).text('Metric: ' + item.label)
 				)
@@ -609,7 +608,19 @@ function buildGraphsPage() {
 				$(this).val(currentValue);
 			}
 		});
-		
+	}
+	
+	function getTermAggregatorsOrderByOptions(graphType) {
+		var options = [];
+		$('#' + graphType + '-y-axis').find('[id^=sel-' + graphType + '-metrics-aggregator-]').each(function (index) {
+			var ix = $(this).attr('id').split('-')[4];
+			var label = $('#input-' + graphType + '-metrics-label-' + ix).val();
+			if (!label) {
+				label = $(this).children('option:selected').text();
+			}
+			options.push({ id: 'metric_' + ix, label: label});
+		});		
+		return options;
 	}
 	
 	function isGraphExistent(name) {
@@ -779,6 +790,7 @@ function buildGraphsPage() {
 	function resetValues() {
 		document.getElementById('graph_form').reset();
 		$('#sel-graph-type').trigger("change");
+		$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").show();
 		enableOrDisableButtons();
 	}
 	
@@ -801,6 +813,7 @@ function buildGraphsPage() {
 
 		function setMultiBucketData(type, data) {
 			$('#' + type + '-y-axis, #' + type + '-x-axis').empty();
+			$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").show();
 			$.each(data.y_axis.aggregators, function(index, aggregator) {
 				addMetricsAggregatorsBlock($('#' + type + '-y-axis'), type, index, aggregator);
 			})
@@ -809,7 +822,6 @@ function buildGraphsPage() {
 				$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").hide();
 				addBucketAggregatorsBlock($('#' + type + '-x-axis'), type, 1, data.x_axis.sub_aggregator);
 			}
-			updateBucketTermAggregatorsOrderBySelector(type);
 		}
 		
 		function setNumberAggregatorData(data) {
