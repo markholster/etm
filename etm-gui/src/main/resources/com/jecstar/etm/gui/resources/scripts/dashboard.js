@@ -282,7 +282,10 @@ function loadDashboard(name) {
 
 	
 	function createCell(col) {
+		// TODO, col.chart, col.chartData & col.interval moeten niet opgeslagen worden!!!
 		col.chart = null;
+		col.chartData = null;
+		col.interval = null;
 		var cellContainer = $('<div>').attr('data-col-id', col.id).attr('data-col-bordered', col.bordered).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
 		var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
 		cellContainer.append(card);
@@ -302,18 +305,37 @@ function loadDashboard(name) {
 				graphData = $.extend(true, {}, graphData);
 				graphData.query = col.query;
 			}
-	        $.ajax({
-	            type: 'POST',
-	            contentType: 'application/json',
-	            url: '../rest/dashboard/graphdata',
-	            data: JSON.stringify(graphData),
-	            success: function(data) {
-	                if (!data) {
-	                    return;
-	                }
-	        		if ('bar' == data.type) {
-	        			formatter = d3.locale(data.d3_formatter);
-	        			numberFormatter = formatter.numberFormat(',f');
+			updateChart(graphData, col, card);
+			col.interval = setInterval( function() { updateChart(graphData, col, card); }, 5000 );
+		}
+		return cellContainer;
+	}
+	
+	function updateChart(graphData, col, card) {
+        $.ajax({
+            type: 'POST',
+            contentType: 'application/json',
+            url: '../rest/dashboard/graphdata',
+            data: JSON.stringify(graphData),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+        		if ('bar' == data.type) {
+    		        data.data.sort(function(a, b){
+    				    if (a.key < b.key) return -1;
+    				    if (b.key < a.key) return 1;
+    				    return 0;
+    				});
+    		        if (col.chart && col.chartData) {
+    		        	col.chartData.length = 0;
+    		        	$.each(data.data, function(index, item) {
+    		        		col.chartData.push(item);
+    		        	});
+    		        	col.chart.update();
+    		        } else {
+    		        	formatter = d3.locale(data.d3_formatter);
+    		        	numberFormatter = formatter.numberFormat(',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.multiBarChart()
 	        		            .x(function(d) { return d.label })
@@ -326,23 +348,25 @@ function loadDashboard(name) {
 	        		            ;
 	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
 	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
-	        		        data.data.sort(function(a, b){
-	        				    if (a.key < b.key) return -1;
-	        				    if (b.key < a.key) return 1;
-	        				    return 0;
-	        				});
-
-	        		        d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
-	        		        	.datum(data.data)
+	        		    	col.chartData = data.data;
+	        		    	d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		        	.datum(col.chartData)
 	        		        	.call(col.chart);
 	        		        nv.utils.windowResize(col.chart.update);
-	        		        return chart;
+	        		        return col.chart;
 	        		    });
-	        		} else if ('line' == data.type) {
-	        			formatter = d3.locale(data.d3_formatter);
-	        			numberFormatter = formatter.numberFormat(',f');
+    		        }
+        		} else if ('line' == data.type) {
+    		        if (col.chart && col.chartData) {
+    		        	col.chartData.length = 0;
+    		        	$.each(formatLineData(data.data), function(index, item) {
+    		        		col.chartData.push(item);
+    		        	});
+    		        	col.chart.update();
+    		        } else {
+    		        	formatter = d3.locale(data.d3_formatter);
+    		        	numberFormatter = formatter.numberFormat(',f');
 	        		    nv.addGraph(function() {
-	        		    	var i = 1
 	        		    	col.chart = nv.models.lineChart()
 							    .showYAxis(true)
 							    .showXAxis(true)       
@@ -353,16 +377,30 @@ function loadDashboard(name) {
 	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
 	        		    	col.chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
 	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
-	       		            d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
-	        		        	.datum(formatLineData(data.data))
+	        		    	col.chartData = formatLineData(data.data);
+	        		    	d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		        	.datum(col.chartData)
 	        		        	.call(col.chart);
 	        		        nv.utils.windowResize(col.chart.update);
-	        		        return chart;
+	        		        return col.chart;
 	        		    });
-	        		} else if ('number' == data.type) {
-	        			$(card).append($('<h1>').text(data.value_as_string),$('<h4>').text(data.label));
-	        		} else if ('pie' == data.type) {
-	        		} else if ('stacked_area' == data.type) {
+    		        }
+        		} else if ('number' == data.type) {
+        			$currentValue = $(card).find("a[data-element-type='number-graph']");
+        			if ($currentValue.length) {
+        				$currentValue.text(data.value_as_string);
+        			} else {
+        				$(card).append($('<h1>').attr('data-element-type', 'number-graph').text(data.value_as_string),$('<h4>').text(data.label));
+        			}
+        		} else if ('pie' == data.type) {
+        		} else if ('stacked_area' == data.type) {
+    		        if (col.chart && col.chartData) {
+    		        	col.chartData.length = 0;
+    		        	$.each(formatLineData(data.data), function(index, item) {
+    		        		col.chartData.push(item);
+    		        	});
+    		        	col.chart.update();
+    		        } else {
 	        			formatter = d3.locale(data.d3_formatter);
 	        			numberFormatter = formatter.numberFormat(',f');
 	        		    nv.addGraph(function() {
@@ -372,46 +410,47 @@ function loadDashboard(name) {
 	        		            .showControls(true)
 	        		            .clipEdge(true);
 	        		            ;
+	        		        col.chartData = formatLineData(data.data);
 	        		        col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-	        		        col.chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+	        		        col.chart.xAxis.tickFormat(function(d,s) {return col.chartData[0].values[d].label});
 	        		        col.chart.margin({left: 75, bottom: 50, right: 50});
 	        		        d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
-	        		        	.datum(formatLineData(data.data))
+	        		        	.datum(col.chartData)
 	        		        	.call(col.chart);
 	        		        nv.utils.windowResize(col.chart.update);
-	        		        return chart;
+	        		        return col.chart;
 	        		    });
-	        		}
-	            }
-	        });
-	        
-			function formatLineData(lineData) {
-				var formattedData = [];
-				$.each(lineData, function(index, serie) {
-					var serieData = {
-						key: serie.key,
-						values: []
-					};
-					$.each(serie.values, function(serieIndex, point) {
-						serieData.values.push(
-							{
-								x: serieIndex,
-								y: point.value
-							}
-						);
-					});
-					formattedData.push(serieData);
+    		        }
+        		}
+            }
+        });
+        
+		function formatLineData(lineData) {
+			var formattedData = [];
+			$.each(lineData, function(index, serie) {
+				var serieData = {
+					key: serie.key,
+					values: []
+				};
+				$.each(serie.values, function(serieIndex, point) {
+					serieData.values.push(
+						{
+							x: serieIndex,
+							y: point.value,
+							label: point.label
+							
+						}
+					);
 				});
-				formattedData.sort(function(a, b){
-				    if (a.key < b.key) return -1;
-				    if (b.key < a.key) return 1;
-				    return 0;
-				});
-				return formattedData;
-			}			
-			
-		}
-		return cellContainer;
+				formattedData.push(serieData);
+			});
+			formattedData.sort(function(a, b){
+			    if (a.key < b.key) return -1;
+			    if (b.key < a.key) return 1;
+			    return 0;
+			});
+			return formattedData;
+		}					
 	}
 	
 	function sortSelectOptions($select) {
