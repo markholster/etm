@@ -282,17 +282,135 @@ function loadDashboard(name) {
 
 	
 	function createCell(col) {
+		col.chart = null;
 		var cellContainer = $('<div>').attr('data-col-id', col.id).attr('data-col-bordered', col.bordered).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
 		var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
 		cellContainer.append(card);
 		if (!col.bordered) {
 			card.addClass('noBorder');
 		}
+		
 		card.append(
 		  $('<h5>').addClass('card-title').text(col.title).append(
 		    $('<a>').attr('href', '#').attr('data-link-action', 'edit-graph').addClass('fa fa-pencil-square-o pull-right invisible')
 		  )
 		);
+		
+		var graphData = graphMap[col.graph];
+		if ('undefined' !== typeof graphData) {
+			if (col.query) {
+				graphData = $.extend(true, {}, graphData);
+				graphData.query = col.query;
+			}
+	        $.ajax({
+	            type: 'POST',
+	            contentType: 'application/json',
+	            url: '../rest/dashboard/graphdata',
+	            data: JSON.stringify(graphData),
+	            success: function(data) {
+	                if (!data) {
+	                    return;
+	                }
+	        		if ('bar' == data.type) {
+	        			formatter = d3.locale(data.d3_formatter);
+	        			numberFormatter = formatter.numberFormat(',f');
+	        		    nv.addGraph(function() {
+	        		    	col.chart = nv.models.multiBarChart()
+	        		            .x(function(d) { return d.label })
+	        		            .y(function(d) { return d.value })
+	        		            .staggerLabels(true)
+	        		            .wrapLabels(true)
+	        		            .showControls(true)
+	        		            .groupSpacing(0.1) 
+	        		            .duration(250)
+	        		            ;
+	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
+	        		        data.data.sort(function(a, b){
+	        				    if (a.key < b.key) return -1;
+	        				    if (b.key < a.key) return 1;
+	        				    return 0;
+	        				});
+
+	        		        d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		        	.datum(data.data)
+	        		        	.call(col.chart);
+	        		        nv.utils.windowResize(col.chart.update);
+	        		        return chart;
+	        		    });
+	        		} else if ('line' == data.type) {
+	        			formatter = d3.locale(data.d3_formatter);
+	        			numberFormatter = formatter.numberFormat(',f');
+	        		    nv.addGraph(function() {
+	        		    	var i = 1
+	        		    	col.chart = nv.models.lineChart()
+							    .showYAxis(true)
+							    .showXAxis(true)       
+	        		            .useInteractiveGuideline(true)  
+	        		            .showLegend(true)
+	        		            .duration(250)
+	        		            ;
+	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+	        		    	col.chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
+	       		            d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		        	.datum(formatLineData(data.data))
+	        		        	.call(col.chart);
+	        		        nv.utils.windowResize(col.chart.update);
+	        		        return chart;
+	        		    });
+	        		} else if ('number' == data.type) {
+	        			$(card).append($('<h1>').text(data.value_as_string),$('<h4>').text(data.label));
+	        		} else if ('pie' == data.type) {
+	        		} else if ('stacked_area' == data.type) {
+	        			formatter = d3.locale(data.d3_formatter);
+	        			numberFormatter = formatter.numberFormat(',f');
+	        		    nv.addGraph(function() {
+	        		    	col.chart = nv.models.stackedAreaChart()
+	        		            .useInteractiveGuideline(true)
+	        		            .duration(250)
+	        		            .showControls(true)
+	        		            .clipEdge(true);
+	        		            ;
+	        		        col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+	        		        col.chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+	        		        col.chart.margin({left: 75, bottom: 50, right: 50});
+	        		        d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		        	.datum(formatLineData(data.data))
+	        		        	.call(col.chart);
+	        		        nv.utils.windowResize(col.chart.update);
+	        		        return chart;
+	        		    });
+	        		}
+	            }
+	        });
+	        
+			function formatLineData(lineData) {
+				var formattedData = [];
+				$.each(lineData, function(index, serie) {
+					var serieData = {
+						key: serie.key,
+						values: []
+					};
+					$.each(serie.values, function(serieIndex, point) {
+						serieData.values.push(
+							{
+								x: serieIndex,
+								y: point.value
+							}
+						);
+					});
+					formattedData.push(serieData);
+				});
+				formattedData.sort(function(a, b){
+				    if (a.key < b.key) return -1;
+				    if (b.key < a.key) return 1;
+				    return 0;
+				});
+				return formattedData;
+			}			
+			
+		}
 		return cellContainer;
 	}
 	
@@ -381,22 +499,6 @@ function loadDashboard(name) {
 			$.each(row.cols, function (colIx, col) {
 				var cell = createCell(col);
 				rowContainer.append(cell);
-				// Now load the data.
-				// TODO controleer of de col ook data heeft om op te halen...
-//			    $.ajax({
-//			        type: 'POST',
-//			        contentType: 'application/json',
-//			        url: '../rest/dashboard/chart',
-//			        data: JSON.stringify(col),
-//			        success: function(data) {
-//			            if (!data) {
-//			                return;
-//			            }
-//			            if ('line' == col.type) {
-//			            	renderLineChart(cell, col, data);
-//			            }
-//			        }
-//			    });							
 			});
 			graphContainer.append(rowContainer);
 		});

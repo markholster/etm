@@ -694,16 +694,12 @@ function buildGraphsPage() {
         		            .y(function(d) { return d.value })
         		            .staggerLabels(true)
         		            .wrapLabels(true)
-        		            .rotateLabels(-90)
         		            .showControls(true)
         		            .groupSpacing(0.1) 
         		            .duration(250)
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-        		        if (data.data && data.data && data.data.length > 0) {
-        		        	var caluclatedBottomMargin = Number(data.data[0].max_label_length) * 7;
-        		        	chart.margin({bottom: caluclatedBottomMargin});
-        		        }
+        		        chart.margin({left: 75, bottom: 50, right: 50});
         		        data.data.sort(function(a, b){
         				    if (a.key < b.key) return -1;
         				    if (b.key < a.key) return 1;
@@ -730,6 +726,7 @@ function buildGraphsPage() {
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
        		            chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+       		            chart.margin({left: 75, bottom: 50, right: 50});
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(formatLineData(data.data))
         		        	.call(chart);
@@ -751,6 +748,7 @@ function buildGraphsPage() {
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
         		        chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+        		        chart.margin({left: 75, bottom: 50, right: 50});
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(formatLineData(data.data))
         		        	.call(chart);
