@@ -134,6 +134,9 @@ function loadDashboard(name) {
 	});
 	
 	$('#btn-apply-graph-settings').click(function (event) {
+		if (!document.getElementById('graph_form').checkValidity()) {
+			return;
+		}
 		currentGraph.title = $("#input-graph-title").val();
 		currentGraph.bordered = $('#sel-graph-border').val() == 'true' ? true : false;
 		currentGraph.graph = $('#sel-graph').val();
@@ -285,6 +288,9 @@ function loadDashboard(name) {
 		// TODO, col.chart, col.chartData & col.interval moeten niet opgeslagen worden!!!
 		col.chart = null;
 		col.chartData = null;
+		if (col.interval) {
+			clearInterval(col.interval);
+		}
 		col.interval = null;
 		var cellContainer = $('<div>').attr('data-col-id', col.id).attr('data-col-bordered', col.bordered).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
 		var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
@@ -306,7 +312,9 @@ function loadDashboard(name) {
 				graphData.query = col.query;
 			}
 			updateChart(graphData, col, card);
-			col.interval = setInterval( function() { updateChart(graphData, col, card); }, 5000 );
+			if (col.refresh_rate) {
+				col.interval = setInterval( function() { updateChart(graphData, col, card); }, col.refresh_rate * 1000 );
+			}
 		}
 		return cellContainer;
 	}
@@ -374,10 +382,10 @@ function loadDashboard(name) {
 	        		            .showLegend(true)
 	        		            .duration(250)
 	        		            ;
-	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-	        		    	col.chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
-	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
 	        		    	col.chartData = formatLineData(data.data);
+	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
+	        		    	col.chart.xAxis.tickFormat(function(d,s) {return col.chartData[0].values[d].label});
+	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
 	        		    	d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
 	        		        	.datum(col.chartData)
 	        		        	.call(col.chart);
@@ -386,7 +394,7 @@ function loadDashboard(name) {
 	        		    });
     		        }
         		} else if ('number' == data.type) {
-        			$currentValue = $(card).find("a[data-element-type='number-graph']");
+        			$currentValue = $(card).find("h1[data-element-type='number-graph']");
         			if ($currentValue.length) {
         				$currentValue.text(data.value_as_string);
         			} else {
