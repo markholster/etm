@@ -1,4 +1,5 @@
 function loadDashboard(name) {
+	var maxParts = 12;
 	var graphMap = {};
 	var keywords = [];
 	var currentDashboard;
@@ -96,7 +97,7 @@ function loadDashboard(name) {
 				// Number of columns in row not changed.
 				jsonRow.cols = oldRow.cols;
 			} else {
-				var remainingParts = 12;
+				var remainingParts = maxParts;
 				for (i=0; i< nrOfCols; i++) {
 					var parts = Math.ceil(remainingParts / (nrOfCols - i));
 					column = {
@@ -122,11 +123,57 @@ function loadDashboard(name) {
 	
 	$('#dashboard-container').on("mouseover mouseout", 'div[data-col-id]', function(event) {
 		$(this).find("a[data-link-action='edit-graph']").toggleClass('invisible');
+		if ($(this).prev().length) {
+			// A column on the left hand size is present
+			$(this).find("div[data-resize-action='bottom-left']").toggleClass('invisible');
+			if ($(this).parent().prev().length) {
+				// A row above this row is present
+				$(this).find("div[data-resize-action='top-left']").toggleClass('invisible');
+			}
+		}
+		if ($(this).next().length) {
+			// A column on the right hand size is present
+			$(this).find("div[data-resize-action='bottom-right']").toggleClass('invisible');
+			if ($(this).parent().prev().length) {
+				// A row above this row is present
+				$(this).find("div[data-resize-action='top-right']").toggleClass('invisible');
+			}
+		}
 		$(this).find(".card").toggleClass('selectedColumn');
 		if ('false' == $(this).attr('data-col-bordered')) {
 			$(this).find(".card").toggleClass('noBorder');
 		}
 	});
+	
+	var dragstatus;
+	$('#dashboard-container').on("mousedown", 'div[data-resize-action]', function(event) {
+		dragstatus = {x: event.pageX, y: event.pageY, id: $(this).parent().parent().attr('data-col-id')};
+	});
+
+	$('#dashboard-container').on("mousemove", function(event) {
+		if (dragstatus) {
+			var divToResize = $('div[data-col-id="' + dragstatus.id + '"]');
+			if ((parseInt(divToResize.offset().top, 10) + divToResize.height()) < event.pageY) {
+				var currentRow;
+				var currentCol; 
+				for (rowIx=0; rowIx < currentDashboard.rows.length; rowIx++) {
+					for (colIx=0; colIx < currentDashboard.rows[rowIx].cols.length; colIx++) {
+						if (currentDashboard.rows[rowIx].cols[colIx].id == divToResize.attr('data-col-id')) {
+							currentRow = currentDashboard.rows[rowIx];
+							currentCol = currentRow.cols[colIx];
+						}
+					}
+				}
+				currentRow.height += 1;
+				divToResize.parent().height(currentRow.height + 'rem');
+			}
+		}
+	});
+
+	$('#dashboard-container').on("mouseup", function(event) {
+		dragstatus = null;
+	});
+
 	
 	$('#dashboard-container').on("click", "a[data-link-action='edit-graph']", function(event) {
     	event.preventDefault();
@@ -316,6 +363,15 @@ function loadDashboard(name) {
 				col.interval = setInterval( function() { updateChart(graphData, col, card); }, col.refresh_rate * 1000 );
 			}
 		}
+		// Bottom right resize icon
+		card.append($('<div>').addClass('invisible').attr('data-resize-action', 'bottom-right').attr('style', 'position:absolute;bottom:0px;right:0.5rem;margin:0;cursor:se-resize;').append($('<span>').addClass('fa fa-angle-right').attr('style', '-webkit-transform: rotate(45deg); -moz-transform: rotate(45deg); -ms-transform: rotate(45deg); -o-transform: rotate(45deg); transform: rotate(45deg);')));
+		// Bottom left resize icon
+		card.append($('<div>').addClass('invisible').attr('data-resize-action', 'bottom-left').attr('style', 'position:absolute;bottom:0px;left:0.5rem;margin:0;cursor:sw-resize;').append($('<span>').addClass('fa fa-angle-left').attr('style', '-webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -ms-transform: rotate(-45deg); -o-transform: rotate(-45deg); transform: rotate(-45deg);')));
+		// Top right resize icon
+		card.append($('<div>').addClass('invisible').attr('data-resize-action', 'top-right').attr('style', 'position:absolute;top:0px;right:0.5rem;margin:0;cursor:ne-resize;').append($('<span>').addClass('fa fa-angle-right').attr('style', '-webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -ms-transform: rotate(-45deg); -o-transform: rotate(-45deg); transform: rotate(-45deg);')));
+		// Top left resize icon
+		card.append($('<div>').addClass('invisible').attr('data-resize-action', 'top-left').attr('style', 'position:absolute;top:0px;left:0.5rem;margin:0;cursor:nw-resize;').append($('<span>').addClass('fa fa-angle-left').attr('style', '-webkit-transform: rotate(45deg); -moz-transform: rotate(45deg); -ms-transform: rotate(45deg); -o-transform: rotate(45deg); transform: rotate(45deg);')));
+		
 		return cellContainer;
 	}
 	
