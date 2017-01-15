@@ -1,5 +1,4 @@
 .spinner_line {
-  margin-top: 1em;
   width: 2.5em;
   height: 0.25em;
   background: #ffffff;
@@ -30,4 +29,18 @@
   100% { 
     transform: rotate(360deg); 
   } 
+}
+
+@media (max-width: 768px) {
+  .spinner {
+	position: absolute;
+	right: 5.5rem;
+	top: 1.6em; 
+  }
+}
+
+@media-breakpoint-up(sm) {
+  .spinner {
+	top: 1.6em; 
+  }
 }
