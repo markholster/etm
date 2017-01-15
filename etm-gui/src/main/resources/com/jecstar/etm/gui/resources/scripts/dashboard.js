@@ -1,4 +1,5 @@
 function loadDashboard(name) {
+	var maxParts = 12;
 	var graphMap = {};
 	var keywords = [];
 	var currentDashboard;
@@ -96,7 +97,7 @@ function loadDashboard(name) {
 				// Number of columns in row not changed.
 				jsonRow.cols = oldRow.cols;
 			} else {
-				var remainingParts = 12;
+				var remainingParts = maxParts;
 				for (i=0; i< nrOfCols; i++) {
 					var parts = Math.ceil(remainingParts / (nrOfCols - i));
 					column = {
@@ -119,14 +120,111 @@ function loadDashboard(name) {
 		$('#dashboard-container').show();
 		buildPage(currentDashboard);
 	});
+	var dragstatus;
 	
-	$('#dashboard-container').on("mouseover mouseout", 'div[data-col-id]', function(event) {
-		$(this).find("a[data-link-action='edit-graph']").toggleClass('invisible');
-		$(this).find(".card").toggleClass('selectedColumn');
-		if ('false' == $(this).attr('data-col-bordered')) {
-			$(this).find(".card").toggleClass('noBorder');
+	$('#dashboard-container').on("mouseover", 'div[data-col-id]', function(event) {
+		if (!dragstatus) {
+			$(this).find("a[data-link-action='edit-graph']").removeClass('invisible');
+			$(this).find("div[data-action='resize-graph']").removeClass('invisible');
+			$(this).find(".card").addClass('selectedColumn');
+			if ('false' == $(this).attr('data-col-bordered')) {
+				$(this).find(".card").removeClass('noBorder');
+			}
 		}
 	});
+
+	$('#dashboard-container').on("mouseout", 'div[data-col-id]', function(event) {
+		if (!dragstatus) {
+			$(this).find("a[data-link-action='edit-graph']").addClass('invisible');
+			$(this).find("div[data-action='resize-graph']").addClass('invisible');
+			$(this).find(".card").removeClass('selectedColumn');
+			if ('false' == $(this).attr('data-col-bordered')) {
+				$(this).find(".card").addClass('noBorder');
+			}
+		}
+	});
+	
+	$('#dashboard-container').on("mousedown", 'div[data-action="resize-graph"]', function(event) {
+		dragstatus = {
+			x: event.pageX, 
+			y: event.pageY, 
+			id: $(this).parent().parent().attr('data-col-id'),
+			columnWidth: Math.round($('div[data-column-template-id="1"]').outerWidth()),
+			columnPartsLeft: maxParts
+		};
+		for (rowIx=0; rowIx < currentDashboard.rows.length; rowIx++) {
+			for (colIx=0; colIx < currentDashboard.rows[rowIx].cols.length; colIx++) {
+				if (currentDashboard.rows[rowIx].cols[colIx].id == $(this).parent().parent().attr('data-col-id')) {
+					dragstatus.row = currentDashboard.rows[rowIx];
+					dragstatus.col = dragstatus.row.cols[colIx];
+				}
+			}
+		}
+		$.each(dragstatus.row.cols, function(index, col) {
+			dragstatus.columnPartsLeft -= col.parts;
+		});
+	});
+
+	$(document).on("mousemove", function(event) {
+		if (dragstatus) {
+			var fontSize = parseInt($(":root").css("font-size"));
+			var divToResize = $('div[data-col-id="' + dragstatus.id + '"]');
+			
+			var heightPx = event.pageY - parseInt(divToResize.offset().top, 10);
+			var widthPx = event.pageX - parseInt(divToResize.offset().left, 10);
+			
+			// Resize the width
+			var parts = Math.round(widthPx / dragstatus.columnWidth);
+			if (parts < 1) {
+				parts = 1;
+			}
+			if (parts > dragstatus.columnPartsLeft + dragstatus.col.parts) {
+				parts = dragstatus.columnPartsLeft + dragstatus.col.parts;
+			}
+			if (dragstatus.col.parts != parts) {
+				dragstatus.columnPartsLeft -= (parts - dragstatus.col.parts);
+				divToResize.removeClass(function (index, className) {
+				    return (className.match (/(^|\s)col-lg-\S+/g) || []).join(' ');
+				}).addClass("col-lg-" + parts);
+				dragstatus.col.parts = parts;
+			}
+				
+			// Resize the height
+			var heightRem = Math.round(heightPx / fontSize);
+			if (heightRem < 1) {
+				heightRem = 1;
+			}
+			if (heightRem > 50) {
+				heightRem = 50;
+			}
+			if (dragstatus.row.height != heightRem) {
+				dragstatus.row.height = heightRem;
+				divToResize.parent().height(heightRem + 'rem');
+			}
+		}
+	});
+
+	$(document).on("mouseup", function(event) {
+		if (dragstatus) {
+			$.each(dragstatus.row.cols, function(index, col) {
+				if (col.chart) {
+					col.chart.update();
+				}
+			});
+			var resizedDiv =  $('div[data-col-id="' + dragstatus.id + '"]');
+			var yLowest = parseInt(resizedDiv.offset().top, 10);
+			var yHighest = yLowest + resizedDiv.height();
+			var xLowest = parseInt(resizedDiv.offset().left, 10);
+			var xHighest = xLowest + resizedDiv.width();
+			if (event.pageY < yLowest || event.pageY > yHighest || event.pageX < xLowest || event.pageX > xHighest) {
+				// Mouseup outside of div. fire the mouseout event manually
+				dragstatus = null;
+				resizedDiv.mouseout();
+			}
+			dragstatus = null;
+		}
+	});
+
 	
 	$('#dashboard-container').on("click", "a[data-link-action='edit-graph']", function(event) {
     	event.preventDefault();
@@ -316,6 +414,8 @@ function loadDashboard(name) {
 				col.interval = setInterval( function() { updateChart(graphData, col, card); }, col.refresh_rate * 1000 );
 			}
 		}
+		// Bottom right resize icon
+		card.append($('<div>').addClass('invisible').attr('data-action', 'resize-graph').attr('style', 'position:absolute;bottom:0px;right:0.5rem;margin:0;cursor:se-resize;').append($('<span>').addClass('fa fa-angle-right').attr('style', '-webkit-transform: rotate(45deg); -moz-transform: rotate(45deg); -ms-transform: rotate(45deg); -o-transform: rotate(45deg); transform: rotate(45deg);')));
 		return cellContainer;
 	}
 	
@@ -537,6 +637,23 @@ function loadDashboard(name) {
 	function buildPage(dashboardData) {
 		$('#dashboard-name').text(dashboardData.name);
 		var graphContainer = $('#graph-container').empty();
+		graphContainer.append($('<div>').attr('id', 'resize-template-row').addClass('row')
+			.append(
+				$('<div>').attr('data-column-template-id', '1').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '2').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '3').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '4').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '5').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '6').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '7').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '8').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '9').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '10').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '11').addClass('col-lg-1'),
+				$('<div>').attr('data-column-template-id', '12').addClass('col-lg-1')
+			)
+		);
+		
 		$.each(dashboardData.rows, function(rowIx, row) {
 			var rowContainer = $('<div>').addClass('row').attr('data-row-id', row.id).attr('style', 'height: ' + row.height + 'rem; padding-bottom: 15px;');
 			if (rowIx != 0) {
