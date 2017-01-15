@@ -122,23 +122,47 @@ function loadDashboard(name) {
 	});
 	var dragstatus;
 	
-	$('#dashboard-container').on("mouseover mouseout", 'div[data-col-id]', function(event) {
-		$(this).find("a[data-link-action='edit-graph']").toggleClass('invisible');
-		if ($(this).prev().length) {
-			// A column on the left hand size is present
-			$(this).find("div[data-resize-action='bottom-left']").toggleClass('invisible');
+	$('#dashboard-container').on("mouseover", 'div[data-col-id]', function(event) {
+		if (!dragstatus) {
+			$(this).find("a[data-link-action='edit-graph']").removeClass('invisible');
+			if ($(this).prev().length) {
+				// A column on the left hand size is present
+				$(this).find("div[data-resize-action='bottom-left']").removeClass('invisible');
+			}
+			if ($(this).next().length) {
+				// A column on the right hand size is present
+				$(this).find("div[data-resize-action='bottom-right']").removeClass('invisible');
+			}
+			if (!$(this).prev().length && !$(this).next().length) {
+				// A row with a single column
+				$(this).find("div[data-resize-action]").removeClass('invisible');
+			}
+			$(this).find(".card").addClass('selectedColumn');
+			if ('false' == $(this).attr('data-col-bordered')) {
+				$(this).find(".card").removeClass('noBorder');
+			}
 		}
-		if ($(this).next().length) {
-			// A column on the right hand size is present
-			$(this).find("div[data-resize-action='bottom-right']").toggleClass('invisible');
-		}
-		if (!$(this).prev().length && !$(this).next().length) {
-			// A row with a single column
-			$(this).find("div[data-resize-action]").toggleClass('invisible');
-		}
-		$(this).find(".card").toggleClass('selectedColumn');
-		if ('false' == $(this).attr('data-col-bordered')) {
-			$(this).find(".card").toggleClass('noBorder');
+	});
+
+	$('#dashboard-container').on("mouseout", 'div[data-col-id]', function(event) {
+		if (!dragstatus) {
+			$(this).find("a[data-link-action='edit-graph']").addClass('invisible');
+			if ($(this).prev().length) {
+				// A column on the left hand size is present
+				$(this).find("div[data-resize-action='bottom-left']").addClass('invisible');
+			}
+			if ($(this).next().length) {
+				// A column on the right hand size is present
+				$(this).find("div[data-resize-action='bottom-right']").addClass('invisible');
+			}
+			if (!$(this).prev().length && !$(this).next().length) {
+				// A row with a single column
+				$(this).find("div[data-resize-action]").addClass('invisible');
+			}
+			$(this).find(".card").removeClass('selectedColumn');
+			if ('false' == $(this).attr('data-col-bordered')) {
+				$(this).find(".card").addClass('noBorder');
+			}
 		}
 	});
 	
@@ -158,7 +182,7 @@ function loadDashboard(name) {
 		}
 	});
 
-	$('#dashboard-container').on("mousemove", function(event) {
+	$(document).on("mousemove", function(event) {
 		if (dragstatus) {
 			var fontSize = parseInt($(":root").css("font-size"));
 			var divToResize = $('div[data-col-id="' + dragstatus.id + '"]');
@@ -178,24 +202,23 @@ function loadDashboard(name) {
 		}
 	});
 
-	$('#dashboard-container').on("mouseup", function(event) {
+	$(document).on("mouseup", function(event) {
 		if (dragstatus) {
 			$.each(dragstatus.row.cols, function(index, col) {
 				if (col.chart) {
 					col.chart.update();
 				}
 			});
-//			var resizedDiv =  $('div[data-col-id="' + dragstatus.id + '"]');
-//			var yLowest = parseInt(resizedDiv.offset().top, 10) + $(window).scrollTop();
-//			var yHighest = yLowest + resizedDiv.height();
-//			var xLowest = parseInt(resizedDiv.offset().left, 10);
-//			var xHighest = xLowest + resizedDiv.width();
-//			if (event.pageY < yLowest || event.pageY > yHighest || event.pageX < xLowest || event.pageX > xHighest) {
-//				// Mouseup outside of div. fire the mouseout event manually
-//				dragstatus = null;
-//				resizedDiv.mouseout();
-//			}
-//			dragstatus = null;
+			var resizedDiv =  $('div[data-col-id="' + dragstatus.id + '"]');
+			var yLowest = parseInt(resizedDiv.offset().top, 10);
+			var yHighest = yLowest + resizedDiv.height();
+			var xLowest = parseInt(resizedDiv.offset().left, 10);
+			var xHighest = xLowest + resizedDiv.width();
+			if (event.pageY < yLowest || event.pageY > yHighest || event.pageX < xLowest || event.pageX > xHighest) {
+				// Mouseup outside of div. fire the mouseout event manually
+				dragstatus = null;
+				resizedDiv.mouseout();
+			}
 			dragstatus = null;
 		}
 	});
