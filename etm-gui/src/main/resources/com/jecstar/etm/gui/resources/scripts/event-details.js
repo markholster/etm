@@ -12,6 +12,8 @@ function showEvent(scrollTo, type, id) {
 	$eventTab.empty();	
 	$eventTab.tab('show');
 	$('#event-tab-header').addClass('active').attr('area-expanded', 'true');
+	// Since bootstap4 alpha 6 we need to add the class 'show' to the tab
+	$eventTab.addClass('show')
 	intialize();
 	
 	$.ajax({
@@ -485,7 +487,7 @@ function showEvent(scrollTo, type, id) {
 							$('<div>').attr('id', 'endpoint-node-detail').append(
 									$('<div>').addClass('row').append(
 											$('<div>').addClass('col-sm-12').append(
-													$('<p>').addClass('text-xs-center').text('Click on a node to view more details')
+													$('<p>').addClass('text-center').text('Click on a node to view more details')
 											)		
 									)		
 							),
@@ -779,17 +781,16 @@ function showEvent(scrollTo, type, id) {
 					.append(
 							$('<div>').addClass('row').append(
 									$('<br/>'),
-									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;'),
-									$('<br/>'),
-									$('<div>').attr('id', 'event-chain-node-detail').append(
-											$('<div>').addClass('row').append(
-													$('<div>').addClass('col-sm-12').append(
-															$('<p>').addClass('text-xs-center').text('Click on a node to view more details')
-													)		
-											)		
-									),
-									$('<div>').attr('id', 'event-chain-node-transaction-detail')									
-							)
+									$('<div>').attr('id', 'event-chain').attr('style', 'width: 100%;')
+							),
+							$('<div>').attr('id', 'event-chain-node-detail').append(
+								$('<div>').addClass('row').append(
+									$('<div>').addClass('col-sm-12').append(
+											$('<p>').addClass('text-center').text('Click on a node to view more details')
+									)		
+								)		
+							),
+							$('<div>').attr('id', 'event-chain-node-transaction-detail')				
 					) 
 		);
 		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
