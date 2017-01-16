@@ -161,19 +161,23 @@ function buildEndpointPage() {
 		}
 		var card = $('<div>').addClass('card card-block etm-field-card');
 		card.append(
-				$('<div>').addClass('row').append($('<a href="#">').addClass('pull-right').text('Remove this field').click(function (event) {event.preventDefault(); removeField($(this))})),
 				$('<div>').addClass('form-group row').append(
-						$('<label>').addClass('col-sm-3 col-form-label').text('Field'),
-						$('<div>').addClass('col-sm-9').append(localParserFieldSelect)
+					$('<div>').addClass('col-sm-12').append(
+						$('<a href="#">').addClass('pull-right').text('Remove this field').click(function (event) {event.preventDefault(); removeField($(this))})
+					)
 				),
 				$('<div>').addClass('form-group row').append(
-						$('<label>').addClass('col-sm-3 col-form-label').text('Collection key'),
-						$('<div>').addClass('col-sm-9').append(inputKey)
+					$('<label>').addClass('col-sm-3 col-form-label').text('Field'),
+					$('<div>').addClass('col-sm-9').append(localParserFieldSelect)
+				),
+				$('<div>').addClass('form-group row').append(
+					$('<label>').addClass('col-sm-3 col-form-label').text('Collection key'),
+					$('<div>').addClass('col-sm-9').append(inputKey)
 				),
 				$('<fieldset>').addClass('form-group').append(
-						$('<a href="#">').addClass('pull-right').text('Add parser').click(function (event) {event.preventDefault(); addParserRow($(this))}),
-						$('<label>').text('Parsers'),
-						parserRow
+					$('<a href="#">').addClass('pull-right').text('Add parser').click(function (event) {event.preventDefault(); addParserRow($(this))}),
+					$('<label>').text('Parsers'),
+					parserRow
 				)
 		)
 		return card;
