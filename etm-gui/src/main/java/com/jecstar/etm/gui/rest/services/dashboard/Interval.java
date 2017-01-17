@@ -16,7 +16,7 @@ public enum Interval {
 	MINUTES("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.MINUTE), 
 	HOURS("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.HOUR), 
 	DAYS("yyyy-MM-dd", DateHistogramInterval.DAY), 
-	WEEKS("yyyy-YY", DateHistogramInterval.WEEK), 
+	WEEKS("yyyy-ww", DateHistogramInterval.WEEK), 
 	MONTHS("yyyy-MM", DateHistogramInterval.MONTH), 
 	QUARTERS(null, DateHistogramInterval.QUARTER), 
 	YEARS("yyyy", DateHistogramInterval.YEAR);
