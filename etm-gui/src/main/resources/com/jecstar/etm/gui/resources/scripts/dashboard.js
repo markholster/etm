@@ -106,24 +106,31 @@ function loadDashboardPage() {
 		}
 		event.preventDefault();
 		var dashboardName = $('#input-dashboard-name').val();
-		if (isDashboardExistent(dashboardName)) {
+		var dashboardData = applyDashboardSettings();
+		if (isDashboardExistent(dashboardName) && dashboardData.changed) {
 			$('#overwrite-dashboard-name').text(dashboardName);
 			$('#modal-dashboard-overwrite').modal();
 		} else {
-			$('#btn-save-dashboard').click();
+			delete dashboardData.changed;
+			currentDashboard = dashboardData;
+			$('#dashboard-container').show();
+			buildDashboard(currentDashboard);
+			$('#dashboard-settings').hide();
+			
 		}
 	});
 	
-	$('#btn-save-dashboard').click(function (event) {
-		event.preventDefault();
+	function applyDashboardSettings() {
+		var dashboardData = {
+			changed: false
+		};
 		if (!currentDashboard) {
-			currentDashboard = {
-			};
+			dashboardData.changed = true;
 		}
-		currentDashboard.name = $('#input-dashboard-name').val();
+		dashboardData.name = $('#input-dashboard-name').val();
 		var oldRows = currentDashboard.rows;
-		currentDashboard.rows = [];
-		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (rowIx, row){
+		dashboardData.rows = [];
+		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (rowIx, row) {
 			var nrOfCols = $(row).find("input[name='row-cols']").val();
 			var height = $(row).find("input[name='row-height']").val();
 			var oldRow;
@@ -141,12 +148,16 @@ function loadDashboardPage() {
 			}
 			if (oldRow) {
 				jsonRow.id = oldRow.id;
-				jsonRow.height =  height
-			} 
+				jsonRow.height = height;
+			}  
+			if (oldRow && oldRow.height != jsonRow.height) {
+				dashboardData.changed = true;
+			}
 			if (oldRow && oldRow.cols && oldRow.cols.length == nrOfCols) {
 				// Number of columns in row not changed.
 				jsonRow.cols = oldRow.cols;
 			} else {
+				dashboardData.changed = true;
 				var remainingParts = maxParts;
 				for (i=0; i< nrOfCols; i++) {
 					var parts = Math.ceil(remainingParts / (nrOfCols - i));
@@ -163,11 +174,30 @@ function loadDashboardPage() {
 					remainingParts -= parts;
 				}		
 			}
-			currentDashboard.rows.push(jsonRow);
+			dashboardData.rows.push(jsonRow);
 		});
-		
+		if (!dashboardData.changed) {
+			if (oldRows && oldRows.length != dashboardData.rows.length) {
+				dashboardData.changed = true;
+			}
+			if (currentDashboard.name != dashboardData.name) {
+				dashboardData.changed = true;
+			}
+			
+		}
+		return dashboardData;
+	}
+	
+	$('#btn-save-dashboard').click(function (event) {
+		event.preventDefault();
+		var dashboardData = applyDashboardSettings();
+		if (dashboardData.changed) {
+			delete dashboardData.changed;
+			currentDashboard = dashboardData;
+			saveDashboard();
+		}
+		$('#modal-dashboard-overwrite').modal('hide');
 		$('#dashboard-container').show();
-		saveDashboard();
 		buildDashboard(currentDashboard);
 		$('#dashboard-settings').hide();
 	});
@@ -300,7 +330,14 @@ function loadDashboardPage() {
 		currentGraph.graph = $('#sel-graph').val();
 		currentGraph.query = $('#input-graph-query').val();
 		currentGraph.refresh_rate = $('#input-refresh-rate').val() ? Number($('#input-refresh-rate').val()) : null;
-		
+		var graphData = graphMap[currentGraph.graph];
+		if ('undefined' !== typeof graphData) {
+			if (graphData.line) {
+				currentGraph.interpolation = $('#sel-graph-interpolation').val();
+			} else {
+				delete currentGraph.interpolation;
+			}			
+		}
 		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
 		saveDashboard();
 		$('#modal-graph-settings').modal('hide');
@@ -312,6 +349,16 @@ function loadDashboardPage() {
 		if ('undefined' !== typeof graphData) {
 			currentGraph.data_source = graphData.data_source;
 			$('#input-graph-query').val(graphData.query);
+			if (graphData.line) {
+				$('#row-graph-interpolation').show();
+				if (currentGraph.interpolation) {
+					$('#sel-graph-interpolation').val(currentGraph.interpolation);
+				} else {
+					$('#sel-graph-interpolation').val('linear');
+				}
+			} else {
+				$('#row-graph-interpolation').hide();
+			}
 		}
 	});
 	
@@ -445,6 +492,19 @@ function loadDashboardPage() {
 		$('#sel-graph').val(currentGraph.graph);
 		$('#input-graph-query').val(currentGraph.query);
 		$('#input-refresh-rate').val(currentGraph.refresh_rate);
+		
+		$('#row-graph-interpolation').hide();
+		if (currentGraph.graph) {
+			graphData = graphMap[currentGraph.graph];
+			if ('undefined' !== graphData && graphData.line) {
+				$('#row-graph-interpolation').show();
+				if (currentGraph.interpolation) {
+					$('#sel-graph-interpolation').val(currentGraph.interpolation);
+				} else {
+					$('#sel-graph-interpolation').val('linear');
+				}
+			}
+		}
 		$('#modal-graph-settings').modal();
 	}
 
@@ -471,9 +531,12 @@ function loadDashboardPage() {
 		
 		var graphData = graphMap[col.graph];
 		if ('undefined' !== typeof graphData) {
+			graphData = $.extend(true, {}, graphData);
 			if (col.query) {
-				graphData = $.extend(true, {}, graphData);
 				graphData.query = col.query;
+			}
+			if (col.interpolation) {
+				graphData.interpolation = col.interpolation;
 			}
 			updateChart(graphData, col, card);
 			if (col.refresh_rate) {
@@ -551,6 +614,7 @@ function loadDashboardPage() {
 	        		    	col.chartData = formatLineData(data.data);
 	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
 	        		    	col.chart.xAxis.tickFormat(function(d,s) {return col.chartData[0].values[d].label});
+	        		    	col.chart.interpolate(graphData.interpolation);
 	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
 	        		    	d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
 	        		        	.datum(col.chartData)
@@ -709,9 +773,7 @@ function loadDashboardPage() {
         		$('#dashboard-settings_infoBox').text('Dashboard \'' + dashboardData.name + '\' saved.').show('fast').delay(5000).hide('fast');
         		enableOrDisableButtons();
             }
-        }).always(function () {
-        	$('#modal-dashboard-overwrite').modal('hide');
-        });    		
+        });   		
 	}
 	
 	function createDashboardData() {

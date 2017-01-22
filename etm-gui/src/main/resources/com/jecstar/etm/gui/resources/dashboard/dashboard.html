@@ -120,6 +120,24 @@ body { padding-top: 60px; }
 	            	<input id="input-graph-query" type="text" class="form-control form-control-sm" />
 				</div>
 	          </div>
+	          <div id="row-graph-interpolation" class="form-group row" style="display: none;">
+	            <label for="sel-graph-interpolation" class="col-sm-3 col-form-label col-form-label-sm">Interpolation</label>
+	            <div class="col-sm-9">
+	            	<select id="sel-graph-interpolation" class="form-control form-control-sm custom-select">
+	            		<option value="basis">Basis</option>
+	            		<option value="basis-closed">Basis closed</option>
+	            		<option value="basis-open">Basis open</option>
+	            		<option value="bundle">Bundle</option>
+	            		<option value="cardinal">Cardinal</option>
+	            		<option value="cardinal-closed">Cardinal closed</option>
+	            		<option value="cardinal-open">Cardinal open</option>
+	            		<option value="linear" selected="selected">Linear</option>
+	            		<option value="monotone">Monotone</option>
+	            		<option value="step-before">Step before</option>
+	            		<option value="step-after">Step after</option>
+	            	</select>
+				</div>
+	          </div>	          
 	          <div class="form-group row">
 	            <label for="sel-graph-border" class="col-sm-3 col-form-label col-form-label-sm">Border</label>
 	            <div class="col-sm-9">
