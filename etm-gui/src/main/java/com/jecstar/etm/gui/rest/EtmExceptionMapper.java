@@ -59,7 +59,11 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 					break;
 				case EtmException.IIB_UNKNOWN_OBJECT:
 					errorMessage.setMessage("Unknown IIB object");
-					break;					
+					break;		
+				case EtmException.MAX_NR_OF_GRAPHS_REACHED:
+					errorMessage.setMessage("Maximum number of graphs reached");
+				case EtmException.MAX_NR_OF_DASHBOARDS_REACHED:
+					errorMessage.setMessage("Maximum number of dashboards reached");
 				default:
 					break;
 			}

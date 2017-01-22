@@ -46,6 +46,7 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregation
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.StringAggregationKey;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -140,6 +141,9 @@ public class DashboardService extends AbstractIndexMetadataService {
 			}
 		}
 		if (!updated) {
+			if (currentGraphs.size() >= etmConfiguration.getMaxGraphCount()) {
+				throw new EtmException(EtmException.MAX_NR_OF_GRAPHS_REACHED);
+			}
 			currentGraphs.add(valueMap);
 		}
 		Map<String, Object> source = new HashMap<>();
@@ -275,6 +279,9 @@ public class DashboardService extends AbstractIndexMetadataService {
 			}
 		}
 		if (!updated) {
+			if (currentDashboards.size() >= etmConfiguration.getMaxGraphCount()) {
+				throw new EtmException(EtmException.MAX_NR_OF_DASHBOARDS_REACHED);
+			}
 			currentDashboards.add(valueMap);
 		}
 		Map<String, Object> source = new HashMap<>();
