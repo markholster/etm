@@ -58,6 +58,14 @@ body { padding-top: 60px; }
         <div id="dashboard-settings_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="dashboard-settings_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
         <div id="dashboard-settings_box">
+          <div class="row">
+            <div class=col-sm-12>
+              <select id="sel-dashboard" class="form-control form-control-sm custom-select">
+         	    <option selected="selected"></option>
+              </select>
+            </div>
+          </div>  
+          <hr />
 	      <div class="row">
             <div class=col-sm-12>
 		      <form id="dashboard-settings_form"> 
@@ -70,7 +78,8 @@ body { padding-top: 60px; }
                 <div id="dashboard-settings-columns" class="form-group">
                 </div>    
                 <div class="modal-footer">
-	              <input id="btn-save-dashboard-settings" type="submit" class="btn btn-primary" value="Save" />
+	              <input type="submit" id="btn-confirm-remove-dashboard" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
+	              <input type="submit" id="btn-confirm-save-dashboard" class="btn btn-primary" value="Save" disabled="disabled" />
 	            </div>
               </form>
             </div>
@@ -135,6 +144,48 @@ body { padding-top: 60px; }
       </div>
     </div>
   </div>  
+  
+  
+  <div class="modal fade" id="modal-dashboard-overwrite" tabindex="-1" role="dialog" aria-labelledby="dashboard-overwrite-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="dashboard-overwrite-modal-label">Dashboard already exists</h4>
+        </div>
+        <div class="modal-body">
+          A dashboard with the name '<i id="overwrite-dashboard-name"></i>' already exists. Do you want to overwrite that dashboard?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button id="btn-save-dashboard" type="button" class="btn btn-primary">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+  <div class="modal fade" id="modal-dashboard-remove" tabindex="-1" role="dialog" aria-labelledby="dashboard-remove-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="dashboard-remove-modal-label">Confirm removal</h4>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to remove the dashboard '<i id="remove-dashboard-name"></i>'?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button id="btn-remove-dashboard" type="button" class="btn btn-primary">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>  
+  
   
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/tether.min.js"></script>

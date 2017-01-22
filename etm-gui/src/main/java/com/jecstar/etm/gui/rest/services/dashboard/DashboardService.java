@@ -19,6 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -172,9 +173,144 @@ public class DashboardService extends AbstractIndexMetadataService {
 				break;
 			}
 		}
+		
+		BulkRequestBuilder bulkRequest = DashboardService.client.prepareBulk()
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+
+		
 		Map<String, Object> source = new HashMap<>();
 		source.put("graphs", currentGraphs);
-		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+		bulkRequest.add(DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.setDoc(source)
+			.setDocAsUpsert(true));
+		
+		// Iterate over all dashboards of the user to remove the graph if it is present in the dashboard
+		getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+				.setFetchSource("dashboards", null)
+				.get();
+		if (!getResponse.isSourceEmpty() && !getResponse.getSourceAsMap().isEmpty()) {
+			boolean dashboardsUpdated = false;
+			Map<String, Object> sourceValues = getResponse.getSourceAsMap();
+			List<Map<String, Object>> dashboardsValues = getArray("dashboards", sourceValues);
+			if (dashboardsValues != null) {
+				for (Map<String, Object> dashboardValues : dashboardsValues) {
+					List<Map<String, Object>> rowsValues = getArray("rows", dashboardValues);
+					if (rowsValues != null) {
+						for (Map<String, Object> rowValues : rowsValues) {
+							List<Map<String, Object>> colsValues = getArray("cols", rowValues);
+							if (colsValues != null) {
+								for (Map<String, Object> colValues : colsValues) {
+									if (graphName.equals(colValues.get("graph"))) {
+										colValues.remove("graph");
+										colValues.remove("query");
+										colValues.remove("title");
+										colValues.remove("refresh_rate");
+										dashboardsUpdated = true;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (dashboardsUpdated) {
+				bulkRequest.add(DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+					.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+					.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+					.setDoc(sourceValues)
+					.setDocAsUpsert(true));
+			}
+		}
+		bulkRequest.get();
+		return "{\"status\":\"success\"}";
+	}
+	
+	@GET
+	@Path("/dashboards")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getDashboards() {
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+				.setFetchSource("dashboards", null)
+				.get();
+		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+			return "{\"max_dashboards\": " + etmConfiguration.getMaxDashboardCount() + "}";
+		}
+		// Hack the max search graphs into the result. Dunno how to do this better.
+		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
+		addIntegerElementToJsonBuffer("max_dashboards", etmConfiguration.getMaxDashboardCount(), result, false);
+		result.append("}");
+		return result.toString();
+	}
+	
+	@PUT
+	@Path("/dashboard/{dashboardName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addDashboard(@PathParam("dashboardName") String dasboardName, String json) {
+		// Execute a dry run on all data.
+		// TODO validate all data
+//		getGraphData(json, true);
+		// Data seems ok, now store the graph.
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+				.setFetchSource("dashboards", null)
+				.get();
+		List<Map<String, Object>> currentDashboards = new ArrayList<>();
+		Map<String, Object> valueMap = toMap(json);
+		valueMap.put("name", dasboardName);
+		if (!getResponse.isSourceEmpty()) {
+			currentDashboards = getArray("dashboards", getResponse.getSourceAsMap());
+		}
+		ListIterator<Map<String, Object>> iterator = currentDashboards.listIterator();
+		boolean updated = false;
+		while (iterator.hasNext()) {
+			Map<String, Object> dashboard = iterator.next();
+			if (dasboardName.equals(getString("name", dashboard))) {
+				iterator.set(valueMap);
+				updated = true;
+				break;
+			}
+		}
+		if (!updated) {
+			currentDashboards.add(valueMap);
+		}
+		Map<String, Object> source = new HashMap<>();
+		source.put("dashboards", currentDashboards);
+		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.setDoc(source)
+			.setDocAsUpsert(true)
+			.get();
+		return "{\"status\":\"success\"}";
+	}
+	
+	@DELETE
+	@Path("/dashboard/{dashboardName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String deleteDashboard(@PathParam("dashboardName") String dashboardName) {
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+				.setFetchSource("dashboards", null)
+				.get();
+		List<Map<String, Object>> currentDashboards = new ArrayList<>();
+		if (!getResponse.isSourceEmpty()) {
+			currentDashboards = getArray("dashboards", getResponse.getSourceAsMap());
+		}
+		ListIterator<Map<String, Object>> iterator = currentDashboards.listIterator();
+		while (iterator.hasNext()) {
+			Map<String, Object> dashboard = iterator.next();
+			if (dashboardName.equals(getString("name", dashboard))) {
+				iterator.remove();
+				break;
+			}
+		}
+		Map<String, Object> source = new HashMap<>();
+		source.put("dashboards", currentDashboards);
+		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())

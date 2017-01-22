@@ -1,7 +1,9 @@
 function loadDashboardPage() {
 	var maxParts = 12;
 	var graphMap = {};
+	var dashboardMap = {};
 	var keywords = [];
+	var dragstatus;
 	var currentDashboard;
 	var currentGraph;
 
@@ -58,14 +60,62 @@ function loadDashboardPage() {
         		}
         	}
         );
-	});    
+	});
 	
-	$('#btn-save-dashboard-settings').click(function (event) {
+	$('#sel-dashboard').change(function(event) {
+		event.preventDefault();
+		var dashboardData = dashboardMap[$(this).val()];
+		if ('undefined' == typeof dashboardData) {
+			resetSettings(true);
+			return;
+		}
+		currentDashboard = dashboardData;
+		showSettings(dashboardData);
+		enableOrDisableButtons();
+	});
+	
+	$.ajax({
+	    type: 'GET',
+	    contentType: 'application/json',
+	    url: '../rest/dashboard/dashboards',
+	    success: function(data) {
+	        if (!data) {
+	            return;
+	        }
+	        $dashboardSelect = $('#sel-dashboard');
+	        $.each(data.dashboards, function(index, dashboard) {
+	        	$dashboardSelect.append($('<option>').attr('value', dashboard.name).text(dashboard.name));
+	        	dashboardMap[dashboard.name] = dashboard;
+	        });
+	        sortSelectOptions($dashboardSelect)
+	        $dashboardSelect.val('');
+	    }
+	});
+	
+	$('#input-dashboard-name').on('input', enableOrDisableButtons);
+	
+	$('#dashboard-name').click(function (event) {
+		event.preventDefault();
+		showSettings(currentDashboard);
+	});
+
+	
+	$('#btn-confirm-save-dashboard').click(function (event) {
 		if (!document.getElementById('dashboard-settings_form').checkValidity()) {
 			return;
 		}
 		event.preventDefault();
-		
+		var dashboardName = $('#input-dashboard-name').val();
+		if (isDashboardExistent(dashboardName)) {
+			$('#overwrite-dashboard-name').text(dashboardName);
+			$('#modal-dashboard-overwrite').modal();
+		} else {
+			$('#btn-save-dashboard').click();
+		}
+	});
+	
+	$('#btn-save-dashboard').click(function (event) {
+		event.preventDefault();
 		if (!currentDashboard) {
 			currentDashboard = {
 			};
@@ -116,11 +166,11 @@ function loadDashboardPage() {
 			currentDashboard.rows.push(jsonRow);
 		});
 		
-		$('#dashboard-settings').hide();
 		$('#dashboard-container').show();
-		buildPage(currentDashboard);
+		saveDashboard();
+		buildDashboard(currentDashboard);
+		$('#dashboard-settings').hide();
 	});
-	var dragstatus;
 	
 	$('#dashboard-container').on("mouseover", 'div[data-col-id]', function(event) {
 		if (!dragstatus) {
@@ -221,10 +271,20 @@ function loadDashboardPage() {
 				dragstatus = null;
 				resizedDiv.mouseout();
 			}
+			saveDashboard();
 			dragstatus = null;
 		}
 	});
+	
+	$('#btn-confirm-remove-dashboard').click(function(event) {
+		event.preventDefault();
+		$('#remove-dashboard-name').text($('#input-dashboard-name').val());
+        $('#modal-dashboard-remove').modal();
+	});
 
+	$('#btn-remove-dashboard').click(function(event) {
+		removeDashboard($('#input-dashboard-name').val());
+	});
 	
 	$('#dashboard-container').on("click", "a[data-link-action='edit-graph']", function(event) {
     	event.preventDefault();
@@ -242,8 +302,7 @@ function loadDashboardPage() {
 		currentGraph.refresh_rate = $('#input-refresh-rate').val() ? Number($('#input-refresh-rate').val()) : null;
 		
 		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
-		
-		// TODO update data via rest.
+		saveDashboard();
 		$('#modal-graph-settings').modal('hide');
 	});	
 
@@ -284,6 +343,8 @@ function loadDashboardPage() {
 	        updateRowActions('#dashboard-settings-columns .actionRow');
 	    }
 	});
+	
+	showSettings();
 	
 	function updateRowActions(selector) {
         $(selector).each(function (index, row) {
@@ -336,18 +397,26 @@ function loadDashboardPage() {
         return row;        
     }
 	
-	function showSettings(dashboardData) {
+	function resetSettings(addEmptyRow) {
 		$('#dashboard-settings-columns').empty();
+		$('#dashboard-settings_form').trigger("reset");
 		$('#dashboard-settings-columns').append(
 		    $('<div>').addClass('row').append(
 		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Columns'), 
 		    	$('<div>').addClass('col-sm-5 font-weight-bold').text('Height'), 
 		    	$('<div>').addClass('col-sm-2 font-weight-bold')
-		        	.append($('<a href="#">').text('Add row')
-		        		.attr('data-row-action', 'row-add')	
-		            )        
-		        )
-		    );			
+		        	.append($('<a href="#">').text('Add row').attr('data-row-action', 'row-add')	
+		        )        
+		    )
+		);			
+		if (addEmptyRow) {
+			$('#dashboard-settings-columns').append(createColumnSettingsRow());
+		}
+		enableOrDisableButtons();
+	}
+	
+	function showSettings(dashboardData) {
+		resetSettings(!dashboardData);
 		if (dashboardData) {
 			$('#input-dashboard-name').val(dashboardData.name);
 			if (dashboardData.rows) {
@@ -356,10 +425,8 @@ function loadDashboardPage() {
 				});
 				updateRowActions('#dashboard-settings-columns .actionRow');
 			}
-		} else {
-			$('#input-dashboard-name').val('My New Dashboard');
-			$('#dashboard-settings-columns').append(createColumnSettingsRow());
 		}
+		enableOrDisableButtons();
 		$('#dashboard-container').hide();
 		$('#dashboard-settings').show();
 	}
@@ -383,7 +450,6 @@ function loadDashboardPage() {
 
 	
 	function createCell(col) {
-		// TODO, col.chart, col.chartData & col.interval moeten niet opgeslagen worden!!!
 		col.chart = null;
 		col.chartData = null;
 		if (col.interval) {
@@ -571,70 +637,7 @@ function loadDashboardPage() {
 		options.appendTo($select);
 	}
 	
-// OLD STUFF
-	
-	
-	
-	$('#dashboard-name').click(function (event) {
-		event.preventDefault();
-		showSettings(currentDashboard);
-	});
-	
-	if (name) {
-		// TODO load dashboard via rest.
-		currentDashboard = {
-				name: 'My Dashboard',
-				rows: [
-				  { 
-					id: generateUUID(),
-					height: 16,
-					cols: [
-					  { 
-						id: generateUUID(),
-						parts: 6,
-						title: 'Log types over time',
-						bordered: true,
-						showLegend: true,
-						type: 'line',
-						area: true,
-						index: {
-							name: 'etm_event_all',
-							types: ['log'],
-						},
-						x_axis: { 
-							agg: {
-								name: 'logs',
-								type: 'date-histogram',
-								field: 'endpoints.writing_endpoint_handler.handling_time',
-								interval: 'hour',
-								aggs: [
-								       {
-								    	   name: 'levels',
-								    	   type: 'terms',
-								    	   field: 'log_level'
-								       }
-								]
-							}
-						},
-						y_axis: {
-							agg : {
-								name: 'count',
-								type: 'count',
-									
-							},
-							label: 'Count'
-						}					
-					  }	
-					]
-				  }
-				]	
-		}
-		buildPage(currentDashboard);
-	} else {
-		showSettings();
-	}
-	
-	function buildPage(dashboardData) {
+	function buildDashboard(dashboardData) {
 		$('#dashboard-name').text(dashboardData.name);
 		var graphContainer = $('#graph-container').empty();
 		graphContainer.append($('<div>').attr('id', 'resize-template-row').addClass('row')
@@ -668,7 +671,82 @@ function loadDashboardPage() {
 		});
 	}
 	
-	// TODO deze functie moet gebruikt worden tijdens het opslaan van een grafiek. Het ID moet dan geset worden naar een unieke waarde
+	function enableOrDisableButtons() {
+		if (document.getElementById('dashboard-settings_form').checkValidity()) {
+			$('#btn-confirm-save-dashboard').removeAttr('disabled');
+		} else {
+			$('#btn-confirm-save-dashboard').attr('disabled', 'disabled');
+		}
+		var dashboardName = $('#input-dashboard-name').val();
+		if (dashboardName && isDashboardExistent(dashboardName)) {
+			$('#btn-confirm-remove-dashboard').removeAttr('disabled');
+		} else {
+			$('#btn-confirm-remove-dashboard').attr('disabled', 'disabled');
+		}
+	}
+	
+	function isDashboardExistent(name) {
+		return "undefined" != typeof dashboardMap[name];
+	}
+	
+	function saveDashboard() {
+		var dashboardData = createDashboardData();
+		$.ajax({
+            type: 'PUT',
+            contentType: 'application/json',
+            url: '../rest/dashboard/dashboard/' + encodeURIComponent(dashboardData.name),
+            data: JSON.stringify(dashboardData),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+        		if (!isDashboardExistent(dashboardData.name)) {
+        			$dashboardSelect = $('#sel-dashboard');
+        			$dashboardSelect.append($('<option>').attr('value', dashboardData.name).text(dashboardData.name));
+        			sortSelectOptions($dashboardSelect);
+        		}
+        		dashboardMap[dashboardData.name] = dashboardData;
+        		$('#dashboard-settings_infoBox').text('Dashboard \'' + dashboardData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+        		enableOrDisableButtons();
+            }
+        }).always(function () {
+        	$('#modal-dashboard-overwrite').modal('hide');
+        });    		
+	}
+	
+	function createDashboardData() {
+		var dashboardData = $.extend(true, {}, currentDashboard);
+		for (rowIx=0; rowIx < dashboardData.rows.length; rowIx++) {
+			for (colIx=0; colIx < dashboardData.rows[rowIx].cols.length; colIx++) {
+				delete dashboardData.rows[rowIx].cols[colIx].chart;
+				delete dashboardData.rows[rowIx].cols[colIx].chartData;
+				delete dashboardData.rows[rowIx].cols[colIx].interval;
+			}
+		}		
+		return dashboardData;
+	}
+	
+	function removeDashboard(dashboardName) {
+		$.ajax({
+            type: 'DELETE',
+            contentType: 'application/json',
+            url: '../rest/dashboard/dashboard/' + encodeURIComponent(dashboardName),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+        		delete dashboardMap[dashboardName];
+        		$("#sel-dashboard > option").filter(function(i){
+     		       return $(this).attr("value") == dashboardName;
+        		}).remove();
+        		$('#dashboard-settings_infoBox').text('Dashboard \'' + dashboardName + '\' removed.').show('fast').delay(5000).hide('fast');
+        		enableOrDisableButtons();
+            }
+        }).always(function () {
+        	$('#modal-dashboard-remove').modal('hide');
+        });    		
+	}
+	
 	function generateUUID() {
     	var d = new Date().getTime();
 	    if(window.performance && typeof window.performance.now === "function"){
