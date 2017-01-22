@@ -227,7 +227,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString())
 			.allowLeadingWildcard(true)
 			.analyzeWildcard(true)
-			.defaultField("payload")
+			.defaultField("_all")
 			.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
 		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 		boolQueryBuilder.must(queryStringBuilder);

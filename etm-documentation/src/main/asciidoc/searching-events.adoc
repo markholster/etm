@@ -82,7 +82,7 @@ image::images/etm-transaction-overview.png["Transaction overview",link="./images
 As we can see the query that selected the shopping card from the database took about 300 milliseconds. Depending on your needs that might or might not be an issue. Nevertheless {etm} will give you a quick inside in what is happening where an what applications and components take most of the execution time of an entire application chain. That is awesome isn't it?
 
 === Query syntax
-The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default the ''payload'' attribute is searched for, but other options are available. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
+The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default all event attributes are matched, but specific attributes can be specified to narrow down the query. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
 
 ==== Event attribute names
 Searching for specific event attribute can be done with the following syntax:

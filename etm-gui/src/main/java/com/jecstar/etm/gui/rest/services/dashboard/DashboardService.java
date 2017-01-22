@@ -326,7 +326,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 				.analyzeWildcard(true)
 				.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
 		if (ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL.equals(index)) {
-			queryStringBuilder.defaultField("payload");
+			queryStringBuilder.defaultField("_all");
 			searchRequest.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder));
 		} else {
 			searchRequest.setQuery(queryStringBuilder);
