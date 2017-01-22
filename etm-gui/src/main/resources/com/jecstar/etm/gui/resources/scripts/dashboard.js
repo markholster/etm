@@ -120,74 +120,6 @@ function loadDashboardPage() {
 		}
 	});
 	
-	function applyDashboardSettings() {
-		var dashboardData = {
-			changed: false
-		};
-		if (!currentDashboard) {
-			dashboardData.changed = true;
-		}
-		dashboardData.name = $('#input-dashboard-name').val();
-		var oldRows = currentDashboard.rows;
-		dashboardData.rows = [];
-		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (rowIx, row) {
-			var nrOfCols = $(row).find("input[name='row-cols']").val();
-			var height = $(row).find("input[name='row-height']").val();
-			var oldRow;
-			var rowId = $(row).attr('data-row-id');
-			if (oldRows && rowId) {
-				// find the row that is edited.
-				oldRow = $.grep(oldRows, function(n, i) {
-					return n.id == rowId;
-				})[0];
-			}
-			var jsonRow = {
-					id: generateUUID(),
-					height: height,
-					cols: []
-			}
-			if (oldRow) {
-				jsonRow.id = oldRow.id;
-				jsonRow.height = height;
-			}  
-			if (oldRow && oldRow.height != jsonRow.height) {
-				dashboardData.changed = true;
-			}
-			if (oldRow && oldRow.cols && oldRow.cols.length == nrOfCols) {
-				// Number of columns in row not changed.
-				jsonRow.cols = oldRow.cols;
-			} else {
-				dashboardData.changed = true;
-				var remainingParts = maxParts;
-				for (i=0; i< nrOfCols; i++) {
-					var parts = Math.ceil(remainingParts / (nrOfCols - i));
-					column = {
-						id: generateUUID(),
-						parts: parts,
-						bordered: true
-					}
-					if (oldRow && oldRow.cols && oldRow.cols[i]) {
-						column = oldRow.cols[i];
-						column.parts = parts;
-					}
-					jsonRow.cols.push(column);
-					remainingParts -= parts;
-				}		
-			}
-			dashboardData.rows.push(jsonRow);
-		});
-		if (!dashboardData.changed) {
-			if (oldRows && oldRows.length != dashboardData.rows.length) {
-				dashboardData.changed = true;
-			}
-			if (currentDashboard.name != dashboardData.name) {
-				dashboardData.changed = true;
-			}
-			
-		}
-		return dashboardData;
-	}
-	
 	$('#btn-save-dashboard').click(function (event) {
 		event.preventDefault();
 		var dashboardData = applyDashboardSettings();
@@ -476,6 +408,74 @@ function loadDashboardPage() {
 		enableOrDisableButtons();
 		$('#dashboard-container').hide();
 		$('#dashboard-settings').show();
+	}
+	
+	function applyDashboardSettings() {
+		var dashboardData = {
+			changed: false
+		};
+		if (!currentDashboard) {
+			dashboardData.changed = true;
+		}
+		dashboardData.name = $('#input-dashboard-name').val();
+		var oldRows = currentDashboard.rows;
+		dashboardData.rows = [];
+		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (rowIx, row) {
+			var nrOfCols = $(row).find("input[name='row-cols']").val();
+			var height = $(row).find("input[name='row-height']").val();
+			var oldRow;
+			var rowId = $(row).attr('data-row-id');
+			if (oldRows && rowId) {
+				// find the row that is edited.
+				oldRow = $.grep(oldRows, function(n, i) {
+					return n.id == rowId;
+				})[0];
+			}
+			var jsonRow = {
+					id: generateUUID(),
+					height: height,
+					cols: []
+			}
+			if (oldRow) {
+				jsonRow.id = oldRow.id;
+				jsonRow.height = height;
+			}  
+			if (oldRow && oldRow.height != jsonRow.height) {
+				dashboardData.changed = true;
+			}
+			if (oldRow && oldRow.cols && oldRow.cols.length == nrOfCols) {
+				// Number of columns in row not changed.
+				jsonRow.cols = oldRow.cols;
+			} else {
+				dashboardData.changed = true;
+				var remainingParts = maxParts;
+				for (i=0; i< nrOfCols; i++) {
+					var parts = Math.ceil(remainingParts / (nrOfCols - i));
+					column = {
+						id: generateUUID(),
+						parts: parts,
+						bordered: true
+					}
+					if (oldRow && oldRow.cols && oldRow.cols[i]) {
+						column = oldRow.cols[i];
+						column.parts = parts;
+					}
+					jsonRow.cols.push(column);
+					remainingParts -= parts;
+				}		
+			}
+			dashboardData.rows.push(jsonRow);
+		});
+		if (!dashboardData.changed) {
+			if (oldRows && oldRows.length != dashboardData.rows.length) {
+				dashboardData.changed = true;
+			}
+			if (currentDashboard.name != dashboardData.name) {
+				dashboardData.changed = true;
+			}
+			
+		}
+		return dashboardData;
 	}
 
 	function editGraph(cellId) {
