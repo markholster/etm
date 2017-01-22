@@ -1,4 +1,4 @@
-function loadDashboard(name) {
+function loadDashboardPage() {
 	var maxParts = 12;
 	var graphMap = {};
 	var keywords = [];

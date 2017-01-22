@@ -168,19 +168,7 @@ $(document).ajaxStart(function () {
     }          
 });
 buildMenu('dashboard', '../');
-
-var queryParams = {};
-window.location.search.substr(1).split("&").forEach(function(item) {
-    var s = item.split("="),
-        k = s[0],
-        v = s[1] && decodeURIComponent(s[1]);
-    (k in queryParams) ? queryParams[k].push(v) : queryParams[k] = [v]
-});
-if (queryParams['name']) {
-	loadDashboard(queryParams['name']);
-} else if ('true' == queryParams['new']) {
-	loadDashboard();	
-}
+loadDashboardPage();	
 
 
 </script>
