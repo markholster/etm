@@ -1,0 +1,27 @@
+== Visualizations
+Besides searching for data {etm} provides a way to visualize statistics on any of the attributes your stored in the <<Event layout>>. Combined with event <<Parsers>> you can extract the specific part of the event payload you are interested in and show statistical information of these parts on a realtime dashboard.
+
+=== Graphs
+Graphs are the base items on a <<Dashboard>>. Each graph represents a visual representation of a part of your data. A graph can be a single number, but also a chart.
+
+To add, modify or delete graphs browse to http://localhost:8080/gui/dashboard/graphs.html or select the menu option ''Visualizations -> Graphs''.
+
+Each graph is uniquely identified by it's name and selects data from a certain datasource. {etm} provides 2 datasources:
+
+. Events
+. Metrics
+
+The Events datasource contains all event you stored in {etm}. The Metrics datasource contains metric data of all {etm} instances. This information can be very helpful to monitor your {etm} cluster.
+To narrow down the data used in your graph you can provide a query. This query will be used as filter query for your statistics. Also, if you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
+
+Finally, depending on the selected Graph type you can provide which information will be shown on your graph.
+[horizontal]
+Bar chart:: A bar chart provides the most efficient way of displaying time and non time data that might be stacked or grouped. On the y-axis the chart must contain one or more <<Metric aggregator>>s. The x-axis is configured with a <<Bucket aggregator>>. 
+Line chart:: Line charts are most useful for time series data. On the y-axis the chart must contain one or more <<Metric aggregator>>s. The x-axis is configured with a <<Bucket aggregator>>.
+Number:: Graph with this type selected will show a single number. The number will be the result of a single <<Metric aggregator>>.
+Stacked area:: Stacked area are the way to go when you want to compare several series or are interested in the total of all series. On the y-axis the chart must contain one or more <<Metric aggregator>>s. The x-axis is configured with a <<Bucket aggregator>>. 
+
+==== Metric aggregator
+
+==== Bucket aggregator
+

@@ -39,7 +39,7 @@ Each user can have one or more roles. Depending on the roles the user has, he or
 [horizontal]
 Admin:: When checked the user can access all pages of {etm} without any restrictions.
 Searcher:: With this role the user can search for events.
-Controller:: When a user has the controller role he or she can access the dashboard.
+Controller:: When a user has the controller role he or she can create and access the dashboard functionality.
 Processor:: With this role the user can add events by posting to the rest processor. By default the rest processor hasn't any access restrictions so everybody can use it. If security is applied to the rest processor only users with the Processor role can use the rest processor.
 Iib-admin:: With this role the user can manage the creation if IIB Monitoring Event from the ''Settings'' menu. See <<Integration with IBM MQ and/or IBM Integration Bus>> to enable this integration.
 
