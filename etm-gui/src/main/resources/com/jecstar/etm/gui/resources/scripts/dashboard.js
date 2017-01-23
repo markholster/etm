@@ -418,7 +418,7 @@ function loadDashboardPage() {
 			dashboardData.changed = true;
 		}
 		dashboardData.name = $('#input-dashboard-name').val();
-		var oldRows = currentDashboard.rows;
+		var oldRows = currentDashboard ? currentDashboard.rows : null;
 		dashboardData.rows = [];
 		$('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (rowIx, row) {
 			var nrOfCols = $(row).find("input[name='row-cols']").val();
