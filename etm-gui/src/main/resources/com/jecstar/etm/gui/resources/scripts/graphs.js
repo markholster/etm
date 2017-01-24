@@ -756,6 +756,7 @@ function buildGraphsPage() {
         		        return chart;
         		    });
         		}
+        		$('html,body').animate({scrollTop: $("#preview_box").parent().parent().offset().top },'fast');
             }
         });
         
