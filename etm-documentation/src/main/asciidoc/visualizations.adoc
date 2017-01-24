@@ -2,7 +2,7 @@
 Besides searching for data {etm} provides a way to visualize statistics on any of the attributes your stored in the <<Event layout>>. Combined with event <<Parsers>> you can extract the specific part of the event payload you are interested in and show statistical information of these parts on a realtime dashboard.
 
 === Graphs
-Graphs are the base items on a <<Dashboard>>. Each graph represents a visual representation of a part of your data. A graph can be a single number, but also a chart.
+Graphs are the base items on <<Dashboards>>. Each graph represents a visual representation of a part of your data. A graph can be a single number, but also a chart.
 
 To add, modify or delete graphs browse to http://localhost:8080/gui/dashboard/graphs.html or select the menu option ''Visualizations -> Graphs''.
 
@@ -14,7 +14,7 @@ Each graph is uniquely identified by it's name and selects data from a certain d
 The Events datasource contains all event you stored in {etm}. The Metrics datasource contains metric data of all {etm} instances. This information can be very helpful to monitor your {etm} cluster.
 To narrow down the data used in your graph you can provide a query. This query will be used as filter query for your statistics. Also, if you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
 
-Finally, depending on the selected Graph type you can provide which information will be shown on your graph.
+Finally, depending on your needs you can select a suitable graph type:
 [horizontal]
 Bar chart:: A bar chart provides the most efficient way of displaying time and non time data that might be stacked or grouped. On the y-axis the chart must contain one or more <<Metric aggregator>>s. The x-axis is configured with a <<Bucket aggregator>>. 
 Line chart:: Line charts are most useful for time series data. On the y-axis the chart must contain one or more <<Metric aggregator>>s. The x-axis is configured with a <<Bucket aggregator>>.
@@ -22,6 +22,28 @@ Number:: Graph with this type selected will show a single number. The number wil
 Stacked area:: Stacked area are the way to go when you want to compare several series or are interested in the total of all series. On the y-axis the chart must contain one or more <<Metric aggregator>>s. The x-axis is configured with a <<Bucket aggregator>>. 
 
 ==== Metric aggregator
+Metric aggregators calculate a value based on the values from the events that are being aggregated. The output of a metric aggregator is a number. The following metric aggregators are available:
+
+[horizontal]
+Average:: Calculates the average value of the provided field.
+Count:: Count the number of events.
+Max:: Select that highest value of the provided field.
+Median:: Select the median value of the provided field.
+Min:: Select the lowest value of the provided field. 
+Percentile:: Calculates a given percentile of the provided field.
+Percentile rank:: Calculates the percentage of events that is lower or equal than a given percentile rank of the provided field.
+Sum:: Calculates the sum of the provided field. 
+Unique count:: Calculate the number of unique occurrences of the provided field. 
 
 ==== Bucket aggregator
+Bucket aggregators don't calculate values but are used to group events based on provided criteria. In the context of graphs the bucket aggregators are responsible to split the metric aggregators in certain groups. For example, if you use the Count metric aggregator, a bucket aggregator can split the count value per timeunit or per event type. The following bucket aggregators are available:
 
+[horizontal]
+Date histogram:: Groups events per given interval based on a provided date field. 
+Histogram:: Groups events per given interval based on a provided numeric field.
+Significant term:: Group events on the most significant terms of the provided field.
+Term:: Groups events on the most or least occurred terms of the provided field. 
+
+=== Dashboards
+After adding some <<Graphs>> it is time to create your first dashboard. To add, modify or delete dashboards browse to http://localhost:8080/gui/dashboard/dashboards.html or select the menu option ''Visualizations -> Dashboards''.
+A dashboard contains of a set of horizontal rows below each other. Each row can be split into columns and each column can contain a graph.
