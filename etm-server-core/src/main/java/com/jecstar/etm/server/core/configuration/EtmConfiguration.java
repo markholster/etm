@@ -331,13 +331,26 @@ public class EtmConfiguration {
 		}
 		return !isLicenseValidAt(Instant.now());
 	}
-	
 
 	public Boolean isLicenseAlmostExpired() {
 		if (this.license == null) {
 			return false;
 		}		
 		return !isLicenseExpired() && !isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
+	}
+	
+	public Boolean isLicenseCountExceeded() {
+		if (this.license == null) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Boolean isLicenseSizeExceeded() {
+		if (this.license == null) {
+			return true;
+		}
+		return false;
 	}
 	
 	private boolean isLicenseValidAt(Instant moment) {

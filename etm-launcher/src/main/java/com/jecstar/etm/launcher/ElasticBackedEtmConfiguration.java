@@ -1,8 +1,13 @@
 package com.jecstar.etm.launcher;
 
+import java.time.ZonedDateTime;
+
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
 
+import com.jecstar.etm.processor.core.persisting.elastic.AbstractElasticTelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
@@ -16,6 +21,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	
 	private final long updateCheckInterval = 60 * 1000;
 	private long lastCheckedForUpdates;
+	
+	private long eventsPersistedToday = 0;
+	private long sizePersistedToday = 0;
 	
 	public ElasticBackedEtmConfiguration(String nodeName, final Client elasticClient) {
 		super(nodeName);
@@ -149,11 +157,54 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return super.isLicenseAlmostExpired();
 	}
 	
+	@Override
+	public Boolean isLicenseCountExceeded() {
+		reloadConfigurationWhenNecessary();
+		License license = getLicense();
+		if (license == null) {
+			return true;
+		}
+		if (license.getMaxEventsPerDay() == -1) {
+			return false;
+		}
+		return this.eventsPersistedToday > license.getMaxEventsPerDay();  
+	}
+	
+	@Override
+	public Boolean isLicenseSizeExceeded() {
+		reloadConfigurationWhenNecessary();
+		License license = getLicense();
+		if (license == null) {
+			return true;
+		}
+		if (license.getMaxSizePerDay() == -1) {
+			return false;
+		}
+		return this.sizePersistedToday > license.getMaxSizePerDay();  
+	}
+	
 	private boolean reloadConfigurationWhenNecessary() {
 		boolean changed = false;
 		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
 			return changed;
 		}
+		
+		String indexNameOfToday = ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + AbstractElasticTelemetryEventPersister.dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+		this.elasticClient.admin().indices().prepareStats(indexNameOfToday)
+				.clear()
+				.setStore(true)
+				.setDocs(true)
+				.execute(new ActionListener<IndicesStatsResponse>() {
+					@Override
+					public void onResponse(IndicesStatsResponse response) {
+						eventsPersistedToday = response.getTotal().docs.getCount() - response.getTotal().docs.getDeleted();
+						sizePersistedToday = response.getTotal().store.getSizeInBytes();
+					}
+
+					@Override
+					public void onFailure(Exception e) {
+					}
+				});
 		GetResponse defaultResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT).get();
 		GetResponse nodeResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, getNodeName()).get();
 		GetResponse licenseResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID).get();

@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -102,14 +101,17 @@ public class SettingsService extends AbstractJsonService {
 			return null;
 		}
 		boolean added = false;
+		NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
 		added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), result, !added) || added;
+		added = addStringElementToJsonBuffer("max_events_per_day_as_text", numberFormat.format(license.getMaxEventsPerDay()), result, !added) || added;
 		added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), result, !added) || added;
-		result.append("}");
+		added = addStringElementToJsonBuffer("max_size_per_day_as_text", numberFormat.format(license.getMaxSizePerDay()), result, !added) || added;
+				result.append("}");
 		return result.toString();
 	}
 	
@@ -130,6 +132,7 @@ public class SettingsService extends AbstractJsonService {
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		NumberFormat numberFormat = etmPrincipal.getNumberFormat();
 		License license = etmConfiguration.getLicense();
 		boolean added = false;
 		StringBuilder result = new StringBuilder();
@@ -139,7 +142,9 @@ public class SettingsService extends AbstractJsonService {
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
 		added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), result, !added) || added;
+		added = addStringElementToJsonBuffer("max_events_per_day_as_text", numberFormat.format(license.getMaxEventsPerDay()), result, !added) || added;
 		added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), result, !added) || added;
+		added = addStringElementToJsonBuffer("max_size_per_day_as_text", numberFormat.format(license.getMaxSizePerDay()), result, !added) || added;
 		result.append("}");
 		return result.toString();
 	}
@@ -181,15 +186,14 @@ public class SettingsService extends AbstractJsonService {
 				.setDocs(true)
 				.setIndexing(true)
 				.setSearch(true)
-				.get();
-		Locale locale = getEtmPrincipal().getLocale();
-		NumberFormat numberFormat = NumberFormat.getInstance(locale);
+				.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"d3_formatter\": " + getD3Formatter());
 		result.append(",\"totals\": {");
-		addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount(), result, true);	
-		addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount()), result, false);	
+		addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted(), result, true);	
+		addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted()), result, false);	
 		addLongElementToJsonBuffer("size_in_bytes", indicesStatsResponse.getTotal().store.getSizeInBytes(), result, false);	
 		addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(indicesStatsResponse.getTotal().store.getSizeInBytes()), result, false);	
 		result.append("}, \"indices\": [");

@@ -262,6 +262,12 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (this.etmConfiguration.isLicenseExpired()) {
 			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
 		}
+		if (this.etmConfiguration.isLicenseCountExceeded()) {
+			throw new EtmException(EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED);
+		}
+		if (this.etmConfiguration.isLicenseSizeExceeded()) {
+			throw new EtmException(EtmException.LICENSE_MESSAGE_SIZE_EXCEEDED);
+		}		
 	}
 
 	@Override
