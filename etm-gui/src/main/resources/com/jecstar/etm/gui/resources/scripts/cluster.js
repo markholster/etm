@@ -46,7 +46,7 @@ function buildClusterPage() {
 	
 	
 	function saveCluster(context) {
-		var clusterData = createClusterData();
+		var clusterData = createClusterData(context);
 		$.ajax({
             type: 'PUT',
             contentType: 'application/json',
@@ -82,27 +82,30 @@ function buildClusterPage() {
 		$("#input-persisting-bulk-time").val(data.persisting_bulk_time);
 	}
 	
-	function createClusterData() {
-		// TODO alleen de data van een bepaalde context (search/persisting etc) opslaan i.p.v. alles.
-		var clusterData = {
-		  shards_per_index : Number($("#input-shards-per-index").val()),
-		  replicas_per_index : Number($("#input-replicas-per-index").val()),
-		  max_event_index_count : Number($("#input-max-event-indices").val()),
-		  max_metrics_index_count : Number($("#input-max-metrics-indices").val()),
-		  wait_for_active_shards : Number($("#input-wait-for-active-shards").val()),
-		  retry_on_conflict_count : Number($("#input-retries-on-conflict").val()),
-		  query_timeout : Number($("#input-query-timeout").val()),
-		  max_search_result_download_rows : Number($("#input-search-export-max-rows").val()),
-		  max_search_template_count : Number($("#input-search-max-templates").val()),
-		  max_search_history_count : Number($("#input-search-max-history-size").val()),
-		  max_graph_count : Number($("#input-visualization-max-graph-count").val()),
-		  max_dashboard_count : Number($("#input-visualization-max-dashboard-count").val()),
-		  enhancing_handler_count : Number($("#input-enhancing-handler-count").val()),
-		  persisting_handler_count : Number($("#input-persisting-handler-count").val()),
-		  event_buffer_size : Number($("#input-event-buffer-size").val()),
-		  persisting_bulk_count : Number($("#input-persisting-bulk-count").val()),
-		  persisting_bulk_size : Number($("#input-persisting-bulk-size").val()),
-		  persisting_bulk_time : Number($("#input-persisting-bulk-time").val())
+	function createClusterData(context) {
+		var clusterData = {};
+		if ('Elasticsearch' == context) {
+			clusterData.shards_per_index = Number($("#input-shards-per-index").val());
+			clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
+			clusterData.max_event_index_count = Number($("#input-max-event-indices").val());
+			clusterData.max_metrics_index_count = Number($("#input-max-metrics-indices").val());
+			clusterData.wait_for_active_shards = Number($("#input-wait-for-active-shards").val());
+			clusterData.retry_on_conflict_count = Number($("#input-retries-on-conflict").val());
+			clusterData.query_timeout = Number($("#input-query-timeout").val());
+		} else if ('Persisting' == context) {
+			clusterData.enhancing_handler_count = Number($("#input-enhancing-handler-count").val());
+			clusterData.persisting_handler_count = Number($("#input-persisting-handler-count").val());
+			clusterData.event_buffer_size = Number($("#input-event-buffer-size").val());
+			clusterData.persisting_bulk_count = Number($("#input-persisting-bulk-count").val());
+			clusterData.persisting_bulk_size = Number($("#input-persisting-bulk-size").val());
+			clusterData.persisting_bulk_time = Number($("#input-persisting-bulk-time").val());
+		} else if ('Search' == context) {
+			clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
+			clusterData.max_search_template_count = Number($("#input-search-max-templates").val());
+			clusterData.max_search_history_count = Number($("#input-search-max-history-size").val());
+		} else if ('Visualizations' == context) {
+			clusterData.max_graph_count = Number($("#input-visualization-max-graph-count").val());
+			clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
 		}
 		return clusterData;
 	}
