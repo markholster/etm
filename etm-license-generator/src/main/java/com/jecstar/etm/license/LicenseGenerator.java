@@ -29,10 +29,11 @@ public class LicenseGenerator {
 		calendar.set(Calendar.SECOND, 59);
 		calendar.set(Calendar.MILLISECOND, 999);
 	    final String company = "Jecstar Innovation";
-	    final LicenseType licenseType = LicenseType.SUBSCRIPTION;
+	    final Long maxEventsPerDay = -1L;
+	    final Long maxSizePerDay = -1L;
 	    final long expiry = calendar.getTimeInMillis();
 	    
-		final String licenseKey = company + "_:_" + expiry + "_:_" + licenseType.name();
+		final String licenseKey = company + "_:_" + expiry + "_:_" + maxEventsPerDay + "_:_" + maxSizePerDay;
 		
 		
 		KeyFactory keyFactory = KeyFactory.getInstance("RSA");

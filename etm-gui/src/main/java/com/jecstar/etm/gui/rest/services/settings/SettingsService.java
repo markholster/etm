@@ -107,7 +107,8 @@ public class SettingsService extends AbstractJsonService {
 		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
-		added = addStringElementToJsonBuffer("license_type", license.getLicenseType().name(), result, !added) || added;
+		added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), result, !added) || added;
+		added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), result, !added) || added;
 		result.append("}");
 		return result.toString();
 	}
@@ -137,7 +138,8 @@ public class SettingsService extends AbstractJsonService {
 		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
-		added = addStringElementToJsonBuffer("license_type", license.getLicenseType().name(), result, !added) || added;
+		added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), result, !added) || added;
+		added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), result, !added) || added;
 		result.append("}");
 		return result.toString();
 	}

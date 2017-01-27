@@ -167,7 +167,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		EtmConfiguration etmConfiguration = this.etmConfigurationConverter.read(nodeContent, defaultContent, "temp-for-reload-merge");
 		if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty()) {
 			Object license = licenseResponse.getSourceAsMap().get(this.etmConfigurationConverter.getTags().getLicenseTag());
-			if (license != null) {
+			if (license != null && isValidLicenseKey(license.toString())) {
 				etmConfiguration.setLicenseKey(license.toString());
 			}
 		}

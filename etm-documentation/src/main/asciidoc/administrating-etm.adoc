@@ -4,7 +4,7 @@ Apart from the <<Node configuration>> {etm} can be configured with a browser. At
 === License registration
 One of the first things you need to do as administrator is entering your license key. Without a proper license no events will be processed. When your license is expired or not entered you will be able to access all features of {etm}. The only part that is disabled is the processing of events.
 To enter your license or view the state of your current license, open a browser and browse to http://localhost:8080/gui/settings/license.html (Of course your server name and port may be different). If you are already logged in to {etm} you can access the license page through the menu options ''Settings -> License''.
-Paste your license key in the input field and hit the ''Apply'' button. If you entered a valid license, the Owner and Expiration Date will become visible.
+Paste your license key in the input field and hit the ''Apply'' button. If you entered a valid license the license data will become visible.
 
 A correctly applied license looks something like this:
 

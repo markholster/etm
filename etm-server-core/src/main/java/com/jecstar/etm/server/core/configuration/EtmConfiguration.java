@@ -89,6 +89,27 @@ public class EtmConfiguration {
 		this.license = new License(licenseKey);
 	}
 	
+	/**
+	 * Method to determine if a license key is valid. This method does not check
+	 * if the license is expired!
+	 * 
+	 * @param licenseKey
+	 *            The key to check.
+	 * @return <code>true</code> if the license is syntactically correct,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean isValidLicenseKey(String licenseKey) {
+		if (licenseKey == null || licenseKey.trim().length() == 0) {
+			return false;
+		}		
+		try {
+			new License(licenseKey);
+			return true;
+		} catch (EtmException e) {
+		}
+		return false;
+	}
+	
 	// Etm processor configuration
 
 	public int getEnhancingHandlerCount() {

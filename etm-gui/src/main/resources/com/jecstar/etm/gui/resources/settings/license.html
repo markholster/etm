@@ -50,6 +50,16 @@ body { padding-top: 60px; }
             <label for="input-expiration-date">Expiration date</label>
             <input id="input-expiration-date" type="text" class="form-control" disabled />
           </div>        
+        </div>  
+        <div class="row">
+          <div class="form-group col-sm-6">
+            <label for="input-max-events">Max events per day</label>
+            <input id="input-max-events" type="text" class="form-control" disabled />
+          </div>
+          <div class="form-group col-sm-6">
+            <label for="input-max-size">Max size per day</label>
+            <input id="input-max-size" type="text" class="form-control" disabled />
+          </div>        
         </div>
         <div class="row">
          <div class="form-group col-sm-12">
@@ -107,6 +117,8 @@ body { padding-top: 60px; }
             }
             $('#input-owner').val(data.owner);
             $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+            $('#input-max-events').val(data.max_events_per_day == '-1' ? 'Unlimited' : data.max_events_per_day);
+            $('#input-max-size').val(data.max_size_per_day == '-1' ? 'Unlimited' : data.max_size_per_day);
         }
     });    
     
@@ -126,6 +138,8 @@ body { padding-top: 60px; }
                 $('#license_infoBox').text('License applied').show('fast').delay(5000).hide('fast');
                 $('#input-owner').val(data.owner);
                 $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+                $('#input-max-events').val(data.max_events_per_day == '-1' ? 'Unlimited' : data.max_events_per_day);
+                $('#input-max-size').val(data.max_size_per_day == '-1' ? 'Unlimited' : data.max_size_per_day);
                 $('#license-key').val('');
             }
         });    

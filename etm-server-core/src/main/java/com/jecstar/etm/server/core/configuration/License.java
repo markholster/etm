@@ -24,7 +24,9 @@ public class License {
 	
 	private Instant expiryDate;
 	
-	private LicenseType licenseType;
+	private Long maxEventsPerDay;
+
+	private Long maxSizePerDay;
 	
 	public License(String licenseKey) {
 		try {
@@ -38,12 +40,13 @@ public class License {
 			byte[] decryptedBytes = decrpyptCipher.doFinal(Base64.getDecoder().decode(licenseKey.getBytes()));
 			String license = new String(decryptedBytes);
 			String[] split = license.split("_:_");
-			if (split.length != 3) {
+			if (split.length != 4) {
 				throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
 			}
 			this.owner = split[0];
 			this.expiryDate = Instant.ofEpochMilli(Long.valueOf(split[1]));
-			this.licenseType = LicenseType.valueOf(split[2]);
+			this.maxEventsPerDay = Long.valueOf(split[2]);
+			this.maxSizePerDay = Long.valueOf(split[3]);
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException
 		        | IllegalBlockSizeException | BadPaddingException | IllegalArgumentException e) {
 			throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION, e);
@@ -55,30 +58,32 @@ public class License {
 	}
 	
 	public Instant getExpiryDate() {
-		return expiryDate;
+		return this.expiryDate;
 	}
 	
-	public LicenseType getLicenseType() {
-		return this.licenseType;
+	public Long getMaxEventsPerDay() {
+		return this.maxEventsPerDay;
+	}
+	
+	public Long getMaxSizePerDay() {
+		return this.maxSizePerDay;
 	}
 
-	public enum LicenseType {
-		TRIAL, SUBSCRIPTION
-	}
-	
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof License) {
 			License other = (License) obj;
-			return other.owner.equals(this.owner) && other.expiryDate.equals(this.expiryDate)
-					&& other.licenseType.equals(this.licenseType);
+			return other.owner.equals(this.owner) 
+					&& other.expiryDate.equals(this.expiryDate) 
+					&& other.maxEventsPerDay.equals(this.maxEventsPerDay)
+					&& other.maxSizePerDay.equals(this.maxSizePerDay);
 		}
 		return false;
 	}
 	
 	@Override
 	public int hashCode() {
-		return (this.owner + this.expiryDate.hashCode() + this.licenseType.name()).hashCode();
+		return (this.owner + this.expiryDate.hashCode() + this.maxEventsPerDay + this.maxSizePerDay).hashCode();
 	}
 }
 
