@@ -47,3 +47,38 @@ Term:: Groups events on the most or least occurred terms of the provided field.
 === Dashboards
 After adding some <<Graphs>> it is time to create your first dashboard. To add, modify or delete dashboards browse to http://localhost:8080/gui/dashboard/dashboards.html or select the menu option ''Visualizations -> Dashboards''.
 A dashboard contains of a set of horizontal rows below each other. Each row can be split into columns and each column can contain a graph.
+
+On the first screen you can enter a dashboard name and add some rows. Change the number of columns per row as needed, and give the rows a suitable height. Don't worry over the exact height of each row right now. When the dashboard is create you can drag the height to the best fit for your screen. When you're done organizing your rows and columns click on the ''Save and show'' button to go to your dashboard. Your dashboard might look like the following image:
+
+.Empty dashboard
+image::images/etm-dashboard-start.png["Empty dashboard",link="./images/etm-dashboard-start.png"]
+
+Not much to see there right? The only thing left is to add some <<Graphs>> to the dashboard. When hovering over a graph container the blue edit button of that container will show up in the top right corner. A model window will show up with all settings applied to that specific container. Go ahead and select a graph you wish to display. Depending on the graph type several other options will be shown:
+
+.Dashboard graph settings
+image::images/etm-dashboard-graph-settings.png["Dashboard graph settings",link="./images/etm-dashboard-graph-settings.png"]
+
+When finished hit the apply button and your graph will be added to the dashboard. There is no need to save the dashboard again, changes are automatically stored.
+
+A graph on a dashboard can have the follwing attributes:
+
+.Dashboard graph attributes
+[options="header"]
+|=======================
+|Name|Description
+|Graph title|The title that appears on top of the graph container in the dashboard.
+|Graph query|The query that is applied when selecting data. When you have stored a large amount of data make sure your query does narrowing down enough to be suitable for a graph. Showing the number of events per second of an entire year isn't a good idea. This would result in a graph with a point for each second of the year. 
+|Interpolation|The interpolation used to create the graph. This tells the graph how the dot's should be connected. The following options are available: *Basis* - A B-spline, with control point duplication on the ends. *Basis closed* - A closed B-spline, as in a loop. *Basis open* - An open B-spline, may not intersect the start or end. *Bundle* - Equivalent to basis, except the tension parameter is used to straighten the spline. *Cardinal* - A Cardinal spline, with control point duplication on the ends. *Cardinal closed* - A closed Cardinal spline, as in a loop. *Cardinal open* - An open Cardinal spline, may not intersect the start or end, but will intersect other control points. *Linear* - Piecewise linear segments, as in a polyline. *Monotone* - Cubic interpolation that preserves monotonicity in y. *Step before* - Alternate between vertical and horizontal segments, as in a step function. *Step after* - Alternate between horizontal and vertical segments, as in a step function.
+|Border|A boolean telling the graph container to display a border around the graph.
+|Refresh rate|The rate in seconds the data of the graph should be refreshed.
+|=======================
+
+Repeat these steps for all graph containers and your dashboard may look like this:
+
+.Dashboard
+image::images/etm-dashboard.png["Dashboard",link="./images/etm-dashboard.png"]
+
+When you want to edit the dashboard settings click on the dashboard name and the initial screen will show up. To resize your graph containers drag the bottom right corner of the specific container around on your screen until it has the appropriate size. The dashboard will be automatically saved when any of the graph containers is resized.
+
+
+
