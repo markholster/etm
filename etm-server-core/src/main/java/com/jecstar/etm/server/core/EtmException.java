@@ -10,6 +10,8 @@ public class EtmException extends RuntimeException {
 	// 200_* reserved for license errors.
 	public static final int INVALID_LICENSE_KEY_EXCEPTION 	= 200_000;
 	public static final int LICENSE_EXPIRED_EXCEPTION 		= 200_001;
+	public static final int LICENSE_MESSAGE_COUNT_EXCEEDED 	= 200_002;
+	public static final int LICENSE_MESSAGE_SIZE_EXCEEDED 	= 200_003;
 	
 	// 201_* reserved for configuration errors.
 	public static final int CONFIGURATION_LOAD_EXCEPTION 	= 201_000;

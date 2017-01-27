@@ -8,6 +8,8 @@ During execution {etm} can run into an error. These may be shown to the end user
 |100000|General error. This error code is used when an error occurred in code that {etm} depends on.| 
 |200000|Invalid license key.|You have provided an invalid license key. Please make sure your license key is exactly copied as provided by Jecstar Innovation.
 |200001|License expired.|Your license has expired and needs to be renewed.
+|200002|License exceeded.|The maximum number of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
+|200003|License exceeded.|The maximum size of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
 |201000|Configuration load error.|Please check the connection to your Elasticsearch cluster.
 |201001|Error creating XML unmarshaller.|
 |201002|Invalid xpath expression. The provided input is an invalid XPath expression.|Change your input to a valid XPath expression.

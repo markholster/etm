@@ -30,6 +30,12 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.LICENSE_EXPIRED_EXCEPTION:
 					errorMessage.setMessage("License expired");
 					break;
+				case EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED:
+					errorMessage.setMessage("Your license doesn't permit more messages to be stored.");
+					break;
+				case EtmException.LICENSE_MESSAGE_SIZE_EXCEEDED:
+					errorMessage.setMessage("Your license doesn't permit more messages to be stored.");
+					break;
 				case EtmException.CONFIGURATION_LOAD_EXCEPTION:
 					errorMessage.setMessage("Error loading configuration");
 					break;
