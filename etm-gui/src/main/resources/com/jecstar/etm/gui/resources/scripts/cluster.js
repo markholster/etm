@@ -1,11 +1,36 @@
 function buildClusterPage() {
-	$('#btn-save-cluster').click(function(event) {
-		if (!document.getElementById('cluster_form').checkValidity()) {
+	$('#btn-save-elasticsearch').click(function(event) {
+		if (!document.getElementById('form-elasticsearch').checkValidity()) {
 			return;
 		}
 		event.preventDefault();
-		saveCluster();
+		saveCluster('Elasticsearch');
 	});
+
+	$('#btn-save-persisting').click(function(event) {
+		if (!document.getElementById('form-persisting').checkValidity()) {
+			return;
+		}
+		event.preventDefault();
+		saveCluster('Persisting');
+	});
+
+	$('#btn-save-search').click(function(event) {
+		if (!document.getElementById('form-search').checkValidity()) {
+			return;
+		}
+		event.preventDefault();
+		saveCluster('Search');
+	});
+
+	$('#btn-save-visualizations').click(function(event) {
+		if (!document.getElementById('form-visualizations').checkValidity()) {
+			return;
+		}
+		event.preventDefault();
+		saveCluster('Visualizations');
+	});
+
 	
 	$.ajax({
 	    type: 'GET',
@@ -20,7 +45,7 @@ function buildClusterPage() {
 	});
 	
 	
-	function saveCluster() {
+	function saveCluster(context) {
 		var clusterData = createClusterData();
 		$.ajax({
             type: 'PUT',
@@ -31,7 +56,7 @@ function buildClusterPage() {
                 if (!data) {
                     return;
                 }
-        		$('#cluster_infoBox').text('Cluster configuration saved.').show('fast').delay(5000).hide('fast');
+        		$('#cluster_infoBox').text(context + ' configuration saved.').show('fast').delay(5000).hide('fast');
             }
         });    		
 	}
@@ -58,6 +83,7 @@ function buildClusterPage() {
 	}
 	
 	function createClusterData() {
+		// TODO alleen de data van een bepaalde context (search/persisting etc) opslaan i.p.v. alles.
 		var clusterData = {
 		  shards_per_index : Number($("#input-shards-per-index").val()),
 		  replicas_per_index : Number($("#input-replicas-per-index").val()),

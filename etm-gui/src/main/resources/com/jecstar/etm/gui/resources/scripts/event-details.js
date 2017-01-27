@@ -12,8 +12,6 @@ function showEvent(scrollTo, type, id) {
 	$eventTab.empty();	
 	$eventTab.tab('show');
 	$('#event-tab-header').addClass('active').attr('area-expanded', 'true');
-	// Since bootstap4 alpha 6 we need to add the class 'show' to the tab
-	$eventTab.addClass('show')
 	intialize();
 	
 	$.ajax({

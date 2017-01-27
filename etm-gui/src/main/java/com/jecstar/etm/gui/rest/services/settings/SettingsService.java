@@ -55,7 +55,6 @@ import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
@@ -70,7 +69,7 @@ import com.jecstar.etm.server.core.util.BCrypt;
 @Path("/settings")
 public class SettingsService extends AbstractJsonService {
 	
-	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+	private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
@@ -164,7 +163,14 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/cluster")
 	@Produces(MediaType.APPLICATION_JSON)		
 	public String setClusterConfiguration(String json) {
-		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, json, null);
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
+				.setFetchSource(true)
+				.get();
+		Map<String, Object> currentValues = getResponse.getSourceAsMap();
+		// Overwrite the values with the new values.
+		currentValues.putAll(toMap(json));
+		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentValues, null);
+		
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
 			.setDoc(this.etmConfigurationConverter.write(null, defaultConfig))
 			.setDocAsUpsert(true)

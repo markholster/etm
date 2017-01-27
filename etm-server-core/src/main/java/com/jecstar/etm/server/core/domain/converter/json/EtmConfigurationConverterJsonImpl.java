@@ -69,6 +69,10 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 	public EtmConfiguration read(String nodeJsonContent, String defaultJsonContent, String nodeName) {
 		Map<String, Object> nodeMap = nodeJsonContent == null ? null : this.converter.toMap(nodeJsonContent);
 		Map<String, Object> defaultMap = this.converter.toMap(defaultJsonContent);
+		return read(nodeMap, defaultMap, nodeName);
+	}
+	
+	public EtmConfiguration read(Map<String, Object> nodeMap, Map<String, Object> defaultMap, String nodeName) {
 		EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName);
 		etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingHandlerCount(getIntValue(this.tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
