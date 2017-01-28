@@ -2,6 +2,7 @@ package com.jecstar.etm.server.core.domain.converter;
 
 public interface EtmConfigurationTags {
 
+	String getNodeNameTag();
 	String getLicenseTag();
 	
 	String getEnhancingHandlerCountTag();
@@ -26,5 +27,6 @@ public interface EtmConfigurationTags {
 	String getMaxSearchTemplateCountTag();
 	String getMaxGraphCountTag();
 	String getMaxDashboardCountTag();
+
 
 }

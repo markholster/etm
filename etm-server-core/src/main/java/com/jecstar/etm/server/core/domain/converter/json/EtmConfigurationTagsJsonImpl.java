@@ -5,6 +5,11 @@ import com.jecstar.etm.server.core.domain.converter.EtmConfigurationTags;
 public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 
 	@Override
+	public String getNodeNameTag() {
+		return "name";
+	}
+	
+	@Override
 	public String getLicenseTag() {
 		return "license";
 	}

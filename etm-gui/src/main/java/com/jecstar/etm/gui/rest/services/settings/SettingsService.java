@@ -181,6 +181,70 @@ public class SettingsService extends AbstractJsonService {
 			.get();
 		return "{\"status\":\"success\"}";
 	}
+	
+	@GET
+	@Path("/nodes")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getNodes() {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE)
+			.setFetchSource(true)
+			.setQuery(QueryBuilders.matchAllQuery())
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		if (!scrollableSearch.hasNext()) {
+			return null;
+		}
+		StringBuilder result = new StringBuilder();
+		result.append("{\"nodes\": [");
+		boolean first = true;
+		for (SearchHit searchHit : scrollableSearch) {
+			if (searchHit.getId().equalsIgnoreCase(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)) {
+				continue;
+			}
+			if (!first) {
+				result.append(",");
+			}
+			result.append(searchHit.getSourceAsString());
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	@PUT
+	@Path("/node/{nodeName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addNode(@PathParam("nodeName") String nodeName, String json) {
+		// Do a read and write of the node to make sure it's valid.
+		GetResponse defaultSettingsResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
+				.setFetchSource(true)
+				.get();
+		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, defaultSettingsResponse.getSourceAsString(), null);
+		EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(json, defaultSettingsResponse.getSourceAsString(), nodeName);
+		
+		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, nodeName)
+			.setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return "{ \"status\": \"success\" }";
+	}
+	
+	@DELETE
+	@Path("/node/{nodeName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String deleteNode(@PathParam("nodeName") String nodeName) {
+		if (ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE.equalsIgnoreCase(nodeName)) {
+			return "{\"status\":\"failed\"}";
+		}
+		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, nodeName)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return "{\"status\":\"success\"}";
+	}
+
 
 	@GET
 	@Path("/indicesstats")
@@ -601,6 +665,38 @@ public class SettingsService extends AbstractJsonService {
 		return result.toString();
 	}
 	
+	@PUT
+	@Path("/group/{groupName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addGroup(@PathParam("groupName") String groupName, String json) {
+		// Do a read and write of the group to make sure it's valid.
+		Map<String, Object> valueMap = toMap(json);
+		EtmGroup newGroup = this.etmPrincipalConverter.readGroup(valueMap);
+		
+		EtmGroup currentGroup = loadGroup(groupName);
+		if (currentGroup != null && currentGroup.isInRole(EtmPrincipalRole.ADMIN) && !newGroup.isInRole(EtmPrincipalRole.ADMIN)) {
+			// The group had the admin role, but that role is revoked. Check if this removes all the admins. If so, block this operation because we don't want a user without the admin role.
+			// This check should be skipped/changed when LDAP is supported.
+			if (getNumberOfUsersWithAdminRole() <= 1) {
+				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
+			}
+		}
+		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
+			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
+			.setDocAsUpsert(true)
+			.setDetectNoop(true)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.get();
+		// Force a reload of the principal if he/she is in the deleted group.
+		EtmPrincipal principal = getEtmPrincipal();
+		if (principal.isInGroup(groupName)) {
+			principal.forceReload = true;
+		}
+		return "{ \"status\": \"success\" }";
+	}
+	
 	@DELETE
 	@Path("/group/{groupName}")
 	@Produces(MediaType.APPLICATION_JSON)	
@@ -664,39 +760,6 @@ public class SettingsService extends AbstractJsonService {
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());		
-	}
-
-
-	@PUT
-	@Path("/group/{groupName}")
-	@Produces(MediaType.APPLICATION_JSON)	
-	public String addGroup(@PathParam("groupName") String groupName, String json) {
-		// Do a read and write of the group to make sure it's valid.
-		Map<String, Object> valueMap = toMap(json);
-		EtmGroup newGroup = this.etmPrincipalConverter.readGroup(valueMap);
-		
-		EtmGroup currentGroup = loadGroup(groupName);
-		if (currentGroup != null && currentGroup.isInRole(EtmPrincipalRole.ADMIN) && !newGroup.isInRole(EtmPrincipalRole.ADMIN)) {
-			// The group had the admin role, but that role is revoked. Check if this removes all the admins. If so, block this operation because we don't want a user without the admin role.
-			// This check should be skipped/changed when LDAP is supported.
-			if (getNumberOfUsersWithAdminRole() <= 1) {
-				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
-			}
-		}
-		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
-			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
-			.setDocAsUpsert(true)
-			.setDetectNoop(true)
-			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
-			.get();
-		// Force a reload of the principal if he/she is in the deleted group.
-		EtmPrincipal principal = getEtmPrincipal();
-		if (principal.isInGroup(groupName)) {
-			principal.forceReload = true;
-		}
-		return "{ \"status\": \"success\" }";
 	}
 	
 	/**

@@ -2,6 +2,7 @@ package com.jecstar.etm.server.core.domain.converter.json;
 
 import java.util.Map;
 
+import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmConfigurationTags;
@@ -23,6 +24,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		sb.append("{");
 		if (nodeConfiguration == null) {
 			// only add the defaults.
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;
@@ -42,6 +44,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addLongElementToJsonBuffer(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
 		} else {
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), nodeConfiguration.getEventBufferSize(), sb, !added) || added;
