@@ -47,11 +47,11 @@ public class PersistingEventHandler implements EventHandler<TelemetryCommand>, C
 		switch (command.commandType) {
 		case BUSINESS_EVENT:	
 			final BusinessTelemetryEventPersister businessPersister = this.commandResources.getPersister(command.commandType);
-			final Context bsuineesTimerContext = this.timer.time();
+			final Context businessTimerContext = this.timer.time();
 			try {
 				businessPersister.persist(command.businessTelemetryEvent, this.businessTelemetryEventConverter);
 			} finally {
-				bsuineesTimerContext.stop();
+				businessTimerContext.stop();
 			}
 			break;			
 		case HTTP_EVENT:	
