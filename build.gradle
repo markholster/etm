@@ -23,7 +23,7 @@ ext {
 
 allprojects {
     apply plugin: "eclipse"
-    version "2.0.1"
+    version "2.0.2-SNAPSHOT"
     group "com.jecstar.etm"
     
     repositories {
