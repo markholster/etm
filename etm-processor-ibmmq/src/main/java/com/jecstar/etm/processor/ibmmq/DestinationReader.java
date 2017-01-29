@@ -58,7 +58,7 @@ public class DestinationReader implements Runnable {
 		this.etmEventHandler = new EtmEventHandler(processor);
 		this.iibEventHandler = new IIBEventHandler(processor);
 		this.clonedMessageEventHandler = new ClonedMessageHandler(processor);
-		this.mqGetTimer = metricRegistry.timer("ibmmq-processor.mqget");
+		this.mqGetTimer = metricRegistry.timer("ibmmq-processor.mqget." + destination.getName().replaceAll("\\.", "_"));
 	}
 	@Override
 	public void run() {
