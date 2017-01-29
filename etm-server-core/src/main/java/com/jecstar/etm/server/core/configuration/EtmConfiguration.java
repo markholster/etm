@@ -23,6 +23,8 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS 	= "maxSearchResultDownloadRows";
 	public static final String CONFIG_KEY_MAX_SEARCH_TEMPLATE_COUNT 		= "maxSearchTemplateCount";
 	public static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT 			= "maxSearchHistoryCount";
+	public static final String CONFIG_KEY_MAX_GRAPH_COUNT 					= "maxGraphCount";
+	public static final String CONFIG_KEY_MAX_DASHBOARD_COUNT 				= "maxDashboardCount";
 
 	// Node configurations
 	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT 			= "enhancingHandlerCount";
@@ -59,6 +61,9 @@ public class EtmConfiguration {
 	private int maxSearchTemplateCount = 10;
 	private int maxSearchHistoryCount = 10;
 	
+	// Visualization options
+	private int maxGraphCount = 100;
+	private int maxDashboardCount = 10;
 	
 	// Other stuff.		
 	private final String nodeName;
@@ -84,14 +89,35 @@ public class EtmConfiguration {
 		this.license = new License(licenseKey);
 	}
 	
+	/**
+	 * Method to determine if a license key is valid. This method does not check
+	 * if the license is expired!
+	 * 
+	 * @param licenseKey
+	 *            The key to check.
+	 * @return <code>true</code> if the license is syntactically correct,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean isValidLicenseKey(String licenseKey) {
+		if (licenseKey == null || licenseKey.trim().length() == 0) {
+			return false;
+		}		
+		try {
+			new License(licenseKey);
+			return true;
+		} catch (EtmException e) {
+		}
+		return false;
+	}
+	
 	// Etm processor configuration
 
 	public int getEnhancingHandlerCount() {
 		return this.enhancingHandlerCount;
 	}
 	
-	public EtmConfiguration setEnhancingHandlerCount(int enhancingHandlerCount) {
-		if (enhancingHandlerCount >= 0) {
+	public EtmConfiguration setEnhancingHandlerCount(Integer enhancingHandlerCount) {
+		if (enhancingHandlerCount != null && enhancingHandlerCount >= 0) {
 			this.enhancingHandlerCount = enhancingHandlerCount;
 		}
 		return this;
@@ -101,8 +127,8 @@ public class EtmConfiguration {
 		return this.persistingHandlerCount;
 	}
 	
-	public EtmConfiguration setPersistingHandlerCount(int persistingHandlerCount) {
-		if (persistingHandlerCount >=0) {
+	public EtmConfiguration setPersistingHandlerCount(Integer persistingHandlerCount) {
+		if (persistingHandlerCount != null && persistingHandlerCount >= 0) {
 			this.persistingHandlerCount = persistingHandlerCount;
 		}
 		return this;
@@ -112,8 +138,8 @@ public class EtmConfiguration {
 		return this.eventBufferSize;
 	}
 	
-	public EtmConfiguration setEventBufferSize(int eventBufferSize) {
-		if (eventBufferSize > 0) {
+	public EtmConfiguration setEventBufferSize(Integer eventBufferSize) {
+		if (eventBufferSize != null && eventBufferSize > 0) {
 			this.eventBufferSize = eventBufferSize;
 		}
 		return this;
@@ -124,8 +150,8 @@ public class EtmConfiguration {
 		return this.persistingBulkSize;
 	}
 	
-	public EtmConfiguration setPersistingBulkSize(int persistingBulkSize) {
-		if (persistingBulkSize >= 0) {
+	public EtmConfiguration setPersistingBulkSize(Integer persistingBulkSize) {
+		if (persistingBulkSize != null && persistingBulkSize >= 0) {
 			this.persistingBulkSize = persistingBulkSize;
 		}
 		return this;
@@ -135,8 +161,8 @@ public class EtmConfiguration {
 		return this.persistingBulkCount;
 	}
 	
-	public EtmConfiguration setPersistingBulkCount(int persistingBulkCount) {
-		if (persistingBulkCount >= 0) {
+	public EtmConfiguration setPersistingBulkCount(Integer persistingBulkCount) {
+		if (persistingBulkCount != null && persistingBulkCount >= 0) {
 			this.persistingBulkCount = persistingBulkCount;
 		}
 		return this;
@@ -146,8 +172,8 @@ public class EtmConfiguration {
 		return this.persistingBulkTime;
 	}
 	
-	public EtmConfiguration setPersistingBulkTime(int persistingBulkTime) {
-		if (persistingBulkTime >= 0) {
+	public EtmConfiguration setPersistingBulkTime(Integer persistingBulkTime) {
+		if (persistingBulkTime != null && persistingBulkTime >= 0) {
 			this.persistingBulkTime = persistingBulkTime;
 		}
 		return this;
@@ -157,8 +183,8 @@ public class EtmConfiguration {
 		return this.shardsPerIndex;
 	}
 	
-	public EtmConfiguration setShardsPerIndex(int shardsPerIndex) {
-		if (shardsPerIndex > 0) {
+	public EtmConfiguration setShardsPerIndex(Integer shardsPerIndex) {
+		if (shardsPerIndex != null && shardsPerIndex > 0) {
 			this.shardsPerIndex = shardsPerIndex;
 		} 
 		return this;
@@ -168,8 +194,8 @@ public class EtmConfiguration {
 		return this.replicasPerIndex;
 	}
 	
-	public EtmConfiguration setReplicasPerIndex(int replicasPerIndex) {
-		if (replicasPerIndex >= 0) {
+	public EtmConfiguration setReplicasPerIndex(Integer replicasPerIndex) {
+		if (replicasPerIndex != null && replicasPerIndex >= 0) {
 			this.replicasPerIndex = replicasPerIndex;
 		}
 		return this;
@@ -179,8 +205,8 @@ public class EtmConfiguration {
 		return this.maxEventIndexCount;
 	}
 	
-	public EtmConfiguration setMaxEventIndexCount(int maxEventIndexCount) {
-		if (maxEventIndexCount > 0) {
+	public EtmConfiguration setMaxEventIndexCount(Integer maxEventIndexCount) {
+		if (maxEventIndexCount != null && maxEventIndexCount > 0) {
 			this.maxEventIndexCount = maxEventIndexCount;
 		}
 		return this;
@@ -190,8 +216,8 @@ public class EtmConfiguration {
 		return this.maxMetricsIndexCount;
 	}
 	
-	public EtmConfiguration setMaxMetricsIndexCount(int maxMetricsIndexCount) {
-		if (maxMetricsIndexCount > 0) {
+	public EtmConfiguration setMaxMetricsIndexCount(Integer maxMetricsIndexCount) {
+		if (maxMetricsIndexCount != null && maxMetricsIndexCount > 0) {
 			this.maxMetricsIndexCount = maxMetricsIndexCount;
 		}
 		return this;
@@ -201,8 +227,8 @@ public class EtmConfiguration {
 		return this.waitForActiveShards;
 	}
 	
-	public EtmConfiguration setWaitForActiveShards(int waitForActiveShards) {
-		if (waitForActiveShards >= -1) {
+	public EtmConfiguration setWaitForActiveShards(Integer waitForActiveShards) {
+		if (waitForActiveShards != null && waitForActiveShards >= -1) {
 			this.waitForActiveShards = waitForActiveShards;
 		}
 		return this;
@@ -212,8 +238,8 @@ public class EtmConfiguration {
 		return this.retryOnConflictCount;
 	}
 	
-	public EtmConfiguration setRetryOnConflictCount(int retryOnConflictCount) {
-		if (retryOnConflictCount >= 0) {
+	public EtmConfiguration setRetryOnConflictCount(Integer retryOnConflictCount) {
+		if (retryOnConflictCount != null && retryOnConflictCount >= 0) {
 			this.retryOnConflictCount = retryOnConflictCount;
 		}
 		return this;
@@ -223,8 +249,8 @@ public class EtmConfiguration {
 		return this.queryTimeout;
 	}
 	
-	public EtmConfiguration setQueryTimeout(long queryTimeout) {
-		if (queryTimeout > 0) {
+	public EtmConfiguration setQueryTimeout(Long queryTimeout) {
+		if (queryTimeout != null && queryTimeout > 0) {
 			this.queryTimeout = queryTimeout;
 		}
 		return this;
@@ -234,8 +260,8 @@ public class EtmConfiguration {
 		return this.maxSearchResultDownloadRows;
 	}
 	
-	public EtmConfiguration setMaxSearchResultDownloadRows(int maxSearchResultDownloadRows) {
-		if (maxSearchResultDownloadRows > 0) {
+	public EtmConfiguration setMaxSearchResultDownloadRows(Integer maxSearchResultDownloadRows) {
+		if (maxSearchResultDownloadRows != null && maxSearchResultDownloadRows > 0) {
 			this.maxSearchResultDownloadRows = maxSearchResultDownloadRows;
 		}
 		return this;
@@ -245,8 +271,8 @@ public class EtmConfiguration {
 		return this.maxSearchHistoryCount;
 	}
 	
-	public EtmConfiguration setMaxSearchHistoryCount(int maxSearchHistoryCount) {
-		if (maxSearchHistoryCount >=  0) {
+	public EtmConfiguration setMaxSearchHistoryCount(Integer maxSearchHistoryCount) {
+		if (maxSearchHistoryCount != null && maxSearchHistoryCount >=  0) {
 			this.maxSearchHistoryCount = maxSearchHistoryCount;
 		}
 		return this;
@@ -256,9 +282,31 @@ public class EtmConfiguration {
 		return this.maxSearchTemplateCount;
 	}
 	
-	public EtmConfiguration setMaxSearchTemplateCount(int maxSearchTemplateCount) {
-		if (maxSearchTemplateCount >= 0) {
+	public EtmConfiguration setMaxSearchTemplateCount(Integer maxSearchTemplateCount) {
+		if (maxSearchTemplateCount != null && maxSearchTemplateCount >= 0) {
 			this.maxSearchTemplateCount = maxSearchTemplateCount;
+		}
+		return this;
+	}
+	
+	public int getMaxGraphCount() {
+		return this.maxGraphCount;
+	}
+	
+	public EtmConfiguration setMaxGraphCount(Integer maxGraphCount) {
+		if (maxGraphCount != null && maxGraphCount >= 0) {
+			this.maxGraphCount = maxGraphCount;
+		}
+		return this;
+	}
+	
+	public int getMaxDashboardCount() {
+		return maxDashboardCount;
+	}
+	
+	public EtmConfiguration setMaxDashboardCount(Integer maxDashboardCount) {
+		if (maxDashboardCount != null && maxDashboardCount >= 0) {
+			this.maxDashboardCount = maxDashboardCount;
 		}
 		return this;
 	}
@@ -283,13 +331,26 @@ public class EtmConfiguration {
 		}
 		return !isLicenseValidAt(Instant.now());
 	}
-	
 
 	public Boolean isLicenseAlmostExpired() {
 		if (this.license == null) {
 			return false;
 		}		
 		return !isLicenseExpired() && !isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
+	}
+	
+	public Boolean isLicenseCountExceeded() {
+		if (this.license == null) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Boolean isLicenseSizeExceeded() {
+		if (this.license == null) {
+			return true;
+		}
+		return false;
 	}
 	
 	private boolean isLicenseValidAt(Instant moment) {
@@ -371,7 +432,6 @@ public class EtmConfiguration {
 			setRetryOnConflictCount(etmConfiguration.getRetryOnConflictCount());
 			changed.add(CONFIG_KEY_RETRY_ON_CONFLICT_COUNT);
 		}
-		
 		if (this.maxSearchResultDownloadRows != etmConfiguration.getMaxSearchResultDownloadRows()) {
 			setMaxSearchResultDownloadRows(etmConfiguration.getMaxSearchResultDownloadRows());
 			changed.add(CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS);
@@ -383,6 +443,14 @@ public class EtmConfiguration {
 		if (this.maxSearchHistoryCount != etmConfiguration.getMaxSearchHistoryCount()) {
 			setMaxSearchHistoryCount(etmConfiguration.getMaxSearchHistoryCount());
 			changed.add(CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT);
+		}
+		if (this.maxGraphCount != etmConfiguration.getMaxGraphCount()) {
+			setMaxGraphCount(etmConfiguration.getMaxGraphCount());
+			changed.add(CONFIG_KEY_MAX_GRAPH_COUNT);
+		}
+		if (this.maxDashboardCount != etmConfiguration.getMaxDashboardCount()) {
+			setMaxDashboardCount(etmConfiguration.getMaxDashboardCount());
+			changed.add(CONFIG_KEY_MAX_DASHBOARD_COUNT);
 		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);

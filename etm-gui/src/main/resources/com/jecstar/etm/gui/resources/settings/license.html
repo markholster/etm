@@ -15,22 +15,24 @@ body { padding-top: 60px; }
 </style>
 </head>
 <body>
-   <nav class="navbar navbar-full navbar-dark navbar-fixed-top" style="background-color: #777;">
-     <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#collapsing_navbar">&#9776;</button>
-     <div class="pull-left">
-     <!-- This needs to be on 1 line because otherwise the menu will be screwed in konqueror and android browsers -->
-       <img src="../images/jecstar.svg" style="max-height: 2.4em; max-width: 2.4em;" />&nbsp;<a class="navbar-brand pull-right" href="http://www.jecstar.com" target="_blank">Jecstar</a>
-     </div>
-     <div id="spinner" class="pull-right" style="display: none;">
-       <div class="spinner_line"></div>
-       <div class="spinner_line spinner_line_2"></div>
-       <div class="spinner_line spinner_line_3"></div>
-       <div class="spinner_line spinner_line_4"></div>
-     </div>
-     <div class="collapse navbar-toggleable-xs" id="collapsing_navbar">
-       <ul id="etm_mainmenu" class="nav navbar-nav">
-       </ul>
-     </div>
+  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
+      Jecstar
+    </a>
+    <div class="collapse navbar-collapse" id="collapsing_navbar">
+      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+      </ul>
+    </div>
+    <div class="spinner" id="spinner">
+      <div class="spinner_line"></div>
+      <div class="spinner_line spinner_line_2"></div>
+      <div class="spinner_line spinner_line_3"></div>
+      <div class="spinner_line spinner_line_4"></div>
+    </div>
   </nav>
   
   <div class="container" style="margin-top: 1em;">
@@ -47,6 +49,16 @@ body { padding-top: 60px; }
           <div class="form-group col-sm-6">
             <label for="input-expiration-date">Expiration date</label>
             <input id="input-expiration-date" type="text" class="form-control" disabled />
+          </div>        
+        </div>  
+        <div class="row">
+          <div class="form-group col-sm-6">
+            <label for="input-max-events">Max events per day</label>
+            <input id="input-max-events" type="text" class="form-control" disabled />
+          </div>
+          <div class="form-group col-sm-6">
+            <label for="input-max-size">Max size per day</label>
+            <input id="input-max-size" type="text" class="form-control" disabled />
           </div>        
         </div>
         <div class="row">
@@ -105,6 +117,8 @@ body { padding-top: 60px; }
             }
             $('#input-owner').val(data.owner);
             $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+            $('#input-max-events').val(data.max_events_per_day == '-1' ? 'Unlimited' : data.max_events_per_day_as_text);
+            $('#input-max-size').val(data.max_size_per_day == '-1' ? 'Unlimited' : data.max_size_per_day_as_text);
         }
     });    
     
@@ -124,6 +138,8 @@ body { padding-top: 60px; }
                 $('#license_infoBox').text('License applied').show('fast').delay(5000).hide('fast');
                 $('#input-owner').val(data.owner);
                 $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+                $('#input-max-events').val(data.max_events_per_day == -1 ? 'Unlimited' : data.max_events_per_day_as_text);
+                $('#input-max-size').val(data.max_size_per_day == -1 ? 'Unlimited' : data.max_size_per_day_as_text);
                 $('#license-key').val('');
             }
         });    

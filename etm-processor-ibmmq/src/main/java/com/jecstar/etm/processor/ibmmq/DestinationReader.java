@@ -3,6 +3,9 @@ package com.jecstar.etm.processor.ibmmq;
 import java.io.IOException;
 import java.util.Hashtable;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
 import com.ibm.mq.MQDestination;
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
@@ -45,14 +48,17 @@ public class DestinationReader implements Runnable {
 	private final EtmEventHandler etmEventHandler;
 	private final IIBEventHandler iibEventHandler;
 	private final ClonedMessageHandler clonedMessageEventHandler;
+
+	private final Timer mqGetTimer;
 	
-	public DestinationReader(String configurationName, final TelemetryCommandProcessor processor, final QueueManager queueManager, final Destination destination) {
+	public DestinationReader(String configurationName, final TelemetryCommandProcessor processor, MetricRegistry metricRegistry, final QueueManager queueManager, final Destination destination) {
 		this.configurationName = configurationName;
 		this.queueManager = queueManager;
 		this.destination = destination;
 		this.etmEventHandler = new EtmEventHandler(processor);
 		this.iibEventHandler = new IIBEventHandler(processor);
 		this.clonedMessageEventHandler = new ClonedMessageHandler(processor);
+		this.mqGetTimer = metricRegistry.timer("ibmmq-processor.mqget." + destination.getName().replaceAll("\\.", "_"));
 	}
 	@Override
 	public void run() {
@@ -66,10 +72,13 @@ public class DestinationReader implements Runnable {
 			try {
 				message = new MQMessage();
 				boolean continueProcessing = true;
+				final Context mqGetContext = this.mqGetTimer.time();
 				try {
 					this.mqDestination.get(message, getOptions, this.destination.getMaxMessageSize());
 				} catch (MQException e) {
 					continueProcessing = handleMQException(e);
+				} finally {
+					mqGetContext.stop();
 				}
 				if (!continueProcessing) {
 					continue;
@@ -207,6 +216,7 @@ public class DestinationReader implements Runnable {
 			Hashtable<String, Object> connectionProperties = new Hashtable<String, Object>();
 			connectionProperties.put(CMQC.TRANSPORT_PROPERTY, CMQC.TRANSPORT_MQSERIES_CLIENT);
 			connectionProperties.put(CMQC.HOST_NAME_PROPERTY, this.queueManager.getHost());
+			connectionProperties.put(CMQC.APPNAME_PROPERTY, "Enterprise Telemetry Monitor - " + this.configurationName);
 			if (this.queueManager.getChannel() != null) {
 				connectionProperties.put(CMQC.CHANNEL_PROPERTY, this.queueManager.getChannel());
 			}

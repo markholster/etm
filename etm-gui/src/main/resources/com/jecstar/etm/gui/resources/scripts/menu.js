@@ -24,13 +24,13 @@ function buildMenu(currentContext, path) {
 		} else if ('dashboard' == menu.name) {
 			var $drowdown = $('<div>').addClass('dropdown-menu');
 			$drowdown.append(
-					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/graphs.html').text('Graphs')
-//					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboards.html').text('Dashboards')
+					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/graphs.html').text('Graphs'),
+					$('<a>').addClass('dropdown-item').attr('href', path + 'dashboard/dashboards.html').text('Dashboards')
 			);
 			$li.addClass('dropdown').append(
 			$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
-					$('<span>').addClass('fa fa-dashboard fa-lg hidden-sm-down').html('&nbsp;'), 
-					'Vizualizations'
+					$('<span>').addClass('fa fa-dashboard fa-lg hidden-md-down').html('&nbsp;'), 
+					'Visualizations'
 					),
 					$drowdown
 			);			
@@ -41,12 +41,12 @@ function buildMenu(currentContext, path) {
 			var licenseClass = '';
 			if (licenseExpired) {
 				$license.addClass('alert-danger').append(
-					$('<span>').addClass('fa fa-ban hidden-sm-down').html('&nbsp;'), 
+					$('<span>').addClass('fa fa-ban hidden-md-down').html('&nbsp;'), 
 					'License'
 				);
 			} else if (licenseWarning) {
 				$license.addClass('alert-warning').append(
-					$('<span>').addClass('fa fa-exclamation-triangle hidden-sm-down').html('&nbsp;'), 
+					$('<span>').addClass('fa fa-exclamation-triangle hidden-md-down').html('&nbsp;'), 
 					'License'
 				);
 			} else {
@@ -61,6 +61,7 @@ function buildMenu(currentContext, path) {
 						$('<div>').addClass('dropdown-divider'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/indexstats.html').text('Index statistics'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/cluster.html').text('Cluster'),
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/nodes.html').text('Nodes'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/parsers.html').text('Parsers'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/endpoints.html').text('Endpoints')
 				);
@@ -83,7 +84,7 @@ function buildMenu(currentContext, path) {
 			
 			$li.addClass('dropdown').append(
 					$('<a>').addClass('nav-link dropdown-toggle').attr('data-toggle', 'dropdown').attr('role', 'button').attr('aria-haspopup', true).attr('aria-expanded', 'false').attr('href', '#').append(
-							$('<span>').addClass('fa fa-wrench fa-lg hidden-sm-down').html('&nbsp;'), 
+							$('<span>').addClass('fa fa-wrench fa-lg hidden-md-down').html('&nbsp;'), 
 							'Settings'
 					),
 					$dropdown
@@ -95,6 +96,6 @@ function buildMenu(currentContext, path) {
 	}
 	
 	function createMenuLink(url, iconClass, text) {
-		return $('<a>').addClass('nav-link').attr('href', url).append($('<span>').addClass('fa ' + iconClass + ' fa-lg hidden-sm-down').html('&nbsp;'), text);
+		return $('<a>').addClass('nav-link').attr('href', url).append($('<span>').addClass('fa ' + iconClass + ' fa-lg hidden-md-down').html('&nbsp;'), text);
 	}
 }

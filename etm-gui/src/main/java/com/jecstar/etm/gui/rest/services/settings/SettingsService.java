@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -56,7 +55,6 @@ import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
@@ -71,7 +69,7 @@ import com.jecstar.etm.server.core.util.BCrypt;
 @Path("/settings")
 public class SettingsService extends AbstractJsonService {
 	
-	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+	private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
@@ -102,13 +100,17 @@ public class SettingsService extends AbstractJsonService {
 			return null;
 		}
 		boolean added = false;
+		NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
-		added = addStringElementToJsonBuffer("license_type", license.getLicenseType().name(), result, !added) || added;
-		result.append("}");
+		added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), result, !added) || added;
+		added = addStringElementToJsonBuffer("max_events_per_day_as_text", numberFormat.format(license.getMaxEventsPerDay()), result, !added) || added;
+		added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), result, !added) || added;
+		added = addStringElementToJsonBuffer("max_size_per_day_as_text", numberFormat.format(license.getMaxSizePerDay()), result, !added) || added;
+				result.append("}");
 		return result.toString();
 	}
 	
@@ -129,6 +131,7 @@ public class SettingsService extends AbstractJsonService {
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		NumberFormat numberFormat = etmPrincipal.getNumberFormat();
 		License license = etmConfiguration.getLicense();
 		boolean added = false;
 		StringBuilder result = new StringBuilder();
@@ -137,7 +140,10 @@ public class SettingsService extends AbstractJsonService {
 		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
-		added = addStringElementToJsonBuffer("license_type", license.getLicenseType().name(), result, !added) || added;
+		added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), result, !added) || added;
+		added = addStringElementToJsonBuffer("max_events_per_day_as_text", numberFormat.format(license.getMaxEventsPerDay()), result, !added) || added;
+		added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), result, !added) || added;
+		added = addStringElementToJsonBuffer("max_size_per_day_as_text", numberFormat.format(license.getMaxSizePerDay()), result, !added) || added;
 		result.append("}");
 		return result.toString();
 	}
@@ -149,14 +155,22 @@ public class SettingsService extends AbstractJsonService {
 		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
 				.setFetchSource(true)
 				.get();
-		return getResponse.getSourceAsString();
+		EtmConfiguration config = this.etmConfigurationConverter.read(null, getResponse.getSourceAsString(), null);
+		return this.etmConfigurationConverter.write(null, config);
 	}
 	
 	@PUT
 	@Path("/cluster")
 	@Produces(MediaType.APPLICATION_JSON)		
 	public String setClusterConfiguration(String json) {
-		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, json, null);
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
+				.setFetchSource(true)
+				.get();
+		Map<String, Object> currentValues = getResponse.getSourceAsMap();
+		// Overwrite the values with the new values.
+		currentValues.putAll(toMap(json));
+		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentValues, null);
+		
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
 			.setDoc(this.etmConfigurationConverter.write(null, defaultConfig))
 			.setDocAsUpsert(true)
@@ -167,6 +181,70 @@ public class SettingsService extends AbstractJsonService {
 			.get();
 		return "{\"status\":\"success\"}";
 	}
+	
+	@GET
+	@Path("/nodes")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getNodes() {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+			.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE)
+			.setFetchSource(true)
+			.setQuery(QueryBuilders.matchAllQuery())
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		if (!scrollableSearch.hasNext()) {
+			return null;
+		}
+		StringBuilder result = new StringBuilder();
+		result.append("{\"nodes\": [");
+		boolean first = true;
+		for (SearchHit searchHit : scrollableSearch) {
+			if (searchHit.getId().equalsIgnoreCase(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)) {
+				continue;
+			}
+			if (!first) {
+				result.append(",");
+			}
+			result.append(searchHit.getSourceAsString());
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+	}
+	
+	@PUT
+	@Path("/node/{nodeName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addNode(@PathParam("nodeName") String nodeName, String json) {
+		// Do a read and write of the node to make sure it's valid.
+		GetResponse defaultSettingsResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
+				.setFetchSource(true)
+				.get();
+		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, defaultSettingsResponse.getSourceAsString(), null);
+		EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(json, defaultSettingsResponse.getSourceAsString(), nodeName);
+		
+		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, nodeName)
+			.setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return "{ \"status\": \"success\" }";
+	}
+	
+	@DELETE
+	@Path("/node/{nodeName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String deleteNode(@PathParam("nodeName") String nodeName) {
+		if (ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE.equalsIgnoreCase(nodeName)) {
+			return "{\"status\":\"failed\"}";
+		}
+		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, nodeName)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return "{\"status\":\"success\"}";
+	}
+
 
 	@GET
 	@Path("/indicesstats")
@@ -178,15 +256,14 @@ public class SettingsService extends AbstractJsonService {
 				.setDocs(true)
 				.setIndexing(true)
 				.setSearch(true)
-				.get();
-		Locale locale = getEtmPrincipal().getLocale();
-		NumberFormat numberFormat = NumberFormat.getInstance(locale);
+				.get(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"d3_formatter\": " + getD3Formatter());
 		result.append(",\"totals\": {");
-		addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount(), result, true);	
-		addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount()), result, false);	
+		addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted(), result, true);	
+		addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted()), result, false);	
 		addLongElementToJsonBuffer("size_in_bytes", indicesStatsResponse.getTotal().store.getSizeInBytes(), result, false);	
 		addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(indicesStatsResponse.getTotal().store.getSizeInBytes()), result, false);	
 		result.append("}, \"indices\": [");
@@ -503,10 +580,13 @@ public class SettingsService extends AbstractJsonService {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
 			}
 		}
-		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+		BulkRequestBuilder bulkDelete = client.prepareBulk()
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.get();
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId));
+		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, userId));
+		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, userId));
+		bulkDelete.get();
 		return "{\"status\":\"success\"}";
 	}
 
@@ -585,6 +665,38 @@ public class SettingsService extends AbstractJsonService {
 		return result.toString();
 	}
 	
+	@PUT
+	@Path("/group/{groupName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String addGroup(@PathParam("groupName") String groupName, String json) {
+		// Do a read and write of the group to make sure it's valid.
+		Map<String, Object> valueMap = toMap(json);
+		EtmGroup newGroup = this.etmPrincipalConverter.readGroup(valueMap);
+		
+		EtmGroup currentGroup = loadGroup(groupName);
+		if (currentGroup != null && currentGroup.isInRole(EtmPrincipalRole.ADMIN) && !newGroup.isInRole(EtmPrincipalRole.ADMIN)) {
+			// The group had the admin role, but that role is revoked. Check if this removes all the admins. If so, block this operation because we don't want a user without the admin role.
+			// This check should be skipped/changed when LDAP is supported.
+			if (getNumberOfUsersWithAdminRole() <= 1) {
+				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
+			}
+		}
+		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
+			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
+			.setDocAsUpsert(true)
+			.setDetectNoop(true)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+			.get();
+		// Force a reload of the principal if he/she is in the deleted group.
+		EtmPrincipal principal = getEtmPrincipal();
+		if (principal.isInGroup(groupName)) {
+			principal.forceReload = true;
+		}
+		return "{ \"status\": \"success\" }";
+	}
+	
 	@DELETE
 	@Path("/group/{groupName}")
 	@Produces(MediaType.APPLICATION_JSON)	
@@ -648,39 +760,6 @@ public class SettingsService extends AbstractJsonService {
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());		
-	}
-
-
-	@PUT
-	@Path("/group/{groupName}")
-	@Produces(MediaType.APPLICATION_JSON)	
-	public String addGroup(@PathParam("groupName") String groupName, String json) {
-		// Do a read and write of the group to make sure it's valid.
-		Map<String, Object> valueMap = toMap(json);
-		EtmGroup newGroup = this.etmPrincipalConverter.readGroup(valueMap);
-		
-		EtmGroup currentGroup = loadGroup(groupName);
-		if (currentGroup != null && currentGroup.isInRole(EtmPrincipalRole.ADMIN) && !newGroup.isInRole(EtmPrincipalRole.ADMIN)) {
-			// The group had the admin role, but that role is revoked. Check if this removes all the admins. If so, block this operation because we don't want a user without the admin role.
-			// This check should be skipped/changed when LDAP is supported.
-			if (getNumberOfUsersWithAdminRole() <= 1) {
-				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
-			}
-		}
-		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
-			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
-			.setDocAsUpsert(true)
-			.setDetectNoop(true)
-			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
-			.get();
-		// Force a reload of the principal if he/she is in the deleted group.
-		EtmPrincipal principal = getEtmPrincipal();
-		if (principal.isInGroup(groupName)) {
-			principal.forceReload = true;
-		}
-		return "{ \"status\": \"success\" }";
 	}
 	
 	/**

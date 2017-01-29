@@ -46,29 +46,31 @@ body { padding-top: 60px; }
 </style>
 </head>
 <body>
-   <nav class="navbar navbar-full navbar-dark navbar-fixed-top" style="background-color: #777;">
-     <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#collapsing_navbar">&#9776;</button>
-     <div class="pull-left">
-     <!-- This needs to be on 1 line because otherwise the menu will be screwed in konqueror and android browsers -->
-       <img src="../images/jecstar.svg" style="max-height: 2.4em; max-width: 2.4em;" />&nbsp;<a class="navbar-brand pull-right" href="http://www.jecstar.com" target="_blank">Jecstar</a>
-     </div>
-     <div id="spinner" class="pull-right" style="display: none;">
-       <div class="spinner_line"></div>
-       <div class="spinner_line spinner_line_2"></div>
-       <div class="spinner_line spinner_line_3"></div>
-       <div class="spinner_line spinner_line_4"></div>
-     </div>
-     <div class="collapse navbar-toggleable-xs" id="collapsing_navbar">
-       <ul id="etm_mainmenu" class="nav navbar-nav">
-       </ul>
-     </div>
+  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
+      Jecstar
+    </a>
+    <div class="collapse navbar-collapse" id="collapsing_navbar">
+      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+      </ul>
+    </div>
+    <div class="spinner" id="spinner">
+      <div class="spinner_line"></div>
+      <div class="spinner_line spinner_line_2"></div>
+      <div class="spinner_line spinner_line_3"></div>
+      <div class="spinner_line spinner_line_4"></div>
+    </div>
   </nav>
   
   <div id="search-container" class="container-fluid">
      <div class="row">
        <div class="col-md-3 push-md-9">
          <div class="row">   
-           <div class="card card-block rowContentMargins">
+           <div class="card card-block rowContentMargins col-md-12">
              <h5 class="card-title">Search templates</h5>
              <div class="card-text">
               <ul id="list-template-links" style="padding-left: 1em; word-wrap: break-word;"></ul>
@@ -84,7 +86,7 @@ body { padding-top: 60px; }
          </div>
 
          <div class="row">   
-           <div class="card card-block rowContentMargins">
+           <div class="card card-block rowContentMargins col-md-12">
              <h5 class="card-title">Search history</h5>
              <div class="card-text">
                <ol id="list-search-history-links" style="padding-left: 1em; word-wrap: break-word;"></ol>
@@ -95,7 +97,7 @@ body { padding-top: 60px; }
        
        <div class="col-md-9 pull-md-3">
          <div class="row">
-           <div id="search-card" class="card card-block rowContentMargins">
+           <div id="search-card" class="card card-block rowContentMargins col-md-12">
              <h5 class="card-title">Search</h5>
              <div class="card-text">
                <p>
@@ -114,20 +116,30 @@ body { padding-top: 60px; }
                    to the field value.
                </p>
                <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-               <label class="checkbox-inline">
-                 <input type="checkbox" id="check-type-business" value="business" checked="checked"> Business
+               <label class="custom-control custom-checkbox">
+                 <input type="checkbox" id="check-type-business" value="business" checked="checked" class="custom-control-input">
+                 <span class="custom-control-indicator"></span>
+                 <span class="custom-control-description">Business</span>
                </label>
-               <label class="checkbox-inline">
-                 <input type="checkbox" id="check-type-http" value="http" checked="checked"> Http
+               <label class="custom-control custom-checkbox">
+                 <input type="checkbox" id="check-type-http" value="http" checked="checked" class="custom-control-input">
+                 <span class="custom-control-indicator"></span>
+                 <span class="custom-control-description">Http</span>
                </label>
-               <label class="checkbox-inline">
-                 <input type="checkbox" id="check-type-log" value="log" checked="checked"> Log
+               <label class="custom-control custom-checkbox">
+                 <input type="checkbox" id="check-type-log" value="log" checked="checked" class="custom-control-input">
+                 <span class="custom-control-indicator"></span>
+                 <span class="custom-control-description">Log</span>
                </label>                 
-               <label class="checkbox-inline">
-                 <input type="checkbox" id="check-type-messaging" value="messaging" checked="checked"> Messaging
+               <label class="custom-control custom-checkbox">
+                 <input type="checkbox" id="check-type-messaging" value="messaging" checked="checked" class="custom-control-input">
+                 <span class="custom-control-indicator"></span>
+                 <span class="custom-control-description">Messaging</span>
                </label>                 
-               <label class="checkbox-inline">
-                 <input type="checkbox" id="check-type-sql" value="sql" checked="checked"> SQL
+               <label class="custom-control custom-checkbox">
+                 <input type="checkbox" id="check-type-sql" value="sql" checked="checked" class="custom-control-input">
+                 <span class="custom-control-indicator"></span>
+                 <span class="custom-control-description">SQL</span>
                </label>                 
                <div class="input-group">
                  <input id="query-string" type="text" class="form-control" placeholder="Search for..." autofocus autocomplete="off">
@@ -139,7 +151,7 @@ body { padding-top: 60px; }
            </div>
          </div>
          <div class="row" id="result_block" style="display: none;">
-           <div id="search-result-card" class="card card-block rowContentMargins">
+           <div id="search-result-card" class="card card-block rowContentMargins col-md-12">
              <h5 class="card-title">Search results<small id="search-stats"></small><small style="font-size: 100%;"><a id="link-edit-table" href="#" class="fa fa-pencil-square-o pull-right" title="Edit result table"></a><a id="link-request-download" href="#" class="fa fa-download pull-right" title="Download results"></a></small></h5>
              <div id="result_card" class="card-text">
              </div>
@@ -163,13 +175,13 @@ body { padding-top: 60px; }
               </li>
             </ul>
             <div id="tabcontents" class="tab-content">
-              <div id="event-tab" aria-labelledby="event-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade active in">
+              <div id="event-tab" aria-labelledby="event-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade active in show">
               </div>
             </div>
           </div>
         </div>
         <hr />
-        <div class="text-xs-center">
+        <div class="text-center">
           <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
         </div>
       </div>
@@ -206,7 +218,7 @@ body { padding-top: 60px; }
           <h4 class="modal-title" id="template-remove-modal-label">Confirm removal</h4>
         </div>
         <div class="modal-body">
-          Are you sure you want to remove the template '<i id="remove-template-name"></i>' ?
+          Are you sure you want to remove the template '<i id="remove-template-name"></i>'?
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
@@ -573,7 +585,7 @@ body { padding-top: 60px; }
                                 if (data.has_more_results) {
                                     return $('<tfoot>')
                                         .append($('<tr>')
-                                            .append($('<td>').addClass('text-xs-center').attr('colspan', $(tableLayout.fields).length)
+                                            .append($('<td>').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
                                                 .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
                                             )
                                         )

@@ -30,6 +30,12 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.LICENSE_EXPIRED_EXCEPTION:
 					errorMessage.setMessage("License expired");
 					break;
+				case EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED:
+					errorMessage.setMessage("Your license doesn't permit more messages to be stored.");
+					break;
+				case EtmException.LICENSE_MESSAGE_SIZE_EXCEEDED:
+					errorMessage.setMessage("Your license doesn't permit more messages to be stored.");
+					break;
 				case EtmException.CONFIGURATION_LOAD_EXCEPTION:
 					errorMessage.setMessage("Error loading configuration");
 					break;
@@ -59,7 +65,11 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 					break;
 				case EtmException.IIB_UNKNOWN_OBJECT:
 					errorMessage.setMessage("Unknown IIB object");
-					break;					
+					break;		
+				case EtmException.MAX_NR_OF_GRAPHS_REACHED:
+					errorMessage.setMessage("Maximum number of graphs reached");
+				case EtmException.MAX_NR_OF_DASHBOARDS_REACHED:
+					errorMessage.setMessage("Maximum number of dashboards reached");
 				default:
 					break;
 			}

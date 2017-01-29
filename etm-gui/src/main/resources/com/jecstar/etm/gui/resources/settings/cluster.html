@@ -16,22 +16,24 @@ body { padding-top: 60px; }
 
 </head>
 <body>
-   <nav class="navbar navbar-full navbar-dark navbar-fixed-top" style="background-color: #777;">
-     <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#collapsing_navbar">&#9776;</button>
-     <div class="pull-left">
-     <!-- This needs to be on 1 line because otherwise the menu will be screwed in konqueror and android browsers -->
-       <img src="../images/jecstar.svg" style="max-height: 2.4em; max-width: 2.4em;" />&nbsp;<a class="navbar-brand pull-right" href="http://www.jecstar.com" target="_blank">Jecstar</a>
-     </div>
-     <div id="spinner" class="pull-right" style="display: none;">
-       <div class="spinner_line"></div>
-       <div class="spinner_line spinner_line_2"></div>
-       <div class="spinner_line spinner_line_3"></div>
-       <div class="spinner_line spinner_line_4"></div>
-     </div>
-     <div class="collapse navbar-toggleable-xs" id="collapsing_navbar">
-       <ul id="etm_mainmenu" class="nav navbar-nav">
-       </ul>
-     </div>
+  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
+      Jecstar
+    </a>
+    <div class="collapse navbar-collapse" id="collapsing_navbar">
+      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+      </ul>
+    </div>
+    <div class="spinner" id="spinner">
+      <div class="spinner_line"></div>
+      <div class="spinner_line spinner_line_2"></div>
+      <div class="spinner_line spinner_line_3"></div>
+      <div class="spinner_line spinner_line_4"></div>
+    </div>
   </nav>
   
   <div class="container" style="margin-top: 1em;">
@@ -40,113 +42,161 @@ body { padding-top: 60px; }
       <div class="card-text">
         <div id="cluster_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="cluster_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <div id="cluster_box">
-	      <div class="row">
-            <div class=col-sm-12>
-		      <form id="cluster_form">
-		        <div class="form-group row">
-				  <label for="input-shards-per-index" class="col-sm-3 col-form-label">Shards per index</label>
-				  <div class="col-sm-9">
-				    <input id="input-shards-per-index" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-replicas-per-index" class="col-sm-3 col-form-label">Replicas per index</label>
-				  <div class="col-sm-9">
-				    <input id="input-replicas-per-index" type="number" class="form-control" min="0" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-max-event-indices" class="col-sm-3 col-form-label">Max event indices</label>
-				  <div class="col-sm-9">
-				    <input id="input-max-event-indices" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-max-metrics-indices" class="col-sm-3 col-form-label">Max metrics indices</label>
-				  <div class="col-sm-9">
-				    <input id="input-max-metrics-indices" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-wait-for-active-shards" class="col-sm-3 col-form-label">Wait for active shards</label>
-				  <div class="col-sm-9">
-				    <input id="input-wait-for-active-shards" type="number" class="form-control" min="-1" required="required" />
-				  </div>
-				</div>				
-		        <div class="form-group row">
-				  <label for="input-retries-on-conflict" class="col-sm-3 col-form-label">Retries on conflict</label>
-				  <div class="col-sm-9">
-				    <input id="input-retries-on-conflict" type="number" class="form-control" min="0" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-query-timeout" class="col-sm-3 col-form-label">Query timeout</label>
-				  <div class="col-sm-9">
-				    <input id="input-query-timeout" type="number" class="form-control" min="1000" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-search-export-max-rows" class="col-sm-3 col-form-label">Search export max rows</label>
-				  <div class="col-sm-9">
-				    <input id="input-search-export-max-rows" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-search-max-templates" class="col-sm-3 col-form-label">Max search templates</label>
-				  <div class="col-sm-9">
-				    <input id="input-search-max-templates" type="number" class="form-control" min="0" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-search-max-history-size" class="col-sm-3 col-form-label">Max search history size</label>
-				  <div class="col-sm-9">
-				    <input id="input-search-max-history-size" type="number" class="form-control" min="0" required="required" />
-				  </div>
-				</div>								
-		        <div class="form-group row">
-				  <label for="input-enhancing-handler-count" class="col-sm-3 col-form-label">Enhancing handler count</label>
-				  <div class="col-sm-9">
-				    <input id="input-enhancing-handler-count" type="number" class="form-control" min="0" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-persisting-handler-count" class="col-sm-3 col-form-label">Persisting handler count</label>
-				  <div class="col-sm-9">
-				    <input id="input-persisting-handler-count" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-event-buffer-size" class="col-sm-3 col-form-label">Event buffer size</label>
-				  <div class="col-sm-9">
-				    <input id="input-event-buffer-size" type="number" class="form-control" min="2" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-persisting-bulk-count" class="col-sm-3 col-form-label">Persisting bulk count</label>
-				  <div class="col-sm-9">
-				    <input id="input-persisting-bulk-count" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-persisting-bulk-size" class="col-sm-3 col-form-label">Persisting bulk size</label>
-				  <div class="col-sm-9">
-				    <input id="input-persisting-bulk-size" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-persisting-bulk-time" class="col-sm-3 col-form-label">Persisting bulk time</label>
-				  <div class="col-sm-9">
-				    <input id="input-persisting-bulk-time" type="number" class="form-control" min="1" required="required" />
-				  </div>
-				</div>
-		        <div class="modal-footer">
-                  <input type="submit" id="btn-save-cluster" class="btn btn-primary" value="Save" />
-		        </div>
-		      </form>
-		    </div>      
+          <div id="cluster_box" role="tabpanel">
+            <ul role="tablist" id="event-tabs" class="nav nav-tabs">
+              <li class="nav-item">
+                <a id="elasticsearch-tab-header" aria-expanded="true" role="tab" href="#elasticsearch-tab" data-toggle="tab" class="nav-link active">Elasticsearch</a>
+              </li>
+              <li class="nav-item">
+                <a id="persisting-tab-header" aria-expanded="true" role="tab" href="#persisting-tab" data-toggle="tab" class="nav-link">Persisting</a>
+              </li>
+              <li class="nav-item">  
+                <a id="search-tab-header" aria-expanded="false" role="tab" href="#search-tab" data-toggle="tab" class="nav-link">Search</a>
+              </li>
+              <li class="nav-item">  
+                <a id="visualizations-tab-header" aria-expanded="false" role="tab" href="#visualizations-tab" data-toggle="tab" class="nav-link">Visualizations</a>
+              </li>
+            </ul>
+            <div id="tabcontents" class="tab-content">
+              <br />
+              <div id="elasticsearch-tab" aria-labelledby="elasticsearch-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade active in show">
+                <form id="form-elasticsearch">
+			        <div class="form-group row">
+					  <label for="input-shards-per-index" class="col-sm-3 col-form-label">Shards per index</label>
+					  <div class="col-sm-9">
+					    <input id="input-shards-per-index" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-replicas-per-index" class="col-sm-3 col-form-label">Replicas per index</label>
+					  <div class="col-sm-9">
+					    <input id="input-replicas-per-index" type="number" class="form-control" min="0" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-max-event-indices" class="col-sm-3 col-form-label">Max event indices</label>
+					  <div class="col-sm-9">
+					    <input id="input-max-event-indices" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-max-metrics-indices" class="col-sm-3 col-form-label">Max metrics indices</label>
+					  <div class="col-sm-9">
+					    <input id="input-max-metrics-indices" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-wait-for-active-shards" class="col-sm-3 col-form-label">Wait for active shards</label>
+					  <div class="col-sm-9">
+					    <input id="input-wait-for-active-shards" type="number" class="form-control" min="-1" required="required" />
+					  </div>
+					</div>				
+			        <div class="form-group row">
+					  <label for="input-retries-on-conflict" class="col-sm-3 col-form-label">Retries on conflict</label>
+					  <div class="col-sm-9">
+					    <input id="input-retries-on-conflict" type="number" class="form-control" min="0" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-query-timeout" class="col-sm-3 col-form-label">Query timeout</label>
+					  <div class="col-sm-9">
+					    <input id="input-query-timeout" type="number" class="form-control" min="1000" required="required" />
+					  </div>
+					</div>
+					<div class="modal-footer">
+	                  <input type="submit" id="btn-save-elasticsearch" class="btn btn-primary" value="Save" />
+			        </div>
+			    </form>      				
+              </div>
+              <div id="search-tab" aria-labelledby="search-tab-header" role="tabpanel" aria-expanded="false" class="tab-pane fade">
+                <form id="form-search">
+			        <div class="form-group row">
+					  <label for="input-search-export-max-rows" class="col-sm-3 col-form-label">Search export max rows</label>
+					  <div class="col-sm-9">
+					    <input id="input-search-export-max-rows" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-search-max-templates" class="col-sm-3 col-form-label">Max search templates</label>
+					  <div class="col-sm-9">
+					    <input id="input-search-max-templates" type="number" class="form-control" min="0" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-search-max-history-size" class="col-sm-3 col-form-label">Max search history size</label>
+					  <div class="col-sm-9">
+					    <input id="input-search-max-history-size" type="number" class="form-control" min="0" required="required" />
+					  </div>
+					</div>	
+					<div class="modal-footer">
+	                  <input type="submit" id="btn-save-search" class="btn btn-primary" value="Save" />
+			        </div>
+			    </form>      
+              </div>
+			  <div id="visualizations-tab" aria-labelledby="visualizations-tab-header" role="tabpanel" aria-expanded="false" class="tab-pane fade">
+			    <form id="form-visualizations">
+			        <div class="form-group row">
+					  <label for="input-visualization-max-graph-count" class="col-sm-3 col-form-label">Max graphs</label>
+					  <div class="col-sm-9">
+					    <input id="input-visualization-max-graph-count" type="number" class="form-control" min="0" required="required" />
+					  </div>
+					</div>								
+			        <div class="form-group row">
+					  <label for="input-visualization-max-dashboard-count" class="col-sm-3 col-form-label">Max dashboards</label>
+					  <div class="col-sm-9">
+					    <input id="input-visualization-max-dashboard-count" type="number" class="form-control" min="0" required="required" />
+					  </div>
+					</div>
+					<div class="modal-footer">
+	                  <input type="submit" id="btn-save-visualizations" class="btn btn-primary" value="Save" />
+			        </div>
+			    </form>  
+			  </div>
+			  <div id="persisting-tab" aria-labelledby="persisting-tab-header" role="tabpanel" aria-expanded="false" class="tab-pane fade">
+			    <form id="form-persisting">
+			        <div class="form-group row">
+					  <label for="input-enhancing-handler-count" class="col-sm-3 col-form-label">Enhancing handler count</label>
+					  <div class="col-sm-9">
+					    <input id="input-enhancing-handler-count" type="number" class="form-control" min="0" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-persisting-handler-count" class="col-sm-3 col-form-label">Persisting handler count</label>
+					  <div class="col-sm-9">
+					    <input id="input-persisting-handler-count" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-event-buffer-size" class="col-sm-3 col-form-label">Event buffer size</label>
+					  <div class="col-sm-9">
+					    <input id="input-event-buffer-size" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-persisting-bulk-count" class="col-sm-3 col-form-label">Persisting bulk count</label>
+					  <div class="col-sm-9">
+					    <input id="input-persisting-bulk-count" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-persisting-bulk-size" class="col-sm-3 col-form-label">Persisting bulk size</label>
+					  <div class="col-sm-9">
+					    <input id="input-persisting-bulk-size" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-persisting-bulk-time" class="col-sm-3 col-form-label">Persisting bulk time</label>
+					  <div class="col-sm-9">
+					    <input id="input-persisting-bulk-time" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+					<div class="modal-footer">
+	                  <input type="submit" id="btn-save-persisting" class="btn btn-primary" value="Save" />
+			        </div>
+			    </form>      
+			  </div>
+            </div>
           </div>
-        </div>
       </div>
     </div>
   </div>

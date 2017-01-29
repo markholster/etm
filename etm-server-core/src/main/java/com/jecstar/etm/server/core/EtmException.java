@@ -10,8 +10,10 @@ public class EtmException extends RuntimeException {
 	// 200_* reserved for license errors.
 	public static final int INVALID_LICENSE_KEY_EXCEPTION 	= 200_000;
 	public static final int LICENSE_EXPIRED_EXCEPTION 		= 200_001;
+	public static final int LICENSE_MESSAGE_COUNT_EXCEEDED 	= 200_002;
+	public static final int LICENSE_MESSAGE_SIZE_EXCEEDED 	= 200_003;
 	
-	// 201_* reserved for confguration errors.
+	// 201_* reserved for configuration errors.
 	public static final int CONFIGURATION_LOAD_EXCEPTION 	= 201_000;
 	public static final int UNMARSHALLER_CREATE_EXCEPTION 	= 201_001;
 	public static final int INVALID_XPATH_EXPRESSION 		= 201_002;
@@ -24,6 +26,11 @@ public class EtmException extends RuntimeException {
 	// 300_* reserved for IIB errors.
 	public static final int IIB_CONNECTION_ERROR 			= 300_000;
 	public static final int IIB_UNKNOWN_OBJECT 				= 300_001;
+	
+	// 400_* reserved for visualization errors.
+	public static final int MAX_NR_OF_GRAPHS_REACHED 		= 400_000;
+	public static final int MAX_NR_OF_DASHBOARDS_REACHED 	= 400_001;
+	
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -1,10 +1,10 @@
-def version_jackson = "2.8.5"
+def version_jackson = "2.8.6"
 def version_resteasy = "3.1.0.Final"
 
 ext {
     dep_disruptor = "com.lmax:disruptor:3.3.6"
-    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.1.1"
-    dep_htmlunitDriver = "org.seleniumhq.selenium:htmlunit-driver:2.21"
+    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.1.2"
+    dep_htmlunitDriver = "org.seleniumhq.selenium:htmlunit-driver:2.23.2"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:" + version_jackson
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.2.0"
     dep_junit = "junit:junit:4.12"
@@ -16,14 +16,14 @@ ext {
     dep_poiOoxml = "org.apache.poi:poi-ooxml:3.15"
     dep_saxonHE = "net.sf.saxon:Saxon-HE:9.7.0-14"
     dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:3.0.1"
-    dep_slf4jApi = "org.slf4j:slf4j-api:1.7.21"
-    dep_undertowServlet = "io.undertow:undertow-servlet:1.4.7.Final"
+    dep_slf4jApi = "org.slf4j:slf4j-api:1.7.22"
+    dep_undertowServlet = "io.undertow:undertow-servlet:1.4.8.Final"
     dep_snakeyaml = "org.yaml:snakeyaml:1.17"
 }
 
 allprojects {
     apply plugin: "eclipse"
-    version "2.0.0"
+    version "2.0.1-SNAPSHOT"
     group "com.jecstar.etm"
     
     repositories {

@@ -8,6 +8,8 @@ During execution {etm} can run into an error. These may be shown to the end user
 |100000|General error. This error code is used when an error occurred in code that {etm} depends on.| 
 |200000|Invalid license key.|You have provided an invalid license key. Please make sure your license key is exactly copied as provided by Jecstar Innovation.
 |200001|License expired.|Your license has expired and needs to be renewed.
+|200002|License exceeded.|The maximum number of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
+|200003|License exceeded.|The maximum size of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
 |201000|Configuration load error.|Please check the connection to your Elasticsearch cluster.
 |201001|Error creating XML unmarshaller.|
 |201002|Invalid xpath expression. The provided input is an invalid XPath expression.|Change your input to a valid XPath expression.
@@ -18,4 +20,6 @@ During execution {etm} can run into an error. These may be shown to the end user
 |201007|No admins left. You are trying to change a user that will result in a system without any users with the admin role.|Make sure you will have an admin user left when the change is applied.
 |300000|Unable to connect to IIB node.|Check your connection parameters and make sure the IIB Node is running.
 |300001|Unknown IIB object.|
+|400000|Maximum number of graphs reached.|You are not allowed to store more graphs. Delete a graph, or ask your {etm} administrator to raise the maximum number of graphs that can be stored.
+|400001|Maximum number of dashboards reached.|You are not allowed to store more dashboards. Delete a dashboard, or ask your {etm} administrator to raise the maximum number of dashboards that can be stored.
 |======================= 

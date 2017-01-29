@@ -72,7 +72,7 @@ public class Launcher {
 				this.httpServer.start();
 			}
 			if (configuration.ibmMq.enabled) {
-				initializeMqProcessor(configuration);
+				initializeMqProcessor(metricRegistry, configuration);
 			}
 			if (!commandLineParameters.isQuiet()) {
 				System.out.println("Enterprise Telemetry Monitor started.");
@@ -168,17 +168,19 @@ public class Launcher {
 		this.elasticClient = transportClient;
 	}
 	
-	private void initializeMqProcessor(Configuration configuration) {
+	private void initializeMqProcessor(MetricRegistry metricRegistry, Configuration configuration) {
 		try {
 			Class<?> clazz = Class.forName("com.jecstar.etm.processor.ibmmq.IbmMqProcessorImpl");
 			this.ibmMqProcessor = (IbmMqProcessor) clazz
 					.getConstructor(
 							TelemetryCommandProcessor.class, 
+							MetricRegistry.class,
 							IbmMq.class, 
 							String.class,
 							String.class
 						).newInstance(
 							this.processor, 
+							metricRegistry,
 							configuration.ibmMq, 
 							configuration.clusterName, 
 							configuration.instanceName);

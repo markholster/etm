@@ -5,6 +5,11 @@ import com.jecstar.etm.server.core.domain.converter.EtmConfigurationTags;
 public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 
 	@Override
+	public String getNodeNameTag() {
+		return "name";
+	}
+	
+	@Override
 	public String getLicenseTag() {
 		return "license";
 	}
@@ -87,6 +92,16 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	@Override
 	public String getMaxSearchTemplateCountTag() {
 		return "max_search_template_count";
+	}
+	
+	@Override
+	public String getMaxGraphCountTag() {
+		return "max_graph_count";
+	}
+	
+	@Override
+	public String getMaxDashboardCountTag() {
+		return "max_dashboard_count";
 	}
 
 }

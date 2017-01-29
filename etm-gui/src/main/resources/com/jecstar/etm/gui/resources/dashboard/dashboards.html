@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+
+<title>Jecstar - Enterprise Telemetry Monitor</title>
+
+<link rel="stylesheet" href="../styles/bootstrap.min.css">
+<link rel="stylesheet" href="../styles/font-awesome.min.css">
+<link rel="stylesheet" href="../styles/jquery-ui.min.css">
+<link rel="stylesheet" href="../styles/autocomplete.css">
+<link rel="stylesheet" href="../styles/spinner.css">
+<link rel="stylesheet" href="../styles/nv.d3.min.css">
+<style type="text/css">
+body { padding-top: 60px; }
+
+.selectedColumn {
+	border: 2px solid rgba(0, 0, 0, 0.25);
+}
+.noBorder {
+	border: 0px;
+}
+</style>
+</head>
+<body>
+  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
+      Jecstar
+    </a>
+    <div class="collapse navbar-collapse" id="collapsing_navbar">
+      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+      </ul>
+    </div>
+    <div class="spinner" id="spinner">
+      <div class="spinner_line"></div>
+      <div class="spinner_line spinner_line_2"></div>
+      <div class="spinner_line spinner_line_3"></div>
+      <div class="spinner_line spinner_line_4"></div>
+    </div>
+  </nav>
+  
+  <div id="dashboard-container" class="container-fluid" style="margin-top: 1em;">
+  	<div id="dasboard-heading" class="text-center"><h3><a id="dashboard-name" href="#"></a></h3></div>
+  	<div id="graph-container">
+  	</div>
+  </div>
+  
+  <div id="dashboard-settings" class="container" style="margin-top: 1em;" style="display: none;">
+    <div class="card card-block">
+      <h5 class="card-title">Dashboard settings</h5>
+      <div class="card-text">
+        <div id="dashboard-settings_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+        <div id="dashboard-settings_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+        <div id="dashboard-settings_box">
+          <div class="row">
+            <div class=col-sm-12>
+              <select id="sel-dashboard" class="form-control form-control-sm custom-select">
+         	    <option selected="selected"></option>
+              </select>
+            </div>
+          </div>  
+          <hr />
+	      <div class="row">
+            <div class=col-sm-12>
+		      <form id="dashboard-settings_form"> 
+                <div class="form-group row">
+                  <label for="input-dashboard-name" class="col-sm-3 col-form-label">Name</label>
+                  <div class="col-sm-9">
+                    <input id="input-dashboard-name" type="text" class="form-control" required="required" />
+                  </div>
+                </div>
+                <div id="dashboard-settings-columns" class="form-group">
+                </div>    
+                <div class="modal-footer">
+	              <input type="submit" id="btn-confirm-remove-dashboard" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
+	              <input type="submit" id="btn-confirm-save-dashboard" class="btn btn-primary" value="Save and show" disabled="disabled" />
+	            </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>        
+  
+  
+  <div class="modal fade" id="modal-graph-settings" tabindex="-1" role="dialog" aria-labelledby="graph-settings-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="graph-settings-modal-label">Graph settings</h4>
+        </div>
+        <div class="modal-body">
+          <form id="graph_form">
+	          <div class="form-group row">
+	            <label for="input-graph-title" class="col-sm-3 col-form-label col-form-label-sm">Graph title</label>
+	            <div class="col-sm-9">
+	            	<input id="input-graph-title" type="text" class="form-control form-control-sm" />
+				</div>
+	          </div>
+	          <div class="form-group row">
+	            <label for="sel-graph" class="col-sm-3 col-form-label col-form-label-sm">Graph</label>
+	            <div class="col-sm-9">
+	            	<select id="sel-graph" class="form-control form-control-sm custom-select">
+	            	</select>
+	            </div>	
+	          </div>
+	          <div class="form-group row">
+	            <label for="input-graph-query" class="col-sm-3 col-form-label col-form-label-sm">Graph query</label>
+	            <div class="col-sm-9">
+	            	<input id="input-graph-query" type="text" class="form-control form-control-sm" />
+				</div>
+	          </div>
+	          <div id="row-graph-interpolation" class="form-group row" style="display: none;">
+	            <label for="sel-graph-interpolation" class="col-sm-3 col-form-label col-form-label-sm">Interpolation</label>
+	            <div class="col-sm-9">
+	            	<select id="sel-graph-interpolation" class="form-control form-control-sm custom-select">
+	            		<option value="basis">Basis</option>
+	            		<option value="basis-closed">Basis closed</option>
+	            		<option value="basis-open">Basis open</option>
+	            		<option value="bundle">Bundle</option>
+	            		<option value="cardinal">Cardinal</option>
+	            		<option value="cardinal-closed">Cardinal closed</option>
+	            		<option value="cardinal-open">Cardinal open</option>
+	            		<option value="linear" selected="selected">Linear</option>
+	            		<option value="monotone">Monotone</option>
+	            		<option value="step-before">Step before</option>
+	            		<option value="step-after">Step after</option>
+	            	</select>
+				</div>
+	          </div>	          
+	          <div class="form-group row">
+	            <label for="sel-graph-border" class="col-sm-3 col-form-label col-form-label-sm">Border</label>
+	            <div class="col-sm-9">
+	            	<select id="sel-graph-border" class="form-control form-control-sm custom-select">
+	            		<option value="true">Yes</option>
+	            		<option value="false">No</option>
+	            	</select>
+	            </div>	
+	          </div>
+	          <div class="form-group row">
+	            <label for="input-refresh-rate" class="col-sm-3 col-form-label col-form-label-sm">Refresh rate</label>
+	            <div class="col-sm-9">
+	            	<input id="input-refresh-rate" type="number" class="form-control form-control-sm" min="10"/>
+				</div>
+	          </div>
+              <div class="modal-footer">
+	          	<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+	            <button id="btn-apply-graph-settings" type="button" class="btn btn-primary">Apply</button>
+	          </div>
+          </form>          
+        </div>
+      </div>
+    </div>
+  </div>  
+  
+  
+  <div class="modal fade" id="modal-dashboard-overwrite" tabindex="-1" role="dialog" aria-labelledby="dashboard-overwrite-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="dashboard-overwrite-modal-label">Dashboard already exists</h4>
+        </div>
+        <div class="modal-body">
+          A dashboard with the name '<i id="overwrite-dashboard-name"></i>' already exists. Do you want to overwrite that dashboard?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button id="btn-save-dashboard" type="button" class="btn btn-primary">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+    
+  <div class="modal fade" id="modal-dashboard-remove" tabindex="-1" role="dialog" aria-labelledby="dashboard-remove-modal-label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="dashboard-remove-modal-label">Confirm removal</h4>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to remove the dashboard '<i id="remove-dashboard-name"></i>'?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button id="btn-remove-dashboard" type="button" class="btn btn-primary">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>  
+  
+  
+  <!-- jQuery first, then Bootstrap JS. -->
+  <script src="../scripts/tether.min.js"></script>
+  <script src="../scripts/jquery.min.js"></script>
+  <script src="../scripts/jquery-ui.min.js"></script>
+  <script src="../scripts/bootstrap.min.js"></script>
+  <script src="../scripts/menu.js"></script>
+  <script src="../scripts/d3.min.js"></script>
+  <script src="../scripts/nv.d3.min.js"></script>
+  <script src="../scripts/autocomplete_fields.js"></script>
+  <script src="../scripts/dashboard.js"></script>
+  
+<script>
+$(document).ajaxStart(function () {
+    $('.errorBox').hide('fast');
+    $('#spinner').show('fast');
+}).ajaxStop(function () {
+    $('#spinner').hide('fast');
+}).ajaxError(function(event, jqXHR, settings, thrownError) {
+    if ("undefined" != typeof jqXHR.responseJSON) {
+        $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+    } else {
+        $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+    }
+}).ajaxComplete(function(event, jqXHR, settings) {
+    var contentType = jqXHR.getResponseHeader("Content-Type");
+    if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+        // assume that our login has expired - reload our current page
+        window.location.reload();
+        return;
+    }          
+});
+buildMenu('dashboard', '../');
+loadDashboardPage();	
+
+
+</script>
+  
+</body>
+</html>

@@ -18,6 +18,7 @@ All event types have a common set of attributes. This section describes these at
 |payload||The payload of the event.
 |payload_format||The payload format. Can be one of HTML, JSON, SOAP, SQL, TEXT or XML.
 |payload_length||A calculated read only attributes that hold the length of the payload content. 
+|timestamp||A calculated read only attributes that hold the date/time the event got first processed. 
 |=======================
 
 [[event-endpoint-attributes]]
