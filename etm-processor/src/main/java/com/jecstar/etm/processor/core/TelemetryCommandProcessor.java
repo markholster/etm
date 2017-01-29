@@ -18,6 +18,7 @@ import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
 import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.domain.builders.SqlTelemetryEventBuilder;
 import com.jecstar.etm.processor.TelemetryCommand;
+import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.metrics.GarbageCollectorMetricSet;
 import com.jecstar.etm.processor.metrics.MemoryUsageMetricSet;
 import com.jecstar.etm.processor.metrics.NetworkMetricSet;
@@ -46,6 +47,10 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	private PersistenceEnvironment persistenceEnvironment;
 	private MetricRegistry metricRegistry;
 	private Timer offerTimer;
+	
+	private boolean licenseExpiredLogged = false;
+	private boolean licenseCountExceededLogged = false;
+	private boolean licenseSizeExceededLogged = false;
 	
 	public TelemetryCommandProcessor(MetricRegistry metricRegistry) {
 		this.metricRegistry = metricRegistry;
@@ -260,14 +265,32 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 			throw new IllegalStateException();
 		}
 		if (this.etmConfiguration.isLicenseExpired()) {
+			if (!this.licenseExpiredLogged) {
+				BusinessEventLogger.logLicenseExpired();
+				this.licenseExpiredLogged = true;
+			}
 			throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
+		} else {
+			this.licenseExpiredLogged = false;
 		}
 		if (this.etmConfiguration.isLicenseCountExceeded()) {
+			if (!this.licenseCountExceededLogged) {
+				BusinessEventLogger.logLicenseCountExceeded();
+				this.licenseCountExceededLogged = true;
+			}
 			throw new EtmException(EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED);
+		} else {
+			this.licenseCountExceededLogged = false;
 		}
 		if (this.etmConfiguration.isLicenseSizeExceeded()) {
+			if (!this.licenseSizeExceededLogged) {
+				BusinessEventLogger.logLicenseSizeExceeded();
+				this.licenseSizeExceededLogged = true;
+			}
 			throw new EtmException(EtmException.LICENSE_MESSAGE_SIZE_EXCEEDED);
-		}		
+		} else {
+			this.licenseSizeExceededLogged = false;
+		}
 	}
 
 	@Override
