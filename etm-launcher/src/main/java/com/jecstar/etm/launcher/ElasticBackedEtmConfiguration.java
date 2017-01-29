@@ -5,7 +5,10 @@ import java.time.ZonedDateTime;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
 import com.jecstar.etm.processor.core.persisting.elastic.AbstractElasticTelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
@@ -193,11 +196,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		this.elasticClient.admin().indices().prepareStats(indexNameOfToday)
 				.clear()
 				.setStore(true)
-				.setDocs(true)
 				.execute(new ActionListener<IndicesStatsResponse>() {
 					@Override
 					public void onResponse(IndicesStatsResponse response) {
-						eventsPersistedToday = response.getTotal().docs.getCount() - response.getTotal().docs.getDeleted();
 						sizePersistedToday = response.getTotal().store.getSizeInBytes();
 					}
 
@@ -205,6 +206,18 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 					public void onFailure(Exception e) {
 					}
 				});
+		this.elasticClient.prepareSearch(indexNameOfToday)
+			.setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.writing_endpoint_handler.application.name: \"Enterprise Telemetry Monitor\"")))
+			.execute(new ActionListener<SearchResponse>() {
+				@Override
+				public void onResponse(SearchResponse response) {
+					eventsPersistedToday = response.getHits().getTotalHits();
+				}
+
+				@Override
+				public void onFailure(Exception e) {
+				}
+			});
 		GetResponse defaultResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT).get();
 		GetResponse nodeResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, getNodeName()).get();
 		GetResponse licenseResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID).get();
