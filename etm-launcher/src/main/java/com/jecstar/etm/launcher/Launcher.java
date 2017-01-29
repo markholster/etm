@@ -174,6 +174,7 @@ public class Launcher {
 			this.ibmMqProcessor = (IbmMqProcessor) clazz
 					.getConstructor(
 							TelemetryCommandProcessor.class, 
+							MetricRegistry.class,
 							IbmMq.class, 
 							String.class,
 							String.class
