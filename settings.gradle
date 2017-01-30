@@ -10,4 +10,5 @@ include 'etm-domain',
         'etm-integration-tests', 
         'etm-license-generator',
         'etm-distribution',
-        'etm-documentation'
+        'etm-documentation',
+        'etm-v1migrator'

@@ -1,0 +1,7 @@
+apply plugin: "java"
+
+dependencies {
+    compile project(":etm-domain")
+    compile "org.elasticsearch:elasticsearch:2.0.0"
+    compile "org.yaml:snakeyaml:1.17"
+}
