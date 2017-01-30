@@ -33,7 +33,7 @@ public class Startup {
 		        .put("cluster.name", config.inputClusterName).build();
 		Client client = TransportClient.builder().settings(settings).build()
 		        .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(config.inputHostname), config.inputPort));
-		InsertRequestHandler requestHandler = new InsertRequestHandler(config.etm20BulkApiLocation);
+		InsertRequestHandler requestHandler = new InsertRequestHandler(config.bulkApiLocation);
 		while (true) {
 			SearchResponse searchResponse = client.prepareSearch("etm_event_all")
 				.addSort(SortBuilders.fieldSort("timestamp").order(SortOrder.ASC))

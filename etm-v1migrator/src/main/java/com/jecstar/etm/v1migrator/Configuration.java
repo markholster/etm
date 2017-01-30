@@ -7,5 +7,5 @@ public class Configuration {
 	public int inputPort;
 	public int bulkSize = 100;
 	
-	public String etm20BulkApiLocation;
+	public String bulkApiLocation;
 }

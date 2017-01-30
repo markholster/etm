@@ -7,12 +7,24 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 
 import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.domain.writers.json.MessagingTelemetryEventWriterJsonImpl;
 
 public class InsertRequestHandler {
 
+	public static final DateTimeFormatter dateTimeFormatterIndexPerDay = new DateTimeFormatterBuilder()
+			.appendValue(ChronoField.YEAR, 4)
+			.appendLiteral("-")
+			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
+			.appendLiteral("-")
+			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
+	
 	private final URL apiLocation;
 	private final StringBuilder buffer = new StringBuilder();
 	private final MessagingTelemetryEventWriterJsonImpl writer;
@@ -25,14 +37,12 @@ public class InsertRequestHandler {
 	}
 
 	public boolean addBuilder(MessagingTelemetryEventBuilder builder) {
-		if (this.buffer.length() == 0) {
-			this.buffer.append("[");
-		} else {
-			this.buffer.append(",");
+		if (this.buffer.length() != 0) {
+			this.buffer.append("\r\n");
 		}
-		this.buffer.append("{\"type\": \"messaging\", \"data\": " + this.writer.write(builder.build()) + "}");
+		this.buffer.append("{ \"index\" : { \"_index\" : \"etm_event_" + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()) + "\", \"_type\" : \"messaging\", \"_id\" : \"" + builder.getId() + "\" } }\r\n");
+		this.buffer.append(this.writer.write(builder.build()));
 		if (this.buffer.length() > this.flushLength) {
-			this.buffer.append("]");
 			return flushBuffer();
 		}
 		return true;
@@ -42,7 +52,6 @@ public class InsertRequestHandler {
 		if (this.buffer.length() == 0) {
 			return true;
 		}
-		this.buffer.append("]");
 		return flushBuffer();
 	}
 
@@ -72,6 +81,7 @@ public class InsertRequestHandler {
 			//  TODO valideren op acknowledged
 			in.close();
 			con.disconnect();
+			this.buffer.setLength(0);
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
