@@ -102,6 +102,7 @@ public class Startup {
 				bulkRequest.get();
 			}
 		}
+		client.close();
 		System.out.println("Done migrating " + count + " events");
 	}
 
