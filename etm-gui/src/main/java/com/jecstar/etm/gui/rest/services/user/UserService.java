@@ -121,14 +121,18 @@ public class UserService extends AbstractJsonService {
 		
 		String oldPassword = getString("current_password", valueMap);
 		String newPassword = getString("new_password", valueMap);
-				
+		
 		boolean valid = BCrypt.checkpw(oldPassword, getEtmPrincipal().getPasswordHash());
 		if (!valid) {
 			throw new EtmException(EtmException.INVALID_PASSWORD);
 		}
+		if (oldPassword.equals(newPassword)) {
+			throw new EtmException(EtmException.PASSWORD_NOT_CHANGED);
+		}
 		String newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt());
 		Map<String, Object> updateMap = new HashMap<String, Object>();
 		updateMap.put(this.tags.getPasswordHashTag(), newHash);
+		updateMap.put(this.tags.getChangePasswordOnLogonTag(), false);
 		
 		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 		.setDoc(updateMap)

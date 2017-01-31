@@ -42,6 +42,7 @@ import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.InMemorySingleSignOnManager;
 import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
 import io.undertow.security.impl.SingleSignOnManager;
+import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
@@ -207,34 +208,38 @@ public class HttpServer {
 		deployment.setApplication(guiApplication);
 		deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
+		di.addInnerHandlerChainWrapper(new HandlerWrapper() {
+			@Override
+			public HttpHandler wrap(HttpHandler handler) {
+				return new ChangePasswordHandler("/gui/", handler);
+			}
+		});
 		di.addWelcomePage("index.html");
 		di.setContextPath("/gui");
-		if (identityManager != null) {
-			deployment.setSecurityEnabled(true);
-			di.addSecurityConstraint(new SecurityConstraint()
-						.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
-						.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/").addUrlPattern("/index.html").addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
-			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName())
-					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
-			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName())
-					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
-			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName())
-					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*")));
-			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
-					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/*").addUrlPattern("/rest/iib/*")));
-			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName());
-			di.setIdentityManager(identityManager);
-			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
-			di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
-		}
+		deployment.setSecurityEnabled(true);
+		di.addSecurityConstraint(new SecurityConstraint()
+					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
+					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/").addUrlPattern("/index.html").addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
+		di.addSecurityConstraint(new SecurityConstraint()
+				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName())
+				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
+		di.addSecurityConstraint(new SecurityConstraint()
+				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName())
+				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
+		di.addSecurityConstraint(new SecurityConstraint()
+				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName())
+				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*")));
+		di.addSecurityConstraint(new SecurityConstraint()
+				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
+				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/*").addUrlPattern("/rest/iib/*")));
+		di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName());
+		di.setIdentityManager(identityManager);
+		di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
+		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
 		di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
+		di.setInvalidateSessionOnLogout(true);
 		di.setDeploymentName("GUI - " + di.getContextPath());
-		
 		// Add the logout servlet.
 		ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
                 .setAsyncSupported(false)

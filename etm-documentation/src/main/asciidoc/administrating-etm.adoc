@@ -29,6 +29,7 @@ Each user can have the following attributes:
 |Time zone|The time zone the user is in. Time based properties will be converted to the selected time zone.
 |Search history size|The number of queries that need to be remembered.
 |User roles|The roles the user should have. See <<User roles>> for a detailed description.
+|Change password on logon|The user is forced to change the password on the next logon, or in the current session if the user is already logged on.
 |New password|The new password for the user. This field is mandatory when adding a new user.
 |Retype password|Retype the new password in this field to make sure you didn't enter a typo in the ''New password'' field.
 |======================= 

@@ -27,6 +27,7 @@ public class EtmPrincipal implements Principal {
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
 	private boolean alwaysShowCorrelatedEvents = false;
 	private int historySize = DEFAULT_HISTORY_SIZE;
+	private boolean changePasswordOnLogon = false;
 
 	
 	// State properties. DO NOT CHANGE!!
@@ -191,6 +192,14 @@ public class EtmPrincipal implements Principal {
 			this.historySize =  0;
 		}
 		this.historySize = historySize;
+	}
+
+	public boolean isChangePasswordOnLogon() {
+		return this.changePasswordOnLogon;
+	}
+	
+	public void setChangePasswordOnLogon(boolean changePasswordOnLogon) {
+		this.changePasswordOnLogon = changePasswordOnLogon;
 	}
 	
 	public NumberFormat getNumberFormat() {

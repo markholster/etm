@@ -16,8 +16,9 @@ During execution {etm} can run into an error. These may be shown to the end user
 |201003|Invalid xslt template. The provided input is an invalid XSLT template.|Change your input to a valid XSLT template.
 |201004|Invalid json path expression. The provided input is an invalid JSON path expression or is not definite.|Change your input to a valid definite JSON path expression.
 |201005|Invalid expression parser type.|
-|201006|Invalid password.|Retype your password and try again.
-|201007|No admins left. You are trying to change a user that will result in a system without any users with the admin role.|Make sure you will have an admin user left when the change is applied.
+|201006|No admins left. You are trying to change a user that will result in a system without any users with the admin role.|Make sure you will have an admin user left when the change is applied.
+|202001|Invalid password.|Retype your password and try again.
+|202002|The new password may not be the same as the old password.|Choose a new password that is not the same as the current password.
 |300000|Unable to connect to IIB node.|Check your connection parameters and make sure the IIB Node is running.
 |300001|Unknown IIB object.|
 |400000|Maximum number of graphs reached.|You are not allowed to store more graphs. Delete a graph, or ask your {etm} administrator to raise the maximum number of graphs that can be stored.

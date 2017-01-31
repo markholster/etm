@@ -10,6 +10,7 @@ public interface EtmPrincipalTags {
 	String getLocaleTag();
 	String getNameTag();
 	String getPasswordHashTag();
+	String getChangePasswordOnLogonTag();
 	String getRolesTag();
 	String getGroupsTag();
 	String getTimeZoneTag();

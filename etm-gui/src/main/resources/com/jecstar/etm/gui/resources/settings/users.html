@@ -29,7 +29,7 @@ body { padding-top: 60px; }
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
       </ul>
     </div>
-    <div class="spinner" id="spinner">
+    <div class="spinner" id="spinner" style="display: none;">
       <div class="spinner_line"></div>
       <div class="spinner_line spinner_line_2"></div>
       <div class="spinner_line spinner_line_3"></div>
@@ -120,6 +120,15 @@ body { padding-top: 60px; }
             		<div class="col-sm-9" id="user-roles-container">
             		</div>
             	</div>		
+                <div class="form-group row">
+                  <label for="sel-change-password-on-logon" class="col-sm-3 col-form-label">Change password on logon</label>
+                  <div class="col-sm-9">
+                    <select id="sel-change-password-on-logon" class="form-control custom-select">
+		          	  <option value="true">Yes</option>
+		          	  <option value="false" selected="selected">No</option>            	    
+                    </select>       
+                  </div>
+                </div>        
 		        <div class="form-group row">
 		          <label for="input-new-password1" class="col-sm-3 col-form-label">New password</label>
 		          <div class="col-sm-9">

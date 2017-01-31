@@ -45,6 +45,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	}
 	
 	@Override
+	public String getChangePasswordOnLogonTag() {
+		return "change_password_on_logon";
+	}
+	
+	@Override
 	public String getRolesTag() {
 		return "roles";
 	}

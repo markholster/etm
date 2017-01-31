@@ -20,9 +20,11 @@ public class EtmException extends RuntimeException {
 	public static final int INVALID_XSLT_TEMPLATE 			= 201_003;
 	public static final int INVALID_JSON_EXPRESSION			= 201_004;
 	public static final int INVALID_EXPRESSION_PARSER_TYPE 	= 201_005;
-	public static final int INVALID_PASSWORD 				= 201_006;
-	public static final int NO_MORE_ADMINS_LEFT 			= 201_007;
+	public static final int NO_MORE_ADMINS_LEFT 			= 201_006;
 	
+	public static final int INVALID_PASSWORD 				= 202_001;
+	public static final int PASSWORD_NOT_CHANGED 			= 202_002;
+
 	// 300_* reserved for IIB errors.
 	public static final int IIB_CONNECTION_ERROR 			= 300_000;
 	public static final int IIB_UNKNOWN_OBJECT 				= 300_001;

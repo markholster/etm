@@ -125,6 +125,7 @@ function buildUserPage() {
 		$('#sel-locale').val(userData.locale);
 		$('#sel-time-zone').val(userData.time_zone);
 		$('#input-search-history-size').val(userData.search_history_size);
+		$('#sel-change-password-on-logon').val(userData.change_password_on_logon ? 'true' : 'false');
 		$('#user-roles-container > label > input').prop('checked', false);
 		if (userData.roles) {
 			$.each(userData.roles, function(index, role) {
@@ -296,6 +297,7 @@ function buildUserPage() {
 			locale: $('#sel-locale').val(),
 			time_zone: $('sel-time-zone').val(),
 			search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,
+			change_password_on_logon: $('#sel-change-password-on-logon').val() == 'true' ? true : false, 
 			roles: [],
 			groups: []
 		}
@@ -315,18 +317,7 @@ function buildUserPage() {
 	}
 
 	function resetValues() {
-		$('#input-user-id').val('');
-		$('#input-user-name').val('');
-		$('#input-filter-query').val('');
-		$('#sel-filter-query-occurrence').val('MUST');
-		$('#sel-always-show-correlated-event').val('false');
-		$('#input-search-history-size').val(5);
-		$('#sel-locale').val(defaultLocale);
-		$('#sel-time-zone').val(defaultTimeZone);
-		$('#user-roles-container > label > input').prop('checked', false);
-        $('#input-new-password1').val('');
-        $('#input-new-password2').val('');
-        $('#list-groups').empty();
+		document.getElementById('user_form').reset();
 		enableOrDisableButtons();
 	}
 }

@@ -31,10 +31,10 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 					errorMessage.setMessage("License expired");
 					break;
 				case EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED:
-					errorMessage.setMessage("Your license doesn't permit more messages to be stored.");
+					errorMessage.setMessage("Your license does not permit more messages to be stored");
 					break;
 				case EtmException.LICENSE_MESSAGE_SIZE_EXCEEDED:
-					errorMessage.setMessage("Your license doesn't permit more messages to be stored.");
+					errorMessage.setMessage("Your license does not permit more messages to be stored");
 					break;
 				case EtmException.CONFIGURATION_LOAD_EXCEPTION:
 					errorMessage.setMessage("Error loading configuration");
@@ -56,6 +56,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 					break;
 				case EtmException.INVALID_PASSWORD:
 					errorMessage.setMessage("Invalid password");
+					break;
+				case EtmException.PASSWORD_NOT_CHANGED:
+					errorMessage.setMessage("The new password may not be the same as the old password");
 					break;
 				case EtmException.NO_MORE_ADMINS_LEFT:
 					errorMessage.setMessage("No users with the '" + EtmPrincipalRole.ADMIN.getRoleName() + "' role left");
