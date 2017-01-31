@@ -119,9 +119,8 @@ public class NetworkMetricSet implements MetricSet {
 				reader.readLine();
 				String interfaceStats;
 				while ((interfaceStats = reader.readLine()) != null) {
-					String[] stats = WHITESPACE.split(interfaceStats);
-					int ifOffset = stats[1].equals("lo:") ? 1 : 0;
-					String interfaceName = stats[NAME_IX + ifOffset];
+					String[] stats = WHITESPACE.split(interfaceStats.trim());
+					String interfaceName = stats[NAME_IX];
 					if (interfaceName.endsWith(":")) {
 						interfaceName = interfaceName.substring(0, interfaceName.length() - 1);
 					}
