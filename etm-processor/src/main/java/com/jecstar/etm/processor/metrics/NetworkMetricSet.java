@@ -69,7 +69,7 @@ public class NetworkMetricSet implements MetricSet {
 		private final int BYTES_SENT_IX = 9;
 		private final int PACKETS_SENT_IX = 10;
 		
-		private final Long ZERO = new Long(0);
+		private final Long MINUS_ONE = new Long(0);
 		
 		private Map<String, String[]> interfaceLines = new HashMap<>();
 		private long lastUpdated = 0;
@@ -103,9 +103,13 @@ public class NetworkMetricSet implements MetricSet {
 			loadStatistics();
 			String[] items = interfaceLines.get(interfaceName);
 			if (items == null) {
-				return ZERO;
+				return MINUS_ONE;
 			}
-			return Long.parseLong(items[itemIx + getInterfaceOffset(interfaceName)]);			
+			try {
+				return Long.parseLong(items[itemIx]);
+			} catch (Exception e) {
+				return MINUS_ONE;
+			}
 		}
 		
 		private void loadStatistics() {
@@ -129,10 +133,6 @@ public class NetworkMetricSet implements MetricSet {
 			} catch (IOException e) {
 			}		
 			this.lastUpdated = System.currentTimeMillis();
-		}
-		
-		private int getInterfaceOffset(String interfaceName) {
-			return interfaceName.equals("lo") ? 1 : 0;
 		}
 
 		List<String> getInterfaceNames() {

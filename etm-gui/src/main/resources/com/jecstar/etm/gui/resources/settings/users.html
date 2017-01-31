@@ -123,13 +123,13 @@ body { padding-top: 60px; }
 		        <div class="form-group row">
 		          <label for="input-new-password1" class="col-sm-3 col-form-label">New password</label>
 		          <div class="col-sm-9">
-		            <input id="input-new-password1" type="password" class="form-control" required="required" />
+		            <input id="input-new-password1" type="password" class="form-control" required="required" pattern=".{6,}" title="The password should be at least 6 characters long" />
 		          </div>
 		        </div>        
 		        <div class="form-group row">
 		          <label for="input-new-password2" class="col-sm-3 col-form-label">Retype password</label>
 		          <div class="col-sm-9">
-		            <input id="input-new-password2" type="password" class="form-control" required="required" />
+		            <input id="input-new-password2" type="password" class="form-control" required="required" pattern=".{6,}" title="The password should be at least 6 characters long" />
 		          </div>
 		        </div>
 		        <div class="modal-footer">
