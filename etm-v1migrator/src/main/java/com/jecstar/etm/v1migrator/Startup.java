@@ -57,31 +57,33 @@ public class Startup {
 				Map<String, Object> source = hit.getSource();
 				MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder();
 				builder.setId(hit.getId());
-				Long timesamp = jsonConverter.getLong("creation_time", source);
-				ZonedDateTime zonedDataTime = ZonedDateTime.ofInstant(new Date(timesamp).toInstant(), ZoneId.systemDefault());
-				builder.addOrMergeEndpoint(
-					new EndpointBuilder().setWritingEndpointHandler(
-						new EndpointHandlerBuilder().setHandlingTime(zonedDataTime)
-					)
-				);
-				builder.setName(jsonConverter.getString("name", source));
-				builder.setCorrelationId(jsonConverter.getString("correlation_id", source));
-				builder.setPayload(jsonConverter.getString("content", source));
-				String type = jsonConverter.getString("type", source);
-				if ("MESSAGE_REQUEST".equals(type)) {
-					builder.setMessagingEventType(MessagingEventType.REQUEST);
-				} else if ("MESSAGE_RESPONSE".equals(type)) {
-					builder.setMessagingEventType(MessagingEventType.RESPONSE);
-				} else {
-					builder.setMessagingEventType(MessagingEventType.FIRE_FORGET);
-				}
-				requestHandler.addBuilder(builder, zonedDataTime);
-				if (requestHandler.shouldFlush()) {
-					if (!requestHandler.flush()) {
-						System.exit(-1);
+				Long timestamp = jsonConverter.getLong("creation_time", source);
+				if (timestamp != null) {
+					ZonedDateTime zonedDataTime = ZonedDateTime.ofInstant(new Date(timestamp).toInstant(), ZoneId.systemDefault());
+					builder.addOrMergeEndpoint(
+						new EndpointBuilder().setWritingEndpointHandler(
+							new EndpointHandlerBuilder().setHandlingTime(zonedDataTime)
+						)
+					);
+					builder.setName(jsonConverter.getString("name", source));
+					builder.setCorrelationId(jsonConverter.getString("correlation_id", source));
+					builder.setPayload(jsonConverter.getString("content", source));
+					String type = jsonConverter.getString("type", source);
+					if ("MESSAGE_REQUEST".equals(type)) {
+						builder.setMessagingEventType(MessagingEventType.REQUEST);
+					} else if ("MESSAGE_RESPONSE".equals(type)) {
+						builder.setMessagingEventType(MessagingEventType.RESPONSE);
 					} else {
-						bulkRequest.get();
-						bulkRequest = client.prepareBulk().setRefresh(true);
+						builder.setMessagingEventType(MessagingEventType.FIRE_FORGET);
+					}
+					requestHandler.addBuilder(builder, zonedDataTime);
+					if (requestHandler.shouldFlush()) {
+						if (!requestHandler.flush()) {
+							System.exit(-1);
+						} else {
+							bulkRequest.get();
+							bulkRequest = client.prepareBulk().setRefresh(true);
+						}
 					}
 				}
 				bulkRequest.add(new DeleteRequestBuilder(client, DeleteAction.INSTANCE)
@@ -96,7 +98,9 @@ public class Startup {
 			if (!requestHandler.flush()) {
 				System.exit(-1);
 			}
-			bulkRequest.get();
+			if (bulkRequest.request().numberOfActions() != 0) {
+				bulkRequest.get();
+			}
 		}
 		System.out.println("Done migrating " + count + " events");
 	}
