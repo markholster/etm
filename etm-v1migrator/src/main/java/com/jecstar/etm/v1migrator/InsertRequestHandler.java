@@ -30,24 +30,25 @@ public class InsertRequestHandler {
 	private final MessagingTelemetryEventWriterJsonImpl writer;
 
 	private final long flushLength = 1024 * 1024 * 2;
+	private final int flushMaxCount = 100;
+
+	private int callCount;
 
 	public InsertRequestHandler(String apiLocation) throws MalformedURLException {
 		this.writer = new MessagingTelemetryEventWriterJsonImpl();
 		this.apiLocation = new URL(apiLocation);
 	}
 
-	public boolean addBuilder(MessagingTelemetryEventBuilder builder) {
-		if (this.buffer.length() != 0) {
-			this.buffer.append("\r\n");
-		}
-		this.buffer.append("{ \"index\" : { \"_index\" : \"etm_event_" + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()) + "\", \"_type\" : \"messaging\", \"_id\" : \"" + builder.getId() + "\" } }\r\n");
-		this.buffer.append(this.writer.write(builder.build()));
-		if (this.buffer.length() > this.flushLength) {
-			return flushBuffer();
-		}
-		return true;
+	public void addBuilder(MessagingTelemetryEventBuilder builder, ZonedDateTime timestamp) {
+		this.buffer.append("{ \"index\" : { \"_index\" : \"etm_event_" + dateTimeFormatterIndexPerDay.format(timestamp) + "\", \"_type\" : \"messaging\", \"_id\" : \"" + builder.getId() + "\" } }\n");
+		this.buffer.append(this.writer.write(builder.build()) + "\n");
+		this.callCount++;
 	}
 
+	public boolean shouldFlush() {
+		return this.buffer.length() > this.flushLength || this.callCount >= flushMaxCount;	
+	}
+	
 	public boolean flush() {
 		if (this.buffer.length() == 0) {
 			return true;
@@ -67,7 +68,7 @@ public class InsertRequestHandler {
 			// Send post request
 			con.setDoOutput(true);
 			stream = new DataOutputStream(con.getOutputStream());
-			stream.write(this.buffer.toString().getBytes());
+			stream.write(this.buffer.toString().getBytes("UTF-8"));
 			stream.flush();
 			stream.close();
 
@@ -82,9 +83,11 @@ public class InsertRequestHandler {
 			in.close();
 			con.disconnect();
 			this.buffer.setLength(0);
+			this.callCount = 0;
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println(this.buffer);
 		} finally {
 			if (con != null) {
 				con.disconnect();
