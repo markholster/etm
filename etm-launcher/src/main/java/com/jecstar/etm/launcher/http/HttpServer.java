@@ -1,21 +1,13 @@
 package com.jecstar.etm.launcher.http;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.KeyManagementException;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.ServletException;
 
 import org.elasticsearch.client.Client;
@@ -32,6 +24,7 @@ import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
 
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -93,9 +86,16 @@ public class HttpServer {
 					log.logWarningMessage("SSL keystore not provided. Https listener not started.");
 				}
 			} else {
-				SSLContext sslContext;
 				try {
-					sslContext = createSslContext(this.configuration);
+					SSLContext sslContext = new SSLContextBuilder().createSslContext(
+							configuration.http.sslProtocol, 
+							configuration.http.sslKeystoreLocation, 
+							configuration.http.sslKeystoreType, 
+							configuration.http.sslKeystorePassword == null ? null : configuration.http.sslKeystorePassword.toCharArray(), 
+							configuration.http.sslTruststoreLocation, 
+							configuration.http.sslTruststoreType, 
+							configuration.http.sslTruststorePassword == null ? null : configuration.http.sslKeystorePassword.toCharArray());
+					
 					builder.addHttpsListener(this.configuration.getHttpsPort(), this.configuration.bindingAddress, sslContext);
 					builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
 					if (log.isInfoLevelEnabled()) {
@@ -246,46 +246,6 @@ public class HttpServer {
                 .addMapping("/logout");
 		di.addServlet(logoutServlet);
 		return di;
-	}
-
-	private SSLContext createSslContext(Configuration configuration) throws KeyManagementException, NoSuchAlgorithmException, CertificateException, KeyStoreException, IOException, UnrecoverableKeyException {
-		KeyStore keyStore = loadKeyStore(configuration.http.sslKeystoreLocation, configuration.http.sslKeystoreType, configuration.http.sslKeystorePassword);
-		KeyStore trustStore = loadKeyStore(configuration.http.sslTruststoreLocation, configuration.http.sslTruststoreType, configuration.http.sslTruststorePassword);
-		KeyManager[] keyManagers = buildKeyManagers(keyStore, configuration.http.sslKeystorePassword);
-		TrustManager[] trustManagers = buildTrustManagers(trustStore, configuration.http.sslTruststorePassword);
-		if (keyManagers == null || trustManagers == null) {
-			return null;
-		}
-		SSLContext sslContext = SSLContext.getInstance(configuration.http.sslProtocol);
-		sslContext.init(keyManagers, trustManagers, null);
-		return sslContext;
-	}
-
-	private KeyStore loadKeyStore(final File location, String type, final String storePassword)
-			throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException {
-		try (final InputStream stream = location == null ? null : new FileInputStream(location);) {
-			if (stream == null) {
-				return null;
-			}
-			KeyStore loadedKeystore = KeyStore.getInstance(type);
-			loadedKeystore.load(stream, storePassword == null ? null : storePassword.toCharArray());
-			return loadedKeystore;
-		}
-	}
-
-	private KeyManager[] buildKeyManagers(final KeyStore keyStore, final String storePassword) throws NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException {
-		KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		keyManagerFactory.init(keyStore, storePassword == null ? null : storePassword.toCharArray());
-		return keyManagerFactory.getKeyManagers();
-	}
-
-	private TrustManager[] buildTrustManagers(final KeyStore trustStore, final String storePassword) throws KeyStoreException, NoSuchAlgorithmException {
-		if (trustStore == null) {
-			return new TrustManager[] { new TrustAllTrustManager() };
-		}
-		TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		trustManagerFactory.init(trustStore);
-		return trustManagerFactory.getTrustManagers();
 	}
 
 	private DeploymentInfo undertowRestDeployment(ResteasyDeployment deployment, String mapping) {

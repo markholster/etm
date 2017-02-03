@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher.http;
+package com.jecstar.etm.server.core.ssl;
 
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
