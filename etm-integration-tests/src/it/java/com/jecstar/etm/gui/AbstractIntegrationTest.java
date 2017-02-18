@@ -72,6 +72,10 @@ public abstract class AbstractIntegrationTest {
 		waitFor(d -> !d.findElement(By.id(elementId)).isDisplayed());
 	}
 	
+	protected void waitForEnabled(String elementId) {
+		waitFor(d -> d.findElement(By.id(elementId)).isEnabled());
+	}
+	
 	protected WebElement findById(String id) {
 		return this.driver.findElement(By.id(id));
 	}

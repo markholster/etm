@@ -23,11 +23,18 @@ public class ElasticSearchLayout {
 	public static final String CONFIGURATION_INDEX_TYPE_PARSER = "parser";
 	public static final String CONFIGURATION_INDEX_TYPE_ENDPOINT = "endpoint";
 	public static final String CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT = "default_configuration";
+	public static final String CONFIGURATION_INDEX_TYPE_LDAP = "ldap";
+	public static final String CONFIGURATION_INDEX_TYPE_LDAP_DEFAULT = "default_configuration";
 	public static final String CONFIGURATION_INDEX_TYPE_NODE = "node";
 	public static final String CONFIGURATION_INDEX_TYPE_NODE_DEFAULT = "default_configuration";
 	public static final String CONFIGURATION_INDEX_TYPE_USER = "user";
 	public static final String CONFIGURATION_INDEX_TYPE_GROUP = "group";
 	public static final String CONFIGURATION_INDEX_TYPE_IIB_NODE = "iib-node";
 	
+	public static final String[] USER_CASCADING = new String[] {
+			CONFIGURATION_INDEX_TYPE_USER,
+			CONFIGURATION_INDEX_TYPE_GRAPH,
+			CONFIGURATION_INDEX_TYPE_DASHBOARD
+	}; 
 	
 }

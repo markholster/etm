@@ -19,16 +19,17 @@ public class EtmPrincipal implements Principal {
 	private String passwordHash;
 	
 	private String name = null;
+	private String emailAddress = null;
 	private Locale locale = Locale.getDefault();
 	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
 	private Set<EtmGroup> groups = new HashSet<EtmGroup>();
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
-	private boolean alwaysShowCorrelatedEvents = false;
+	private boolean alwaysShowCorrelatedEvents;
 	private int historySize = DEFAULT_HISTORY_SIZE;
-	private boolean changePasswordOnLogon = false;
-
+	private boolean changePasswordOnLogon;
+	private boolean ldapBase;
 	
 	// State properties. DO NOT CHANGE!!
 	public boolean forceReload = false;
@@ -62,6 +63,14 @@ public class EtmPrincipal implements Principal {
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public String getEmailAddress() {
+		return this.emailAddress;
+	}
+	
+	public void setEmailAddress(String emailAddress) {
+		this.emailAddress = emailAddress;
 	}
 	
 	public Locale getLocale() {
@@ -200,6 +209,14 @@ public class EtmPrincipal implements Principal {
 	
 	public void setChangePasswordOnLogon(boolean changePasswordOnLogon) {
 		this.changePasswordOnLogon = changePasswordOnLogon;
+	}
+	
+	public boolean isLdapBase() {
+		return this.ldapBase;
+	}
+	
+	public void setLdapBase(boolean ldapBase) {
+		this.ldapBase = ldapBase;
 	}
 	
 	public NumberFormat getNumberFormat() {

@@ -3,6 +3,7 @@ package com.jecstar.etm.launcher;
 import java.time.ZonedDateTime;
 
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -13,14 +14,19 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import com.jecstar.etm.processor.core.persisting.elastic.AbstractElasticTelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
-import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.configuration.converter.LdapConfigurationConverter;
+import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.configuration.converter.json.LdapConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.ldap.Directory;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
-
+	
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+	private final LdapConfigurationConverter<String> ldapConfigurationConverter = new LdapConfigurationConverterJsonImpl();
 	
 	private final long updateCheckInterval = 60 * 1000;
 	private long lastCheckedForUpdates;
@@ -186,6 +192,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		return this.sizePersistedToday > license.getMaxSizePerDay();  
 	}
 	
+	@Override
+	public Directory getDirectory() {
+		reloadConfigurationWhenNecessary();
+		return super.getDirectory();
+	}
+	
 	private boolean reloadConfigurationWhenNecessary() {
 		boolean changed = false;
 		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
@@ -218,9 +230,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 				public void onFailure(Exception e) {
 				}
 			});
+		ListenableActionFuture<GetResponse> licenseExecute = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID).execute();
+		ListenableActionFuture<GetResponse> ldapExecute = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP_DEFAULT).execute();
 		GetResponse defaultResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT).get();
 		GetResponse nodeResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, getNodeName()).get();
-		GetResponse licenseResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID).get();
 
 		String defaultContent = defaultResponse.getSourceAsString();
 		String nodeContent = null;
@@ -229,11 +242,24 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			nodeContent = nodeResponse.getSourceAsString();
 		}
 		EtmConfiguration etmConfiguration = this.etmConfigurationConverter.read(nodeContent, defaultContent, "temp-for-reload-merge");
+		GetResponse licenseResponse = licenseExecute.actionGet();
 		if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty()) {
 			Object license = licenseResponse.getSourceAsMap().get(this.etmConfigurationConverter.getTags().getLicenseTag());
 			if (license != null && isValidLicenseKey(license.toString())) {
 				etmConfiguration.setLicenseKey(license.toString());
 			}
+		}
+		GetResponse ldapResponse = ldapExecute.actionGet();
+		if (ldapResponse.isExists() &&!ldapResponse.isSourceEmpty()) {
+			LdapConfiguration ldapConfiguration = this.ldapConfigurationConverter.read(ldapResponse.getSourceAsString());
+			if (super.getDirectory() != null) {
+				super.getDirectory().merge(ldapConfiguration);
+			} else {
+				Directory directory = new Directory(ldapConfiguration);
+				setDirectory(directory);
+			}
+		} else {
+			setDirectory(null);
 		}
 		changed = this.mergeAndNotify(etmConfiguration);
 		this.lastCheckedForUpdates = System.currentTimeMillis();

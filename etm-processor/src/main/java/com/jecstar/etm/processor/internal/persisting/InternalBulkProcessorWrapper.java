@@ -1,6 +1,5 @@
 package com.jecstar.etm.processor.internal.persisting;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +28,7 @@ import com.jecstar.etm.server.core.configuration.EtmConfiguration;
  * 
  * @author Mark Holster
  */
-public class InternalBulkProcessorWrapper implements Closeable {
+public class InternalBulkProcessorWrapper implements AutoCloseable {
 
 	private static final LogTelemetryEventWriterJsonImpl logWriter = new LogTelemetryEventWriterJsonImpl();
 	private static final BusinessTelemetryEventWriterJsonImpl businessWriter = new BusinessTelemetryEventWriterJsonImpl();

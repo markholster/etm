@@ -56,6 +56,9 @@ body { padding-top: 60px; }
               <li class="nav-item">  
                 <a id="visualizations-tab-header" aria-expanded="false" role="tab" href="#visualizations-tab" data-toggle="tab" class="nav-link">Visualizations</a>
               </li>
+              <li class="nav-item">  
+                <a id="ldap-tab-header" aria-expanded="false" role="tab" href="#ldap-tab" data-toggle="tab" class="nav-link">Ldap</a>
+              </li>
             </ul>
             <div id="tabcontents" class="tab-content">
               <br />
@@ -195,10 +198,157 @@ body { padding-top: 60px; }
 			        </div>
 			    </form>      
 			  </div>
+              <div id="ldap-tab" aria-labelledby="ldap-tab-header" role="tabpanel" aria-expanded="false" class="tab-pane fade">
+                <form id="form-ldap">
+                  <div class="form-group row">
+                    <label for="input-ldap-host" class="col-sm-3 col-form-label">Ldap host</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-host" class="form-control" required="required" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-port" class="col-sm-3 col-form-label">Ldap port</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-port" type="number" class="form-control" min="1" max="65535" required="required" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="sel-ldap-connection-security" class="col-sm-3 col-form-label">Connection security</label>
+                    <div class="col-sm-9">
+                      <select id="sel-ldap-connection-security" class="form-control custom-select">
+                        <option selected="selected"></option>
+                        <option value="SSL_TLS">SSL/TLS</option>
+                        <option value="STARTTLS">STARTTLS</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-bind-dn" class="col-sm-3 col-form-label">Bind DN</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-bind-dn" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-bind-password" class="col-sm-3 col-form-label">Bind password</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-bind-password" type="password" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-connection-pool-min" class="col-sm-3 col-form-label">Min connections</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-connection-pool-min" type="number" class="form-control" min="1" value="3" required="required"/>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-connection-pool-max" class="col-sm-3 col-form-label">Max connections</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-connection-pool-max" type="number" class="form-control" min="3"  value="10" required="required"/>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-connection-test-base-dn" class="col-sm-3 col-form-label">Connection test base DN</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-connection-test-base-dn" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-connection-test-search-filter" class="col-sm-3 col-form-label">Connection test search filter</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-connection-test-search-filter" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-group-base-dn" class="col-sm-3 col-form-label">Group base DN</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-group-base-dn" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-group-search-filter" class="col-sm-3 col-form-label">Group search filter</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-group-search-filter" class="form-control" required="required" placeholder="(<attribute>={group})"/>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-base-dn" class="col-sm-3 col-form-label">User base DN</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-base-dn" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-search-filter" class="col-sm-3 col-form-label">User search filter</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-search-filter" class="form-control" required="required" placeholder="(<attribute>={user})"/>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-id-attribute" class="col-sm-3 col-form-label">User identifier attribute</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-id-attribute" class="form-control" required="required"/>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-fullname-attribute" class="col-sm-3 col-form-label">User full name attribute</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-fullname-attribute" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-email-attribute" class="col-sm-3 col-form-label">User email attribute</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-email-attribute" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-member-of-groups-attribute" class="col-sm-3 col-form-label">User member of groups attribute</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-member-of-groups-attribute" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-groups-query-base-dn" class="col-sm-3 col-form-label">User groups query base DN</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-groups-query-base-dn" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label for="input-ldap-user-groups-query-filter" class="col-sm-3 col-form-label">User groups query filter</label>
+                    <div class="col-sm-9">
+                      <input id="input-ldap-user-groups-query-filter" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <input type="submit" id="btn-confirm-remove-ldap" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />
+                    <input type="submit" id="btn-save-ldap" class="btn btn-primary" value="Save" />
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
       </div>
     </div>
+ 
+     <div class="modal fade" id="modal-ldap-remove" tabindex="-1" role="dialog" aria-labelledby="ldap-remove-modal-label" aria-hidden="true">
+       <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+             <h4 class="modal-title" id="ldap-remove-modal-label">Confirm removal</h4>
+           </div>
+           <div class="modal-body">
+            Are you sure you want to remove the Ldap configuration? Imported users will be unable to login afterwards.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+            <button id="btn-remove-ldap" type="button" class="btn btn-primary">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
   </div>
   
   <!-- jQuery first, then Bootstrap JS. -->

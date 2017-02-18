@@ -1,6 +1,6 @@
-package com.jecstar.etm.server.core.domain.converter.json;
+package com.jecstar.etm.server.core.configuration.converter.json;
 
-import com.jecstar.etm.server.core.domain.converter.EtmConfigurationTags;
+import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationTags;
 
 public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 

@@ -1,11 +1,12 @@
-package com.jecstar.etm.server.core.domain.converter.json;
+package com.jecstar.etm.server.core.configuration.converter.json;
 
 import java.util.Map;
 
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.converter.EtmConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.EtmConfigurationTags;
+import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationTags;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.

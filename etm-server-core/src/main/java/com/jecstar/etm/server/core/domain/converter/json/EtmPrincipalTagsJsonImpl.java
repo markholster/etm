@@ -8,6 +8,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	public String getIdTag() {
 		return "id";
 	}
+
+	@Override
+	public String getEmailTag() {
+		return "email";
+	}
 	
 	@Override
 	public String getFilterQueryTag() {
@@ -72,6 +77,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
 	@Override
 	public String getSearchTemplatesTag() {
 		return "search_templates";
+	}
+
+	@Override
+	public String getLdapBaseTag() {
+		return "ldap_base";
 	}
 
 }

@@ -5,3 +5,14 @@ dependencies {
     compile "org.elasticsearch:elasticsearch:2.0.0"
     compile "org.yaml:snakeyaml:1.17"
 }
+
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'Enterprise Telemetry Monitor v1 migrator',  
+        	'Implementation-Version': project.version,
+        	'Main-Class': 'com.jecstar.etm.v1migrator.Startup'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

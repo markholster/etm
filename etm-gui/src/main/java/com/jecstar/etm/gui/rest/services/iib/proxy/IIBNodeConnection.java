@@ -1,6 +1,5 @@
 package com.jecstar.etm.gui.rest.services.iib.proxy;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -17,7 +16,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class IIBNodeConnection implements Closeable {
+public class IIBNodeConnection implements AutoCloseable {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.

@@ -1,4 +1,4 @@
-package com.jecstar.etm.server.core.domain.converter;
+package com.jecstar.etm.server.core.configuration.converter;
 
 public interface EtmConfigurationTags {
 
