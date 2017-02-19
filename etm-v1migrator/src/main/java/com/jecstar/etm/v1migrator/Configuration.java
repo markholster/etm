@@ -6,6 +6,6 @@ public class Configuration {
 	public String inputHostname;
 	public int inputPort;
 	public int bulkSize = 100;
-	
 	public String bulkApiLocation;
+	public boolean deleteSource = false;
 }

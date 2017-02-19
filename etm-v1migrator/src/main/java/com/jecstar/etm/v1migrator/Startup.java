@@ -81,16 +81,20 @@ public class Startup {
 						if (!requestHandler.flush()) {
 							System.exit(-1);
 						} else {
-							bulkRequest.get();
+							if (bulkRequest.request().numberOfActions() != 0) {
+								bulkRequest.get();
+							}
 							bulkRequest = client.prepareBulk().setRefresh(true);
 						}
 					}
 				}
-				bulkRequest.add(new DeleteRequestBuilder(client, DeleteAction.INSTANCE)
+				if (config.deleteSource) {
+					bulkRequest.add(new DeleteRequestBuilder(client, DeleteAction.INSTANCE)
 						.setIndex(hit.getIndex())
 						.setType(hit.getType())
 						.setId(hit.getId())
-				);
+					);
+				}
 				if (count % 10000 == 0) {
 					System.out.println(count + " processed.");
 				}
