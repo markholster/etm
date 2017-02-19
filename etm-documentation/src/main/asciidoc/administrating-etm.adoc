@@ -21,7 +21,7 @@ Each user can have the following attributes:
 |Name|Description
 |Id|The unique id of the user. This id is also used for logging in to the {etm} Gui.
 |Name|The (full) name of the user. 
-|Groups|The groups the user belongs to. This field will only be available if at least one group is created. See <<Groups>> for more information.
+|Groups|The groups the user belongs to. This field will only be available if at least one group is created or when an ldap connection is setup. When the user is synchronized with an ldap server only the membership of imported ldap groups are shown. See <<Groups>> for more information.
 |Filter query|The filter query that needs to be applied to the user. See <<Filter query>> for more information.
 |Filter query occurrence|The occurrence of the filter query. See <<Filter query>> for more information.
 |Always show correlated events|Always show directly correlated events in the event detail screen even when they normally would be filtered by a <<Filter query>>. Note that this does not mean that those correlated events will be shown in the <<Search results widget>>. This feature can, for example, be useful if you apply a filter that shows only request, but you want to be able to view the correlated responses in the event detail screen as well.   
