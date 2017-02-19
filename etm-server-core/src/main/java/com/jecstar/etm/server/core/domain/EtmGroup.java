@@ -8,14 +8,11 @@ import java.util.Set;
 public class EtmGroup {
 
 	private String name;
-	
 	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
-
 	private String filterQuery = null;
-
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
-	
 	private boolean alwaysShowCorrelatedEvents = false;
+	private boolean ldapBase;
 	
 	public EtmGroup(String name) {
 		this.name = name;
@@ -49,6 +46,14 @@ public class EtmGroup {
 		this.alwaysShowCorrelatedEvents = alwaysShowCorrelatedEvents;
 	}
 
+	public boolean isLdapBase() {
+		return this.ldapBase;
+	}
+	
+	public void setLdapBase(boolean ldapBase) {
+		this.ldapBase = ldapBase;
+	}
+	
 	public Set<EtmPrincipalRole> getRoles() {
 		return Collections.unmodifiableSet(this.roles);
 	}
@@ -88,5 +93,18 @@ public class EtmGroup {
 			}
 		}
 		return true;		
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof EtmGroup) {
+			return this.name.equals(((EtmGroup)obj).getName());
+		}
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.name.hashCode();
 	}
 }

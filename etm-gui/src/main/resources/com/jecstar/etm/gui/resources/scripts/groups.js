@@ -84,7 +84,60 @@ function buildGroupPage() {
 	$('#btn-remove-group').click(function(event) {
 		removeGroup($('#input-group-name').val());
 	});
+	
+	$('#btn-confirm-import-group').click(function(event) {
+		event.preventDefault();
+		$("#sel-import-group").empty();
+		$.ajax({
+		    type: 'GET',
+		    contentType: 'application/json',
+		    url: '../rest/settings/groups/ldap',
+		    success: function(data) {
+		        if (!data) {
+		            return;
+		        }
+		        $groupSelect = $('#sel-import-group');
+		        $.each(data.groups, function(index, group) {
+		        	$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
+		        });
+		        sortSelectOptions($groupSelect)
+		        $groupSelect.val('');
+		        $('#modal-group-import').modal();
+		    }
+		});		
+	});
 
+	$('#btn-import-group').click(function(event) {
+		event.preventDefault();
+		var groupName = $("#sel-import-group").val();
+		if (!groupName) {
+			return false;
+		}
+		$.ajax({
+		    type: 'PUT',
+		    contentType: 'application/json',
+		    url: '../rest/settings/groups/ldap/import/' + encodeURIComponent(groupName),
+		    success: function(group) {
+		        if (!group) {
+		            return;
+		        }
+				// First the group if it is already present
+				$('#sel-group > option').each(function () {
+				    if(group.name == $(this).attr('value')) {
+				        $(this).remove();
+				    }
+				});
+				// Now add the updated group
+		        $('#sel-group').append($('<option>').attr('value', group.name).text(group.name));
+		        sortSelectOptions($('#sel-group'));
+		        groupMap[group.name] = group;
+		        $('#sel-group').val(group.name).trigger('change');
+		    },
+		    complete: function() {
+		    	$('#modal-group-import').modal('hide');
+		    }
+		});
+	});
 	
 	$('#input-group-name').on('input', enableOrDisableButtons);
 	
@@ -95,6 +148,9 @@ function buildGroupPage() {
 	    success: function(data) {
 	        if (!data) {
 	            return;
+	        }
+	        if (data.has_ldap) {
+	        	$('#btn-confirm-import-group').show();
 	        }
 	        $groupSelect = $('#sel-group');
 	        $.each(data.groups, function(index, group) {
@@ -152,9 +208,10 @@ function buildGroupPage() {
         		}
         		groupMap[groupData.name] = groupData;
         		$('#groups_infoBox').text('Group \'' + groupData.name+ '\' saved.').show('fast').delay(5000).hide('fast');
+            },
+            complete: function () {
+            	$('#modal-group-overwrite').modal('hide');
             }
-        }).always(function () {
-        	$('#modal-group-overwrite').modal('hide');
         });  		
 	}
 	
@@ -172,9 +229,10 @@ function buildGroupPage() {
         		       return $(this).attr("value") == groupName;
         		}).remove();
         		$('#groups_infoBox').text('Group \'' + groupName + '\' removed.').show('fast').delay(5000).hide('fast');
+            },
+            complete: function() {
+            	$('#modal-group-remove').modal('hide');
             }
-        }).always(function() {
-        	$('#modal-group-remove').modal('hide');
         });  		
 	}
 	

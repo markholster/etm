@@ -1,7 +1,14 @@
 package com.jecstar.etm.processor.ibmmq;
 
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Hashtable;
+
+import javax.net.ssl.SSLContext;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -23,6 +30,7 @@ import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
 
 public class DestinationReader implements Runnable {
 	
@@ -217,10 +225,28 @@ public class DestinationReader implements Runnable {
 			connectionProperties.put(CMQC.TRANSPORT_PROPERTY, CMQC.TRANSPORT_MQSERIES_CLIENT);
 			connectionProperties.put(CMQC.HOST_NAME_PROPERTY, this.queueManager.getHost());
 			connectionProperties.put(CMQC.APPNAME_PROPERTY, "Enterprise Telemetry Monitor - " + this.configurationName);
-			if (this.queueManager.getChannel() != null) {
-				connectionProperties.put(CMQC.CHANNEL_PROPERTY, this.queueManager.getChannel());
-			}
 			connectionProperties.put(CMQC.PORT_PROPERTY, this.queueManager.getPort());
+			setConnectionPropertyWhenNotEmpty(CMQC.USER_ID_PROPERTY, this.queueManager.getUserId(), connectionProperties);
+			setConnectionPropertyWhenNotEmpty(CMQC.PASSWORD_PROPERTY, this.queueManager.getPassword(), connectionProperties);
+			setConnectionPropertyWhenNotEmpty(CMQC.CHANNEL_PROPERTY, this.queueManager.getChannel(), connectionProperties);
+			if (this.queueManager.getSslCipherSuite() != null) {
+				try {
+					SSLContext sslContext = new SSLContextBuilder().createSslContext(
+							queueManager.getSslProtocol(), 
+							queueManager.getSslKeystoreLocation(), 
+							queueManager.getSslKeystoreType(), 
+							queueManager.getSslKeystorePassword() == null ? null : queueManager.getSslKeystorePassword().toCharArray(), 
+							queueManager.getSslTruststoreLocation(), 
+							queueManager.getSslTruststoreType(), 
+							queueManager.getSslTruststorePassword() == null ? null : queueManager.getSslTruststorePassword().toCharArray()); 
+					connectionProperties.put(CMQC.SSL_CIPHER_SUITE_PROPERTY, this.queueManager.getSslCipherSuite());
+					connectionProperties.put(CMQC.SSL_SOCKET_FACTORY_PROPERTY, sslContext.getSocketFactory());
+				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
+					if (log.isErrorLevelEnabled()) {
+						log.logErrorMessage("Unable to create SSL context. Fallback to insecure connection to queuemanager '" + this.queueManager.getName()+ "'.", e);
+					}
+				}
+			}
 			this.mqQueueManager = new MQQueueManager(this.queueManager.getName(), connectionProperties);
 			if ("topic".equals(this.destination.getType())) {
 				this.mqDestination = this.mqQueueManager.accessTopic(this.destination.getName(), null, CMQC.MQSO_CREATE, null, "Enterprise Telemetry Monitor - " + this.configurationName);
@@ -237,6 +263,11 @@ public class DestinationReader implements Runnable {
 		}
 	}
 	
+	private void setConnectionPropertyWhenNotEmpty(String propertyKey, String propertyValue, Hashtable<String, Object> connectionProperties) {
+		if (propertyValue != null) {
+			connectionProperties.put(propertyKey, propertyValue);
+		}
+	}
 	private void disconnect() {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Disconnecting from queuemanager");
@@ -321,5 +352,5 @@ public class DestinationReader implements Runnable {
 		}
 		return allZero ? null : this.byteArrayBuilder.toString();
 	}
-
+	
 }

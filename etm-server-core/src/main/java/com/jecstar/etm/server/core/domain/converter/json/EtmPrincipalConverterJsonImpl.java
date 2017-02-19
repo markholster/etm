@@ -24,7 +24,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		boolean added = false;
 		sb.append("{");
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, !added) || added;
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
@@ -33,8 +33,9 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getChangePasswordOnLogonTag(), etmPrincipal.isChangePasswordOnLogon(), sb, !added) || added;
+		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmPrincipal.isLdapBase(), sb, !added) || added;
 		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles().stream().map(c -> c.getRoleName()).collect(Collectors.toSet()), true, sb, !added) || added;
-		added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().map(c -> c.getName()).collect(Collectors.toSet()), true, sb, !added) || added;
+		added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(c -> c.getName()).collect(Collectors.toSet()), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
@@ -54,6 +55,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
+		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmGroup.isLdapBase(), sb, !added) || added;
 		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles().stream().map(c -> c.getRoleName()).collect(Collectors.toSet()), true, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
@@ -68,11 +70,13 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		EtmPrincipal principal = new EtmPrincipal(this.converter.getString(this.tags.getIdTag(), valueMap));
 		principal.setPasswordHash(this.converter.getString(this.tags.getPasswordHashTag(), valueMap));
 		principal.setName(this.converter.getString(this.tags.getNameTag(), valueMap));
+		principal.setEmailAddress(this.converter.getString(this.tags.getEmailTag(), valueMap));
 		principal.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
 		principal.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
 		principal.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));
 		principal.setHistorySize(this.converter.getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE));
 		principal.setChangePasswordOnLogon(this.converter.getBoolean(this.tags.getChangePasswordOnLogonTag(), valueMap, Boolean.FALSE));
+		principal.setLdapBase(this.converter.getBoolean(this.tags.getLdapBaseTag(), valueMap, Boolean.FALSE));
 		String value = this.converter.getString(this.tags.getLocaleTag(), valueMap);
 		if (value != null) {
 			principal.setLocale(Locale.forLanguageTag(value));
@@ -93,6 +97,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		group.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
 		group.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
 		group.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));
+		group.setLdapBase(this.converter.getBoolean(this.tags.getLdapBaseTag(), valueMap, Boolean.FALSE));
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
 			group.addRoles(roles.stream().map(c -> EtmPrincipalRole.fromRoleName(c)).collect(Collectors.toSet()));

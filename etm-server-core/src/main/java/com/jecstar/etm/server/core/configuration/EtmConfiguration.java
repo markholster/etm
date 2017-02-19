@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.util.ObjectUtils;
 
 public class EtmConfiguration {
 	//License configuration
 	public static final String CONFIG_KEY_LICENSE 							= "license";
-	
 	// Cluster configuration
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX 					= "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX 				= "replicasPerIndex";
@@ -25,7 +25,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT 			= "maxSearchHistoryCount";
 	public static final String CONFIG_KEY_MAX_GRAPH_COUNT 					= "maxGraphCount";
 	public static final String CONFIG_KEY_MAX_DASHBOARD_COUNT 				= "maxDashboardCount";
-
+	
 	// Node configurations
 	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT 			= "enhancingHandlerCount";
 	public static final String CONFIG_KEY_PERSISTING_HANDLER_COUNT 			= "persistingHandlerCount";
@@ -44,7 +44,6 @@ public class EtmConfiguration {
 	private int persistingBulkSize = 1024 * 1024 * 5;
 	private int persistingBulkCount = 1000;
 	private int persistingBulkTime = 5000;
-	
 	
 	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 0;
@@ -69,6 +68,8 @@ public class EtmConfiguration {
 	private final String nodeName;
 
 	private License license;
+	
+	private Directory directory;
 
 	private List<ConfigurationChangeListener> changeListeners = new ArrayList<ConfigurationChangeListener>();
 
@@ -87,6 +88,17 @@ public class EtmConfiguration {
 			throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
 		}		
 		this.license = new License(licenseKey);
+	}
+	
+	public Directory getDirectory() {
+		return this.directory;
+	}
+	
+	public void setDirectory(Directory directory) {
+		if (this.directory != null) {
+			this.directory.close();
+		}
+		this.directory = directory;
 	}
 	
 	/**

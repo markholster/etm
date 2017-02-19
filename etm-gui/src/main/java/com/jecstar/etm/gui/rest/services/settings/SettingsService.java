@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -45,11 +47,14 @@ import org.elasticsearch.search.SearchHit;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
-import com.jecstar.etm.gui.rest.services.search.SearchRequestParameters;
+import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
+import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.configuration.converter.json.LdapConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -58,10 +63,10 @@ import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConvert
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.ExpressionParserConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
+import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
 import com.jecstar.etm.server.core.parsers.ExpressionParserField;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -70,6 +75,7 @@ import com.jecstar.etm.server.core.util.BCrypt;
 public class SettingsService extends AbstractJsonService {
 	
 	private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+	private final LdapConfigurationConverterJsonImpl ldapConfigurationConverter = new LdapConfigurationConverterJsonImpl();
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
@@ -110,7 +116,7 @@ public class SettingsService extends AbstractJsonService {
 		added = addStringElementToJsonBuffer("max_events_per_day_as_text", numberFormat.format(license.getMaxEventsPerDay()), result, !added) || added;
 		added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), result, !added) || added;
 		added = addStringElementToJsonBuffer("max_size_per_day_as_text", numberFormat.format(license.getMaxSizePerDay()), result, !added) || added;
-				result.append("}");
+		result.append("}");
 		return result.toString();
 	}
 	
@@ -180,6 +186,72 @@ public class SettingsService extends AbstractJsonService {
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
 		return "{\"status\":\"success\"}";
+	}
+	
+	@GET
+	@Path("/ldap")
+	@Produces(MediaType.APPLICATION_JSON)		
+	public String getLdapConfiguration() {
+		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP_DEFAULT)
+				.setFetchSource(true)
+				.get();
+		if (!getResponse.isExists()) {
+			return null;
+		}
+		LdapConfiguration config = this.ldapConfigurationConverter.read(getResponse.getSourceAsString());
+		return this.ldapConfigurationConverter.write(config);
+	}
+	
+	@PUT
+	@Path("/ldap")
+	@Produces(MediaType.APPLICATION_JSON)		
+	public String setLdapConfiguration(String json) {
+		LdapConfiguration config = this.ldapConfigurationConverter.read(json);
+		testLdapConnection(config);
+		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP_DEFAULT)
+			.setSource(this.ldapConfigurationConverter.write(config))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		if (etmConfiguration.getDirectory() != null) {
+			etmConfiguration.getDirectory().merge(config);
+		} else {
+			Directory directory = new Directory(config);
+			etmConfiguration.setDirectory(directory);
+		}
+		return "{\"status\":\"success\"}";
+	}
+
+	@PUT
+	@Path("/ldap/test")
+	@Produces(MediaType.APPLICATION_JSON)		
+	public String testLdapConfiguration(String json) {
+		LdapConfiguration config = this.ldapConfigurationConverter.read(json);
+		testLdapConnection(config);
+		return "{\"status\":\"success\"}";
+	}
+
+	@DELETE
+	@Path("/ldap")
+	@Produces(MediaType.APPLICATION_JSON)		
+	public String deleteLdapConfiguration() {
+		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP_DEFAULT)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		etmConfiguration.setDirectory(null);
+		return "{\"status\":\"success\"}";
+	}
+	
+	/**
+	 * Test a configuration by setting up a connection.
+	 * 
+	 * @param config The configuration to test.
+	 */
+	private void testLdapConnection(LdapConfiguration config) {
+		try (Directory directory = new Directory(config)){
+			directory.test();
+		} 
 	}
 	
 	@GET
@@ -561,8 +633,91 @@ public class SettingsService extends AbstractJsonService {
 			result.append(searchHit.getSourceAsString());
 			first = false;
 		}
+		result.append("], \"has_ldap\": " + (etmConfiguration.getDirectory() != null) + "}");
+		return result.toString();
+	}
+
+	@GET
+	@Path("/user/{userId}/ldap/groups")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getLdapGroupsOfUser(@PathParam("userId") String userId) {
+		if (etmConfiguration.getDirectory() == null) {
+			return null;
+		}
+		EtmPrincipal principal = etmConfiguration.getDirectory().getPrincipal(userId, true);
+		StringBuilder result = new StringBuilder();
+		result.append("{\"groups\": [");
+		boolean first = true;
+		Set<EtmGroup> notImportedLdapGroups = getNotImportedLdapGroups();
+		for (EtmGroup etmGroup : principal.getGroups()) {
+			if (notImportedLdapGroups.contains(etmGroup)) {
+				continue;
+			}
+			if (!first) {
+				result.append(",");
+			}
+			result.append(this.etmPrincipalConverter.writeGroup(etmGroup));
+			first = false;
+		}
 		result.append("]}");
 		return result.toString();
+
+	}
+	
+	@POST
+	@Path("/users/ldap/search")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String searchUsers(String json) {
+		String query = getString("query", toMap(json));
+		if (query == null || etmConfiguration.getDirectory() == null) {
+			return null;
+		}
+		List<EtmPrincipal> principals = etmConfiguration.getDirectory().searchPrincipal(query.endsWith("*") ? query : query + "*");
+		StringBuilder result = new StringBuilder();
+		result.append("[");
+		boolean first = true;
+		for (EtmPrincipal principal : principals) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append("{");
+			addStringElementToJsonBuffer("id", principal.getId(), result, true);
+			addStringElementToJsonBuffer("label", principal.getName() != null ? principal.getId() + " - " + principal.getName() :  principal.getId(), result, false);
+			addStringElementToJsonBuffer("value", principal.getId(), result, false);
+			result.append("}");
+			first = false;
+		}
+		result.append("]");
+		return result.toString();
+	}
+	
+	@PUT
+	@Path("/users/ldap/import/{userId}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String importLdapUser(@PathParam("userId") String userId) {
+		if (etmConfiguration.getDirectory() == null) {
+			return null;
+		}
+		EtmPrincipal principal = etmConfiguration.getDirectory().getPrincipal(userId, false);
+		if (principal == null) {
+			throw new EtmException(EtmException.INVALID_LDAP_USER);
+		}
+		EtmPrincipal currentPrincipal = loadPrincipal(userId);
+		if (currentPrincipal != null) {
+			// Merge the current and the LDAP principal.
+			currentPrincipal.setPasswordHash(null);
+			currentPrincipal.setName(principal.getName());
+			currentPrincipal.setEmailAddress(principal.getEmailAddress());
+			currentPrincipal.setChangePasswordOnLogon(false);
+			principal = currentPrincipal;
+		}
+		principal.setLdapBase(true);
+		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+			.setSource(this.etmPrincipalConverter.writePrincipal(principal))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return this.etmPrincipalConverter.writePrincipal(principal);
 	}
 	
 	@DELETE
@@ -583,9 +738,11 @@ public class SettingsService extends AbstractJsonService {
 		BulkRequestBuilder bulkDelete = client.prepareBulk()
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
-		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId));
-		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, userId));
-		bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, userId));
+		for (String indexTypes : ElasticSearchLayout.USER_CASCADING) {
+			bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, indexTypes, userId));
+			bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, indexTypes, userId));
+			bulkDelete.add(client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, indexTypes, userId));
+		}
 		bulkDelete.get();
 		return "{\"status\":\"success\"}";
 	}
@@ -618,20 +775,15 @@ public class SettingsService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
-		if (currentPrincipal == null && etmConfiguration.getMaxSearchTemplateCount() >= 3 && newPrincipal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.SEARCHER)) {
+		if (currentPrincipal == null && etmConfiguration.getMaxSearchTemplateCount() >= 3) {
 			// Add some default templates to the user if he/she is able to search.
-			StringBuilder templates = new StringBuilder();
-			templates.append("{\"search_templates\":[");
-			templates.append(new SearchRequestParameters("endpoints.writing_endpoint_handler.handling_time: [now-1h TO now]").toJsonSearchTemplate("Events of last 60 mins"));
-			templates.append("," + new SearchRequestParameters("endpoints.writing_endpoint_handler.handling_time: [now/d TO now/d]").toJsonSearchTemplate("Events of today"));
-			templates.append("," + new SearchRequestParameters("endpoints.writing_endpoint_handler.handling_time: [now-1d/d TO now-1d/d]").toJsonSearchTemplate("Events of yesterday"));
-			templates.append("]}");
 			client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-				.setDoc(templates.toString())
+				.setDoc(new DefaultSearchTemplates().toJson())
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
-				.get();		}
+				.get();		
+		}
 		if (userId.equals(getEtmPrincipal().getId())) {
 			getEtmPrincipal().forceReload = true;
 		}
@@ -648,9 +800,6 @@ public class SettingsService extends AbstractJsonService {
 			.setQuery(QueryBuilders.matchAllQuery())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
-		if (!scrollableSearch.hasNext()) {
-			return null;
-		}
 		StringBuilder result = new StringBuilder();
 		result.append("{\"groups\": [");
 		boolean first = true;
@@ -661,9 +810,74 @@ public class SettingsService extends AbstractJsonService {
 			result.append(searchHit.getSourceAsString());
 			first = false;
 		}
+		result.append("], \"has_ldap\": " + (etmConfiguration.getDirectory() != null) + "}");
+		return result.toString();
+	}
+	
+	/**
+	 * Gives the ldap groups that are not imported yet.
+	 * @return The non imported ldap groups
+	 */
+	@GET
+	@Path("/groups/ldap")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String getLdapGroups() {
+		Set<EtmGroup> groups = getNotImportedLdapGroups();
+		StringBuilder result = new StringBuilder();
+		result.append("{\"groups\": [");
+		boolean first = true;
+		for (EtmGroup etmGroup : groups) {
+			if (!first) {
+				result.append(",");
+			}
+			result.append(this.etmPrincipalConverter.writeGroup(etmGroup));
+			first = false;
+		}
 		result.append("]}");
 		return result.toString();
 	}
+	
+	
+	private Set<EtmGroup> getNotImportedLdapGroups() {
+		Set<EtmGroup> groups = etmConfiguration.getDirectory().getGroups();
+		Iterator<EtmGroup> iterator = groups.iterator();
+		while (iterator.hasNext()) {
+			EtmGroup group = iterator.next();
+			GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group.getName())
+				.get();
+			if (getResponse.isExists()) {
+				Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+				if (getBoolean(this.etmPrincipalTags.getLdapBaseTag(), sourceAsMap, Boolean.FALSE)) {
+					iterator.remove();
+				}
+			}
+		}
+		return groups;
+	}
+	
+	@PUT
+	@Path("/groups/ldap/import/{groupName}")
+	@Produces(MediaType.APPLICATION_JSON)	
+	public String importLdapGroup(@PathParam("groupName") String groupName) {
+		EtmGroup group = etmConfiguration.getDirectory().getGroup(groupName);
+		if (group == null) {
+			throw new EtmException(EtmException.INVALID_LDAP_GROUP);
+		}
+		EtmGroup currentGroup = loadGroup(groupName);
+		if (currentGroup != null) {
+			// Merge the existing group with the new one. 
+			// Currently no properties need to be merged
+			group = currentGroup;
+		}
+		group.setLdapBase(true);
+		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
+			.setSource(this.etmPrincipalConverter.writeGroup(group))
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
+		return this.etmPrincipalConverter.writeGroup(group);
+	}
+
 	
 	@PUT
 	@Path("/group/{groupName}")
@@ -676,10 +890,12 @@ public class SettingsService extends AbstractJsonService {
 		EtmGroup currentGroup = loadGroup(groupName);
 		if (currentGroup != null && currentGroup.isInRole(EtmPrincipalRole.ADMIN) && !newGroup.isInRole(EtmPrincipalRole.ADMIN)) {
 			// The group had the admin role, but that role is revoked. Check if this removes all the admins. If so, block this operation because we don't want a user without the admin role.
-			// This check should be skipped/changed when LDAP is supported.
 			if (getNumberOfUsersWithAdminRole() <= 1) {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
 			}
+		}
+		if (currentGroup != null) {
+			newGroup.setLdapBase(currentGroup.isLdapBase());
 		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
 			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
@@ -689,7 +905,7 @@ public class SettingsService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
-		// Force a reload of the principal if he/she is in the deleted group.
+		// Force a reload of the principal if he/she is in the updated group.
 		EtmPrincipal principal = getEtmPrincipal();
 		if (principal.isInGroup(groupName)) {
 			principal.forceReload = true;
@@ -871,7 +1087,7 @@ public class SettingsService extends AbstractJsonService {
 			query = QueryBuilders.boolQuery()
 					.should(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName()))
 					.should(QueryBuilders.termsQuery(this.etmPrincipalTags.getGroupsTag(), adminGroups))
-					.minimumNumberShouldMatch(1);
+					.minimumShouldMatch(1);
 		}
 		SearchResponse response = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER)

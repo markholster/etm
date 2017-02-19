@@ -90,7 +90,7 @@ function buildMenu(currentContext, path) {
 					$dropdown
 			);
 		} else if ('sign-out' == menu.name) {
-			$li.append(createMenuLink(path + 'logout?source=' + window.location.href , 'fa-sign-out', 'Sign out'));
+			$li.append(createMenuLink(path + 'logout?source=' + './' , 'fa-sign-out', 'Sign out'));
 		}
 		$('#etm_mainmenu').append($li);
 	}

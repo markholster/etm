@@ -31,7 +31,7 @@ public abstract class AbstractIntegrationTest {
 //		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 //		this.driver = new ChromeDriver();
 
-		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-v0.13.0-linux64");
+		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-v0.14.0-linux64");
 		DesiredCapabilities capabilities = DesiredCapabilities.firefox();
 		capabilities.setJavascriptEnabled(true);
 		this.driver = new FirefoxDriver(capabilities);
@@ -70,6 +70,10 @@ public abstract class AbstractIntegrationTest {
 	
 	protected void waitForHide(String elementId) {
 		waitFor(d -> !d.findElement(By.id(elementId)).isDisplayed());
+	}
+	
+	protected void waitForEnabled(String elementId) {
+		waitFor(d -> d.findElement(By.id(elementId)).isEnabled());
 	}
 	
 	protected WebElement findById(String id) {

@@ -58,7 +58,7 @@ public class UserService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getUserSettings() {
 		GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-				.setFetchSource(null, new String[] {"searchtemplates", "dashboards", "password_hash"})
+				.setFetchSource(null, new String[] {"searchtemplates", "password_hash"})
 				.get();
 		if (getResponse.isSourceEmpty()) {
 			return "{}";
@@ -76,9 +76,13 @@ public class UserService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String setUserSettings(String json) throws Exception {
 		Map<String, Object> valueMap = toMap(json);
+		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		
 		Map<String, Object> updateMap = new HashMap<String, Object>();
-		updateMap.put(this.tags.getNameTag(), valueMap.get(this.tags.getNameTag()));
+		if (etmPrincipal.isLdapBase()) {
+			updateMap.put(this.tags.getNameTag(), valueMap.get(this.tags.getNameTag()));
+			updateMap.put(this.tags.getEmailTag(), valueMap.get(this.tags.getEmailTag()));
+		}
 		updateMap.put(this.tags.getTimeZoneTag(), valueMap.get(this.tags.getTimeZoneTag()));
 		updateMap.put(this.tags.getLocaleTag(), valueMap.get(this.tags.getLocaleTag()));
 		Integer newHistorySize = getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE);
@@ -87,7 +91,6 @@ public class UserService extends AbstractJsonService {
 		}
 		updateMap.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
 		
-		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
 		.setDoc(updateMap)
 		.setDetectNoop(true)
@@ -116,7 +119,10 @@ public class UserService extends AbstractJsonService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String setPassword(String json) throws Exception {
-		// TODO Deze functie mag niet beschikbaar zijn als er LDAP authenticatie gebruikt wordt.
+		if (getEtmPrincipal().isLdapBase()) {
+			// TODO gooi exceptie
+			return null;
+		}
 		Map<String, Object> valueMap = toMap(json);
 		
 		String oldPassword = getString("current_password", valueMap);
@@ -188,7 +194,7 @@ public class UserService extends AbstractJsonService {
 			added = addStringElementToJsonBuffer("name", "dashboard", result, true) || added;
 			result.append("}");
 		}
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER, EtmPrincipalRole.SEARCHER)) {
+		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER, EtmPrincipalRole.SEARCHER, EtmPrincipalRole.IIB_ADMIN)) {
 			if (added) {
 				result.append(",");
 			}

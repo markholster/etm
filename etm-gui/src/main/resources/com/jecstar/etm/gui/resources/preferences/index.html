@@ -56,6 +56,12 @@ body { padding-top: 60px; }
 	            <input id="input-user-name" type="text" class="form-control" />
 	          </div>
 	        </div>        
+          <div class="form-group row">
+            <label for="input-user-email" class="col-sm-3 col-form-label">Email address</label>
+            <div class="col-sm-9">
+              <input id="input-user-email" type="text" class="form-control" />
+            </div>
+          </div>        
 	        <div class="form-group row">
 	          <label for="input-locale" class="col-sm-3 col-form-label">Locale</label>
 	          <div class="col-sm-9">
@@ -81,7 +87,7 @@ body { padding-top: 60px; }
       </div>
     </div>
     <br />
-    <div class="card card-block">
+    <div id="change-password-container" class="card card-block">
       <h5 class="card-title">Change password</h5>
       <div class="card-text">
       	<form id="password_form">
@@ -177,10 +183,16 @@ body { padding-top: 60px; }
                 }
                 $('#input-user-id').val(data.id);
                 $('#input-user-name').val(data.name);
+                $('#input-user-email').val(data.email);
                 $('#input-locale').val(data.locale);
                 $('#input-time-zone').val(data.time_zone);
                 $('#input-search-history-size').val(data.search_history_size);
                 $('#input-search-history-size').attr('max', data.max_search_history_size);
+                if (data.ldap_base) {
+                	$('#change-password-container').hide();
+                	$('#input-user-name').attr('disabled', 'disabled');
+                	$('#input-user-email').attr('disabled', 'disabled');
+                }
             }
         })
         
@@ -258,6 +270,7 @@ body { padding-top: 60px; }
     function createUserSettings() {
         var userSettings = {
             name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
+            email: $('#input-user-email').val() ? $('#input-user-email').val() : null,
             locale: $('#input-locale').val(),
             time_zone: $('#input-time-zone').val(),
             search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0

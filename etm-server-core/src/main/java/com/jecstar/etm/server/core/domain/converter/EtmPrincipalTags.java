@@ -3,6 +3,7 @@ package com.jecstar.etm.server.core.domain.converter;
 public interface EtmPrincipalTags {
 
 	String getIdTag();
+	String getEmailTag();
 	String getFilterQueryTag();
 	String getFilterQueryOccurrenceTag();
 	String getAlwaysShowCorrelatedEventsTag();
@@ -14,6 +15,7 @@ public interface EtmPrincipalTags {
 	String getRolesTag();
 	String getGroupsTag();
 	String getTimeZoneTag();
+	String getLdapBaseTag();
 	
 	String getSearchHistoryTag();
 	String getSearchTemplatesTag();

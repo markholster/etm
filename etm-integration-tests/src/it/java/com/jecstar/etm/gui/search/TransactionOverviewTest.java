@@ -228,13 +228,13 @@ public class TransactionOverviewTest extends AbstractSearchIntegrationTest {
 //	    int clickPointXOffset = (canvas.getRect().width / 6) * 5;
 //	    int clickPointYOffset = (canvas.getRect().height / 3) * 2;
 	    
-// TODO Onderstaande werkt niet met marionette driver...
+// TODO Onderstaande werkt niet met gecko driver...
 //	    // Move to the event reader in the canvas and send a click event.
 //	    new Actions(this.driver).moveToElement(canvas, clickPointXOffset, clickPointYOffset).click().perform();
 //	    // And wait for the detail table to show.
 //	    waitForShow("transaction-detail-table");
 //	    // Make sure 6 events are in the transaction (and 1 for the table header). 
-//	    List<WebElement> tableRows = findById"transaction-detail-table").findElements(By.tagName("tr"));
+//	    List<WebElement> tableRows = findById("transaction-detail-table").findElements(By.tagName("tr"));
 //	    assertSame(6 + 1, tableRows.size());
 	}
 

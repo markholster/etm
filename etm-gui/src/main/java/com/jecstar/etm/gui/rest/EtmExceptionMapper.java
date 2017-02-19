@@ -54,14 +54,20 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.INVALID_EXPRESSION_PARSER_TYPE:
 					errorMessage.setMessage("Invalid expression parser type");
 					break;
+				case EtmException.NO_MORE_ADMINS_LEFT:
+					errorMessage.setMessage("No users with the '" + EtmPrincipalRole.ADMIN.getRoleName() + "' role left");
+					break;
+				case EtmException.INVALID_LDAP_USER:
+					errorMessage.setMessage("Invalid LDAP user");
+					break;
+				case EtmException.INVALID_LDAP_GROUP:
+					errorMessage.setMessage("Invalid LDAP group");
+					break;
 				case EtmException.INVALID_PASSWORD:
 					errorMessage.setMessage("Invalid password");
 					break;
 				case EtmException.PASSWORD_NOT_CHANGED:
 					errorMessage.setMessage("The new password may not be the same as the old password");
-					break;
-				case EtmException.NO_MORE_ADMINS_LEFT:
-					errorMessage.setMessage("No users with the '" + EtmPrincipalRole.ADMIN.getRoleName() + "' role left");
 					break;
 				case EtmException.IIB_CONNECTION_ERROR:
 					errorMessage.setMessage("Unable to connect to IIB node");

@@ -29,10 +29,12 @@ function buildUserPage() {
 	            }
 	            var $timezones = $('#sel-time-zone');
 	            $(data.time_zones).each(function (index, timeZone) {
-	                $timezones.append($('<option>').attr('value', timeZone).text(timeZone))
+	            	$option =  $('<option>').attr('value', timeZone).text(timeZone); 
+	            	if (timeZone === data.default_time_zone) {
+	            		$option.attr('selected', 'selected');
+	            	}
+	                $timezones.append($option)
 	            }); 
-	            defaultTimeZone = data.default_time_zone;
-	            $timezones.val(defaultTimeZone);
 	        }
 	    }),
 	    $.ajax({
@@ -45,10 +47,12 @@ function buildUserPage() {
 	            }
 	            var $locales = $('#sel-locale');
 	            $(data.locales).each(function (index, locale) {
-	                $locales.append($('<option>').attr('value', locale.value).text(locale.name))
+	            	$option = $('<option>').attr('value', locale.value).text(locale.name);
+	            	if (locale.value === data.default_locale.value) {
+	            		$option.attr('selected', 'selected');
+	            	}
+	            	$locales.append($option)
 	            });
-	            defaultLocale = data.default_locale.value;
-	            $locales.val(defaultLocale);
 	        }
 	    }),
 	    $.ajax({
@@ -83,8 +87,14 @@ function buildUserPage() {
 	                return;
 	            }
 	            $.each(data.groups, function(index, group) {
-	            	$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
+	            	if (!group.ldap_base) {
+	            		$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
+	            	}
 	            });
+	            if ($groupSelect.children('option').length == 0) {
+	            	// Only ldap groups present. remove the add-group link
+	            	$('#lnk-add-group').remove();
+	            }
 	            sortSelectOptions($groupSelect);
 	        }
 	    })	    
@@ -97,6 +107,9 @@ function buildUserPage() {
 		        if (!data) {
 		            return;
 		        }
+		        if (data.has_ldap) {
+		        	$('#btn-confirm-import-user').show();
+		        }
 		        $userSelect = $('#sel-user');
 		        $.each(data.users, function(index, user) {
 		        	$userSelect.append($('<option>').attr('value', user.id).text(user.id + ' - ' + user.name));
@@ -108,17 +121,38 @@ function buildUserPage() {
 		});
 	});
 	
+    $("#input-import-user-id").autocomplete({
+        source: function( request, response ) {
+          $.ajax({
+        	type: 'POST',
+            url: "../rest/settings/users/ldap/search",
+            contentType: 'application/json',
+            data: JSON.stringify({ query: request.term }),
+            success: function(data) {
+            	if (!data) {
+            		return
+            	}
+            	response(data);
+            }
+          });
+        },
+        minLength: 1,
+      });
+	
+	
 	var userMap = {};
 	$('#sel-user').change(function(event) {
 		event.preventDefault();
 		var userData = userMap[$(this).val()];
 		if ('undefined' == typeof userData) {
 			resetValues();
+			enableFieldsForNonLdapUser();
 			return;
 		}
 		$('#list-groups').empty();
 		$('#input-user-id').val(userData.id);
 		$('#input-user-name').val(userData.name);
+		$('#input-user-email').val(userData.email);
 		$('#input-filter-query').val(userData.filter_query);
 		$('#sel-filter-query-occurrence').val(userData.filter_query_occurrence);
 		$('#sel-always-show-correlated-events').val(userData.always_show_correlated_events ? 'true' : 'false');
@@ -136,16 +170,55 @@ function buildUserPage() {
 			$.each(userData.groups, function(index, groupName) {
 				$('#list-groups').append(createGroupRow(groupName));
 			});
+			if (userData.ldap_base) {
+				// load the ldap groups of the user
+				$.ajax({
+				    type: 'GET',
+				    contentType: 'application/json',
+				    url: '../rest/settings/user/' + encodeURIComponent(userData.id) + '/ldap/groups',
+				    success: function(data) {
+				        if (!data) {
+				            return;
+				        }
+						$.each(data.groups, function(index, group) {
+							$('#list-groups').append(createLdapGroupRow(group.name));
+						});
+				    }
+				});				
+			}
 		}
         $('#input-new-password1').val('');
-        $('#input-new-password2').val('');		
+        $('#input-new-password2').val('');
+        if (userData.ldap_base) {
+        	disableFieldsForLdapUser();
+        } else {
+        	enableFieldsForNonLdapUser();
+        }
 		enableOrDisableButtons();
+		
+		function enableFieldsForNonLdapUser() {
+        	$('#input-user-id').removeAttr('disabled');
+        	$('#input-user-name').removeAttr('disabled');
+        	$('#input-user-email').removeAttr('disabled');
+        	$('#input-new-password1').removeAttr('disabled');
+        	$('#input-new-password2').removeAttr('disabled');
+        	$('#sel-change-password-on-logon').removeAttr('disabled');			
+		}
+		
+		function disableFieldsForLdapUser() {
+        	$('#input-user-id').attr('disabled', 'disabled');
+        	$('#input-user-name').attr('disabled', 'disabled');
+        	$('#input-user-email').attr('disabled', 'disabled');
+        	$('#input-new-password1').attr('disabled', 'disabled');
+        	$('#input-new-password2').attr('disabled', 'disabled');
+        	$('#sel-change-password-on-logon').attr('disabled', 'disabled');			
+		}
 	});
 	
 	$('#btn-confirm-save-user').click(function(event) {
 		$('#input-new-password1, #input-new-password2').parent().removeClass('has-danger');
 		if (!document.getElementById('user_form').checkValidity()) {
-			return false;
+			return;
 		}
 		if (!checkOrInvalidateFormInCaseOfPasswordMismatch()) {
 			return false;
@@ -173,13 +246,50 @@ function buildUserPage() {
 	$('#btn-remove-user').click(function(event) {
 		removeUser($('#input-user-id').val());
 	});
+
+	$('#btn-confirm-import-user').click(function(event) {
+		event.preventDefault();
+		$('#input-import-user-id').val('');
+		$('#modal-user-import').modal();
+	});
+	
+	$('#btn-import-user').click(function(event) {
+		event.preventDefault();
+		var userId = $("#input-import-user-id").val();
+		if (!userId) {
+			return false;
+		}
+		$.ajax({
+		    type: 'PUT',
+		    contentType: 'application/json',
+		    url: '../rest/settings/users/ldap/import/' + encodeURIComponent(userId),
+		    success: function(user) {
+		        if (!user) {
+		            return;
+		        }
+				// First the group if it is already present
+				$('#sel-user > option').each(function () {
+				    if(user.id == $(this).attr('value')) {
+				        $(this).remove();
+				    }
+				});
+				// Now add the updated user
+		        $('#sel-user').append($('<option>').attr('value', user.id).text(user.id + ' - ' + user.name));
+		        sortSelectOptions($('#sel-user'));
+		        userMap[user.id] = user;
+		        $('#sel-user').val(user.id).trigger('change');
+		    },
+		    complete: function() {
+		    	$('#modal-user-import').modal('hide');
+		    }
+		});
+	});
 	
 	$('#lnk-add-group').click(function(event) {
 		event.preventDefault();
 		$('#list-groups').append(createGroupRow());
 	});
 
-	
 	$('#input-user-id').on('input', enableOrDisableButtons);
 		
 	function sortSelectOptions($select) {
@@ -208,13 +318,19 @@ function buildUserPage() {
 		}
 	}
 	
+    function createLdapGroupRow(groupName) {
+    	return $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+    			$('<div>').addClass('input-group').append(groupName)
+    	);
+    }
+	
     function createGroupRow(groupName) {
     	var groupRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
-					$('<div>').addClass('input-group').append(
-							$groupSelect.clone(true), 
-							$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeGroupRow($(this));}))
-					)
-			);
+			$('<div>').addClass('input-group').append(
+				$groupSelect.clone(true), 
+				$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeGroupRow($(this));}))
+			)
+		);
     	if (groupName) {
     		$(groupRow).find('.etm-group').val(groupName)
     	}
@@ -245,14 +361,15 @@ function buildUserPage() {
                 }
         		if (!isUserExistent(userData.id)) {
         			$userSelect = $('#sel-user');
-        			$userSelect.append($('<option>').attr('value', userData.id).text(userData.id + ' - ' + userData.name));
+        			$userSelect.append($('<option>').attr('value', userData.id).text(userData.name ? (userData.id + ' - ' + userData.name) : (userData.id + ' - ' + userData.id)));
         			sortSelectOptions($userSelect);
         		}
         		userMap[userData.id] = userData;
         		$('#users_infoBox').text('User \'' + userData.id+ '\' saved.').show('fast').delay(5000).hide('fast');
+            },
+            complete: function () {
+            	$('#modal-user-overwrite').modal('hide');            	
             }
-        }).always(function () {
-        	$('#modal-user-overwrite').modal('hide');
         });  		
 	}
 	
@@ -270,9 +387,10 @@ function buildUserPage() {
         		       return $(this).attr("value") == userId;
         		}).remove();
         		$('#users_infoBox').text('User \'' + userId + '\' removed.').show('fast').delay(5000).hide('fast');
+            },
+            complete: function() {
+            	$('#modal-user-remove').modal('hide');
             }
-        }).always(function() {
-        	$('#modal-user-remove').modal('hide');
         });  		
 	}
 	
@@ -291,6 +409,7 @@ function buildUserPage() {
 		var userData = {
 			id: $('#input-user-id').val(),
 			name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
+			email: $('#input-user-email').val() ? $('#input-user-email').val() : null,
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
 			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),
 			always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,

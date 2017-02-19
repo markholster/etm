@@ -1,7 +1,7 @@
 == Setup {etm}
 This section explains in detail the steps to download, configure and run an {etm} installation. Because {etm} is a pure Java application it should be able to run on any machine with a proper Java runtime installed. At a minimum a link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[Java 8] runtime should be available. It is recommended to install JDK from Oracle's site, but {etm} might run with other JDK suppliers as well.
 
-For the storage of the events {etm} relies on an link:http://www.elastic.co/downloads[Elasticsearch 5.1] or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of {etm} and need to be installed, configured and managed separately.
+For the storage of the events {etm} relies on an link:http://www.elastic.co/downloads[Elasticsearch 5.2] or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of {etm} and need to be installed, configured and managed separately.
 
 === System requirements
 {etm} works best on machines that are equipped with 8 to 64 GiB of RAM. More than 64 GiB makes the Java garbage collections run so long that it has an overall negative impact on the performance. In most situations 8 GiB is more than sufficient, but when you need to process a lot of big events you might need some more memory.
@@ -80,6 +80,8 @@ map1:
 
 A detailed specification of the yaml syntax can be found on the link:http://yaml.org/[yaml website].
 
+IMPORTANT: When storing passwords in the etm.yml file, make sure the file is only readable by the {etm} administrators.
+
 ==== General configuration in etm.yml
 General configuration options have no indentation in the etm.yml file. The following options are available:
 
@@ -124,10 +126,10 @@ The ''http'' section contains all options that are necessary to start the gui an
 |maxQueuedRequests|100|The maximum number of requests that can be queued. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
 |sslProtocol|TLSv1.2|The ssl protocol that needs to be used on the secure https listener. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
 |sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your server.
-|sslKeystorePassword||The password of the ssl keystore. When provided, make sure the configuration is will not be readable for everyone but allow only the etm process can read it.
+|sslKeystorePassword||The password of the ssl keystore.
 |sslKeystoreType|PKCS12|The ssl keystore type.
 |sslKeystoreLocation||The location of you ssl truststore. The trust store contains certificates of machines that are allowed to connect to this Node. When not provided, everybody is allowed to access this Node although a a username and password are still necessary to login.
-|sslKeystorePassword||The password of the ssl truststore. When provided, make sure the configuration is will not be readable for everyone but allow only the etm process can read it.
+|sslKeystorePassword||The password of the ssl truststore.
 |sslKeystoreType|JSK|The ssl truststore type.
 |=======================
 
@@ -151,6 +153,16 @@ The ''ibmMq'' section contains all options that are necessary to process {etm} e
 |host|127.0.0.1|The hostname or ip-address the QueueManager is running on.
 |port|1414|The port the QueueManager is listening on.
 |channel||The channel to use to setup the connection to the QueueManager.
+|userId||The user id used to setup the connection to the QueueManager.
+|password||The password used to setup the connection to the QueueManager.
+|sslCipherSuite||The ssl cipher suite to use. Set this property to the desired suite to enable an encrypted connection to the QueueManager. 
+|sslProtocol|TLSv1.2|The ssl protocol that needs to be to connect to the QueueManager. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
+|sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your Node.
+|sslKeystorePassword||The password of the ssl keystore.
+|sslKeystoreType|PKCS12|The ssl keystore type.
+|sslKeystoreLocation||The location of you ssl truststore. The trust store contains certificates of Queuemanager machines that this Node is allowed to connect to. When not provided, all Queuemanager machines are trusted.
+|sslKeystorePassword||The password of the ssl truststore.
+|sslKeystoreType|JSK|The ssl truststore type.
 |destinations||A list of destinations to listen on. See <<ibmmq-destination-options>> to view the nested options.
 |=======================
 

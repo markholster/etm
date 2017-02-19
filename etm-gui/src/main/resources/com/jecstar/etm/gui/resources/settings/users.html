@@ -67,7 +67,13 @@ body { padding-top: 60px; }
 				    <input id="input-user-name" type="text" class="form-control" />
 				  </div>
 				</div>
-		        <div class="form-group">
+                <div class="form-group row">
+                  <label for="input-user-email" class="col-sm-3 col-form-label">Email address</label>
+                  <div class="col-sm-9">
+                    <input id="input-user-email" type="text" class="form-control" />
+                  </div>
+                </div>
+                <div class="form-group">
 		          <a id="lnk-add-group" class="pull-right" href="#">Add group</a>
 		          <label>Groups</label>
 		          <ol id="list-groups">
@@ -143,6 +149,7 @@ body { padding-top: 60px; }
 		        </div>
 		        <div class="modal-footer">
                   <input type="submit" id="btn-confirm-remove-user" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
+                  <input type="submit" id="btn-confirm-import-user" class="btn btn-secondary" value="Import" formnovalidate="formnovalidate" style="display: none;" />              
                   <input type="submit" id="btn-confirm-save-user" class="btn btn-primary" value="Save" disabled="disabled" />
 		        </div>				
 		      </form>
@@ -191,6 +198,27 @@ body { padding-top: 60px; }
         </div>
       </div>
     </div>  
+    
+    <div class="modal fade" id="modal-user-import" tabindex="-1" role="dialog" aria-labelledby="user-import-modal-label" aria-hidden="true">
+       <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+             <h4 class="modal-title" id="user-import-modal-label">Import LDAP user</h4>
+           </div>
+           <div class="modal-body">
+             <p>Please enter the user id that needs to be imported</p>
+             <input id="input-import-user-id" type="text" class="form-control" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button id="btn-import-user" type="button" class="btn btn-primary">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>    
   
   </div>
   
@@ -221,8 +249,10 @@ body { padding-top: 60px; }
             // assume that our login has expired - reload our current page
             window.location.reload();
             return;
-        }          
-        $('html,body').animate({scrollTop: 0},'fast');
+        } 
+        if (settings.url !== "../rest/settings/users/search") {
+	        $('html,body').animate({scrollTop: 0},'fast');
+        }
     });
   	buildMenu('settings', '../');
   	buildUserPage();

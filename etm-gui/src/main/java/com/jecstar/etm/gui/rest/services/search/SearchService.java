@@ -447,7 +447,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getTransaction(@PathParam("application") String applicationName, @PathParam("id") String transactionId) {
 		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
-			.minimumNumberShouldMatch(1)
+			.minimumShouldMatch(1)
 			.should(
 					new BoolQueryBuilder()
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
@@ -796,7 +796,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			return;
 		}
 		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
-				.minimumNumberShouldMatch(1)
+				.minimumShouldMatch(1)
 				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 						"." + this.eventTags.getReadingEndpointHandlersTag() + 
 						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
