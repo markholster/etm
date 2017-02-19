@@ -221,7 +221,7 @@ public class TransactionOverviewTest extends AbstractSearchIntegrationTest {
 	    // Cytoscape renders 3 canvas elements. Make sure they are all present.
 	    assertSame(3, canvasElements.size());
 	    // Now click on the event reader
-	    WebElement canvas = canvasElements.get(0);
+//	    WebElement canvas = canvasElements.get(0);
 //	    
 //	    // Calculate the clich point in the canvas.
 //	    // The canvas consits of a grid with 3 columns. We have to click on the center of the 3th cell. 

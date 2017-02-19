@@ -92,9 +92,8 @@ function buildUserPage() {
 	            	}
 	            });
 	            if ($groupSelect.children('option').length == 0) {
-	            	// Only ldap groups present. remove groups fieldset.
-	            	// TODO This may change when we also load the ldap groups of a user. In that case they should be displayed as read only fields.
-	            	$('#lnk-add-group').parent().remove();
+	            	// Only ldap groups present. remove the add-group link
+	            	$('#lnk-add-group').remove();
 	            }
 	            sortSelectOptions($groupSelect);
 	        }
@@ -171,6 +170,22 @@ function buildUserPage() {
 			$.each(userData.groups, function(index, groupName) {
 				$('#list-groups').append(createGroupRow(groupName));
 			});
+			if (userData.ldap_base) {
+				// load the ldap groups of the user
+				$.ajax({
+				    type: 'GET',
+				    contentType: 'application/json',
+				    url: '../rest/settings/user/' + encodeURIComponent(userData.id) + '/ldap/groups',
+				    success: function(data) {
+				        if (!data) {
+				            return;
+				        }
+						$.each(data.groups, function(index, group) {
+							$('#list-groups').append(createLdapGroupRow(group.name));
+						});
+				    }
+				});				
+			}
 		}
         $('#input-new-password1').val('');
         $('#input-new-password2').val('');
@@ -303,13 +318,19 @@ function buildUserPage() {
 		}
 	}
 	
+    function createLdapGroupRow(groupName) {
+    	return $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+    			$('<div>').addClass('input-group').append(groupName)
+    	);
+    }
+	
     function createGroupRow(groupName) {
     	var groupRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
-					$('<div>').addClass('input-group').append(
-							$groupSelect.clone(true), 
-							$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeGroupRow($(this));}))
-					)
-			);
+			$('<div>').addClass('input-group').append(
+				$groupSelect.clone(true), 
+				$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeGroupRow($(this));}))
+			)
+		);
     	if (groupName) {
     		$(groupRow).find('.etm-group').val(groupName)
     	}

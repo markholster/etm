@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.ldap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
-import java.util.List;
+import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -78,7 +78,7 @@ public class DirectoryTest {
 	@Test
 	public void testGetGroups() {
 		Directory directory = new Directory(createLdapConfiguration());
-		List<EtmGroup> groups = directory.getGroups();
+		Set<EtmGroup> groups = directory.getGroups();
 		assertEquals(2, groups.size());
 		directory.close();
 	}

@@ -3,8 +3,10 @@ package com.jecstar.etm.server.core.ldap;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -156,8 +158,8 @@ public class Directory implements AutoCloseable {
 		return null;
 	}
 
-	public List<EtmGroup> getGroups() {
-		List<EtmGroup> groups = new ArrayList<>();
+	public Set<EtmGroup> getGroups() {
+		Set<EtmGroup> groups = new HashSet<>();
 		if (!checkConnected()) {
 			return groups;
 		}
@@ -181,7 +183,7 @@ public class Directory implements AutoCloseable {
 			return null;
 		}
 		// Jikes, dunno how to query based on DN.
-		List<EtmGroup> groups = getGroups();
+		Set<EtmGroup> groups = getGroups();
 		Iterator<EtmGroup> groupIterator = groups.iterator();
 		while (groupIterator.hasNext()) {
 			EtmGroup etmGroup = groupIterator.next();
@@ -193,7 +195,7 @@ public class Directory implements AutoCloseable {
 			// TODO logging
 			return null;		
 		}
-		return groups.get(0);
+		return groups.iterator().next();
 	}
 
 	/**
@@ -205,6 +207,30 @@ public class Directory implements AutoCloseable {
 	 * @return A list with <code>EtmPrincipal</code>s.
 	 */
 	public List<EtmPrincipal> searchPrincipal(String query) {
+		return searchPrincipal(query, false);
+	}
+
+	/**
+	 * Gets an principals. This method does not fully load the found
+	 * <code>EtmPrincipal</code> and <code>EtmGroup</code>s but only sets the
+	 * user id, full name and email address. For the <code>EtmGroup</code>s only
+	 * the name and ldapBase are set.
+	 * 
+	 * @param userId
+	 *            The id of the user to retrieve
+	 * @return The <code>EtmPrincipal</code> or <code>null</code> if not exactly
+	 *         one principal is found.
+	 */
+	public EtmPrincipal getPrincipal(String userId, boolean includeGroups) {
+		List<EtmPrincipal> principals = searchPrincipal(userId, includeGroups);
+		if (principals.size() != 1) {
+			// TODO logging
+			return null;		
+		}
+		return principals.get(0);
+	}
+	
+	private List<EtmPrincipal> searchPrincipal(String query, boolean includeGroups) {
 		List<EtmPrincipal> principals = new ArrayList<>();
 		if (!checkConnected()) {
 			return principals;
@@ -217,11 +243,7 @@ public class Directory implements AutoCloseable {
 			SearchResult searchResult = executor.search(
 				this.connectionFactory, 
 				getSearchFilter(this.ldapConfiguration, query), 
-				new String[] {
-					this.ldapConfiguration.getUserIdentifierAttribute(), 
-					this.ldapConfiguration.getUserFullNameAttribute(),
-					this.ldapConfiguration.getUserEmailAttribute()
-				}
+				createUserAttributes(this.ldapConfiguration).toArray(new String[0])
 			).getResult();
 			for (LdapEntry ldapEntry : searchResult.getEntries()) {
 				LdapAttribute attribute = ldapEntry.getAttribute(this.ldapConfiguration.getUserIdentifierAttribute());
@@ -230,21 +252,21 @@ public class Directory implements AutoCloseable {
 				setAttributeFromLdapEntity(this.ldapConfiguration.getUserFullNameAttribute(), ldapEntry, principal::setName);
 				setAttributeFromLdapEntity(this.ldapConfiguration.getUserEmailAttribute(), ldapEntry, principal::setEmailAddress);
 				principals.add(principal);
+				if (includeGroups) {
+					attribute = ldapEntry.getAttribute(this.ldapConfiguration.getUserMemberOfGroupsAttribute());
+					if (attribute != null) {
+						addGroups(principal, attribute.getStringValues());
+					} else {
+						addGroups(this.ldapConfiguration, principal, ldapEntry);
+					}
+				}
 			}
 		} catch (LdapException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}		
-		return principals;
+		return principals;		
 	}
-	
-	public EtmPrincipal getPrincipal(String userId) {
-		List<EtmPrincipal> principals = searchPrincipal(userId);
-		if (principals.size() != 1) {
-			// TODO logging
-			return null;		
-		}
-		return principals.get(0);
-	}
+
 	
 	private boolean connect() {
 		if (this.connectionPool != null) {
@@ -286,7 +308,6 @@ public class Directory implements AutoCloseable {
 			
 			oldPool.close();
 		}
-		
 	}
 	
 	private AbstractConnectionPool createConnectionPool(int minPoolSize, int maxPoolSize, LdapConfiguration ldapConfiguration, ConnectionConfig connectionConfig) {

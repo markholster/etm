@@ -94,4 +94,17 @@ public class EtmGroup {
 		}
 		return true;		
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof EtmGroup) {
+			return this.name.equals(((EtmGroup)obj).getName());
+		}
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return this.name.hashCode();
+	}
 }

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.DELETE;
@@ -635,6 +636,33 @@ public class SettingsService extends AbstractJsonService {
 		result.append("], \"has_ldap\": " + (etmConfiguration.getDirectory() != null) + "}");
 		return result.toString();
 	}
+
+	@GET
+	@Path("/user/{userId}/ldap/groups")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getLdapGroupsOfUser(@PathParam("userId") String userId) {
+		if (etmConfiguration.getDirectory() == null) {
+			return null;
+		}
+		EtmPrincipal principal = etmConfiguration.getDirectory().getPrincipal(userId, true);
+		StringBuilder result = new StringBuilder();
+		result.append("{\"groups\": [");
+		boolean first = true;
+		Set<EtmGroup> notImportedLdapGroups = getNotImportedLdapGroups();
+		for (EtmGroup etmGroup : principal.getGroups()) {
+			if (notImportedLdapGroups.contains(etmGroup)) {
+				continue;
+			}
+			if (!first) {
+				result.append(",");
+			}
+			result.append(this.etmPrincipalConverter.writeGroup(etmGroup));
+			first = false;
+		}
+		result.append("]}");
+		return result.toString();
+
+	}
 	
 	@POST
 	@Path("/users/ldap/search")
@@ -667,7 +695,10 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/users/ldap/import/{userId}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String importLdapUser(@PathParam("userId") String userId) {
-		EtmPrincipal principal = etmConfiguration.getDirectory().getPrincipal(userId);
+		if (etmConfiguration.getDirectory() == null) {
+			return null;
+		}
+		EtmPrincipal principal = etmConfiguration.getDirectory().getPrincipal(userId, false);
 		if (principal == null) {
 			throw new EtmException(EtmException.INVALID_LDAP_USER);
 		}
@@ -791,19 +822,7 @@ public class SettingsService extends AbstractJsonService {
 	@Path("/groups/ldap")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getLdapGroups() {
-		List<EtmGroup> groups = etmConfiguration.getDirectory().getGroups();
-		Iterator<EtmGroup> iterator = groups.iterator();
-		while (iterator.hasNext()) {
-			EtmGroup group = iterator.next();
-			GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group.getName())
-				.get();
-			if (getResponse.isExists()) {
-				Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-				if (getBoolean(this.etmPrincipalTags.getLdapBaseTag(), sourceAsMap, Boolean.FALSE)) {
-					iterator.remove();
-				}
-			}
-		}
+		Set<EtmGroup> groups = getNotImportedLdapGroups();
 		StringBuilder result = new StringBuilder();
 		result.append("{\"groups\": [");
 		boolean first = true;
@@ -816,6 +835,24 @@ public class SettingsService extends AbstractJsonService {
 		}
 		result.append("]}");
 		return result.toString();
+	}
+	
+	
+	private Set<EtmGroup> getNotImportedLdapGroups() {
+		Set<EtmGroup> groups = etmConfiguration.getDirectory().getGroups();
+		Iterator<EtmGroup> iterator = groups.iterator();
+		while (iterator.hasNext()) {
+			EtmGroup group = iterator.next();
+			GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group.getName())
+				.get();
+			if (getResponse.isExists()) {
+				Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+				if (getBoolean(this.etmPrincipalTags.getLdapBaseTag(), sourceAsMap, Boolean.FALSE)) {
+					iterator.remove();
+				}
+			}
+		}
+		return groups;
 	}
 	
 	@PUT
