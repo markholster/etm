@@ -17,8 +17,8 @@ The .tgz archive for {etm} can be downloaded and installed as follow:
 
 [source,bash,subs=attributes+]
 ----
-wget http://www.jecstar.com/downloads/etm-{project-version}.tgz
-wget http://www.jecstar.com/downloads/etm-{project-version}.tgz.sha512
+wget https://www.jecstar.com/downloads/etm-{project-version}.tgz
+wget https://www.jecstar.com/downloads/etm-{project-version}.tgz.sha512
 cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
 tar -zxvf etm-{project-version}.tgz
 cd etm-{project-version}/bin
@@ -32,8 +32,8 @@ The .zip archive for {etm} can be downloaded and installed as follow:
 
 [source,bash,subs=attributes+]
 ----
-wget http://www.jecstar.com/downloads/etm-{project-version}.zip
-wget http://www.jecstar.com/downloads/etm-{project-version}.zip.sha512
+wget https://www.jecstar.com/downloads/etm-{project-version}.zip
+wget https://www.jecstar.com/downloads/etm-{project-version}.zip.sha512
 cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
 unzip etm-{project-version}.tgz 
 cd etm-{project-version}/bin
@@ -43,7 +43,7 @@ cd etm-{project-version}/bin
 <2> This command does not actually start {etm} but shows the options that are available with the etm script.
 
 === Installation on Windows
-Although {etm} best performs on linux like systems it can be run under windows as well. You can download {etm} from http://www.jecstar.com/downloads/etm-{project-version}.zip and unzip it with your favorite archiving tool. In the directory <UNZIP_LOCATION>\etm-{project-version}\bin you will find a file named ''etm.bat''. By executing that batch file {etm} will start.
+Although {etm} best performs on linux like systems it can be run under windows as well. You can download {etm} from https://www.jecstar.com/downloads/etm-{project-version}.zip and unzip it with your favorite archiving tool. In the directory <UNZIP_LOCATION>\etm-{project-version}\bin you will find a file named ''etm.bat''. By executing that batch file {etm} will start.
 
 === Integration with IBM MQ and/or IBM Integration Bus
 {etm} is capable of providing deep integration with IBM MQ and or IBM Integration Bus. To make use of any of these integrations the classpath of {etm} needs to be extended. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}. 

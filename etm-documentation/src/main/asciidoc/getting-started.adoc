@@ -53,12 +53,12 @@ Don\'t forget to read the link:https://www.elastic.co/guide/en/elasticsearch/ref
 {etm} does not require a specific Elasticsearch cluster name and can join any Elasticsearch cluster, but out of the box it is trying to connect to a cluster with the name 'elasticsearch'. {etm} indici and aliases will be prefixed with abbreviation ''etm_''.
   
 
-Once Elasticsearch is up and running you can download and run {etm}. The binaries can be downloaded from link:http://www.jecstar.com/downloads[www.jecstar.com/downloads]. Depending on your operation (or personal
+Once Elasticsearch is up and running you can download and run {etm}. The binaries can be downloaded from link:https://www.jecstar.com/downloads[www.jecstar.com/downloads]. Depending on your operation (or personal
 preference) you can download a .zip or .tgz file. In this example we choose the .tgz file, so let's download the binary to our machine:
 
 [source,bash,subs=attributes+]
 ----
-curl -LO http://www.jecstar.com/downloads/etm-{project-version}.tgz
+curl -LO https://www.jecstar.com/downloads/etm-{project-version}.tgz
 ----
 
 Then extract the archive with the following command:
