@@ -58,7 +58,7 @@ preference) you can download a .zip or .tgz file. In this example we choose the 
 
 [source,bash,subs=attributes+]
 ----
-curl -LO https://www.jecstar.com/downloads/etm-{project-version}.tgz
+curl -LO https://www.jecstar.com/downloads/etm/etm-{project-version}.tgz
 ----
 
 Then extract the archive with the following command:
