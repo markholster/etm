@@ -136,6 +136,9 @@ public class SettingsService extends AbstractJsonService {
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
 			.get();
+		// Because the access to the etmConfiguration in the above statement could cause a reload of the configuration 
+		// the old license may still be applied. To prevent this, we set the license again at this place.
+		etmConfiguration.setLicenseKey(licenseKey);
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		NumberFormat numberFormat = etmPrincipal.getNumberFormat();
 		License license = etmConfiguration.getLicense();
