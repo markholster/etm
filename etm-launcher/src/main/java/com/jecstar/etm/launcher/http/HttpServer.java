@@ -110,7 +110,7 @@ public class HttpServer {
 		}
 		this.server = builder.setHandler(root).build();
 		if (this.configuration.http.restProcessorEnabled) {
-			DeploymentInfo di = createProcessorDeploymentInfo(processor, null);
+			DeploymentInfo di = createProcessorDeploymentInfo(processor, this.configuration.http.restProcessorLoginRequired ? identityManager : null);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			try {

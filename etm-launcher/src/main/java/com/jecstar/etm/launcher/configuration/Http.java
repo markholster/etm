@@ -6,6 +6,7 @@ public class Http {
 
 	public boolean guiEnabled = true;
 	public boolean restProcessorEnabled = true;
+	public boolean restProcessorLoginRequired = false;
 	
 	public int httpPort = 8080;
 	public int httpsPort = 8443;
