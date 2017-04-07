@@ -10,7 +10,7 @@ If your system is running on spinning disk you might consider upgrade to SSD or 
 
 Processing events is the most CPU intensive task in {etm}. Because events are processed in parallel {etm} takes a huge benefit from multi-core CPU's. If you have to choose between a faster CPU or a multi-core CPU always go for the multi-core CPU. 
 
-When you aree planning to create a multi node cluster, make sure the nodes are as close to each other as possible. Network latency can have a negative impact on the processing performance. Optical network interfaces are the preferred way to go, but if they are not available to you make sure your servers are equipped with at least Gigabit network interfaces. 
+When you are planning to create a multi node cluster, make sure the nodes are as close to each other as possible. Network latency can have a negative impact on the processing performance. Optical network interfaces are the preferred way to go, but if they are not available to you make sure your servers are equipped with at least Gigabit network interfaces. 
 
 === Installation with .tgz
 The .tgz archive for {etm} can be downloaded and installed as follow:

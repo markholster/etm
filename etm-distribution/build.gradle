@@ -20,6 +20,11 @@ distributions {
             into ('config') { 
             	from { 'src/main/distribution/config' }
             }
+            into ('bin') { 
+            	from ('src/main/distribution/scripts') {
+            		include 'etm.service'
+            	}
+            }            
         }
     }
 }
