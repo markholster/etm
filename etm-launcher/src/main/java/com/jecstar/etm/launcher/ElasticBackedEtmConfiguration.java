@@ -16,6 +16,7 @@ import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.configuration.License;
+import com.jecstar.etm.server.core.configuration.WaitStrategy;
 import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
@@ -62,6 +63,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	public int getEventBufferSize() {
 		reloadConfigurationWhenNecessary();
 		return super.getEventBufferSize();
+	}
+	
+	@Override
+	public WaitStrategy getWaitStrategy() {
+		reloadConfigurationWhenNecessary();
+		return super.getWaitStrategy();
 	}
 
 	@Override

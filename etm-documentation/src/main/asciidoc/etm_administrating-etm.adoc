@@ -118,6 +118,7 @@ The cluster page has grouped related configuration items into several tabs:
 |Enhancing handler count|The number of threads that will be used by the event enhancer in the Processor.
 |Persisting handler count|The number of threads that will be used by the event persister in the Processor. 
 |Event buffer size|The maximum number of event that can be buffered by the Processor before they are offered to the event enhancer and event persister.
+|Wait strategy|The strategy to use when the event processor is waiting for events. The ''Blocking'' strategy can be used when low-latency are not as important as CPU resources. The ''Busy spin'' strategy will use CPU cycles to avoid syscalls. Syscalls will cause a peek in latency. The ''Sleeping'' strategy will consume less CPU resources over time, but has also a greater latency peek over time. The ''Yielding'' strategy is a good compromise between performance and CPU resource without incurring significant latency spikes. 
 |Persisting bulk count|The maximum number of events that can be buffered before flushed to an Elasticsearch node.
 |Persisting bulk size|The maximum combined size in bytes of events that can be buffered before flushed to an Elasticsearch node.
 |Persisting bulk time|The maximum number of millisecond that events can be buffered before flushed to an Elasticsearch node.
@@ -172,7 +173,7 @@ When changing any of these properties no restart is required. All settings will 
 
 === Nodes
 To manage node specific settings browse to http://localhost:8080/gui/settings/nodes.html or select the menu option ''Settings -> Nodes''. When you have several {etm} instances running on different kind of hardware the default <<Cluster>> settings might not be optimal for every node. On the nodes configuration page you can fine tune node specific settings. To configure a node, the node name must be the same as the instanceName configured in the <<General configuration in etm.yml>>.
-For a detailed desciption of the configuration options visit the <<Cluster>> chapter.   
+For a detailed description of the configuration options visit the <<Cluster>> chapter.   
 
 === Parsers
 To add, modify or delete parsers browse to http://localhost:8080/gui/settings/parsers.html or select the menu option ''Settings -> Parsers''. Parsers are used to extract information from an event so it can be categorized and/or enhanced with custom values based on the payload of an event.

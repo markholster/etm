@@ -5,8 +5,12 @@ import java.util.concurrent.ThreadFactory;
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
+import com.lmax.disruptor.WaitStrategy;
+import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
@@ -16,8 +20,7 @@ public class DisruptorEnvironment {
 	private final PersistingEventHandler[] persistingEventHandlers;
 
 	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ThreadFactory threadFactory, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
-		// TODO Waitstrategy moet configureerbaar gemaakt worden.
-		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), threadFactory, ProducerType.MULTI, new SleepingWaitStrategy());
+		this.disruptor = new Disruptor<TelemetryCommand>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), threadFactory, ProducerType.MULTI, convertWaitStrategy(etmConfiguration.getWaitStrategy()));
 		this.disruptor.setDefaultExceptionHandler(new TelemetryCommandExceptionHandler(metricRegistry));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();
 		final EnhancingEventHandler[] enhancingEventHandlers = new EnhancingEventHandler[enhancingHandlerCount];
@@ -41,6 +44,22 @@ public class DisruptorEnvironment {
 		}
 	}
 	
+	private WaitStrategy convertWaitStrategy(com.jecstar.etm.server.core.configuration.WaitStrategy waitStrategy) {
+		switch (waitStrategy) {
+		case BLOCKING:
+			return new BlockingWaitStrategy();
+		case BUSY_SPIN:
+			return new BusySpinWaitStrategy();
+		case SLEEPING:
+			return new SleepingWaitStrategy();
+		case YIELDING:
+			return new YieldingWaitStrategy();
+		default:
+			return null;
+		}
+		
+	}
+
 	public RingBuffer<TelemetryCommand> start() {
 		return this.disruptor.start();
 	}

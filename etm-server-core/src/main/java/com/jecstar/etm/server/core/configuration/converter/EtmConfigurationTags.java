@@ -8,6 +8,7 @@ public interface EtmConfigurationTags {
 	String getEnhancingHandlerCountTag();
 	String getPersistingHandlerCountTag();
 	String getEventBufferSizeTag();
+	String getWaitStrategyTag();
 
 	String getPersistingBulkCountTag();
 	String getPersistingBulkSizeTag();

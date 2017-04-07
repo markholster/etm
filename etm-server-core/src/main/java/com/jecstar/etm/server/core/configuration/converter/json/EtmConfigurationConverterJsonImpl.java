@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.configuration.WaitStrategy;
 import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationTags;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -29,6 +30,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name(), sb, !added);
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), sb, !added) || added;
@@ -49,6 +51,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), nodeConfiguration.getEventBufferSize(), sb, !added) || added;
+			added = addStringWhenNotDefault(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name(), nodeConfiguration.getWaitStrategy().name(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), nodeConfiguration.getPersistingBulkCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), nodeConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), nodeConfiguration.getPersistingBulkTime(), sb, !added) || added;
@@ -81,6 +84,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingHandlerCount(getIntValue(this.tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setEventBufferSize(getIntValue(this.tags.getEventBufferSizeTag(), defaultMap, nodeMap));
+		etmConfiguration.setWaitStrategy(WaitStrategy.safeValueOf(getStringValue(this.tags.getWaitStrategyTag(), defaultMap, nodeMap)));
 		etmConfiguration.setPersistingBulkCount(getIntValue(this.tags.getPersistingBulkCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingBulkSize(getIntValue(this.tags.getPersistingBulkSizeTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingBulkTime(getIntValue(this.tags.getPersistingBulkTimeTag(), defaultMap, nodeMap));
@@ -117,6 +121,15 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		return null;
 	}
 	
+	private String getStringValue(String tag, Map<String, Object> defaultMap, Map<String, Object> nodeMap) {
+		if (nodeMap != null && nodeMap.containsKey(tag)) {
+			return (nodeMap.get(tag)).toString();
+		} else if (defaultMap != null && defaultMap.containsKey(tag)) {
+			return (defaultMap.get(tag)).toString();
+		}
+		return null;
+	}
+	
 	private boolean addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, StringBuilder buffer, boolean firstElement) {
 		if (defaultValue == specificValue) {
 			return false;
@@ -129,6 +142,13 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			return false;
 		}
 		return this.converter.addLongElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+	}
+	
+	private boolean addStringWhenNotDefault(String tag, String defaultValue, String specificValue, StringBuilder buffer, boolean firstElement) {
+		if (defaultValue.equals(specificValue)) {
+			return false;
+		}
+		return this.converter.addStringElementToJsonBuffer(tag, specificValue, buffer, firstElement);
 	}
 
 	@Override

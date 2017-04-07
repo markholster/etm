@@ -138,6 +138,7 @@ function buildClusterPage() {
 		$("#input-enhancing-handler-count").val(data.enhancing_handler_count);
 		$("#input-persisting-handler-count").val(data.persisting_handler_count);
 		$("#input-event-buffer-size").val(data.event_buffer_size);
+		$("#sel-wait-strategy").val(data.wait_strategy);
 		$("#input-persisting-bulk-count").val(data.persisting_bulk_count);
 		$("#input-persisting-bulk-size").val(data.persisting_bulk_size);
 		$("#input-persisting-bulk-time").val(data.persisting_bulk_time);
@@ -157,6 +158,7 @@ function buildClusterPage() {
 			clusterData.enhancing_handler_count = Number($("#input-enhancing-handler-count").val());
 			clusterData.persisting_handler_count = Number($("#input-persisting-handler-count").val());
 			clusterData.event_buffer_size = Number($("#input-event-buffer-size").val());
+			clusterData.wait_strategy = $("#sel-wait-strategy").val();
 			clusterData.persisting_bulk_count = Number($("#input-persisting-bulk-count").val());
 			clusterData.persisting_bulk_size = Number($("#input-persisting-bulk-size").val());
 			clusterData.persisting_bulk_time = Number($("#input-persisting-bulk-time").val());

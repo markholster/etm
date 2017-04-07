@@ -28,6 +28,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	public String getEventBufferSizeTag() {
 		return "event_buffer_size";
 	}
+	
+	@Override
+	public String getWaitStrategyTag() {
+		return "wait_strategy";
+	}
 
 	@Override
 	public String getPersistingBulkCountTag() {

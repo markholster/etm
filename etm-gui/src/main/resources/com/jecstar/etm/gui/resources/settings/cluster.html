@@ -175,6 +175,17 @@ body { padding-top: 60px; }
 					    <input id="input-event-buffer-size" type="number" class="form-control" min="1" required="required" />
 					  </div>
 					</div>
+                    <div class="form-group row">
+                      <label for="sel-wait-strategy" class="col-sm-3 col-form-label">Wait strategy</label>
+                      <div class="col-sm-9">
+                    	<select id="sel-wait-strategy" class="form-control custom-select">
+      	            		<option value="BLOCKING">Blocking</option>
+      	            		<option value="BUSY_SPIN">Busy spin</option>
+      	            		<option value="SLEEPING">Sleeping</option>
+      	            		<option value="YIELDING">Yielding</option>
+      	            	</select>
+                      </div>
+                    </div>
 			        <div class="form-group row">
 					  <label for="input-persisting-bulk-count" class="col-sm-3 col-form-label">Persisting bulk count</label>
 					  <div class="col-sm-9">

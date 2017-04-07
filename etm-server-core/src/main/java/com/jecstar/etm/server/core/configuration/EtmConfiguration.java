@@ -33,12 +33,14 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_PERSISTING_BULK_COUNT 			= "persistingBulkCount";
 	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE 				= "persistingBulkSize";
 	public static final String CONFIG_KEY_PERSISTING_BULK_TIME 				= "persistingBulkTime";
+	public static final String CONFIG_KEY_WAIT_STRATEGY 					= "waitStrategy";
 	
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
 	private int persistingHandlerCount = 5;
 	private int eventBufferSize = 4096;
+	private WaitStrategy waitStrategy = WaitStrategy.BLOCKING;
 	
 	// Persisting configuration properties;
 	private int persistingBulkSize = 1024 * 1024 * 5;
@@ -153,6 +155,17 @@ public class EtmConfiguration {
 	public EtmConfiguration setEventBufferSize(Integer eventBufferSize) {
 		if (eventBufferSize != null && eventBufferSize > 0) {
 			this.eventBufferSize = eventBufferSize;
+		}
+		return this;
+	}
+	
+	public WaitStrategy getWaitStrategy() {
+		return this.waitStrategy;
+	}
+	
+	public EtmConfiguration setWaitStrategy(WaitStrategy waitStrategy) {
+		if (waitStrategy != null) {
+			this.waitStrategy = waitStrategy;
 		}
 		return this;
 	}
@@ -403,6 +416,10 @@ public class EtmConfiguration {
 		if (this.eventBufferSize != etmConfiguration.getEventBufferSize()) {
 			setEventBufferSize(etmConfiguration.getEventBufferSize());
 			changed.add(CONFIG_KEY_EVENT_BUFFER_SIZE);
+		}
+		if (!this.waitStrategy.equals(etmConfiguration.waitStrategy)) {
+			setWaitStrategy(etmConfiguration.waitStrategy);
+			changed.add(CONFIG_KEY_WAIT_STRATEGY);
 		}
 		if (this.persistingBulkSize != etmConfiguration.getPersistingBulkSize()) {
 			setPersistingBulkSize(etmConfiguration.getPersistingBulkSize());
