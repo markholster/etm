@@ -19,6 +19,7 @@ public interface EtmConfigurationTags {
 
 	String getMaxEventIndexCountTag();
 	String getMaxMetricsIndexCountTag();
+	String getMaxAuditLogIndexCountTag();
 	
 	String getWaitForActiveShardsTag();
 	String getRetryOnConflictCountTag();

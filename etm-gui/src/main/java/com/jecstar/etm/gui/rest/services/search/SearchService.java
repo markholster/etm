@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.search;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +33,9 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
@@ -233,8 +237,16 @@ public class SearchService extends AbstractIndexMetadataService {
 					etmPrincipal, 
 					Math.min(etmPrincipal.getHistorySize(), etmConfiguration.getMaxSearchHistoryCount()));
 			// Log the query request to the audit logs.
-			auditLogBuilder.setUserQuery(parameters.getQueryString()).setExectuedQuery(requestBuilder.toString()).setNumberOfResults(response.getHits().getTotalHits());
-			client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_SEARCH)
+			String executedQuery = null;
+			try {
+				XContentBuilder contentBuilder = XContentFactory.jsonBuilder();
+				requestBuilder.request().source().query().toXContent(contentBuilder, ToXContent.EMPTY_PARAMS);
+				executedQuery = contentBuilder.string();
+			} catch (IOException e) {
+				// TODO error logging.
+			}
+			auditLogBuilder.setUserQuery(parameters.getQueryString()).setExectuedQuery(executedQuery).setNumberOfResults(response.getHits().getTotalHits());
+			client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_SEARCH)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
@@ -404,7 +416,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		}
 		result.append("}");
 		// Log the retrieval request to the audit logs.
-		client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_GET_EVENT)
+		client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_GET_EVENT)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)

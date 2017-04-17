@@ -127,6 +127,7 @@ function buildClusterPage() {
 		$("#input-replicas-per-index").val(data.replicas_per_index);
 		$("#input-max-event-indices").val(data.max_event_index_count);
 		$("#input-max-metrics-indices").val(data.max_metrics_index_count);
+		$("#input-max-audit-log-indices").val(data.max_audit_log_index_count);
 		$("#input-wait-for-active-shards").val(data.wait_for_active_shards);
 		$("#input-retries-on-conflict").val(data.retry_on_conflict_count);
 		$("#input-query-timeout").val(data.query_timeout);
@@ -151,6 +152,7 @@ function buildClusterPage() {
 			clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
 			clusterData.max_event_index_count = Number($("#input-max-event-indices").val());
 			clusterData.max_metrics_index_count = Number($("#input-max-metrics-indices").val());
+			clusterData.max_audit_log_index_count = Number($("#input-max-audit-log-indices").val());
 			clusterData.wait_for_active_shards = Number($("#input-wait-for-active-shards").val());
 			clusterData.retry_on_conflict_count = Number($("#input-retries-on-conflict").val());
 			clusterData.query_timeout = Number($("#input-query-timeout").val());

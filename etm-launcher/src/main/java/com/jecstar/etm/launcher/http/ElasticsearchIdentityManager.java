@@ -260,7 +260,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
 	private void logLoginAttempt(String id, boolean success) {
 		LoginAuditLogBuilder auditLogBuilder = new LoginAuditLogBuilder().setHandlingTime(ZonedDateTime.now()).setPrincipalId(id).setSuccess(success);
-		this.client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_LOGIN)
+		this.client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_LOGIN)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)

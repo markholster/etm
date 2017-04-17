@@ -114,6 +114,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		reloadConfigurationWhenNecessary();
 		return super.getMaxMetricsIndexCount();
 	}
+
+	@Override
+	public int getMaxAuditLogIndexCount() {
+		reloadConfigurationWhenNecessary();
+		return super.getMaxAuditLogIndexCount();
+	}
 	
 	@Override
 	public int getWaitForActiveShards() {

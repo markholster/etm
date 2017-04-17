@@ -17,6 +17,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX 				= "replicasPerIndex";
 	public static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT 			= "maxEventIndexCount";
 	public static final String CONFIG_KEY_MAX_METRICS_INDEX_COUNT 			= "maxMetricsIndexCount";
+	public static final String CONFIG_KEY_MAX_AUDIT_LOG_INDEX_COUNT 		= "maxAuditLogIndexCount";	
 	public static final String CONFIG_KEY_WAIT_FOR_ACTIVE_SHARDS 			= "waitForActiveShards";
 	public static final String CONFIG_KEY_QUERY_TIMEOUT 					= "queryTimeout";
 	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
@@ -54,7 +55,8 @@ public class EtmConfiguration {
 	
 	// Data configuration properties;
 	private int maxEventIndexCount = 7; 
-	private int maxMetricsIndexCount = 7; 
+	private int maxMetricsIndexCount = 7;
+	private int maxAuditLogIndexCount = 7; 
 
 	// Query options
 	private long queryTimeout = 60 * 1000;
@@ -247,6 +249,18 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public int getMaxAuditLogIndexCount() {
+		return this.maxMetricsIndexCount;
+	}
+	
+	public EtmConfiguration setMaxAuditLogIndexCount(Integer maxAuditLogIndexCount) {
+		if (maxAuditLogIndexCount != null && maxAuditLogIndexCount >= 7) {
+			this.maxAuditLogIndexCount = maxAuditLogIndexCount;
+		}
+		return this;
+	}
+
 	
 	public int getWaitForActiveShards() {
 		return this.waitForActiveShards;
@@ -448,6 +462,10 @@ public class EtmConfiguration {
 		if (this.maxMetricsIndexCount != etmConfiguration.getMaxMetricsIndexCount()) {
 			 setMaxMetricsIndexCount(etmConfiguration.getMaxMetricsIndexCount());
 			 changed.add(CONFIG_KEY_MAX_METRICS_INDEX_COUNT);
+		}
+		if (this.maxAuditLogIndexCount != etmConfiguration.getMaxAuditLogIndexCount()) {
+			 setMaxAuditLogIndexCount(etmConfiguration.getMaxAuditLogIndexCount());
+			 changed.add(CONFIG_KEY_MAX_AUDIT_LOG_INDEX_COUNT);
 		}
 		if (this.waitForActiveShards != etmConfiguration.getWaitForActiveShards()) {
 			setWaitForActiveShards(etmConfiguration.getWaitForActiveShards());

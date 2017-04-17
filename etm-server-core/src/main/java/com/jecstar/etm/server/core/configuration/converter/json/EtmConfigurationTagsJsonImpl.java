@@ -70,6 +70,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	}
 
 	@Override
+	public String getMaxAuditLogIndexCountTag() {
+		return "max_audit_log_index_count";
+	}
+	
+	@Override
 	public String getWaitForActiveShardsTag() {
 		return "wait_for_active_shards";
 	}

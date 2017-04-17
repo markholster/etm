@@ -83,31 +83,14 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		try {
 			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.ETM_METRICS_TEMPLATE_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
-				new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_METRICS_TEMPLATE_NAME)
-					.setCreate(false)
-					.setTemplate(ElasticSearchLayout.ETM_METRICS_INDEX_PREFIX + "*")
-					.setSettings(Settings.builder()
-						.put("number_of_shards", 2)
-						.put("number_of_replicas", 0))
-					.addMapping("_default_", createMetricsMapping("_default_"), XContentType.JSON)
-					.addAlias(new Alias(ElasticSearchLayout.ETM_METRICS_INDEX_ALIAS_ALL))
-					.get();
+				creatEtmMetricsIndexTemplate(true, 0);
 			}
 		} catch (IllegalArgumentException e) {}
 		
 		try {
 			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.CONFIGURATION_INDEX_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
-				new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
-					.setCreate(true)
-					.setTemplate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
-					.setSettings(Settings.builder()
-						.put("number_of_shards", 1)
-						.put("number_of_replicas", 0))
-					.addMapping("_default_", createEtmConfigurationMapping("_default_"), XContentType.JSON)
-					.get();
-				insertDefaultEtmConfiguration(elasticClient);
-				insertAdminUser(elasticClient);
+				creatEtmConfigurationIndexTemplate(true, 0);
 			}
 		} catch (IllegalArgumentException e) {}
 	}
@@ -152,6 +135,18 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		.addAlias(new Alias(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL))
 		.get();
 	}
+
+	private void creatEtmMetricsIndexTemplate(boolean create, int replicasPerIndex) {
+		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_METRICS_TEMPLATE_NAME)
+		.setCreate(create)
+		.setTemplate(ElasticSearchLayout.ETM_METRICS_INDEX_PREFIX + "*")
+		.setSettings(Settings.builder()
+			.put("number_of_shards", 2)
+			.put("number_of_replicas", replicasPerIndex))
+		.addMapping("_default_", createMetricsMapping("_default_"), XContentType.JSON)
+		.addAlias(new Alias(ElasticSearchLayout.ETM_METRICS_INDEX_ALIAS_ALL))
+		.get();
+	}
 	
 	private void creatEtmAuditLogIndexTemplate(boolean create, int replicasPerIndex) {
 		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME)
@@ -166,6 +161,21 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		.get();
 	}
 
+	private void creatEtmConfigurationIndexTemplate(boolean create, int replicasPerIndex) {
+		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+		.setCreate(create)
+		.setTemplate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
+		.setSettings(Settings.builder()
+			.put("number_of_shards", 1)
+			.put("number_of_replicas", 0))
+		.addMapping("_default_", createEtmConfigurationMapping("_default_"), XContentType.JSON)
+		.get();
+		if (create) {
+			insertDefaultEtmConfiguration(elasticClient);
+			insertAdminUser(elasticClient);
+		}
+	}
+	
 	private String createEventMapping(String name) {
 		return "{ \"" + name + "\": " 
 				+ "{\"dynamic_templates\": ["
@@ -727,7 +737,9 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_SHARDS_PER_INDEX, EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
 			creatEtmEventIndexTemplate(false, this.etmConfiguration.getShardsPerIndex(), this.etmConfiguration.getReplicasPerIndex());
+			creatEtmMetricsIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
 			creatEtmAuditLogIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
+			creatEtmConfigurationIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
 		}
 		if (event.isChanged(EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
 			List<String> indices = new ArrayList<>();
