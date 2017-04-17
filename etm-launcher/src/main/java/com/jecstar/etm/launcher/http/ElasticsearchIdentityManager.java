@@ -1,6 +1,8 @@
 package com.jecstar.etm.launcher.http;
 
 import java.security.cert.X509Certificate;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,19 +15,25 @@ import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.audit.LoginAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builders.LoginAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.domain.converter.json.LoginAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
+import com.jecstar.etm.server.core.util.DateUtils;
 import com.jecstar.etm.server.core.util.ObjectUtils;
 
 import io.undertow.security.idm.Account;
@@ -40,12 +48,14 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(ElasticsearchIdentityManager.class);
+	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 	
 	private final Client client;
 	private final EtmConfiguration etmConfiguration;
 	private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
 	private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
 	private final JsonConverter jsonConverter = new JsonConverter();
+	private final AuditLogConverter<String, LoginAuditLog> auditLogConverter = new LoginAuditLogConverterJsonImpl();
 
 	
 	public ElasticsearchIdentityManager(Client client, EtmConfiguration etmConfiguration) {
@@ -83,10 +93,12 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Invalid password for account with id '" + id + "'.");
 				}
+				logLoginAttempt(id, false);
 				return null;
 			}
 			EtmPrincipal principal = loadPrincipal(id);
 			EtmAccount etmAccount = new EtmAccount(principal);
+			logLoginAttempt(id, true);
 			return etmAccount;
 		} else if (this.etmConfiguration.getDirectory() != null) {
 			EtmPrincipal principal = this.etmConfiguration.getDirectory().authenticate(id, new String(((PasswordCredential) credential).getPassword()));
@@ -94,6 +106,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Invalid password for account with id '" + id + "'.");
 				}
+				logLoginAttempt(id, false);
 				return null;				
 			}
 			EtmPrincipal storedPrincipal = loadPrincipal(id);
@@ -107,6 +120,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				addLdapGroups(storedPrincipal, principal.getGroups());
 			}
 			EtmAccount etmAccount = new EtmAccount(storedPrincipal);
+			logLoginAttempt(id, true);
 			return etmAccount;
 			
 		}
@@ -140,13 +154,13 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
 	private void createLdapUser(EtmPrincipal principal) {
 		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
-		.setSource(this.etmPrincipalConverter.writePrincipal(principal))
+		.setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.get();
 	if (etmConfiguration.getMaxSearchTemplateCount() >= 3) {
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
-			.setDoc(new DefaultSearchTemplates().toJson())
+			.setDoc(new DefaultSearchTemplates().toJson(), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -243,5 +257,15 @@ public class ElasticsearchIdentityManager implements IdentityManager {
     	return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
     }
 
+
+	private void logLoginAttempt(String id, boolean success) {
+		LoginAuditLogBuilder auditLogBuilder = new LoginAuditLogBuilder().setHandlingTime(ZonedDateTime.now()).setPrincipalId(id).setSuccess(success);
+		this.client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_LOGIN)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
+			.execute();
+	}
+	
 
 }

@@ -48,8 +48,8 @@ Before you proceed, please check if a correct version of the Java runtime is ins
 java -version
 ----
 
-If your organization not already has an Elasticsearch cluster installed it is time to install it now. {etm} needs an Elasticsearch cluster formed of nodes with version 5.2 or compatible. The installation of Elasticsearch is covert at the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.2/\_installation.html[Elastic.co\'s website]. 
-Don\'t forget to read the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.2/important-settings.html[important configurations] and link:https://www.elastic.co/guide/en/elasticsearch/reference/5.2/system-config.html[important system configurations] pages! 
+If your organization not already has an Elasticsearch cluster installed it is time to install it now. {etm} needs an Elasticsearch cluster formed of nodes with version 5.3 or compatible. The installation of Elasticsearch is covert at the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.3/\_installation.html[Elastic.co\'s website]. 
+Don\'t forget to read the link:https://www.elastic.co/guide/en/elasticsearch/reference/5.3/important-settings.html[important configurations] and link:https://www.elastic.co/guide/en/elasticsearch/reference/5.3/system-config.html[important system configurations] pages! 
 {etm} does not require a specific Elasticsearch cluster name and can join any Elasticsearch cluster, but out of the box it is trying to connect to a cluster with the name 'elasticsearch'. {etm} indici and aliases will be prefixed with abbreviation ''etm_''.
   
 

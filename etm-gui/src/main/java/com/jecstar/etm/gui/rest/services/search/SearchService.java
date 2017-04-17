@@ -2,6 +2,8 @@ package com.jecstar.etm.gui.rest.services.search;
 
 import java.io.File;
 import java.text.NumberFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -55,15 +58,26 @@ import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
+import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builders.GetEventAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.builders.QueryAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.converter.json.GetEventAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.json.QueryAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.util.DateUtils;
 
 @Path("/search")
 public class SearchService extends AbstractIndexMetadataService {
 
+	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	private final QueryExporter queryExporter = new QueryExporter();
+	private final AuditLogConverter<String, QueryAuditLog> queryAuditLogConverter = new QueryAuditLogConverterJsonImpl();
+	private final AuditLogConverter<String, GetEventAuditLog> getEventAuditLogConverter = new GetEventAuditLogConverterJsonImpl();
 	
 	
 	public static void initialize(Client client, EtmConfiguration etmConfiguration) {
@@ -186,6 +200,9 @@ public class SearchService extends AbstractIndexMetadataService {
 	public String executeQuery(String json) {
 		long startTime = System.currentTimeMillis();
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
+		
+		QueryAuditLogBuilder auditLogBuilder = new QueryAuditLogBuilder().setHandlingTime(ZonedDateTime.now()).setPrincipalId(etmPrincipal.getId());
+		
 		SearchRequestParameters parameters = new SearchRequestParameters(toMap(json));
 		SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
 		NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
@@ -211,13 +228,22 @@ public class SearchService extends AbstractIndexMetadataService {
 		result.append("}");
 		
 		if (parameters.getStartIndex() == 0) {
-			writeQueryHistory(startTime, 
+			writeQueryHistory(startTime,  
 					parameters, 
 					etmPrincipal, 
 					Math.min(etmPrincipal.getHistorySize(), etmConfiguration.getMaxSearchHistoryCount()));
+			// Log the query request to the audit logs.
+			auditLogBuilder.setUserQuery(parameters.getQueryString()).setExectuedQuery(requestBuilder.toString()).setNumberOfResults(response.getHits().getTotalHits());
+			client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_SEARCH)
+				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+				.setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
+				.execute();
 		}
 		return result.toString();
 	}
+	
+	
 	
 	private SearchRequestBuilder createRequestFromInput(SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
 		if (parameters.getFields().isEmpty()) {
@@ -303,11 +329,18 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Path("/event/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+		GetEventAuditLogBuilder auditLogBuilder = new GetEventAuditLogBuilder()
+			.setHandlingTime(ZonedDateTime.now())
+			.setPrincipalId(getEtmPrincipal().getId())
+			.setEventId(eventId)
+			.setEventType(eventType)
+			.setFound(false);
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
 		SearchHit searchHit = getEvent(eventType, eventId, true, null, null);
 		if (searchHit != null) {
+			auditLogBuilder.setFound(true);
 			result.append(", \"event\": {");
 			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
 			addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
@@ -317,6 +350,8 @@ public class SearchService extends AbstractIndexMetadataService {
 
 			// Try to find an event this event is correlating to.
 			Map<String, Object> valueMap = searchHit.getSource();
+			// Add the name to the audit log.
+			auditLogBuilder.setEventName(getString(this.eventTags.getNameTag(), valueMap));
 			String correlatedToId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
 			boolean correlationAdded = false;
 			if (correlatedToId != null && !correlatedToId.equals(eventId)) {
@@ -368,6 +403,12 @@ public class SearchService extends AbstractIndexMetadataService {
 			
 		}
 		result.append("}");
+		// Log the retrieval request to the audit logs.
+		client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_INDEX_TYPE_GET_EVENT)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
+			.execute();
 		return result.toString();
 	}
 	

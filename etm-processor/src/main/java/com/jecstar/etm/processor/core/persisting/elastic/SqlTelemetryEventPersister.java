@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
@@ -25,7 +26,7 @@ public class SqlTelemetryEventPersister extends AbstractElasticTelemetryEventPer
 	@Override
 	public void persist(SqlTelemetryEvent event, SqlTelemetryEventWriterJsonImpl writer) {
 		IndexRequest indexRequest = createIndexRequest(event.id)
-				.source(writer.write(event));
+				.source(writer.write(event), XContentType.JSON);
 		Map<String, Object> parameters =  new HashMap<>();
 		parameters.put("source", indexRequest.sourceAsMap());
 		bulkProcessor.add(createUpdateRequest(event.id)
@@ -34,7 +35,7 @@ public class SqlTelemetryEventPersister extends AbstractElasticTelemetryEventPer
 		if (SqlEventType.RESULTSET.equals(event.sqlEventType) && event.correlationId != null) {
 			bulkProcessor.add(createUpdateRequest(event.correlationId)
 					.script(new Script(ScriptType.STORED, "painless", "etm_update-request-with-response", parameters))
-					.upsert("{}")
+					.upsert("{}", XContentType.JSON)
 					.scriptedUpsert(true));
 		} else {
 			setCorrelationOnParent(event);

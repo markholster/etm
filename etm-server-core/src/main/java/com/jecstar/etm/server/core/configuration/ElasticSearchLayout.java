@@ -31,6 +31,13 @@ public class ElasticSearchLayout {
 	public static final String CONFIGURATION_INDEX_TYPE_GROUP = "group";
 	public static final String CONFIGURATION_INDEX_TYPE_IIB_NODE = "iib-node";
 	
+	public static final String ETM_AUDIT_TEMPLATE_NAME = "etm_audit";
+	public static final String ETM_AUDIT_INDEX_PREFIX = ETM_AUDIT_TEMPLATE_NAME + "_";
+	public static final String ETM_AUDIT_INDEX_ALIAS_ALL = ETM_AUDIT_INDEX_PREFIX + "all";
+	public static final String ETM_AUDIT_INDEX_TYPE_LOGIN = "login";
+	public static final String ETM_AUDIT_INDEX_TYPE_SEARCH = "search";
+	public static final String ETM_AUDIT_INDEX_TYPE_GET_EVENT = "getevent";
+	
 	public static final String[] USER_CASCADING = new String[] {
 			CONFIGURATION_INDEX_TYPE_USER,
 			CONFIGURATION_INDEX_TYPE_GRAPH,

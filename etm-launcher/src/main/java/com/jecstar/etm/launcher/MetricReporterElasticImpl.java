@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentType;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -87,7 +88,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 			objectMapper.writeValue(sw, root);
 	        this.elasticClient.prepareIndex(getElasticIndexName(now), this.nodeName, "" + now.toEpochMilli())
         	.setWaitForActiveShards(ActiveShardCount.ONE)
-        	.setSource(sw.toString()).get();
+        	.setSource(sw.toString(), XContentType.JSON).get();
 		} catch (IOException e) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Failed to generate json metrics", e);

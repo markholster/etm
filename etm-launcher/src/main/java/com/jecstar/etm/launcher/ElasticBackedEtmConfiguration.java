@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ListenableActionFuture;
@@ -11,7 +12,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
-import com.jecstar.etm.processor.core.persisting.elastic.AbstractElasticTelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.LdapConfiguration;
@@ -22,9 +22,11 @@ import com.jecstar.etm.server.core.configuration.converter.LdapConfigurationConv
 import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.configuration.converter.json.LdapConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.ldap.Directory;
+import com.jecstar.etm.server.core.util.DateUtils;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	
+	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final LdapConfigurationConverter<String> ldapConfigurationConverter = new LdapConfigurationConverterJsonImpl();
@@ -211,7 +213,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			return changed;
 		}
 		
-		String indexNameOfToday = ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + AbstractElasticTelemetryEventPersister.dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+		String indexNameOfToday = ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
 		this.elasticClient.admin().indices().prepareStats(indexNameOfToday)
 				.clear()
 				.setStore(true)

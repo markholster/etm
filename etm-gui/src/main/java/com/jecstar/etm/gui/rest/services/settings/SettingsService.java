@@ -41,6 +41,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -181,7 +182,7 @@ public class SettingsService extends AbstractJsonService {
 		EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentValues, null);
 		
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
-			.setDoc(this.etmConfigurationConverter.write(null, defaultConfig))
+			.setDoc(this.etmConfigurationConverter.write(null, defaultConfig), XContentType.JSON)
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -212,7 +213,7 @@ public class SettingsService extends AbstractJsonService {
 		LdapConfiguration config = this.ldapConfigurationConverter.read(json);
 		testLdapConnection(config);
 		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_LDAP_DEFAULT)
-			.setSource(this.ldapConfigurationConverter.write(config))
+			.setSource(this.ldapConfigurationConverter.write(config), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
@@ -299,7 +300,7 @@ public class SettingsService extends AbstractJsonService {
 		EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(json, defaultSettingsResponse.getSourceAsString(), nodeName);
 		
 		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE, nodeName)
-			.setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig))
+			.setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
@@ -479,7 +480,7 @@ public class SettingsService extends AbstractJsonService {
 		// Do a read and write of the parser to make sure it's valid.
 		ExpressionParser expressionParser = this.expressionParserConverter.read(json);
 		bulkRequestBuilder.add(client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_PARSER, parserName)
-			.setDoc(this.expressionParserConverter.write(expressionParser))
+			.setDoc(this.expressionParserConverter.write(expressionParser), XContentType.JSON)
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -584,7 +585,7 @@ public class SettingsService extends AbstractJsonService {
 	
 	private UpdateRequestBuilder createEndpointUpdateRequest(EndpointConfiguration endpointConfiguration) {
 		return client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointConfiguration.name)
-		.setDoc(this.endpointConfigurationConverter.write(endpointConfiguration))
+		.setDoc(this.endpointConfigurationConverter.write(endpointConfiguration), XContentType.JSON)
 		.setDocAsUpsert(true)
 		.setDetectNoop(true)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -716,7 +717,7 @@ public class SettingsService extends AbstractJsonService {
 		}
 		principal.setLdapBase(true);
 		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-			.setSource(this.etmPrincipalConverter.writePrincipal(principal))
+			.setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
@@ -771,7 +772,7 @@ public class SettingsService extends AbstractJsonService {
 			} 
 		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-			.setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal))
+			.setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal), XContentType.JSON)
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -781,7 +782,7 @@ public class SettingsService extends AbstractJsonService {
 		if (currentPrincipal == null && etmConfiguration.getMaxSearchTemplateCount() >= 3) {
 			// Add some default templates to the user if he/she is able to search.
 			client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
-				.setDoc(new DefaultSearchTemplates().toJson())
+				.setDoc(new DefaultSearchTemplates().toJson(), XContentType.JSON)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -874,7 +875,7 @@ public class SettingsService extends AbstractJsonService {
 		}
 		group.setLdapBase(true);
 		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
-			.setSource(this.etmPrincipalConverter.writeGroup(group))
+			.setSource(this.etmPrincipalConverter.writeGroup(group), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
@@ -901,7 +902,7 @@ public class SettingsService extends AbstractJsonService {
 			newGroup.setLdapBase(currentGroup.isLdapBase());
 		}
 		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)
-			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup))
+			.setDoc(this.etmPrincipalConverter.writeGroup(newGroup), XContentType.JSON)
 			.setDocAsUpsert(true)
 			.setDetectNoop(true)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -973,7 +974,7 @@ public class SettingsService extends AbstractJsonService {
 	
 	private UpdateRequestBuilder createPrincipalUpdateRequest(EtmPrincipal principal) {
 		return client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
-		.setDoc(this.etmPrincipalConverter.writePrincipal(principal))
+		.setDoc(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
 		.setDocAsUpsert(true)
 		.setDetectNoop(true)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))

@@ -3,7 +3,7 @@ def version_resteasy = "3.1.0.Final"
 ext {
 	dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M23"
     dep_disruptor = "com.lmax:disruptor:3.3.6"
-    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.2.1"
+    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.3.0"
     dep_htmlunitDriver = "org.seleniumhq.selenium:htmlunit-driver:2.23.2"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:2.8.6"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.2.0"
@@ -24,7 +24,7 @@ ext {
 
 allprojects {
     apply plugin: "eclipse"
-    version "2.1.1-SNAPSHOT"
+    version "2.2.0-SNAPSHOT"
     group "com.jecstar.etm"
     
     repositories {
