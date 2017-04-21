@@ -122,7 +122,7 @@ public class AuditService extends AbstractIndexMetadataService {
 		boolQueryBuilder.must(queryStringBuilder);
 		boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
 		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL)
-			.setQuery(addEtmPrincipalFilterQuery(boolQueryBuilder))
+			.setQuery(boolQueryBuilder)
 			.setFetchSource(true)
 			.setFrom(parameters.getStartIndex())
 			.setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())

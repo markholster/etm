@@ -4,6 +4,11 @@ import java.time.ZonedDateTime;
 
 public abstract class AuditLog<T extends AuditLog<T>> {
 
+
+	/**
+	 * The time the audit was written to the database.
+	 */
+	public ZonedDateTime timestamp;
 	
 	/**
 	 * The principalId that caused this log.

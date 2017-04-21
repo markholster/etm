@@ -200,7 +200,8 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	private String createAuditMapping(String name) {
 		return "{ \"" + name + "\": " 
 				+ "{\"dynamic_templates\": ["
-				+ "{ \"" + this.auditTags.getHandlingTimeTag() + "\": { \"match\": \"" + auditTags.getHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
+				+ "{ \"" + this.auditTags.getTimestampTag() + "\": { \"match\": \"" + this.auditTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
+				+ ", { \"" + this.auditTags.getHandlingTimeTag() + "\": { \"match\": \"" + auditTags.getHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
 				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}"
 				+ "}";	
 	}

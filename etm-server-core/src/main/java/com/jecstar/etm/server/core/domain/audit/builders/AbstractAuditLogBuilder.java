@@ -15,6 +15,12 @@ abstract class AbstractAuditLogBuilder<Audit extends AuditLog<Audit>, Builder ex
 	public Audit build() {
 		return this.audit;
 	}
+
+	@SuppressWarnings("unchecked")
+	public Builder setTimestamp(ZonedDateTime timestamp) {
+		this.audit.timestamp = timestamp;
+		return (Builder) this;
+	}
 	
 	@SuppressWarnings("unchecked")
 	public Builder setHandlingTime(ZonedDateTime handlingTime) {

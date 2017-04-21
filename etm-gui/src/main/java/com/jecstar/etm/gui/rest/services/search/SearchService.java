@@ -205,7 +205,8 @@ public class SearchService extends AbstractIndexMetadataService {
 		long startTime = System.currentTimeMillis();
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
 		
-		QueryAuditLogBuilder auditLogBuilder = new QueryAuditLogBuilder().setHandlingTime(ZonedDateTime.now()).setPrincipalId(etmPrincipal.getId());
+		ZonedDateTime now = ZonedDateTime.now();
+		QueryAuditLogBuilder auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
 		
 		SearchRequestParameters parameters = new SearchRequestParameters(toMap(json));
 		SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
@@ -246,7 +247,7 @@ public class SearchService extends AbstractIndexMetadataService {
 				// TODO error logging.
 			}
 			auditLogBuilder.setUserQuery(parameters.getQueryString()).setExectuedQuery(executedQuery).setNumberOfResults(response.getHits().getTotalHits());
-			client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_SEARCH)
+			client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_SEARCH)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
@@ -341,8 +342,10 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Path("/event/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+		ZonedDateTime now = ZonedDateTime.now();
 		GetEventAuditLogBuilder auditLogBuilder = new GetEventAuditLogBuilder()
-			.setHandlingTime(ZonedDateTime.now())
+			.setTimestamp(now)
+			.setHandlingTime(now)
 			.setPrincipalId(getEtmPrincipal().getId())
 			.setEventId(eventId)
 			.setEventType(eventType)
@@ -417,7 +420,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		}
 		result.append("}");
 		// Log the retrieval request to the audit logs.
-		client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now()), ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_GET_EVENT)
+		client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_GET_EVENT)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)

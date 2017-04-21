@@ -2,6 +2,7 @@ package com.jecstar.etm.server.core.domain.converter;
 
 public interface AuditLogTags {
 
+	String getTimestampTag();
 	String getHandlingTimeTag();
 	String getPrincipalIdTag();
 	

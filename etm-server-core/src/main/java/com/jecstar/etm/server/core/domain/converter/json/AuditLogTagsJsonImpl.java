@@ -5,6 +5,11 @@ import com.jecstar.etm.server.core.domain.converter.AuditLogTags;
 public class AuditLogTagsJsonImpl implements AuditLogTags {
 
 	@Override
+	public String getTimestampTag() {
+		return "timestamp";
+	}
+	
+	@Override
 	public String getHandlingTimeTag() {
 		return "handling_time";
 	}
