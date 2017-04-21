@@ -13,6 +13,34 @@
 <link rel="stylesheet" href="../styles/autocomplete.css">
 <link rel="stylesheet" href="../styles/spinner.css">
 <style type="text/css">
+.headerSortAsc, .headerSortDesc {
+    border-bottom-color: #777 !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+}
+.headerSortAsc::after, .headerSortDesc::after {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    content: "";
+    display: inline-block;
+    height: 0;
+    margin-bottom: 2px;
+    margin-left: 5px;
+    margin-right: -10px;
+    width: 0;
+}
+.headerSortDesc::after {
+    border-top: 4px solid;
+}
+.headerSortAsc::after {
+    border-bottom: 4px solid;
+}
+.rowContentMargins {
+    margin: 0.9375rem 0.9375rem 0rem 0.9375rem;
+}
+.audit_log-selected {
+  font-weight: bold;
+}
 body { padding-top: 60px; }
 </style>
 
@@ -53,6 +81,12 @@ body { padding-top: 60px; }
            <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">Search</button>
          </span>
        </div>
+      </div>
+    </div>
+    <br />
+    <div id="search-result-card" class="card card-block" style="display: none;">
+      <h5 class="card-title">Search results<small id="search-stats"></small></h5>
+      <div id="result_card" class="card-text rowContentMargins">
       </div>
     </div>
   </div>

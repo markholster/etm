@@ -84,7 +84,7 @@ function buildAuditLogPage() {
             return;
         }
         queryInProgress = true;
-        $('#result_block').show();
+        $('#search-result-card').show();
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
@@ -94,6 +94,63 @@ function buildAuditLogPage() {
                 if (!data) {
                     return;
                 }
+                currentQuery.current_ix = data.start_ix;
+                if (appendToCurrent) {
+                    var endIx = $('#search-stats').text().lastIndexOf(' ');
+                    $('#search-stats').text($('#search-stats').text().substring(0, endIx + 1) + (data.end_ix + 1) + '.');
+//                    var $body = $('#search_result_table > tbody')
+//                    $(data.results).each(function (index, searchResult) {
+//                        $body.append(function () {
+//                            return createResultTableRow(searchResult, data.time_zone);
+//                        })
+//                    });
+//                    if (!data.has_more_results) {
+//                        var $body = $('#search_result_table > tfoot').remove();    
+//                    }
+                } else {
+                    $('#search-stats').text(':  Found ' + data.hits_as_string + ' audit logs in ' + data.query_time_as_string + 'ms. Showing audit logs ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
+                    $('#result_card').empty();
+                    if (data.hits === 0) {
+                       $('#result_card').append($('<p>').text('No results found'));
+                    } else {
+                        var resultTable = $('<table id="search_result_table">');
+                        $(resultTable)
+                            .addClass('table table-hover table-sm')
+                            .append(
+                            	$('<thead>').append(
+                            		$('<tr>').append(
+                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Hanlding time').attr('data-event-field', 'handling_time').addClass('headerSortDesc'),
+                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Principal id').attr('data-event-field', 'principal_id')
+                            		)
+                            	)
+                            )
+                            .append(function () {
+                                if (data.has_more_results) {
+                                    return $('<tfoot>')
+                                        .append($('<tr>')
+                                            .append($('<td>').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
+                                                .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
+                                            )
+                                        )
+                                }
+                            })
+                            .append(function() {
+                                var $body = $('<tbody>')
+//                                $(data.results).each(function (index, searchResult) {
+//                                    $body.append(function () {
+//                                        return createResultTableRow(searchResult, data.time_zone);
+//                                    })
+//                                });
+                                return $body;
+                            });
+                        $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
+                        if (!isInViewport($('#result_card'))) {
+                            $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
+                        }
+                    }
+                    
+                }                
+                
             },
             complete: function () {
             	queryInProgress = false;
