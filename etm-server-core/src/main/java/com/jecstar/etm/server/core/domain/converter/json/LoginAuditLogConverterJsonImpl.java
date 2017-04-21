@@ -20,7 +20,7 @@ public class LoginAuditLogConverterJsonImpl extends AbstractAuditLogConverterJso
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{");
 		boolean added = write(buffer, audit, true);
-		added = addBooleanElementToJsonBuffer(this.tags.getSuccessTag(), audit.success, buffer, !added) || added;
+		added = addBooleanElementToJsonBuffer(getTags().getSuccessTag(), audit.success, buffer, !added) || added;
 		buffer.append("}");
 		return buffer.toString();
 	}

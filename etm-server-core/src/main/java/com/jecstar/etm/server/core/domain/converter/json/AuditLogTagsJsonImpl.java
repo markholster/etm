@@ -33,6 +33,11 @@ public class AuditLogTagsJsonImpl implements AuditLogTags {
 	public String getFoundTag() {
 		return "found";
 	}
+	
+	@Override
+	public String getCorrelatedEventsTag() {
+		return "correlated_events";
+	}
 
 	@Override
 	public String getSuccessTag() {

@@ -27,5 +27,10 @@ public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAud
 		this.audit.eventName = eventName;
 		return this;
 	}
+	
+	public GetEventAuditLogBuilder addCorrelatedEvent(String correlatedEventId, String correlatedEventType) {
+		this.audit.correlatedEvents.put(correlatedEventId, correlatedEventType);
+		return this;
+	}
 
 }

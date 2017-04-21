@@ -10,6 +10,7 @@ public interface AuditLogTags {
 	String getEventTypeTag();
 	String getEventNameTag();
 	String getFoundTag();
+	String getCorrelatedEventsTag();
 	
 	//Login tags
 	String getSuccessTag();

@@ -22,9 +22,9 @@ public class QueryAuditLogConverterJsonImpl extends AbstractAuditLogConverterJso
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{");
 		boolean added = write(buffer, audit, true);
-		added = addStringElementToJsonBuffer(this.tags.getUserQueryTag(), audit.userQuery, buffer, !added) || added;
-		added = addStringElementToJsonBuffer(this.tags.getExecutedQueryTag(), audit.executedQuery, buffer, !added) || added;
-		added = addLongElementToJsonBuffer(this.tags.getNumberOfResultsTag(), audit.numberOfResults, buffer, !added) || added;
+		added = addStringElementToJsonBuffer(getTags().getUserQueryTag(), audit.userQuery, buffer, !added) || added;
+		added = addStringElementToJsonBuffer(getTags().getExecutedQueryTag(), audit.executedQuery, buffer, !added) || added;
+		added = addLongElementToJsonBuffer(getTags().getNumberOfResultsTag(), audit.numberOfResults, buffer, !added) || added;
 		buffer.append("}");
 		return buffer.toString();
 	}

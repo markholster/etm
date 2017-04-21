@@ -359,11 +359,10 @@ public class SearchService extends AbstractIndexMetadataService {
 			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
 			result.append(", \"source\": " + searchHit.getSourceAsString());
 			result.append("}");
-
-			// Try to find an event this event is correlating to.
 			Map<String, Object> valueMap = searchHit.getSource();
 			// Add the name to the audit log.
 			auditLogBuilder.setEventName(getString(this.eventTags.getNameTag(), valueMap));
+			// Try to find an event this event is correlating to.
 			String correlatedToId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
 			boolean correlationAdded = false;
 			if (correlatedToId != null && !correlatedToId.equals(eventId)) {
@@ -379,6 +378,7 @@ public class SearchService extends AbstractIndexMetadataService {
 					result.append(", \"source\": " + correlatedEvent.getSourceAsString());
 					result.append("}");
 					correlationAdded = true;
+					auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
 				}
 			}
 			// Try to find event that correlate to this event.
@@ -406,6 +406,7 @@ public class SearchService extends AbstractIndexMetadataService {
 						result.append(", \"source\": " + correlatedEvent.getSourceAsString());
 						result.append("}");
 						correlationAdded = true;
+						auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
 					}
 				}
 			}

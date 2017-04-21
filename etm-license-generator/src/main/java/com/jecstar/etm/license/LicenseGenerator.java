@@ -22,13 +22,13 @@ public class LicenseGenerator {
 	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
 		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 		calendar.set(Calendar.YEAR, 2017);
-		calendar.set(Calendar.MONTH, Calendar.JULY);
-		calendar.set(Calendar.DAY_OF_MONTH, 15);
+		calendar.set(Calendar.MONTH, Calendar.DECEMBER);
+		calendar.set(Calendar.DAY_OF_MONTH, 31);
 		calendar.set(Calendar.HOUR_OF_DAY, 23);
 		calendar.set(Calendar.MINUTE, 59);
 		calendar.set(Calendar.SECOND, 59);
 		calendar.set(Calendar.MILLISECOND, 999);
-	    final String company = "Achmea Holding N.V.";
+	    final String company = "Jecstar Innovation V.O.F.";
 	    final Long maxEventsPerDay = -1L;
 	    final Long maxSizePerDay = -1L;
 	    final long expiry = calendar.getTimeInMillis();
