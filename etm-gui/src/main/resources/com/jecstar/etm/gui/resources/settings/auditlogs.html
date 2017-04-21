@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+
+<title>Jecstar - Enterprise Telemetry Monitor</title>
+
+<link rel="stylesheet" href="../styles/bootstrap.min.css">
+<link rel="stylesheet" href="../styles/font-awesome.min.css">
+<link rel="stylesheet" href="../styles/jquery-ui.min.css">
+<link rel="stylesheet" href="../styles/autocomplete.css">
+<link rel="stylesheet" href="../styles/spinner.css">
+<style type="text/css">
+body { padding-top: 60px; }
+</style>
+
+</head>
+<body>
+  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
+      Jecstar
+    </a>
+    <div class="collapse navbar-collapse" id="collapsing_navbar">
+      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+      </ul>
+    </div>
+    <div class="spinner" id="spinner" style="display: none;">
+      <div class="spinner_line"></div>
+      <div class="spinner_line spinner_line_2"></div>
+      <div class="spinner_line spinner_line_3"></div>
+      <div class="spinner_line spinner_line_4"></div>
+    </div>
+  </nav>
+  
+  <div class="container" style="margin-top: 1em;">
+    <div class="card card-block">
+      <h5 class="card-title">Audit logs</h5>
+      <div class="card-text">
+       <p>
+           Please enter your search string in the field below and press the
+           'Search' button.
+       </p>
+       <div id="audit_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+       <div class="input-group">
+         <input id="input-query-string" type="text" class="form-control" placeholder="Search for..." autofocus autocomplete="off">
+         <span class="input-group-btn">
+           <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">Search</button>
+         </span>
+       </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- jQuery first, then Bootstrap JS. -->
+  <script src="../scripts/tether.min.js"></script>
+  <script src="../scripts/jquery.min.js"></script>
+  <script src="../scripts/jquery-ui.min.js"></script>
+  <script src="../scripts/moment.min.js"></script>
+  <script src="../scripts/moment-timezone-with-data.min.js"></script>
+  <script src="../scripts/bootstrap.min.js"></script>
+  <script src="../scripts/menu.js"></script>
+  <script src="../scripts/autocomplete_fields.js"></script>
+  <script src="../scripts/auditlog.js"></script>
+  <script>
+    $(document).ajaxStart(function () {
+        $("#audit_errorBox").hide('fast');
+        $('#spinner').show('fast');
+    }).ajaxStop(function () {
+        $('#spinner').hide('fast');
+    }).ajaxError(function(event, jqXHR, settings, thrownError) {
+        if ("undefined" != typeof jqXHR.responseJSON) {
+            $('#audit_errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+        } else {
+            $('#audit_errorBox').text('Error executing query: ' +  thrownError).show('fast');
+        }
+        $('html,body').animate({scrollTop: 0},'fast');
+    }).ajaxComplete(function(event, jqXHR, settings) {
+        var contentType = jqXHR.getResponseHeader("Content-Type");
+        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
+            // assume that our login has expired - reload our current page
+            window.location.reload();
+            return;
+        } 
+        $('html,body').animate({scrollTop: 0},'fast');
+    });
+    function isInViewport(elem) {
+    	if (!$(elem).is(':visible')) {
+    		return false;
+    	}
+        var docViewTop = $(window).scrollTop();
+        var docViewBottom = docViewTop + $(window).height();
+        var elemTop = $(elem).offset().top;
+        var elemBottom = elemTop + $(elem).height();
+        return docViewBottom > elemTop;
+    }
+  	buildMenu('settings', '../');
+  	buildAuditLogPage();
+  	
+  </script>
+  
+</body>
+</html>

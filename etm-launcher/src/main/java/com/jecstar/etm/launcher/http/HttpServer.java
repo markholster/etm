@@ -228,7 +228,7 @@ public class HttpServer {
 				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
 		di.addSecurityConstraint(new SecurityConstraint()
 				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName())
-				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*")));
+				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*").addUrlPattern("/rest/audit/*")));
 		di.addSecurityConstraint(new SecurityConstraint()
 				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
 				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/*").addUrlPattern("/rest/iib/*")));

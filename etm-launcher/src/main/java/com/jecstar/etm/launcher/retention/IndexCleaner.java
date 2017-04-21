@@ -40,7 +40,7 @@ public class IndexCleaner implements Runnable {
 			if (Thread.currentThread().isInterrupted()) {
 				return;
 			}
-			cleanupIndex(ElasticSearchLayout.ETM_AUDIT_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxAuditLogIndexCount());
+			cleanupIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxAuditLogIndexCount());
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to clean indices", e);

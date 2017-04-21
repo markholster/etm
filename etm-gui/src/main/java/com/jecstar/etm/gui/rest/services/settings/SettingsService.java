@@ -671,7 +671,7 @@ public class SettingsService extends AbstractJsonService {
 	@POST
 	@Path("/users/ldap/search")
 	@Produces(MediaType.APPLICATION_JSON)	
-	public String searchUsers(String json) {
+	public String searchLdapUsers(String json) {
 		String query = getString("query", toMap(json));
 		if (query == null || etmConfiguration.getDirectory() == null) {
 			return null;

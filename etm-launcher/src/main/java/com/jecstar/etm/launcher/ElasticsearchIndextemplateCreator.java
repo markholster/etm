@@ -74,7 +74,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		}
 
 		try {
-			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME).get();
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticSearchLayout.ETM_AUDIT_LOG_TEMPLATE_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
 				creatEtmAuditLogIndexTemplate(true, 0);
 			}
@@ -149,15 +149,15 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	}
 	
 	private void creatEtmAuditLogIndexTemplate(boolean create, int replicasPerIndex) {
-		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_AUDIT_TEMPLATE_NAME)
+		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticSearchLayout.ETM_AUDIT_LOG_TEMPLATE_NAME)
 		.setCreate(create)
-		.setTemplate(ElasticSearchLayout.ETM_AUDIT_INDEX_PREFIX + "*")
+		.setTemplate(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + "*")
 		.setSettings(Settings.builder()
 			.put("index.number_of_shards", 2)
 			.put("index.number_of_replicas", replicasPerIndex)
 		)
 		.addMapping("_default_", createAuditMapping("_default_"), XContentType.JSON)
-		.addAlias(new Alias(ElasticSearchLayout.ETM_AUDIT_INDEX_ALIAS_ALL))
+		.addAlias(new Alias(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL))
 		.get();
 	}
 

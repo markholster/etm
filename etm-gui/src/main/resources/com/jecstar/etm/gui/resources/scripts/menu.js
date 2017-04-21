@@ -59,11 +59,13 @@ function buildMenu(currentContext, path) {
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/users.html').text('Users'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/groups.html').text('Groups'),
 						$('<div>').addClass('dropdown-divider'),
-						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/indexstats.html').text('Index statistics'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/cluster.html').text('Cluster'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/nodes.html').text('Nodes'),
 						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/parsers.html').text('Parsers'),
-						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/endpoints.html').text('Endpoints')
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/endpoints.html').text('Endpoints'),
+						$('<div>').addClass('dropdown-divider'),
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/auditlogs.html').text('Audit logs'),
+						$('<a>').addClass('dropdown-item').attr('href', path + 'settings/indexstats.html').text('Index statistics')
 				);
 			}
 			if ($.inArray('iib_admin', menu.submenus) != -1) {
