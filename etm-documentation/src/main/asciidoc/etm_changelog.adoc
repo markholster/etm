@@ -1,6 +1,7 @@
 == Changelog
 
 === Version 2.2.0 
-* Upgrade to Elasicsearch 5.3.x 
+* Upgrade to Elasicsearch 5.3.x.
 * Support for basic authentication on rest processor.
-* Added audit logs to audit the usage of {etm}
+* Added audit logs to audit the usage of {etm}.
+* Configurable ringbuffer wait strategy.
