@@ -644,11 +644,14 @@ body { padding-top: 60px; }
     }
     
     function sortResultTable(fieldName) {
+    	if (queryInProgress) {
+    		return false;
+    	}
         if (tableLayout.sort_field === fieldName) {
             if (tableLayout.sort_order === 'asc') {
                 tableLayout.sort_order = 'desc';
             } else {
-                tableLayout.sort_order = 'asc'
+                tableLayout.sort_order = 'asc';
             }
         } else {
             tableLayout.sort_field = fieldName;

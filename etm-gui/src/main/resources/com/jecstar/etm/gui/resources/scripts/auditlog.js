@@ -41,8 +41,27 @@ function buildAuditLogPage() {
    });
 
    $('#btn-search').click(function() {
-    	startNewQuery();
+	   startNewQuery();
    });
+   
+   $('#result_card').on('click', '#search_result_table thead th', function(event) {
+	   event.preventDefault();
+       sortResultTable($(this).attr('data-event-field'));
+   });
+   
+   $('#result_card').on('click', '#search_result_table tfoot a', function(event) {
+       event.preventDefault();
+       var query = createQuery(true);
+       query.start_ix = currentQuery.current_ix + currentQuery.results_per_page; 
+       executeQuery(query, true);
+   });
+   
+   $(window).scroll(function(event) {
+	   var $showMoreLink = $('#lnk_show_more');
+	   if (isInViewport($showMoreLink)) {
+		   $showMoreLink.click();
+	   }
+   });    
     
    function enableOrDisableSearchButton() {
 		if (!$('#input-query-string').val()) {
@@ -98,15 +117,15 @@ function buildAuditLogPage() {
                 if (appendToCurrent) {
                     var endIx = $('#search-stats').text().lastIndexOf(' ');
                     $('#search-stats').text($('#search-stats').text().substring(0, endIx + 1) + (data.end_ix + 1) + '.');
-//                    var $body = $('#search_result_table > tbody')
-//                    $(data.results).each(function (index, searchResult) {
-//                        $body.append(function () {
-//                            return createResultTableRow(searchResult, data.time_zone);
-//                        })
-//                    });
-//                    if (!data.has_more_results) {
-//                        var $body = $('#search_result_table > tfoot').remove();    
-//                    }
+                    var $body = $('#search_result_table > tbody')
+                    $(data.results).each(function (index, auditLog) {
+                        $body.append(function () {
+                            return createResultTableRow(auditLog, data.time_zone);
+                        })
+                    });
+                    if (!data.has_more_results) {
+                        var $body = $('#search_result_table > tfoot').remove();    
+                    }
                 } else {
                     $('#search-stats').text(':  Found ' + data.hits_as_string + ' audit logs in ' + data.query_time_as_string + 'ms. Showing audit logs ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
                     $('#result_card').empty();
@@ -119,8 +138,9 @@ function buildAuditLogPage() {
                             .append(
                             	$('<thead>').append(
                             		$('<tr>').append(
-                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Hanlding time').attr('data-event-field', 'handling_time').addClass('headerSortDesc'),
-                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Principal id').attr('data-event-field', 'principal_id')
+                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Hanlding time').attr('data-event-field', 'handling_time').addClass(getHeaderClass('handling_time')),
+                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Type').attr('data-event-field', '_type').addClass(getHeaderClass('_type')),
+                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Principal id').attr('data-event-field', 'principal_id').addClass(getHeaderClass('principal_id'))
                             		)
                             	)
                             )
@@ -128,7 +148,7 @@ function buildAuditLogPage() {
                                 if (data.has_more_results) {
                                     return $('<tfoot>')
                                         .append($('<tr>')
-                                            .append($('<td>').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
+                                            .append($('<td>').addClass('text-center').attr('colspan', '3')
                                                 .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
                                             )
                                         )
@@ -136,11 +156,11 @@ function buildAuditLogPage() {
                             })
                             .append(function() {
                                 var $body = $('<tbody>')
-//                                $(data.results).each(function (index, searchResult) {
-//                                    $body.append(function () {
-//                                        return createResultTableRow(searchResult, data.time_zone);
-//                                    })
-//                                });
+                                $(data.results).each(function (index, auditLog) {
+                                    $body.append(function () {
+                                        return createResultTableRow(auditLog, data.time_zone);
+                                    })
+                                });
                                 return $body;
                             });
                         $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
@@ -148,16 +168,59 @@ function buildAuditLogPage() {
                             $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
                         }
                     }
-                    
                 }                
-                
             },
             complete: function () {
             	queryInProgress = false;
             }
         });    
     }
-	
+    
+    function createResultTableRow(auditLog, timeZone) {
+        var $tr = $('<tr>');
+        
+        $tr.append(
+        	$('<td style="padding: 0.1rem">').append(
+	            $('<a>')
+	            	.attr('href', '#')
+	            	.attr('id', auditLog.id)
+	            	.attr('data-event-type', auditLog.type)
+	            	.text(moment.tz(auditLog.source.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
+        	),
+        	$('<td style="padding: 0.1rem">').text(auditLog.type),
+        	$('<td style="padding: 0.1rem">').text(auditLog.source.principal_id)
+        );
+        return $tr;
+    }
+
+    function sortResultTable(fieldName) {
+    	if (queryInProgress) {
+    		return false;
+    	}
+        if (currentQuery.sort_field === fieldName) {
+            if (currentQuery.sort_order === 'asc') {
+            	currentQuery.sort_order = 'desc';
+            } else {
+            	currentQuery.sort_order = 'asc';
+            }
+        } else {
+        	currentQuery.sort_field = fieldName;
+        }
+        currentQuery.current_ix = 0;
+        executeQuery(createQuery(true));
+    }
+    
+    function getHeaderClass(fieldName) {
+    	if (currentQuery.sort_field !== fieldName) {
+    		return '';
+    	}
+        if (currentQuery.sort_order === 'asc') {
+        	return 'headerSortAsc';
+        } else {
+        	return 'headerSortDesc';
+        }
+    }
+    
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
     		return false;
