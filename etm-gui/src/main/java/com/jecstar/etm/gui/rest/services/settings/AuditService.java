@@ -15,6 +15,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -79,6 +80,20 @@ public class AuditService extends AbstractIndexMetadataService {
 		result.append("]}");
 		return result.toString();
 	}
+
+	@GET
+	@Path("/{index}/{type}/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getAuditLog(@PathParam("index") String index, @PathParam("type") String type, @PathParam("id") String id) {
+		if (!index.startsWith(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX)) {
+			return null;
+		}
+		GetResponse getResponse = client.prepareGet(index, type, id)
+			.setFetchSource(true)
+			.get();
+		return getResponse.getSourceAsString();
+	}
+
 	
 	@POST
 	@Path("/query")

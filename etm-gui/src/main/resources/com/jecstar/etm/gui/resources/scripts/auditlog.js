@@ -1,3 +1,5 @@
+var clipboards = [];
+
 function buildAuditLogPage() {
 	var currentQuery = {
 	    results_per_page: 50,
@@ -7,6 +9,10 @@ function buildAuditLogPage() {
 	    current_ix: 0,
 	    current_query: null,
 	};
+	$.each(clipboards, function(index, clipboard) {
+		clipboard.destroy();
+	}); 
+	clipboards = [];
 	var queryInProgress = false;
 	
 	$.ajax({
@@ -54,6 +60,20 @@ function buildAuditLogPage() {
        var query = createQuery(true);
        query.start_ix = currentQuery.current_ix + currentQuery.results_per_page; 
        executeQuery(query, true);
+   });
+   
+   $('#result_card').on('click', '#search_result_table tbody a', function(event) {
+	   event.preventDefault();
+       showEvent($(window).scrollTop(), $(this).attr('data-event-index'), $(this).attr('data-event-type'), $(this).attr('id'), $(this).parent().parent().parent().attr('data-user-timezone'));
+       $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
+  	   $(event.target).parent().parent().addClass('event-selected');
+   });
+   
+   $('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function(event) {
+		event.preventDefault();
+		$('#event-container').hide();
+		$('#search-container').show();
+		$('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))},'fast');
    });
    
    $(window).scroll(function(event) {
@@ -155,7 +175,7 @@ function buildAuditLogPage() {
                                 }
                             })
                             .append(function() {
-                                var $body = $('<tbody>')
+                                var $body = $('<tbody>').attr('data-user-timezone', data.time_zone);
                                 $(data.results).each(function (index, auditLog) {
                                     $body.append(function () {
                                         return createResultTableRow(auditLog, data.time_zone);
@@ -185,6 +205,7 @@ function buildAuditLogPage() {
 	            	.attr('href', '#')
 	            	.attr('id', auditLog.id)
 	            	.attr('data-event-type', auditLog.type)
+	            	.attr('data-event-index', auditLog.index)
 	            	.text(moment.tz(auditLog.source.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
         	),
         	$('<td style="padding: 0.1rem">').text(auditLog.type),
@@ -220,6 +241,139 @@ function buildAuditLogPage() {
         	return 'headerSortDesc';
         }
     }
+    
+    function showEvent(scrollTo, index, type, id, timeZone) {
+    	$('#search-container').hide();
+    	$('#btn-back-to-results, #link-back-to-results').attr('data-scroll-to', scrollTo);
+    	$('#event-detail').empty();
+    	$.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/audit/' + encodeURIComponent(index) + '/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
+            success: function(data) {
+                if (!data) {
+                    return;
+                }
+                if ('login' === type) {
+                	showLoginAuditLog(data, timeZone);
+                } else if ('getevent' === type) {
+                    showGetEventAuditLog(data, timeZone);
+                } else if ('search' === type) {
+                	showSearchAuditLog(data, timeZone);
+                }
+            }
+       });
+       $('#event-container').show();
+    }
+    
+    function showLoginAuditLog(data, timeZone) {
+    	appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+    	appendToContainerInRow($('#event-detail'), 'Type', 'Login');
+    	appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
+    	appendToContainerInRow($('#event-detail'), 'Successful', data.success ? 'Yes' : 'No');
+    }
+
+    function showGetEventAuditLog(data, timeZone) {
+    	appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+    	appendToContainerInRow($('#event-detail'), 'Type', 'Get event');
+    	appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
+    	appendToContainerInRow($('#event-detail'), 'Found', data.found ? 'Yes' : 'No');
+    	appendToContainerInRow($('#event-detail'), 'Event name', data.event_name);
+    	
+    	if (data.correlated_events) {
+        	$('#event-detail').append($('<br/>'));
+	        $correlationTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
+	        	$('<caption>').attr('style', 'caption-side: top;').text('Correlated events')
+	        ).append(
+	        	$('<thead>').append(
+	        		$('<tr>').append(
+	        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Id'),
+		        		$('<th>').attr('style' ,'padding: 0.1rem;').text('Type')
+		        	)
+		        )
+	        ).append(function () {
+		        $tbody = $('<tbody>');
+		        $.each(data.correlated_events, function(index, event) {
+		        	$tbody.append(
+		        		$('<tr>').append(
+		        			$('<td>').attr('style' ,'padding: 0.1rem;').text(event.event_id),
+		        			$('<td>').attr('style' ,'padding: 0.1rem;').text('sql' == event.event_type ? 'SQL' : capitalize(event.event_type))
+		        		)
+		        	);	
+		        });
+		        return $tbody;
+		    });
+		    $('#event-detail').append($correlationTable);
+    	}
+    	
+    	function capitalize(text) {
+    		if (!text) {
+    			return text;
+    		}
+    		return text.charAt(0).toUpperCase() + text.toLowerCase().slice(1);
+    	}
+    }
+    
+    function showSearchAuditLog(data, timeZone) {
+    	appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+    	appendToContainerInRow($('#event-detail'), 'Type', 'Search');
+    	appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
+    	appendToContainerInRow($('#event-detail'), 'Number of results', data.number_of_results);
+    	appendToContainerInRow($('#event-detail'), 'Query', data.user_query);
+    
+    	$('#event-detail').append($('<br/>'));
+    	$('#event-detail').append($('<label>').addClass('font-weight-bold form-control-static').text('Executed query on database'));
+	    var executedQuery = $('<code>').text(vkbeautify.json(data.executed_query, 4));
+	    $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw query to clipboard');
+	    $('#event-detail').append(
+	    		$('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
+	    				$('<div>').addClass('col-sm-12').append(
+	    						$clipboard,
+	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append(
+	    								executedQuery
+	    						),
+	    						$('<pre>').attr('style', 'display: none').text(data.executed_query)
+	    						
+	    				)
+	    		)
+	    );
+	    clipboards.push(new Clipboard($clipboard[0], {
+	        text: function(trigger) {
+	            return $(trigger).next().next().text();
+	        }
+	    }));
+	    if (typeof(Worker) !== "undefined") {
+	    	var worker = new Worker('../scripts/highlight-worker.js');
+	    	worker.onmessage = function(result) { 
+	    		executedQuery.html(result.data);
+	    	}
+	    	worker.postMessage([executedQuery.text(), 'JSON']);
+	    }
+    }
+    
+	function appendToContainerInRow(container, name, value) {
+		appendElementToContainerInRow(container, name, $('<p>').addClass('form-control-static').text(value));
+	}
+	
+	function appendElementToContainerInRow(container, name, element) {
+		var $container = $(container);
+		var $row = $container.children(":last-child");
+		if ($row.children().length > 0 && $row.children().length <= 2) {
+			$row.append(
+			    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
+			    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append(element)
+			);
+		} else {
+			$container.append(
+					$('<div>').addClass('row')
+						.append(
+						    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
+						    $('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append(element)
+					)
+			);
+		}
+	}
+
     
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {

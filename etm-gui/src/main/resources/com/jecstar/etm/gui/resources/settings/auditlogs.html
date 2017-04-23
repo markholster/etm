@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="../styles/jquery-ui.min.css">
 <link rel="stylesheet" href="../styles/autocomplete.css">
 <link rel="stylesheet" href="../styles/spinner.css">
+<link rel="stylesheet" href="../styles/highlightjs-googlecode.css">
 <style type="text/css">
 .headerSortAsc, .headerSortDesc {
     border-bottom-color: #777 !important;
@@ -38,7 +39,7 @@
 .rowContentMargins {
     margin: 0.9375rem 0.9375rem 0rem 0.9375rem;
 }
-.audit_log-selected {
+.event-selected {
   font-weight: bold;
 }
 body { padding-top: 60px; }
@@ -66,7 +67,7 @@ body { padding-top: 60px; }
     </div>
   </nav>
   
-  <div class="container" style="margin-top: 1em;">
+  <div id="search-container" class="container" style="margin-top: 1em;">
     <div class="card card-block">
       <h5 class="card-title">Audit logs</h5>
       <div class="card-text">
@@ -90,6 +91,20 @@ body { padding-top: 60px; }
       </div>
     </div>
   </div>
+
+  <div id="event-container" class="container" style="margin-top: 1em; display: none;">
+    <div class="card card-block">
+      <h5 class="card-title">Audit log<small><a id="link-back-to-results" href="#" class="pull-right">Back</a></small></h5>
+      <div class="card-text">
+        <div id="event-detail">
+        </div>
+        <br />
+        <div class="text-center">
+          <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/tether.min.js"></script>
@@ -100,6 +115,8 @@ body { padding-top: 60px; }
   <script src="../scripts/bootstrap.min.js"></script>
   <script src="../scripts/menu.js"></script>
   <script src="../scripts/autocomplete_fields.js"></script>
+  <script src="../scripts/vkbeautify.js"></script>
+  <script src="../scripts/clipboard.min.js"></script>
   <script src="../scripts/auditlog.js"></script>
   <script>
     $(document).ajaxStart(function () {
