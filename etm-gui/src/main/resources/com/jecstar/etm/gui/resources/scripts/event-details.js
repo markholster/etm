@@ -107,6 +107,9 @@ function showEvent(scrollTo, type, id) {
 					createEventChainTab(data.event.id, data.event.type, data.time_zone);
 				}
 			}
+			if (data.audit_logs) {
+				createAuditLogsTab(data.audit_logs, data.time_zone);
+			}
 		}
 	}
 	
@@ -755,6 +758,52 @@ function showEvent(scrollTo, type, id) {
 		}
 		
 		return flat;
+	}
+	
+	function createAuditLogsTab(auditLogs, timeZone) {
+		$('#event-tabs').append(
+				$('<li>').addClass('nav-item').append(
+						$('<a>').attr('id', 'audit-log-tab-header')
+						.attr('aria-expanded', 'false')
+						.attr('role', 'tab')
+						.attr('data-toggle', 'tab')
+						.attr('href', '#audit-log-tab')
+						.addClass('nav-link')
+						.text('Audit logs')
+				)
+		);
+		
+		$auditTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
+        	$('<thead>').append(
+        		$('<tr>').append(
+        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Handling time'),
+	        		$('<th>').attr('style' ,'padding: 0.1rem;').text('Principal id'),
+	        		$('<th>').attr('style' ,'padding: 0.1rem;').text('Direct')
+	        	)
+	        )
+	    ).append(function () {
+	        $tbody = $('<tbody>');
+	        $.each(auditLogs, function(index, auditLog) {
+	        	$tbody.append(
+	        		$('<tr>').append(
+	        			$('<td>').attr('style' ,'padding: 0.1rem;').text(moment.tz(auditLog.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')),
+	        			$('<td>').attr('style' ,'padding: 0.1rem;').text(auditLog.principal_id),
+	        			$('<td>').attr('style' ,'padding: 0.1rem;').text(auditLog.direct ? 'Yes' : 'No')
+	        		)
+	        	);	
+	        });
+	        return $tbody;
+	    });
+		
+		$('#tabcontents').append(
+			$('<div>').attr('id', 'audit-log-tab')
+				.attr('aria-labelledby', 'audit-log-tab-header')
+				.attr('role', 'tabpanel')
+				.attr('aria-expanded', 'false')
+				.addClass('tab-pane fade')
+				.append($auditTable)
+		);
+
 	}
 	
 	function createEventChainTab(id, type, timeZone) {

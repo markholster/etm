@@ -28,6 +28,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -62,11 +63,14 @@ import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builders.GetEventAuditLogBuilder;
 import com.jecstar.etm.server.core.domain.audit.builders.QueryAuditLogBuilder;
 import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.converter.AuditLogTags;
+import com.jecstar.etm.server.core.domain.converter.json.AuditLogTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.GetEventAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.QueryAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.util.DateUtils;
@@ -79,6 +83,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	private static EtmConfiguration etmConfiguration;
 	
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
+	private final AuditLogTags auditLogTags = new AuditLogTagsJsonImpl();
 	private final QueryExporter queryExporter = new QueryExporter();
 	private final AuditLogConverter<String, QueryAuditLog> queryAuditLogConverter = new QueryAuditLogConverterJsonImpl();
 	private final AuditLogConverter<String, GetEventAuditLog> getEventAuditLogConverter = new GetEventAuditLogConverterJsonImpl();
@@ -350,6 +355,11 @@ public class SearchService extends AbstractIndexMetadataService {
 			.setEventId(eventId)
 			.setEventType(eventType)
 			.setFound(false);
+		ListenableActionFuture<SearchResponse> auditLogsForEvent = null;
+		if (getEtmPrincipal().isInRole(EtmPrincipalRole.ADMIN)) {
+			// We've got an admin requesting the event. Also add the audit logs of this event to the response.
+			auditLogsForEvent = findAuditLogsForEvent(eventType, eventId);
+		}
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
@@ -416,6 +426,28 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (correlationAdded) {
 				result.append("]");
 			}
+			if (auditLogsForEvent != null) {
+				// Audit logs received async. Wait here to add the to the result.
+				SearchResponse auditLogResponse = auditLogsForEvent.actionGet();
+				if (auditLogResponse.getHits().hits().length != 0) {
+					boolean auditLogAdded = false;
+					result.append(", \"audit_logs\": [");
+					for (SearchHit hit : auditLogResponse.getHits().hits()) {
+						Map<String, Object> auditLogValues = hit.getSource();
+						if (auditLogAdded) {
+							result.append(",");
+						} else {
+							auditLogAdded = true;
+						}
+						result.append("{");
+						addBooleanElementToJsonBuffer("direct", getString(this.auditLogTags.getEventIdTag(), auditLogValues).equals(eventId) ? true : false, result, true);
+						addLongElementToJsonBuffer("handling_time", getLong(this.auditLogTags.getHandlingTimeTag(), auditLogValues), result, false);
+						addStringElementToJsonBuffer("principal_id", getString(this.auditLogTags.getPrincipalIdTag(), auditLogValues), result, false);
+						result.append("}");
+					}
+					result.append("]");
+				}
+			}
 			
 		}
 		result.append("}");
@@ -428,6 +460,23 @@ public class SearchService extends AbstractIndexMetadataService {
 		return result.toString();
 	}
 	
+	private ListenableActionFuture<SearchResponse> findAuditLogsForEvent(String eventType, String eventId) {
+		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+		boolQueryBuilder.must(new TermQueryBuilder("_type", "getevent"));
+		boolQueryBuilder.must(new TermQueryBuilder(this.auditLogTags.getEventTypeTag(), eventType));
+		boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getEventIdTag(), eventId));
+		boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getCorrelatedEventsTag() + "." + this.auditLogTags.getEventIdTag(), eventId));
+		boolQueryBuilder.minimumShouldMatch(1);
+		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL)
+			.setQuery(boolQueryBuilder)
+			.addSort(this.auditLogTags.getHandlingTimeTag(), SortOrder.DESC)
+			.setFetchSource(new String[] {this.auditLogTags.getHandlingTimeTag(), this.auditLogTags.getPrincipalIdTag(), this.auditLogTags.getEventIdTag()}, null)
+			.setFrom(0)
+			.setSize(500)
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		return requestBuilder.execute();
+	}
+
 	@GET
 	@Path("/event/{type}/{id}/endpoints")
 	@Produces(MediaType.APPLICATION_JSON)
