@@ -109,10 +109,13 @@ public class HttpServer {
 			}
 		}
 		this.server = builder.setHandler(root).build();
+		SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
+		
 		if (this.configuration.http.restProcessorEnabled) {
 			DeploymentInfo di = createProcessorDeploymentInfo(processor, this.configuration.http.restProcessorLoginRequired ? identityManager : null);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
+			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
 			try {
 				HttpHandler httpHandler = manager.start();
 				root.addPrefixPath(di.getContextPath(), new SessionAttachmentHandler(httpHandler, manager.getDeployment().getSessionManager(), manager.getDeployment().getServletContext().getSessionConfig()));
@@ -129,6 +132,7 @@ public class HttpServer {
 			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
+			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
 			try {
 				EncodingHandler httpHandler = new EncodingHandler(new ContentEncodingRepository()
 					.addEncodingHandler("gzip", new GzipEncodingProvider(), 100, Predicates.maxContentSize(1024))

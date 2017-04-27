@@ -35,6 +35,7 @@ public class ElasticSearchLayout {
 	public static final String ETM_AUDIT_LOG_INDEX_PREFIX = ETM_AUDIT_LOG_TEMPLATE_NAME + "_";
 	public static final String ETM_AUDIT_LOG_INDEX_ALIAS_ALL = ETM_AUDIT_LOG_INDEX_PREFIX + "all";
 	public static final String ETM_AUDIT_LOG_INDEX_TYPE_LOGIN = "login";
+	public static final String ETM_AUDIT_LOG_INDEX_TYPE_LOGOUT = "logout";
 	public static final String ETM_AUDIT_LOG_INDEX_TYPE_SEARCH = "search";
 	public static final String ETM_AUDIT_LOG_INDEX_TYPE_GET_EVENT = "getevent";
 	

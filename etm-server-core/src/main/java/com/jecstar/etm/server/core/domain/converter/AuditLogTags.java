@@ -16,10 +16,15 @@ public interface AuditLogTags {
 	//Login tags
 	String getSuccessTag();
 	
+	//Logout tags
+	String getExpiredTag();
+	
 	//Query tags
 	String getUserQueryTag();
 	String getExecutedQueryTag();
 	String getNumberOfResultsTag();
+	
+
 	
 	
 	

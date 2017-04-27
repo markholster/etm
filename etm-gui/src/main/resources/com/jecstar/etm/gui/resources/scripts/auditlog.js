@@ -256,6 +256,8 @@ function buildAuditLogPage() {
                 }
                 if ('login' === type) {
                 	showLoginAuditLog(data, timeZone);
+                } else if ('logout' === type) {
+                	showLogoutAuditLog(data, timeZone);
                 } else if ('getevent' === type) {
                     showGetEventAuditLog(data, timeZone);
                 } else if ('search' === type) {
@@ -273,6 +275,14 @@ function buildAuditLogPage() {
     	appendToContainerInRow($('#event-detail'), 'Successful', data.success ? 'Yes' : 'No');
     }
 
+    function showLogoutAuditLog(data, timeZone) {
+    	appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+    	appendToContainerInRow($('#event-detail'), 'Type', 'Logout');
+    	appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
+    	appendToContainerInRow($('#event-detail'), 'Expired', data.expired ? 'Yes' : 'No');
+    }
+
+    
     function showGetEventAuditLog(data, timeZone) {
     	appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
     	appendToContainerInRow($('#event-detail'), 'Type', 'Get event');

@@ -48,6 +48,11 @@ public class AuditLogTagsJsonImpl implements AuditLogTags {
 	public String getSuccessTag() {
 		return "success";
 	}
+	
+	@Override
+	public String getExpiredTag() {
+		return "expired";
+	}
 
 	@Override
 	public String getUserQueryTag() {
