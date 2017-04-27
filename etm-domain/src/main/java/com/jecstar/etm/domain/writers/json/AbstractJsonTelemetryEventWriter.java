@@ -37,7 +37,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				sb.append(", ");
 			}
-			sb.append("\"" + getTags().getEndpointsTag() + "\": [");
+			sb.append(this.jsonWriter.escapeToJson(getTags().getEndpointsTag(), true)  + ": [");
 			boolean endpointAdded = false;
 			for (int i = 0; i < event.endpoints.size(); i++) {
 				endpointAdded = addEndpointToJsonBuffer(event.endpoints.get(i), sb, i == 0 ? true : !endpointAdded, getTags()) || endpointAdded;
@@ -49,7 +49,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				sb.append(", ");
 			}
-			sb.append("\"" + getTags().getEventHashesTag() + "\": [");
+			sb.append(this.jsonWriter.escapeToJson(getTags().getEventHashesTag(), true) + ": [");
 			sb.append(event.getCalculatedHash());
 			sb.append("]");
 			added = true;
@@ -78,7 +78,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append("\"" + elementName + "\": {");
+		buffer.append(this.jsonWriter.escapeToJson(elementName, true) + ": {");
 		firstElement = true;
 		for (Entry<String, Object> entry : elementValues.entrySet()) {
 			if (!firstElement) {
@@ -112,7 +112,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append("\"" + getTags().getReadingEndpointHandlersTag() + "\": [");
+			buffer.append(this.jsonWriter.escapeToJson(getTags().getReadingEndpointHandlersTag(), true) + ": [");
 			added = false;
 			for (int i = 0; i < endpoint.readingEndpointHandlers.size(); i++) {
 				added = addEndpointHandlerToJsonBuffer(endpoint.writingEndpointHandler.handlingTime, endpoint.readingEndpointHandlers.get(i), buffer, i == 0 ? true : !added, getTags()) || added;
@@ -124,7 +124,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append("\"" + this.tags.getWritingEndpointHandlerTag() + "\": ");
+			buffer.append(this.jsonWriter.escapeToJson(this.tags.getWritingEndpointHandlerTag(), true) + ": ");
 			added = addEndpointHandlerToJsonBuffer(null, endpoint.writingEndpointHandler, buffer, true, this.tags) || added;
 		}
 		buffer.append("}");
@@ -152,7 +152,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append("\"" + tags.getEndpointHandlerApplicationTag() + "\" : {");
+			buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerApplicationTag(), true) + ": {");
 			added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationNameTag(), application.name, buffer, true);
 			added = this.jsonWriter.addInetAddressElementToJsonBuffer(tags.getApplicationHostAddressTag(), tags.getApplicationHostNameTag(), application.hostAddress, buffer, !added) || added;
 			added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationInstanceTag(), application.instance, buffer, !added) || added;
@@ -165,7 +165,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append("\"" + tags.getEndpointHandlerLocationTag() + "\" : {");
+			buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerLocationTag(), true) + ": {");
 			added = this.jsonWriter.addDoubleElementToJsonBuffer(tags.getLatitudeTag(), location.latitude, buffer, true);
 			added = this.jsonWriter.addDoubleElementToJsonBuffer(tags.getLongitudeTag(), location.longitude, buffer, !added) || added;
 			buffer.append("}");			

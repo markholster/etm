@@ -13,8 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
-import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
-import com.jecstar.etm.domain.writers.json.MessagingTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writers.json.ConversionMessagingTelemetryEventWriterJsonImpl;
 
 public class InsertRequestHandler {
 
@@ -27,7 +26,7 @@ public class InsertRequestHandler {
 	
 	private final URL apiLocation;
 	private final StringBuilder buffer = new StringBuilder();
-	private final MessagingTelemetryEventWriterJsonImpl writer;
+	private final ConversionMessagingTelemetryEventWriterJsonImpl writer;
 
 	private final long flushLength = 1024 * 1024 * 2;
 	private final int flushMaxCount = 100;
@@ -35,13 +34,13 @@ public class InsertRequestHandler {
 	private int callCount;
 
 	public InsertRequestHandler(String apiLocation) throws MalformedURLException {
-		this.writer = new MessagingTelemetryEventWriterJsonImpl();
+		this.writer = new ConversionMessagingTelemetryEventWriterJsonImpl();
 		this.apiLocation = new URL(apiLocation);
 	}
 
-	public void addBuilder(MessagingTelemetryEventBuilder builder, ZonedDateTime timestamp) {
+	public void addBuilder(ConversionMessagingTelemetryEventBuilder builder, ZonedDateTime timestamp) {
 		this.buffer.append("{ \"index\" : { \"_index\" : \"etm_event_" + dateTimeFormatterIndexPerDay.format(timestamp) + "\", \"_type\" : \"messaging\", \"_id\" : \"" + builder.getId() + "\" } }\n");
-		this.buffer.append(this.writer.write(builder.build()) + "\n");
+		this.buffer.append(this.writer.write(builder) + "\n");
 		this.callCount++;
 	}
 

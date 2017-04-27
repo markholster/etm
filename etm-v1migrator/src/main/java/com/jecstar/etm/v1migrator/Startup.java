@@ -28,7 +28,6 @@ import org.yaml.snakeyaml.Yaml;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.builders.EndpointBuilder;
 import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
-import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
 
 
 public class Startup {
@@ -55,7 +54,7 @@ public class Startup {
 			for (SearchHit hit : hits.getHits()) {
 				count++;
 				Map<String, Object> source = hit.getSource();
-				MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder();
+				ConversionMessagingTelemetryEventBuilder builder = new ConversionMessagingTelemetryEventBuilder();
 				builder.setId(hit.getId());
 				Long timestamp = jsonConverter.getLong("creation_time", source);
 				if (timestamp != null) {
@@ -68,6 +67,7 @@ public class Startup {
 					builder.setName(jsonConverter.getString("name", source));
 					builder.setCorrelationId(jsonConverter.getString("correlation_id", source));
 					builder.setPayload(jsonConverter.getString("content", source));
+					builder.setCorrelations(jsonConverter.getArray("child_correlation_ids", source));
 					String type = jsonConverter.getString("type", source);
 					if ("MESSAGE_REQUEST".equals(type)) {
 						builder.setMessagingEventType(MessagingEventType.REQUEST);

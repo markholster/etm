@@ -87,7 +87,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 				this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), DEFAULT_ENHANCER_TYPE, result, true);
 				this.converter.addBooleanElementToJsonBuffer(this.tags.getEnhancePayloadFormatTag(), enhancer.isEnhancePayloadFormat(), result, false);
 				result.append(",");
-				result.append("\"" + this.tags.getFieldsTag() + "\": [");
+				result.append(this.converter.escapeToJson(this.tags.getFieldsTag(), true) + ": [");
 				boolean first = true;
 				for (Entry<String, List<ExpressionParser>> entry : enhancer.getFields().entrySet()) {
 					if (entry.getValue() != null) {
