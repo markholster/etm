@@ -125,6 +125,7 @@ The ''http'' section contains all options that are necessary to start the gui an
 |httpsPort|8443|The port to bind the secure https listener to. The listener will not start unless the sslKeystore is properly configured.
 |maxConcurrentRequests|100|The maximum number of request that can be processed in parallel at any given moment. This is the number of request to the gui and rest processor combined. If the number exceeds the maximum, the requests will be queued.
 |maxQueuedRequests|100|The maximum number of requests that can be queued. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
+|sessionTimeout|30|The timeout of the http sessions in minutes.
 |sslProtocol|TLSv1.2|The ssl protocol that needs to be used on the secure https listener. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
 |sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your server.
 |sslKeystorePassword||The password of the ssl keystore.
