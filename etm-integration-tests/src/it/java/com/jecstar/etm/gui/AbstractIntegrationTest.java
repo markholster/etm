@@ -2,6 +2,7 @@ package com.jecstar.etm.gui;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -31,7 +32,7 @@ public abstract class AbstractIntegrationTest {
 //		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 //		this.driver = new ChromeDriver();
 
-		System.setProperty("webdriver.gecko.driver", "./drivers/geckodriver-v0.15.0-linux64");
+		System.setProperty("webdriver.gecko.driver", new File("./drivers/geckodriver-v0.16.1-linux64").getAbsolutePath());
 		DesiredCapabilities capabilities = DesiredCapabilities.firefox();
 		capabilities.setJavascriptEnabled(true);
 		this.driver = new FirefoxDriver(capabilities);
