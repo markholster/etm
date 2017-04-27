@@ -17,7 +17,8 @@ import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
 import com.jecstar.etm.server.core.domain.converter.json.LogoutAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.util.DateUtils;
 
-import io.undertow.security.idm.Account;
+import io.undertow.security.api.AuthenticatedSessionManager.AuthenticatedSession;
+import io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionListener;
@@ -61,10 +62,14 @@ public class SessionListenerAuditLogger implements SessionListener {
 
 	@Override
 	public void sessionDestroyed(Session session, HttpServerExchange exchange, SessionDestroyedReason reason) {
-		Account account = exchange.getSecurityContext().getAuthenticatedAccount();
 		String id = null;
-		if (account != null) {
-			id = ((EtmPrincipal)account.getPrincipal()).getId();
+		if (exchange != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
+			id = ((EtmPrincipal)exchange.getSecurityContext().getAuthenticatedAccount().getPrincipal()).getId();
+		} else {
+			AuthenticatedSession authenticatedSession = (AuthenticatedSession) session.getAttribute(CachedAuthenticatedSessionHandler.ATTRIBUTE_NAME);
+			if (authenticatedSession != null) {
+				id = ((EtmPrincipal)authenticatedSession.getAccount().getPrincipal()).getId();
+			}
 		}
 		if (id == null) {
 			return;
