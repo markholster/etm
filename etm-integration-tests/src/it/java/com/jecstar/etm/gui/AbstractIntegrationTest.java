@@ -41,7 +41,6 @@ public abstract class AbstractIntegrationTest {
 	@After
 	public void tearDown() {
 		if (this.driver != null) {
-			this.driver.close();
 			this.driver.quit();
 			this.driver = null;
 		}
