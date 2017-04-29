@@ -30,7 +30,7 @@ import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
@@ -85,7 +85,7 @@ public class AuditService extends AbstractIndexMetadataService {
 	@Path("/{index}/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getAuditLog(@PathParam("index") String index, @PathParam("type") String type, @PathParam("id") String id) {
-		if (!index.startsWith(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX)) {
+		if (!index.startsWith(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX)) {
 			return null;
 		}
 		GetResponse getResponse = client.prepareGet(index, type, id)
@@ -136,7 +136,7 @@ public class AuditService extends AbstractIndexMetadataService {
 		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 		boolQueryBuilder.must(queryStringBuilder);
 		boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
-		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL)
+		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL)
 			.setQuery(boolQueryBuilder)
 			.setFetchSource(true)
 			.setFrom(parameters.getStartIndex())

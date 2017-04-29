@@ -8,7 +8,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.audit.LogoutAuditLog;
@@ -40,8 +40,8 @@ public class SessionListenerAuditLogger implements SessionListener {
 		ZonedDateTime now = ZonedDateTime.now();
 		LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
 				.setPrincipalId(id).setExpired(expired);
-		client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
-				ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_LOGOUT)
+		client.prepareIndex(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
+				ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_LOGOUT)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON).execute();

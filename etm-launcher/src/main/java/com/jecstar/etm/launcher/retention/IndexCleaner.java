@@ -9,7 +9,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -32,15 +32,15 @@ public class IndexCleaner implements Runnable {
 	@Override
 	public void run() {
 		try {
-			cleanupIndex(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxEventIndexCount());
+			cleanupIndex(ElasticsearchLayout.ETM_EVENT_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxEventIndexCount());
 			if (Thread.currentThread().isInterrupted()) {
 				return;
 			}
-			cleanupIndex(ElasticSearchLayout.ETM_METRICS_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxMetricsIndexCount());
+			cleanupIndex(ElasticsearchLayout.ETM_METRICS_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxMetricsIndexCount());
 			if (Thread.currentThread().isInterrupted()) {
 				return;
 			}
-			cleanupIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxAuditLogIndexCount());
+			cleanupIndex(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxAuditLogIndexCount());
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to clean indices", e);

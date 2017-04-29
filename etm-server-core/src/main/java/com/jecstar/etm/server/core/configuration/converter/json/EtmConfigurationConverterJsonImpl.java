@@ -2,7 +2,7 @@ package com.jecstar.etm.server.core.configuration.converter.json;
 
 import java.util.Map;
 
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.configuration.WaitStrategy;
 import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
@@ -26,7 +26,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		sb.append("{");
 		if (nodeConfiguration == null) {
 			// only add the defaults.
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, !added) || added;
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;

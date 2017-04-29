@@ -47,7 +47,7 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregation
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.StringAggregationKey;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 
@@ -101,7 +101,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@Path("/graphs")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getGraphs() {
-		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 				.setFetchSource("graphs", null)
 				.get();
 		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
@@ -121,7 +121,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		// Execute a dry run on all data.
 		getGraphData(json, true);
 		// Data seems ok, now store the graph.
-		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 				.setFetchSource("graphs", null)
 				.get();
 		List<Map<String, Object>> currentGraphs = new ArrayList<>();
@@ -148,7 +148,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		}
 		Map<String, Object> source = new HashMap<>();
 		source.put("graphs", currentGraphs);
-		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+		DashboardService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -162,7 +162,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@Path("/graph/{graphName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteGraph(@PathParam("graphName") String graphName) {
-		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 				.setFetchSource("graphs", null)
 				.get();
 		List<Map<String, Object>> currentGraphs = new ArrayList<>();
@@ -185,7 +185,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		
 		Map<String, Object> source = new HashMap<>();
 		source.put("graphs", currentGraphs);
-		bulkRequest.add(DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
+		bulkRequest.add(DashboardService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GRAPH, getEtmPrincipal().getId())
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -193,7 +193,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 			.setDocAsUpsert(true));
 		
 		// Iterate over all dashboards of the user to remove the graph if it is present in the dashboard
-		getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+		getResponse = DashboardService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 				.setFetchSource("dashboards", null)
 				.get();
 		if (!getResponse.isSourceEmpty() && !getResponse.getSourceAsMap().isEmpty()) {
@@ -222,7 +222,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 				}
 			}
 			if (dashboardsUpdated) {
-				bulkRequest.add(DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+				bulkRequest.add(DashboardService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 					.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 					.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -238,7 +238,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@Path("/dashboards")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String getDashboards() {
-		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 				.setFetchSource("dashboards", null)
 				.get();
 		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
@@ -259,7 +259,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		// TODO validate all data
 //		getGraphData(json, true);
 		// Data seems ok, now store the graph.
-		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 				.setFetchSource("dashboards", null)
 				.get();
 		List<Map<String, Object>> currentDashboards = new ArrayList<>();
@@ -286,7 +286,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		}
 		Map<String, Object> source = new HashMap<>();
 		source.put("dashboards", currentDashboards);
-		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+		DashboardService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -300,7 +300,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 	@Path("/dashboard/{dashboardName}")
 	@Produces(MediaType.APPLICATION_JSON)	
 	public String deleteDashboard(@PathParam("dashboardName") String dashboardName) {
-		GetResponse getResponse = DashboardService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+		GetResponse getResponse = DashboardService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 				.setFetchSource("dashboards", null)
 				.get();
 		List<Map<String, Object>> currentDashboards = new ArrayList<>();
@@ -317,7 +317,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		}
 		Map<String, Object> source = new HashMap<>();
 		source.put("dashboards", currentDashboards);
-		DashboardService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
+		DashboardService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_DASHBOARD, getEtmPrincipal().getId())
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -468,7 +468,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 				.allowLeadingWildcard(true)
 				.analyzeWildcard(true)
 				.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
-		if (ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL.equals(index)) {
+		if (ElasticsearchLayout.ETM_EVENT_INDEX_ALIAS_ALL.equals(index)) {
 			queryStringBuilder.defaultField("_all");
 			searchRequest.setQuery(addEtmPrincipalFilterQuery(queryStringBuilder));
 		} else {

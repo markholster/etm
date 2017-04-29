@@ -14,7 +14,7 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.util.DateUtils;
 
@@ -50,7 +50,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
 	}
     
     protected String getElasticIndexName() {
-    	return ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+    	return ElasticsearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
     
     protected abstract String getElasticTypeName();

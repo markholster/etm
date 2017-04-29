@@ -1,6 +1,6 @@
 package com.jecstar.etm.server.core.configuration;
 
-public class ElasticSearchLayout {
+public class ElasticsearchLayout {
 
 	public static final String ETM_METRICS_TEMPLATE_NAME = "etm_metrics";
 	public static final String ETM_METRICS_INDEX_PREFIX = ETM_METRICS_TEMPLATE_NAME + "_";
@@ -38,6 +38,9 @@ public class ElasticSearchLayout {
 	public static final String ETM_AUDIT_LOG_INDEX_TYPE_LOGOUT = "logout";
 	public static final String ETM_AUDIT_LOG_INDEX_TYPE_SEARCH = "search";
 	public static final String ETM_AUDIT_LOG_INDEX_TYPE_GET_EVENT = "getevent";
+	
+	public static final String STATE_INDEX_NAME = "etm_state";
+	public static final String STATE_INDEX_TYPE_SESSION = "session";
 	
 	public static final String[] USER_CASCADING = new String[] {
 			CONFIGURATION_INDEX_TYPE_USER,

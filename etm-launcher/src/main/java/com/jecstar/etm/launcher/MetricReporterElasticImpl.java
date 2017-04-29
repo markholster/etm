@@ -29,7 +29,7 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.launcher.MetricConverterTags.RateType;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -240,7 +240,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 	 * @return The name of the index.
 	 */
 	public String getElasticIndexName(Instant instant) {
-		return ElasticSearchLayout.ETM_METRICS_INDEX_PREFIX + this.dateTimeFormatter.format(instant);		
+		return ElasticsearchLayout.ETM_METRICS_INDEX_PREFIX + this.dateTimeFormatter.format(instant);		
 	}
 	
 }

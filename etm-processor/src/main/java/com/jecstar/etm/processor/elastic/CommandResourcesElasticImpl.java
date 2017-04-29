@@ -25,7 +25,7 @@ import com.jecstar.etm.processor.core.persisting.elastic.MessagingTelemetryEvent
 import com.jecstar.etm.processor.core.persisting.elastic.SqlTelemetryEventPersister;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
@@ -80,7 +80,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 				mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
 			}
 		}
-		mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT));
+		mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT));
 	}
 	
 	private EndpointConfiguration retrieveEndpoint(String endpointName) {
@@ -92,7 +92,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 				return cachedItem;
 			}
 		}
-		GetResponse getResponse = this.elasticClient.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointName)
+		GetResponse getResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointName)
 			.setFetchSource(true)
 			.get();
 		if (getResponse.isExists() && !getResponse.isSourceEmpty()) {

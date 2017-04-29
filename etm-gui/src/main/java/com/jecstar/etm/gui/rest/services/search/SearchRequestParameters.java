@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 public class SearchRequestParameters {
@@ -36,11 +36,11 @@ public class SearchRequestParameters {
 		this.sortField = this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag();
 		this.sortOrder = "desc";
 		this.types = new ArrayList<>(5);
-		this.types.add(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_BUSINESS);
-		this.types.add(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_HTTP);
-		this.types.add(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_LOG);
-		this.types.add(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING);
-		this.types.add(ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_SQL);
+		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_BUSINESS);
+		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_HTTP);
+		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_LOG);
+		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING);
+		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_SQL);
 		this.fields = new ArrayList<>(2);
 		this.fields.add(this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag());
 		this.fields.add(this.tags.getNameTag());

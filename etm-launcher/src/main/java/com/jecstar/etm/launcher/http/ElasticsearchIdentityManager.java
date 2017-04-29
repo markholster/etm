@@ -18,7 +18,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmGroup;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
@@ -141,7 +141,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			Map<String, Object> updateMap = new HashMap<String, Object>();
 				updateMap.put(this.etmPrincipalTags.getNameTag(), storedPrincipal.getName());
 				updateMap.put(this.etmPrincipalTags.getEmailTag(), storedPrincipal.getEmailAddress());
-			client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, storedPrincipal.getId())
+			client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, storedPrincipal.getId())
 				.setDoc(updateMap)
 				.setDetectNoop(true)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -153,13 +153,13 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	}
 
 	private void createLdapUser(EtmPrincipal principal) {
-		client.prepareIndex(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
+		client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
 		.setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 		.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 		.get();
 	if (etmConfiguration.getMaxSearchTemplateCount() >= 3) {
-		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
+		client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
 			.setDoc(new DefaultSearchTemplates().toJson(), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -191,7 +191,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	}
 	
 	private EtmPrincipal loadPrincipal(String userId) {
-		GetResponse getResponse = this.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId).get();
+		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -200,7 +200,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 		if (groups != null && !groups.isEmpty()) {
 			MultiGetRequestBuilder multiGetBuilder = this.client.prepareMultiGet();
 			for (String group : groups) {
-				multiGetBuilder.add(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group);
+				multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group);
 			}
 			MultiGetResponse multiGetResponse = multiGetBuilder.get();
 			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
@@ -217,7 +217,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 		if (set != null && !set.isEmpty()) {
 			MultiGetRequestBuilder multiGetBuilder = this.client.prepareMultiGet();
 			for (EtmGroup group : set) {
-				multiGetBuilder.add(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group.getName());
+				multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group.getName());
 			}
 			MultiGetResponse multiGetResponse = multiGetBuilder.get();
 			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
@@ -234,7 +234,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	}
 	
 	private String getPasswordHash(String userId) {
-		GetResponse getResponse = this.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 				.setFetchSource(new String[] {this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getLdapBaseTag()}, null)
 				.get();
 		if (!getResponse.isExists()) {
@@ -261,7 +261,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 	private void logLoginAttempt(String id, boolean success) {
 		ZonedDateTime now = ZonedDateTime.now();
 		LoginAuditLogBuilder auditLogBuilder = new LoginAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(id).setSuccess(success);
-		this.client.prepareIndex(ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticSearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_LOGIN)
+		this.client.prepareIndex(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_LOGIN)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)

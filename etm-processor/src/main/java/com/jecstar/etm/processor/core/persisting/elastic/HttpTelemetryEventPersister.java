@@ -13,7 +13,7 @@ import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.writers.json.HttpTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
@@ -44,7 +44,7 @@ public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPe
 
 	@Override
 	protected String getElasticTypeName() {
-		return ElasticSearchLayout.ETM_EVENT_INDEX_TYPE_HTTP;
+		return ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_HTTP;
 	}
 
 }
