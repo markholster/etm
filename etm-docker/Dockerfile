@@ -10,9 +10,8 @@ WORKDIR /usr/share/etm
 
 RUN apk update && \                                                                                                                                                                                                                        
     apk add ca-certificates wget && \                                                                                                                                                                                                      
-    update-ca-certificates    
-
-RUN wget https://www.jecstar.com/downloads/etm/etm-2.1.0.tgz && \
+    update-ca-certificates && \
+    wget https://www.jecstar.com/downloads/etm/etm-2.1.0.tgz && \
     wget https://www.jecstar.com/downloads/etm/etm-2.1.0.tgz.sha512 && \
     test "etm-2.1.0.tgz: OK" == "$(cat etm-2.1.0.tgz.sha512 | sha512sum -c)" && \
     tar zxf etm-2.1.0.tgz && \
@@ -24,11 +23,9 @@ RUN wget https://www.jecstar.com/downloads/etm/etm-2.1.0.tgz && \
 USER etm
 
 COPY etm.yml config/
-COPY etm-docker bin/
 
 USER root
 RUN chown -R etm:etm *
-RUN chmod 774 bin/etm-docker
 
 USER etm
 CMD ["/bin/sh", "bin/etm", "console", "--quit"]
