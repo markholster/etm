@@ -44,7 +44,8 @@ public class ElasticsearchSession implements Session {
 	@Override
 	public void requestDone(HttpServerExchange serverExchange) {
 		this.lastAccessedTime = System.currentTimeMillis();
-		// TODO persist to elasticsearch.
+		// TODO alleen opslaan als er een GET van *.html of POST of een GET van een rest endpoint van het dashboard, aangezien deze een auto update funtie heeft die de sessietimeout moet bumpen. 
+		this.sessionManager.persistSession(this);
 	}
 
 	@Override
@@ -96,11 +97,11 @@ public class ElasticsearchSession implements Session {
 	public void invalidate(HttpServerExchange exchange) {
         UndertowLogger.SESSION_LOGGER.debugf("Invalidating session %s for exchange %s", sessionId, exchange);
         this.invalid = true;
-        // TODO hier verwijderen uit elasticsearch of in een session listener or periodiek?
+        this.sessionManager.removeSession(this);
         this.sessionManager.getSessionListeners().sessionDestroyed(this, exchange, SessionListener.SessionDestroyedReason.INVALIDATED);
 
         if (exchange != null) {
-            sessionCookieConfig.clearSession(exchange, this.getId());
+            this.sessionCookieConfig.clearSession(exchange, this.getId());
         }
 		
         if(exchange != null) {
@@ -116,8 +117,16 @@ public class ElasticsearchSession implements Session {
 
 	@Override
 	public String changeSessionId(HttpServerExchange exchange, SessionConfig config) {
-		// TODO Auto-generated method stub
-		return null;
+        final String oldId = this.sessionId;
+        String newId = this.sessionManager.createSessionId();
+        this.sessionId = newId;
+        if(!this.invalid) {
+            config.setSessionId(exchange, this.getId());
+            this.sessionManager.changeSessionId(oldId, newId);
+        }
+        this.sessionManager.getSessionListeners().sessionIdChanged(this, oldId);
+        return newId;
+		
 	}
 
 }

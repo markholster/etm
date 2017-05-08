@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
@@ -68,7 +69,7 @@ public class ElasticsearchSessionManager implements SessionManager {
 		String sessionId = sessionCookieConfig.findSessionId(serverExchange);
 		int count = 0;
 		while (sessionId == null) {
-			sessionId = this.sessionIdGenerator.createSessionId();
+			sessionId = createSessionId();
 			GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, sessionId).setFetchSource(false).get();
 			if (getResponse.isExists()) {
 				sessionId = null;
@@ -78,7 +79,7 @@ public class ElasticsearchSessionManager implements SessionManager {
 			}
 		}
 		final ElasticsearchSession session = new ElasticsearchSession(this.etmConfiguration, this, sessionId, sessionCookieConfig);
-		// TODO store the session in elasticsearch.
+		this.persistSession(session);
 
 		UndertowLogger.SESSION_LOGGER.debugf("Created session with id %s for exchange %s", sessionId, serverExchange);
 		sessionCookieConfig.setSessionId(serverExchange, session.getId());
@@ -142,11 +143,11 @@ public class ElasticsearchSessionManager implements SessionManager {
 	public Set<String> getActiveSessions() {
 		return getAllSessions();
 	}
-
+	
 	@Override
 	public Set<String> getAllSessions() {
 		Set<String> result = new HashSet<>();
-		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME)
+		SearchRequestBuilder requestBuilder = this.client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME)
 			.setTypes(ElasticsearchLayout.STATE_INDEX_TYPE_SESSION)
 			.setFetchSource(false)
 			.setQuery(new MatchAllQueryBuilder())
@@ -162,5 +163,47 @@ public class ElasticsearchSessionManager implements SessionManager {
 	public SessionManagerStatistics getStatistics() {
 		return null;
 	}
+	
+	void persistSession(ElasticsearchSession session) {
+		//TODO persist session
+	}
+
+	void removeSession(ElasticsearchSession session) {
+		this.client.prepareDelete(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, session.getId())
+			.setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
+			.setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
+			.get();
+	}
+	
+	String createSessionId() {
+		return this.sessionIdGenerator.createSessionId();
+	}
+
+	void changeSessionId(String oldId, String newId) {
+		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, oldId)
+			.setFetchSource(true)
+			.get();
+		if (getResponse.isExists()) {
+			this.client.prepareIndex(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, newId)
+				.setSource(getResponse.getSource())
+				.setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
+				.setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
+				.get();
+			this.client.prepareDelete(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, oldId)
+				.setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
+				.setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
+				.get();
+		}
+	}
+	
+    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
+    	if (-1 == etmConfiguration.getWaitForActiveShards()) {
+    		return ActiveShardCount.ALL;
+    	} else if (0 == etmConfiguration.getWaitForActiveShards()) {
+    		return ActiveShardCount.NONE;
+    	}
+    	return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
+    }
+
 
 }
