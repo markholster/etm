@@ -20,11 +20,7 @@ RUN apk update && \
     rmdir etm-2.1.0 && \
     rm etm-2.1.0.tgz*
 
-USER etm
-
 COPY etm.yml config/
-
-USER root
 RUN chown -R etm:etm *
 
 USER etm

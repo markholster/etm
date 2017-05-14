@@ -24,6 +24,8 @@ import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
+import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
@@ -50,6 +52,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	private final MetricConverterTags metricTags = new MetricConverterTagsJsonImpl();
 	private final AuditLogTags auditTags = new AuditLogTagsJsonImpl();
+	private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
 	private final Client elasticClient;
@@ -91,6 +94,13 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.CONFIGURATION_INDEX_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
 				creatEtmConfigurationIndexTemplate(true, 0);
+			}
+		} catch (IllegalArgumentException e) {}
+
+		try {
+			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME).get();
+			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+				creatEtmStateIndexTemplate(true, 0);
 			}
 		} catch (IllegalArgumentException e) {}
 	}
@@ -171,9 +181,20 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		.addMapping("_default_", createEtmConfigurationMapping("_default_"), XContentType.JSON)
 		.get();
 		if (create) {
-			insertDefaultEtmConfiguration(elasticClient);
-			insertAdminUser(elasticClient);
+			insertDefaultEtmConfiguration(this.elasticClient);
+			insertAdminUser(this.elasticClient);
 		}
+	}
+	
+	private void creatEtmStateIndexTemplate(boolean create, int replicasPerIndex) {
+		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME)
+		.setCreate(create)
+		.setTemplate(ElasticsearchLayout.STATE_INDEX_NAME)
+		.setSettings(Settings.builder()
+			.put("number_of_shards", 1)
+			.put("number_of_replicas", 0))
+		.addMapping("_default_", createEtmStateMapping("_default_"), XContentType.JSON)
+		.get();
 	}
 	
 	private String createEventMapping(String name) {
@@ -210,6 +231,15 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		return "{ \"" + name + "\": {\"dynamic_templates\": [{ \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}}";	
 	}
 
+	private String createEtmStateMapping(String name) {
+		return "{ \"" + name + "\": " 
+				+ "{\"dynamic_templates\": ["
+				+ "{ \"" + this.sessionTags.getLastAccessedTag() + "\": { \"match\": \"" + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
+				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}"
+				+ "}";	
+	}
+
+	
 	private void insertDefaultEtmConfiguration(Client elasticClient) {
 		elasticClient.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT)
 			.setWaitForActiveShards(ActiveShardCount.ALL)
@@ -741,6 +771,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 			creatEtmMetricsIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
 			creatEtmAuditLogIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
 			creatEtmConfigurationIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
+			creatEtmStateIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
 		}
 		if (event.isChanged(EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
 			List<String> indices = new ArrayList<>();

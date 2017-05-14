@@ -2,7 +2,6 @@ package com.jecstar.etm.launcher.http.session;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.elasticsearch.action.get.GetResponse;
@@ -10,6 +9,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
@@ -17,7 +17,6 @@ import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
-import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.Session;
@@ -29,6 +28,7 @@ import io.undertow.server.session.SessionManager;
 import io.undertow.server.session.SessionManagerStatistics;
 import io.undertow.util.AttachmentKey;
 
+//TODO implementatie zou ook van een bulkupdater gebruik kunnen maken.
 public class ElasticsearchSessionManager implements SessionManager {
 
 	final AttachmentKey<ElasticsearchSession> ETM_SESSION = AttachmentKey.create(ElasticsearchSession.class);
@@ -39,6 +39,7 @@ public class ElasticsearchSessionManager implements SessionManager {
 	private final EtmConfiguration etmConfiguration;
 
 	private final SessionListeners sessionListeners = new SessionListeners();
+	private final ElasticsearchSessionConverter<String> converter = new ElasticsearchSessionConverterJsonImpl();
 
 
 	public ElasticsearchSessionManager(Client client, SessionIdGenerator sessionIdGenerator, String deploymentName, EtmConfiguration etmConfiguration) {
@@ -78,10 +79,8 @@ public class ElasticsearchSessionManager implements SessionManager {
 				throw UndertowMessages.MESSAGES.couldNotGenerateUniqueSessionId();
 			}
 		}
-		final ElasticsearchSession session = new ElasticsearchSession(this.etmConfiguration, this, sessionId, sessionCookieConfig);
+		final ElasticsearchSession session = new ElasticsearchSession(this, sessionId, sessionCookieConfig);
 		this.persistSession(session);
-
-		UndertowLogger.SESSION_LOGGER.debugf("Created session with id %s for exchange %s", sessionId, serverExchange);
 		sessionCookieConfig.setSessionId(serverExchange, session.getId());
 		this.sessionListeners.sessionCreated(session, serverExchange);
 		serverExchange.putAttachment(ETM_SESSION, session);
@@ -97,23 +96,32 @@ public class ElasticsearchSessionManager implements SessionManager {
 			}
 		}
 		String sessionId = sessionCookieConfig.findSessionId(serverExchange);
-		return getSession(sessionId);
+		return getSession(sessionId, sessionCookieConfig);
 	}
 
 	@Override
 	public Session getSession(String sessionId) {
+		return getSession(sessionId, null);
+	}
+	
+	private Session getSession(String sessionId, SessionConfig sessionCookieConfig) {
 		if (sessionId == null) {
 			return null;
 		}
 		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, sessionId).setFetchSource(true).get();
 		if (getResponse.isExists()) {
 			return null;
-		} else {
-			Map<String, Object> valueMap = getResponse.getSourceAsMap();
-			// TODO Eerst bepalen of de session nog geldig is. Als dat het geval is dan de map converteren naar een sessie object.
+		}
+		ElasticsearchSession session = this.converter.read(getResponse.getSourceAsString(), this, sessionCookieConfig);
+		// TODO haal de timeout uit de etm configuration.
+//		long timeout = this.etmConfiguration.getSessionTimeout();
+		long timeout = 30 * 60 * 1000;
+		if (session.getLastAccessedTime()  + timeout < System.currentTimeMillis()) {
 			return null;
 		}
+		return session;
 	}
+	
 
 	@Override
 	public void registerSessionListener(SessionListener listener) {
@@ -165,7 +173,11 @@ public class ElasticsearchSessionManager implements SessionManager {
 	}
 	
 	void persistSession(ElasticsearchSession session) {
-		//TODO persist session
+		this.client.prepareIndex(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, session.getId())
+			.setSource(this.converter.write(session), XContentType.JSON)
+			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+			.get();
 	}
 
 	void removeSession(ElasticsearchSession session) {
@@ -204,6 +216,5 @@ public class ElasticsearchSessionManager implements SessionManager {
     	}
     	return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
     }
-
 
 }
