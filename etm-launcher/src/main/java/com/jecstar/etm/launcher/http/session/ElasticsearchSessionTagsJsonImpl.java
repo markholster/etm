@@ -24,7 +24,7 @@ public class ElasticsearchSessionTagsJsonImpl implements ElasticsearchSessionTag
 	
 	@Override
 	public String getAttributeValueTag() {
-		return "value_type";
+		return "value";
 	}
 	
 	@Override

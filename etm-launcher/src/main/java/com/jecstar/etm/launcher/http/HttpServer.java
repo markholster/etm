@@ -18,6 +18,7 @@ import org.jboss.resteasy.wadl.ResteasyWadlServlet;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
+import com.jecstar.etm.launcher.http.session.ElasticsearchSessionManagerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -32,9 +33,6 @@ import io.undertow.Undertow.Builder;
 import io.undertow.UndertowOptions;
 import io.undertow.predicate.Predicates;
 import io.undertow.security.idm.IdentityManager;
-import io.undertow.security.impl.InMemorySingleSignOnManager;
-import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
-import io.undertow.security.impl.SingleSignOnManager;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.GracefulShutdownHandler;
@@ -52,8 +50,9 @@ import io.undertow.servlet.api.LoginConfig;
 import io.undertow.servlet.api.SecurityConstraint;
 import io.undertow.servlet.api.ServletContainer;
 import io.undertow.servlet.api.ServletInfo;
+import io.undertow.servlet.api.SessionManagerFactory;
 import io.undertow.servlet.api.WebResourceCollection;
-import io.undertow.util.ImmediateAuthenticationMechanismFactory;
+import io.undertow.servlet.core.InMemorySessionManagerFactory;
 
 public class HttpServer {
 
@@ -66,10 +65,12 @@ public class HttpServer {
 	private Undertow server;
 	private GracefulShutdownHandler shutdownHandler;
 	private boolean started;
-	private final SingleSignOnManager singleSignOnManager = new InMemorySingleSignOnManager();
+	private final SessionManagerFactory sessionManagerFactory;
 
 	public HttpServer(final IdentityManager identityManager, Configuration configuration, EtmConfiguration etmConfiguration, TelemetryCommandProcessor processor, Client client) {;
 		this.configuration = configuration;
+//		this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
+		this.sessionManagerFactory = new InMemorySessionManagerFactory();
 		final PathHandler root = Handlers.path();
 		this.shutdownHandler = Handlers.gracefulShutdown(Handlers.requestLimitingHandler(configuration.http.maxConcurrentRequests, configuration.http.maxQueuedRequests, root));
 		final ServletContainer container = ServletContainer.Factory.newInstance();
@@ -180,6 +181,7 @@ public class HttpServer {
 		deployment.setApplication(processorApplication);
 		DeploymentInfo di = undertowRestDeployment(deployment, "/");
 		di.setContextPath("/rest/processor/");
+		di.setSessionManagerFactory(this.sessionManagerFactory);
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			di.addSecurityConstraint(new SecurityConstraint()
@@ -187,8 +189,7 @@ public class HttpServer {
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
 			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.PROCESSOR.getRoleName());
 			di.setIdentityManager(identityManager);
-			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
-			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
+			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
 		}
 		di.setClassLoader(processorApplication.getClass().getClassLoader());
 		di.setDeploymentName("Rest event processor - " + di.getContextPath());
@@ -214,6 +215,7 @@ public class HttpServer {
 		deployment.setApplication(guiApplication);
 		deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
+		di.setSessionManagerFactory(this.sessionManagerFactory);
 		di.addInnerHandlerChainWrapper(new HandlerWrapper() {
 			@Override
 			public HttpHandler wrap(HttpHandler handler) {
@@ -240,8 +242,7 @@ public class HttpServer {
 				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/*").addUrlPattern("/rest/iib/*")));
 		di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName());
 		di.setIdentityManager(identityManager);
-		di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
-		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
+		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
 		di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
 		di.setInvalidateSessionOnLogout(true);

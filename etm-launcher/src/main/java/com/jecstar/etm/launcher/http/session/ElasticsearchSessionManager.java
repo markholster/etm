@@ -79,7 +79,7 @@ public class ElasticsearchSessionManager implements SessionManager {
 				throw UndertowMessages.MESSAGES.couldNotGenerateUniqueSessionId();
 			}
 		}
-		final ElasticsearchSession session = new ElasticsearchSession(this, sessionId, sessionCookieConfig);
+		final ElasticsearchSession session = new ElasticsearchSession(sessionId, this.etmConfiguration, this, sessionCookieConfig);
 		this.persistSession(session);
 		sessionCookieConfig.setSessionId(serverExchange, session.getId());
 		this.sessionListeners.sessionCreated(session, serverExchange);
@@ -109,10 +109,10 @@ public class ElasticsearchSessionManager implements SessionManager {
 			return null;
 		}
 		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, sessionId).setFetchSource(true).get();
-		if (getResponse.isExists()) {
+		if (!getResponse.isExists()) {
 			return null;
 		}
-		ElasticsearchSession session = this.converter.read(getResponse.getSourceAsString(), this, sessionCookieConfig);
+		ElasticsearchSession session = this.converter.read(getResponse.getSourceAsString(), this.etmConfiguration, this, sessionCookieConfig);
 		// TODO haal de timeout uit de etm configuration.
 //		long timeout = this.etmConfiguration.getSessionTimeout();
 		long timeout = 30 * 60 * 1000;
@@ -139,7 +139,6 @@ public class ElasticsearchSessionManager implements SessionManager {
 
 	@Override
 	public void setDefaultSessionTimeout(int timeout) {
-		throw new UnsupportedOperationException("setDefaultSessionTimeout");
 	}
 
 	@Override

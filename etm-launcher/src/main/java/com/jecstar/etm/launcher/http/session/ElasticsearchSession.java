@@ -4,6 +4,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.server.HttpServerExchange;
@@ -19,6 +21,7 @@ public class ElasticsearchSession implements Session {
 	
 	
 	private final long creationTime;
+	private final EtmConfiguration etmConfiguration;
 	private final ElasticsearchSessionManager sessionManager;
 	private final SessionConfig sessionConfig;
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
@@ -26,9 +29,13 @@ public class ElasticsearchSession implements Session {
 	private String sessionId;
 	private long lastAccessedTime;
 	private boolean invalid;
+
+
 	
-	public ElasticsearchSession(ElasticsearchSessionManager sessionManager, String sessionId, SessionConfig sessionConfig) {
+	public ElasticsearchSession(String sessionId, EtmConfiguration etmConfiguration, ElasticsearchSessionManager sessionManager, SessionConfig sessionConfig) {
+		this.sessionId = sessionId;
 		this.creationTime = lastAccessedTime = System.currentTimeMillis();
+		this.etmConfiguration = etmConfiguration;
 		this.sessionManager = sessionManager;
 		this.sessionConfig = sessionConfig;
 	}
@@ -41,8 +48,10 @@ public class ElasticsearchSession implements Session {
 	@Override
 	public void requestDone(HttpServerExchange serverExchange) {
 		this.lastAccessedTime = System.currentTimeMillis();
-		// TODO alleen opslaan als er een GET van *.html of POST of een GET van een rest endpoint van het dashboard, aangezien deze een auto update funtie heeft die de sessietimeout moet bumpen. 
-		this.sessionManager.persistSession(this);
+		String lowerCasePath = serverExchange.getRelativePath().toLowerCase();
+		if (lowerCasePath.endsWith(".html") || lowerCasePath.contains("/rest/")) {
+			this.sessionManager.persistSession(this);
+		}
 	}
 
 	@Override
@@ -67,7 +76,7 @@ public class ElasticsearchSession implements Session {
         if (this.invalid) {
             throw UndertowMessages.MESSAGES.sessionIsInvalid(sessionId);
         }
-		throw new UnsupportedOperationException("setMaxInactiveInterval");
+        throw new UnsupportedOperationException("setMaxInactiveInterval");
 	}
 
 	@Override
@@ -75,7 +84,7 @@ public class ElasticsearchSession implements Session {
         if (this.invalid) {
             throw UndertowMessages.MESSAGES.sessionIsInvalid(sessionId);
         }
-		throw new UnsupportedOperationException("getMaxInactiveInterval");
+        return (int)(this.etmConfiguration.getSessionTimeout() / 1000);
 	}
 
 	@Override

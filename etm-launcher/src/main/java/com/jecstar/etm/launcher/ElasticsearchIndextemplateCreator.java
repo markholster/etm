@@ -8,6 +8,8 @@ import java.util.SortedMap;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptAction;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.Alias;
+import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsAction;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesAction;
@@ -101,6 +103,10 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 			GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME).get();
 			if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
 				creatEtmStateIndexTemplate(true, 0);
+				// Create the index over here because the first thing we do is getting a session from the index. If index insn't already present that get will fail with an exception.
+				new CreateIndexRequestBuilder(this.elasticClient, CreateIndexAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME).setSettings(Settings.builder()
+						.put("index.number_of_shards", 1)
+						.put("index.number_of_replicas", 0)).get();
 			}
 		} catch (IllegalArgumentException e) {}
 	}

@@ -12,7 +12,9 @@ import com.jecstar.etm.server.core.util.ObjectUtils;
 public class EtmConfiguration {
 	//License configuration
 	public static final String CONFIG_KEY_LICENSE 							= "license";
+	
 	// Cluster configuration
+	public static final String CONFIG_KEY_SESSION_TIMEOUT 					= "sessionTimeout";
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX 					= "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX 				= "replicasPerIndex";
 	public static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT 			= "maxEventIndexCount";
@@ -67,6 +69,9 @@ public class EtmConfiguration {
 	// Visualization options
 	private int maxGraphCount = 100;
 	private int maxDashboardCount = 10;
+	
+	// Http options
+	private long sessionTimeout = 30 * 60 * 1000; 
 	
 	// Other stuff.		
 	private final String nodeName;
@@ -349,6 +354,17 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public long getSessionTimeout() {
+		return this.sessionTimeout;
+	}
+	
+	public void setSessionTimeout(Long sessionTimeout) {
+		if (sessionTimeout != null && sessionTimeout >= 1000) {
+			this.sessionTimeout = sessionTimeout;
+		}
+		this.sessionTimeout = sessionTimeout;
+	}
 
 	public String getNodeName() {
 		return this.nodeName;
@@ -499,10 +515,15 @@ public class EtmConfiguration {
 			setMaxDashboardCount(etmConfiguration.getMaxDashboardCount());
 			changed.add(CONFIG_KEY_MAX_DASHBOARD_COUNT);
 		}
+		if (this.sessionTimeout != etmConfiguration.getSessionTimeout()) {
+			setSessionTimeout(etmConfiguration.getSessionTimeout());
+			changed.add(CONFIG_KEY_SESSION_TIMEOUT);
+		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);
 			this.changeListeners.forEach(c -> c.configurationChanged(event));
 		}
 		return changed.size() > 0;
 	}
+
 }
