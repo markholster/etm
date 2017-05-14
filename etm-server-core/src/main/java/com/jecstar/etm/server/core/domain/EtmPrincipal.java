@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.domain;
 
+import java.io.Serializable;
 import java.security.Principal;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -11,8 +12,13 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
-public class EtmPrincipal implements Principal {
+public class EtmPrincipal implements Principal, Serializable {
 	
+	/**
+	 * The serialVersionUID for this class.
+	 */
+	private static final long serialVersionUID = 2297816478265968473L;
+
 	public static final int DEFAULT_HISTORY_SIZE = 5;
 	
 	private final String id;

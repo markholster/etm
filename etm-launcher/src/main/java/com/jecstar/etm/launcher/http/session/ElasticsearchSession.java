@@ -6,19 +6,20 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
-import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
+import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionConfig;
 import io.undertow.server.session.SessionListener;
 import io.undertow.server.session.SessionManager;
+import io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler;
 import io.undertow.util.AttachmentKey;
 
 public class ElasticsearchSession implements Session {
 
-	protected static final AttachmentKey<ElasticsearchSession> ETM_SESSION = AttachmentKey.create(ElasticsearchSession.class);
-	
+	static final AttachmentKey<ElasticsearchSession> ETM_SESSION = AttachmentKey.create(ElasticsearchSession.class);
+	private static final String SSO_ATTRIBUTE = SingleSignOnAuthenticationMechanism.class.getName() + ".SSOID";
 	
 	private final long creationTime;
 	private final EtmConfiguration etmConfiguration;
@@ -47,6 +48,9 @@ public class ElasticsearchSession implements Session {
 
 	@Override
 	public void requestDone(HttpServerExchange serverExchange) {
+		if (this.invalid) {
+			return;
+		}
 		this.lastAccessedTime = System.currentTimeMillis();
 		String lowerCasePath = serverExchange.getRelativePath().toLowerCase();
 		if (lowerCasePath.endsWith(".html") || lowerCasePath.contains("/rest/")) {
@@ -117,6 +121,10 @@ public class ElasticsearchSession implements Session {
         } else {
         	this.sessionManager.getSessionListeners().attributeUpdated(this, name, value, existing);
         }
+        if (name.equals(CachedAuthenticatedSessionHandler.ATTRIBUTE_NAME) || name.equals(SSO_ATTRIBUTE)) {
+        	// A little hack because these attributes are set after the requestDone method is called.
+        	this.sessionManager.persistSession(this);
+        }
         return existing;
 	}
 
@@ -132,16 +140,15 @@ public class ElasticsearchSession implements Session {
 
 	@Override
 	public void invalidate(HttpServerExchange exchange) {
-        UndertowLogger.SESSION_LOGGER.debugf("Invalidating session %s for exchange %s", sessionId, exchange);
-        this.invalid = true;
-        this.sessionManager.removeSession(this);
         this.sessionManager.getSessionListeners().sessionDestroyed(this, exchange, SessionListener.SessionDestroyedReason.INVALIDATED);
+        this.sessionManager.removeSession(this);
+        this.invalid = true;
 
         if (exchange != null && this.sessionConfig != null) {
             this.sessionConfig.clearSession(exchange, this.getId());
         }
         if(exchange != null) {
-            exchange.removeAttachment(this.sessionManager.ETM_SESSION);
+            exchange.removeAttachment(ETM_SESSION);
         }
 	}
 

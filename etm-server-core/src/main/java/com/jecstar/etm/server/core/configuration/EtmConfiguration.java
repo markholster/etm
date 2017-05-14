@@ -360,7 +360,7 @@ public class EtmConfiguration {
 	}
 	
 	public void setSessionTimeout(Long sessionTimeout) {
-		if (sessionTimeout != null && sessionTimeout >= 1000) {
+		if (sessionTimeout != null && sessionTimeout >= 60000) {
 			this.sessionTimeout = sessionTimeout;
 		}
 		this.sessionTimeout = sessionTimeout;

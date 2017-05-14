@@ -170,6 +170,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	@Override
+	public long getSessionTimeout() {
+		reloadConfigurationWhenNecessary();
+		return super.getSessionTimeout();
+	}
+	
+	@Override
 	public boolean isLicenseExpired() {
 		reloadConfigurationWhenNecessary();
 		return super.isLicenseExpired();

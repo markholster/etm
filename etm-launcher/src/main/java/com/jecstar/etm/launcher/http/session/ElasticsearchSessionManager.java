@@ -26,12 +26,9 @@ import io.undertow.server.session.SessionListener;
 import io.undertow.server.session.SessionListeners;
 import io.undertow.server.session.SessionManager;
 import io.undertow.server.session.SessionManagerStatistics;
-import io.undertow.util.AttachmentKey;
 
 //TODO implementatie zou ook van een bulkupdater gebruik kunnen maken.
 public class ElasticsearchSessionManager implements SessionManager {
-
-	final AttachmentKey<ElasticsearchSession> ETM_SESSION = AttachmentKey.create(ElasticsearchSession.class);
 
 	private final Client client;
 	private final SessionIdGenerator sessionIdGenerator;
@@ -83,14 +80,14 @@ public class ElasticsearchSessionManager implements SessionManager {
 		this.persistSession(session);
 		sessionCookieConfig.setSessionId(serverExchange, session.getId());
 		this.sessionListeners.sessionCreated(session, serverExchange);
-		serverExchange.putAttachment(ETM_SESSION, session);
+		serverExchange.putAttachment(ElasticsearchSession.ETM_SESSION, session);
 		return session;
 	}
 
 	@Override
 	public Session getSession(HttpServerExchange serverExchange, SessionConfig sessionCookieConfig) {
 		if (serverExchange != null) {
-			ElasticsearchSession newSession = serverExchange.getAttachment(ETM_SESSION);
+			ElasticsearchSession newSession = serverExchange.getAttachment(ElasticsearchSession.ETM_SESSION);
 			if (newSession != null) {
 				return newSession;
 			}

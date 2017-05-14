@@ -1,12 +1,18 @@
 package com.jecstar.etm.server.core.domain;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class EtmGroup {
-
+public class EtmGroup implements Serializable {
+	
+	/**
+	 * The serialVersionUID for this class. 
+	 */
+	private static final long serialVersionUID = 7152085459917438053L;
+	
 	private String name;
 	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
 	private String filterQuery = null;

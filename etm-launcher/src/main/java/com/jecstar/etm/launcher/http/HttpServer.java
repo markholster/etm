@@ -65,6 +65,7 @@ public class HttpServer {
 	private Undertow server;
 	private GracefulShutdownHandler shutdownHandler;
 	private boolean started;
+//	private final SingleSignOnManager singleSignOnManager = new InMemorySingleSignOnManager();
 	private final SessionManagerFactory sessionManagerFactory;
 
 	public HttpServer(final IdentityManager identityManager, Configuration configuration, EtmConfiguration etmConfiguration, TelemetryCommandProcessor processor, Client client) {;
@@ -189,6 +190,8 @@ public class HttpServer {
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
 			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.PROCESSOR.getRoleName());
 			di.setIdentityManager(identityManager);
+//			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
+//			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
 		}
 		di.setClassLoader(processorApplication.getClass().getClassLoader());
@@ -242,6 +245,8 @@ public class HttpServer {
 				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/*").addUrlPattern("/rest/iib/*")));
 		di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName());
 		di.setIdentityManager(identityManager);
+//		di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
+//		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
 		di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
