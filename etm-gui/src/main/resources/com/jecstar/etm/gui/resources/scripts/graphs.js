@@ -789,7 +789,7 @@ function buildGraphsPage() {
 	function resetValues() {
 		document.getElementById('graph_form').reset();
 		$('#sel-graph-type').trigger("change");
-		$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").show();
+		$("a[data-element-type='remove-bucket-aggregator']:visible").click();
 		enableOrDisableButtons();
 	}
 	
