@@ -725,7 +725,12 @@ function buildGraphsPage() {
         		            .duration(250)
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-       		            chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+       		            chart.xAxis.tickFormat(function(d,s) { 
+       		            	if (d < 0 || d >= data.data[0].values.length) {
+       		            		return '';
+       		            	}; 
+       		            	return data.data[0].values[d].label;
+       		            });
        		            chart.margin({left: 75, bottom: 50, right: 50});
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(formatLineData(data.data))
@@ -747,7 +752,12 @@ function buildGraphsPage() {
         		            .clipEdge(true);
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-        		        chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+       		            chart.xAxis.tickFormat(function(d,s) { 
+       		            	if (d < 0 || d >= data.data[0].values.length) {
+       		            		return '';
+       		            	}; 
+       		            	return data.data[0].values[d].label;
+       		            });
         		        chart.margin({left: 75, bottom: 50, right: 50});
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(formatLineData(data.data))
