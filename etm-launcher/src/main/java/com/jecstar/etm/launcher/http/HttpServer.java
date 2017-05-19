@@ -18,7 +18,6 @@ import org.jboss.resteasy.wadl.ResteasyWadlServlet;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
-import com.jecstar.etm.launcher.http.session.ElasticsearchSessionManagerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -41,7 +40,6 @@ import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
-import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
@@ -249,7 +247,7 @@ public class HttpServer {
 //		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
-		di.setResourceManager(new ClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
+		di.setResourceManager(new MenuAwareClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
 		di.setInvalidateSessionOnLogout(true);
 		di.setDeploymentName("GUI - " + di.getContextPath());
 		// Add the logout servlet.
