@@ -25,12 +25,10 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
-import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -170,65 +168,6 @@ public class UserService extends AbstractJsonService {
 				.collect(Collectors.joining(",")) 
 			+ "], \"default_locale\": {" + escapeObjectToJsonNameValuePair("name", Locale.getDefault().getDisplayName(requestedLocale)) 
 			+ ", " + escapeObjectToJsonNameValuePair("value", Locale.getDefault().toLanguageTag())+ "}}";
-	}
-	
-	@GET
-	@Path("/menu")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getMenu() {
-		StringBuilder result = new StringBuilder();
-		EtmPrincipal principal = getEtmPrincipal();
-		result.append("{");
-		result.append("\"items\": [");
-		boolean added = false;
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.SEARCHER)) {
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "search", result, true) || added;
-			result.append("}");
-		}
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER)) {
-			if (added) {
-				result.append(",");
-			}
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "dashboard", result, true) || added;
-			result.append("}");
-		}
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER, EtmPrincipalRole.SEARCHER, EtmPrincipalRole.IIB_ADMIN)) {
-			if (added) {
-				result.append(",");
-			}
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "preferences", result, true) || added;
-			result.append("}");
-		}
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN)) {
-			if (added) {
-				result.append(",");
-			}
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "settings", result, true) || added;
-			result.append(", \"submenus\": [");
-			boolean subMenuAdded = false;
-			if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
-				result.append("\"admin\"");
-				subMenuAdded = true;
-			}
-			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && IIBApi.IIB_PROXY_AVAILABLE) {
-				if (subMenuAdded) {
-					result.append(",");
-				}
-				result.append("\"iib_admin\"");
-				subMenuAdded = true;
-			}
-			result.append("]");
-			result.append("}");
-		}
-		result.append("]");
-		addBooleanElementToJsonBuffer("license_expired", etmConfiguration.isLicenseExpired(), result, false);
-		addBooleanElementToJsonBuffer("license_almost_expired", etmConfiguration.isLicenseAlmostExpired(), result, false);
-		result.append("}"); 
-		return result.toString();
 	}
 	
 	@GET

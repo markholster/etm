@@ -56,6 +56,7 @@ body { padding-top: 60px; }
     </a>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+        <li id="placeholder-for-MenuAwareURLResource"></li>
       </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
@@ -376,9 +377,7 @@ body { padding-top: 60px; }
   <script src="../scripts/searchresults-layout.js"></script>
   <script src="../scripts/event-details.js"></script>
   <script src="../scripts/search-templates.js"></script>
-  <script src="../scripts/menu.js"></script>
   <script>
-  	buildMenu('search', '../');
     var maxDownloads;
     $('[id^=check-type-]').on('change', function() {
         enableOrDisableSearchButton();

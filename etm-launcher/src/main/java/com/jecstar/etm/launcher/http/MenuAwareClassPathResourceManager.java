@@ -2,17 +2,26 @@ package com.jecstar.etm.launcher.http;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.stream.Collectors;
+
+import com.jecstar.etm.launcher.http.MenuAwareURLResource.MenuContext;
+import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.Resource;
 
 public class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
 
+	private final EtmConfiguration etmConfiguration;
+	private final String contextRoot;
 	private final String prefix;
 	private final ClassLoader classLoader;
 
-	public MenuAwareClassPathResourceManager(ClassLoader classLoader, String prefix) {
+	public MenuAwareClassPathResourceManager(EtmConfiguration etmConfiguration, String contextRoot, ClassLoader classLoader, String prefix) {
 		super(classLoader, prefix);
+		this.etmConfiguration = etmConfiguration;
+		this.contextRoot = contextRoot;
 		this.prefix = prefix;
 		this.classLoader = classLoader;
 	}
@@ -30,7 +39,20 @@ public class MenuAwareClassPathResourceManager extends ClassPathResourceManager 
 	        if(resource == null) {
 	            return null;
 	        } else {
-	            return new MenuAwareURLResource(resource, resource.openConnection(), path);
+	        	final int pathLevels = path.length() - path.replace("/", "").length();
+	        	final String pathPrefixToContextRoot = pathLevels <= 1 ? "./" : Collections.nCopies(pathLevels - 1, "../").stream().collect(Collectors.joining());
+	        	MenuContext menuContext = null;
+	        	final String lowerCasePath = path.toLowerCase();
+	        	if (lowerCasePath.startsWith("/search/")) {
+	        		menuContext = MenuContext.SEARCH;
+	        	} else if (lowerCasePath.startsWith("/dashboard/")) {
+	        		menuContext = MenuContext.DASHBOARD;
+	        	} else if (lowerCasePath.startsWith("/preferences/")) {
+	        		menuContext = MenuContext.PREFERENCES;
+	        	} else if (lowerCasePath.startsWith("/settings/") || lowerCasePath.startsWith("/iib/")) {
+	        		menuContext = MenuContext.SETTINGS;
+	        	}
+	            return new MenuAwareURLResource(this.etmConfiguration, pathPrefixToContextRoot, menuContext, resource, resource.openConnection(), path);
 	        }
 
 		}

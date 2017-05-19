@@ -211,6 +211,7 @@ public class HttpServer {
 	}
 	
 	private DeploymentInfo createGuiDeploymentInfo(Client client, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
+		final String contextRoot = "/gui";
 		RestGuiApplication guiApplication = new RestGuiApplication(client, etmConfiguration);
 		ResteasyDeployment deployment = new ResteasyDeployment();
 		deployment.setApplication(guiApplication);
@@ -224,7 +225,7 @@ public class HttpServer {
 			}
 		});
 		di.addWelcomePage("index.html");
-		di.setContextPath("/gui");
+		di.setContextPath(contextRoot);
 		deployment.setSecurityEnabled(true);
 		di.addSecurityConstraint(new SecurityConstraint()
 					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
@@ -247,7 +248,7 @@ public class HttpServer {
 //		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
-		di.setResourceManager(new MenuAwareClassPathResourceManager(guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
+		di.setResourceManager(new MenuAwareClassPathResourceManager(etmConfiguration, contextRoot, guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
 		di.setInvalidateSessionOnLogout(true);
 		di.setDeploymentName("GUI - " + di.getContextPath());
 		// Add the logout servlet.

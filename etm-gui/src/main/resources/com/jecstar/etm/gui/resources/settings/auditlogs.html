@@ -57,6 +57,7 @@ body { padding-top: 60px; }
     </a>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+        <li id="placeholder-for-MenuAwareURLResource"></li>
       </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
@@ -113,7 +114,6 @@ body { padding-top: 60px; }
   <script src="../scripts/moment.min.js"></script>
   <script src="../scripts/moment-timezone-with-data.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/menu.js"></script>
   <script src="../scripts/autocomplete_fields.js"></script>
   <script src="../scripts/vkbeautify.js"></script>
   <script src="../scripts/clipboard.min.js"></script>
@@ -149,7 +149,6 @@ body { padding-top: 60px; }
         var elemBottom = elemTop + $(elem).height();
         return docViewBottom > elemTop;
     }
-  	buildMenu('settings', '../');
   	buildAuditLogPage();
   	
   </script>

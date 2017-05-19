@@ -27,6 +27,7 @@ body { padding-top: 60px; }
     </a>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+        <li id="placeholder-for-MenuAwareURLResource"></li>
       </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
@@ -228,7 +229,6 @@ body { padding-top: 60px; }
   <script src="../scripts/jquery-ui.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
   <script src="../scripts/autocomplete_fields.js"></script>  
-  <script src="../scripts/menu.js"></script>
   <script src="../scripts/users.js"></script>
   <script>
     $(document).ajaxStart(function () {
@@ -254,7 +254,6 @@ body { padding-top: 60px; }
 	        $('html,body').animate({scrollTop: 0},'fast');
         }
     });
-  	buildMenu('settings', '../');
   	buildUserPage();
   	
   </script>
