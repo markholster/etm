@@ -18,6 +18,7 @@ import org.jboss.resteasy.wadl.ResteasyWadlServlet;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
+import com.jecstar.etm.launcher.http.session.ElasticsearchSessionManagerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
@@ -50,7 +51,6 @@ import io.undertow.servlet.api.ServletContainer;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.SessionManagerFactory;
 import io.undertow.servlet.api.WebResourceCollection;
-import io.undertow.servlet.core.InMemorySessionManagerFactory;
 
 public class HttpServer {
 
@@ -68,8 +68,8 @@ public class HttpServer {
 
 	public HttpServer(final IdentityManager identityManager, Configuration configuration, EtmConfiguration etmConfiguration, TelemetryCommandProcessor processor, Client client) {;
 		this.configuration = configuration;
-//		this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
-		this.sessionManagerFactory = new InMemorySessionManagerFactory();
+		this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
+//		this.sessionManagerFactory = new InMemorySessionManagerFactory();
 		final PathHandler root = Handlers.path();
 		this.shutdownHandler = Handlers.gracefulShutdown(Handlers.requestLimitingHandler(configuration.http.maxConcurrentRequests, configuration.http.maxQueuedRequests, root));
 		final ServletContainer container = ServletContainer.Factory.newInstance();
@@ -248,7 +248,7 @@ public class HttpServer {
 //		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
-		di.setResourceManager(new MenuAwareClassPathResourceManager(etmConfiguration, contextRoot, guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
+		di.setResourceManager(new MenuAwareClassPathResourceManager(etmConfiguration, guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
 		di.setInvalidateSessionOnLogout(true);
 		di.setDeploymentName("GUI - " + di.getContextPath());
 		// Add the logout servlet.

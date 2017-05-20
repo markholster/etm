@@ -22,6 +22,7 @@ import com.codahale.metrics.ScheduledReporter;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
+import com.jecstar.etm.launcher.retention.HttpSessionCleaner;
 import com.jecstar.etm.launcher.retention.IndexCleaner;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
@@ -64,7 +65,7 @@ public class Launcher {
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);
-			initializeIndexCleaner(etmConfiguration, this.elasticClient);
+			initializeIndexCleaners(configuration, etmConfiguration, this.elasticClient);
 			
 			if (configuration.isHttpServerNecessary()) {
 				System.setProperty("org.jboss.logging.provider", "slf4j");
@@ -130,9 +131,16 @@ public class Launcher {
 	}
 	
 	
-	private void initializeIndexCleaner(EtmConfiguration etmConfiguration, Client client) {
-		this.retentionScheduler = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("etm_retention_scheduler"));
+	private void initializeIndexCleaners(final Configuration configuration, final EtmConfiguration etmConfiguration, final Client client) {
+		int threadPoolSize = 1;
+		if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
+			threadPoolSize++;
+		}
+		this.retentionScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_retention_scheduler"));
 		this.retentionScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
+		if (configuration.http.guiEnabled) {
+			this.retentionScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
+		}
 	}
 
 	

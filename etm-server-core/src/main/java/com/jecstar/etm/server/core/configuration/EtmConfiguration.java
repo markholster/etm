@@ -70,7 +70,7 @@ public class EtmConfiguration {
 	private int maxGraphCount = 100;
 	private int maxDashboardCount = 10;
 	
-	// Http options
+	// General options
 	private long sessionTimeout = 30 * 60 * 1000; 
 	
 	// Other stuff.		
@@ -359,11 +359,11 @@ public class EtmConfiguration {
 		return this.sessionTimeout;
 	}
 	
-	public void setSessionTimeout(Long sessionTimeout) {
+	public EtmConfiguration setSessionTimeout(Long sessionTimeout) {
 		if (sessionTimeout != null && sessionTimeout >= 60000) {
 			this.sessionTimeout = sessionTimeout;
 		}
-		this.sessionTimeout = sessionTimeout;
+		return this;
 	}
 
 	public String getNodeName() {

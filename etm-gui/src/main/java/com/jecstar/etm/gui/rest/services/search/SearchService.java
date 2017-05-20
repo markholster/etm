@@ -632,8 +632,6 @@ public class SearchService extends AbstractIndexMetadataService {
 			}
 			events.add(event);
 		}
-		scrollableSearch.clearScrollIds();
-		
 		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
 		result.append("{");
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
@@ -924,7 +922,6 @@ public class SearchService extends AbstractIndexMetadataService {
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequest);
 		if (!scrollableSearch.hasNext()) {
-			scrollableSearch.clearScrollIds();
 			return;
 		}
 		for (SearchHit searchHit : scrollableSearch) {
@@ -975,7 +972,6 @@ public class SearchService extends AbstractIndexMetadataService {
 			// Check for request/response correlation and add those transactions as well.
 			addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, searchHit.getType(), subType);
 		}
-		scrollableSearch.clearScrollIds();
 	}
 	
 	@SuppressWarnings("unchecked")

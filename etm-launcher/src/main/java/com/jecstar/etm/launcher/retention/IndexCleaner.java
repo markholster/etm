@@ -24,7 +24,7 @@ public class IndexCleaner implements Runnable {
 	private final EtmConfiguration etmConfiguration;
 	private final Client client;
 
-	public IndexCleaner(EtmConfiguration etmConfiguration, Client client) {
+	public IndexCleaner(final EtmConfiguration etmConfiguration, final Client client) {
 		this.etmConfiguration = etmConfiguration;
 		this.client = client;
 	}

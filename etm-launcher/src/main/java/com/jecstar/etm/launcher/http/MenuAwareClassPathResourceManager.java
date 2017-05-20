@@ -14,14 +14,12 @@ import io.undertow.server.handlers.resource.Resource;
 public class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
 
 	private final EtmConfiguration etmConfiguration;
-	private final String contextRoot;
 	private final String prefix;
 	private final ClassLoader classLoader;
 
-	public MenuAwareClassPathResourceManager(EtmConfiguration etmConfiguration, String contextRoot, ClassLoader classLoader, String prefix) {
+	public MenuAwareClassPathResourceManager(EtmConfiguration etmConfiguration, ClassLoader classLoader, String prefix) {
 		super(classLoader, prefix);
 		this.etmConfiguration = etmConfiguration;
-		this.contextRoot = contextRoot;
 		this.prefix = prefix;
 		this.classLoader = classLoader;
 	}

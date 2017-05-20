@@ -15,6 +15,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	}
 	
 	@Override
+	public String getSessionTimeoutTag() {
+		return "session_timeout";
+	}
+	
+	@Override
 	public String getEnhancingHandlerCountTag() {
 		return "enhancing_handler_count";
 	}

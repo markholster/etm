@@ -5,6 +5,8 @@ public interface EtmConfigurationTags {
 	String getNodeNameTag();
 	String getLicenseTag();
 	
+	String getSessionTimeoutTag();
+	
 	String getEnhancingHandlerCountTag();
 	String getPersistingHandlerCountTag();
 	String getEventBufferSizeTag();

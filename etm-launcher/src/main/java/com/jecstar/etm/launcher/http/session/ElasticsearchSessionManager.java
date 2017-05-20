@@ -110,10 +110,8 @@ public class ElasticsearchSessionManager implements SessionManager {
 			return null;
 		}
 		ElasticsearchSession session = this.converter.read(getResponse.getSourceAsString(), this.etmConfiguration, this, sessionCookieConfig);
-		// TODO haal de timeout uit de etm configuration.
-//		long timeout = this.etmConfiguration.getSessionTimeout();
-		long timeout = 30 * 60 * 1000;
-		if (session.getLastAccessedTime()  + timeout < System.currentTimeMillis()) {
+		long timeout = this.etmConfiguration.getSessionTimeout();
+		if (session.getLastAccessedTime() + timeout < System.currentTimeMillis()) {
 			return null;
 		}
 		return session;

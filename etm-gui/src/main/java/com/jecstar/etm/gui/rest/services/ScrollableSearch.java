@@ -2,6 +2,7 @@ package com.jecstar.etm.gui.rest.services;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.elasticsearch.action.search.ClearScrollRequestBuilder;
@@ -62,12 +63,27 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 		return this;
 	}
 	
+	@Override
+	public SearchHit next() {
+		if (!hasNext()) {
+			throw new NoSuchElementException();
+		}
+		return this.response.getHits().hits()[this.currentIndexInResponse++];
+	}
+	
 	public void clearScrollIds() {
 		ClearScrollRequestBuilder clearScrollRequestBuilder = this.client.prepareClearScroll();
 		for (String scrollId : this.scrollIds) {
 			clearScrollRequestBuilder.addScrollId(scrollId);
 		}
 		clearScrollRequestBuilder.execute();
+	}
+	
+	public long getNumberOfHits() {
+		if (this.response == null) {
+			executeSearch();
+		}
+		return this.response.getHits().getTotalHits();
 	}
 	
 	private void executeSearch() {
@@ -91,10 +107,5 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 		this.scrollIds.add(this.currentScrollId);
 		this.nextBatchRequired = this.scrollSize == this.response.getHits().hits().length;
 
-	}
-
-	@Override
-	public SearchHit next() {
-		return this.response.getHits().hits()[this.currentIndexInResponse++];
 	}
 }
