@@ -12,26 +12,22 @@ import java.util.Map;
 import java.util.Set;
 
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
-
-import io.undertow.server.session.SessionConfig;
 
 public class ElasticsearchSessionConverterJsonImpl extends JsonConverter implements ElasticsearchSessionConverter<String> {
 
 	private final ElasticsearchSessionTags tags = new ElasticsearchSessionTagsJsonImpl();
 	
 	@Override
-	public ElasticsearchSession read(String content, EtmConfiguration etmConfiguration, ElasticsearchSessionManager sessionManager, SessionConfig sessionConfig) {
+	public void read(String content, ElasticsearchSession session) {
 		Map<String, Object> valueMap = toMap(content);
-		ElasticsearchSession session = new ElasticsearchSession(getString(this.tags.getIdTag(), valueMap), etmConfiguration, sessionManager, sessionConfig);
-		List<Map<String, Object>>  attributes = getArray(this.tags.getAttributesTag(), valueMap);
+		session.setLastAccessedTime(getLong(this.tags.getLastAccessedTag(), valueMap));
+		List<Map<String, Object>> attributes = getArray(this.tags.getAttributesTag(), valueMap);
 		if (attributes != null) {
 			for (Map<String, Object> attribute : attributes) {
 				session.setAttribute(getString(this.tags.getAttributeKeyTag(), attribute), getAttributeValue(attribute));
 			}
 		}
-		return session;
 	}
 	
 	private Object getAttributeValue(Map<String, Object> attribute) {
@@ -48,8 +44,7 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
 	public String write(ElasticsearchSession session) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		addStringElementToJsonBuffer(this.tags.getIdTag(), session.getId(), sb, true);
-		addLongElementToJsonBuffer(this.tags.getLastAccessedTag(), session.getLastAccessedTime(), sb, false);
+		addLongElementToJsonBuffer(this.tags.getLastAccessedTag(), session.getLastAccessedTime(), sb, true);
 		sb.append(", " + escapeToJson(this.tags.getAttributesTag(), true) + ": [");
 		Set<String> attributeNames = session.getAttributeNames();
 		boolean first = true;
@@ -99,6 +94,5 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
 	public ElasticsearchSessionTags getTags() {
 		return this.tags;
 	}
-
 
 }

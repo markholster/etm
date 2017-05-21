@@ -3,11 +3,6 @@ package com.jecstar.etm.launcher.http.session;
 public class ElasticsearchSessionTagsJsonImpl implements ElasticsearchSessionTags {
 
 	@Override
-	public String getIdTag() {
-		return "id";
-	}
-	
-	@Override
 	public String getLastAccessedTag() {
 		return "last_accessed";
 	}

@@ -74,6 +74,13 @@ public class ElasticsearchSession implements Session {
         }
 		return this.lastAccessedTime;
 	}
+	
+	void setLastAccessedTime(long lastAccessedTime) {
+        if (this.invalid) {
+            throw UndertowMessages.MESSAGES.sessionIsInvalid(sessionId);
+        }
+		this.lastAccessedTime = lastAccessedTime;
+	}
 
 	@Override
 	public void setMaxInactiveInterval(int interval) {

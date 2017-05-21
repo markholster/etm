@@ -81,6 +81,9 @@ image::images/etm-transaction-overview.png["Transaction overview",link="./images
  
 As we can see the query that selected the shopping card from the database took about 300 milliseconds. Depending on your needs that might or might not be an issue. Nevertheless {etm} will give you a quick inside in what is happening where an what applications and components take most of the execution time of an entire application chain. That is awesome isn't it?
 
+[NOTE]
+If you have administrator rights and the audit logs are kept long enough you may see an extra ''Audit Logs'' tab. This tab shows information over who saw this particular event over time. When the column ''Direct'' contains the value ''true'' then the user clicked on this event. When the column contains the value ''false'' the event was retrieved as a correlated event. 
+
 === Query syntax
 The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default all event attributes are matched, but specific attributes can be specified to narrow down the query. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
 In large datasets you can improve search performance by always specifying the event attribute you want to query. This allows {etm} to narrow the search down to the given attribute instead of querying them all.  

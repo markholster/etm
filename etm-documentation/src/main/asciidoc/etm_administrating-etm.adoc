@@ -87,14 +87,18 @@ When a user is added to multiple groups he or she has the roles and Filter queri
 ==== Import grou from ldap
 In case you have configured a ldap server in the <<Ldap settings>> you can import a group by clicking on the ''Import'' button. Select the group you want to import and confirm your selection by clicking on the ''Import'' button. Make sure you assign at least one role to the group otherwise users that are member of that group have no access rights!    
 
-
-=== Index statistics
-To view some basic index statistics browse to http://localhost:8080/gui/settings/indexstats.html or select the menu option ''Settings -> Index statistics''. This page shows the total number of events and the disk space those events take. Also an graph is showing those numbers per index. Note that the x-axis of the graphs is showing an index name, not a date! Indices are created at the start of every day in the UTC time zone. This means that if you are not located in the UTC time zone a new index can be created in the middle of the day. The performance statistics will be reset when your Elasticsearch cluster is restarted. 
-
 === Cluster
 To manage your cluster settings browse to http://localhost:8080/gui/settings/cluster.html or select the menu option ''Settings -> Cluster''. On the cluster settings page you can adjust several settings that help you keep your cluster performing the way you want. By default most of the settings should be fine, but if you want to make optimal use of each CPU cycle your cluster has to offer you have the option to tune it on this page.
 
 The cluster page has grouped related configuration items into several tabs:
+
+==== General settings
+.General settings
+[options="header"]
+|=======================
+|Name|Description
+|Http session timeout|The maximum idle time in milliseconds for an http session before it will be cleaned up. All http sessions are stored in Elasticsearch to provide maximum flexibility in starting and stopping different nodes. An http session will always be available on all nodes to provide High Availablilty out of the box. 
+|=======================
 
 ==== Elasticsearch settings 
 .Elasticsearch settings
@@ -204,6 +208,12 @@ To create a new endpoint configuration just type the name of the endpoint it sho
 If you want additional fields to be enhanced click on the ''Add field'' link. Then select the field you want to enhance. If the field is a collection, you should provide a key for the field. Finally add one ore more <<Parsers>> to apply to the event's payload. The order of the parsers is the order in which the are executed. If a parser doesn't have a result, or cannot be applied the next parser is tried. This will be repeated until a parser has a result. That result will be added to the event, and further processing of other parser for that field is stopped.
 
 When you want to enter a global enhancement configuration you can select the endpoint configuration with the name ''*'' (an asterisk). This endpoint configuration is the only configuration that cannot be deleted. When changing an endpoint configuration it will be applied within 60 seconds.
+
+=== Audit logs
+To view the audit logs browse to http://localhost:8080/gui/settings/auditlogs.html or select the menu option ''Settings -> Audit logs''. This page shows all audit logs that are recorded. Of course all audit logs are searchable the way you expect them to be. By pressing the arrow down button in the search you get to see an overview of all attributes that can be searched for. 
+
+=== Index statistics
+To view some basic index statistics browse to http://localhost:8080/gui/settings/indexstats.html or select the menu option ''Settings -> Index statistics''. This page shows the total number of events and the disk space those events take. Also an graph is showing those numbers per index. Note that the x-axis of the graphs is showing an index name, not a date! Indices are created at the start of every day in the UTC time zone. This means that if you are not located in the UTC time zone a new index can be created in the middle of the day. The performance statistics will be reset when your Elasticsearch cluster is restarted. 
 
 === IIB Nodes
 To add, modify or delete IIB Nodes browse to http://localhost:8080/gui/iib/nodes.html or select the menu option ''Settings -> IIB Nodes''. This option might not available to you, depending on the integration options chosen by your administrator. See <<Integration with IBM MQ and/or IBM Integration Bus>> for information how to enable the IIB integration.
