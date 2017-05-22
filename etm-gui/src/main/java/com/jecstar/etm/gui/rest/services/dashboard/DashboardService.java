@@ -362,7 +362,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		Map<String, Object> yAxisData = getObject("y_axis", graphData);
 		
 		Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData);
-		BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData);
+		BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, query));
 		BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
 		// First create the bucket aggregator
 		AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();

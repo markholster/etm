@@ -4,9 +4,13 @@ import java.text.Format;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.min.Min;
+import org.elasticsearch.search.aggregations.metrics.max.Max;
 
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -23,28 +27,48 @@ public class BucketAggregatorWrapper {
 	private final String fieldType;
 	private final Format fieldFormat;
 	private final AggregationBuilder aggregationBuilder;
+	private DateInterval requiredDateInterval;
 
 	public BucketAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData) {
+		this(etmPrincipal, jsonData, null);
+	}
+	
+	public BucketAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData, SearchRequestBuilder searchRequest) {
 		this.jsonData = jsonData;
 		this.aggregatorType = this.jsonConverter.getString("aggregator", jsonData);
 		this.field = this.jsonConverter.getString("field", jsonData);
 		this.fieldType = this.jsonConverter.getString("field_type", jsonData);
 		if ("date_histogram".equals(this.aggregatorType)) {
-			this.fieldFormat = Interval.safeValueOf(this.jsonConverter.getString("interval", jsonData)).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
+			if ("auto".equals(this.jsonConverter.getString("interval", jsonData))) {
+				this.requiredDateInterval = calculateInterval(searchRequest, this.field);
+			} else {
+				this.requiredDateInterval = DateInterval.safeValueOf(this.jsonConverter.getString("interval", jsonData));
+			}
+			this.fieldFormat = this.requiredDateInterval.getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
 		} else {
 			this.fieldFormat = "date".equals(this.fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
 		}
 		this.aggregationBuilder = createBucketAggregationBuilder();
 	}
 	
-	
+
+
+	private DateInterval calculateInterval(SearchRequestBuilder searchRequest, String field) {
+		SearchResponse searchResponse = searchRequest
+			.addAggregation(AggregationBuilders.min("min").field(field))
+			.addAggregation(AggregationBuilders.max("max").field(field))
+			.get();
+		long min = new Double(((Min)searchResponse.getAggregations().get("min")).getValue()).longValue();
+		long max = new Double(((Max)searchResponse.getAggregations().get("max")).getValue()).longValue();
+		return DateInterval.ofRange(max-min);
+	}
+
 	private AggregationBuilder createBucketAggregationBuilder() {
 		Map<String, Object> metadata = new HashMap<>();
 		AggregationBuilder builder = null;
 		if ("date_histogram".equals(this.aggregatorType)) {
 			String internalLabel = "Date of " + this.field;
-			Interval interval = Interval.safeValueOf(this.jsonConverter.getString("interval", this.jsonData));
-			builder = AggregationBuilders.dateHistogram(internalLabel).field(this.field).dateHistogramInterval(interval.getDateHistogramInterval());		
+			builder = AggregationBuilders.dateHistogram(internalLabel).field(this.field).dateHistogramInterval(this.requiredDateInterval.getDateHistogramInterval());		
 		} else if ("histogram".equals(this.aggregatorType)) {
 			String internalLabel = this.field;
 			Double interval = this.jsonConverter.getDouble("interval", this.jsonData, 1D);

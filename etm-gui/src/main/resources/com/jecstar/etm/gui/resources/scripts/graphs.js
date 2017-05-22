@@ -438,10 +438,11 @@ function buildGraphsPage() {
 				$('<div>').addClass('col-sm-9').append(
 					$('<select>').attr('id', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('form-control form-control-sm custom-select')
 					.append(
+						$('<option>').attr('value', 'auto').attr('selected', 'selected').text('Auto'),	
 						$('<option>').attr('value', 'seconds').text('Seconds'),
 						$('<option>').attr('value', 'minutes').text('Minutes'),
 						$('<option>').attr('value', 'hours').text('Hours'),
-						$('<option>').attr('value', 'days').attr('selected', 'selected').text('Days'),
+						$('<option>').attr('value', 'days').text('Days'),
 						$('<option>').attr('value', 'weeks').text('Weeks'),
 						$('<option>').attr('value', 'months').text('Months'),
 						$('<option>').attr('value', 'quarters').text('Quarters'),
