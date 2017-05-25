@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher.retention;
+package com.jecstar.etm.launcher.background;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;

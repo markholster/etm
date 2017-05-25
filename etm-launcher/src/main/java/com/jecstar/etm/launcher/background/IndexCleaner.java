@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher.retention;
+package com.jecstar.etm.launcher.background;
 
 import java.util.ArrayList;
 import java.util.Collections;

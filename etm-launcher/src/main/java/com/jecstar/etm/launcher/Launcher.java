@@ -19,11 +19,12 @@ import org.jboss.netty.logging.Slf4JLoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
+import com.jecstar.etm.launcher.background.HttpSessionCleaner;
+import com.jecstar.etm.launcher.background.IndexCleaner;
+import com.jecstar.etm.launcher.background.LicenseUpdater;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
-import com.jecstar.etm.launcher.retention.HttpSessionCleaner;
-import com.jecstar.etm.launcher.retention.IndexCleaner;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
@@ -47,7 +48,7 @@ public class Launcher {
 	private Client elasticClient;
 	private ScheduledReporter metricReporter;
 	private IbmMqProcessor ibmMqProcessor;
-	private ScheduledExecutorService retentionScheduler;
+	private ScheduledExecutorService backgroundScheduler;
 	private InternalBulkProcessorWrapper bulkProcessorWrapper;
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration, InternalBulkProcessorWrapper bulkProcessorWrapper) {
@@ -65,7 +66,7 @@ public class Launcher {
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);
-			initializeIndexCleaners(configuration, etmConfiguration, this.elasticClient);
+			initializeBackgroundProcesses(configuration, etmConfiguration, this.elasticClient);
 			
 			if (configuration.isHttpServerNecessary()) {
 				System.setProperty("org.jboss.logging.provider", "slf4j");
@@ -102,8 +103,8 @@ public class Launcher {
 				if (Launcher.this.indexTemplateCreator != null) {
 					try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
 				}
-				if (Launcher.this.retentionScheduler != null) {
-					try { Launcher.this.retentionScheduler.shutdownNow(); } catch (Throwable t) {}
+				if (Launcher.this.backgroundScheduler != null) {
+					try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
 				}
 				if (Launcher.this.ibmMqProcessor != null) {
 					try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
@@ -131,16 +132,18 @@ public class Launcher {
 	}
 	
 	
-	private void initializeIndexCleaners(final Configuration configuration, final EtmConfiguration etmConfiguration, final Client client) {
-		int threadPoolSize = 1;
+	private void initializeBackgroundProcesses(final Configuration configuration, final EtmConfiguration etmConfiguration, final Client client) {
+		int threadPoolSize = 2;
 		if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
 			threadPoolSize++;
 		}
-		this.retentionScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_retention_scheduler"));
-		this.retentionScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
+		this.backgroundScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_background_scheduler"));
+		this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
+		this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, client), 0, 6, TimeUnit.HOURS);
 		if (configuration.http.guiEnabled) {
-			this.retentionScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
+			this.backgroundScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
 		}
+		
 	}
 
 	
