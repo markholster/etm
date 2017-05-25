@@ -11,19 +11,19 @@ WORKDIR /usr/share/etm
 RUN apk update && \                                                                                                                                                                                                                        
     apk add ca-certificates wget && \                                                                                                                                                                                                      
     update-ca-certificates && \
-    wget https://www.jecstar.com/downloads/etm/etm-2.1.0.tgz && \
-    wget https://www.jecstar.com/downloads/etm/etm-2.1.0.tgz.sha512 && \
-    test "etm-2.1.0.tgz: OK" == "$(cat etm-2.1.0.tgz.sha512 | sha512sum -c)" && \
-    tar zxf etm-2.1.0.tgz && \
-    chown -R etm:etm etm-2.1.0 && \
-    mv etm-2.1.0/* . && \
-    rmdir etm-2.1.0 && \
-    rm etm-2.1.0.tgz*
+    wget https://www.jecstar.com/downloads/etm/etm-${etm-version}.tgz && \
+    wget https://www.jecstar.com/downloads/etm/etm-${etm-version}.tgz.sha512 && \
+    test "etm-${etm-version}.tgz: OK" == "$(cat etm-${etm-version}.tgz.sha512 | sha512sum -c)" && \
+    tar zxf etm-${etm-version}.tgz && \
+    chown -R etm:etm etm-${etm-version} && \
+    mv etm-${etm-version}/* . && \
+    rmdir etm-${etm-version} && \
+    rm etm-${etm-version}.tgz*
 
 COPY etm.yml config/
 RUN chown -R etm:etm *
 
 USER etm
-CMD ["/bin/sh", "bin/etm", "console", "--quit"]
+CMD ["/bin/sh", "bin/etm", "docker"]
 
 EXPOSE 8080

@@ -129,6 +129,9 @@ case "$DIST_OS" in
     'unix_sv')
         DIST_OS="unixware"
         ;;
+    cygwin_nt*)
+        DIST_OS="cygwin"
+        ;;
 esac
 
 if [ -z "$JAVA_HOME" ] ; then
@@ -138,7 +141,7 @@ if [ -z "$JAVA_HOME" ] ; then
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
-if $cygwin ; then
+if [ "$DIST_OS" = "cygwin" ]; then
   [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
   [ -n "$CLASSPATH" ] && CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
 fi
@@ -214,7 +217,6 @@ testpid() {
 }
 
 console() {
-    echo "Running $APP_LONG_NAME..."
     getpid
     if [ "X$pid" = "X" ]
     then
@@ -228,13 +230,10 @@ console() {
 }
 
 start() {
-    echo "Starting $APP_LONG_NAME..."
     getpid
     if [ "X$pid" = "X" ]
     then
-        # The string passed to eval must handles spaces in paths correctly.
-        COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\""
-        nohup $JAVACMD $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath "$CLASSPATH" -Dapp.name="$APP_NAME" -Dapp.version="$APP_VERSION" -Dapp.repo="$REPO" -Dapp.home="$BASEDIR" ${mainClassName} --config-dir="$CONFIGDIR" </dev/null >/dev/null 2>&1 &
+        nohup $JAVACMD $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath "$CLASSPATH" -Dapp.name="$APP_NAME" -Dapp.version="$APP_VERSION" -Dapp.repo="$REPO" -Dapp.home="$BASEDIR" ${mainClassName} --config-dir="$CONFIGDIR" $1 </dev/null >/dev/null 2>&1 &
         echo $! > $PIDFILE
     else
         echo "$APP_LONG_NAME is already running."
@@ -243,7 +242,6 @@ start() {
 }
 
 stopit() {
-    echo "Stopping $APP_LONG_NAME..."
     getpid
     if [ "X$pid" = "X" ]
     then
@@ -339,14 +337,21 @@ dump() {
 case "$1" in
 
     'console')
+        echo "Running $APP_LONG_NAME..."
         console
         ;;
 
+    'docker')
+        start '--quiet'
+        ;;
+
     'start')
+        echo "Starting $APP_LONG_NAME..."
         start
         ;;
 
     'stop')
+        echo "Stopping $APP_LONG_NAME..."
         stopit
         ;;
 
