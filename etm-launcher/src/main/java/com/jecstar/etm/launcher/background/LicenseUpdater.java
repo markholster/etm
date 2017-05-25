@@ -60,7 +60,9 @@ public class LicenseUpdater implements Runnable {
 					// the old license may still be applied. To prevent this, we set the license again at this place.
 					etmConfiguration.setLicenseKey(licenseKey);
 				} catch (Exception e) {
-					
+					if (log.isDebugLevelEnabled()) {
+						log.logDebugMessage("Unable to update license automatically.", e);
+					}
 				}
 			}
 		}
