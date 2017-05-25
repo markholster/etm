@@ -11,6 +11,9 @@ A correctly applied license looks something like this:
 .{etm} license
 image::images/etm-license.png["{etm} license",link="./images/etm-license.png"]
 
+{etm} can be used with a free license. When possible it will be automatically retrieved and applied. This license allows you to index 1000 event or 100 MiB every day. This free license will be valid for 7 days. Within the last 12 hours before the license will expire it will be automatically refreshed. If your server can't connect to the internet you can manually download the license from the https://www.jecstar.com/licenses/index.html[Jecstar website]. 
+
+
 === Users
 To add, create or modify users browse to http://localhost:8080/gui/settings/users.html or select the menu option ''Settings -> Users''. The top drop-down field allows you to select a user to modify, delete or copy. It is highly recommended to remove the default administrator user for security reasons! You should at least change the password of the default administrator user.
 
