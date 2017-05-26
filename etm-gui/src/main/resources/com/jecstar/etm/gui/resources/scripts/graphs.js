@@ -688,7 +688,7 @@ function buildGraphsPage() {
                 $('#preview_box').empty();
         		if ('bar' == data.type) {
         			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(',f');
+        			numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format);
         		    nv.addGraph(function() {
         		        var chart = nv.models.multiBarChart()
         		            .x(function(d) { return d.label })
@@ -715,7 +715,7 @@ function buildGraphsPage() {
         		    });
         		} else if ('line' == data.type) {
         			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(',f');
+        			numberFormatter = formatter.numberFormat(graphData.line.y_axis.format);
         		    nv.addGraph(function() {
         		    	var i = 1
         		        var chart = nv.models.lineChart()
@@ -744,7 +744,7 @@ function buildGraphsPage() {
         		} else if ('pie' == data.type) {
         		} else if ('stacked_area' == data.type) {
         			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(',f');
+        			numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format);
         		    nv.addGraph(function() {
         		        var chart = nv.models.stackedAreaChart()
         		            .useInteractiveGuideline(true)
@@ -824,6 +824,9 @@ function buildGraphsPage() {
 		function setMultiBucketData(type, data) {
 			$('#' + type + '-y-axis, #' + type + '-x-axis').empty();
 			$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").show();
+			if (data.y_axis.format) {
+				$('[id=input-' + type + '-y-axis-format]').val(data.y_axis.format);
+			}
 			$.each(data.y_axis.aggregators, function(index, aggregator) {
 				addMetricsAggregatorsBlock($('#' + type + '-y-axis'), type, index, aggregator);
 			})
@@ -882,6 +885,10 @@ function buildGraphsPage() {
 				x_axis: {
 					aggregator: getBucketAggregatorsBlock(graphData.type, 0)
 				}
+			}
+			data.y_axis.format = $('[id=input-' + type + '-y-axis-format]').val();
+			if (!data.y_axis.format) {
+				data.y_axis.format = '.f';
 			}
 			$('[id^=sel-' + type + '-metrics-aggregator-]').each(function(index) {
 				var barIx = $(this).attr('id').split('-')[4];
