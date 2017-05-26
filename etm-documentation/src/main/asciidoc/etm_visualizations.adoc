@@ -21,6 +21,77 @@ Line chart:: Line charts are most useful for time series data. On the y-axis the
 Number:: Graph with this type selected will show a single number. The number will be the result of a single <<Metric aggregator>>.
 Stacked area:: Stacked area are the way to go when you want to compare several series or are interested in the total of all series. On the y-axis the chart must contain one or more <<Metric aggregator>>s. The x-axis is configured with a <<Bucket aggregator>>. 
 
+==== Y-axis format
+Bar, line and stacked area chart allow you to specify the format used to display the values on the y-axis. The format is based on the https://github.com/d3/d3-format#locale_format[D3 locale format specifier] and has the following format:
+
+[source]
+[​[fill]align][sign][symbol][0][width][,][.precision][type]
+
+The 'fill' can be any character. The presence of a fill character is signaled by the 'align' character following it, which must be one of the following:
+
+* > - Forces the field to be right-aligned within the available space. (Default behavior).
+* < - Forces the field to be left-aligned within the available space.
+* ^ - Forces the field to be centered within the available space.
+* = - like >, but with any sign and symbol to the left of any padding.
+
+The 'sign' can be:
+
+* - - nothing for zero or positive and a minus sign for negative. (Default behavior.)
+* + - a plus sign for zero or positive and a minus sign for negative.
+* ( - nothing for zero or positive and parentheses for negative.
+* (space) - a space for zero or positive and a minus sign for negative.
+
+The 'symbol' can be:
+
+* $ - apply currency symbols per the locale definition.
+* # - for binary, octal, or hexadecimal notation, prefix by 0b, 0o, or 0x, respectively.
+
+The 'zero' (0) option enables zero-padding; this implicitly sets 'fill' to 0 and 'align' to =. The 'width' defines the minimum field width; if not specified, then the width will be determined by the content. The comma (,) option enables the use of a group separator, such as a comma for thousands.
+
+Depending on the 'type', the 'precision' either indicates the number of digits that follow the decimal point (types f and %), or the number of significant digits (types ​, e, g, r, s and p). If the precision is not specified, it defaults to 6 for all types except ​ (none), which defaults to 12. Precision is ignored for integer formats (types b, o, d, x, X and c).
+
+The available 'type' values are:
+
+* e - exponent notation.
+* f - fixed point notation.
+* g - either decimal or exponent notation, rounded to significant digits.
+* r - decimal notation, rounded to significant digits.
+* s - decimal notation with an SI prefix, rounded to significant digits.
+* % - multiply by 100, and then decimal notation with a percent sign.
+* p - multiply by 100, round to significant digits, and then decimal notation with a percent sign.
+* b - binary notation, rounded to integer.
+* o - octal notation, rounded to integer.
+* d - decimal notation, rounded to integer.
+* x - hexadecimal notation, using lower-case letters, rounded to integer.
+* X - hexadecimal notation, using upper-case letters, rounded to integer.
+* c - converts the integer to the corresponding unicode character before printing.
+* (none) - like g, but trim insignificant trailing zeros.
+
+The type n is also supported as shorthand for ,g. For the g, n and ​ (none) types, decimal notation is used if the resulting string would have precision or fewer digits; otherwise, exponent notation is used. For example:
+
+[options="header"]
+|=======================
+|Format|Input|result
+|.2|42|42
+|.2|4.2|4.2
+|.1|42|4e+1
+|.1|4.2|4
+|=======================
+
+Some general examples:
+
+[options="header"]
+|=======================
+|Format|Input|result
+|.0%|0.123|12%
+|$.2f|-3.5|£3.50
+|+20|42|                 +42
+|.^20|42|.........42.........
+|.2s"|42e6|42M
+|#x"|48879|0xbeef
+|,.2r|4223|4,200
+|=======================
+
 ==== Metric aggregator
 Metric aggregators calculate a value based on the values from the events that are being aggregated. The output of a metric aggregator is a number. The following metric aggregators are available:
 
