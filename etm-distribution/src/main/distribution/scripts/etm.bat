@@ -63,7 +63,7 @@ if NOT "%CLASSPATH_PREFIX%" == "" set CLASSPATH=%CLASSPATH_PREFIX%;%CLASSPATH%
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-%JAVACMD% %JAVA_OPTS% -Xms256m -Xmx1024m -Xss256m -classpath %CLASSPATH% -Dapp.name="${applicationName}" -Dapp.version="${applicationVersion}" -Dapp.repo="%REPO%" -Dapp.home="%BASEDIR%" -Dbasedir="%BASEDIR%" ${mainClassName} --config-dir="%BASEDIR%/config" %CMD_LINE_ARGS%
+%JAVACMD% %JAVA_OPTS% -Xms256m -Xmx1024m -Xss256m -classpath %CLASSPATH% -Djava.net.useSystemProxies=true -Dapp.name="${applicationName}" -Dapp.version="${applicationVersion}" -Dapp.repo="%REPO%" -Dapp.home="%BASEDIR%" -Dbasedir="%BASEDIR%" ${mainClassName} --config-dir="%BASEDIR%/config" %CMD_LINE_ARGS%
 if %ERRORLEVEL% NEQ 0 goto error
 goto end
 
