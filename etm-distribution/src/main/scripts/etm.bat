@@ -53,7 +53,7 @@ if "%JAVACMD%"=="" set JAVACMD=java
 
 if "%REPO%"=="" set REPO=%BASEDIR%\lib
 
-set CLASSPATH="%REPO%"\*
+set CLASSPATH="%REPO%"\*;"%REPO%"\ext\*
 
 set ENDORSED_DIR=
 if NOT "%ENDORSED_DIR%" == "" set CLASSPATH="%BASEDIR%"\%ENDORSED_DIR%\*;%CLASSPATH%

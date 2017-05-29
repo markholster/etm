@@ -48,9 +48,9 @@ Although {etm} best performs on linux like systems it can be run under windows a
 === Integration with IBM MQ and/or IBM Integration Bus
 {etm} is capable of providing deep integration with IBM MQ and or IBM Integration Bus. To make use of any of these integrations the classpath of {etm} needs to be extended. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}. 
 
-To make use of the IBM MQ integration you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory. This integration makes it possible to process events from any IBM MQ Destination. For further configuration see the <<IBM MQ section in etm.yml>>.
+To make use of the IBM MQ integration you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib/ext directory. This integration makes it possible to process events from any IBM MQ Destination. For further configuration see the <<IBM MQ section in etm.yml>>.
 
-The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}. To make use of this integration you need to copy a file named ''configmanagerproxy.jar'' from your MQ installation to the <INSTALL_DIR>/lib directory when you are running IIB version 9.x. If you are running IIB version 10.x the file is named ''integrationapi.jar''.
+The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}. To make use of this integration you need to copy a file named ''configmanagerproxy.jar'' from your MQ installation to the <INSTALL_DIR>/lib/ext directory when you are running IIB version 9.x. If you are running IIB version 10.x the file is named ''integrationapi.jar''.
 Also, for both versions of IBM Integration Bus the file ''ibmjsseprovider2.jar'' needs to be copied as well. All files can be found in your IBM Integration Bus installation.
 
 === Node configuration
