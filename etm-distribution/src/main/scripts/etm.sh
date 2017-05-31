@@ -171,7 +171,7 @@ then
   REPO="$BASEDIR"/lib
 fi
 
-CLASSPATH="$REPO"/*;"$REPO"/ext/*
+CLASSPATH="$REPO"/*:"$REPO"/ext/*
 
 getpid() {
     if [ -f "$PIDFILE" ]
