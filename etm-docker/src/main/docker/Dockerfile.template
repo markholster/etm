@@ -14,7 +14,7 @@ RUN apk update && \
     wget https://www.jecstar.com/downloads/etm/etm-${etm-version}.tgz && \
     wget https://www.jecstar.com/downloads/etm/etm-${etm-version}.tgz.sha512 && \
     test "etm-${etm-version}.tgz: OK" == "$(cat etm-${etm-version}.tgz.sha512 | sha512sum -c)" && \
-    tar zxf etm-${etm-version}.tgz && \
+    tar -zxf etm-${etm-version}.tgz && \
     chown -R etm:etm etm-${etm-version} && \
     mv etm-${etm-version}/* . && \
     rmdir etm-${etm-version} && \
