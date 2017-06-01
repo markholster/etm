@@ -41,6 +41,8 @@ public class EmbeddableLdapServer {
 	public static final String BIND_PASSWORD = "admin-password";
 	public static final String GROUP_BASE_DN = "ou=groups,dc=jecstar,dc=com";
 	public static final String USER_BASE_DN = "ou=people,dc=jecstar,dc=com";
+	public static final String DEPARTMENT_1_USER_BASE_DN = "ou=department1," + USER_BASE_DN;
+	public static final String DEPARTMENT_2_USER_BASE_DN = "ou=department2," + USER_BASE_DN;
 	
 	public static final String USER_ID_ATTRIBUTE = "uid";
 	public static final String USER_NAME_ATTRIBUTE = "cn";
@@ -211,7 +213,21 @@ public class EmbeddableLdapServer {
 			entryPeople.add("objectClass", "organizationalUnit", "top");
 			entryPeople.add("ou", "people");
 			service.getAdminSession().add(entryPeople);
+			
+			// Add dep 1 context
+			Dn dnDep1 = new Dn(DEPARTMENT_1_USER_BASE_DN);
+			Entry entryDep1 = service.newEntry(dnDep1);
+			entryDep1.add("objectClass", "organizationalUnit", "top");
+			entryDep1.add("ou", "people");
+			service.getAdminSession().add(entryDep1);
 
+			// Add dep 1 context
+			Dn dnDep2 = new Dn(DEPARTMENT_2_USER_BASE_DN);
+			Entry entryDep2 = service.newEntry(dnDep2);
+			entryDep2.add("objectClass", "organizationalUnit", "top");
+			entryDep2.add("ou", "people");
+			service.getAdminSession().add(entryDep2);
+			
 			// Add system context.
 			Dn dnSystem = new Dn("ou=system,dc=jecstar,dc=com");
 			Entry entrySystem = service.newEntry(dnSystem);
@@ -235,11 +251,11 @@ public class EmbeddableLdapServer {
 			entryUser.add("userPassword", BIND_PASSWORD);
 			service.getAdminSession().add(entryUser);
 
-			addUser(service, ADMIN_USER_ID, "ETM Administrator");
-			addUser(service, "etm-searcher", "ETM Searcher");
-			addUser(service, "test-user-1", "Test user 1");
-			addUser(service, "test-user-2", "Test user 2");
-			addUser(service, "test-user-3", "Test user 3");
+			addUser(service, ADMIN_USER_ID, "ETM Administrator", USER_BASE_DN);
+			addUser(service, "etm-searcher", "ETM Searcher", USER_BASE_DN);
+			addUser(service, "test-user-1", "Test user 1", USER_BASE_DN);
+			addUser(service, "test-user-2", "Test user 2", DEPARTMENT_1_USER_BASE_DN);
+			addUser(service, "test-user-3", "Test user 3", DEPARTMENT_2_USER_BASE_DN);
 			
 			// Add some groups
 			Dn dnGroup = new Dn(ADMIN_GROUP_DN);
@@ -261,8 +277,8 @@ public class EmbeddableLdapServer {
 		// We are all done !
 	}
 	
-	private void addUser(DirectoryService service, String userId, String userName) throws LdapException {
-		Dn dnUser = new Dn("cn=" + userId + ",ou=people,dc=jecstar,dc=com");
+	private void addUser(DirectoryService service, String userId, String userName, String baseDN) throws LdapException {
+		Dn dnUser = new Dn("cn=" + userId + "," + baseDN);
 		Entry entryUser = service.newEntry(dnUser);
 		entryUser.add("objectClass", "inetOrgPerson", "organizationalPerson", "person", "top");
 		entryUser.add(USER_NAME_ATTRIBUTE, userName);
@@ -303,18 +319,22 @@ public class EmbeddableLdapServer {
 	 * @throws Exception
 	 */
 	public void startServer() {
-		server = new LdapServer();
-		server.setTransports(new TcpTransport(HOST, PORT));
-		server.setDirectoryService(service);
+		this.server = new LdapServer();
+		this.server.setTransports(new TcpTransport(HOST, PORT));
+		this.server.setDirectoryService(service);
 		try {
-			server.start();
+			this.server.start();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
 	public void stopServer() {
-		server.stop();
+		this.server.stop();
+	}
+	
+	public static void main(String[] args) {
+		new EmbeddableLdapServer().startServer();
 	}
 
 }

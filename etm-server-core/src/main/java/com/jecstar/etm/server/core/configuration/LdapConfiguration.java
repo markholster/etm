@@ -17,7 +17,7 @@ public class LdapConfiguration {
 			}
 		}
 	}
-
+	
 	// Connection settings
 	private String host;
 	private int port;
@@ -34,6 +34,7 @@ public class LdapConfiguration {
 	// User filters
 	private String userBaseDn;
 	private String userSearchFilter;
+	private boolean userSearchInSubtree;
 	private String userIdentifierAttribute;
 	private String userFullNameAttribute;
 	private String userEmailAttribute;
@@ -114,6 +115,12 @@ public class LdapConfiguration {
 	}
 	public void setUserSearchFilter(String userSearchFilter) {
 		this.userSearchFilter = userSearchFilter;
+	}
+	public boolean isUserSearchInSubtree() {
+		return this.userSearchInSubtree;
+	}
+	public void setUserSearchInSubtree(boolean userSearchInSubtree) {
+		this.userSearchInSubtree = userSearchInSubtree;
 	}
 	public String getUserIdentifierAttribute() {
 		return this.userIdentifierAttribute;

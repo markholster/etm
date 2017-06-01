@@ -1,7 +1,11 @@
 package com.jecstar.etm.server.core.ldap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 
@@ -73,6 +77,33 @@ public class DirectoryTest {
 		assertEquals("etm-admin", principal.getId());
 		assertEquals("etm-admin@localhost", principal.getEmailAddress());
 		assertSame(2, principal.getGroups().size());
+	}
+	
+	@Test
+	public void testAuthenticateWithoutSubtreeSearch() {
+		LdapConfiguration ldapConfig = createLdapConfiguration();
+		assertFalse(ldapConfig.isUserSearchInSubtree());
+		Directory directory = new Directory(ldapConfig);
+		// Test user 1 is placed in user base dn and should be able to login.
+		assertNotNull(directory.authenticate("test-user-1", "password"));
+		// Test users 2 & 3 are a level below the base dn and should not be able to login.
+		assertNull(directory.authenticate("test-user-2", "password"));
+		assertNull(directory.authenticate("test-user-3", "password"));
+		directory.close();
+	}
+	
+	@Test
+	public void testAuthenticateWithSubtreeSearch() {
+		LdapConfiguration ldapConfig = createLdapConfiguration();
+		ldapConfig.setUserSearchInSubtree(true);
+		assertTrue(ldapConfig.isUserSearchInSubtree());
+		Directory directory = new Directory(ldapConfig);
+		// Test user 1 is placed in user base dn and should be able to login.
+		assertNotNull(directory.authenticate("test-user-1", "password"));
+		// Test users 2 & r are a level below the base dn and should also able to login.
+		assertNotNull(directory.authenticate("test-user-2", "password"));
+		assertNotNull(directory.authenticate("test-user-3", "password"));
+		directory.close();
 	}
 	
 	@Test

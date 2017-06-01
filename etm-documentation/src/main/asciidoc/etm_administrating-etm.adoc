@@ -87,7 +87,7 @@ To add, create or modify groups browse to http://localhost:8080/gui/settings/gro
 
 When a user is added to multiple groups he or she has the roles and Filter queries of all groups combined. Also if any of the groups of an user has the ''Always show correlated events'' option set to ''Yes'' the correlated events will be shown in the event detail screen.
 
-==== Import grou from ldap
+==== Import group from ldap
 In case you have configured a ldap server in the <<Ldap settings>> you can import a group by clicking on the ''Import'' button. Select the group you want to import and confirm your selection by clicking on the ''Import'' button. Make sure you assign at least one role to the group otherwise users that are member of that group have no access rights!    
 
 === Cluster
@@ -169,12 +169,13 @@ The cluster page has grouped related configuration items into several tabs:
 |Group search filter|The search filter for groups that need to be synchronized with {etm}. Make sure you use the variable ''{group}'' on the place where the name of the group would normally be in your search filter. E.g. ''(cn={group})''
 |User base DN|The base DN for all user that need to be synchronized with {etm}.
 |User search filter|The search filter for users that need to be synchronized with {etm}. Make sure you use the variable ''{user}'' on the place where the id of the user would normally be in your search filter. E.g. ''(uid={user})''
+|User search in subtree|Set to ''Yes'' when the search for users should take place in the entire ''User base DN'' instead of only the root of the ''User base DN''.
 |User identifier attribute|The name of the attribute that holds the id of the user.
 |User full name attribute|The name of the attribute that holds the full name of the user.
 |User email attribute|The name of the attribute that holds the email address of the user.
 |User member of groups attribute|Some ldap instances hold the group memberships of an user inside an user attribute. Place the name of that attribute in this field if this situation applies to your ldap configuration. 
 |User groups query base DN|The base DN for the query to find the group memberships of an user. Most of the time this would be the same af the ''Groupe base DN''.
-|User groups query filter|The filter used to determine the group membership(s) of an user. User attributes may be provided in the for of ''{<attribute-name>}''. E.g. (| (member={dn}) (uniqueMember={dn}) (memberUid={uid})) 
+|User groups query filter|The filter used to determine the group membership(s) of an user. User attributes may be provided in the for of ''{<attribute-name>}''. E.g. ''(| (member={dn}) (uniqueMember={dn}) (memberUid={uid}))''
 |======================= 
 
 When changing any of these properties no restart is required. All settings will be automatically applied within 60 seconds. For some settings a hot-restart of the processor is required. This may cause a little latency peek in the Processor.

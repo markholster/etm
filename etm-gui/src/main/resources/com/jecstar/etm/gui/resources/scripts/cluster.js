@@ -198,6 +198,7 @@ function buildClusterPage() {
 		$('#input-ldap-connection-test-search-filter').val(data.connection_test_search_filter);
 		$('#input-ldap-user-base-dn').val(data.user_base_dn);
 		$('#input-ldap-user-search-filter').val(data.user_search_filter);
+		$('#sel-ldap-user-search-in-subtree').val(data.user_search_in_subtree ? 'true' : 'false');
 		$('#input-ldap-user-id-attribute').val(data.user_identifier_attribute);
 		$('#input-ldap-user-fullname-attribute').val(data.user_full_name_attribute);
 		$('#input-ldap-user-email-attribute').val(data.user_email_attribute);
@@ -221,6 +222,7 @@ function buildClusterPage() {
 		ldapData.connection_test_search_filter = $('#input-ldap-connection-test-search-filter').val();
 		ldapData.user_base_dn = $('#input-ldap-user-base-dn').val();
 		ldapData.user_search_filter = $('#input-ldap-user-search-filter').val();
+		ldapData.user_search_in_subtree = $('#sel-ldap-user-search-in-subtree').val() == 'true' ? true : false;
 		ldapData.user_identifier_attribute = $('#input-ldap-user-id-attribute').val();
 		ldapData.user_full_name_attribute = $('#input-ldap-user-fullname-attribute').val();
 		ldapData.user_email_attribute = $('#input-ldap-user-email-attribute').val();

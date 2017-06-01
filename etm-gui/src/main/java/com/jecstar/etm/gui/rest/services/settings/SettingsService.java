@@ -771,6 +771,10 @@ public class SettingsService extends AbstractJsonService {
 				throw new EtmException(EtmException.NO_MORE_ADMINS_LEFT);
 			} 
 		}
+		if (currentPrincipal != null) {
+			// Copy the ldap base of the original user because it may never be overwritten.
+			newPrincipal.setLdapBase(currentPrincipal.isLdapBase());
+		}
 		client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
 			.setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal), XContentType.JSON)
 			.setDocAsUpsert(true)
@@ -899,6 +903,7 @@ public class SettingsService extends AbstractJsonService {
 			}
 		}
 		if (currentGroup != null) {
+			// Copy the ldap base of the original group because it may never be overwritten.
 			newGroup.setLdapBase(currentGroup.isLdapBase());
 		}
 		client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, groupName)

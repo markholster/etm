@@ -15,6 +15,7 @@ public interface LdapConfigurationTags {
 	
 	String getUserBaseDnTag();
 	String getUserSearchFilterTag();
+	String getUserSearchInSubtreeTag();
 	String getUserIdentifierAttributeTag();
 	String getUserFullNameAttributeTag();
 	String getUserEmailAttributeTag();

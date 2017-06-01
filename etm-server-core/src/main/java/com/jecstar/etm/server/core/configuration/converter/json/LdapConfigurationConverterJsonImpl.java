@@ -36,6 +36,7 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 		
 		ldapConfiguration.setUserBaseDn(this.converter.getString(this.tags.getUserBaseDnTag(), valueMap));
 		ldapConfiguration.setUserSearchFilter(this.converter.getString(this.tags.getUserSearchFilterTag(), valueMap));
+		ldapConfiguration.setUserSearchInSubtree(this.converter.getBoolean(this.tags.getUserSearchInSubtreeTag(), valueMap, false));
 		ldapConfiguration.setUserIdentifierAttribute(this.converter.getString(this.tags.getUserIdentifierAttributeTag(), valueMap));
 		ldapConfiguration.setUserFullNameAttribute(this.converter.getString(this.tags.getUserFullNameAttributeTag(), valueMap));
 		ldapConfiguration.setUserEmailAttribute(this.converter.getString(this.tags.getUserEmailAttributeTag(), valueMap));
@@ -67,6 +68,7 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getUserBaseDnTag(), ldapConfiguration.getUserBaseDn(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getUserSearchFilterTag(), ldapConfiguration.getUserSearchFilter(), sb, !added) || added;
+		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getUserSearchInSubtreeTag(), ldapConfiguration.isUserSearchInSubtree(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getUserIdentifierAttributeTag(), ldapConfiguration.getUserIdentifierAttribute(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getUserFullNameAttributeTag(), ldapConfiguration.getUserFullNameAttribute(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getUserEmailAttributeTag(), ldapConfiguration.getUserEmailAttribute(), sb, !added) || added;

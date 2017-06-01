@@ -116,14 +116,20 @@ public class Directory implements AutoCloseable {
 		SearchDnResolver dnResolver = new SearchDnResolver(this.connectionFactory);
 		dnResolver.setBaseDn(this.ldapConfiguration.getUserBaseDn() == null ? "" : this.ldapConfiguration.getUserBaseDn());
 		dnResolver.setUserFilter(this.ldapConfiguration.getUserSearchFilter());
+		dnResolver.setSubtreeSearch(this.ldapConfiguration.isUserSearchInSubtree());
+		
 		BindAuthenticationHandler authHandler = new BindAuthenticationHandler(this.connectionFactory);
 		authHandler.setAuthenticationControls(new PasswordPolicyControl());
-		Authenticator auth = new Authenticator(dnResolver, authHandler);
+		
 		SearchEntryResolver searchEntryResolver = new SearchEntryResolver(this.connectionFactory);
 		searchEntryResolver.setBaseDn(this.ldapConfiguration.getUserBaseDn() == null ? "" : this.ldapConfiguration.getUserBaseDn());
+		searchEntryResolver.setSubtreeSearch(this.ldapConfiguration.isUserSearchInSubtree());
+		
+		Authenticator auth = new Authenticator(dnResolver, authHandler);
 		auth.setEntryResolver(searchEntryResolver);
 		// TODO hier is ook een ActiveDirectoryResponseHandler mogelijk
 		auth.setAuthenticationResponseHandlers(new PasswordPolicyAuthenticationResponseHandler());
+		
 		AuthenticationResponse response;
 		try {
 			response = auth.authenticate(new AuthenticationRequest(userId, new Credential(password), createUserAttributes(this.ldapConfiguration).toArray(new String[0])));
@@ -144,7 +150,6 @@ public class Directory implements AutoCloseable {
 				addGroups(this.ldapConfiguration, principal, ldapEntry);
 			}
 			return principal;
-			
 		} else {
 			if (log.isDebugLevelEnabled()) {
 				AccountState accountState = response.getAccountState();
@@ -239,6 +244,7 @@ public class Directory implements AutoCloseable {
 		executor.setBaseDn(this.ldapConfiguration.getUserBaseDn() == null ? "" : this.ldapConfiguration.getUserBaseDn());
 		executor.setSizeLimit(15);
 		executor.setSortBehavior(SortBehavior.SORTED);
+		executor.setSearchScope(this.ldapConfiguration.isUserSearchInSubtree() ? SearchScope.SUBTREE : SearchScope.ONELEVEL);
 		try {
 			SearchResult searchResult = executor.search(
 				this.connectionFactory, 
@@ -374,7 +380,7 @@ public class Directory implements AutoCloseable {
 		SearchExecutor executor = new SearchExecutor();
 		executor.setBaseDn(ldapConfiguration.getUserGroupsQueryBaseDn() == null ? "" : ldapConfiguration.getUserGroupsQueryBaseDn());
 		SearchFilter searchFilter = new SearchFilter(ldapConfiguration.getUserGroupsQueryFilter());
-		Matcher matcher = attributePattern.matcher(ldapConfiguration.getUserGroupsQueryFilter());
+		Matcher matcher = this.attributePattern.matcher(ldapConfiguration.getUserGroupsQueryFilter());
 		while (matcher.find()) {
 			if ("dn".equalsIgnoreCase(matcher.group(1))) {
 				searchFilter.setParameter("dn", ldapEntry.getDn());
@@ -465,6 +471,7 @@ public class Directory implements AutoCloseable {
 		} else if (!ObjectUtils.equalsNullProof(this.ldapConfiguration.getConnectionTestSearchFilter(), ldapConfiguration.getConnectionTestSearchFilter())) {
 			reconnectNecessary = true;
 		}
+		this.ldapConfiguration = ldapConfiguration;
 		if (reconnectNecessary) {
 			if (log.isInfoLevelEnabled()) {
 				log.logInfoMessage("Detected a change in the configuration that needs a reconnect to the ldap server.");
