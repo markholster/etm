@@ -8,3 +8,4 @@
 * Automatic date interval determination in graphs.
 * Custom y-axis format in graphs.
 * Automatic install and update free license.
+* Allow subtree scope in LDAP user authentication.
