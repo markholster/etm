@@ -2,10 +2,8 @@
 #
 # The binding address of ETM. By default ETM will bind to all ipv4 interfaces
 bindingAddress: 0.0.0.0
-
 # The name of the ETM Cluster. When running multiple clusters it is advised to change this name. For example etm-dev for a development cluster.
 clusterName: Enterprise Telemetry Monitor
-
 # The name of this node. Although it is not required, it is strongly recommended to give each node in a cluster an unique name.
 instanceName: Node_1
 
@@ -15,6 +13,9 @@ elasticsearch:
   clusterName: elasticsearch
 # A comma separated list of Elasticsearch nodes to connect to.
   connectAddresses: 127.0.0.1:9300
+# Boolean indicating ETM should wait before any of the nodes configured in the 'connectAddresses' option is available. When setting this option to false starting ETM will fail when no nodes are available.   
+  waitForConnectionOnStartup: false  
+
 # The http configuration options  
 http:
 # Should the gui be enabled. Set this option to false if you want this node to be an processing node only.

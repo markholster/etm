@@ -9,6 +9,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -176,9 +177,41 @@ public class Launcher {
 				}
 			}
 		}
+		if (configuration.elasticsearch.waitForConnectionOnStartup) {
+			waitForActiveConnection(transportClient);
+		}
 		this.elasticClient = transportClient;
 	}
 	
+	private void waitForActiveConnection(TransportClient transportClient) {
+		while(transportClient.connectedNodes().isEmpty()) {
+			// Wait for any elasticsearch node to become active.
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}
+		}
+		ClusterHealthResponse clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
+		while (clusterHealthResponse.getInitializingShards() != 0 && clusterHealthResponse.getNumberOfPendingTasks() != 0) {
+			// Wait for all shards to be initialized and no more tasks pending.
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}			
+			clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
+		}
+	
+		
+	}
+
 	private void initializeMqProcessor(MetricRegistry metricRegistry, Configuration configuration) {
 		try {
 			Class<?> clazz = Class.forName("com.jecstar.etm.processor.ibmmq.IbmMqProcessorImpl");

@@ -204,6 +204,7 @@ The ''elasticsearch'' section contains all options that are necessary to connect
 |Name|Default value|Description
 |clusterName|elasticsearch|The name of the Elasticsearch cluster to connect to.
 |connectAddresses|127.0.0.1:9300|A comma separated list of Elasticsearch nodes to connect to. When high availability is a demand of your production environment you should provide at least 2 addresses.
+|waitForConnectionOnStartup|false|Wait for any of the connections supplied in the ''connectAddresses'' to be established before fully starting {etm}. This option is usefull when {etm} is started before any of the Elasticsearch nodes is started.
 |=======================
 
 ==== Http section in etm.yml
