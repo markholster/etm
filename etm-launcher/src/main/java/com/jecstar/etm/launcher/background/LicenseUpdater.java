@@ -42,8 +42,8 @@ public class LicenseUpdater implements Runnable {
 	@Override
 	public void run() {
 		License license = etmConfiguration.getLicense();
-		if (license == null || (license.getOwner().equals("Jecstar Free License") && license.getExpiryDate().isAfter(Instant.now().minus(18, ChronoUnit.HOURS)))) {
-			String licenseKey = getLicenseKey();
+		if (license == null || (license.getOwner().equals("Jecstar Free License") && license.getExpiryDate().isBefore(Instant.now().plus(18, ChronoUnit.HOURS)))) {
+			String licenseKey = downloadLicenseKey();
 			if (licenseKey != null) {
 				try {
 					etmConfiguration.setLicenseKey(licenseKey);
@@ -68,7 +68,7 @@ public class LicenseUpdater implements Runnable {
 		}
 	}
 	
-	private String getLicenseKey() {
+	private String downloadLicenseKey() {
 		BufferedReader in = null;
 		try {
 			URL url = new URL("https://www.jecstar.com/rest/license/etm/free/Jecstar%20Free%20License");
