@@ -101,9 +101,9 @@ public class Startup {
 				try {
 					if (field.getType().equals(String.class)) {
 						field.set(configurationInstance, value);
-					} else if (field.getType().equals(Boolean.class)){
+					} else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)){
 						field.set(configurationInstance, new Boolean(value));
-					} else if (field.getType().equals(Integer.class)) {
+					} else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
 						field.set(configurationInstance, new Integer(value));
 					} else if (field.getType().equals(File.class)) {
 						field.set(configurationInstance, new File(value));
