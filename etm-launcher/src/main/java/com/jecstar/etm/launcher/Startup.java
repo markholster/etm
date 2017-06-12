@@ -90,11 +90,11 @@ public class Startup {
 			if (field.getType().getName().startsWith("com.jecstar.")) {
 				// A nested configuration class.
 				try {
-					addEnvironmentToConfigruation(field.get(configurationInstance), prefix == null ? field.getName() : prefix + "." + field.getName());
+					addEnvironmentToConfigruation(field.get(configurationInstance), prefix == null ? field.getName() : prefix + "_" + field.getName());
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 				}
 			} else {
-				String value = System.getenv(prefix == null ? field.getName() : prefix + "." + field.getName());
+				String value = System.getenv(prefix == null ? field.getName() : prefix + "_" + field.getName());
 				if (value == null) {
 					continue;
 				}

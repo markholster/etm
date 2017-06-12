@@ -57,10 +57,10 @@ To run the Docker image {etm} needs to know where to find elasticsearch. The mos
 
 [source,bash,subs=attributes+]
 ----
-docker run -p 8080:8080 -e "elasticsearch.connectAddresses=<my-elasticsearch-host>:9300" -e "elasticsearch.clusterName=elasticsearch" jecstar.com/etm/etm:{project-version}
+docker run -p 8080:8080 -e "elasticsearch_connectAddresses=<my-elasticsearch-host>:9300" -e "elasticsearch_clusterName=elasticsearch" jecstar.com/etm/etm:{project-version}
 ----
 
-Most of the properties mentioned in the <<Node configuration>> chapter can be passed as environment variables to the Docker container.
+Most of the properties mentioned in the <<Node configuration>> chapter can be passed as environment variables to the Docker container. Properties not mentioned in the <<General configuration in etm.yml>> but is a separate section of the configuration should be prefixed by their section names. For example, the properties ''elasticsearch.clusterName'' in the configuration file should be passed as environment variable ''elasticsearch_clusterName''. In short, the 'dot' in the configuration file should be replaced with an 'underscore' in the environment variable name.
 
 Another option of configuring the Docker image is by mounting a custom configuration file from from host system to the location the image is expecting the configuration file. This can be done by adding
 
@@ -128,8 +128,8 @@ services:
     environment:
       instanceName: etm-node-1
       clusterName: Enterprise Telemetry Monitor
-      elasticsearch.clusetName: Enterprise Telemetry Monitor
-      elasticsearch.connectAddresses: es-master-node-1:9300
+      elasticsearch_clusetName: Enterprise Telemetry Monitor
+      elasticsearch_connectAddresses: es-master-node-1:9300
     networks:
       - etm
     ports:
