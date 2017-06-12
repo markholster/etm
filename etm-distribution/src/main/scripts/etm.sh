@@ -189,7 +189,7 @@ getpid() {
                 if [ "$DIST_OS" = "macosx" ]; then
                   pidtest=`$PSEXE -p $pid -o command -ww | grep "$JAVACMD" | tail -1`
                 else
-                  pidtest=`$PSEXE -p $pid -o args | grep "$JAVACMD" | tail -1`
+                  pidtest=`$PSEXE -o args,pid | grep "$JAVACMD" | grep $pid | tail -1`
                 fi
                 if [ "X$pidtest" = "X" ]
                 then
@@ -207,8 +207,12 @@ getpid() {
 }
 
 testpid() {
-    pid=`$PSEXE -p $pid | grep $pid | grep -v grep | awk '{print $1}' | tail -1`
-    if [ "X$pid" = "X" ]
+    if [ "$DIST_OS" = "macosx" ]; then
+      pidtest=`$PSEXE -p $pid -o command -ww | grep "$JAVACMD" | tail -1`
+    else
+      pidtest=`$PSEXE -o args,pid | grep "$JAVACMD" | grep $pid | tail -1`
+    fi
+    if [ "X$pidtest" = "X" ]
     then
         # Process is gone so remove the pid file.
         rm -f "$PIDFILE"
