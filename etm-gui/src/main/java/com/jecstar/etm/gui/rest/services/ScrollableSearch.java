@@ -48,10 +48,10 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 		if (this.response == null) {
 			executeSearch();
 		}
-		if (this.response.getHits().hits().length == this.currentIndexInResponse && this.nextBatchRequired) {
+		if (this.response.getHits().getHits().length == this.currentIndexInResponse && this.nextBatchRequired) {
 			scrollToNext();
 		}
-		boolean hasNext = this.currentIndexInResponse < this.response.getHits().hits().length; 
+		boolean hasNext = this.currentIndexInResponse < this.response.getHits().getHits().length; 
 		if (!hasNext) {
 			clearScrollIds();
 		}
@@ -68,7 +68,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		return this.response.getHits().hits()[this.currentIndexInResponse++];
+		return this.response.getHits().getHits()[this.currentIndexInResponse++];
 	}
 	
 	public void clearScrollIds() {
@@ -95,7 +95,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 		this.currentIndexInResponse = 0;
 		this.currentScrollId = this.response.getScrollId();
 		this.scrollIds.add(this.currentScrollId);
-		this.nextBatchRequired = this.scrollSize == this.response.getHits().hits().length;
+		this.nextBatchRequired = this.scrollSize == this.response.getHits().getHits().length;
 	}
 
 	private void scrollToNext() {
@@ -105,7 +105,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 		this.currentIndexInResponse = 0;
 		this.currentScrollId = this.response.getScrollId();
 		this.scrollIds.add(this.currentScrollId);
-		this.nextBatchRequired = this.scrollSize == this.response.getHits().hits().length;
+		this.nextBatchRequired = this.scrollSize == this.response.getHits().getHits().length;
 
 	}
 }

@@ -184,7 +184,6 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 		.setSettings(Settings.builder()
 			.put("number_of_shards", 1)
 			.put("number_of_replicas", 0))
-		.addMapping("_default_", createEtmConfigurationMapping("_default_"), XContentType.JSON)
 		.get();
 		if (create) {
 			insertDefaultEtmConfiguration(this.elasticClient);
@@ -206,12 +205,10 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	private String createEventMapping(String name) {
 		return "{ \"" + name + "\": " 
 				+ "{\"dynamic_templates\": ["
-				+ "{ \"" + this.eventTags.getPayloadTag() + "\": { \"match\": \"" + this.eventTags.getPayloadTag() + "\", \"mapping\": {\"index\": \"analyzed\"}}}"
-				+ ", { \"" + this.eventTags.getEndpointHandlerLocationTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerLocationTag() + "\", \"mapping\": {\"type\": \"geo_point\"}}}"
-				+ ", { \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"" + this.eventTags.getExpiryTag() + "\": { \"match\": \"" + this.eventTags.getExpiryTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"" + this.eventTags.getTimestampTag() + "\": { \"match\": \"" + this.eventTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}"
+				+ "{ \"" + this.eventTags.getEndpointHandlerLocationTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerLocationTag() + "\", \"mapping\": {\"type\": \"geo_point\"}}}"
+				+ ", { \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+				+ ", { \"" + this.eventTags.getExpiryTag() + "\": { \"match\": \"" + this.eventTags.getExpiryTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+				+ ", { \"" + this.eventTags.getTimestampTag() + "\": { \"match\": \"" + this.eventTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
 				+ "]}"
 				+ "}";
 	}
@@ -219,29 +216,26 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	private String createMetricsMapping(String name) {
 		return "{ \"" + name + "\": " 
 				+ "{\"dynamic_templates\": ["
-				+ "{ \"" + this.metricTags.getTimestampTag() + "\": { \"match\": \"" + this.metricTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}"
+				+ "{ \"" + this.metricTags.getTimestampTag() + "\": { \"match\": \"" + this.metricTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+				+ "]}"
 				+ "}";	
 	}
 	
 	private String createAuditMapping(String name) {
 		return "{ \"" + name + "\": " 
 				+ "{\"dynamic_templates\": ["
-				+ "{ \"" + this.auditTags.getTimestampTag() + "\": { \"match\": \"" + this.auditTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"" + this.auditTags.getHandlingTimeTag() + "\": { \"match\": \"" + auditTags.getHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}"
+				+ "{ \"" + this.auditTags.getTimestampTag() + "\": { \"match\": \"" + this.auditTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+				+ ", { \"" + this.auditTags.getHandlingTimeTag() + "\": { \"match\": \"" + this.auditTags.getHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+				+ "]}"
 				+ "}";	
 	}
 	
-	private String createEtmConfigurationMapping(String name) {
-		return "{ \"" + name + "\": {\"dynamic_templates\": [{ \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}}";	
-	}
 
 	private String createEtmStateMapping(String name) {
 		return "{ \"" + name + "\": " 
 				+ "{\"dynamic_templates\": ["
-				+ "{ \"" + this.sessionTags.getLastAccessedTag() + "\": { \"match\": \"" + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\", \"index\": \"not_analyzed\"}}}"
-				+ ", { \"other\": { \"match\": \"*\", \"mapping\": {\"index\": \"not_analyzed\"}}}]}"
+				+ "{ \"" + this.sessionTags.getLastAccessedTag() + "\": { \"match\": \"" + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+				+ "]}"
 				+ "}";	
 	}
 

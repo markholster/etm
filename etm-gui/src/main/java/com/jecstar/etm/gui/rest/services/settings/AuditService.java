@@ -114,8 +114,8 @@ public class AuditService extends AbstractIndexMetadataService {
 		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"start_ix\": " + parameters.getStartIndex());
-		result.append(",\"end_ix\": " + (parameters.getStartIndex() + response.getHits().hits().length - 1));
-		result.append(",\"has_more_results\": " + (parameters.getStartIndex() + response.getHits().hits().length < response.getHits().getTotalHits() - 1));
+		result.append(",\"end_ix\": " + (parameters.getStartIndex() + response.getHits().getHits().length - 1));
+		result.append(",\"has_more_results\": " + (parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1));
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"results\": [");
 		addSearchHits(result, response.getHits());
@@ -143,7 +143,7 @@ public class AuditService extends AbstractIndexMetadataService {
 			.setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-			requestBuilder.addSort(parameters.getSortField(), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+			requestBuilder.addSort(getSortProperty(client, ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL, null ,parameters.getSortField()), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
 		}
 		return requestBuilder;
 	}

@@ -225,8 +225,8 @@ public class SearchService extends AbstractIndexMetadataService {
 		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"start_ix\": " + parameters.getStartIndex());
-		result.append(",\"end_ix\": " + (parameters.getStartIndex() + response.getHits().hits().length - 1));
-		result.append(",\"has_more_results\": " + (parameters.getStartIndex() + response.getHits().hits().length < response.getHits().getTotalHits() - 1));
+		result.append(",\"end_ix\": " + (parameters.getStartIndex() + response.getHits().getHits().length - 1));
+		result.append(",\"has_more_results\": " + (parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1));
 		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
 		result.append(",\"max_downloads\": " + etmConfiguration.getMaxSearchResultDownloadRows());
 		result.append(",\"results\": [");
@@ -283,7 +283,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			.setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-			requestBuilder.addSort(parameters.getSortField(), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+			requestBuilder.addSort(getSortProperty(client, ElasticsearchLayout.ETM_EVENT_INDEX_ALIAS_ALL, null ,parameters.getSortField()), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
 		}
 		if (parameters.getTypes() != null && !parameters.getTypes().isEmpty()) {
 			requestBuilder.setTypes(parameters.getTypes().toArray(new String[parameters.getTypes().size()]));
@@ -429,10 +429,10 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (auditLogsForEvent != null) {
 				// Audit logs received async. Wait here to add the to the result.
 				SearchResponse auditLogResponse = auditLogsForEvent.actionGet();
-				if (auditLogResponse.getHits().hits().length != 0) {
+				if (auditLogResponse.getHits().getHits().length != 0) {
 					boolean auditLogAdded = false;
 					result.append(", \"audit_logs\": [");
-					for (SearchHit hit : auditLogResponse.getHits().hits()) {
+					for (SearchHit hit : auditLogResponse.getHits().getHits()) {
 						Map<String, Object> auditLogValues = hit.getSource();
 						if (auditLogAdded) {
 							result.append(",");
@@ -463,9 +463,9 @@ public class SearchService extends AbstractIndexMetadataService {
 	private ListenableActionFuture<SearchResponse> findAuditLogsForEvent(String eventType, String eventId) {
 		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 		boolQueryBuilder.must(new TermQueryBuilder("_type", "getevent"));
-		boolQueryBuilder.must(new TermQueryBuilder(this.auditLogTags.getEventTypeTag(), eventType));
-		boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getEventIdTag(), eventId));
-		boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getCorrelatedEventsTag() + "." + this.auditLogTags.getEventIdTag(), eventId));
+		boolQueryBuilder.must(new TermQueryBuilder(this.auditLogTags.getEventTypeTag() + KEYWORD_SUFFIX, eventType));
+		boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getEventIdTag() + KEYWORD_SUFFIX, eventId));
+		boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getCorrelatedEventsTag() + "." + this.auditLogTags.getEventIdTag() + KEYWORD_SUFFIX, eventId));
 		boolQueryBuilder.minimumShouldMatch(1);
 		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL)
 			.setQuery(boolQueryBuilder)
@@ -512,7 +512,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			builder.setFetchSource(includes, excludes);
 		}
 		SearchResponse response = builder.get();
-		if (response.getHits().hits().length == 0) {
+		if (response.getHits().getHits().length == 0) {
 			return null;
 		}
 		return response.getHits().getAt(0);
@@ -529,7 +529,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			.setFetchSource(true)
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		SearchResponse response = builder.get();
-		if (response.getHits().hits().length == 0) {
+		if (response.getHits().getHits().length == 0) {
 			return null;
 		}
 		return response.getHits().getAt(0);		
@@ -559,19 +559,19 @@ public class SearchService extends AbstractIndexMetadataService {
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 								"." + this.eventTags.getReadingEndpointHandlersTag() + 
 								"." + this.eventTags.getEndpointHandlerApplicationTag() + 
-								"." + this.eventTags.getApplicationNameTag(), applicationName))
+								"." + this.eventTags.getApplicationNameTag() + KEYWORD_SUFFIX, applicationName))
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 								"." + this.eventTags.getReadingEndpointHandlersTag() + 
-								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
+								"." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
 			).should(
 					new BoolQueryBuilder()
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 								"." + this.eventTags.getWritingEndpointHandlerTag() + 
 								"." + this.eventTags.getEndpointHandlerApplicationTag() + 
-								"." + this.eventTags.getApplicationNameTag(), applicationName))
+								"." + this.eventTags.getApplicationNameTag() + KEYWORD_SUFFIX, applicationName))
 						.must(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 								"." + this.eventTags.getWritingEndpointHandlerTag() + 
-								"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
+								"." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
 		);
 		
 		
@@ -676,7 +676,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			.setSize(1)
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();
-		if (response.getHits().hits().length == 0) {
+		if (response.getHits().getHits().length == 0) {
 			return null;
 		}
 		SearchHit searchHit = response.getHits().getAt(0);
@@ -903,10 +903,10 @@ public class SearchService extends AbstractIndexMetadataService {
 				.minimumShouldMatch(1)
 				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 						"." + this.eventTags.getReadingEndpointHandlersTag() + 
-						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId))
+						"." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
 				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 						"." + this.eventTags.getWritingEndpointHandlerTag() + 
-						"." + this.eventTags.getEndpointHandlerTransactionIdTag(), transactionId));
+						"." + this.eventTags.getEndpointHandlerTransactionIdTag()+ KEYWORD_SUFFIX, transactionId));
 		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
 		SearchRequestBuilder searchRequest = client.prepareSearch(ElasticsearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 				.setTypes("http", "messaging")
@@ -1013,7 +1013,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		if ("messaging".equals(type)) {
 			MessagingEventType messagingEventType = MessagingEventType.safeValueOf(subType);
 			if (MessagingEventType.REQUEST.equals(messagingEventType)) {
-				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), id));
+				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag() + KEYWORD_SUFFIX, id));
 			} else if (MessagingEventType.RESPONSE.equals(messagingEventType) && correlationId != null) {
 				queryBuilder = new IdsQueryBuilder().types("messaging").addIds(correlationId);
 			}
@@ -1022,7 +1022,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (HttpEventType.RESPONSE.equals(httpEventType) && correlationId != null) {
 				queryBuilder = new IdsQueryBuilder().types("http").addIds(correlationId);
 			} else {
-				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag(), id));
+				queryBuilder = new BoolQueryBuilder().must(new TermQueryBuilder(this.eventTags.getCorrelationIdTag() + KEYWORD_SUFFIX, id));
 			}
 		}
 		if (queryBuilder == null) {
@@ -1036,10 +1036,10 @@ public class SearchService extends AbstractIndexMetadataService {
 				.setSize(10)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.get();
-		if (response.getHits().hits().length == 0) {
+		if (response.getHits().getHits().length == 0) {
 			return;
 		}
-		for (SearchHit searchHit : response.getHits().hits()) {
+		for (SearchHit searchHit : response.getHits().getHits()) {
 			Map<String, Object> source = searchHit.getSource();
 			List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
 			if (endpoints == null) {
