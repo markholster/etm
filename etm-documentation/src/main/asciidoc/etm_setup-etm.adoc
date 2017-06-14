@@ -87,12 +87,20 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.4.1
     deploy:
       replicas: 1
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 2G
     environment:
       cluster.name: Enterprise Telemetry Monitor
       bootstrap.memory_lock: 'true'
       node.data: 'false'
       node.ingest: 'false'
       xpack.security.enabled: 'false'
+      network.host: 0.0.0.0
+      transport.tcp.port: 9300
+      discovery.zen.ping.unicast.hosts: es-master-node-1:9300
     networks:
       - etm
     ulimits:
@@ -102,6 +110,11 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.4.1
     deploy:
       replicas: 1
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 2G
     depends_on:
       - es-master-node-1  
     environment:
@@ -110,7 +123,9 @@ services:
       node.master: 'false'
       node.ingest: 'false'
       xpack.security.enabled: 'false'
-      discovery.zen.ping.unicast.hosts: es-master-node-1
+      network.host: 0.0.0.0
+      transport.tcp.port: 9305
+      discovery.zen.ping.unicast.hosts: es-master-node-1:9300
     networks:
       - etm
     ulimits:
@@ -119,7 +134,7 @@ services:
     volumes:
       - es-data-node-1:/usr/share/elasticsearch/data
   etm-node-1:
-    image: jecstar.com/etm/etm:{project-version}
+    image: etm:{project-version}
     deploy:
       replicas: 1
     depends_on:
@@ -128,17 +143,20 @@ services:
     environment:
       instanceName: etm-node-1
       clusterName: Enterprise Telemetry Monitor
-      elasticsearch_clusetName: Enterprise Telemetry Monitor
-      elasticsearch_connectAddresses: es-master-node-1:9300
+      elasticsearch_clusterName: Enterprise Telemetry Monitor
+      elasticsearch_connectAddresses: es-data-node-1:9305
+      elasticsearch_waitForConnectionOnStartup: 'true'
     networks:
       - etm
     ports:
-      - "8080:8080"            
+      - "8080:8080"
 networks:
   etm:
 volumes:
-  es-data-node-1:
+  es-data-node-1:      
 ----
+
+
 
 === Integration with IBM MQ and/or IBM Integration Bus
 {etm} is capable of providing deep integration with IBM MQ and or IBM Integration Bus. To make use of any of these integrations the classpath of {etm} needs to be extended. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}. 

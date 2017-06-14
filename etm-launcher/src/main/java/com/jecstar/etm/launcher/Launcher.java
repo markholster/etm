@@ -164,6 +164,7 @@ public class Launcher {
 				.put("client.transport.sniff", true).build());
 		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
 		for (String host : hosts) {
+			// TODO dit gaat niet goed in Docker als de etm sevice opkomt voordat de es services er zijn. De hostname van es bestaat dan nog niet.
 			int ix = host.lastIndexOf(":");
 			if (ix != -1) {
 				try {
