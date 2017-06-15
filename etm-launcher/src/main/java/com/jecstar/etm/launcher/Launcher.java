@@ -173,7 +173,7 @@ public class Launcher {
 					break;
 				}
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
@@ -219,14 +219,14 @@ public class Launcher {
 			}
 			// Wait for any elasticsearch node to become active.
 			try {
-				Thread.sleep(5000);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
 		}
 		ClusterHealthResponse clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
-		while (clusterHealthResponse.getInitializingShards() != 0 && clusterHealthResponse.getNumberOfPendingTasks() != 0) {
-			// Wait for all shards to be initialized and no more tasks pending.
+		while (clusterHealthResponse.getInitializingShards() != 0 && clusterHealthResponse.getNumberOfPendingTasks() != 0 && clusterHealthResponse.getNumberOfDataNodes() != 0) {
+			// Wait for all shards to be initialized and no more tasks pending and at least 1 data node to be available.
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
