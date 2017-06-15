@@ -53,8 +53,9 @@ public class IndexCleaner implements Runnable {
 			log.logDebugMessage("Looking for indices in alias '" + indexAlias + "' to remove.");
 		}		
 		SortedMap<String, AliasOrIndex> aliases = this.client.admin().cluster()
-			    .prepareState().execute()
-			    .actionGet().getState()
+			    .prepareState()
+			    .get()
+			    .getState()
 			    .getMetaData().getAliasAndIndexLookup();
 		if (aliases.containsKey(indexAlias)) {
 			AliasOrIndex aliasOrIndex = aliases.get(indexAlias);
