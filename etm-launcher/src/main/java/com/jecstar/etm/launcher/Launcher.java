@@ -15,6 +15,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.discovery.MasterNotDiscoveredException;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
@@ -168,7 +169,7 @@ public class Launcher {
 		if (configuration.elasticsearch.waitForConnectionOnStartup) {
 			while (hostsAdded == 0) {
 				// Currently this can only happen in docker swarm installations where the elasticsearch service isn't fully started when ETM starts. This will result in a 
-				// UnknownHostException so that leaves with a transportclient without any hosts. Also this may ofcourse happen when the end users misspells the hostname in the configuration.
+				// UnknownHostException so that leaves with a transportclient without any hosts. Also this may happen when the end users misspells the hostname in the configuration.
 				if (Thread.currentThread().isInterrupted()) {
 					break;
 				}
@@ -224,18 +225,20 @@ public class Launcher {
 				Thread.currentThread().interrupt();
 			}
 		}
-		ClusterHealthResponse clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
-		while (clusterHealthResponse.getInitializingShards() != 0 && clusterHealthResponse.getNumberOfPendingTasks() != 0 && clusterHealthResponse.getNumberOfDataNodes() != 0) {
+		ClusterHealthResponse clusterHealthResponse = null;
+		while (clusterHealthResponse == null || (clusterHealthResponse.getInitializingShards() != 0 && clusterHealthResponse.getNumberOfPendingTasks() != 0 && clusterHealthResponse.getNumberOfDataNodes() != 0)) {
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}			
 			// Wait for all shards to be initialized and no more tasks pending and at least 1 data node to be available.
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
-			if (Thread.currentThread().isInterrupted()) {
-				return;
-			}			
-			clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
+			try {
+				clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
+			} catch (MasterNotDiscoveredException e) {}
 		}
 	
 		
