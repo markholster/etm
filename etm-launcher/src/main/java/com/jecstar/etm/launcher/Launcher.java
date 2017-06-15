@@ -14,6 +14,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
@@ -163,37 +164,64 @@ public class Launcher {
 				.put("cluster.name", configuration.elasticsearch.clusterName)
 				.put("client.transport.sniff", true).build());
 		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
-		for (String host : hosts) {
-			// TODO dit gaat niet goed in Docker als de etm sevice opkomt voordat de es services er zijn. De hostname van es bestaat dan nog niet.
-			int ix = host.lastIndexOf(":");
-			if (ix != -1) {
-				try {
-					InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
-					int port = Integer.parseInt(host.substring(ix + 1));
-					transportClient.addTransportAddress(new InetSocketTransportAddress(inetAddress, port));
-				} catch (UnknownHostException e) {
-					if (log.isWarningLevelEnabled()) {
-						log.logWarningMessage("Unable to connect to '" + host + "'", e);
-					}
-				}
-			}
-		}
+		int hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
 		if (configuration.elasticsearch.waitForConnectionOnStartup) {
+			while (hostsAdded == 0) {
+				// Currently this can only happen in docker swarm installations where the elasticsearch service isn't fully started when ETM starts. This will result in a 
+				// UnknownHostException so that leaves with a transportclient without any hosts. Also this may ofcourse happen when the end users misspells the hostname in the configuration.
+				if (Thread.currentThread().isInterrupted()) {
+					break;
+				}
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
+			}
 			waitForActiveConnection(transportClient);
 		}
 		this.elasticClient = transportClient;
 	}
 	
+	private int addElasticsearchHostsToTransportClient(String[] hosts, TransportClient transportClient) {
+		int added = 0;
+		for (String host : hosts) {
+			TransportAddress transportAddress = createTransportAddress(host);
+			if (transportAddress != null) {
+				transportClient.addTransportAddress(transportAddress);
+				added++;
+			}
+		}
+		return added;
+	}
+	
+	private TransportAddress createTransportAddress(String host) {
+		int ix = host.lastIndexOf(":");
+		if (ix != -1) {
+			try {
+				InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
+				int port = Integer.parseInt(host.substring(ix + 1));
+				return new InetSocketTransportAddress(inetAddress, port);
+			} catch (UnknownHostException e) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Unable to connect to '" + host + "'", e);
+				}
+			}
+		}
+		return null;
+	}
+
 	private void waitForActiveConnection(TransportClient transportClient) {
 		while(transportClient.connectedNodes().isEmpty()) {
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}
 			// Wait for any elasticsearch node to become active.
 			try {
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
-			}
-			if (Thread.currentThread().isInterrupted()) {
-				return;
 			}
 		}
 		ClusterHealthResponse clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
