@@ -53,11 +53,11 @@ Although {etm} best performs on linux like systems it can be run under windows a
 docker pull jecstar.com/etm/etm:{project-version}
 ----
 
-To run the Docker image {etm} needs to know where to find elasticsearch. The most simple way of doing this is to use an environment variable:
+To run the Docker image {etm} needs to know where to find Elasticsearch. The most simple way of doing this is to use an environment variable:
 
 [source,bash,subs=attributes+]
 ----
-docker run -p 8080:8080 -e "elasticsearch_connectAddresses=<my-elasticsearch-host>:9300" -e "elasticsearch_clusterName=elasticsearch" jecstar.com/etm/etm:{project-version}
+docker run -p 8080:8080 -e "elasticsearch_connectAddresses=<my-elasticsearch-host>:<my-elasticsearch-port>" -e "elasticsearch_clusterName=elasticsearch" jecstar.com/etm/etm:{project-version}
 ----
 
 Most of the properties mentioned in the <<Node configuration>> chapter can be passed as environment variables to the Docker container. Properties not mentioned in the <<General configuration in etm.yml>> but is a separate section of the configuration should be prefixed by their section names. For example, the properties ''elasticsearch.clusterName'' in the configuration file should be passed as environment variable ''elasticsearch_clusterName''. In short, the 'dot' in the configuration file should be replaced with an 'underscore' in the environment variable name.
@@ -71,6 +71,7 @@ Another option of configuring the Docker image is by mounting a custom configura
 
 to the Docker run command. Also if you need an <<Integration with IBM MQ and/or IBM Integration Bus>> you need to mound the directory that contains the proprietary IIB and/or MQ jar files to the image: 
 
+[source,bash,subs=attributes+]
 ----
 -v full_path_to/proprietary_jar_files:/usr/share/etm/lib/ext
 ----
@@ -134,9 +135,14 @@ services:
     volumes:
       - es-data-node-1:/usr/share/elasticsearch/data
   etm-node-1:
-    image: etm:{project-version}
+    image: jecstar.com/etm/etm:{project-version}
     deploy:
       replicas: 1
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     depends_on:
       - es-master-node-1
       - es-data-node-1
@@ -144,8 +150,9 @@ services:
       instanceName: etm-node-1
       clusterName: Enterprise Telemetry Monitor
       elasticsearch_clusterName: Enterprise Telemetry Monitor
-      elasticsearch_connectAddresses: es-data-node-1:9305
+      elasticsearch_connectAddresses: es-data-node-1:9305,es-master-node-1:9300
       elasticsearch_waitForConnectionOnStartup: 'true'
+      http.httpPort: 8080
     networks:
       - etm
     ports:
@@ -156,6 +163,17 @@ volumes:
   es-data-node-1:      
 ----
 
+
+By executing the following command you will bring up the services. 
+
+[source,bash,subs=attributes+]
+----
+docker stack deploy -c docker-compose.yml etm
+----
+
+The above yaml file is a good starting point for deploying {etm} in a Docker Swarm. An Elasticsearch master node, and a separate data node will be created. Also a single instance of an {etm} node is added as service and is referencing th Elasticsearch instances. Although it is possible to assign more replicas to the {etm} service, you have to understand that all instances will be given the exact same {etm} node name. This means they cannot be separately configured. Also if they are deployed on the same host all instances try to bind on the same http port, which of course won't work. 
+It might be better to add a new service to your yaml file and redeploy the stack to your swarm.
+Another thing to take into account are the data volumes. In the above yaml example file a named volume is used. This named volume default to the ''local'' driver which means the data of your Elasticsearch data node will be stored on the node the service is deployed to. If your Docker swarm contains more than 1 node you have to make sure the data volume is configured with a driver/location all nodes can access and write to. You can avoid this situation by defining a link:https://docs.docker.com/compose/compose-file/#placement[placement contraints] in your yaml configuration file. With such a constraint it is possible to make sure a service will always deployed on a specific Docker host.
 
 
 === Integration with IBM MQ and/or IBM Integration Bus
