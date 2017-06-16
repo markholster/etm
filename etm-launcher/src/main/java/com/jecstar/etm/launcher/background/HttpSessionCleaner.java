@@ -74,7 +74,7 @@ public class HttpSessionCleaner implements Runnable {
 			}			
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Failed to http sessions", e);
+				log.logErrorMessage("Failed to clean http sessions", e);
 			}
  		}
 	}
