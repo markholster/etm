@@ -99,6 +99,7 @@ services:
       node.data: 'false'
       node.ingest: 'false'
       xpack.security.enabled: 'false'
+      xpack.ml.enabled: 'false'
       network.host: 0.0.0.0
       transport.tcp.port: 9300
       discovery.zen.ping.unicast.hosts: es-master-node-1:9300
@@ -124,6 +125,7 @@ services:
       node.master: 'false'
       node.ingest: 'false'
       xpack.security.enabled: 'false'
+      xpack.ml.enabled: 'false'
       network.host: 0.0.0.0
       transport.tcp.port: 9305
       discovery.zen.ping.unicast.hosts: es-master-node-1:9300
