@@ -64,7 +64,7 @@ public class RestTelemetryEventProcessor {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@SuppressWarnings("unchecked")
-	public String addEvent(InputStream data) {
+	public Response addEvent(InputStream data) {
 		try {
 			Map<String, Object> event = this.objectMapper.readValue(data, HashMap.class);
 			String eventType = (String) event.get("type");
@@ -74,7 +74,7 @@ public class RestTelemetryEventProcessor {
 			}
 			Map<String, Object> eventData = (Map<String, Object>) event.get("data");
 			process(commandType, eventData);
-			return "{ \"status\": \"acknowledged\" }";
+			return Response.accepted("{ \"status\": \"acknowledged\" }").build();
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Not processing rest message.", e);
@@ -89,7 +89,7 @@ public class RestTelemetryEventProcessor {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@SuppressWarnings("unchecked")
-	public String addEvents(InputStream data) {
+	public Response addEvents(InputStream data) {
 		try {
 			ArrayList<Map<String, Object>> events = this.objectMapper.readValue(data, ArrayList.class);
 			for (Map<String, Object> event : events) {
@@ -103,7 +103,7 @@ public class RestTelemetryEventProcessor {
 				Map<String, Object> eventData = (Map<String, Object>) event.get("data");
 				process(commandType, eventData);
 			}
-			return "{ \"status\": \"acknowledged\" }";
+			return Response.accepted("{ \"status\": \"acknowledged\" }").build();
 		} catch (IOException e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Not processing rest message.", e);
