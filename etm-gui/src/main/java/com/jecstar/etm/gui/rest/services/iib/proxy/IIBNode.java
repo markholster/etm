@@ -20,7 +20,12 @@ public class IIBNode {
 	}
 
 	public boolean isSupported() {
-		return this.node.getType().startsWith("ComIbmMQ") && !"ComIbmMQHeaderNode".equals(this.node.getType());
+		return 
+			(this.node.getType().startsWith("ComIbmMQ") && !"ComIbmMQHeaderNode".equals(this.node.getType())) 
+			|| (this.node.getType().startsWith("ComIbmHTTP") && !this.node.getType().equals("ComIbmHTTPHeader"))
+			|| (this.node.getType().startsWith("ComIbmWS") && !this.node.getType().equals("ComIbmWSRequestNode"))
+			|| (this.node.getType().startsWith("ComIbmSOAP") && !this.node.getType().equals("ComIbmSOAPRequestNode") && !this.node.getType().equals("ComIbmSOAPWrapperNode") && !this.node.getType().equals("ComIbmSOAPExtractNode"))
+		;
 	}
 
 	public boolean isMonitoringSetInProfile(String profile) {

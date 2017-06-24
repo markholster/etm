@@ -256,7 +256,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 			return HandlerResult.FAILED;
 		}	
 		this.httpTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
-		this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
+		this.telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEventBuilder);
 		return HandlerResult.PROCESSED;
 	}
 	
@@ -307,7 +307,12 @@ public class IIBEventHandler extends AbstractEventHandler {
 			throws MQDataException, IOException {
 		if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
 			try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
-				MQMD mqmd = new MQMD(inputData);
+				MQMD mqmd = null;
+				if (encoding > 0 && ccsid > 0) {
+					mqmd = new MQMD(inputData, encoding, ccsid);
+				} else {
+					mqmd = new MQMD(inputData);
+				}
 				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), builder.getMetadata());
 				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, builder.getMetadata());
 				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), builder.getMetadata());
@@ -321,6 +326,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 					new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
 					// TODO Do something with RFH2 header?
 				}
+				
 				byte[] remaining = new byte[inputData.available()];
 				inputData.readFully(remaining);
 				
@@ -364,16 +370,19 @@ public class IIBEventHandler extends AbstractEventHandler {
 		}
 		try (BufferedReader reader = new BufferedReader(ccsid == -1 ? new InputStreamReader(new ByteArrayInputStream(decoded)) : new InputStreamReader(new ByteArrayInputStream(decoded), codepage))) {
 			String line = reader.readLine();
-			if (line != null) {
-				// First line is always the method + url + protocol version;
-				String[] split = line.split(" ");
-				if (split.length >= 2) {
-					builder.setHttpEventType(HttpEventType.safeValueOf(split[0]));
-					endpointBuilder.setName(split[1]);
+			boolean inHeaders = false;
+			if (!HttpEventType.RESPONSE.equals(builder.getHttpEventType())) {
+				if (line != null) {
+					// First line is always the method + url + protocol version;
+					String[] split = line.split(" ");
+					if (split.length >= 2) {
+						builder.setHttpEventType(HttpEventType.safeValueOf(split[0]));
+						endpointBuilder.setName(split[1]);
+					}
 				}
+				line = reader.readLine();
+				inHeaders = true;
 			}
-			line = reader.readLine();
-			boolean inHeaders = true;
 			while (line != null) {
 				if (line.trim().length() == 0 && inHeaders) {
 					inHeaders = false;
