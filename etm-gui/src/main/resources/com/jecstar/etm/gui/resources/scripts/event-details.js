@@ -676,12 +676,8 @@ function showEvent(scrollTo, type, id) {
 	function formatTransactionLine(event) {
 		if ('business' == event.type) {
 			return event.name ? event.name : '?';
-		} else if ('http' == event.type) {
-			if ('incoming' == event.direction) {
-				return 'Received ' + ("RESPONSE" == event.sub_type ? 'http response' : 'http ' + event.payload);
-			} else {
-				return 'Send ' + ("RESPONSE" == event.sub_type ? 'http response' : 'http ' + event.payload);
-			}
+		} else if ('http' == event.type) {			
+			return ('incoming' == event.direction ? 'Received ' : 'Send ') + ("RESPONSE" == event.sub_type ? 'http response ' : 'http ') + (event.name ? event.name : '?')
 		} else if ('log' == event.type) {
 			return event.payload;
 		} else if ('messaging' == event.type) {

@@ -199,6 +199,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 		this.httpTelemetryEventBuilder.initialize();
 		int encoding = -1;
 		int ccsid = -1;
+		String replyIdentifier = null;
 		// Determine the encoding & ccsid based on values from the event.
 		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
 			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
@@ -206,10 +207,12 @@ public class IIBEventHandler extends AbstractEventHandler {
 					encoding = Integer.valueOf(simpleContent.getValue());
 				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
 					ccsid = Integer.valueOf(simpleContent.getValue());
-				} 
+				} else if ("ReplyIdentifier".equals(simpleContent.getName()) && SimpleContentDataType.HEX_BINARY.equals(simpleContent.getDataType())) {
+					replyIdentifier = simpleContent.getValue();
+				}
 			}
 		}	
-	
+
 		// TODO uitlezen local environment voor het id & correlationId.
 		EndpointBuilder endpointBuilder = new EndpointBuilder();
 		// Add some flow information
@@ -229,7 +232,10 @@ public class IIBEventHandler extends AbstractEventHandler {
 				"ComIbmWSReplyNode".equals(nodeType) ||
 				"ComIbmSOAPReplyNode".equals(nodeType) ||
 				"ComIbmSOAPAsyncResponseNode".equals(nodeType)) {
+			this.httpTelemetryEventBuilder.setCorrelationId(replyIdentifier);
 			this.httpTelemetryEventBuilder.setHttpEventType(HttpEventType.RESPONSE);
+		} else {
+			this.httpTelemetryEventBuilder.setId(replyIdentifier);
 		}
 		if (event.getBitstreamData() == null|| event.getBitstreamData().getBitstream() == null) {
 			if (log.isDebugLevelEnabled()) {

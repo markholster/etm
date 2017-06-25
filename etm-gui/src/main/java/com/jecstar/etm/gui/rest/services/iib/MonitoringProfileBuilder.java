@@ -27,7 +27,7 @@ public class MonitoringProfileBuilder {
 			"				<profile:payloadQuery profile:queryText=\"$Root/MQMD/CodedCharSetId\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination\" />\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
@@ -57,7 +57,7 @@ public class MonitoringProfileBuilder {
 			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/WrittenDestination\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination\" />\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
