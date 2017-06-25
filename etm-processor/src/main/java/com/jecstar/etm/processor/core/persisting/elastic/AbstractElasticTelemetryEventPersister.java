@@ -25,9 +25,9 @@ import com.jecstar.etm.server.core.util.DateUtils;
  */
 public abstract class AbstractElasticTelemetryEventPersister {
 	
-	private final EtmConfiguration etmConfiguration;
 	protected BulkProcessor bulkProcessor;
 	
+	private final EtmConfiguration etmConfiguration;
 	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 	
 	public AbstractElasticTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
@@ -87,5 +87,4 @@ public abstract class AbstractElasticTelemetryEventPersister {
 				.upsert("{}", XContentType.JSON)
 				.scriptedUpsert(true));
     }
-
 }

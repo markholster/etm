@@ -103,6 +103,8 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		if (event.endpoints.size() == 0) {
 			Endpoint endpoint = new Endpoint();
 			endpoint.writingEndpointHandler.handlingTime = enhanceTime;
+			// This writing endpoint handler is forced added because there should always be a writing endpoint handler. 
+			endpoint.writingEndpointHandler.forced = true;
 			event.endpoints.add(endpoint);
 		} else {
 			for (Endpoint endpoint : event.endpoints) {
@@ -113,6 +115,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 					} else {
 						endpoint.writingEndpointHandler.handlingTime = enhanceTime;
 					}
+					endpoint.writingEndpointHandler.forced = true;
 				}				
 			}
 		}

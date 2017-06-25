@@ -48,4 +48,9 @@ public class EndpointHandlerBuilder {
 		return this;
 	}
 
+	public EndpointHandlerBuilder setForced(boolean forced) {
+		this.endpointHandler.forced = forced;
+		return this;
+	}
+
 }

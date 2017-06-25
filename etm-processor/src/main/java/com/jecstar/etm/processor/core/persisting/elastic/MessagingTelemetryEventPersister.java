@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.xcontent.XContentHelper;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -28,7 +30,7 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
 		IndexRequest indexRequest = createIndexRequest(event.id)
 				.source(writer.write(event), XContentType.JSON);
 		Map<String, Object> parameters =  new HashMap<>();
-		parameters.put("source", indexRequest.sourceAsMap());
+		parameters.put("source",  XContentHelper.convertToMap(new BytesArray(writer.write(event, true)), false, XContentType.JSON).v2());
 		bulkProcessor.add(createUpdateRequest(event.id)
 					.script(new Script(ScriptType.STORED, "painless", "etm_update-event", parameters))
 					.upsert(indexRequest));
