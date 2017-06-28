@@ -257,9 +257,9 @@ public class MenuAwareURLResource extends URLResource {
         				}
         				html.append("License</a>");
         			}
-        			html.append("<li class=\"nav-item\"><a class=\"nav-link\" href=\"" + pathPrefixToContextRoot + "logout?source=./\"><span class=\"fa fa-sign-out fa-lg hidden-md-down\">&nbsp;</span>Sign out</a></li>");
         			html.append("</div></li>");
         		}
+    			html.append("<li class=\"nav-item\"><a class=\"nav-link\" href=\"" + pathPrefixToContextRoot + "logout?source=./\"><span class=\"fa fa-sign-out fa-lg hidden-md-down\">&nbsp;</span>Sign out</a></li>");
 				return html.toString();
 			}
         }
