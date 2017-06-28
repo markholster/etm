@@ -225,7 +225,7 @@ console() {
     if [ "X$pid" = "X" ]
     then
         # The string passed to eval must handles spaces in paths correctly.
-        COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Djava.net.useSystemProxies=true -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\" $1"
+        COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Djava.net.useSystemProxies=true -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\" $@"
         eval $COMMAND_LINE
     else
         echo "$APP_LONG_NAME is already running."
@@ -237,7 +237,7 @@ start() {
     getpid
     if [ "X$pid" = "X" ]
     then
-        nohup $JAVACMD $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath "$CLASSPATH" -Djava.net.useSystemProxies=true -Dapp.name="$APP_NAME" -Dapp.version="$APP_VERSION" -Dapp.repo="$REPO" -Dapp.home="$BASEDIR" ${mainClassName} --config-dir="$CONFIGDIR" $1 </dev/null >/dev/null 2>&1 &
+        nohup $JAVACMD $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath "$CLASSPATH" -Djava.net.useSystemProxies=true -Dapp.name="$APP_NAME" -Dapp.version="$APP_VERSION" -Dapp.repo="$REPO" -Dapp.home="$BASEDIR" ${mainClassName} --config-dir="$CONFIGDIR" $@ </dev/null >/dev/null 2>&1 &
         echo $! > $PIDFILE
     else
         echo "$APP_LONG_NAME is already running."
@@ -342,7 +342,7 @@ case "$1" in
 
     'console')
         echo "Running $APP_LONG_NAME..."
-        console
+        console $2 $3 $4 $5 $6
         ;;
 
     'docker')
@@ -351,7 +351,7 @@ case "$1" in
 
     'start')
         echo "Starting $APP_LONG_NAME..."
-        start
+        start $2 $3 $4 $5 $6
         ;;
 
     'stop')

@@ -66,6 +66,12 @@ public class Launcher {
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
 			this.bulkProcessorWrapper.setConfiguration(etmConfiguration);
 			this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
+			if (commandLineParameters.isReinitialize()) {
+				this.indexTemplateCreator.reinitialize();
+				if (!commandLineParameters.isQuiet()) {
+					System.out.println("Reinitialized system.");
+				}
+			}
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);

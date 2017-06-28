@@ -144,6 +144,20 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 			.get();
 	}
 
+	/**
+	 * Reinitializes all Elasticsearch templates, scripts etc. 
+	 */
+	public void reinitialize() {
+		reinitializeTemplates();
+		try {
+			insertPainlessScripts();
+		} catch (IOException e) {
+			if (log.isFatalLevelEnabled()) {
+				log.logFatalMessage("Failed to reinitialize painless scripts. Cluster will not be usable.", e);
+			}
+		}
+	}
+
 	private void creatEtmEventIndexTemplate(boolean create, int shardsPerIndex, int replicasPerIndex) {
 		new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticsearchLayout.ETM_EVENT_TEMPLATE_NAME)
 		.setCreate(create)
@@ -769,15 +783,19 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 	public void removeConfigurationChangeNotificationListener() {
 		this.etmConfiguration.removeConfigurationChangeListener(this);
 	}
+	
+	private void reinitializeTemplates() {
+		creatEtmEventIndexTemplate(false, this.etmConfiguration.getShardsPerIndex(), this.etmConfiguration.getReplicasPerIndex());
+		creatEtmMetricsIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
+		creatEtmAuditLogIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
+		creatEtmConfigurationIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
+		creatEtmStateIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
+	}
 
 	@Override
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_SHARDS_PER_INDEX, EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
-			creatEtmEventIndexTemplate(false, this.etmConfiguration.getShardsPerIndex(), this.etmConfiguration.getReplicasPerIndex());
-			creatEtmMetricsIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
-			creatEtmAuditLogIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
-			creatEtmConfigurationIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
-			creatEtmStateIndexTemplate(false, this.etmConfiguration.getReplicasPerIndex());
+			reinitializeTemplates();
 		}
 		if (event.isChanged(EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
 			List<String> indices = new ArrayList<>();
