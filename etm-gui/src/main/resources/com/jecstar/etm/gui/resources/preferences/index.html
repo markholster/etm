@@ -191,6 +191,9 @@ body { padding-top: 60px; }
                 	$('#change-password-container').hide();
                 	$('#input-user-name').attr('disabled', 'disabled');
                 	$('#input-user-email').attr('disabled', 'disabled');
+                	$('#input-locale').focus();
+                } else {
+                	$('#input-user-name').focus();
                 }
             }
         })
