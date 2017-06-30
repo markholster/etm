@@ -66,6 +66,7 @@ import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.ExpressionParserConverterJsonImpl;
+import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
@@ -452,15 +453,13 @@ public class SettingsService extends AbstractJsonService {
 			EndpointConfiguration endpointConfig = this.endpointConfigurationConverter.read(searchHit.getSourceAsString());
 			if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
 				DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfig.eventEnhancer;
-				for (List<ExpressionParser> parsers : enhancer.getFields().values()) {
-					if (parsers != null) {
-						Iterator<ExpressionParser> it = parsers.iterator();
-						while (it.hasNext()) {
-							ExpressionParser parser = it.next();
-							if (parser.getName().equals(parserName)) {
-								it.remove();
-								updated = true;
-							}
+				for (DefaultField field : enhancer.getFields()) {
+					Iterator<ExpressionParser> it = field.getParsers().iterator();
+					while (it.hasNext()) {
+						ExpressionParser parser = it.next();
+						if (parser.getName().equals(parserName)) {
+							it.remove();
+							updated = true;
 						}
 					}
 				}
@@ -504,17 +503,15 @@ public class SettingsService extends AbstractJsonService {
 			EndpointConfiguration endpointConfig = this.endpointConfigurationConverter.read(searchHit.getSourceAsString());
 			if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
 				DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfig.eventEnhancer;
-				for (List<ExpressionParser> parsers : enhancer.getFields().values()) {
-					if (parsers != null) {
-						ListIterator<ExpressionParser> it = parsers.listIterator();
-						while (it.hasNext()) {
-							ExpressionParser parser = it.next();
-							if (parser.getName().equals(expressionParser.getName())) {
-								it.set(expressionParser);
-								updated = true;
-							}
+				for (DefaultField field : enhancer.getFields()) {
+					ListIterator<ExpressionParser> it = field.getParsers().listIterator();
+					while (it.hasNext()) {
+						ExpressionParser parser = it.next();
+						if (parser.getName().equals(expressionParser.getName())) {
+							it.set(expressionParser);
+							updated = true;
 						}
-					}					
+					}
 				}
 			}
 			if (updated) {

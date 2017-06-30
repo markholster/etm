@@ -139,6 +139,11 @@ function buildEndpointPage() {
 				$(inputKey).attr('disabled', 'disabled');
 			}
 		});
+		var writePolicySelect = $('<select>').addClass('form-control custom-select etm-writy-policy').append(
+				$('<option>').attr('value', 'ALWAYS_OVERWRITE').text('Always overwrite'),
+				$('<option>').attr('value', 'OVERWRITE_WHEN_FOUND').text('Overwrite when found'),
+				$('<option>').attr('value', 'WHEN_EMPTY').text('When empty').attr('selected', 'selected')
+			);
 		var parserRow = $('<ol>');
 		if (fieldData) {
 			var options = $parserFieldSelect.children("option").map(function(){return $(this).attr("value");}).get();
@@ -153,6 +158,7 @@ function buildEndpointPage() {
 					return false;
 				}
 			});
+			writePolicySelect.val(fieldData.write_policy ? fieldData.write_policy : 'WHEN_EMPTY');
 			$.each(fieldData.parsers, function(index, parser) {
 				parserRow.append(createParserRow(parser))				
 			})
@@ -173,6 +179,10 @@ function buildEndpointPage() {
 				$('<div>').addClass('form-group row').append(
 					$('<label>').addClass('col-sm-3 col-form-label').text('Collection key'),
 					$('<div>').addClass('col-sm-9').append(inputKey)
+				),
+				$('<div>').addClass('form-group row').append(
+						$('<label>').addClass('col-sm-3 col-form-label').text('Write policy'),
+						$('<div>').addClass('col-sm-9').append(writePolicySelect)
 				),
 				$('<fieldset>').addClass('form-group').append(
 					$('<a href="#">').addClass('pull-right').text('Add parser').click(function (event) {event.preventDefault(); addParserRow($(this))}),
@@ -290,6 +300,7 @@ function buildEndpointPage() {
 		$('.etm-field-card').each(function (index, block) {
 			var field = {
 			    field: endsWith($(block).find('.etm-parser-field').val(), '.') ? $(block).find('.etm-parser-field').val() + $(block).find('.etm-collection-key').val() : $(block).find('.etm-parser-field').val(),
+			    write_policy: $(block).find('.etm-writy-policy').val(),	
 			    parsers: []
 			}
 			$(block).find('.etm-expression-parser').each(function (index, parser) {

@@ -1,16 +1,18 @@
 package com.jecstar.etm.server.core.enhancers;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
+import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
 import com.jecstar.etm.server.core.parsers.ExpressionParserField;
 
@@ -18,7 +20,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	
 	private boolean enhancePayloadFormat = true;
 	
-	private Map<String,List<ExpressionParser>> fields = new LinkedHashMap<>();
+	private List<DefaultField> fields = new ArrayList<>();
 	
 	@Override
 	public void enhance(TelemetryEvent<?> event, ZonedDateTime enhanceTime) {
@@ -36,21 +38,17 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		return this.enhancePayloadFormat;
 	}
 	
-	public Map<String, List<ExpressionParser>> getFields() {
+	public List<DefaultField> getFields() {
 		return this.fields;
 	}
 	
-	public void addField(String field, List<ExpressionParser> expressionParsers) {
-		if (this.fields.containsKey(field)) {
-			List<ExpressionParser> currentParsers = this.fields.get(field);
-			if (currentParsers == null) {
-				this.fields.put(field, expressionParsers);
-			} else {
-				currentParsers.addAll(expressionParsers);
-			}
-			
+	public void addField(DefaultField field) {
+		Optional<DefaultField> optional = this.fields.stream().filter(f -> f.getName().equals(field.getName())).findFirst();
+		if (optional.isPresent()) {
+			DefaultField defaultField = optional.get();
+			defaultField.addParsers(field.getParsers());
 		} else {
-			this.fields.put(field, expressionParsers);
+			this.fields.add(field);
 		}
 	}
 	
@@ -66,27 +64,26 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		}
 		if (this.fields.isEmpty()) {
 			// Current parsers is empty, just overwrite with other.
-			this.fields.putAll(other.fields);
+			this.fields.addAll(other.fields);
 			return;
 		}
-		for (Entry<String, List<ExpressionParser>> entry : other.fields.entrySet()) {
-			if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-				if (this.fields.get(entry.getKey()) != null) {
-					// Both enhancers contain the same key. Append the "other" parsers to the current ones.
-					this.fields.get(entry.getKey()).addAll(entry.getValue());
-				} else {
-					this.fields.put(entry.getKey(), entry.getValue());
-				}
+		for (DefaultField field : other.getFields()) {
+			Optional<DefaultField> optional = this.fields.stream().filter(p -> p.getName().equals(field.getName())).findFirst();
+			if (optional.isPresent()) {
+				// Both enhancers contain the same key. Append the "other" parsers to the current ones.
+				optional.get().addParsers(field.getParsers());
+			} else {
+				this.fields.add(field);
 			}
 		}
 	}
 	
 	private void enchanceId(final TelemetryEvent<?> event) {
-		if (event.id != null) {
-			return;
+		Optional<DefaultField> optional =  this.fields.stream().filter(p -> p.getName().equals(ExpressionParserField.ID.getJsonTag())).findFirst();
+		// Check if the id needs to be set by a parsers.
+		if (optional.isPresent()) {
+			conditionallySetValue(event, optional.get());
 		}
-		// Check if the id needs to be set by a parsers. 
-		setWhenCurrentValueEmpty(event, ExpressionParserField.ID.getJsonTag(), this.fields.get(ExpressionParserField.ID.getJsonTag()));
 		if (event.id != null) {
 			return;
 		}
@@ -160,78 +157,129 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		if (this.fields.size() == 0) {
 			return;
 		}
-		for (Entry<String, List<ExpressionParser>> entry : this.fields.entrySet()) {
-			setWhenCurrentValueEmpty(event, entry.getKey(), entry.getValue());
+		for (DefaultField field : this.fields) {
+			conditionallySetValue(event, field);
 		}
 			
 	}
 
-	private void setWhenCurrentValueEmpty(TelemetryEvent<?> event, String key, List<ExpressionParser> parsers) {
-		if (parsers == null || parsers.isEmpty()) {
+	private void conditionallySetValue(TelemetryEvent<?> event, DefaultField field) {
+		if (field == null) {
 			return;
 		}
-		if (key == null) {
-			return;
-		}
-		if (ExpressionParserField.ID.getJsonTag().equals(key) && event.id == null ) {
-			event.id= parseValue(parsers, event.payload);
-		} else if (ExpressionParserField.CORRELATION_ID.getJsonTag().equals(key) && event.correlationId == null ) {
-			event.correlationId= parseValue(parsers, event.payload);
-		} else if (ExpressionParserField.NAME.getJsonTag().equals(key) && event.name == null ) {
-			event.name = parseValue(parsers, event.payload);
-		} else if (key.startsWith(ExpressionParserField.CORRELATION_DATA.getJsonTag())) {
-			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.CORRELATION_DATA, event.correlationData);
-		} else if (key.startsWith(ExpressionParserField.EXTRACTED_DATA.getJsonTag())) {
-			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.EXTRACTED_DATA, event.extractedData);
-		} else if (key.startsWith(ExpressionParserField.METADATA.getJsonTag())) {
-			putInMapWhenCurrentValueEmpty(event, key, parsers, ExpressionParserField.METADATA, event.metadata);
-		} else if (ExpressionParserField.WRITER_TRANSACTION_ID.getJsonTag().equals(key)) {
+		if (ExpressionParserField.ID.getJsonTag().equals(field.getName())) {
+			if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
+				|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && event.id == null)) {
+				event.id = parseValue(field.getParsers(), event.payload);
+			} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
+				String value = parseValue(field.getParsers(), event.payload);
+				if (value != null) {
+					event.id = value;
+				}
+			}
+		} else if (ExpressionParserField.CORRELATION_ID.getJsonTag().equals(field.getName())) {
+			if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
+					|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && event.correlationId == null)) {
+				event.correlationId = parseValue(field.getParsers(), event.payload);
+			} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
+				String value = parseValue(field.getParsers(), event.payload);
+				if (value != null) {
+					event.correlationId = value;
+				}
+			}
+		} else if (ExpressionParserField.NAME.getJsonTag().equals(field.getName())) {
+			if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
+					|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && event.name == null)) {
+				event.name = parseValue(field.getParsers(), event.payload);
+			} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
+				String value = parseValue(field.getParsers(), event.payload);
+				if (value != null) {
+					event.name = value;
+				}
+			}
+		} else if (field.getName().startsWith(ExpressionParserField.CORRELATION_DATA.getJsonTag())) {
+			conditionallyPutInMap(event, field, ExpressionParserField.CORRELATION_DATA, event.correlationData);
+		} else if (field.getName().startsWith(ExpressionParserField.EXTRACTED_DATA.getJsonTag())) {
+			conditionallyPutInMap(event, field, ExpressionParserField.EXTRACTED_DATA, event.extractedData);
+		} else if (field.getName().startsWith(ExpressionParserField.METADATA.getJsonTag())) {
+			conditionallyPutInMap(event, field, ExpressionParserField.METADATA, event.metadata);
+		} else if (ExpressionParserField.WRITER_TRANSACTION_ID.getJsonTag().equals(field.getName())) {
 			// transaction id can be on several levels. Add them to every position when the current value is not set.
-			setWritingTransactionIdOnEndpoints(parseValue(parsers, event.payload), event.endpoints);
-		} else if (ExpressionParserField.READER_TRANSACTION_ID.getJsonTag().equals(key)) {
+			setWritingTransactionIdOnEndpoints(field, event);
+		} else if (ExpressionParserField.READER_TRANSACTION_ID.getJsonTag().equals(field.getName())) {
 			// transaction id can be on several levels. Add them to every position when the current value is not set.
-			setReadingTransactionIdOnEndpoints(parseValue(parsers, event.payload), event.endpoints);
+			setReadingTransactionIdOnEndpoints(field, event);
 		}
 	}
 	
-	private void setWritingTransactionIdOnEndpoints(String transactionId, List<Endpoint> endpoints) {
-		if (transactionId == null) {
+	private void setWritingTransactionIdOnEndpoints(DefaultField field, TelemetryEvent<?> event) {
+		if (event.endpoints == null || event.endpoints.size() < 1) {
 			return;
 		}
-		if (endpoints == null || endpoints.size() < 1) {
-			return;
-		}
-		for (Endpoint endpoint : endpoints) {
-			if (endpoint.writingEndpointHandler.transactionId == null) {
-				endpoint.writingEndpointHandler.transactionId = transactionId;
+		// Do everything to prevent the slow extraction of the field value from the data. Speed is everything...
+		if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE)) {
+			String transactionId = parseValue(field.getParsers(), event.payload);
+			if (transactionId != null) {
+				for (Endpoint endpoint : event.endpoints) {
+					endpoint.writingEndpointHandler.transactionId = transactionId;
+				}
+			}
+		} else {
+			List<EndpointHandler> emptyEndpointHanlders = event.endpoints.stream().map(f -> f.writingEndpointHandler).filter(p -> p.transactionId == null).collect(Collectors.toList());
+			if (emptyEndpointHanlders != null && emptyEndpointHanlders.size() > 0) {
+				String transactionId = parseValue(field.getParsers(), event.payload);
+				for (EndpointHandler endpointHandler : emptyEndpointHanlders) {
+					if ((field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND) && transactionId != null) || endpointHandler.transactionId == null) {
+						endpointHandler.transactionId = transactionId;
+					}
+				}
 			}
 		}
 	}
 	
-	private void setReadingTransactionIdOnEndpoints(String transactionId, List<Endpoint> endpoints) {
-		if (transactionId == null) {
+	private void setReadingTransactionIdOnEndpoints(DefaultField field, TelemetryEvent<?> event) {
+		if (event.endpoints == null || event.endpoints.size() < 1) {
 			return;
 		}
-		if (endpoints == null || endpoints.size() < 1) {
-			return;
-		}
-		for (Endpoint endpoint : endpoints) {
-			for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
-				if (handler.transactionId == null) {
-					handler.transactionId = transactionId;
+		// Do everything to prevent the slow extraction of the field value from the data. Speed is everything...
+		if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE)) {
+			String transactionId = parseValue(field.getParsers(), event.payload);
+			if (transactionId != null) {
+				for (Endpoint endpoint : event.endpoints) {
+					for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
+						handler.transactionId = transactionId;
+					}
+				}
+			}
+		} else {
+			List<EndpointHandler> emptyEndpointHanlders = event.endpoints.stream().flatMap(f -> f.readingEndpointHandlers.stream()).filter(p -> p.transactionId == null).collect(Collectors.toList());
+			if (emptyEndpointHanlders != null && emptyEndpointHanlders.size() > 0) {
+				String transactionId = parseValue(field.getParsers(), event.payload);
+				for (EndpointHandler endpointHandler : emptyEndpointHanlders) {
+					if ((field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND) && transactionId != null) || endpointHandler.transactionId == null) {
+						endpointHandler.transactionId = transactionId;
+					}
 				}
 			}
 		}
 	}
 
-	private void putInMapWhenCurrentValueEmpty(TelemetryEvent<?> event, String key, List<ExpressionParser> parsers, ExpressionParserField field, Map<String, Object> container) {
-		String dataKey = field.getCollectionKeyName(key);
-		if (!container.containsKey(dataKey)) {
-			String value = parseValue(parsers, event.payload);
+	private void conditionallyPutInMap(TelemetryEvent<?> event, DefaultField field, ExpressionParserField parserField, Map<String, Object> container) {
+		String dataKey = parserField.getCollectionKeyName(field.getName());
+		if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
+				|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && !container.containsKey(dataKey))) {
+			String value = parseValue(field.getParsers(), event.payload);
+			if (value == null) {
+				container.remove(dataKey);
+			} else {
+				container.put(dataKey, parseValue(field.getParsers(), event.payload));
+			}
+		} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
+			String value = parseValue(field.getParsers(), event.payload);
 			if (value != null) {
 				container.put(dataKey, value);
 			}
-		}		
+		}
 	}
 	
 	private String parseValue(List<ExpressionParser> expressionParsers, String payload) {

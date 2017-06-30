@@ -9,3 +9,4 @@
 * Custom y-axis format in graphs.
 * Automatic installation of free license.
 * Allow subtree scope in LDAP user authentication.
+* Add a write policy to endpoint configurations alowing fields to be overwritten.

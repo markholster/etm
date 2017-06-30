@@ -28,6 +28,11 @@ public class EndpointConfigurationTagsJsonImpl implements EndpointConfigurationT
 	public String getFieldsTag() {
 		return "fields";
 	}
+	
+	@Override
+	public String getWritePolicyTag() {
+		return "write_policy";
+	}
 
 	@Override
 	public String getFieldTag() {
@@ -38,5 +43,4 @@ public class EndpointConfigurationTagsJsonImpl implements EndpointConfigurationT
 	public String getParsersTag() {
 		return "parsers";
 	}
-
 }
