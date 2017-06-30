@@ -52,7 +52,17 @@ public class IIBMessageFlow implements IIBFlow {
 			List<IIBNode> nodes = new ArrayList<>();
 			Enumeration<Node> nodeProxy = this.messageFlow.getNodes();
 			while (nodeProxy.hasMoreElements()) {
-				nodes.add(new IIBNode(nodeProxy.nextElement()));
+				IIBNode iibNode = new IIBNode(nodeProxy.nextElement());
+				if (!nodes.stream().anyMatch(n -> n.getName().equals(iibNode.getName()))) {
+					// Filter nodes with the same name. Although it should not
+					// be possible to have 2 nodes with the same name in a
+					// single IIB flow it might be the case when a Publication
+					// node is used in a flow. A single Publication node in a
+					// flow will result in 2 unique Nodes in the xml of the
+					// flow. Both nodes have the exact same name, but a
+					// different uuid. 
+					nodes.add(iibNode);
+				}
 			}
 			return nodes;
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {

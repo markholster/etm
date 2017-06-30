@@ -52,7 +52,10 @@ public class MonitoringProfileBuilder {
 			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$Root/MQMD/CodedCharSetId\" />\r\n" + 
-			"			</profile:complexContent>			\r\n" + 
+			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$Root/Properties/Topic\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/WrittenDestination\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
@@ -75,24 +78,17 @@ public class MonitoringProfileBuilder {
 		StringBuilder profile = new StringBuilder();
 		profile.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?><profile:monitoringProfile xmlns:profile=\"http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0.3/monitoring/profile\" profile:version=\"2.0\" profile:enabled=\"true\">");
 		for (Node node : nodes) {
-			if (node.getNodeType().endsWith("InputNode")) {
+			if (node.getNodeType().endsWith("InputNode") 
+				|| "ComIbmMQGetNode".equals(node.getNodeType()) ) {
 				profile.append(
 						inputTemplate.replaceAll("<nodename>", node.getName())
 						.replaceAll("<terminal>", "transaction.Start")
 						.replaceAll("<eventname>", node.getEventName())
 				);
-			} else if ("ComIbmMQGetNode".equals(node.getNodeType())) {
-				profile.append(
-						inputTemplate.replaceAll("<nodename>", node.getName())
-						.replaceAll("<terminal>", ".terminal.in")
-						.replaceAll("<eventname>", node.getEventName())
-				);			
-			} else if (node.getNodeType().contains("Response") || node.getNodeType().contains("Reply")) {
-				profile.append(
-						outputTemplate.replaceAll("<nodename>", node.getName())
-						.replaceAll("<eventname>", node.getEventName())
-				);
-			} else if ("ComIbmMQOutputNode".equals(node.getNodeType())){
+			} else if (node.getNodeType().contains("Response") 
+				|| node.getNodeType().contains("Reply") 
+				|| "ComIbmMQOutputNode".equals(node.getNodeType()) 
+				|| "ComIbmPublication".equals(node.getNodeType()) ) {
 				profile.append(
 						outputTemplate.replaceAll("<nodename>", node.getName())
 						.replaceAll("<eventname>", node.getEventName())

@@ -100,7 +100,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 			return HandlerResult.FAILED;
 		}
 		// See https://www.ibm.com/support/knowledgecenter/SSMKHH_10.0.0/com.ibm.etools.mft.doc/as36001_.htm for node types.
-		if (nodeType.startsWith("ComIbmMQ")) {
+		if (nodeType.startsWith("ComIbmMQ") || "ComIbmPublicationNode".equals(nodeType)) {
 			return processAsMessagingEvent(messageId,event);
 		} else if ((nodeType.startsWith("ComIbmHTTP") && !nodeType.equals("ComIbmHTTPHeader")) ||
 				(nodeType.startsWith("ComIbmWS") && !nodeType.equals("ComIbmWSRequestNode")) ||
@@ -117,6 +117,8 @@ public class IIBEventHandler extends AbstractEventHandler {
 		this.messagingTelemetryEventBuilder.initialize();
 		int encoding = -1;
 		int ccsid = -1;
+		String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
+		EndpointBuilder endpointBuilder = new EndpointBuilder();
 		// Determine the encoding & ccsid based on values from the event.
 		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
 			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
@@ -124,11 +126,11 @@ public class IIBEventHandler extends AbstractEventHandler {
 					encoding = Integer.valueOf(simpleContent.getValue());
 				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
 					ccsid = Integer.valueOf(simpleContent.getValue());
-				} 
+				} else if ("Topic".equals(simpleContent.getName()) && SimpleContentDataType.STRING.equals(simpleContent.getDataType()) && "ComIbmPublicationNode".equals(nodeType)) {
+					endpointBuilder.setName(simpleContent.getValue());
+				}
 			}
 		}	
-	
-		EndpointBuilder endpointBuilder = new EndpointBuilder();
 		// TODO, filteren op output terminal? Events op de in terminal van de MqOutputNode hebben nog geen msg id.
 		if (event.getApplicationData() != null && event.getApplicationData().getComplexContent() != null) {
 			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
@@ -156,7 +158,6 @@ public class IIBEventHandler extends AbstractEventHandler {
 		// Add some flow information
 		addSourceInformation(event, this.messagingTelemetryEventBuilder);
 		EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event);
-		String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
 		if ("ComIbmMQInputNode".equals(nodeType) || "ComIbmMQGetNode".equals(nodeType)) {
 			String endpoint = event.getEventPointData().getMessageFlowData().getNode().getDetail();
 			if (endpointBuilder.getName() == null) {
