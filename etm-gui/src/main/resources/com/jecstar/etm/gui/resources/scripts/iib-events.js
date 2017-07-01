@@ -89,13 +89,21 @@ function buildEventPage() {
 					$('<h5>').text('Application ' + applicationData.name)
 				);
 				$.each(applicationData.flows, function(index, flow) {
-					$flowDiv = $('<div>');
+					$flowDiv = $('<div>').attr('data-flow-type', 'application.flow');
 					appendFlowData($flowDiv, flow);
 					$applicationFields.append(
 						$('<strong>').text('Flow ' + flow.name),
 						$flowDiv
 					);
 				});
+//				$.each(applicationData.subflows, function(index, subflow) {
+//					$flowDiv = $('<div>').attr('data-flow-type', 'application.subflow');
+//					appendFlowData($flowDiv, subflow);
+//					$applicationFields.append(
+//						$('<strong>').text('Subflow ' + subflow.name),
+//						$flowDiv
+//					);
+//				});
 				$applicationFields.show();
 			}
 		} else if (startsWith(selectedContainer, 'library:')) {
@@ -109,13 +117,21 @@ function buildEventPage() {
 					$('<h5>').text('Library ' + libraryData.name)
 				);
 				$.each(libraryData.flows, function(index, flow) {
-					$flowDiv = $('<div>');
+					$flowDiv = $('<div>').attr('data-flow-type', 'library.flow');
 					appendFlowData($flowDiv, flow);
 					$libraryFields.append(
 						$('<strong>').text('Flow ' + flow.name),
 						$flowDiv
 					);
 				});
+//				$.each(libraryData.subflows, function(index, flow) {
+//					$flowDiv = $('<div>').attr('data-flow-type', 'library.subflow');
+//					appendFlowData($flowDiv, flow);
+//					$libraryFields.append(
+//						$('<strong>').text('Subflow ' + flow.name),
+//						$flowDiv
+//					);
+//				});
 				$libraryFields.show();
 			}
 		} else if (startsWith(selectedContainer, 'flow:')) {
@@ -312,8 +328,11 @@ function buildEventPage() {
 			
 			if (applicationData) {
 				$.each(applicationData.flows, function (index, flow) {
-					setFlowMonitoringData(flow);
+					setFlowMonitoringData(flow, 'application.flow');
 				});
+//				$.each(applicationData.subflows, function (index, flow) {
+//					setFlowMonitoringData(flow, 'application.subflow');
+//				});
 				return applicationData;
 			}
 		} else if (startsWith(selectedContainer, 'library:')) {
@@ -324,8 +343,11 @@ function buildEventPage() {
 			})[0]);
 			if (libraryData) {
 				$.each(libraryData.flows, function (index, flow) {
-					setFlowMonitoringData(flow);
+					setFlowMonitoringData(flow, 'library.flow');
 				});				
+//				$.each(libraryData.subflows, function (index, flow) {
+//					setFlowMonitoringData(flow, 'library.subflow');
+//				});				
 				return libraryData;
 			}
 		} else if (startsWith(selectedContainer, 'flow:')) {
@@ -341,9 +363,9 @@ function buildEventPage() {
 		}
 	}
 	
-	function setFlowMonitoringData(flow) {
+	function setFlowMonitoringData(flow, flowType) {
 		$flowDiv = $($.grep($("div[data-flow-name]"), function(n, i) {
-			return $(n).attr('data-flow-name') === flow.name;
+			return $(n).attr('data-flow-name') === flow.name && $(n).attr('data-flow-type') === flowType;
 		})[0]);
 		flow.monitoring_active = $flowDiv.find('select[name="monitoring_active"]').val() == 'true' ? true : false;
 		$.each(flow.nodes, function (index, node) {
