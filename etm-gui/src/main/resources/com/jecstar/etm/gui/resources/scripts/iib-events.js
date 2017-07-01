@@ -96,14 +96,6 @@ function buildEventPage() {
 						$flowDiv
 					);
 				});
-//				$.each(applicationData.subflows, function(index, subflow) {
-//					$flowDiv = $('<div>').attr('data-flow-type', 'application.subflow');
-//					appendFlowData($flowDiv, subflow);
-//					$applicationFields.append(
-//						$('<strong>').text('Subflow ' + subflow.name),
-//						$flowDiv
-//					);
-//				});
 				$applicationFields.show();
 			}
 		} else if (startsWith(selectedContainer, 'library:')) {
@@ -124,14 +116,6 @@ function buildEventPage() {
 						$flowDiv
 					);
 				});
-//				$.each(libraryData.subflows, function(index, flow) {
-//					$flowDiv = $('<div>').attr('data-flow-type', 'library.subflow');
-//					appendFlowData($flowDiv, flow);
-//					$libraryFields.append(
-//						$('<strong>').text('Subflow ' + flow.name),
-//						$flowDiv
-//					);
-//				});
 				$libraryFields.show();
 			}
 		} else if (startsWith(selectedContainer, 'flow:')) {
@@ -330,9 +314,6 @@ function buildEventPage() {
 				$.each(applicationData.flows, function (index, flow) {
 					setFlowMonitoringData(flow, 'application.flow');
 				});
-//				$.each(applicationData.subflows, function (index, flow) {
-//					setFlowMonitoringData(flow, 'application.subflow');
-//				});
 				return applicationData;
 			}
 		} else if (startsWith(selectedContainer, 'library:')) {
@@ -345,9 +326,6 @@ function buildEventPage() {
 				$.each(libraryData.flows, function (index, flow) {
 					setFlowMonitoringData(flow, 'library.flow');
 				});				
-//				$.each(libraryData.subflows, function (index, flow) {
-//					setFlowMonitoringData(flow, 'library.subflow');
-//				});				
 				return libraryData;
 			}
 		} else if (startsWith(selectedContainer, 'flow:')) {

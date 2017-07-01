@@ -1,7 +1,9 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -237,17 +239,7 @@ public class IIBService extends AbstractJsonService {
 					if (!firstFlow) {
 						result.append(",");
 					}
-					addFlowDeployment(nodeConnection, messageFlow, result);
-					firstFlow = false;
-				}
-				result.append("], \"subflows\": [");
-				List<IIBSubFlow> subFlows = application.getSubFlows();
-				firstFlow = true;
-				for (IIBSubFlow subFlow : subFlows) {
-					if (!firstFlow) {
-						result.append(",");
-					}
-					addFlowDeployment(nodeConnection, subFlow, result);
+					addFlowDeployment(nodeConnection, messageFlow, application.getSubFlows(), result);
 					firstFlow = false;
 				}
 				result.append("]}");
@@ -270,7 +262,7 @@ public class IIBService extends AbstractJsonService {
 				if (!firstFlow) {
 					result.append(",");
 				}
-				addFlowDeployment(nodeConnection, messageFlow, result);
+				addFlowDeployment(nodeConnection, messageFlow, Collections.emptyList(), result);
 				firstFlow = false;
 			}
 			result.append("]");
@@ -282,30 +274,20 @@ public class IIBService extends AbstractJsonService {
 	private void addLibraryDeployment(IIBNodeConnection nodeConnection, IIBLibrary library, StringBuilder result) {
 		result.append("{");
 		addStringElementToJsonBuffer("name", library.getName(), result, true);
-		result.append(", \"flows\": [");
+		result.append("], \"flows\": [");
 		List<IIBMessageFlow> messageFlows = library.getMessageFlows();
 		boolean firstFlow = true;
 		for (IIBMessageFlow messageFlow : messageFlows) {
 			if (!firstFlow) {
 				result.append(",");
 			}
-			addFlowDeployment(nodeConnection, messageFlow, result);
-			firstFlow = false;
-		}
-		result.append("], \"subflows\": [");
-		List<IIBSubFlow> subFlows = library.getSubFlows();
-		firstFlow = true;
-		for (IIBSubFlow subFlow : subFlows) {
-			if (!firstFlow) {
-				result.append(",");
-			}
-			addFlowDeployment(nodeConnection, subFlow, result);
+			addFlowDeployment(nodeConnection, messageFlow, library.getSubFlows(), result);
 			firstFlow = false;
 		}
 		result.append("]}");		
 	}
 
-	private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBFlow flow, StringBuilder result) {
+	private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBFlow flow, List<IIBSubFlow> subFlows, StringBuilder result) {
 		boolean monitoringActivated = flow.isMonitoringActivated();
 		String currentProfile = null;
 		String currentProfileName = flow.getMonitoringProfileName();
@@ -320,22 +302,46 @@ public class IIBService extends AbstractJsonService {
 		addBooleanElementToJsonBuffer("monitoring_active", monitoringActivated, result, false);
 		result.append(", \"nodes\": [");
 		List<IIBNode> nodes = flow.getNodes();
-		boolean firstNode = true;
+		appendNodes(result, null, nodes, subFlows, currentProfile, true);
+		result.append("]}");	
+	}
+	
+	private boolean appendNodes(StringBuilder buffer, String namePrefix, List<IIBNode> nodes, List<IIBSubFlow> subFlows, String currentMonitoringProfile, boolean firstNode) {
 		for (IIBNode node : nodes) {
 			if (!node.isSupported()) {
 				continue;
 			}
-			if (!firstNode) {
-				result.append(",");
+			if ("SubFlowNode".equals(node.getType())) {
+				String prop = node.getProperty("subflowImplFile");
+				if (prop == null) {
+					continue;
+				}
+				final String subFlowName = prop.substring(0, prop.length() - ".subflow".length());
+				Optional<IIBSubFlow> optional = subFlows.stream().filter(p -> p.getName().equals(subFlowName)).findFirst();
+				if (!optional.isPresent()) {
+					continue;
+				}
+				List<IIBNode> subFlowNodes = optional.get().getNodes();
+				firstNode = appendNodes(buffer, namePrefix == null ? node.getName() + "." : namePrefix + node.getName() + "." , subFlowNodes, subFlows, currentMonitoringProfile, firstNode);
+			} else {
+				if (!firstNode) {
+					buffer.append(",");
+				}
+				String fullNodeName = namePrefix == null ? node.getName() : namePrefix + node.getName();
+				appendNode(buffer, fullNodeName, node.getType(), isMonitoringSetInProfile(currentMonitoringProfile, fullNodeName));
+				firstNode = false;
 			}
-			result.append("{");
-			addStringElementToJsonBuffer("name", node.getName(), result, true);
-			addStringElementToJsonBuffer("type", node.getType(), result, false);
-			addBooleanElementToJsonBuffer("monitoring_set", node.isMonitoringSetInProfile(currentProfile), result, false);
-			result.append("}");
-			firstNode = false;
 		}
-		result.append("]}");	}
+		return firstNode;
+	}
+
+	private void appendNode(StringBuilder buffer, String name, String type, boolean monitoringSet) {
+		buffer.append("{");
+		addStringElementToJsonBuffer("name", name, buffer, true);
+		addStringElementToJsonBuffer("type", type, buffer, false);
+		addBooleanElementToJsonBuffer("monitoring_set", monitoringSet, buffer, false);
+		buffer.append("}");
+	}
 
 	private String updateApplicationMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		String applicationName = getString("name", valueMap);
@@ -368,15 +374,6 @@ public class IIBService extends AbstractJsonService {
 			}
 			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, messageFlow, flowValues);
 		}
-		List<Map<String, Object>> subflowsValues = getArray("subflows", valueMap);
-		for (Map<String, Object> subflowValues : subflowsValues) {
-			String flowName = getString("name", subflowValues);
-			IIBSubFlow subFlow = application.getSubFlowByName(flowName);
-			if (subFlow == null) {
-				continue;
-			}
-			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, subFlow, subflowValues);
-		}		
 		return "{\"status\":\"success\"}";
 	}
 	
@@ -395,20 +392,6 @@ public class IIBService extends AbstractJsonService {
 				deactivateMonitoring(nodeConnection, messageFlow);
 			}
 		}
-		List<Map<String, Object>> subflowsValues = getArray("subflows", valueMap);
-		for (Map<String, Object> subflowValues : subflowsValues) {
-			String flowName = getString("name", subflowValues);
-			IIBSubFlow subFlow = library.getSubFlowByName(flowName);
-			if (subFlow == null) {
-				continue;
-			}
-			boolean monitoringActive = getBoolean("monitoring_active", subflowValues);
-			if (monitoringActive) {
-				activateMonitoring(nodeConnection, integrationServer, applicationName, library.getName(), version, subFlow, subflowValues);
-			} else {
-				deactivateMonitoring(nodeConnection, subFlow);
-			}
-		}		
 		return "{\"status\":\"success\"}";
 	}
 	
@@ -477,6 +460,13 @@ public class IIBService extends AbstractJsonService {
 			}
 		}
 		return builder.build();		
+	}
+
+	public boolean isMonitoringSetInProfile(String profile, String nodeName) {
+		if (profile == null) {
+			return false;
+		}
+		return profile.indexOf("profile:eventSourceAddress=\"" + nodeName + ".") >= 0;
 	}
 
 	

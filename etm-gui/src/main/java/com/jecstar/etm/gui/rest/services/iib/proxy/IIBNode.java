@@ -20,8 +20,9 @@ public class IIBNode {
 	}
 
 	public boolean isSupported() {
-		return 
-			this.node.getType().startsWith("ComIbmMQ") 
+		return
+			this.node.getType().equals("SubFlowNode")
+			||this.node.getType().startsWith("ComIbmMQ") 
 			|| this.node.getType().equals("ComIbmPublication")
 //			|| this.node.getType().startsWith("ComIbmREST")
 			|| (this.node.getType().startsWith("ComIbmHTTP") && !this.node.getType().equals("ComIbmHTTPHeader"))
@@ -30,11 +31,8 @@ public class IIBNode {
 		;
 	}
 
-	public boolean isMonitoringSetInProfile(String profile) {
-		if (profile == null) {
-			return false;
-		}
-		return profile.indexOf("profile:eventSourceAddress=\"" + getName() + ".") >= 0;
+	public String getProperty(String key) {
+		return this.node.getProperties().getProperty(key);
 	}
 	
 
