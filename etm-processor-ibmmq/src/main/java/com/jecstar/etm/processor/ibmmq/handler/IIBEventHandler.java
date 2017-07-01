@@ -103,8 +103,9 @@ public class IIBEventHandler extends AbstractEventHandler {
 		if (nodeType.startsWith("ComIbmMQ") || "ComIbmPublicationNode".equals(nodeType)) {
 			return processAsMessagingEvent(messageId,event);
 		} else if ((nodeType.startsWith("ComIbmHTTP") && !nodeType.equals("ComIbmHTTPHeader")) ||
-				(nodeType.startsWith("ComIbmWS") && !nodeType.equals("ComIbmWSRequestNode")) ||
-				(nodeType.startsWith("ComIbmSOAP") && !nodeType.equals("ComIbmSOAPRequestNode") && !nodeType.equals("ComIbmSOAPWrapperNode") && !nodeType.equals("ComIbmSOAPExtractNode"))) {
+				nodeType.startsWith("ComIbmWS") ||
+//				nodeType.startsWith("ComIbmREST") ||
+				(nodeType.startsWith("ComIbmSOAP") && !nodeType.equals("ComIbmSOAPWrapperNode") && !nodeType.equals("ComIbmSOAPExtractNode"))) {
 			return processAsHttpEvent(messageId, event);
 		} 
 		if (log.isDebugLevelEnabled()) {
@@ -200,7 +201,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 		this.httpTelemetryEventBuilder.initialize();
 		int encoding = -1;
 		int ccsid = -1;
-		String replyIdentifier = null;
+		String httpIdentifier = null;
 		// Determine the encoding & ccsid based on values from the event.
 		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
 			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
@@ -209,7 +210,9 @@ public class IIBEventHandler extends AbstractEventHandler {
 				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
 					ccsid = Integer.valueOf(simpleContent.getValue());
 				} else if ("ReplyIdentifier".equals(simpleContent.getName()) && SimpleContentDataType.HEX_BINARY.equals(simpleContent.getDataType())) {
-					replyIdentifier = simpleContent.getValue();
+					httpIdentifier = simpleContent.getValue();
+				} else if ("RequestIdentifier".equals(simpleContent.getName()) && SimpleContentDataType.HEX_BINARY.equals(simpleContent.getDataType())) {
+					httpIdentifier = simpleContent.getValue();
 				}
 			}
 		}	
@@ -224,7 +227,8 @@ public class IIBEventHandler extends AbstractEventHandler {
 		if ("ComIbmHTTPAsyncResponse".equals(nodeType) || 
 				"ComIbmWSInputNode".equals(nodeType) ||
 				"ComIbmSOAPInputNode".equals(nodeType) ||
-				"ComIbmSOAPAsyncResponseNode".equals(nodeType)) {
+				"ComIbmSOAPAsyncResponseNode".equals(nodeType) ||
+				"ComIbmRESTAsyncResponse".equals(nodeType)) {
 			endpointBuilder.addReadingEndpointHandler(endpointHandlerBuilder);
 		} else {
 			endpointBuilder.setWritingEndpointHandler(endpointHandlerBuilder);
@@ -232,11 +236,12 @@ public class IIBEventHandler extends AbstractEventHandler {
 		if ("ComIbmHTTPAsyncResponse".equals(nodeType) ||
 				"ComIbmWSReplyNode".equals(nodeType) ||
 				"ComIbmSOAPReplyNode".equals(nodeType) ||
-				"ComIbmSOAPAsyncResponseNode".equals(nodeType)) {
-			this.httpTelemetryEventBuilder.setCorrelationId(replyIdentifier);
+				"ComIbmSOAPAsyncResponseNode".equals(nodeType) ||
+				"ComIbmRESTAsyncResponse".equals(nodeType)) {
+			this.httpTelemetryEventBuilder.setCorrelationId(httpIdentifier);
 			this.httpTelemetryEventBuilder.setHttpEventType(HttpEventType.RESPONSE);
 		} else {
-			this.httpTelemetryEventBuilder.setId(replyIdentifier);
+			this.httpTelemetryEventBuilder.setId(httpIdentifier);
 		}
 		if (event.getBitstreamData() == null|| event.getBitstreamData().getBitstream() == null) {
 			if (log.isDebugLevelEnabled()) {

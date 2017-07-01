@@ -29,6 +29,9 @@ public class MonitoringProfileBuilder {
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/HTTP/RequestIdentifier\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
 			"	</profile:eventSource>";
@@ -61,6 +64,9 @@ public class MonitoringProfileBuilder {
 			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/HTTP/RequestIdentifier\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 

@@ -21,11 +21,12 @@ public class IIBNode {
 
 	public boolean isSupported() {
 		return 
-			(this.node.getType().startsWith("ComIbmMQ") && !"ComIbmMQHeaderNode".equals(this.node.getType())) 
+			this.node.getType().startsWith("ComIbmMQ") 
 			|| this.node.getType().equals("ComIbmPublication")
+//			|| this.node.getType().startsWith("ComIbmREST")
 			|| (this.node.getType().startsWith("ComIbmHTTP") && !this.node.getType().equals("ComIbmHTTPHeader"))
-			|| (this.node.getType().startsWith("ComIbmWS") && !this.node.getType().equals("ComIbmWSRequestNode"))
-			|| (this.node.getType().startsWith("ComIbmSOAP") && !this.node.getType().equals("ComIbmSOAPRequestNode") && !this.node.getType().equals("ComIbmSOAPWrapperNode") && !this.node.getType().equals("ComIbmSOAPExtractNode"))
+			|| this.node.getType().startsWith("ComIbmWS")
+			|| (this.node.getType().startsWith("ComIbmSOAP") && !this.node.getType().equals("ComIbmSOAPWrapperNode") && !this.node.getType().equals("ComIbmSOAPExtractNode"))
 		;
 	}
 
