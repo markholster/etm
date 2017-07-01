@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.iib.proxy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public class IIBLibrary {
 	
 	public List<IIBSubFlow> getSubFlows() {
 		if (!IIBApi.IIB_SUBFLOW_PROXY_AVAILABLE) {
-			return new ArrayList<>();
+			return Collections.emptyList();
 		}
 		return getSubFlowsWhenSubflowApiPresent();
 	}

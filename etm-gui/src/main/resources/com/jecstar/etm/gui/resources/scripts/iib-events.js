@@ -23,7 +23,6 @@ function buildEventPage() {
 	$('#sel-server').change(function(event) {
 		event.preventDefault();
 		$applicationGroup = $('#sel-container-application-group');
-		$libraryGroup = $('#sel-container-library-group');
 		$flowGroup = $('#sel-container-flow-group');
 		
 		emptyContainerSelect();
@@ -58,14 +57,10 @@ function buildEventPage() {
 			$.each(deploymentData.applications, function(index, application) {
 				$applicationGroup.append($('<option>').attr('value', 'application:' + application.name).text(application.name));
 			});
-			$.each(deploymentData.libraries, function(index, library) {
-				$libraryGroup.append($('<option>').attr('value', 'library:' + library.name).text(library.name));
-			});
 			$.each(deploymentData.flows, function(index, flow) {
 				$flowGroup.append($('<option>').attr('value', 'flow:' + flow.name).text(flow.name));
 			});	
 			sortSelectOptions($applicationGroup);
-			sortSelectOptions($libraryGroup);
 			sortSelectOptions($flowGroup);
 			$('#sel-container').removeAttr('disabled');			
 		}
@@ -97,26 +92,6 @@ function buildEventPage() {
 					);
 				});
 				$applicationFields.show();
-			}
-		} else if (startsWith(selectedContainer, 'library:')) {
-			var libraryName = selectedContainer.substring(8);
-			var libraryData = $.grep(serverMap[serverMapKey].libraries, function(n, i) {
-				return n.name === libraryName;
-			})[0];			
-			if (libraryData) {
-				$libraryFields = $('div[data-container-type="library"]');
-				$libraryFields.append(
-					$('<h5>').text('Library ' + libraryData.name)
-				);
-				$.each(libraryData.flows, function(index, flow) {
-					$flowDiv = $('<div>').attr('data-flow-type', 'library.flow');
-					appendFlowData($flowDiv, flow);
-					$libraryFields.append(
-						$('<strong>').text('Flow ' + flow.name),
-						$flowDiv
-					);
-				});
-				$libraryFields.show();
 			}
 		} else if (startsWith(selectedContainer, 'flow:')) {
 			var flowName = selectedContainer.substring(5);
@@ -176,8 +151,6 @@ function buildEventPage() {
 		var objectType;
 		if (startsWith(selectedContainer, 'application:')) {
 			objectType = 'application'
-		} else if (startsWith(selectedContainer, 'library:')) {
-			objectType = 'library'
 		} else if (startsWith(selectedContainer, 'flow:')) {
 			objectType = 'flow'
 		}
@@ -203,13 +176,6 @@ function buildEventPage() {
 								return false;
 							}
 						});
-					} else if ('library' == objectType) {
-						$.each(serverData.libraries, function (index, library) {
-							if (library.name == monitoringData.name) {
-								serverData.libraries[index] = monitoringData;
-								return false;
-							}
-						});						
 					} else if ('flow' == objectType) {
 						$.each(serverData.flows, function (index, flow) {
 							if (flow.name == monitoringData.name) {
@@ -273,7 +239,6 @@ function buildEventPage() {
 	
 	function emptyContainerSelect() {
 		$('#sel-container-application-group').empty();
-		$('#sel-container-library-group').empty();
 		$('#sel-container-flow-group').empty();
 	}
 	
@@ -315,18 +280,6 @@ function buildEventPage() {
 					setFlowMonitoringData(flow, 'application.flow');
 				});
 				return applicationData;
-			}
-		} else if (startsWith(selectedContainer, 'library:')) {
-			var libraryName = selectedContainer.substring(8);
-			// Clone the current data.
-			var libraryData = $.extend(true, {}, $.grep(serverMap[serverMapKey].libraries, function(n, i) {
-				return n.name === libraryName;
-			})[0]);
-			if (libraryData) {
-				$.each(libraryData.flows, function (index, flow) {
-					setFlowMonitoringData(flow, 'library.flow');
-				});				
-				return libraryData;
 			}
 		} else if (startsWith(selectedContainer, 'flow:')) {
 			var flowName = selectedContainer.substring(5);

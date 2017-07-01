@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -168,7 +169,7 @@ public class IIBService extends AbstractJsonService {
 				result = updateApplicationMonitorning(nodeConnection, integrationServer, valueMap);
 			} else if ("library".equals(objectType)) {
 				String libraryName = getString("name", valueMap);
-				IIBLibrary library = integrationServer.getLibraryByName(libraryName);
+				IIBLibrary library = integrationServer.getSharedLibraryByName(libraryName);
 				if (library == null) {
 					if (log.isDebugLevelEnabled()) {
 						log.logDebugMessage("Library '" + libraryName + "' not found. Not updating monitoring.");
@@ -213,6 +214,12 @@ public class IIBService extends AbstractJsonService {
 		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
 			nodeConnection.connect();
 			IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
+			List<IIBSubFlow> sharedLibrarySubFlows = new ArrayList<>();
+			List<IIBLibrary> sharedLibraries = integrationServer.getSharedLibraries();
+			for (IIBLibrary library : sharedLibraries) {
+				sharedLibrarySubFlows.addAll(library.getSubFlows());
+			}
+			
 			List<IIBApplication> applications = integrationServer.getApplications();
 			result.append("\"applications\": [");
 			boolean firstApplication = true;
@@ -221,11 +228,14 @@ public class IIBService extends AbstractJsonService {
 					result.append(",");
 				}
 				result.append("{");
+				List<IIBSubFlow> subFlows = application.getSubFlows();
+				subFlows.addAll(sharedLibrarySubFlows);
 				addStringElementToJsonBuffer("name", application.getName(), result, true);
 				List<IIBLibrary> libraries = application.getLibraries();
 				result.append(", \"libraries\": [");
 				boolean firstLibrary = true;
 				for (IIBLibrary library : libraries) {
+					subFlows.addAll(library.getSubFlows());
 					if (!firstLibrary) {
 						result.append(",");
 					}
@@ -239,21 +249,11 @@ public class IIBService extends AbstractJsonService {
 					if (!firstFlow) {
 						result.append(",");
 					}
-					addFlowDeployment(nodeConnection, messageFlow, application.getSubFlows(), result);
+					addFlowDeployment(nodeConnection, messageFlow, subFlows, result);
 					firstFlow = false;
 				}
 				result.append("]}");
 				firstApplication = false;
-			}
-			result.append("], \"libraries\": [");
-			List<IIBLibrary> libraries = integrationServer.getLibraries();
-			boolean firstLibrary = true;
-			for (IIBLibrary library : libraries) {
-				if (!firstLibrary) {
-					result.append(",");
-				}
-				addLibraryDeployment(nodeConnection, library, result);
-				firstLibrary = false;
 			}
 			result.append("], \"flows\": [");
 			List<IIBMessageFlow> messageFlows = integrationServer.getMessageFlows();
@@ -274,7 +274,7 @@ public class IIBService extends AbstractJsonService {
 	private void addLibraryDeployment(IIBNodeConnection nodeConnection, IIBLibrary library, StringBuilder result) {
 		result.append("{");
 		addStringElementToJsonBuffer("name", library.getName(), result, true);
-		result.append("], \"flows\": [");
+		result.append(", \"flows\": [");
 		List<IIBMessageFlow> messageFlows = library.getMessageFlows();
 		boolean firstFlow = true;
 		for (IIBMessageFlow messageFlow : messageFlows) {
