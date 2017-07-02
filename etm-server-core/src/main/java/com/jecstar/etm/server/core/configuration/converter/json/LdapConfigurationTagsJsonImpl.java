@@ -58,6 +58,11 @@ public class LdapConfigurationTagsJsonImpl implements LdapConfigurationTags {
 	public String getUserSearchFilterTag() {
 		return "user_search_filter";
 	}
+	
+	@Override
+	public String getUserSearchInSubtreeTag() {
+		return "user_search_in_subtree";
+	}
 
 	@Override
 	public String getUserIdentifierAttributeTag() {

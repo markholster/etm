@@ -28,7 +28,7 @@ public class LicenseGenerator {
 		calendar.set(Calendar.MINUTE, 59);
 		calendar.set(Calendar.SECOND, 59);
 		calendar.set(Calendar.MILLISECOND, 999);
-	    final String company = "Jecstar Innovation";
+	    final String company = "Jecstar Innovation V.O.F.";
 	    final Long maxEventsPerDay = -1L;
 	    final Long maxSizePerDay = -1L;
 	    final long expiry = calendar.getTimeInMillis();

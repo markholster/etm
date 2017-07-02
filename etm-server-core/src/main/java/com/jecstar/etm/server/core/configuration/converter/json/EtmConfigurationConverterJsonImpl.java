@@ -2,8 +2,9 @@ package com.jecstar.etm.server.core.configuration.converter.json;
 
 import java.util.Map;
 
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.configuration.WaitStrategy;
 import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationTags;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -25,10 +26,12 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		sb.append("{");
 		if (nodeConfiguration == null) {
 			// only add the defaults.
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, !added) || added;
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, !added) || added;
+			added = this.converter.addLongElementToJsonBuffer(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name(), sb, !added);
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), sb, !added) || added;
@@ -36,6 +39,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
+			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxAuditLogIndexCountTag(), defaultConfiguration.getMaxAuditLogIndexCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
@@ -46,9 +50,11 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
 		} else {
 			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, !added) || added;
+			added = addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), nodeConfiguration.getEventBufferSize(), sb, !added) || added;
+			added = addStringWhenNotDefault(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name(), nodeConfiguration.getWaitStrategy().name(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), nodeConfiguration.getPersistingBulkCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), nodeConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), nodeConfiguration.getPersistingBulkTime(), sb, !added) || added;
@@ -56,6 +62,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = addIntegerWhenNotDefault(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), nodeConfiguration.getReplicasPerIndex(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), nodeConfiguration.getMaxEventIndexCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), nodeConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
+			added = addIntegerWhenNotDefault(this.tags.getMaxAuditLogIndexCountTag(), defaultConfiguration.getMaxAuditLogIndexCount(), nodeConfiguration.getMaxAuditLogIndexCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), nodeConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount(), nodeConfiguration.getMaxSearchHistoryCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), nodeConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
@@ -78,9 +85,11 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 	
 	public EtmConfiguration read(Map<String, Object> nodeMap, Map<String, Object> defaultMap, String nodeName) {
 		EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName);
+		etmConfiguration.setSessionTimeout(getLongValue(this.tags.getSessionTimeoutTag(), defaultMap, nodeMap));
 		etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingHandlerCount(getIntValue(this.tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setEventBufferSize(getIntValue(this.tags.getEventBufferSizeTag(), defaultMap, nodeMap));
+		etmConfiguration.setWaitStrategy(WaitStrategy.safeValueOf(getStringValue(this.tags.getWaitStrategyTag(), defaultMap, nodeMap)));
 		etmConfiguration.setPersistingBulkCount(getIntValue(this.tags.getPersistingBulkCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingBulkSize(getIntValue(this.tags.getPersistingBulkSizeTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingBulkTime(getIntValue(this.tags.getPersistingBulkTimeTag(), defaultMap, nodeMap));
@@ -88,6 +97,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		etmConfiguration.setReplicasPerIndex(getIntValue(this.tags.getReplicasPerIndexTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxEventIndexCount(getIntValue(this.tags.getMaxEventIndexCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxMetricsIndexCount(getIntValue(this.tags.getMaxMetricsIndexCountTag(), defaultMap, nodeMap));
+		etmConfiguration.setMaxAuditLogIndexCount(getIntValue(this.tags.getMaxAuditLogIndexCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxSearchResultDownloadRows(getIntValue(this.tags.getMaxSearchResultDownloadRowsTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxSearchHistoryCount(getIntValue(this.tags.getMaxSearchHistoryCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxSearchTemplateCount(getIntValue(this.tags.getMaxSearchTemplateCountTag(), defaultMap, nodeMap));
@@ -117,6 +127,15 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		return null;
 	}
 	
+	private String getStringValue(String tag, Map<String, Object> defaultMap, Map<String, Object> nodeMap) {
+		if (nodeMap != null && nodeMap.containsKey(tag)) {
+			return (nodeMap.get(tag)).toString();
+		} else if (defaultMap != null && defaultMap.containsKey(tag)) {
+			return (defaultMap.get(tag)).toString();
+		}
+		return null;
+	}
+	
 	private boolean addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, StringBuilder buffer, boolean firstElement) {
 		if (defaultValue == specificValue) {
 			return false;
@@ -129,6 +148,13 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			return false;
 		}
 		return this.converter.addLongElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+	}
+	
+	private boolean addStringWhenNotDefault(String tag, String defaultValue, String specificValue, StringBuilder buffer, boolean firstElement) {
+		if (defaultValue.equals(specificValue)) {
+			return false;
+		}
+		return this.converter.addStringElementToJsonBuffer(tag, specificValue, buffer, firstElement);
 	}
 
 	@Override

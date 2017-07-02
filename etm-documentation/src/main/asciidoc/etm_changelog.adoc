@@ -1,0 +1,12 @@
+== Changelog
+
+=== Version 2.2.0 
+* Upgrade to Elasicsearch 5.4.x.
+* Support for basic authentication on rest processor.
+* Added audit logs to audit the usage of {etm}.
+* Configurable ringbuffer wait strategy.
+* Automatic date interval determination in graphs.
+* Custom y-axis format in graphs.
+* Automatic installation of free license.
+* Allow subtree scope in LDAP user authentication.
+* Add a write policy to endpoint configurations alowing fields to be overwritten.

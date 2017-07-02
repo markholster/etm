@@ -105,6 +105,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	}
 	
 	@Override
+	public String getEndpointHandlerForcedTag() {
+		return "forced";
+	}
+	
+	@Override
 	public String getEndpointHandlerLatencyTag() {
 		return "latency";
 	}

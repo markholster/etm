@@ -3,13 +3,14 @@ package com.jecstar.etm.server.core.domain.converter.json;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationTags;
+import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.enhancers.TelemetryEventEnhancer;
+import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.parsers.ExpressionParser;
@@ -62,6 +63,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 		if (fields != null) {
 			for (Map<String, Object> fieldValues : fields) {
 				String fieldName = this.converter.getString(this.tags.getFieldTag(), fieldValues);
+				DefaultField field = new DefaultField(fieldName);
 				List<ExpressionParser> expressionParsers = new ArrayList<>();
 				List<Map<String, Object>> parsers = this.converter.getArray(this.tags.getParsersTag(), fieldValues);
 				if (parsers != null) {
@@ -69,7 +71,10 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 						expressionParsers.add(this.expressionParserConverter.read(parserValues));
 					}
 				}
-				enhancer.addField(fieldName, expressionParsers);
+				field.addParsers(expressionParsers);
+				field.setWritePolicy(WritePolicy.safeValueOf(this.converter.getString(this.tags.getWritePolicyTag(), fieldValues)));
+				
+				enhancer.addField(field);
 			}
 		}
 		return enhancer;
@@ -87,27 +92,26 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 				this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), DEFAULT_ENHANCER_TYPE, result, true);
 				this.converter.addBooleanElementToJsonBuffer(this.tags.getEnhancePayloadFormatTag(), enhancer.isEnhancePayloadFormat(), result, false);
 				result.append(",");
-				result.append("\"" + this.tags.getFieldsTag() + "\": [");
+				result.append(this.converter.escapeToJson(this.tags.getFieldsTag(), true) + ": [");
 				boolean first = true;
-				for (Entry<String, List<ExpressionParser>> entry : enhancer.getFields().entrySet()) {
-					if (entry.getValue() != null) {
-						if (!first) {
+				for (DefaultField field : enhancer.getFields()) {
+					if (!first) {
+						result.append(",");
+					}
+					result.append("{");
+					this.converter.addStringElementToJsonBuffer(this.tags.getFieldTag(), field.getName(), result, true);
+					this.converter.addStringElementToJsonBuffer(this.tags.getWritePolicyTag(), field.getWritePolicy().name(), result, false);
+					result.append(",\"" + this.tags.getParsersTag() + "\": [");
+					boolean firstParser = true;
+					for (ExpressionParser expressionParser : field.getParsers()) {
+						if (!firstParser) {
 							result.append(",");
 						}
-						result.append("{");
-						this.converter.addStringElementToJsonBuffer(this.tags.getFieldTag(), entry.getKey(), result, true);
-						result.append(",\"" + this.tags.getParsersTag() + "\": [");
-						boolean firstParser = true;
-						for (ExpressionParser expressionParser : entry.getValue()) {
-							if (!firstParser) {
-								result.append(",");
-							}
-							result.append(this.expressionParserConverter.write(expressionParser));
-							firstParser = false;
-						}
-						result.append("]}");
-						first = false;
+						result.append(this.expressionParserConverter.write(expressionParser));
+						firstParser = false;
 					}
+					result.append("]}");
+					first = false;
 				}
 				result.append("]");
 			} else {

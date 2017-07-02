@@ -8,13 +8,17 @@ import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
 import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedException;
 import com.ibm.broker.config.proxy.MessageFlowProxy;
 import com.ibm.broker.config.proxy.MessageFlowProxy.Node;
+import com.jecstar.etm.gui.rest.services.iib.proxy.IIBMessageFlow;
 import com.jecstar.etm.server.core.EtmException;
 
-public class IIBMessageFlow implements IIBFlow {
+public class IIBMessageFlow {
+	
+	static final String RUNTIME_PROPERTY_MONITORING = "This/monitoring";
+	static final String RUNTIME_PROPERTY_MONITORING_PROFILE = "This/monitoringProfile";
 	
 	private MessageFlowProxy messageFlow;
 
-	protected IIBMessageFlow(MessageFlowProxy messageFlowProxy) {
+	public IIBMessageFlow(MessageFlowProxy messageFlowProxy) {
 		this.messageFlow = messageFlowProxy;
 	}
 	
@@ -28,8 +32,8 @@ public class IIBMessageFlow implements IIBFlow {
 	
 	public boolean isMonitoringActivated() {
 		try {
-			if (this.messageFlow.getRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING) != null
-					&& this.messageFlow.getRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING)
+			if (this.messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING) != null
+					&& this.messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING)
 							.equals("active")) {
 				return true;
 			}
@@ -41,7 +45,7 @@ public class IIBMessageFlow implements IIBFlow {
 	
 	public String getMonitoringProfileName() {
 		try {
-			return this.messageFlow.getRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING_PROFILE);
+			return this.messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE);
 		} catch (ConfigManagerProxyPropertyNotInitializedException | IllegalArgumentException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
@@ -52,7 +56,17 @@ public class IIBMessageFlow implements IIBFlow {
 			List<IIBNode> nodes = new ArrayList<>();
 			Enumeration<Node> nodeProxy = this.messageFlow.getNodes();
 			while (nodeProxy.hasMoreElements()) {
-				nodes.add(new IIBNode(nodeProxy.nextElement()));
+				IIBNode iibNode = new IIBNode(nodeProxy.nextElement());
+				if (!nodes.stream().anyMatch(n -> n.getName().equals(iibNode.getName()))) {
+					// Filter nodes with the same name. Although it should not
+					// be possible to have 2 nodes with the same name in a
+					// single IIB flow it might be the case when a Publication
+					// node is used in a flow. A single Publication node in a
+					// flow will result in 2 unique Nodes in the xml of the
+					// flow. Both nodes have the exact same name, but a
+					// different uuid. 
+					nodes.add(iibNode);
+				}
 			}
 			return nodes;
 		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
@@ -70,13 +84,13 @@ public class IIBMessageFlow implements IIBFlow {
 
 	public void activateMonitoringProfile(String monitoringProfileName) {
 		try {
-			String currenProfileName = this.messageFlow.getRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING_PROFILE);
+			String currenProfileName = this.messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE);
 			if (currenProfileName == null || !currenProfileName.equals(monitoringProfileName)) {
-				this.messageFlow.setRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING_PROFILE, monitoringProfileName);
+				this.messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE, monitoringProfileName);
 			}
-			String status = this.messageFlow.getRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING);
+			String status = this.messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING);
 			if (status == null || !status.equals("active")) {
-				this.messageFlow.setRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING, "active");
+				this.messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING, "active");
 			}	
 		} catch (ConfigManagerProxyPropertyNotInitializedException | IllegalArgumentException | ConfigManagerProxyLoggedException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
@@ -85,13 +99,13 @@ public class IIBMessageFlow implements IIBFlow {
 
 	public String deactivateMonitoringProfile() {
 		try {
-			String status = messageFlow.getRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING);
+			String status = messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING);
 			if ("active".equals(status)) {
-				this.messageFlow.setRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING, "inactive");
+				this.messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING, "inactive");
 			}
-			String currentProfile = messageFlow.getRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING_PROFILE);
+			String currentProfile = messageFlow.getRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE);
 			if (currentProfile != null) {
-				this.messageFlow.setRuntimeProperty(IIBFlow.RUNTIME_PROPERTY_MONITORING_PROFILE, "");
+				this.messageFlow.setRuntimeProperty(RUNTIME_PROPERTY_MONITORING_PROFILE, "");
 			}
 			return currentProfile;
 		} catch (ConfigManagerProxyPropertyNotInitializedException | IllegalArgumentException | ConfigManagerProxyLoggedException e) {

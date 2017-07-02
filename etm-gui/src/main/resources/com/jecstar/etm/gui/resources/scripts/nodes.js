@@ -158,6 +158,7 @@ function buildNodePage() {
 		if ($("#input-event-buffer-size").val()) {
 			nodeData.event_buffer_size = Number($("#input-event-buffer-size").val());
 		}
+		nodeData.wait_strategy = $("#sel-wait-strategy").val();
 		if ($("#input-persisting-bulk-count").val()) {
 			nodeData.persisting_bulk_count = Number($("#input-persisting-bulk-count").val());
 		}
@@ -175,6 +176,9 @@ function buildNodePage() {
 		$("#input-enhancing-handler-count").val(nodeData.enhancing_handler_count);
 		$("#input-persisting-handler-count").val(nodeData.persisting_handler_count);
 		$("#input-event-buffer-size").val(nodeData.event_buffer_size);
+		if (nodeData.wait_strategy) {
+			$("#sel-wait-strategy").val(nodeData.wait_strategy);
+		}
 		$("#input-persisting-bulk-count").val(nodeData.persisting_bulk_count);
 		$("#input-persisting-bulk-size").val(nodeData.persisting_bulk_size);
 		$("#input-persisting-bulk-time").val(nodeData.persisting_bulk_time);
@@ -184,6 +188,14 @@ function buildNodePage() {
 		$("#input-enhancing-handler-count").attr('placeholder', clusterData.enhancing_handler_count);
 		$("#input-persisting-handler-count").attr('placeholder', clusterData.persisting_handler_count);
 		$("#input-event-buffer-size").attr('placeholder', clusterData.event_buffer_size);
+		
+		$("#sel-wait-strategy").children('option').each(function (ix, option) {
+			if ($(option).attr('value') == clusterData.wait_strategy) {
+				$(option).text(option.text + ' (Cluster default)').attr('selected', 'selected').attr('data-cluter-default', 'true');
+			}
+		});
+
+		
 		$("#input-persisting-bulk-count").attr('placeholder', clusterData.persisting_bulk_count);
 		$("#input-persisting-bulk-size").attr('placeholder', clusterData.persisting_bulk_size);
 		$("#input-persisting-bulk-time").attr('placeholder', clusterData.persisting_bulk_time);

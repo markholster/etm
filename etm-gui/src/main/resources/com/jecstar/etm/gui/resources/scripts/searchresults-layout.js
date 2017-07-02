@@ -66,7 +66,7 @@ var tableLayout = {
                     }
                 }
             } else {
-                return true;
+                return false;
             }
         });
     },

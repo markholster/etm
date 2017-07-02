@@ -1,10 +1,7 @@
 package com.jecstar.etm.processor.core.persisting.elastic;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,12 +9,14 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.util.DateUtils;
 
 /**
  * Base class for <code>TelemetryEvent</code> persisters that store their data in elasticsearch.
@@ -26,16 +25,11 @@ import com.jecstar.etm.server.core.configuration.EtmConfiguration;
  */
 public abstract class AbstractElasticTelemetryEventPersister {
 	
-	private final EtmConfiguration etmConfiguration;
 	protected BulkProcessor bulkProcessor;
 	
-	public static final DateTimeFormatter dateTimeFormatterIndexPerDay = new DateTimeFormatterBuilder()
-			.appendValue(ChronoField.YEAR, 4)
-			.appendLiteral("-")
-			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
-			.appendLiteral("-")
-			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
-
+	private final EtmConfiguration etmConfiguration;
+	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
+	
 	public AbstractElasticTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
 		this.bulkProcessor = bulkProcessor;
 		this.etmConfiguration = etmConfiguration;
@@ -56,7 +50,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
 	}
     
     protected String getElasticIndexName() {
-    	return ElasticSearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+    	return ElasticsearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
     
     protected abstract String getElasticTypeName();
@@ -90,8 +84,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
 		parameters.put("correlating_id", event.id);
 		bulkProcessor.add(createUpdateRequest(event.correlationId)
 				.script(new Script(ScriptType.STORED, "painless", "etm_update-event-with-correlation", parameters))
-				.upsert("{}")
+				.upsert("{}", XContentType.JSON)
 				.scriptedUpsert(true));
     }
-
 }

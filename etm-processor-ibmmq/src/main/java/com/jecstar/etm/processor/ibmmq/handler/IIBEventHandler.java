@@ -100,11 +100,12 @@ public class IIBEventHandler extends AbstractEventHandler {
 			return HandlerResult.FAILED;
 		}
 		// See https://www.ibm.com/support/knowledgecenter/SSMKHH_10.0.0/com.ibm.etools.mft.doc/as36001_.htm for node types.
-		if (nodeType.startsWith("ComIbmMQ")) {
+		if (nodeType.startsWith("ComIbmMQ") || "ComIbmPublicationNode".equals(nodeType)) {
 			return processAsMessagingEvent(messageId,event);
 		} else if ((nodeType.startsWith("ComIbmHTTP") && !nodeType.equals("ComIbmHTTPHeader")) ||
-				(nodeType.startsWith("ComIbmWS") && !nodeType.equals("ComIbmWSRequestNode")) ||
-				(nodeType.startsWith("ComIbmSOAP") && !nodeType.equals("ComIbmSOAPRequestNode") && !nodeType.equals("ComIbmSOAPWrapperNode") && !nodeType.equals("ComIbmSOAPExtractNode"))) {
+				nodeType.startsWith("ComIbmWS") ||
+//				nodeType.startsWith("ComIbmREST") ||
+				(nodeType.startsWith("ComIbmSOAP") && !nodeType.equals("ComIbmSOAPWrapperNode") && !nodeType.equals("ComIbmSOAPExtractNode"))) {
 			return processAsHttpEvent(messageId, event);
 		} 
 		if (log.isDebugLevelEnabled()) {
@@ -117,6 +118,8 @@ public class IIBEventHandler extends AbstractEventHandler {
 		this.messagingTelemetryEventBuilder.initialize();
 		int encoding = -1;
 		int ccsid = -1;
+		String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
+		EndpointBuilder endpointBuilder = new EndpointBuilder();
 		// Determine the encoding & ccsid based on values from the event.
 		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
 			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
@@ -124,11 +127,11 @@ public class IIBEventHandler extends AbstractEventHandler {
 					encoding = Integer.valueOf(simpleContent.getValue());
 				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
 					ccsid = Integer.valueOf(simpleContent.getValue());
-				} 
+				} else if ("Topic".equals(simpleContent.getName()) && SimpleContentDataType.STRING.equals(simpleContent.getDataType()) && "ComIbmPublicationNode".equals(nodeType)) {
+					endpointBuilder.setName(simpleContent.getValue());
+				}
 			}
 		}	
-	
-		EndpointBuilder endpointBuilder = new EndpointBuilder();
 		// TODO, filteren op output terminal? Events op de in terminal van de MqOutputNode hebben nog geen msg id.
 		if (event.getApplicationData() != null && event.getApplicationData().getComplexContent() != null) {
 			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
@@ -156,7 +159,6 @@ public class IIBEventHandler extends AbstractEventHandler {
 		// Add some flow information
 		addSourceInformation(event, this.messagingTelemetryEventBuilder);
 		EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event);
-		String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
 		if ("ComIbmMQInputNode".equals(nodeType) || "ComIbmMQGetNode".equals(nodeType)) {
 			String endpoint = event.getEventPointData().getMessageFlowData().getNode().getDetail();
 			if (endpointBuilder.getName() == null) {
@@ -199,6 +201,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 		this.httpTelemetryEventBuilder.initialize();
 		int encoding = -1;
 		int ccsid = -1;
+		String httpIdentifier = null;
 		// Determine the encoding & ccsid based on values from the event.
 		if (event.getApplicationData() != null && event.getApplicationData().getSimpleContent() != null) {
 			for (SimpleContent simpleContent : event.getApplicationData().getSimpleContent()) {
@@ -206,10 +209,14 @@ public class IIBEventHandler extends AbstractEventHandler {
 					encoding = Integer.valueOf(simpleContent.getValue());
 				} else if ("CodedCharSetId".equals(simpleContent.getName()) && SimpleContentDataType.INTEGER.equals(simpleContent.getDataType())) {
 					ccsid = Integer.valueOf(simpleContent.getValue());
-				} 
+				} else if ("ReplyIdentifier".equals(simpleContent.getName()) && SimpleContentDataType.HEX_BINARY.equals(simpleContent.getDataType())) {
+					httpIdentifier = simpleContent.getValue();
+				} else if ("RequestIdentifier".equals(simpleContent.getName()) && SimpleContentDataType.HEX_BINARY.equals(simpleContent.getDataType())) {
+					httpIdentifier = simpleContent.getValue();
+				}
 			}
 		}	
-	
+
 		// TODO uitlezen local environment voor het id & correlationId.
 		EndpointBuilder endpointBuilder = new EndpointBuilder();
 		// Add some flow information
@@ -220,7 +227,8 @@ public class IIBEventHandler extends AbstractEventHandler {
 		if ("ComIbmHTTPAsyncResponse".equals(nodeType) || 
 				"ComIbmWSInputNode".equals(nodeType) ||
 				"ComIbmSOAPInputNode".equals(nodeType) ||
-				"ComIbmSOAPAsyncResponseNode".equals(nodeType)) {
+				"ComIbmSOAPAsyncResponseNode".equals(nodeType) ||
+				"ComIbmRESTAsyncResponse".equals(nodeType)) {
 			endpointBuilder.addReadingEndpointHandler(endpointHandlerBuilder);
 		} else {
 			endpointBuilder.setWritingEndpointHandler(endpointHandlerBuilder);
@@ -228,8 +236,12 @@ public class IIBEventHandler extends AbstractEventHandler {
 		if ("ComIbmHTTPAsyncResponse".equals(nodeType) ||
 				"ComIbmWSReplyNode".equals(nodeType) ||
 				"ComIbmSOAPReplyNode".equals(nodeType) ||
-				"ComIbmSOAPAsyncResponseNode".equals(nodeType)) {
+				"ComIbmSOAPAsyncResponseNode".equals(nodeType) ||
+				"ComIbmRESTAsyncResponse".equals(nodeType)) {
+			this.httpTelemetryEventBuilder.setCorrelationId(httpIdentifier);
 			this.httpTelemetryEventBuilder.setHttpEventType(HttpEventType.RESPONSE);
+		} else {
+			this.httpTelemetryEventBuilder.setId(httpIdentifier);
 		}
 		if (event.getBitstreamData() == null|| event.getBitstreamData().getBitstream() == null) {
 			if (log.isDebugLevelEnabled()) {
@@ -256,7 +268,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 			return HandlerResult.FAILED;
 		}	
 		this.httpTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
-		this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
+		this.telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEventBuilder);
 		return HandlerResult.PROCESSED;
 	}
 	
@@ -307,7 +319,12 @@ public class IIBEventHandler extends AbstractEventHandler {
 			throws MQDataException, IOException {
 		if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
 			try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
-				MQMD mqmd = new MQMD(inputData);
+				MQMD mqmd = null;
+				if (encoding > 0 && ccsid > 0) {
+					mqmd = new MQMD(inputData, encoding, ccsid);
+				} else {
+					mqmd = new MQMD(inputData);
+				}
 				putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), builder.getMetadata());
 				putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, builder.getMetadata());
 				putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), builder.getMetadata());
@@ -321,6 +338,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 					new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
 					// TODO Do something with RFH2 header?
 				}
+				
 				byte[] remaining = new byte[inputData.available()];
 				inputData.readFully(remaining);
 				
@@ -364,16 +382,19 @@ public class IIBEventHandler extends AbstractEventHandler {
 		}
 		try (BufferedReader reader = new BufferedReader(ccsid == -1 ? new InputStreamReader(new ByteArrayInputStream(decoded)) : new InputStreamReader(new ByteArrayInputStream(decoded), codepage))) {
 			String line = reader.readLine();
-			if (line != null) {
-				// First line is always the method + url + protocol version;
-				String[] split = line.split(" ");
-				if (split.length >= 2) {
-					builder.setHttpEventType(HttpEventType.safeValueOf(split[0]));
-					endpointBuilder.setName(split[1]);
+			boolean inHeaders = false;
+			if (!HttpEventType.RESPONSE.equals(builder.getHttpEventType())) {
+				if (line != null) {
+					// First line is always the method + url + protocol version;
+					String[] split = line.split(" ");
+					if (split.length >= 2) {
+						builder.setHttpEventType(HttpEventType.safeValueOf(split[0]));
+						endpointBuilder.setName(split[1]);
+					}
 				}
+				line = reader.readLine();
+				inHeaders = true;
 			}
-			line = reader.readLine();
-			boolean inHeaders = true;
 			while (line != null) {
 				if (line.trim().length() == 0 && inHeaders) {
 					inHeaders = false;

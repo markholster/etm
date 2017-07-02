@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.elasticsearch.action.ActionRequest;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -48,13 +48,14 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 		metricRegistry.register("event-processor.blacklist_size", blacklistGauge);
 	}
 	
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void beforeBulk(long executionId, BulkRequest request) {
 		this.metricContext.put(executionId, this.bulkTimer.time());
 		cleanupBlacklist();
-		Iterator<ActionRequest> it = request.requests().iterator();
+		Iterator<DocWriteRequest> it = request.requests().iterator();
 		while (it.hasNext()) {
-			ActionRequest action = it.next();
+			DocWriteRequest action = it.next();
 			if (isBlacklisted(action)) {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Event with id '" + getEventId(action) + " is currently blacklisted and will not be persisted.");
@@ -85,11 +86,11 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 		this.metricContext.remove(executionId).stop();
 	}
 
-	private boolean isBlacklisted(ActionRequest action) {
+	private boolean isBlacklisted(DocWriteRequest<?> action) {
 		return this.blacklistedIds.containsKey(getEventId(action));
 	}
 	
-	private String getEventId(ActionRequest action) {
+	private String getEventId(DocWriteRequest<?> action) {
         if (action instanceof IndexRequest) {
         	return ((IndexRequest) action).id();
         }  else if (action instanceof UpdateRequest) {

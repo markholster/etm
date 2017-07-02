@@ -56,10 +56,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 	}
 	
 	/**
-	 * Test the merging reading event handlers and writing event handlers when the writer is added after the reader. 
+	 * Test the merging reading event handlers and writing event handlers when the reader is added after the writer. 
 	 */
 	@Test
-	public void testMergingOfWriterAfterReader() throws InterruptedException {
+	public void testMergingOfReaderAfterWriter() throws InterruptedException {
 		final String eventId = UUID.randomUUID().toString();
 		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 		
@@ -95,6 +95,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setMessagingEventType(MessagingEventType.REQUEST)
 			.addOrMergeEndpoint(new EndpointBuilder()
 						.setName("TEST.QUEUE")
+						// Empty WritingEndpointHandler is added by the enhancer
+						.setWritingEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(readingEndpointHandler.handlingTime).setForced(true))
 						.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
@@ -111,10 +113,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 	}
 	
 	/**
-	 * Test the merging reading event handlers and writing event handlers when the reader is added after the writer. 
+	 * Test the merging reading event handlers and writing event handlers when the writer is added after the reader. 
 	 */
 	@Test
-	public void testMergingOfReaderAfterWriter() throws InterruptedException {
+	public void testMergingOfWriterAfterReader() throws InterruptedException {
 		final String eventId = UUID.randomUUID().toString();
 		final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 		
@@ -137,6 +139,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setMessagingEventType(MessagingEventType.REQUEST)
 			.addOrMergeEndpoint(new EndpointBuilder()
 					.setName("TEST.QUEUE")
+					// Empty WritingEndpointHandler is added by the enhancer
+					.setWritingEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(readingEndpointHandler.handlingTime).setForced(true))
 					.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);

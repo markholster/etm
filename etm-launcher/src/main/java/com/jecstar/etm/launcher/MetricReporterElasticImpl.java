@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentType;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -28,7 +29,7 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.launcher.MetricConverterTags.RateType;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -87,7 +88,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 			objectMapper.writeValue(sw, root);
 	        this.elasticClient.prepareIndex(getElasticIndexName(now), this.nodeName, "" + now.toEpochMilli())
         	.setWaitForActiveShards(ActiveShardCount.ONE)
-        	.setSource(sw.toString()).get();
+        	.setSource(sw.toString(), XContentType.JSON).get();
 		} catch (IOException e) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Failed to generate json metrics", e);
@@ -239,7 +240,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 	 * @return The name of the index.
 	 */
 	public String getElasticIndexName(Instant instant) {
-		return ElasticSearchLayout.ETM_METRICS_INDEX_PREFIX + this.dateTimeFormatter.format(instant);		
+		return ElasticsearchLayout.ETM_METRICS_INDEX_PREFIX + this.dateTimeFormatter.format(instant);		
 	}
 	
 }

@@ -17,9 +17,6 @@ distributions {
             exclude '**/ibmjsseprovider2.jar'
             exclude '**/integration-api-*.jar'
             exclude '**/etm-distribution-*.jar'
-            into ('config') { 
-            	from { 'src/main/distribution/config' }
-            }
         }
     }
 }
@@ -27,23 +24,23 @@ distributions {
 tasks.withType(Tar) { task ->
     compression = Compression.GZIP
     task.doLast {
-        ant.checksum(file: task.archivePath, algorithm: 'SHA-512', fileext: '.sha512', pattern: "{0} {1}")
+        ant.checksum(file: task.archivePath, algorithm: 'SHA-512', fileext: '.sha512', pattern: "{0}  {1}")
     }
 }
 
 tasks.withType(Zip) { task ->
     task.doLast {
-        ant.checksum(file: task.archivePath, algorithm: 'SHA-512', fileext: '.sha512', pattern: "{0} {1}")
+        ant.checksum(file: task.archivePath, algorithm: 'SHA-512', fileext: '.sha512', pattern: "{0}  {1}")
     }
 }
 
 startScripts {
     doLast {
-        unixScript.text = file('src/main/distribution/scripts/etm.sh').text
+        unixScript.text = file('src/main/scripts/etm.sh').text
             .replace('${applicationName}', applicationName)
             .replace('${applicationVersion}', version)
             .replace('${mainClassName}', mainClassName)
-        windowsScript.text = file('src/main/distribution/scripts/etm.bat').text
+        windowsScript.text = file('src/main/scripts/etm.bat').text
             .replace('${applicationName}', applicationName)
             .replace('${applicationVersion}', version)
             .replace('${mainClassName}', mainClassName)

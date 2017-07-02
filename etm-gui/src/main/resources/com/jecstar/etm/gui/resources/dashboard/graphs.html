@@ -22,12 +22,13 @@ body { padding-top: 60px; }
     <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+    <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
       <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
       Jecstar
     </a>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+        <li id="placeholder-for-MenuAwareURLResource"></li>
       </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
@@ -49,7 +50,7 @@ body { padding-top: 60px; }
             <div id="graphs_box">
               <div class="row">
                 <div class=col-sm-12>
-	              <select id="sel-graph" class="form-control form-control-sm custom-select">
+	              <select id="sel-graph" class="form-control form-control-sm custom-select" autofocus="autofocus">
 	          	    <option selected="selected"></option>
 	              </select>
 	            </div>
@@ -97,6 +98,12 @@ body { padding-top: 60px; }
 
 					<div id="bar-fields" data-field-group="bar">
 					  <p><b>Y-axis</b><a href="#" data-element-type="add-y-axis-metrics-aggregator" data-graph-type="bar" class="pull-right">Add aggregator</a></p>
+                      <div class="form-group row">
+                        <label for="input-bar-y-axis-format" class="col-sm-3 col-form-label col-form-label-sm">Y-axis format</label>
+                        <div class="col-sm-9">
+                          <input id="input-bar-y-axis-format" type="text" class="form-control form-control-sm" value=",f" />
+                        </div>
+                      </div>
 					  <div id="bar-y-axis"></div>
 					  <hr />
 					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="bar" class="pull-right">Add sub aggregator</a></p>
@@ -105,6 +112,12 @@ body { padding-top: 60px; }
 
 					<div id="line-fields" data-field-group="line" style="display: none;">
 					  <p><b>Y-axis</b><a data-element-type="add-y-axis-metrics-aggregator" data-graph-type="line" href="#" class="pull-right">Add aggregator</a></p>
+                      <div class="form-group row">
+                        <label for="input-line-y-axis-format" class="col-sm-3 col-form-label col-form-label-sm">Y-axis format</label>
+                        <div class="col-sm-9">
+                          <input id="input-line-y-axis-format" type="text" class="form-control form-control-sm" value=",f" />
+                        </div>
+                      </div>
 					  <div id="line-y-axis"></div>
 					  <hr />
 					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="line" class="pull-right">Add sub aggregator</a></p>
@@ -116,6 +129,12 @@ body { padding-top: 60px; }
 					
 					<div id="stacked_area-fields" data-field-group="stacked_area" style="display: none;">
 					  <p><b>Y-axis</b><a data-element-type="add-y-axis-metrics-aggregator" data-graph-type="stacked_area" href="#" class="pull-right">Add aggregator</a></p>
+                      <div class="form-group row">
+                        <label for="input-stacked_area-y-axis-format" class="col-sm-3 col-form-label col-form-label-sm">Y-axis format</label>
+                        <div class="col-sm-9">
+                          <input id="input-stacked_area-y-axis-format" type="text" class="form-control form-control-sm" value=",f" />
+                        </div>
+                      </div>
 					  <div id="stacked_area-y-axis"></div>
 					  <hr />
 					  <p><b>X-axis</b><a href="#" data-element-type="add-x-axis-bucket-aggregator" data-graph-type="stacked_area" class="pull-right">Add sub aggregator</a></p>
@@ -191,7 +210,6 @@ body { padding-top: 60px; }
   <script src="../scripts/jquery.min.js"></script>
   <script src="../scripts/jquery-ui.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/menu.js"></script>
   <script src="../scripts/d3.min.js"></script>
   <script src="../scripts/nv.d3.min.js"></script>  
   <script src="../scripts/autocomplete_fields.js"></script>
@@ -217,7 +235,6 @@ body { padding-top: 60px; }
             return;
         }          
     });
-    buildMenu('dashboard', '../');
     buildGraphsPage();
   </script>    
 </body>

@@ -29,12 +29,13 @@ body { padding-top: 60px; }
     <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+    <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
       <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
       Jecstar
     </a>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+        <li id="placeholder-for-MenuAwareURLResource"></li>
       </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
@@ -60,7 +61,7 @@ body { padding-top: 60px; }
         <div id="dashboard-settings_box">
           <div class="row">
             <div class=col-sm-12>
-              <select id="sel-dashboard" class="form-control form-control-sm custom-select">
+              <select id="sel-dashboard" class="form-control form-control-sm custom-select" autofocus="autofocus">
          	    <option selected="selected"></option>
               </select>
             </div>
@@ -210,7 +211,6 @@ body { padding-top: 60px; }
   <script src="../scripts/jquery.min.js"></script>
   <script src="../scripts/jquery-ui.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/menu.js"></script>
   <script src="../scripts/d3.min.js"></script>
   <script src="../scripts/nv.d3.min.js"></script>
   <script src="../scripts/autocomplete_fields.js"></script>
@@ -236,7 +236,6 @@ $(document).ajaxStart(function () {
         return;
     }          
 });
-buildMenu('dashboard', '../');
 loadDashboardPage();	
 
 

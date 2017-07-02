@@ -20,12 +20,13 @@ body { padding-top: 60px; }
     <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+    <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
       <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
       Jecstar
     </a>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+        <li id="placeholder-for-MenuAwareURLResource"></li>
       </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
@@ -45,7 +46,10 @@ body { padding-top: 60px; }
           <div id="cluster_box" role="tabpanel">
             <ul role="tablist" id="event-tabs" class="nav nav-tabs">
               <li class="nav-item">
-                <a id="elasticsearch-tab-header" aria-expanded="true" role="tab" href="#elasticsearch-tab" data-toggle="tab" class="nav-link active">Elasticsearch</a>
+                <a id="general-tab-header" aria-expanded="true" role="tab" href="#general-tab" data-toggle="tab" class="nav-link active">General</a>
+              </li>
+              <li class="nav-item">
+                <a id="elasticsearch-tab-header" aria-expanded="true" role="tab" href="#elasticsearch-tab" data-toggle="tab" class="nav-link">Elasticsearch</a>
               </li>
               <li class="nav-item">
                 <a id="persisting-tab-header" aria-expanded="true" role="tab" href="#persisting-tab" data-toggle="tab" class="nav-link">Persisting</a>
@@ -62,7 +66,20 @@ body { padding-top: 60px; }
             </ul>
             <div id="tabcontents" class="tab-content">
               <br />
-              <div id="elasticsearch-tab" aria-labelledby="elasticsearch-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade active in show">
+              <div id="general-tab" aria-labelledby="general-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade active in show">
+                <form id="form-general">
+                  <div class="form-group row">
+                    <label for="input-session-timeout" class="col-sm-3 col-form-label">Http session timeout</label>
+                    <div class="col-sm-9">
+                      <input id="input-session-timeout" type="number" class="form-control" min="60000" required="required" autofocus="autofocus"/>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <input type="submit" id="btn-save-general" class="btn btn-primary" value="Save" />
+                  </div>
+                </form>  
+              </div>
+              <div id="elasticsearch-tab" aria-labelledby="elasticsearch-tab-header" role="tabpanel" aria-expanded="true" class="tab-pane fade">
                 <form id="form-elasticsearch">
 			        <div class="form-group row">
 					  <label for="input-shards-per-index" class="col-sm-3 col-form-label">Shards per index</label>
@@ -86,6 +103,12 @@ body { padding-top: 60px; }
 					  <label for="input-max-metrics-indices" class="col-sm-3 col-form-label">Max metrics indices</label>
 					  <div class="col-sm-9">
 					    <input id="input-max-metrics-indices" type="number" class="form-control" min="1" required="required" />
+					  </div>
+					</div>
+			        <div class="form-group row">
+					  <label for="input-max-audit-log-indices" class="col-sm-3 col-form-label">Max audit log indices</label>
+					  <div class="col-sm-9">
+					    <input id="input-max-audit-log-indices" type="number" class="form-control" min="7" required="required" />
 					  </div>
 					</div>
 			        <div class="form-group row">
@@ -175,6 +198,17 @@ body { padding-top: 60px; }
 					    <input id="input-event-buffer-size" type="number" class="form-control" min="1" required="required" />
 					  </div>
 					</div>
+                    <div class="form-group row">
+                      <label for="sel-wait-strategy" class="col-sm-3 col-form-label">Wait strategy</label>
+                      <div class="col-sm-9">
+                    	<select id="sel-wait-strategy" class="form-control custom-select">
+      	            		<option value="BLOCKING">Blocking</option>
+      	            		<option value="BUSY_SPIN">Busy spin</option>
+      	            		<option value="SLEEPING">Sleeping</option>
+      	            		<option value="YIELDING">Yielding</option>
+      	            	</select>
+                      </div>
+                    </div>
 			        <div class="form-group row">
 					  <label for="input-persisting-bulk-count" class="col-sm-3 col-form-label">Persisting bulk count</label>
 					  <div class="col-sm-9">
@@ -283,6 +317,15 @@ body { padding-top: 60px; }
                     </div>
                   </div>
                   <div class="form-group row">
+                    <label for="sel-ldap-user-search-in-subtree" class="col-sm-3 col-form-label">User search in subtree</label>
+                    <div class="col-sm-9">
+                      <select id="sel-ldap-user-search-in-subtree" class="form-control custom-select">
+                        <option value="true">Yes</option>
+                        <option value="false" selected="selected">No</option>                 
+                      </select>                    
+                    </div>
+                  </div>
+                  <div class="form-group row">
                     <label for="input-ldap-user-id-attribute" class="col-sm-3 col-form-label">User identifier attribute</label>
                     <div class="col-sm-9">
                       <input id="input-ldap-user-id-attribute" class="form-control" required="required"/>
@@ -355,7 +398,6 @@ body { padding-top: 60px; }
   <script src="../scripts/tether.min.js"></script>
   <script src="../scripts/jquery.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/menu.js"></script>
   <script src="../scripts/cluster.js"></script>
   <script>
     $(document).ajaxStart(function () {
@@ -389,7 +431,6 @@ body { padding-top: 60px; }
         var elemBottom = elemTop + $(elem).height();
         return docViewBottom > elemTop;
     }
-  	buildMenu('settings', '../');
   	buildClusterPage();
   	
   </script>

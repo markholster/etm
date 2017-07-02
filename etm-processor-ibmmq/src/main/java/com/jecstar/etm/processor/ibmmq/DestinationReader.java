@@ -224,7 +224,7 @@ public class DestinationReader implements Runnable {
 			Hashtable<String, Object> connectionProperties = new Hashtable<String, Object>();
 			connectionProperties.put(CMQC.TRANSPORT_PROPERTY, CMQC.TRANSPORT_MQSERIES_CLIENT);
 			connectionProperties.put(CMQC.HOST_NAME_PROPERTY, this.queueManager.getHost());
-			connectionProperties.put(CMQC.APPNAME_PROPERTY, "Enterprise Telemetry Monitor - " + this.configurationName);
+			connectionProperties.put(CMQC.APPNAME_PROPERTY, "ETM-" + this.configurationName);
 			connectionProperties.put(CMQC.PORT_PROPERTY, this.queueManager.getPort());
 			setConnectionPropertyWhenNotEmpty(CMQC.USER_ID_PROPERTY, this.queueManager.getUserId(), connectionProperties);
 			setConnectionPropertyWhenNotEmpty(CMQC.PASSWORD_PROPERTY, this.queueManager.getPassword(), connectionProperties);

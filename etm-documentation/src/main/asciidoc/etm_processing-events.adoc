@@ -1,0 +1,71 @@
+== Processing events
+{etm} needs to be feeded with events to do its magic. This can be done with 2 main transport methods: 
+
+. Sending events to the rest processor
+. Sending events to an IBM message queue or topic that is read by the IBM MQ processor.
+
+Depending on your current infrastructure and expected load you can pick any of these options. When guaranteed delivery and processing of your events is a requirement than sending the event to a message queue is the best option for you. On the other hand the rest processor doesn't need any changes to your infrastructure but if the processor is down for maintenance no events will be processed. The applications sending events will likely drop the events that can't be delivered.
+
+Performance wise there is no advantage in picking one specific processor. {etm} is capable of processing ~25.000 log events per second on a single instance. Of course the more information you provide in your event, the more time it will take to process the event. Also memory and disk speed can influence the throughput of events in a relatively high way.
+
+=== Rest processor
+The rest processor is enabled by default. To check if the processor is configured make sure the option ''restProcessorEnabled'' is set to ''true'' in the <<Http section in etm.yml>>. When enabled a WADL can be downloaded from http://localhost:8080/rest/processor/application.wadl. 
+
+==== Add a single event
+To process a single event post some data to http://localhost:8080/rest/processor/event/. The data needs to be in JSON format and should contain a single json object with 2 keys: ''type'' and ''data''. Type should be one of the predefined event types for example ''log'', and data should contain the event data as described in the <<Event layout>> section.
+
+The following curl example will add a log event to {etm}:
+
+[source,json,subs=attributes+]
+----
+curl -H 'Content-Type: application/json' -XPOST 'http://localhost:8080/rest/processor/event/' -d'
+{
+    "type" : "log",
+    "data" : {
+    	"payload" : "My first {etm} event!"
+    }
+}'
+----
+
+As a response you will receive the following message
+
+[source,json]
+----
+{ "status": "acknowledged" }
+----
+telling you the event is successfully received and will be available in {etm} from now on.
+
+==== Adding events in bulk
+Although adding a single event takes only a few milliseconds there will be some overhead of setting up a connection. When you expect a high load it might be useful to add events in bulk. This can be done by posting the to http://127.0.0.1:8080/rest/processor/event/_bulk. The data send to this endpoint needs to be a json array of objects with the same layout as the object explained in the section <<Add a single event>>. 
+
+For example:
+
+[source,json]
+----
+curl -H 'Content-Type: application/json' -XPOST 'http://localhost:8080/rest/processor/event/_bulk' -d'
+[ 
+  { "type" : "log", "data" : { "payload" : "My first bulk event!" }},
+  { "type" : "log", "data" : { "payload" : "My second bulk event!" }}
+]'
+----
+
+will add 2 events in a single POST action. Again you will receive 
+
+[source,json]
+----
+{ "status": "acknowledged" }
+----
+
+to let you know the events are successfully received.
+
+=== IBM MQ processor
+The rest IBM MQ processor is disabled by default. Follow the instructions in the section <<IBM MQ section in etm.yml>> to enable a processor that receives messages from one or more queues or topics. 
+
+Contrary to the rest processor the IBM MQ processor can handle different content types. Depending on the value of the option ''messagesType'' defined in the <<ibmmq-destination-options>> the processing is as follow:
+
+[horizontal]
+auto:: The IBM MQ processor will try to determine with type of message is received. This is the most flexible option, but also the slowest. If you expect a high load please define a specific format per IBM MQ endpoint.
+iibevent:: The event must be a xml document formatted as a http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Event] message.
+etmevent:: The event must be a json object with the layout described in the <<Add a single event>> section. 
+clone:: The received MQ message is a clone of the original message. When using this setting the event type will always be ''messaging'', and the IBM MQ MQMD header is used to determine several event attributes.
+

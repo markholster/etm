@@ -12,11 +12,14 @@ import com.jecstar.etm.server.core.util.ObjectUtils;
 public class EtmConfiguration {
 	//License configuration
 	public static final String CONFIG_KEY_LICENSE 							= "license";
+	
 	// Cluster configuration
+	public static final String CONFIG_KEY_SESSION_TIMEOUT 					= "sessionTimeout";
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX 					= "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX 				= "replicasPerIndex";
 	public static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT 			= "maxEventIndexCount";
 	public static final String CONFIG_KEY_MAX_METRICS_INDEX_COUNT 			= "maxMetricsIndexCount";
+	public static final String CONFIG_KEY_MAX_AUDIT_LOG_INDEX_COUNT 		= "maxAuditLogIndexCount";	
 	public static final String CONFIG_KEY_WAIT_FOR_ACTIVE_SHARDS 			= "waitForActiveShards";
 	public static final String CONFIG_KEY_QUERY_TIMEOUT 					= "queryTimeout";
 	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
@@ -33,12 +36,14 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_PERSISTING_BULK_COUNT 			= "persistingBulkCount";
 	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE 				= "persistingBulkSize";
 	public static final String CONFIG_KEY_PERSISTING_BULK_TIME 				= "persistingBulkTime";
+	public static final String CONFIG_KEY_WAIT_STRATEGY 					= "waitStrategy";
 	
 
 	// Disruptor configuration properties.
 	private int enhancingHandlerCount = 5;
 	private int persistingHandlerCount = 5;
 	private int eventBufferSize = 4096;
+	private WaitStrategy waitStrategy = WaitStrategy.BLOCKING;
 	
 	// Persisting configuration properties;
 	private int persistingBulkSize = 1024 * 1024 * 5;
@@ -52,7 +57,8 @@ public class EtmConfiguration {
 	
 	// Data configuration properties;
 	private int maxEventIndexCount = 7; 
-	private int maxMetricsIndexCount = 7; 
+	private int maxMetricsIndexCount = 7;
+	private int maxAuditLogIndexCount = 7; 
 
 	// Query options
 	private long queryTimeout = 60 * 1000;
@@ -63,6 +69,9 @@ public class EtmConfiguration {
 	// Visualization options
 	private int maxGraphCount = 100;
 	private int maxDashboardCount = 10;
+	
+	// General options
+	private long sessionTimeout = 30 * 60 * 1000; 
 	
 	// Other stuff.		
 	private final String nodeName;
@@ -156,6 +165,17 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public WaitStrategy getWaitStrategy() {
+		return this.waitStrategy;
+	}
+	
+	public EtmConfiguration setWaitStrategy(WaitStrategy waitStrategy) {
+		if (waitStrategy != null) {
+			this.waitStrategy = waitStrategy;
+		}
+		return this;
+	}
 
 	// Etm persisting configuration.
 	public int getPersistingBulkSize() {
@@ -234,6 +254,18 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public int getMaxAuditLogIndexCount() {
+		return this.maxMetricsIndexCount;
+	}
+	
+	public EtmConfiguration setMaxAuditLogIndexCount(Integer maxAuditLogIndexCount) {
+		if (maxAuditLogIndexCount != null && maxAuditLogIndexCount >= 7) {
+			this.maxAuditLogIndexCount = maxAuditLogIndexCount;
+		}
+		return this;
+	}
+
 	
 	public int getWaitForActiveShards() {
 		return this.waitForActiveShards;
@@ -322,6 +354,17 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+	
+	public long getSessionTimeout() {
+		return this.sessionTimeout;
+	}
+	
+	public EtmConfiguration setSessionTimeout(Long sessionTimeout) {
+		if (sessionTimeout != null && sessionTimeout >= 60000) {
+			this.sessionTimeout = sessionTimeout;
+		}
+		return this;
+	}
 
 	public String getNodeName() {
 		return this.nodeName;
@@ -404,6 +447,10 @@ public class EtmConfiguration {
 			setEventBufferSize(etmConfiguration.getEventBufferSize());
 			changed.add(CONFIG_KEY_EVENT_BUFFER_SIZE);
 		}
+		if (!this.waitStrategy.equals(etmConfiguration.waitStrategy)) {
+			setWaitStrategy(etmConfiguration.waitStrategy);
+			changed.add(CONFIG_KEY_WAIT_STRATEGY);
+		}
 		if (this.persistingBulkSize != etmConfiguration.getPersistingBulkSize()) {
 			setPersistingBulkSize(etmConfiguration.getPersistingBulkSize());
 			changed.add(CONFIG_KEY_PERSISTING_BULK_SIZE);
@@ -431,6 +478,10 @@ public class EtmConfiguration {
 		if (this.maxMetricsIndexCount != etmConfiguration.getMaxMetricsIndexCount()) {
 			 setMaxMetricsIndexCount(etmConfiguration.getMaxMetricsIndexCount());
 			 changed.add(CONFIG_KEY_MAX_METRICS_INDEX_COUNT);
+		}
+		if (this.maxAuditLogIndexCount != etmConfiguration.getMaxAuditLogIndexCount()) {
+			 setMaxAuditLogIndexCount(etmConfiguration.getMaxAuditLogIndexCount());
+			 changed.add(CONFIG_KEY_MAX_AUDIT_LOG_INDEX_COUNT);
 		}
 		if (this.waitForActiveShards != etmConfiguration.getWaitForActiveShards()) {
 			setWaitForActiveShards(etmConfiguration.getWaitForActiveShards());
@@ -464,10 +515,15 @@ public class EtmConfiguration {
 			setMaxDashboardCount(etmConfiguration.getMaxDashboardCount());
 			changed.add(CONFIG_KEY_MAX_DASHBOARD_COUNT);
 		}
+		if (this.sessionTimeout != etmConfiguration.getSessionTimeout()) {
+			setSessionTimeout(etmConfiguration.getSessionTimeout());
+			changed.add(CONFIG_KEY_SESSION_TIMEOUT);
+		}
 		if (changed.size() > 0) {
 			ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);
 			this.changeListeners.forEach(c -> c.configurationChanged(event));
 		}
 		return changed.size() > 0;
 	}
+
 }

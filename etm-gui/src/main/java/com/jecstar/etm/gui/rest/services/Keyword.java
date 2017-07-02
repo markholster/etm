@@ -33,7 +33,7 @@ public class Keyword {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Keyword) {
-			return ((Keyword)obj).equals(this.name);
+			return ((Keyword)obj).getName().equals(this.name);
 		}
 		return super.equals(obj);
 	}

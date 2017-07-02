@@ -5,9 +5,12 @@ public interface EtmConfigurationTags {
 	String getNodeNameTag();
 	String getLicenseTag();
 	
+	String getSessionTimeoutTag();
+	
 	String getEnhancingHandlerCountTag();
 	String getPersistingHandlerCountTag();
 	String getEventBufferSizeTag();
+	String getWaitStrategyTag();
 
 	String getPersistingBulkCountTag();
 	String getPersistingBulkSizeTag();
@@ -18,6 +21,7 @@ public interface EtmConfigurationTags {
 
 	String getMaxEventIndexCountTag();
 	String getMaxMetricsIndexCountTag();
+	String getMaxAuditLogIndexCountTag();
 	
 	String getWaitForActiveShardsTag();
 	String getRetryOnConflictCountTag();

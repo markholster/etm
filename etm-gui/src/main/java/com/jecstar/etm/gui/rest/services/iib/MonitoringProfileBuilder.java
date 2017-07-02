@@ -26,11 +26,17 @@ public class MonitoringProfileBuilder {
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$Root/MQMD/CodedCharSetId\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/HTTP/RequestIdentifier\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
 			"	</profile:eventSource>";
 	
-	private static final String mqOutputTemplate = "	<profile:eventSource profile:eventSourceAddress=\"<nodename>.terminal.out\" profile:enabled=\"true\">\r\n" + 
+	private static final String outputTemplate = "	<profile:eventSource profile:eventSourceAddress=\"<nodename>.terminal.out\" profile:enabled=\"true\">\r\n" + 
 			"		<profile:eventPointDataQuery>\r\n" + 
 			"			<profile:eventIdentity>\r\n" + 
 			"				<profile:eventName profile:literal=\"<eventname>\" />\r\n" + 
@@ -49,16 +55,25 @@ public class MonitoringProfileBuilder {
 			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$Root/MQMD/CodedCharSetId\" />\r\n" + 
-			"			</profile:complexContent>			\r\n" + 
+			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$Root/Properties/Topic\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/WrittenDestination\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
+			"			</profile:complexContent>\r\n" + 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/HTTP/RequestIdentifier\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
 			"	</profile:eventSource>";	
 	
 	private List<Node> nodes = new ArrayList<>();
-	
+
 	
 	public void addNode(String name, String nodeType, String containerName, String containerVersion) {
 		this.nodes.add(new Node(name, nodeType, containerName, containerVersion));
@@ -69,21 +84,19 @@ public class MonitoringProfileBuilder {
 		StringBuilder profile = new StringBuilder();
 		profile.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?><profile:monitoringProfile xmlns:profile=\"http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0.3/monitoring/profile\" profile:version=\"2.0\" profile:enabled=\"true\">");
 		for (Node node : nodes) {
-			if (node.getNodeType().endsWith("InputNode")) {
+			if (node.getNodeType().endsWith("InputNode") 
+				|| "ComIbmMQGetNode".equals(node.getNodeType()) ) {
 				profile.append(
 						inputTemplate.replaceAll("<nodename>", node.getName())
 						.replaceAll("<terminal>", "transaction.Start")
 						.replaceAll("<eventname>", node.getEventName())
 				);
-			} else if ("ComIbmMQGetNode".equals(node.getNodeType())) {
+			} else if (node.getNodeType().contains("Response") 
+				|| node.getNodeType().contains("Reply") 
+				|| "ComIbmMQOutputNode".equals(node.getNodeType()) 
+				|| "ComIbmPublication".equals(node.getNodeType()) ) {
 				profile.append(
-						inputTemplate.replaceAll("<nodename>", node.getName())
-						.replaceAll("<terminal>", ".terminal.in")
-						.replaceAll("<eventname>", node.getEventName())
-				);				
-			} else if ("ComIbmMQOutputNode".equals(node.getNodeType())){
-				profile.append(
-						mqOutputTemplate.replaceAll("<nodename>", node.getName())
+						outputTemplate.replaceAll("<nodename>", node.getName())
 						.replaceAll("<eventname>", node.getEventName())
 				);
 			}

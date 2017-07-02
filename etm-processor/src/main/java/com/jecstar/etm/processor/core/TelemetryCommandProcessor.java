@@ -298,7 +298,8 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (this.started && event.isAnyChanged(
 				EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,
 				EtmConfiguration.CONFIG_KEY_PERSISTING_HANDLER_COUNT,
-				EtmConfiguration.CONFIG_KEY_EVENT_BUFFER_SIZE)) {
+				EtmConfiguration.CONFIG_KEY_EVENT_BUFFER_SIZE,
+				EtmConfiguration.CONFIG_KEY_WAIT_STRATEGY)) {
 			if (log.isInfoLevelEnabled()) {
 				log.logInfoMessage("Detected a change in the configuration that needs a restart of the command processor.");
 			}

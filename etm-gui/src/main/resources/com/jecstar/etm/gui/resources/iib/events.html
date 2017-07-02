@@ -19,12 +19,13 @@ body { padding-top: 60px; }
     <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <a class="navbar-brand" href="http://www.jecstar.com" target="_blank">
+    <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
       <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
       Jecstar
     </a>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
       <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+        <li id="placeholder-for-MenuAwareURLResource"></li>
       </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
@@ -47,7 +48,7 @@ body { padding-top: 60px; }
 			  <div class="form-group row">
 				<label for="sel-node" class="col-sm-3 col-form-label">IIB Node</label>
 	          	<div class="col-sm-9">
-	          	  <select id="sel-node" class="form-control custom-select">
+	          	  <select id="sel-node" class="form-control custom-select" autofocus="autofocus">
 	          	    <option selected="selected"></option>
 	          	  </select>
 	          	</div>  
@@ -67,8 +68,6 @@ body { padding-top: 60px; }
 	          	    <option selected="selected"></option>
 	          	    <optgroup id="sel-container-application-group" label="Applications">
 	          	    </optgroup>
-	          	    <optgroup id="sel-container-library-group" label="Libraries">
-	          	    </optgroup>
 	          	    <optgroup id="sel-container-flow-group" label="Message flows">
 	          	    </optgroup>	          	  
 	          	  </select>
@@ -81,8 +80,6 @@ body { padding-top: 60px; }
             <div class=col-sm-12>
 		      <form id="event_form">
 		      	<div data-container-type="application" style="display: none;">
-		      	</div>
-		      	<div data-container-type="library" style="display: none;">
 		      	</div>
 			    <div data-container-type="flow" style="display: none;">
 		      	</div>	 
@@ -104,7 +101,6 @@ body { padding-top: 60px; }
   <script src="../scripts/tether.min.js"></script>
   <script src="../scripts/jquery.min.js"></script>
   <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/menu.js"></script>
   <script src="../scripts/iib-events.js"></script>
   <script>
     $(document).ajaxStart(function () {
@@ -128,7 +124,6 @@ body { padding-top: 60px; }
         }          
         $('html,body').animate({scrollTop: 0},'fast');
     });
-  	buildMenu('settings', '../');
   	buildEventPage();
   	
   </script>

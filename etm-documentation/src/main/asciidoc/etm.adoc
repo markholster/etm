@@ -3,12 +3,13 @@ Enterprise Telemetry Monitor
 :revnumber: {project-version} 
 :revdate: {docdate}
 
-include::getting-started.adoc[]
-include::setup-etm.adoc[]
-include::administrating-etm.adoc[]
-include::event-layout.adoc[]
-include::processing-events.adoc[]
-include::searching-events.adoc[]
-include::user-preferences.adoc[]
-include::visualizations.adoc[]
-include::error-codes.adoc[]
+include::etm_getting-started.adoc[]
+include::etm_setup-etm.adoc[]
+include::etm_administrating-etm.adoc[]
+include::etm_event-layout.adoc[]
+include::etm_processing-events.adoc[]
+include::etm_searching-events.adoc[]
+include::etm_user-preferences.adoc[]
+include::etm_visualizations.adoc[]
+include::etm_error-codes.adoc[]
+include::etm_changelog.adoc[]

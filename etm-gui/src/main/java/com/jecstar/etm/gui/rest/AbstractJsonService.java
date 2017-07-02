@@ -25,6 +25,8 @@ import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 public class AbstractJsonService extends JsonConverter {
 
+	protected static final String KEYWORD_SUFFIX = ".keyword";
+	
     @Context
     protected SecurityContext securityContext;
 

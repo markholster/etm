@@ -1,7 +1,12 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -16,15 +21,16 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
 import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
 import com.ibm.broker.config.proxy.ConfigurableService;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBApplication;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBFlow;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBIntegrationServer;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBLibrary;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBMessageFlow;
@@ -32,7 +38,7 @@ import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNode;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNodeConnection;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBSubFlow;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -62,8 +68,8 @@ public class IIBService extends AbstractJsonService {
 	@Path("/nodes")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getNodes() {
-		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticSearchLayout.CONFIGURATION_INDEX_NAME)
-				.setTypes(ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE).setFetchSource(true)
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE).setFetchSource(true)
 				.setQuery(QueryBuilders.matchAllQuery())
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
@@ -88,8 +94,8 @@ public class IIBService extends AbstractJsonService {
 	@Path("/node/{nodeName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String deleteNode(@PathParam("nodeName") String nodeName) {
-		client.prepareDelete(ElasticSearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName)
+		client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())).get();
 		return "{\"status\":\"success\"}";
@@ -100,11 +106,11 @@ public class IIBService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String addNode(@PathParam("nodeName") String nodeName, String json) {
 		Node node = this.nodeConverter.read(json);
-		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 		}
-		client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setDoc(this.nodeConverter.write(node))
+		client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setDoc(this.nodeConverter.write(node), XContentType.JSON)
 				.setDocAsUpsert(true).setDetectNoop(true).setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount()).get();
@@ -115,8 +121,8 @@ public class IIBService extends AbstractJsonService {
 	@Path("/node/{nodeName}/servers")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getServers(@PathParam("nodeName") String nodeName) {
-		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
+		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -124,7 +130,7 @@ public class IIBService extends AbstractJsonService {
 		StringBuilder result = new StringBuilder();
 		result.append("{\"servers\": [");
 		boolean first = true;
-		try (IIBNodeConnection nodeConnection  = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection  = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 			List<IIBIntegrationServer> integrationServers = nodeConnection.getServers();
 			for (IIBIntegrationServer integrationServer : integrationServers) {
@@ -144,14 +150,14 @@ public class IIBService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String updateEventMonitoring(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName, @PathParam("objectType") String objectType, String json) {
 		Map<String, Object> valueMap = toMap(json);
-		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
+		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
 		Node node = this.nodeConverter.read(getResponse.getSourceAsString());
 		String result = null;
-		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 			nodeConnection.setSynchronous(240000);
 			IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
@@ -165,7 +171,7 @@ public class IIBService extends AbstractJsonService {
 				result = updateApplicationMonitorning(nodeConnection, integrationServer, valueMap);
 			} else if ("library".equals(objectType)) {
 				String libraryName = getString("name", valueMap);
-				IIBLibrary library = integrationServer.getLibraryByName(libraryName);
+				IIBLibrary library = integrationServer.getSharedLibraryByName(libraryName);
 				if (library == null) {
 					if (log.isDebugLevelEnabled()) {
 						log.logDebugMessage("Library '" + libraryName + "' not found. Not updating monitoring.");
@@ -199,17 +205,23 @@ public class IIBService extends AbstractJsonService {
 	@Path("/node/{nodeName}/server/{serverName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getServerDeployments(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName) {
-		GetResponse getResponse = client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
+		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
 		Node node = this.nodeConverter.read(getResponse.getSourceAsString());
 		StringBuilder result = new StringBuilder();
 		result.append("{\"deployments\": {");
-		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 			IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
+			List<IIBSubFlow> sharedLibrarySubFlows = new ArrayList<>();
+			List<IIBLibrary> sharedLibraries = integrationServer.getSharedLibraries();
+			for (IIBLibrary library : sharedLibraries) {
+				sharedLibrarySubFlows.addAll(library.getSubFlows());
+			}
+			
 			List<IIBApplication> applications = integrationServer.getApplications();
 			result.append("\"applications\": [");
 			boolean firstApplication = true;
@@ -218,11 +230,14 @@ public class IIBService extends AbstractJsonService {
 					result.append(",");
 				}
 				result.append("{");
+				List<IIBSubFlow> subFlows = application.getSubFlows();
+				subFlows.addAll(sharedLibrarySubFlows);
 				addStringElementToJsonBuffer("name", application.getName(), result, true);
 				List<IIBLibrary> libraries = application.getLibraries();
 				result.append(", \"libraries\": [");
 				boolean firstLibrary = true;
 				for (IIBLibrary library : libraries) {
+					subFlows.addAll(library.getSubFlows());
 					if (!firstLibrary) {
 						result.append(",");
 					}
@@ -236,31 +251,11 @@ public class IIBService extends AbstractJsonService {
 					if (!firstFlow) {
 						result.append(",");
 					}
-					addFlowDeployment(nodeConnection, messageFlow, result);
-					firstFlow = false;
-				}
-				result.append("], \"subflows\": [");
-				List<IIBSubFlow> subFlows = application.getSubFlows();
-				firstFlow = true;
-				for (IIBSubFlow subFlow : subFlows) {
-					if (!firstFlow) {
-						result.append(",");
-					}
-					addFlowDeployment(nodeConnection, subFlow, result);
+					addFlowDeployment(nodeConnection, messageFlow, subFlows, result);
 					firstFlow = false;
 				}
 				result.append("]}");
 				firstApplication = false;
-			}
-			result.append("], \"libraries\": [");
-			List<IIBLibrary> libraries = integrationServer.getLibraries();
-			boolean firstLibrary = true;
-			for (IIBLibrary library : libraries) {
-				if (!firstLibrary) {
-					result.append(",");
-				}
-				addLibraryDeployment(nodeConnection, library, result);
-				firstLibrary = false;
 			}
 			result.append("], \"flows\": [");
 			List<IIBMessageFlow> messageFlows = integrationServer.getMessageFlows();
@@ -269,7 +264,7 @@ public class IIBService extends AbstractJsonService {
 				if (!firstFlow) {
 					result.append(",");
 				}
-				addFlowDeployment(nodeConnection, messageFlow, result);
+				addFlowDeployment(nodeConnection, messageFlow, Collections.emptyList(), result);
 				firstFlow = false;
 			}
 			result.append("]");
@@ -288,23 +283,13 @@ public class IIBService extends AbstractJsonService {
 			if (!firstFlow) {
 				result.append(",");
 			}
-			addFlowDeployment(nodeConnection, messageFlow, result);
-			firstFlow = false;
-		}
-		result.append("], \"subflows\": [");
-		List<IIBSubFlow> subFlows = library.getSubFlows();
-		firstFlow = true;
-		for (IIBSubFlow subFlow : subFlows) {
-			if (!firstFlow) {
-				result.append(",");
-			}
-			addFlowDeployment(nodeConnection, subFlow, result);
+			addFlowDeployment(nodeConnection, messageFlow, library.getSubFlows(), result);
 			firstFlow = false;
 		}
 		result.append("]}");		
 	}
 
-	private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBFlow flow, StringBuilder result) {
+	private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBMessageFlow flow, List<IIBSubFlow> subFlows, StringBuilder result) {
 		boolean monitoringActivated = flow.isMonitoringActivated();
 		String currentProfile = null;
 		String currentProfileName = flow.getMonitoringProfileName();
@@ -319,22 +304,46 @@ public class IIBService extends AbstractJsonService {
 		addBooleanElementToJsonBuffer("monitoring_active", monitoringActivated, result, false);
 		result.append(", \"nodes\": [");
 		List<IIBNode> nodes = flow.getNodes();
-		boolean firstNode = true;
+		appendNodes(result, null, nodes, subFlows, currentProfile, true);
+		result.append("]}");	
+	}
+	
+	private boolean appendNodes(StringBuilder buffer, String namePrefix, List<IIBNode> nodes, List<IIBSubFlow> subFlows, String currentMonitoringProfile, boolean firstNode) {
 		for (IIBNode node : nodes) {
 			if (!node.isSupported()) {
 				continue;
 			}
-			if (!firstNode) {
-				result.append(",");
+			if ("SubFlowNode".equals(node.getType())) {
+				String prop = node.getProperty("subflowImplFile");
+				if (prop == null) {
+					continue;
+				}
+				final String subFlowName = prop.substring(0, prop.length() - ".subflow".length());
+				Optional<IIBSubFlow> optional = subFlows.stream().filter(p -> p.getName().equals(subFlowName)).findFirst();
+				if (!optional.isPresent()) {
+					continue;
+				}
+				List<IIBNode> subFlowNodes = optional.get().getNodes();
+				firstNode = appendNodes(buffer, namePrefix == null ? node.getName() + "." : namePrefix + node.getName() + "." , subFlowNodes, subFlows, currentMonitoringProfile, firstNode);
+			} else {
+				if (!firstNode) {
+					buffer.append(",");
+				}
+				String fullNodeName = namePrefix == null ? node.getName() : namePrefix + node.getName();
+				appendNode(buffer, fullNodeName, node.getType(), isMonitoringSetInProfile(currentMonitoringProfile, fullNodeName));
+				firstNode = false;
 			}
-			result.append("{");
-			addStringElementToJsonBuffer("name", node.getName(), result, true);
-			addStringElementToJsonBuffer("type", node.getType(), result, false);
-			addBooleanElementToJsonBuffer("monitoring_set", node.isMonitoringSetInProfile(currentProfile), result, false);
-			result.append("}");
-			firstNode = false;
 		}
-		result.append("]}");	}
+		return firstNode;
+	}
+
+	private void appendNode(StringBuilder buffer, String name, String type, boolean monitoringSet) {
+		buffer.append("{");
+		addStringElementToJsonBuffer("name", name, buffer, true);
+		addStringElementToJsonBuffer("type", type, buffer, false);
+		addBooleanElementToJsonBuffer("monitoring_set", monitoringSet, buffer, false);
+		buffer.append("}");
+	}
 
 	private String updateApplicationMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		String applicationName = getString("name", valueMap);
@@ -367,15 +376,6 @@ public class IIBService extends AbstractJsonService {
 			}
 			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, messageFlow, flowValues);
 		}
-		List<Map<String, Object>> subflowsValues = getArray("subflows", valueMap);
-		for (Map<String, Object> subflowValues : subflowsValues) {
-			String flowName = getString("name", subflowValues);
-			IIBSubFlow subFlow = application.getSubFlowByName(flowName);
-			if (subFlow == null) {
-				continue;
-			}
-			updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, subFlow, subflowValues);
-		}		
 		return "{\"status\":\"success\"}";
 	}
 	
@@ -394,25 +394,11 @@ public class IIBService extends AbstractJsonService {
 				deactivateMonitoring(nodeConnection, messageFlow);
 			}
 		}
-		List<Map<String, Object>> subflowsValues = getArray("subflows", valueMap);
-		for (Map<String, Object> subflowValues : subflowsValues) {
-			String flowName = getString("name", subflowValues);
-			IIBSubFlow subFlow = library.getSubFlowByName(flowName);
-			if (subFlow == null) {
-				continue;
-			}
-			boolean monitoringActive = getBoolean("monitoring_active", subflowValues);
-			if (monitoringActive) {
-				activateMonitoring(nodeConnection, integrationServer, applicationName, library.getName(), version, subFlow, subflowValues);
-			} else {
-				deactivateMonitoring(nodeConnection, subFlow);
-			}
-		}		
 		return "{\"status\":\"success\"}";
 	}
 	
 	
-	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String libraryName, String version, IIBFlow flow, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
+	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String libraryName, String version, IIBMessageFlow flow, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		boolean monitoringActive = getBoolean("monitoring_active", valueMap);
 		if (monitoringActive) {
 			activateMonitoring(nodeConnection, integrationServer, applicationName, libraryName, version, flow, valueMap);
@@ -422,7 +408,7 @@ public class IIBService extends AbstractJsonService {
 		return "{\"status\":\"success\"}";
 	}
 
-	private void activateMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String application, String library, String version, IIBFlow flow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException {
+	private void activateMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String application, String library, String version, IIBMessageFlow flow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException {
 		if (log.isInfoLevelEnabled()) {
 			log.logInfoMessage("Activating monitoring on '" + flow.getName() + "'.");
 		}
@@ -447,7 +433,7 @@ public class IIBService extends AbstractJsonService {
 		flow.activateMonitoringProfile(configurableServiceName.toString());
 	}
 
-	private void deactivateMonitoring(IIBNodeConnection nodeConnection, IIBFlow flow) {
+	private void deactivateMonitoring(IIBNodeConnection nodeConnection, IIBMessageFlow flow) {
 		if (log.isInfoLevelEnabled()) {
 			log.logInfoMessage("Deactivating monitoring on '" + flow.getName() + "'.");
 		}
@@ -476,6 +462,33 @@ public class IIBService extends AbstractJsonService {
 			}
 		}
 		return builder.build();		
+	}
+
+	public boolean isMonitoringSetInProfile(String profile, String nodeName) {
+		if (profile == null) {
+			return false;
+		}
+		return profile.indexOf("profile:eventSourceAddress=\"" + nodeName + ".") >= 0;
+	}
+	
+	private IIBNodeConnection createIIBConnectionInstance(Node node) {
+		if (IIBApi.IIB_V10_ON_CLASSPATH) {
+			try {
+				Class<?> clazz = Class.forName("com.jecstar.etm.gui.rest.services.iib.proxy.v10.IIBNodeConnectionV10Impl");
+				Constructor<?> constructor = clazz.getConstructor(Node.class);
+				return (IIBNodeConnection) constructor.newInstance(node);
+			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+			}
+		} else {
+			try {
+				Class<?> clazz = Class.forName("com.jecstar.etm.gui.rest.services.iib.proxy.v9.IIBNodeConnectionV9Impl");
+				Constructor<?> constructor = clazz.getConstructor(Node.class);
+				return (IIBNodeConnection) constructor.newInstance(node);
+			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+			}
+		}
 	}
 
 	

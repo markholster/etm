@@ -15,6 +15,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	}
 	
 	@Override
+	public String getSessionTimeoutTag() {
+		return "session_timeout";
+	}
+	
+	@Override
 	public String getEnhancingHandlerCountTag() {
 		return "enhancing_handler_count";
 	}
@@ -27,6 +32,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	@Override
 	public String getEventBufferSizeTag() {
 		return "event_buffer_size";
+	}
+	
+	@Override
+	public String getWaitStrategyTag() {
+		return "wait_strategy";
 	}
 
 	@Override
@@ -64,6 +74,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 		return "max_metrics_index_count";
 	}
 
+	@Override
+	public String getMaxAuditLogIndexCountTag() {
+		return "max_audit_log_index_count";
+	}
+	
 	@Override
 	public String getWaitForActiveShardsTag() {
 		return "wait_for_active_shards";

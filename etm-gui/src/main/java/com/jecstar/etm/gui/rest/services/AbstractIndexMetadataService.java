@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsRequestBuilder;
+import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
@@ -20,7 +22,6 @@ import com.jecstar.etm.gui.rest.AbstractJsonService;
 
 public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 
-	
 	/**
 	 * Gives a list of fields of an index per index type.
 	 * 
@@ -66,6 +67,21 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 			
 		}
 		return names;
+	}
+	
+	protected String getSortProperty(Client client, String indexName, String indexType, String propertyName) {
+		GetFieldMappingsRequestBuilder fieldRequest = client.admin().indices().prepareGetFieldMappings(indexName)
+			.setFields(propertyName);
+		if (indexType != null) {
+			fieldRequest.addTypes(indexType);
+		}
+		GetFieldMappingsResponse response = fieldRequest.get();
+		if (response.mappings().isEmpty()) {
+			return propertyName;
+		}
+		Map<String, Object> sourceMap = response.mappings().values().iterator().next().values().iterator().next().values().iterator().next().sourceAsMap();
+		String type = getString("type", getObject(propertyName, sourceMap));
+		return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
 	}
 
 	@SuppressWarnings("unchecked")

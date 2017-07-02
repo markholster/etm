@@ -1,0 +1,332 @@
+== Setup {etm}
+This section explains in detail the steps to download, configure and run an {etm} installation. Because {etm} is a pure Java application it should be able to run on any machine with a proper Java runtime installed. At a minimum a link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[Java 8] runtime should be available. It is recommended to install JDK from Oracle's site, but {etm} might run with other JDK suppliers as well.
+
+For the storage of the events {etm} relies on an link:http://www.elastic.co/downloads[Elasticsearch 5.4] or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of {etm} and need to be installed, configured and managed separately.
+
+=== System requirements
+{etm} works best on machines that are equipped with 8 to 64 GiB of RAM. More than 64 GiB makes the Java garbage collections run so long that it has an overall negative impact on the performance. In most situations 8 GiB is more than sufficient, but when you need to process a lot of big events you might need some more memory.
+
+If your system is running on spinning disk you might consider upgrade to SSD or even NVME disks. This is in particular important for your Elasticsearch nodes! Elasticsearch will store and retrieve all the event data, so make sure your disks at these nodes are as fast as possible. They will be most likely the bottleneck of your {etm} cluster setup.
+
+Processing events is the most CPU intensive task in {etm}. Because events are processed in parallel {etm} takes a huge benefit from multi-core CPU's. If you have to choose between a faster CPU or a multi-core CPU always go for the multi-core CPU. 
+
+When you are planning to create a multi node cluster, make sure the nodes are as close to each other as possible. Network latency can have a negative impact on the processing performance. Optical network interfaces are the preferred way to go, but if they are not available to you make sure your servers are equipped with at least Gigabit network interfaces. 
+
+=== Installation with .tgz
+The .tgz archive for {etm} can be downloaded and installed as follow:
+
+[source,bash,subs=attributes+]
+----
+wget https://www.jecstar.com/downloads/etm/etm-{project-version}.tgz
+wget https://www.jecstar.com/downloads/etm/etm-{project-version}.tgz.sha512
+cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
+tar -zxvf etm-{project-version}.tgz
+cd etm-{project-version}/bin
+./etm ## <2>
+----
+<1> Checks the sha512 hash of the downloaded file. If not ok, this command will fail.
+<2> This command does not actually start {etm} but shows the options that are available with the etm script.
+
+=== Installation with .zip
+The .zip archive for {etm} can be downloaded and installed as follow:
+
+[source,bash,subs=attributes+]
+----
+wget https://www.jecstar.com/downloads/etm/etm-{project-version}.zip
+wget https://www.jecstar.com/downloads/etm/etm-{project-version}.zip.sha512
+cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
+unzip etm-{project-version}.tgz 
+cd etm-{project-version}/bin
+./etm ## <2>
+----
+<1> Checks the sha512 hash of the downloaded file. If not ok, this command will fail.
+<2> This command does not actually start {etm} but shows the options that are available with the etm script.
+
+=== Installation on Windows
+Although {etm} best performs on linux like systems it can be run under windows as well. You can download {etm} from https://www.jecstar.com/downloads/etm/etm-{project-version}.zip and unzip it with your favorite archiving tool. In the directory <UNZIP_LOCATION>\etm-{project-version}\bin you will find a file named ''etm.bat''. By executing that batch file {etm} will start.
+
+=== Installation with Docker
+{etm} is also available as a Docker image. This image is based on the openjdk:8-jdk-alpine image. To retrieve the image run the following command:
+
+[source,bash,subs=attributes+]
+----
+docker pull jecstar.com/etm/etm:{project-version}
+----
+
+To run the Docker image {etm} needs to know where to find Elasticsearch. The most simple way of doing this is to use an environment variable:
+
+[source,bash,subs=attributes+]
+----
+docker run -p 8080:8080 -e "elasticsearch_connectAddresses=<my-elasticsearch-host>:<my-elasticsearch-port>" -e "elasticsearch_clusterName=elasticsearch" jecstar.com/etm/etm:{project-version}
+----
+
+Most of the properties mentioned in the <<Node configuration>> chapter can be passed as environment variables to the Docker container. Properties not mentioned in the <<General configuration in etm.yml>> but is a separate section of the configuration should be prefixed by their section names. For example, the properties ''elasticsearch.clusterName'' in the configuration file should be passed as environment variable ''elasticsearch_clusterName''. In short, the 'dot' in the configuration file should be replaced with an 'underscore' in the environment variable name.
+
+Another option of configuring the Docker image is by mounting a custom configuration file from from host system to the location the image is expecting the configuration file. This can be done by adding
+
+[source,bash,subs=attributes+]
+----
+-v full_path_to/custom_etm.yml:/usr/share/etm/config/etm.yml
+----
+
+to the Docker run command. Also if you need an <<Integration with IBM MQ and/or IBM Integration Bus>> you need to mound the directory that contains the proprietary IIB and/or MQ jar files to the image: 
+
+[source,bash,subs=attributes+]
+----
+-v full_path_to/proprietary_jar_files:/usr/share/etm/lib/ext
+----
+
+IMPORTANT: The container runs {etm} as user etm using uid:gid 1000:1000. Bind mounted host directories and files, such as custom_etm.yml above, need to be accessible by this user. 
+
+Because the {etm} Docker image has a dependency to Elasticsearch, and Elasticsearch is also capable of running as a Docker service it might be convenient to create a docker-compose.yml file. The following snippet may be a good starting point for your needs.
+
+[source,yaml,subs=attributes+]
+----
+version: "3"
+services:
+  es-master-node-1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.4.1
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 2G
+    environment:
+      cluster.name: Enterprise Telemetry Monitor
+      bootstrap.memory_lock: 'true'
+      node.data: 'false'
+      node.ingest: 'false'
+      xpack.security.enabled: 'false'
+      xpack.ml.enabled: 'false'
+      network.host: 0.0.0.0
+      transport.tcp.port: 9300
+      discovery.zen.ping.unicast.hosts: es-master-node-1:9300
+    networks:
+      - etm
+    ulimits:
+      nofile: 65536
+      memlock: -1
+  es-data-node-1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.4.1
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 2G
+    depends_on:
+      - es-master-node-1  
+    environment:
+      cluster.name: Enterprise Telemetry Monitor
+      bootstrap.memory_lock: 'true'
+      node.master: 'false'
+      node.ingest: 'false'
+      xpack.security.enabled: 'false'
+      xpack.ml.enabled: 'false'
+      network.host: 0.0.0.0
+      transport.tcp.port: 9305
+      discovery.zen.ping.unicast.hosts: es-master-node-1:9300
+    networks:
+      - etm
+    ulimits:
+      nofile: 65536
+      memlock: -1
+    volumes:
+      - es-data-node-1:/usr/share/elasticsearch/data
+  etm-node-1:
+    image: jecstar.com/etm/etm:{project-version}
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    depends_on:
+      - es-master-node-1
+      - es-data-node-1
+    environment:
+      instanceName: etm-node-1
+      clusterName: Enterprise Telemetry Monitor
+      elasticsearch_clusterName: Enterprise Telemetry Monitor
+      elasticsearch_connectAddresses: es-data-node-1:9305,es-master-node-1:9300
+      elasticsearch_waitForConnectionOnStartup: 'true'
+      http.httpPort: 8080
+    networks:
+      - etm
+    ports:
+      - "8080:8080"
+networks:
+  etm:
+volumes:
+  es-data-node-1:      
+----
+
+
+By executing the following command you will bring up the services. 
+
+[source,bash,subs=attributes+]
+----
+docker stack deploy -c docker-compose.yml etm
+----
+
+The above yaml file is a good starting point for deploying {etm} in a Docker Swarm. An Elasticsearch master node, and a separate data node will be created. Also a single instance of an {etm} node is added as service and is referencing th Elasticsearch instances. Although it is possible to assign more replicas to the {etm} service, you have to understand that all instances will be given the exact same {etm} node name. This means they cannot be separately configured. Also if they are deployed on the same host all instances try to bind on the same http port, which of course won't work. 
+It might be better to add a new service to your yaml file and redeploy the stack to your swarm.
+Another thing to take into account are the data volumes. In the above yaml example file a named volume is used. This named volume default to the ''local'' driver which means the data of your Elasticsearch data node will be stored on the node the service is deployed to. If your Docker swarm contains more than 1 node you have to make sure the data volume is configured with a driver/location all nodes can access and write to. You can avoid this situation by defining a link:https://docs.docker.com/compose/compose-file/#placement[placement contraints] in your yaml configuration file. With such a constraint it is possible to make sure a service will always deployed on a specific Docker host.
+
+
+=== Integration with IBM MQ and/or IBM Integration Bus
+{etm} is capable of providing deep integration with IBM MQ and or IBM Integration Bus. To make use of any of these integrations the classpath of {etm} needs to be extended. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}. 
+
+To make use of the IBM MQ integration you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib/ext directory. This integration makes it possible to process events from any IBM MQ Destination. For further configuration see the <<IBM MQ section in etm.yml>>.
+
+The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}. To make use of this integration you need to copy a file named ''configmanagerproxy.jar'' from your MQ installation to the <INSTALL_DIR>/lib/ext directory when you are running IIB version 9.x. If you are running IIB version 10.x the file is named ''integrationapi.jar''.
+Also, for both versions of IBM Integration Bus the file ''ibmjsseprovider2.jar'' needs to be copied as well. All files can be found in your IBM Integration Bus installation.
+
+=== Node configuration
+Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.
+
+Indentation in the etm.yml configuration file is necessary to create nested properties. See the following example for an explanation on how to create lists an key-value mappings.
+
+[source,yaml]
+----
+property1: value1 <1>
+object1: <2>
+  sub-property1: value2 <3>
+list1:
+- listproperty1: value3 <4>
+  listproperty2: value4
+- listproperty1: value5    
+  listproperty2: value4
+map1:
+  key1: value1 <5>
+  key2: value2  
+----
+<1> This is just a general property with the name ''property1'' and a value of ''value1''. 
+<2> A new object with the name ''object1'' is created. An object itself has no direct value, but has (sub)properties with an indentation of 2 spaces.
+<3> The property ''sub-poroperty1'' is added to the object ''object1''
+<4> A new list is created. A list is actually an object as well because it has no direct value bus has (sub)properties with an indentation of 2 spaces. In this case the list doesn't contain single values but objects. Each object starts with a ''-''.
+<5> A new map is created. Just like the list, a map is actually an object. In this case the map contains of simple key/value string pairs.
+
+A detailed specification of the yaml syntax can be found on the link:http://yaml.org/[yaml website].
+
+IMPORTANT: When storing passwords in the etm.yml file, make sure the file is only readable by the {etm} administrators.
+
+==== General configuration in etm.yml
+General configuration options have no indentation in the etm.yml file. The following options are available:
+
+.General configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|bindingAddress|0.0.0.0|The interface address to bind {etm} to.
+|clusterName|Enterprise Telemetry Monitor|The name of the {etm} cluster. When running multiple {etm} clusters it is recommended to give them a separate name.
+|instanceName|Node_1|The name of the Node. When running multiple nodes in a cluster, it is recommended to give them a separate name.
+|elasticsearch||The elasticsearch configuration. See <<Elasticsearch section in etm.yml>> to view the nested options.
+|http||The http configuration. See <<Http section in etm.yml>> to view the nested options.
+|ibmMq||The IBM MQ configuration. See <<IBM MQ section in etm.yml>> to view the nested options.
+|logging||The logging configuration. See <<Logging section in etm.yml>> to view the nested options.
+|======================= 
+
+All other configuration sections are identified with the name of the section without indentation. Configuration options in that section have an indentation of 2 spaces.
+
+==== Elasticsearch section in etm.yml
+The ''elasticsearch'' section contains all options that are necessary to connect to an Elasticsearch cluster:
+
+.Elasticsearch configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|clusterName|elasticsearch|The name of the Elasticsearch cluster to connect to.
+|connectAddresses|127.0.0.1:9300|A comma separated list of Elasticsearch nodes to connect to. When high availability is a demand of your production environment you should provide at least 2 addresses.
+|waitForConnectionOnStartup|false|Wait for any of the connections supplied in the ''connectAddresses'' to be established before fully starting {etm}. This option is usefull when {etm} is started before any of the Elasticsearch nodes is started.
+|=======================
+
+==== Http section in etm.yml
+The ''http'' section contains all options that are necessary to start the gui and rest processor:
+
+.Http configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|guiEnabled|true|Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the ''/gui'' context on your server and can be accessed by browsing to \http://<bindingAddress>:<httpPort>/gui/
+|restProcessorEnabled|true|Should the REST processor be enabled? Set this value to false if you don't want this node to act as a processor that can process events with a REST api. The REST api is bound to the ''/rest/processor/'' context and can be access from \http://<bindingAddress>:<httpPort>/rest/processor/ 
+|restProcessorLoginRequired|false|Should basic authentication be applied to the rest processor? If so, only users with the ''admin'' or ''Processor'' role are allowed to make use of the REST processor. Credentials must be provided within the basic authentication http header which is not encrypted. So make sure you access the REST processor over https instead of http if you enable this option. Otherwise your credentials will be vulnerable to a man in the middle attack.
+|httpPort|8080|The port to bind the http listener to. To disable the http listener set the value to zero or lower.
+|httpsPort|8443|The port to bind the secure https listener to. The listener will not start unless the sslKeystore is properly configured.
+|maxConcurrentRequests|100|The maximum number of request that can be processed in parallel at any given moment. This is the number of request to the gui and rest processor combined. If the number exceeds the maximum, the requests will be queued.
+|maxQueuedRequests|100|The maximum number of requests that can be queued. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
+|sessionTimeout|30|The timeout of the http sessions in minutes.
+|sslProtocol|TLSv1.2|The ssl protocol that needs to be used on the secure https listener. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
+|sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your server.
+|sslKeystorePassword||The password of the ssl keystore.
+|sslKeystoreType|PKCS12|The ssl keystore type.
+|sslKeystoreLocation||The location of you ssl truststore. The trust store contains certificates of machines that are allowed to connect to this Node. When not provided, everybody is allowed to access this Node although a a username and password are still necessary to login.
+|sslKeystorePassword||The password of the ssl truststore.
+|sslKeystoreType|JSK|The ssl truststore type.
+|=======================
+
+==== IBM MQ section in etm.yml
+The ''ibmMq'' section contains all options that are necessary to process {etm} events from a IBM MQ queue or topic. Make sure to add the MQ libraries to the classpath of the Node. See the <<Integration with IBM MQ and/or IBM Integration Bus>> section.
+
+.IBM MQ configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|enabled|false|Should the IBM MQ processor be enabled? Set this value to true to process events from defined IBM MQ queue's and/or topics.
+|queueManagers||A list of QueueManagers to connect to. See <<ibmmq-queuemanager-options>> to view the nested options.
+|=======================
+
+[[ibmmq-queuemanager-options]]
+.QueueManager options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|name|QMGR|The name of the QueueManager.
+|host|127.0.0.1|The hostname or ip-address the QueueManager is running on.
+|port|1414|The port the QueueManager is listening on.
+|channel||The channel to use to setup the connection to the QueueManager.
+|userId||The user id used to setup the connection to the QueueManager.
+|password||The password used to setup the connection to the QueueManager.
+|sslCipherSuite||The ssl cipher suite to use. Set this property to the desired suite to enable an encrypted connection to the QueueManager. 
+|sslProtocol|TLSv1.2|The ssl protocol that needs to be to connect to the QueueManager. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
+|sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your Node.
+|sslKeystorePassword||The password of the ssl keystore.
+|sslKeystoreType|PKCS12|The ssl keystore type.
+|sslKeystoreLocation||The location of you ssl truststore. The trust store contains certificates of Queuemanager machines that this Node is allowed to connect to. When not provided, all Queuemanager machines are trusted.
+|sslKeystorePassword||The password of the ssl truststore.
+|sslKeystoreType|JSK|The ssl truststore type.
+|destinations||A list of destinations to listen on. See <<ibmmq-destination-options>> to view the nested options.
+|=======================
+
+[[ibmmq-destination-options]]
+.Destination options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|name||The name of the Queue or Topic to connect to.
+|type|queue|The destination type. Can be one of ''queue'' or ''destination''.
+|nrOfListeners|1|The number of listeners to connect to the destination. In most cases 1 will be enough because the processor processes the events asynchronous.
+|channel||The channel to use to setup the connection to the QueueManager.
+|messagesType|auto|Can be one of ''auto'' which auto detect the message type but is the slowest, ''iibevent'' which is capable of handling http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events],  ''etmevent'' which is capable of handling events in the {etm} json format or ''clone'' which assumes the message read is a clone of the original message. See the section <<Event layout>> for a description of the {etm} json format.
+|maxMessageSize|4194304|The maximum message size in bytes that can be read. Depending on the get options the message will be ignored or truncated.
+|commitSize|500|The maximum number of messages processed before a MQCMIT is executed.
+|commitInterval|10000|The maximum number of milliseconds the processor can read messages without executing a MQCMIT.
+|destinationGetOptions|MQGMO_WAIT + MQGMO_FAIL_IF_QUIESCING + MQGMO_SYNCPOINT + MQGMO_LOGICAL_ORDER + MQGMO_ALL_SEGMENTS_AVAILABLE + MQGMO_COMPLETE_MSG|The MQ Get options.
+|destinationOpenOptions|MQOO_INQUIRE + MQOO_FAIL_IF_QUIESCING + MQOO_INPUT_SHARED|The MQ Open options.
+|=======================
+
+==== Logging section in etm.yml
+The ''logging'' section contains all options to configure the loggers and log levels. Log levels can be one of TRACE, DEBUG, INFO, WARNING or ERROR
+
+.Logging configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|rootLogger|INFO|The root logging level. If no specific logger is configured, this value will be used.
+|loggers||A map with string key/value pairs. The key is the name of the logger and the value is the log level to be used for that specific logger.
+|=======================
+

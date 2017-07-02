@@ -572,7 +572,7 @@ function loadDashboardPage() {
     		        	col.chart.update();
     		        } else {
     		        	formatter = d3.locale(data.d3_formatter);
-    		        	numberFormatter = formatter.numberFormat(',f');
+    		        	numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format ? graphData.bar.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.multiBarChart()
 	        		            .x(function(d) { return d.label })
@@ -602,7 +602,7 @@ function loadDashboardPage() {
     		        	col.chart.update();
     		        } else {
     		        	formatter = d3.locale(data.d3_formatter);
-    		        	numberFormatter = formatter.numberFormat(',f');
+    		        	numberFormatter = formatter.numberFormat(graphData.line.y_axis.format ? graphData.line.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.lineChart()
 							    .showYAxis(true)
@@ -613,7 +613,12 @@ function loadDashboardPage() {
 	        		            ;
 	        		    	col.chartData = formatLineData(data.data);
 	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-	        		    	col.chart.xAxis.tickFormat(function(d,s) {return col.chartData[0].values[d].label});
+	        		    	col.chart.xAxis.tickFormat(function(d,s) { 
+	       		            	if (d < 0 || d >= col.chartData[0].values.length) {
+	       		            		return '';
+	       		            	}; 
+	       		            	return col.chartData[0].values[d].label;
+	       		            });
 	        		    	col.chart.interpolate(graphData.interpolation);
 	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
 	        		    	d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
@@ -640,7 +645,7 @@ function loadDashboardPage() {
     		        	col.chart.update();
     		        } else {
 	        			formatter = d3.locale(data.d3_formatter);
-	        			numberFormatter = formatter.numberFormat(',f');
+	        			numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format ? graphData.stacked_area.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.stackedAreaChart()
 	        		            .useInteractiveGuideline(true)
@@ -650,7 +655,12 @@ function loadDashboardPage() {
 	        		            ;
 	        		        col.chartData = formatLineData(data.data);
 	        		        col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-	        		        col.chart.xAxis.tickFormat(function(d,s) {return col.chartData[0].values[d].label});
+	        		    	col.chart.xAxis.tickFormat(function(d,s) { 
+	       		            	if (d < 0 || d >= col.chartData[0].values.length) {
+	       		            		return '';
+	       		            	}; 
+	       		            	return col.chartData[0].values[d].label;
+	       		            });
 	        		        col.chart.margin({left: 75, bottom: 50, right: 50});
 	        		        d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
 	        		        	.datum(col.chartData)

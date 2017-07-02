@@ -438,10 +438,11 @@ function buildGraphsPage() {
 				$('<div>').addClass('col-sm-9').append(
 					$('<select>').attr('id', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('form-control form-control-sm custom-select')
 					.append(
+						$('<option>').attr('value', 'auto').attr('selected', 'selected').text('Auto'),	
 						$('<option>').attr('value', 'seconds').text('Seconds'),
 						$('<option>').attr('value', 'minutes').text('Minutes'),
 						$('<option>').attr('value', 'hours').text('Hours'),
-						$('<option>').attr('value', 'days').attr('selected', 'selected').text('Days'),
+						$('<option>').attr('value', 'days').text('Days'),
 						$('<option>').attr('value', 'weeks').text('Weeks'),
 						$('<option>').attr('value', 'months').text('Months'),
 						$('<option>').attr('value', 'quarters').text('Quarters'),
@@ -687,7 +688,7 @@ function buildGraphsPage() {
                 $('#preview_box').empty();
         		if ('bar' == data.type) {
         			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(',f');
+        			numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format);
         		    nv.addGraph(function() {
         		        var chart = nv.models.multiBarChart()
         		            .x(function(d) { return d.label })
@@ -714,7 +715,7 @@ function buildGraphsPage() {
         		    });
         		} else if ('line' == data.type) {
         			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(',f');
+        			numberFormatter = formatter.numberFormat(graphData.line.y_axis.format);
         		    nv.addGraph(function() {
         		    	var i = 1
         		        var chart = nv.models.lineChart()
@@ -725,7 +726,12 @@ function buildGraphsPage() {
         		            .duration(250)
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-       		            chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+       		            chart.xAxis.tickFormat(function(d,s) { 
+       		            	if (d < 0 || d >= data.data[0].values.length) {
+       		            		return '';
+       		            	}; 
+       		            	return data.data[0].values[d].label;
+       		            });
        		            chart.margin({left: 75, bottom: 50, right: 50});
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(formatLineData(data.data))
@@ -738,7 +744,7 @@ function buildGraphsPage() {
         		} else if ('pie' == data.type) {
         		} else if ('stacked_area' == data.type) {
         			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(',f');
+        			numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format);
         		    nv.addGraph(function() {
         		        var chart = nv.models.stackedAreaChart()
         		            .useInteractiveGuideline(true)
@@ -747,7 +753,12 @@ function buildGraphsPage() {
         		            .clipEdge(true);
         		            ;
         		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-        		        chart.xAxis.tickFormat(function(d,s) {return data.data[0].values[d].label});
+       		            chart.xAxis.tickFormat(function(d,s) { 
+       		            	if (d < 0 || d >= data.data[0].values.length) {
+       		            		return '';
+       		            	}; 
+       		            	return data.data[0].values[d].label;
+       		            });
         		        chart.margin({left: 75, bottom: 50, right: 50});
         		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
         		        	.datum(formatLineData(data.data))
@@ -789,7 +800,7 @@ function buildGraphsPage() {
 	function resetValues() {
 		document.getElementById('graph_form').reset();
 		$('#sel-graph-type').trigger("change");
-		$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").show();
+		$("a[data-element-type='remove-bucket-aggregator']:visible").click();
 		enableOrDisableButtons();
 	}
 	
@@ -813,6 +824,9 @@ function buildGraphsPage() {
 		function setMultiBucketData(type, data) {
 			$('#' + type + '-y-axis, #' + type + '-x-axis').empty();
 			$('#' + type + '-x-axis').parent().find("a[data-element-type='add-x-axis-bucket-aggregator']").show();
+			if (data.y_axis.format) {
+				$('[id=input-' + type + '-y-axis-format]').val(data.y_axis.format);
+			}
 			$.each(data.y_axis.aggregators, function(index, aggregator) {
 				addMetricsAggregatorsBlock($('#' + type + '-y-axis'), type, index, aggregator);
 			})
@@ -871,6 +885,10 @@ function buildGraphsPage() {
 				x_axis: {
 					aggregator: getBucketAggregatorsBlock(graphData.type, 0)
 				}
+			}
+			data.y_axis.format = $('[id=input-' + type + '-y-axis-format]').val();
+			if (!data.y_axis.format) {
+				data.y_axis.format = '.f';
 			}
 			$('[id^=sel-' + type + '-metrics-aggregator-]').each(function(index) {
 				var barIx = $(this).attr('id').split('-')[4];

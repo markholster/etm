@@ -7,7 +7,7 @@ public class IIBNode {
 
 	private Node node;
 
-	protected IIBNode(MessageFlowProxy.Node node) {
+	public IIBNode(MessageFlowProxy.Node node) {
 		this.node = node;
 	}
 	
@@ -20,15 +20,20 @@ public class IIBNode {
 	}
 
 	public boolean isSupported() {
-		return this.node.getType().startsWith("ComIbmMQ") && !"ComIbmMQHeaderNode".equals(this.node.getType());
+		return
+			this.node.getType().equals("SubFlowNode")
+			|| (this.node.getType().startsWith("ComIbmMQ") && !this.node.getType().equals("ComIbmMQHeaderNode"))
+			|| this.node.getType().equals("ComIbmPublication")
+//			|| this.node.getType().startsWith("ComIbmREST")
+			|| (this.node.getType().startsWith("ComIbmHTTP") && !this.node.getType().equals("ComIbmHTTPHeader"))
+			|| this.node.getType().startsWith("ComIbmWS")
+			|| (this.node.getType().startsWith("ComIbmSOAP") && !this.node.getType().equals("ComIbmSOAPWrapperNode") && !this.node.getType().equals("ComIbmSOAPExtractNode"))
+		;
 	}
 
-	public boolean isMonitoringSetInProfile(String profile) {
-		if (profile == null) {
-			return false;
-		}
-		return profile.indexOf("profile:eventSourceAddress=\"" + getName() + ".") >= 0;
+	public String getProperty(String key) {
+		return this.node.getProperties().getProperty(key);
 	}
-
+	
 
 }

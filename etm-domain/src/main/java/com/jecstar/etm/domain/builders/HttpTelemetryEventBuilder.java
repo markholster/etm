@@ -21,4 +21,8 @@ public class HttpTelemetryEventBuilder extends TelemetryEventBuilder<HttpTelemet
 		this.event.httpEventType = httpEventType;
 		return this;
 	}
+	
+	public HttpEventType getHttpEventType() {
+		return this.event.httpEventType;
+	}
 }

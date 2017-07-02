@@ -25,12 +25,10 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
-import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.ElasticSearchLayout;
+import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -57,7 +55,7 @@ public class UserService extends AbstractJsonService {
 	@Path("/settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getUserSettings() {
-		GetResponse getResponse = UserService.client.prepareGet(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+		GetResponse getResponse = UserService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 				.setFetchSource(null, new String[] {"searchtemplates", "password_hash"})
 				.get();
 		if (getResponse.isSourceEmpty()) {
@@ -91,7 +89,7 @@ public class UserService extends AbstractJsonService {
 		}
 		updateMap.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
 		
-		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
+		UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
 		.setDoc(updateMap)
 		.setDetectNoop(true)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -103,7 +101,7 @@ public class UserService extends AbstractJsonService {
 			// History size is smaller. Make sure the stored queries are sliced to the new size.
 			Map<String, Object> scriptParams = new HashMap<String, Object>();
 			scriptParams.put("history_size", newHistorySize);
-			UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+			UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 					.setScript(new Script(ScriptType.STORED, "painless", "etm_update-search-history", scriptParams))
 					.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -140,7 +138,7 @@ public class UserService extends AbstractJsonService {
 		updateMap.put(this.tags.getPasswordHashTag(), newHash);
 		updateMap.put(this.tags.getChangePasswordOnLogonTag(), false);
 		
-		UserService.client.prepareUpdate(ElasticSearchLayout.CONFIGURATION_INDEX_NAME, ElasticSearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+		UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 		.setDoc(updateMap)
 		.setDetectNoop(true)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -173,71 +171,12 @@ public class UserService extends AbstractJsonService {
 	}
 	
 	@GET
-	@Path("/menu")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getMenu() {
-		StringBuilder result = new StringBuilder();
-		EtmPrincipal principal = getEtmPrincipal();
-		result.append("{");
-		result.append("\"items\": [");
-		boolean added = false;
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.SEARCHER)) {
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "search", result, true) || added;
-			result.append("}");
-		}
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER)) {
-			if (added) {
-				result.append(",");
-			}
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "dashboard", result, true) || added;
-			result.append("}");
-		}
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER, EtmPrincipalRole.SEARCHER, EtmPrincipalRole.IIB_ADMIN)) {
-			if (added) {
-				result.append(",");
-			}
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "preferences", result, true) || added;
-			result.append("}");
-		}
-		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN)) {
-			if (added) {
-				result.append(",");
-			}
-			result.append("{");
-			added = addStringElementToJsonBuffer("name", "settings", result, true) || added;
-			result.append(", \"submenus\": [");
-			boolean subMenuAdded = false;
-			if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
-				result.append("\"admin\"");
-				subMenuAdded = true;
-			}
-			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && IIBApi.IIB_PROXY_AVAILABLE) {
-				if (subMenuAdded) {
-					result.append(",");
-				}
-				result.append("\"iib_admin\"");
-				subMenuAdded = true;
-			}
-			result.append("]");
-			result.append("}");
-		}
-		result.append("]");
-		addBooleanElementToJsonBuffer("license_expired", etmConfiguration.isLicenseExpired(), result, false);
-		addBooleanElementToJsonBuffer("license_almost_expired", etmConfiguration.isLicenseAlmostExpired(), result, false);
-		result.append("}"); 
-		return result.toString();
-	}
-	
-	@GET
 	@Path("/eventstats")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEvents() {
 		StringBuilder result = new StringBuilder();
 		NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
-		SearchResponse searchResponse = client.prepareSearch(ElasticSearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
+		SearchResponse searchResponse = client.prepareSearch(ElasticsearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
 			.setSize(0).setQuery(QueryBuilders.matchAllQuery())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();

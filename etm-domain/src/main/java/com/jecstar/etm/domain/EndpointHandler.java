@@ -43,6 +43,14 @@ public class EndpointHandler {
 	 */
 	public Long responseTime;
 	
+	//STATE FIELDS
+	/**
+	 * Boolean indicating this EndpointHandler was forced added because there
+	 * was not writing EndpointHandler present at the time the event was
+	 * processed by the enhancer.
+	 */
+	public boolean forced;
+	
 	public EndpointHandler initialize() {
 		this.application.initialize();
 		this.location.initialize();
@@ -51,6 +59,8 @@ public class EndpointHandler {
 		// Initialize read only fields.
 		this.latency = null;
 		this.responseTime = null;
+		// Initialize state fields.
+		this.forced = false;
 		return this;
 	}
 	

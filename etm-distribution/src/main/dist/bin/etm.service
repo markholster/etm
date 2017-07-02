@@ -1,0 +1,21 @@
+[Unit]
+Description=Enterprise Telemetry Monitor
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+Environment=ETM_PATH=/usr/local/etm
+Type=forking
+PIDFile=$ETM_PATH/etm.pid
+ExecStartPre=/usr/bin/rm -f $ETM_PATH/etm.pid
+ExecStart=$ETM_PATH/bin/etm start
+ExecStop=$ETM_PATH/bin/etm stop
+ExecReload=$ETM_PATH/bin/etm restart
+KillSignal=SIGQUIT
+TimeoutStopSec=10
+KillMode=process
+PrivateTmp=true
+User=etm
+Group=etm
+
+[Install]
+WantedBy=multi-user.target

@@ -9,20 +9,25 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.discovery.MasterNotDiscoveredException;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
+import com.jecstar.etm.launcher.background.HttpSessionCleaner;
+import com.jecstar.etm.launcher.background.IndexCleaner;
+import com.jecstar.etm.launcher.background.LicenseUpdater;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
-import com.jecstar.etm.launcher.retention.IndexCleaner;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
@@ -46,7 +51,7 @@ public class Launcher {
 	private Client elasticClient;
 	private ScheduledReporter metricReporter;
 	private IbmMqProcessor ibmMqProcessor;
-	private ScheduledExecutorService retentionScheduler;
+	private ScheduledExecutorService backgroundScheduler;
 	private InternalBulkProcessorWrapper bulkProcessorWrapper;
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration, InternalBulkProcessorWrapper bulkProcessorWrapper) {
@@ -61,10 +66,16 @@ public class Launcher {
 			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
 			this.bulkProcessorWrapper.setConfiguration(etmConfiguration);
 			this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
+			if (commandLineParameters.isReinitialize()) {
+				this.indexTemplateCreator.reinitialize();
+				if (!commandLineParameters.isQuiet()) {
+					System.out.println("Reinitialized system.");
+				}
+			}
 			MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);
-			initializeIndexCleaner(etmConfiguration, this.elasticClient);
+			initializeBackgroundProcesses(configuration, etmConfiguration, this.elasticClient);
 			
 			if (configuration.isHttpServerNecessary()) {
 				System.setProperty("org.jboss.logging.provider", "slf4j");
@@ -101,8 +112,8 @@ public class Launcher {
 				if (Launcher.this.indexTemplateCreator != null) {
 					try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
 				}
-				if (Launcher.this.retentionScheduler != null) {
-					try { Launcher.this.retentionScheduler.shutdownNow(); } catch (Throwable t) {}
+				if (Launcher.this.backgroundScheduler != null) {
+					try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
 				}
 				if (Launcher.this.ibmMqProcessor != null) {
 					try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
@@ -130,9 +141,18 @@ public class Launcher {
 	}
 	
 	
-	private void initializeIndexCleaner(EtmConfiguration etmConfiguration, Client client) {
-		this.retentionScheduler = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("etm_retention_scheduler"));
-		this.retentionScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 0, 15, TimeUnit.MINUTES);
+	private void initializeBackgroundProcesses(final Configuration configuration, final EtmConfiguration etmConfiguration, final Client client) {
+		int threadPoolSize = 2;
+		if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
+			threadPoolSize++;
+		}
+		this.backgroundScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_background_scheduler"));
+		this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, client), 0, 6, TimeUnit.HOURS);
+		this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 1, 15, TimeUnit.MINUTES);
+		if (configuration.http.guiEnabled) {
+			this.backgroundScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, client), 2, 15, TimeUnit.MINUTES);
+		}
+		
 	}
 
 	
@@ -151,23 +171,85 @@ public class Launcher {
 				.put("cluster.name", configuration.elasticsearch.clusterName)
 				.put("client.transport.sniff", true).build());
 		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
-		for (String host : hosts) {
-			int ix = host.lastIndexOf(":");
-			if (ix != -1) {
-				try {
-					InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
-					int port = Integer.parseInt(host.substring(ix + 1));
-					transportClient.addTransportAddress(new InetSocketTransportAddress(inetAddress, port));
-				} catch (UnknownHostException e) {
-					if (log.isWarningLevelEnabled()) {
-						log.logWarningMessage("Unable to connect to '" + host + "'", e);
-					}
+		int hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
+		if (configuration.elasticsearch.waitForConnectionOnStartup) {
+			while (hostsAdded == 0) {
+				// Currently this can only happen in docker swarm installations where the elasticsearch service isn't fully started when ETM starts. This will result in a 
+				// UnknownHostException so that leaves with a transportclient without any hosts. Also this may happen when the end users misspells the hostname in the configuration.
+				if (Thread.currentThread().isInterrupted()) {
+					break;
 				}
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
 			}
+			waitForActiveConnection(transportClient);
 		}
 		this.elasticClient = transportClient;
 	}
 	
+	private int addElasticsearchHostsToTransportClient(String[] hosts, TransportClient transportClient) {
+		int added = 0;
+		for (String host : hosts) {
+			TransportAddress transportAddress = createTransportAddress(host);
+			if (transportAddress != null) {
+				transportClient.addTransportAddress(transportAddress);
+				added++;
+			}
+		}
+		return added;
+	}
+	
+	private TransportAddress createTransportAddress(String host) {
+		int ix = host.lastIndexOf(":");
+		if (ix != -1) {
+			try {
+				InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
+				int port = Integer.parseInt(host.substring(ix + 1));
+				return new InetSocketTransportAddress(inetAddress, port);
+			} catch (UnknownHostException e) {
+				if (log.isWarningLevelEnabled()) {
+					log.logWarningMessage("Unable to connect to '" + host + "'", e);
+				}
+			}
+		}
+		return null;
+	}
+
+	private void waitForActiveConnection(TransportClient transportClient) {
+		while(transportClient.connectedNodes().isEmpty()) {
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}
+			// Wait for any elasticsearch node to become active.
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		ClusterHealthResponse clusterHealthResponse = null;
+		while (clusterHealthResponse == null || (clusterHealthResponse.getInitializingShards() != 0 && clusterHealthResponse.getNumberOfPendingTasks() != 0 && clusterHealthResponse.getNumberOfDataNodes() != 0)) {
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}			
+			// Wait for all shards to be initialized and no more tasks pending and at least 1 data node to be available.
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			try {
+				clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
+			} catch (MasterNotDiscoveredException e) {}
+		}
+	
+		
+	}
+
 	private void initializeMqProcessor(MetricRegistry metricRegistry, Configuration configuration) {
 		try {
 			Class<?> clazz = Class.forName("com.jecstar.etm.processor.ibmmq.IbmMqProcessorImpl");

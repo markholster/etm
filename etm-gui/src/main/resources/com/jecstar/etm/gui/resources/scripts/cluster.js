@@ -1,6 +1,14 @@
 function buildClusterPage() {
 	var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9+/=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/rn/g,"n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
-	
+
+	$('#btn-save-general').click(function(event) {
+		if (!document.getElementById('form-general').checkValidity()) {
+			return;
+		}
+		event.preventDefault();
+		saveCluster('General');
+	});
+
 	$('#btn-save-elasticsearch').click(function(event) {
 		if (!document.getElementById('form-elasticsearch').checkValidity()) {
 			return;
@@ -123,10 +131,12 @@ function buildClusterPage() {
 	}
 	
 	function setClusterData(data) {
+		$("#input-session-timeout").val(data.session_timeout);
 		$("#input-shards-per-index").val(data.shards_per_index);
 		$("#input-replicas-per-index").val(data.replicas_per_index);
 		$("#input-max-event-indices").val(data.max_event_index_count);
 		$("#input-max-metrics-indices").val(data.max_metrics_index_count);
+		$("#input-max-audit-log-indices").val(data.max_audit_log_index_count);
 		$("#input-wait-for-active-shards").val(data.wait_for_active_shards);
 		$("#input-retries-on-conflict").val(data.retry_on_conflict_count);
 		$("#input-query-timeout").val(data.query_timeout);
@@ -138,6 +148,7 @@ function buildClusterPage() {
 		$("#input-enhancing-handler-count").val(data.enhancing_handler_count);
 		$("#input-persisting-handler-count").val(data.persisting_handler_count);
 		$("#input-event-buffer-size").val(data.event_buffer_size);
+		$("#sel-wait-strategy").val(data.wait_strategy);
 		$("#input-persisting-bulk-count").val(data.persisting_bulk_count);
 		$("#input-persisting-bulk-size").val(data.persisting_bulk_size);
 		$("#input-persisting-bulk-time").val(data.persisting_bulk_time);
@@ -145,11 +156,14 @@ function buildClusterPage() {
 	
 	function createClusterData(context) {
 		var clusterData = {};
-		if ('Elasticsearch' == context) {
+		if ('General' == context) {
+			clusterData.session_timeout = Number($("#input-session-timeout").val());
+		} else if ('Elasticsearch' == context) {
 			clusterData.shards_per_index = Number($("#input-shards-per-index").val());
 			clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
 			clusterData.max_event_index_count = Number($("#input-max-event-indices").val());
 			clusterData.max_metrics_index_count = Number($("#input-max-metrics-indices").val());
+			clusterData.max_audit_log_index_count = Number($("#input-max-audit-log-indices").val());
 			clusterData.wait_for_active_shards = Number($("#input-wait-for-active-shards").val());
 			clusterData.retry_on_conflict_count = Number($("#input-retries-on-conflict").val());
 			clusterData.query_timeout = Number($("#input-query-timeout").val());
@@ -157,6 +171,7 @@ function buildClusterPage() {
 			clusterData.enhancing_handler_count = Number($("#input-enhancing-handler-count").val());
 			clusterData.persisting_handler_count = Number($("#input-persisting-handler-count").val());
 			clusterData.event_buffer_size = Number($("#input-event-buffer-size").val());
+			clusterData.wait_strategy = $("#sel-wait-strategy").val();
 			clusterData.persisting_bulk_count = Number($("#input-persisting-bulk-count").val());
 			clusterData.persisting_bulk_size = Number($("#input-persisting-bulk-size").val());
 			clusterData.persisting_bulk_time = Number($("#input-persisting-bulk-time").val());
@@ -183,6 +198,7 @@ function buildClusterPage() {
 		$('#input-ldap-connection-test-search-filter').val(data.connection_test_search_filter);
 		$('#input-ldap-user-base-dn').val(data.user_base_dn);
 		$('#input-ldap-user-search-filter').val(data.user_search_filter);
+		$('#sel-ldap-user-search-in-subtree').val(data.user_search_in_subtree ? 'true' : 'false');
 		$('#input-ldap-user-id-attribute').val(data.user_identifier_attribute);
 		$('#input-ldap-user-fullname-attribute').val(data.user_full_name_attribute);
 		$('#input-ldap-user-email-attribute').val(data.user_email_attribute);
@@ -206,6 +222,7 @@ function buildClusterPage() {
 		ldapData.connection_test_search_filter = $('#input-ldap-connection-test-search-filter').val();
 		ldapData.user_base_dn = $('#input-ldap-user-base-dn').val();
 		ldapData.user_search_filter = $('#input-ldap-user-search-filter').val();
+		ldapData.user_search_in_subtree = $('#sel-ldap-user-search-in-subtree').val() == 'true' ? true : false;
 		ldapData.user_identifier_attribute = $('#input-ldap-user-id-attribute').val();
 		ldapData.user_full_name_attribute = $('#input-ldap-user-fullname-attribute').val();
 		ldapData.user_email_attribute = $('#input-ldap-user-email-attribute').val();
