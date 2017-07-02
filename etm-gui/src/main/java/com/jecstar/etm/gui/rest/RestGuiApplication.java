@@ -22,7 +22,7 @@ public class RestGuiApplication extends Application {
 		SettingsService.initialize(client, etmConfiguration);
 		AuditService.initialize(client, etmConfiguration);
 		DashboardService.initialize(client, etmConfiguration);
-		if (IIBApi.IIB_PROXY_AVAILABLE) {
+		if (IIBApi.IIB_PROXY_ON_CLASSPATH) {
 			com.jecstar.etm.gui.rest.services.iib.IIBService.initialize(client, etmConfiguration);
 		}
 	}
@@ -36,7 +36,7 @@ public class RestGuiApplication extends Application {
 		classes.add(SettingsService.class);
 		classes.add(AuditService.class);
 		classes.add(DashboardService.class);
-		if (IIBApi.IIB_PROXY_AVAILABLE) {
+		if (IIBApi.IIB_PROXY_ON_CLASSPATH) {
 			classes.add(com.jecstar.etm.gui.rest.services.iib.IIBService.class);
 		}
 		return classes;

@@ -237,7 +237,7 @@ public class MenuAwareURLResource extends URLResource {
         				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/auditlogs.html\">Audit logs</a>");
         				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/indexstats.html\">Index statistics</a>");
         			}
-        			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && IIBApi.IIB_PROXY_AVAILABLE) {
+        			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && IIBApi.IIB_PROXY_ON_CLASSPATH) {
         				if (added) {
         					html.append("<div class=\"dropdown-divider\"></div>");
         				}

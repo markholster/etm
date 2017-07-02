@@ -7,7 +7,7 @@ public class IIBNode {
 
 	private Node node;
 
-	protected IIBNode(MessageFlowProxy.Node node) {
+	public IIBNode(MessageFlowProxy.Node node) {
 		this.node = node;
 	}
 	
@@ -22,7 +22,7 @@ public class IIBNode {
 	public boolean isSupported() {
 		return
 			this.node.getType().equals("SubFlowNode")
-			||this.node.getType().startsWith("ComIbmMQ") 
+			|| (this.node.getType().startsWith("ComIbmMQ") && !this.node.getType().equals("ComIbmMQHeaderNode"))
 			|| this.node.getType().equals("ComIbmPublication")
 //			|| this.node.getType().startsWith("ComIbmREST")
 			|| (this.node.getType().startsWith("ComIbmHTTP") && !this.node.getType().equals("ComIbmHTTPHeader"))

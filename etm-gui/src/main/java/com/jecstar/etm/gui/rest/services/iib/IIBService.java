@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,9 +28,9 @@ import org.elasticsearch.search.SearchHit;
 import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
 import com.ibm.broker.config.proxy.ConfigurableService;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBApplication;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBFlow;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBIntegrationServer;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBLibrary;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBMessageFlow;
@@ -104,7 +106,7 @@ public class IIBService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String addNode(@PathParam("nodeName") String nodeName, String json) {
 		Node node = this.nodeConverter.read(json);
-		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 		}
 		client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
@@ -128,7 +130,7 @@ public class IIBService extends AbstractJsonService {
 		StringBuilder result = new StringBuilder();
 		result.append("{\"servers\": [");
 		boolean first = true;
-		try (IIBNodeConnection nodeConnection  = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection  = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 			List<IIBIntegrationServer> integrationServers = nodeConnection.getServers();
 			for (IIBIntegrationServer integrationServer : integrationServers) {
@@ -155,7 +157,7 @@ public class IIBService extends AbstractJsonService {
 		}
 		Node node = this.nodeConverter.read(getResponse.getSourceAsString());
 		String result = null;
-		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 			nodeConnection.setSynchronous(240000);
 			IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
@@ -211,7 +213,7 @@ public class IIBService extends AbstractJsonService {
 		Node node = this.nodeConverter.read(getResponse.getSourceAsString());
 		StringBuilder result = new StringBuilder();
 		result.append("{\"deployments\": {");
-		try (IIBNodeConnection nodeConnection = new IIBNodeConnection(node);) {
+		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 			IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
 			List<IIBSubFlow> sharedLibrarySubFlows = new ArrayList<>();
@@ -287,7 +289,7 @@ public class IIBService extends AbstractJsonService {
 		result.append("]}");		
 	}
 
-	private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBFlow flow, List<IIBSubFlow> subFlows, StringBuilder result) {
+	private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBMessageFlow flow, List<IIBSubFlow> subFlows, StringBuilder result) {
 		boolean monitoringActivated = flow.isMonitoringActivated();
 		String currentProfile = null;
 		String currentProfileName = flow.getMonitoringProfileName();
@@ -396,7 +398,7 @@ public class IIBService extends AbstractJsonService {
 	}
 	
 	
-	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String libraryName, String version, IIBFlow flow, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
+	private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String libraryName, String version, IIBMessageFlow flow, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
 		boolean monitoringActive = getBoolean("monitoring_active", valueMap);
 		if (monitoringActive) {
 			activateMonitoring(nodeConnection, integrationServer, applicationName, libraryName, version, flow, valueMap);
@@ -406,7 +408,7 @@ public class IIBService extends AbstractJsonService {
 		return "{\"status\":\"success\"}";
 	}
 
-	private void activateMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String application, String library, String version, IIBFlow flow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException {
+	private void activateMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String application, String library, String version, IIBMessageFlow flow, Map<String, Object> flowValues) throws ConfigManagerProxyLoggedException {
 		if (log.isInfoLevelEnabled()) {
 			log.logInfoMessage("Activating monitoring on '" + flow.getName() + "'.");
 		}
@@ -431,7 +433,7 @@ public class IIBService extends AbstractJsonService {
 		flow.activateMonitoringProfile(configurableServiceName.toString());
 	}
 
-	private void deactivateMonitoring(IIBNodeConnection nodeConnection, IIBFlow flow) {
+	private void deactivateMonitoring(IIBNodeConnection nodeConnection, IIBMessageFlow flow) {
 		if (log.isInfoLevelEnabled()) {
 			log.logInfoMessage("Deactivating monitoring on '" + flow.getName() + "'.");
 		}
@@ -467,6 +469,26 @@ public class IIBService extends AbstractJsonService {
 			return false;
 		}
 		return profile.indexOf("profile:eventSourceAddress=\"" + nodeName + ".") >= 0;
+	}
+	
+	private IIBNodeConnection createIIBConnectionInstance(Node node) {
+		if (IIBApi.IIB_V10_ON_CLASSPATH) {
+			try {
+				Class<?> clazz = Class.forName("com.jecstar.etm.gui.rest.services.iib.proxy.v10.IIBNodeConnectionV10Impl");
+				Constructor<?> constructor = clazz.getConstructor(Node.class);
+				return (IIBNodeConnection) constructor.newInstance(node);
+			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+			}
+		} else {
+			try {
+				Class<?> clazz = Class.forName("com.jecstar.etm.gui.rest.services.iib.proxy.v9.IIBNodeConnectionV9Impl");
+				Constructor<?> constructor = clazz.getConstructor(Node.class);
+				return (IIBNodeConnection) constructor.newInstance(node);
+			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+			}
+		}
 	}
 
 	
