@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 /**
  * Class testing the usage of the search templates in the GUI.
@@ -48,7 +49,7 @@ public class SearchTemplateTest extends AbstractSearchIntegrationTest {
 	    assertTrue("Template save button is enabled when template name is not provided", findById("btn-save-template").isEnabled());
 	    // Save the template and make sure the template is available afterwards.
 	    findById("btn-save-template").click();
-	    waitFor(d -> d.findElement(By.id("list-template-links")).findElement(By.xpath("./li/a[text()='" + templateName + "']")) != null);
+	    waitFor(ExpectedConditions.presenceOfNestedElementLocatedBy(By.id("list-template-links"), By.xpath("./li/a[text()='" + templateName + "']")));
 	    
 	    // Now let's check the template is working. First we need to change the query field contents
 	    findById("query-string").sendKeys("This value should be changed with the value of the template");

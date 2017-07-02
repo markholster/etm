@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.function.Predicate;
 
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +18,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public abstract class AbstractIntegrationTest {
@@ -56,24 +56,16 @@ public abstract class AbstractIntegrationTest {
 	    } catch (NoSuchElementException e) {}
 	}
 	
-	protected void waitFor(Predicate<WebDriver> predicate) {
-	    new WebDriverWait(this.driver, 10).until(new ExpectedCondition<Boolean>() {
-            public Boolean apply(WebDriver d) {
-            	return predicate.test(d);
-            }
-        });
+	protected void waitFor(ExpectedCondition<?> condition) {
+	    new WebDriverWait(this.driver, 10).until(condition);
 	}
 	
 	protected void waitForShow(String elementId) {
-		waitFor(d -> d.findElement(By.id(elementId)).isDisplayed());
+		waitFor(ExpectedConditions.visibilityOfElementLocated(By.id(elementId)));
 	}
 	
 	protected void waitForHide(String elementId) {
-		waitFor(d -> !d.findElement(By.id(elementId)).isDisplayed());
-	}
-	
-	protected void waitForEnabled(String elementId) {
-		waitFor(d -> d.findElement(By.id(elementId)).isEnabled());
+		waitFor(ExpectedConditions.invisibilityOfElementLocated(By.id(elementId)));
 	}
 	
 	protected WebElement findById(String id) {

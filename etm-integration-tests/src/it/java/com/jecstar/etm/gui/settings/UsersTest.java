@@ -7,7 +7,9 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import org.junit.Test;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 
 import com.jecstar.etm.gui.AbstractIntegrationTest;
@@ -29,7 +31,7 @@ public class UsersTest extends AbstractIntegrationTest {
 			}
 			if (!"admin".equals(user.getAttribute("value"))) {
 				userSelect.selectByValue(user.getAttribute("value"));
-				waitForEnabled("btn-confirm-remove-user");
+				waitFor(ExpectedConditions.elementToBeClickable(By.id("btn-confirm-remove-user")));
 				findById("btn-confirm-remove-user").click();
 				waitForShow("modal-user-remove");
 				findById("btn-remove-user").click();
@@ -61,7 +63,7 @@ public class UsersTest extends AbstractIntegrationTest {
 		findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT);
 
 		// Somehow the remove button isn't enabled at this point
-		waitForEnabled("btn-confirm-remove-user");
+		waitFor(ExpectedConditions.elementToBeClickable(By.id("btn-confirm-remove-user")));
 		
 		// Now try to remove the user
 		findById("btn-confirm-remove-user").click();
