@@ -3,7 +3,7 @@ def version_resteasy = "3.1.2.Final"
 ext {
     dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M23"
     dep_disruptor = "com.lmax:disruptor:3.3.6"
-    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.4.2"
+    dep_elasticsearchClient = "org.elasticsearch.client:transport:5.4.3"
     dep_htmlunitDriver = "org.seleniumhq.selenium:htmlunit-driver:2.26"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:2.8.8.1"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.2.0"
