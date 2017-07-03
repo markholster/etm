@@ -8,7 +8,12 @@ public interface NodeTags {
 
 	String getPortTag();
 
+	String getUsernameTag();
+
+	String getPasswordTag();
+
 	String getQueueManagerTag();
 
 	String getChannelTag();
+
 }

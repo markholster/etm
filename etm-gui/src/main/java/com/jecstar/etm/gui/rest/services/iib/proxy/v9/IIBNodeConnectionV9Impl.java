@@ -39,6 +39,12 @@ public class IIBNodeConnectionV9Impl implements IIBNodeConnection {
 
 	public void connect() {
 		MQBrokerConnectionParameters bcp = new MQBrokerConnectionParameters(this.node.getHost(), this.node.getPort(), this.node.getQueueManager());
+		if (this.node.getUsername() != null) {
+			bcp.setUserID(this.node.getUsername());
+		}
+		if (this.node.getPassword() != null) {
+			bcp.setPassword(this.node.getPassword());
+		}
 		if (this.node.getChannel()!= null) {
 			bcp.setAdvancedConnectionParameters(this.node.getChannel(), null, null, -1, -1, null);
 		}

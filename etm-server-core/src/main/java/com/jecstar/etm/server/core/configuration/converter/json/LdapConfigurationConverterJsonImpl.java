@@ -1,8 +1,5 @@
 package com.jecstar.etm.server.core.configuration.converter.json;
 
-import java.util.Base64;
-import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
 import java.util.Map;
 
 import com.jecstar.etm.server.core.configuration.LdapConfiguration;
@@ -27,7 +24,7 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 		ldapConfiguration.setPort(this.converter.getInteger(this.tags.getPortTag(), valueMap));
 		ldapConfiguration.setConnectionSecurity(ConnectionSecurity.safeValueOf(this.converter.getString(this.tags.getConnectionSecurityTag(), valueMap)));
 		ldapConfiguration.setBindDn(this.converter.getString(this.tags.getBindDnTag(), valueMap));
-		ldapConfiguration.setBindPassword(decodeBase64(this.converter.getString(this.tags.getBindPasswordTag(), valueMap), 7));
+		ldapConfiguration.setBindPassword(this.converter.decodeBase64(this.converter.getString(this.tags.getBindPasswordTag(), valueMap), 7));
 		
 		ldapConfiguration.setMinPoolSize(this.converter.getInteger(this.tags.getMinPoolSizeTag(), valueMap));
 		ldapConfiguration.setMaxPoolSize(this.converter.getInteger(this.tags.getMaxPoolSizeTag(), valueMap));
@@ -59,7 +56,7 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), ldapConfiguration.getPort(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getConnectionSecurityTag(), ldapConfiguration.getConnectionSecurity() != null ? ldapConfiguration.getConnectionSecurity().name() : null, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getBindDnTag(), ldapConfiguration.getBindDn(), sb, !added) || added;
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getBindPasswordTag(), encodeBase64(ldapConfiguration.getBindPassword(), 7), sb, !added) || added;
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getBindPasswordTag(), this.converter.encodeBase64(ldapConfiguration.getBindPassword(), 7), sb, !added) || added;
 		
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMinPoolSizeTag(), ldapConfiguration.getMinPoolSize(), sb, !added) || added;
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxPoolSizeTag(), ldapConfiguration.getMaxPoolSize(), sb, !added) || added;
@@ -87,30 +84,4 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 	public LdapConfigurationTags getTags() {
 		return this.tags;
 	}
-	
-	private String encodeBase64(String stringToEncode, int rounds) {
-		if (stringToEncode == null) {
-			return null;
-		}
-		Encoder encoder = Base64.getEncoder();
-		byte[] encoded = stringToEncode.getBytes();
-		for (int i=0; i < rounds; i++) {
-			encoded = encoder.encode(encoded);
-		}
-		return new String(encoded);
-	}
-	
-	private String decodeBase64(String stringToDecode, int rounds) {
-		if (stringToDecode == null) {
-			return null;
-		}
-		Decoder decoder = Base64.getDecoder();
-		byte[] decoded = stringToDecode.getBytes();
-		for (int i=0; i < rounds; i++) {
-			decoded = decoder.decode(decoded);
-		}
-		return new String(decoded);
-		
-	}
-
 }

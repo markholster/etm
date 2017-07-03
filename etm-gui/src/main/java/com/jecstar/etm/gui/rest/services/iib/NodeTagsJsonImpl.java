@@ -18,6 +18,16 @@ public class NodeTagsJsonImpl implements NodeTags {
 	}
 
 	@Override
+	public String getUsernameTag() {
+		return "username";
+	}
+	
+	@Override
+	public String getPasswordTag() {
+		return "password";
+	}
+	
+	@Override
 	public String getQueueManagerTag() {
 		return "queue_manager";
 	}

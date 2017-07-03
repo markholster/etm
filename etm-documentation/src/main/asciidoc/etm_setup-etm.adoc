@@ -183,8 +183,22 @@ Another thing to take into account are the data volumes. In the above yaml examp
 
 To make use of the IBM MQ integration you need to copy a file named ''com.ibm.mq.allclient.jar'' from your MQ installation to the <INSTALL_DIR>/lib/ext directory. This integration makes it possible to process events from any IBM MQ Destination. For further configuration see the <<IBM MQ section in etm.yml>>.
 
-The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}. To make use of this integration you need to copy a file named ''configmanagerproxy.jar'' from your MQ installation to the <INSTALL_DIR>/lib/ext directory when you are running IIB version 9.x. If you are running IIB version 10.x the file is named ''integrationapi.jar''.
-Also, for both versions of IBM Integration Bus the file ''ibmjsseprovider2.jar'' needs to be copied as well. All files can be found in your IBM Integration Bus installation.
+The IBM Integration Bus integration makes it possible to manage the emission of link:http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events] from within {etm}.
+Depending on your IIB version you need to copy some files to the <INSTALL_DIR>/lib/ext directory of every {etm} node running. Consult the table below to determine which files are necessary for your setup.
+
+.Dependencies based on IIB version
+[options="header"]
+|=======================
+|Filename|IIB 9|IIB 10
+|configmanagerproxy.jar|✔|
+|ibmjsseprovider2.jar|✔|✔
+|integrationapi.jar||✔
+|jetty-io.jar||✔
+|jetty-util.jar||✔
+|websocket-api.jar||✔
+|websocket-client.jar||✔
+|websocket-common.jar||✔
+|======================= 
 
 === Node configuration
 Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.

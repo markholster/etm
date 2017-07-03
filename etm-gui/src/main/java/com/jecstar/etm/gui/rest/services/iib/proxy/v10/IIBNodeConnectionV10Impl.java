@@ -39,7 +39,13 @@ public class IIBNodeConnectionV10Impl implements IIBNodeConnection {
 
 	public void connect() {
 		IntegrationNodeConnectionParameters incp = new IntegrationNodeConnectionParameters(this.node.getHost(), this.node.getPort());
-		// TODO support for username + password & ssl.
+		if (this.node.getUsername() != null) {
+			incp.setUserID(this.node.getUsername());
+		}
+		if (this.node.getPassword() != null) {
+			incp.setPassword(this.node.getPassword());
+		}
+		// TODO support for ssl.
 		try {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Connecting to the integration node running at " + this.node.getHost() + ":" + this.node.getPort() + ".");
