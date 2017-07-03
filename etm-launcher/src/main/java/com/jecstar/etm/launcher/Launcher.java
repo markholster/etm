@@ -13,10 +13,12 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.discovery.MasterNotDiscoveredException;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 
@@ -167,9 +169,28 @@ public class Launcher {
 		if (this.elasticClient != null) {
 			return;
 		}
-		TransportClient transportClient = new PreBuiltTransportClient(Settings.builder()
-				.put("cluster.name", configuration.elasticsearch.clusterName)
-				.put("client.transport.sniff", true).build());
+		Builder settingsBuilder = Settings.builder()
+			.put("cluster.name", configuration.elasticsearch.clusterName)
+			.put("client.transport.sniff", true);
+		TransportClient transportClient = null;
+		if (configuration.elasticsearch.username != null && configuration.elasticsearch.password != null) {
+			settingsBuilder.put("xpack.security.user", configuration.elasticsearch.username + ":" + configuration.elasticsearch.password);
+			if (configuration.elasticsearch.sslKeyLocation != null) {
+				settingsBuilder.put("xpack.ssl.key", configuration.elasticsearch.sslKeyLocation.getAbsolutePath());
+			}
+			if (configuration.elasticsearch.sslCertificateLocation != null) {
+				settingsBuilder.put("xpack.ssl.certificate", configuration.elasticsearch.sslCertificateLocation.getAbsolutePath());
+			}
+			if (configuration.elasticsearch.sslCertificateAuthoritiesLocation != null) {
+				settingsBuilder.put("xpack.ssl.certificate_authorities", configuration.elasticsearch.sslCertificateAuthoritiesLocation.getAbsolutePath());
+			}
+			if (configuration.elasticsearch.sslEnabled) {
+				settingsBuilder.put("xpack.security.transport.ssl.enabled", "true");
+			}
+			transportClient = new PreBuiltXPackTransportClient(settingsBuilder.build());
+		} else {
+			transportClient = new PreBuiltTransportClient(settingsBuilder.build());
+		}
 		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
 		int hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
 		if (configuration.elasticsearch.waitForConnectionOnStartup) {

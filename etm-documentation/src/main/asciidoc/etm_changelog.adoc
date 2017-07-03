@@ -1,5 +1,8 @@
 == Changelog
 
+=== Version 2.3.0
+* Support for x-pack secured Elasticsearch clusters.
+
 === Version 2.2.0 
 * Upgrade to Elasicsearch 5.4.x.
 * Support for basic authentication on rest processor.

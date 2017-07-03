@@ -14,8 +14,20 @@ elasticsearch:
 # A comma separated list of Elasticsearch nodes to connect to.
   connectAddresses: 127.0.0.1:9300
 # Boolean indicating ETM should wait before any of the nodes configured in the 'connectAddresses' option is available. When setting this option to false starting ETM will fail when no nodes are available.   
-  waitForConnectionOnStartup: false  
-
+  waitForConnectionOnStartup: false
+# To connect to a xpack secured Elasticsearch cluster at a minimum a username and password should be provided.
+# The username used to connect to a secured Elasticsearch cluster.
+#  username: elastic
+# The password used to connect to a secured Elasticsearch cluster.
+#  password: changeme
+# Should ssl be applied. If set to false all passwords will be send unencrypted to Elasticsearch.
+#  sslEnabled: true
+# A full path to the client key.
+#  sslKeyLocation: /path/to/client.key
+# A full path to the client certificate.
+#  sslCertificateLocation: /path/to/client.crt
+# A full path to the certificate authorities.
+#  sslCertificateAuthoritiesLocation: /path/to/ca.crt
 # The http configuration options  
 http:
 # Should the gui be enabled. Set this option to false if you want this node to be an processing node only.
