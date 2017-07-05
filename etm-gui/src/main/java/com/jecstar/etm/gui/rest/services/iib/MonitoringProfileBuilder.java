@@ -5,6 +5,26 @@ import java.util.List;
 
 public class MonitoringProfileBuilder {
 	
+	private static final String CORRELATION_PLACEHOLDER = "<applicationData>";
+	
+	private static final String SOAP_CORRELATION_IDENTIFIER = 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
+			"			</profile:complexContent>\r\n"; 
+	
+	private static final String HTTP_CORRELATION_IDENTIFIER =
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/HTTP/RequestIdentifier\" />\r\n" + 
+			"			</profile:complexContent>\r\n"; 
+	
+	private static final String MQ_WRITTEN_DESTINATION = 
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/WrittenDestination\" />\r\n" + 
+			"			</profile:complexContent>\r\n"; 
+	private static final String MQ_TOPIC =
+			"			<profile:complexContent>\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$Root/Properties/Topic\" />\r\n" + 
+			"			</profile:complexContent>\r\n"; 
 	
 	private static final String inputTemplate = "	<profile:eventSource profile:eventSourceAddress=\"<nodename>.<terminal>\" profile:enabled=\"true\">\r\n" + 
 			"		<profile:eventPointDataQuery>\r\n" + 
@@ -25,13 +45,8 @@ public class MonitoringProfileBuilder {
 			"			</profile:complexContent>\r\n" + 
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$Root/MQMD/CodedCharSetId\" />\r\n" + 
-			"			</profile:complexContent>\r\n" + 
-			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
-			"			</profile:complexContent>\r\n" + 
-			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/HTTP/RequestIdentifier\" />\r\n" + 
-			"			</profile:complexContent>\r\n" + 
+			"			</profile:complexContent>\r\n" +
+			CORRELATION_PLACEHOLDER + 
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
 			"	</profile:eventSource>";
@@ -56,18 +71,7 @@ public class MonitoringProfileBuilder {
 			"			<profile:complexContent>\r\n" + 
 			"				<profile:payloadQuery profile:queryText=\"$Root/MQMD/CodedCharSetId\" />\r\n" + 
 			"			</profile:complexContent>\r\n" + 
-			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$Root/Properties/Topic\" />\r\n" + 
-			"			</profile:complexContent>\r\n" + 
-			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/WrittenDestination\" />\r\n" + 
-			"			</profile:complexContent>\r\n" + 
-			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/SOAP/Reply/ReplyIdentifier\" />\r\n" + 
-			"			</profile:complexContent>\r\n" + 
-			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/Destination/HTTP/RequestIdentifier\" />\r\n" + 
-			"			</profile:complexContent>\r\n" + 
+			CORRELATION_PLACEHOLDER +
 			"		</profile:applicationDataQuery>\r\n" + 
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
 			"	</profile:eventSource>";	
@@ -84,21 +88,35 @@ public class MonitoringProfileBuilder {
 		StringBuilder profile = new StringBuilder();
 		profile.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?><profile:monitoringProfile xmlns:profile=\"http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0.3/monitoring/profile\" profile:version=\"2.0\" profile:enabled=\"true\">");
 		for (Node node : nodes) {
-			if (node.getNodeType().endsWith("InputNode") 
-				|| "ComIbmMQGetNode".equals(node.getNodeType()) ) {
-				profile.append(
-						inputTemplate.replaceAll("<nodename>", node.getName())
+			if (node.isInputNode()) {
+				// All nodes that act as an input node.
+				String monitoringProfile = inputTemplate.replaceAll("<nodename>", node.getName())
 						.replaceAll("<terminal>", "transaction.Start")
-						.replaceAll("<eventname>", node.getEventName())
-				);
-			} else if (node.getNodeType().contains("Response") 
-				|| node.getNodeType().contains("Reply") 
-				|| "ComIbmMQOutputNode".equals(node.getNodeType()) 
-				|| "ComIbmPublication".equals(node.getNodeType()) ) {
-				profile.append(
-						outputTemplate.replaceAll("<nodename>", node.getName())
-						.replaceAll("<eventname>", node.getEventName())
-				);
+						.replaceAll("<eventname>", node.getEventName());
+				
+				if (node.isHttpNode()) {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, HTTP_CORRELATION_IDENTIFIER);
+				} else if (node.isWebServiceNode()) {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, SOAP_CORRELATION_IDENTIFIER);
+				} else {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, "");
+				}
+				profile.append(monitoringProfile);
+			} else if (node.isOutputNode()) {
+				String monitoringProfile = outputTemplate.replaceAll("<nodename>", node.getName())
+						.replaceAll("<eventname>", node.getEventName());
+				if (node.isHttpNode()) {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, HTTP_CORRELATION_IDENTIFIER);
+				} else if (node.isWebServiceNode()) {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, SOAP_CORRELATION_IDENTIFIER);
+				} else if (node.isTopicPublicationNode()) {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, MQ_TOPIC);
+				} else if (node.isMqNode()) {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, MQ_WRITTEN_DESTINATION);
+				} else {
+					monitoringProfile = monitoringProfile.replace(CORRELATION_PLACEHOLDER, "");
+				}
+				profile.append(monitoringProfile);
 			}
 		}
 		profile.append("</profile:monitoringProfile>");
@@ -137,6 +155,37 @@ public class MonitoringProfileBuilder {
 			return containerName.replace(",", "\\,");
 		}
 		
+		public boolean isInputNode() {
+			return getNodeType().endsWith("InputNode") 
+				|| "ComIbmMQGetNode".equals(getNodeType())
+			;
+		}
+		
+		public boolean isOutputNode() {
+			return getNodeType().contains("Response") 
+				|| getNodeType().contains("Reply") 
+				|| "ComIbmMQOutputNode".equals(getNodeType()) 
+				|| "ComIbmPublication".equals(getNodeType()) 
+			;
+		}
+		
+		public boolean isHttpNode() {
+			return getNodeType().startsWith("ComIbmHTTP") 
+				|| getNodeType().startsWith("ComIbmWS")
+			;
+		}
+		
+		public boolean isWebServiceNode() {
+			return getNodeType().startsWith("ComIbmSOAP");
+		}
+		
+		public boolean isTopicPublicationNode() {
+			return "ComIbmPublication".equals(getNodeType());
+		}
+		
+		public boolean isMqNode() {
+			return "ComIbmMQ".equals(getNodeType());
+		}
 	}
 
 }
