@@ -171,7 +171,7 @@ public class UserService extends AbstractJsonService {
 	}
 	
 	@GET
-	@Path("/eventstats")
+	@Path("/etminfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getEvents() {
 		StringBuilder result = new StringBuilder();
@@ -183,6 +183,7 @@ public class UserService extends AbstractJsonService {
 		result.append("{");
 		addLongElementToJsonBuffer("event_count", searchResponse.getHits().getTotalHits(), result, true);
 		addStringElementToJsonBuffer("event_count_as_string", numberFormat.format(searchResponse.getHits().getTotalHits()), result, false);
+		addStringElementToJsonBuffer("etm_version", System.getProperty("app.version"), result, false);
 		result.append("}");
 		return result.toString();
 	}
