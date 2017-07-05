@@ -19,7 +19,7 @@ public class MonitoringProfileBuilder {
 	
 	private static final String MQ_WRITTEN_DESTINATION = 
 			"			<profile:complexContent>\r\n" + 
-			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/WrittenDestination\" />\r\n" + 
+			"				<profile:payloadQuery profile:queryText=\"$LocalEnvironment/WrittenDestination/MQ/DestinationData\" />\r\n" + 
 			"			</profile:complexContent>\r\n"; 
 	private static final String MQ_TOPIC =
 			"			<profile:complexContent>\r\n" + 
@@ -184,7 +184,7 @@ public class MonitoringProfileBuilder {
 		}
 		
 		public boolean isMqNode() {
-			return "ComIbmMQ".equals(getNodeType());
+			return getNodeType().startsWith("ComIbmMQ");
 		}
 	}
 

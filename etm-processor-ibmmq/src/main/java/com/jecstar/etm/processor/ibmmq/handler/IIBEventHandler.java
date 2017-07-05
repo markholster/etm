@@ -135,7 +135,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 		// TODO, filteren op output terminal? Events op de in terminal van de MqOutputNode hebben nog geen msg id.
 		if (event.getApplicationData() != null && event.getApplicationData().getComplexContent() != null) {
 			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
-				if (!("WrittenDestination".equals(complexContent.getElementName()))) {
+				if (!("DestinationData".equals(complexContent.getElementName()))) {
 					continue;
 				}
 				NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");

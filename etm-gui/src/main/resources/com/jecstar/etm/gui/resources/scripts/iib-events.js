@@ -258,6 +258,12 @@ function buildEventPage() {
 			return 'MQ Output'
 		} else if ('ComIbmMQGetNode' == nodeType) {
 			return 'MQ Get'
+		} else if ('ComIbmMQReply' == nodeType) {
+			return 'MQ Reply'
+		} else if ('ComIbmSOAPInputNode' == nodeType) {
+			return 'SOAP Input'
+		} else if ('ComIbmSOAPReplyNode' == nodeType) {
+			return 'SOAP Reply'
 		}
 		return nodeType
 	}
