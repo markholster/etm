@@ -571,8 +571,8 @@ function loadDashboardPage() {
     		        	});
     		        	col.chart.update();
     		        } else {
-    		        	formatter = d3.locale(data.d3_formatter);
-    		        	numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format ? graphData.bar.y_axis.format : ',f');
+    		        	var formatter = d3.locale(data.d3_formatter);
+    		        	var numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format ? graphData.bar.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.multiBarChart()
 	        		            .x(function(d) { return d.label })
@@ -601,8 +601,8 @@ function loadDashboardPage() {
     		        	});
     		        	col.chart.update();
     		        } else {
-    		        	formatter = d3.locale(data.d3_formatter);
-    		        	numberFormatter = formatter.numberFormat(graphData.line.y_axis.format ? graphData.line.y_axis.format : ',f');
+    		        	var formatter = d3.locale(data.d3_formatter);
+    		        	var numberFormatter = formatter.numberFormat(graphData.line.y_axis.format ? graphData.line.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.lineChart()
 							    .showYAxis(true)
@@ -644,8 +644,8 @@ function loadDashboardPage() {
     		        	});
     		        	col.chart.update();
     		        } else {
-	        			formatter = d3.locale(data.d3_formatter);
-	        			numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format ? graphData.stacked_area.y_axis.format : ',f');
+    		        	var formatter = d3.locale(data.d3_formatter);
+	        			var numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format ? graphData.stacked_area.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.stackedAreaChart()
 	        		            .useInteractiveGuideline(true)
