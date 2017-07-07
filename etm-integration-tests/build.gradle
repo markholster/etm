@@ -8,6 +8,8 @@ sourceSets {
         resources {
             srcDir 'src/it/resources'
         }
+        compileClasspath += sourceSets.main.output.classesDirs
+        runtimeClasspath += sourceSets.main.output.classesDirs
     }
 }
 
@@ -17,12 +19,11 @@ dependencies {
 
 eclipse {
     classpath {
-        plusConfigurations += [ configurations.integrationTestCompile ]
+        plusConfigurations += [ configurations.integrationTestCompile, configurations.integrationTestRuntime ]
     }
 }
 
-
 task integrationTest(type: Test) {
-    testClassesDir = sourceSets.integrationTest.output.classesDir
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
 }

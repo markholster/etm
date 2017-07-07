@@ -8,6 +8,8 @@ sourceSets {
         resources {
             srcDir 'src/it/resources'
         }
+        compileClasspath += sourceSets.main.output.classesDirs
+        runtimeClasspath += sourceSets.main.output.classesDirs
     }
 }
 
@@ -23,8 +25,7 @@ eclipse {
     }
 }
 
-
 task integrationTest(type: Test) {
-    testClassesDir = sourceSets.integrationTest.output.classesDir
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
 }
