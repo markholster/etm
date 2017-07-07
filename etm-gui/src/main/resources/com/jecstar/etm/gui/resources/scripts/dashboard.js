@@ -785,8 +785,10 @@ function loadDashboardPage() {
         	if ($('#modal-dashboard-overwrite').is(':visible')) {
         		$('#modal-dashboard-overwrite').modal('hide');
         	}
+        	if ($('#modal-graph-settings').is(':visible')) {
+        		$('#modal-graph-settings').modal('hide');
+        	}
         });
-        
 	}
 	
 	function createDashboardData() {
