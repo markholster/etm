@@ -278,11 +278,12 @@ function buildUserPage() {
 		        sortSelectOptions($('#sel-user'));
 		        userMap[user.id] = user;
 		        $('#sel-user').val(user.id).trigger('change');
-		    },
-		    complete: function() {
-		    	$('#modal-user-import').modal('hide');
 		    }
-		});
+		}).always(function () {
+        	if ($('#modal-user-import').is(':visible')) {
+        		$('#modal-user-import').modal('hide');
+        	}
+        });
 	});
 	
 	$('#lnk-add-group').click(function(event) {
@@ -366,10 +367,11 @@ function buildUserPage() {
         		}
         		userMap[userData.id] = userData;
         		$('#users_infoBox').text('User \'' + userData.id+ '\' saved.').show('fast').delay(5000).hide('fast');
-            },
-            complete: function () {
-            	$('#modal-user-overwrite').modal('hide');            	
             }
+        }).always(function () {
+        	if ($('#modal-user-overwrite').is(':visible')) {
+        		$('#modal-user-overwrite').modal('hide');
+        	}
         });  		
 	}
 	
@@ -387,11 +389,12 @@ function buildUserPage() {
         		       return $(this).attr("value") == userId;
         		}).remove();
         		$('#users_infoBox').text('User \'' + userId + '\' removed.').show('fast').delay(5000).hide('fast');
-            },
-            complete: function() {
-            	$('#modal-user-remove').modal('hide');
             }
-        });  		
+        }).always(function () {
+        	if ($('#modal-user-remove').is(':visible')) {
+        		$('#modal-user-remove').modal('hide');
+        	}
+        });		
 	}
 	
 	function checkOrInvalidateFormInCaseOfPasswordMismatch() {

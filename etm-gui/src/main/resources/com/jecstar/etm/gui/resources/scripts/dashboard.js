@@ -128,7 +128,6 @@ function loadDashboardPage() {
 			currentDashboard = dashboardData;
 			saveDashboard();
 		}
-		$('#modal-dashboard-overwrite').modal('hide');
 		$('#dashboard-container').show();
 		buildDashboard(currentDashboard);
 		$('#dashboard-settings').hide();
@@ -272,7 +271,6 @@ function loadDashboardPage() {
 		}
 		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
 		saveDashboard();
-		$('#modal-graph-settings').modal('hide');
 	});	
 
 	$('#sel-graph').on("change", function(event) {
@@ -783,7 +781,12 @@ function loadDashboardPage() {
         		$('#dashboard-settings_infoBox').text('Dashboard \'' + dashboardData.name + '\' saved.').show('fast').delay(5000).hide('fast');
         		enableOrDisableButtons();
             }
-        });   		
+        }).always(function () {
+        	if ($('#modal-dashboard-overwrite').is(':visible')) {
+        		$('#modal-dashboard-overwrite').modal('hide');
+        	}
+        });
+        
 	}
 	
 	function createDashboardData() {
@@ -815,7 +818,12 @@ function loadDashboardPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	$('#modal-dashboard-remove').modal('hide');
+        	if ($('#modal-dashboard-remove').is(':visible')) {
+        		$('#modal-dashboard-remove').modal('hide');
+        	}
+        	if ($('#modal-graph-settings').is(':visible')) {
+        		$('#modal-graph-settings').modal('hide');
+        	}
         });    		
 	}
 	

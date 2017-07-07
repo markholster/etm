@@ -116,7 +116,9 @@ function buildNodePage() {
         		$('#nodes_infoBox').text('Node \'' + nodeData.name + '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	$('#modal-node-overwrite').modal('hide');
+        	if ($('#modal-node-overwrite').is(':visible')) {
+        		$('#modal-node-overwrite').modal('hide');
+        	}
         });  		
 	}
 	
@@ -136,7 +138,9 @@ function buildNodePage() {
         		$('#nodes_infoBox').text('Node \'' + nodeName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function() {
-        	$('#modal-node-remove').modal('hide');
+        	if ($('#modal-node-remove').is(':visible')) {
+        		$('#modal-node-remove').modal('hide');
+        	}
         });  		
 	}
 	

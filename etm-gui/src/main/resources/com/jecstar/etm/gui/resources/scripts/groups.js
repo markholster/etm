@@ -132,11 +132,12 @@ function buildGroupPage() {
 		        sortSelectOptions($('#sel-group'));
 		        groupMap[group.name] = group;
 		        $('#sel-group').val(group.name).trigger('change');
-		    },
-		    complete: function() {
-		    	$('#modal-group-import').modal('hide');
 		    }
-		});
+		}).always(function () {
+        	if ($('#modal-group-import').is(':visible')) {
+        		$('#modal-group-import').modal('hide');
+        	}
+        });
 	});
 	
 	$('#input-group-name').on('input', enableOrDisableButtons);
@@ -208,11 +209,12 @@ function buildGroupPage() {
         		}
         		groupMap[groupData.name] = groupData;
         		$('#groups_infoBox').text('Group \'' + groupData.name+ '\' saved.').show('fast').delay(5000).hide('fast');
-            },
-            complete: function () {
-            	$('#modal-group-overwrite').modal('hide');
             }
-        });  		
+        }).always(function () {
+        	if ($('#modal-group-overwrite').is(':visible')) {
+        		$('#modal-group-overwrite').modal('hide');
+        	}
+        });		
 	}
 	
 	function removeGroup(groupName) {
@@ -229,11 +231,12 @@ function buildGroupPage() {
         		       return $(this).attr("value") == groupName;
         		}).remove();
         		$('#groups_infoBox').text('Group \'' + groupName + '\' removed.').show('fast').delay(5000).hide('fast');
-            },
-            complete: function() {
-            	$('#modal-group-remove').modal('hide');
             }
-        });  		
+        }).always(function () {
+        	if ($('#modal-group-remove').is(':visible')) {
+        		$('#modal-group-remove').modal('hide');
+        	}
+        });	
 	}
 	
 	function createGroupData() {

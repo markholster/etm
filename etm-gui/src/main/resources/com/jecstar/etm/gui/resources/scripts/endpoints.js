@@ -263,7 +263,9 @@ function buildEndpointPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	$('#modal-endpoint-overwrite').modal('hide');
+        	if ($('#modal-endpoint-overwrite').is(':visible')) {
+        		$('#modal-endpoint-overwrite').modal('hide');
+        	}
         });    		
 	}
 	
@@ -284,7 +286,9 @@ function buildEndpointPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	$('#modal-endpoint-remove').modal('hide');
+        	if ($('#modal-endpoint-remove').is(':visible')) {
+        		$('#modal-endpoint-remove').modal('hide');
+        	}
         });    		
 	}
 	
