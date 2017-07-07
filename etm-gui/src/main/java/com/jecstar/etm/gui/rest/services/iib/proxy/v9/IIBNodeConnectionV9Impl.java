@@ -18,6 +18,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
+@SuppressWarnings("deprecation")
 public class IIBNodeConnectionV9Impl implements IIBNodeConnection {
 	
 	/**

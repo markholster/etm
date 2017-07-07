@@ -31,6 +31,7 @@ public class IIBApplicationV9Impl implements IIBApplication {
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	public List<IIBLibrary> getLibraries() {
 		try {
 			List<IIBLibrary> libraries = new ArrayList<>();
@@ -44,6 +45,7 @@ public class IIBApplicationV9Impl implements IIBApplication {
 		}		
 	}
 	
+	@SuppressWarnings("deprecation")
 	public IIBLibrary getLibraryByName(String libraryName) {
 		try {
 			LibraryProxy libraryByProxy = this.application.getLibraryByName(libraryName);
