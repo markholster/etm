@@ -109,7 +109,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				logLoginAttempt(id, false);
 				return null;				
 			}
-			EtmPrincipal storedPrincipal = loadPrincipal(id);
+			EtmPrincipal storedPrincipal = loadPrincipal(principal.getId());
 			if (storedPrincipal == null) {
 				createLdapUser(principal);
 				storedPrincipal = loadPrincipal(id);
