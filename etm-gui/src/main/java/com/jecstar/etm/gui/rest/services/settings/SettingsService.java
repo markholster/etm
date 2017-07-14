@@ -703,7 +703,7 @@ public class SettingsService extends AbstractJsonService {
 		if (principal == null) {
 			throw new EtmException(EtmException.INVALID_LDAP_USER);
 		}
-		EtmPrincipal currentPrincipal = loadPrincipal(userId);
+		EtmPrincipal currentPrincipal = loadPrincipal(principal.getId());
 		if (currentPrincipal != null) {
 			// Merge the current and the LDAP principal.
 			currentPrincipal.setPasswordHash(null);
@@ -713,7 +713,7 @@ public class SettingsService extends AbstractJsonService {
 			principal = currentPrincipal;
 		}
 		principal.setLdapBase(true);
-		client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+		client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
 			.setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))

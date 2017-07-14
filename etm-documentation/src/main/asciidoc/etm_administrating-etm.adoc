@@ -93,6 +93,8 @@ In case you have configured a ldap server in the <<Ldap settings>> you can impor
 === Cluster
 To manage your cluster settings browse to http://localhost:8080/gui/settings/cluster.html or select the menu option ''Settings -> Cluster''. On the cluster settings page you can adjust several settings that help you keep your cluster performing the way you want. By default most of the settings should be fine, but if you want to make optimal use of each CPU cycle your cluster has to offer you have the option to tune it on this page.
 
+When changing any of these properties no restart is required. All settings will be automatically applied within 60 seconds. For some settings a hot-restart of the processor is required. This may cause a little latency peek in the Processor.
+
 The cluster page has grouped related configuration items into several tabs:
 
 ==== General settings
@@ -178,7 +180,12 @@ The cluster page has grouped related configuration items into several tabs:
 |User groups query filter|The filter used to determine the group membership(s) of an user. User attributes may be provided in the for of ''{<attribute-name>}''. E.g. ''(| (member={dn}) (uniqueMember={dn}) (memberUid={uid}))''
 |======================= 
 
-When changing any of these properties no restart is required. All settings will be automatically applied within 60 seconds. For some settings a hot-restart of the processor is required. This may cause a little latency peek in the Processor.
+There are some things to take into account when configuring a connection to a LDAP server in {etm}. First of all the ''Group search filter'' should be configured in such a way that only groups that should belong to your {etm} instance will be returned. So if your LDAP server contains 100 LDAP groups for several applications and 5 of those groups apply to {etm}, the search filter should be configured to return only those 5 groups when passing '*' as the ''{group}'' variable.
+Secondly, all user that can successfully authenticate against your LDAP server can login to {etm} unless your ''User search filter'' limits this set of users. Before authenticating the Distinguished Name (DN) of the provided username is searched. This is where the ''User search filter'' is applied. If this search action doesn't result in one and only one Distinguished Name the authentication process will fail. So if you want to limit the successful logins to users that belong to a certain {etm} LDAP group this limitation should be added to the ''User search filter''.
+Thirdly, if a user is already present in the {etm} user administration this password takes priority over the LDAP password! The only way to change this is by importing the user as described in the <<Import user from ldap>> chapter.
+Finally, ldap users can be added to non-ldap groups, but non-ldap users cannot be added to ldap groups. Password management and groups membership of ldap users cannot be managed in {etm}.
+
+TIP: Make sure you have at least one account with admin privileges that is a non-ldap account. This way it is always possible to login to {etm} even when the LDAP server isn't reachable for some reason.
 
 === Nodes
 To manage node specific settings browse to http://localhost:8080/gui/settings/nodes.html or select the menu option ''Settings -> Nodes''. When you have several {etm} instances running on different kind of hardware the default <<Cluster>> settings might not be optimal for every node. On the nodes configuration page you can fine tune node specific settings. To configure a node, the node name must be the same as the instanceName configured in the <<General configuration in etm.yml>>.
