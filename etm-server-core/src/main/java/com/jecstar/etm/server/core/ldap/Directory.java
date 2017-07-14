@@ -393,10 +393,14 @@ public class Directory implements AutoCloseable {
 			}
 		}
 		executor.setSearchFilter(searchFilter);
+		Set<EtmGroup> availableEtmGroups = getGroups();
 		try {
 			SearchResult result = executor.search(this.connectionFactory).getResult();
 			for (LdapEntry entry : result.getEntries()) {
 				EtmGroup etmGroup = new EtmGroup(entry.getDn());
+				if (!availableEtmGroups.contains(etmGroup)) {
+					continue;
+				}
 				etmGroup.setLdapBase(true);
 				principal.addGroup(etmGroup);
 			}
@@ -409,8 +413,12 @@ public class Directory implements AutoCloseable {
 		if (principal == null || groupDns == null) {
 			return;
 		}
+		Set<EtmGroup> availableEtmGroups = getGroups();
 		for (String groupDn : groupDns) {
 			EtmGroup etmGroup = new EtmGroup(groupDn);
+			if (!availableEtmGroups.contains(etmGroup)) {
+				continue;
+			}
 			etmGroup.setLdapBase(true);
 			principal.addGroup(etmGroup);
 		}
