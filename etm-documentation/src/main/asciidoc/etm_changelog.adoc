@@ -1,9 +1,22 @@
-== Changelog
+== Changelog & upgrade
 
 === Version 2.3.0
 * Support for x-pack secured Elasticsearch clusters.
 * Upgrade to Elasticsearch 5.5.x.
 * Separate rate limiting on GUI and REST processor. 
+
+==== Upgrade from version 2.x to 2.3.0
+. Make sure you have a backup of all Elasticsearch data!
+. Download and uncompress Elasticsearch 5.5.x to a new directory. 
+. Stop all {etm} nodes.
+. Stop your current Elasticsearch nodes.
+. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
+. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
+. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
+. Dowload and uncompress {etm} 2.3.0 to a new directory.
+. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
+. Copy the file 'config/etm.yml' from your old {etm} installation to the new one. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' under the http chapter. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
+. Start your {etm} nodes.
 
 === Version 2.2.0 
 * Upgrade to Elasicsearch 5.4.x.
