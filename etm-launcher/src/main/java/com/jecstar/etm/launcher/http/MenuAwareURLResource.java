@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -44,8 +43,8 @@ public class MenuAwareURLResource extends URLResource {
 	private final URL url;
 
 
-	public MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, MenuContext menuContext, URL url, URLConnection connection, String path) {
-		super(url, connection, path);
+	public MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, MenuContext menuContext, URL url, String path) {
+		super(url, path);
 		this.etmConfiguration = etmConfiguration;
 		this.pathPrefixToContextRoot = pathPrefixToContextRoot;
 		this.menuContext = menuContext;

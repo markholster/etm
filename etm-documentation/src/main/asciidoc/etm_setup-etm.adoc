@@ -272,14 +272,19 @@ The ''http'' section contains all options that are necessary to start the gui an
 [options="header"]
 |=======================
 |Name|Default value|Description
-|guiEnabled|true|Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the ''/gui'' context on your server and can be accessed by browsing to \http://<bindingAddress>:<httpPort>/gui/
-|restProcessorEnabled|true|Should the REST processor be enabled? Set this value to false if you don't want this node to act as a processor that can process events with a REST api. The REST api is bound to the ''/rest/processor/'' context and can be access from \http://<bindingAddress>:<httpPort>/rest/processor/ 
-|restProcessorLoginRequired|false|Should basic authentication be applied to the rest processor? If so, only users with the ''admin'' or ''Processor'' role are allowed to make use of the REST processor. Credentials must be provided within the basic authentication http header which is not encrypted. So make sure you access the REST processor over https instead of http if you enable this option. Otherwise your credentials will be vulnerable to a man in the middle attack.
 |httpPort|8080|The port to bind the http listener to. To disable the http listener set the value to zero or lower.
 |httpsPort|8443|The port to bind the secure https listener to. The listener will not start unless the sslKeystore is properly configured.
-|maxConcurrentRequests|100|The maximum number of request that can be processed in parallel at any given moment. This is the number of request to the gui and rest processor combined. If the number exceeds the maximum, the requests will be queued.
-|maxQueuedRequests|100|The maximum number of requests that can be queued. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
-|sessionTimeout|30|The timeout of the http sessions in minutes.
+|ioThreads|2|The number of IO threads. IO threads handle all non-blocking calls to the web server. One thread per cpu core should be more than sufficient.
+|workerThreads|16|The number of worker threads to handle all blocking calls to the web server. Around 10 threads per cpu cure should be a good starting point for servers under a high load.
+|guiEnabled|true|Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the ''/gui'' context on your server and can be accessed by browsing to \http://<bindingAddress>:<httpPort>/gui/
+|guiMaxConcurrentRequests|50|The maximum number of request that can be processed in parallel at any given moment by the GUI. If the number exceeds the maximum, the requests will be queued.
+|guiMaxQueuedRequests|50|The maximum number of requests that can be queued by the GUI. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
+|guiMessionTimeout|30|The timeout of the http sessions in minutes for the GUI.
+|restProcessorEnabled|true|Should the REST processor be enabled? Set this value to false if you don't want this node to act as a processor that can process events with a REST api. The REST api is bound to the ''/rest/processor/'' context and can be access from \http://<bindingAddress>:<httpPort>/rest/processor/ 
+|restProcessorLoginRequired|false|Should basic authentication be applied to the rest processor? If so, only users with the ''admin'' or ''Processor'' role are allowed to make use of the REST processor. Credentials must be provided within the basic authentication http header which is not encrypted. So make sure you access the REST processor over https instead of http if you enable this option. Otherwise your credentials will be vulnerable to a man in the middle attack.
+|restProcessorMaxConcurrentRequests|50|The maximum number of request that can be processed in parallel at any given moment by the REST processor. If the number exceeds the maximum, the requests will be queued.
+|restProcessorMaxQueuedRequests|50|The maximum number of requests that can be queued by the REST processor. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
+|restProcessorMessionTimeout|5|The timeout of the http sessions in minutes for the REST processor.
 |sslProtocol|TLSv1.2|The ssl protocol that needs to be used on the secure https listener. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
 |sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your server.
 |sslKeystorePassword||The password of the ssl keystore.

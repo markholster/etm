@@ -63,17 +63,18 @@ public class HttpServer {
 	private Undertow server;
 	private GracefulShutdownHandler shutdownHandler;
 	private boolean started;
-//	private final SingleSignOnManager singleSignOnManager = new InMemorySingleSignOnManager();
 	private final SessionManagerFactory sessionManagerFactory;
 
 	public HttpServer(final IdentityManager identityManager, Configuration configuration, EtmConfiguration etmConfiguration, TelemetryCommandProcessor processor, Client client) {;
 		this.configuration = configuration;
 		this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
-//		this.sessionManagerFactory = new InMemorySessionManagerFactory();
 		final PathHandler root = Handlers.path();
-		this.shutdownHandler = Handlers.gracefulShutdown(Handlers.requestLimitingHandler(configuration.http.maxConcurrentRequests, configuration.http.maxQueuedRequests, root));
+		this.shutdownHandler = Handlers.gracefulShutdown(root);
 		final ServletContainer container = ServletContainer.Factory.newInstance();
-		Builder builder = Undertow.builder();
+		Builder builder = Undertow.builder()
+			.setIoThreads(configuration.http.ioThreads)
+			.setWorkerThreads(configuration.http.workerThreads);
+		
 		if (this.configuration.getHttpPort() > 0) {
 			builder.addHttpListener(this.configuration.getHttpPort(), this.configuration.bindingAddress);
 			if (log.isInfoLevelEnabled()) {
@@ -113,13 +114,23 @@ public class HttpServer {
 		
 		if (this.configuration.http.restProcessorEnabled) {
 			DeploymentInfo di = createProcessorDeploymentInfo(processor, this.configuration.http.restProcessorLoginRequired ? identityManager : null);
-			di.setDefaultSessionTimeout(configuration.http.sessionTimeout * 60);
+			di.setDefaultSessionTimeout(configuration.http.restProcessorSessionTimeout * 60);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
 			try {
-				HttpHandler httpHandler = manager.start();
-				root.addPrefixPath(di.getContextPath(), new SessionAttachmentHandler(httpHandler, manager.getDeployment().getSessionManager(), manager.getDeployment().getServletContext().getSessionConfig()));
+				root.addPrefixPath(
+					di.getContextPath(), 
+					Handlers.requestLimitingHandler(
+						configuration.http.restProcessorMaxConcurrentRequests, 
+						configuration.http.restProcessorMaxQueuedRequests, 
+						new SessionAttachmentHandler(
+							manager.start(), 
+							manager.getDeployment().getSessionManager(), 
+							manager.getDeployment().getServletContext().getSessionConfig()
+						)
+					)
+				);
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Bound rest processor to '" + di.getContextPath() + "'.");
 				}
@@ -131,16 +142,27 @@ public class HttpServer {
 		}
 		if (this.configuration.http.guiEnabled) {
 			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
-			di.setDefaultSessionTimeout(configuration.http.sessionTimeout * 60);
+			di.setDefaultSessionTimeout(configuration.http.guiSessionTimeout * 60);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
 			try {
-				EncodingHandler httpHandler = new EncodingHandler(new ContentEncodingRepository()
+				EncodingHandler encodigHandler = new EncodingHandler(new ContentEncodingRepository()
 					.addEncodingHandler("gzip", new GzipEncodingProvider(), 100, Predicates.maxContentSize(1024))
 					.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(1024)))
 					.setNext(manager.start());
-				root.addPrefixPath(di.getContextPath(), new SessionAttachmentHandler(httpHandler, manager.getDeployment().getSessionManager(), manager.getDeployment().getServletContext().getSessionConfig()));
+				root.addPrefixPath(
+						di.getContextPath(), 
+						Handlers.requestLimitingHandler(
+							configuration.http.guiMaxConcurrentRequests, 
+							configuration.http.guiMaxQueuedRequests, 
+							new SessionAttachmentHandler(
+								encodigHandler, 
+								manager.getDeployment().getSessionManager(), 
+								manager.getDeployment().getServletContext().getSessionConfig()
+							)
+						)
+					);
 				if (log.isInfoLevelEnabled()) {
 					log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
 				}

@@ -50,7 +50,7 @@ public class MenuAwareClassPathResourceManager extends ClassPathResourceManager 
 	        	} else if (lowerCasePath.startsWith("/settings/") || lowerCasePath.startsWith("/iib/")) {
 	        		menuContext = MenuContext.SETTINGS;
 	        	}
-	            return new MenuAwareURLResource(this.etmConfiguration, pathPrefixToContextRoot, menuContext, resource, resource.openConnection(), path);
+	            return new MenuAwareURLResource(this.etmConfiguration, pathPrefixToContextRoot, menuContext, resource, path);
 	        }
 
 		}

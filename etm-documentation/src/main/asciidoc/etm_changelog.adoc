@@ -3,6 +3,7 @@
 === Version 2.3.0
 * Support for x-pack secured Elasticsearch clusters.
 * Upgrade to Elasticsearch 5.5.x.
+* Separate rate limiting on GUI and REST processor. 
 
 === Version 2.2.0 
 * Upgrade to Elasicsearch 5.4.x.
