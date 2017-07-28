@@ -1,6 +1,6 @@
 ext {
     version_resteasy = "3.1.2.Final"
-    version_elasticsearch = "5.5.0"
+    version_elasticsearch = "5.5.1"
 
     dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M23"
     dep_disruptor = "com.lmax:disruptor:3.3.6"
@@ -34,5 +34,5 @@ allprojects {
         maven {
     		url "https://artifacts.elastic.co/maven"
  	 	}
-    };
+    }
 }
