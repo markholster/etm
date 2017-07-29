@@ -6,9 +6,9 @@ import com.jecstar.etm.server.core.domain.audit.AuditLog;
 
 abstract class AbstractAuditLogBuilder<Audit extends AuditLog<Audit>, Builder extends AbstractAuditLogBuilder<Audit, Builder>> {
 
-	protected Audit audit;
+	final Audit audit;
 
-	protected AbstractAuditLogBuilder(Audit audit) {
+	AbstractAuditLogBuilder(Audit audit) {
 		this.audit = audit;
 	}
 

@@ -37,7 +37,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": " + escapeToJson(elementValue, true));
+		buffer.append(escapeToJson(elementName, true)).append(": ").append(escapeToJson(elementValue, true));
 		return true;
 	}
 
@@ -48,7 +48,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
+		buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
 		return true;
 	}
 	
@@ -59,7 +59,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
+		buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
 		return true;
 	}
 	
@@ -70,7 +70,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": " + elementValue);
+		buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
 		return true;
 	}
 	
@@ -81,7 +81,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": " + elementValue.booleanValue());
+		buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
 		return true;
 	}
 	
@@ -92,8 +92,8 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(hostAddressTag, true) + ": " + escapeToJson(elementValue.getHostAddress(), true));
-		buffer.append(", " + escapeToJson(hostNameTag, true) + ": " + escapeToJson(elementValue.getHostName(), true));
+		buffer.append(escapeToJson(hostAddressTag, true)).append(": ").append(escapeToJson(elementValue.getHostAddress(), true));
+		buffer.append(", ").append(escapeToJson(hostNameTag, true)).append(": ").append(escapeToJson(elementValue.getHostName(), true));
 		return true;
 	}
 	
@@ -104,7 +104,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": [");
+		buffer.append(escapeToJson(elementName, true)).append(": [");
 		buffer.append(elementValues.stream()
 				.map(c -> escapeToJson(c, true))
 				.sorted()
@@ -120,7 +120,7 @@ public class JsonWriter {
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(escapeToJson(elementName, true) + ": [");
+		buffer.append(escapeToJson(elementName, true)).append(": [");
 		buffer.append(elementValues.stream()
 				.map(c -> escapeToJson(c, true))
 				.sorted()
@@ -145,11 +145,10 @@ public class JsonWriter {
         }
         conversion_loop:
         for (int i=0; i < value.length(); i++) {
-            escape_loop:
             while (true) {
                 char c = value.charAt(i);
                 if (c < escLen && ESCAPE_TABLE[c] != NO_ESCAPE) {
-                    break escape_loop;
+                    break;
                 }
                 outputBuffer[outputPointer++] = c;
                 if (++i >= value.length()) {

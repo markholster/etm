@@ -27,34 +27,14 @@ public class NetworkMetricSet implements MetricSet {
 
 	@Override
 	public Map<String, Metric> getMetrics() {
-		final Map<String, Metric> gauges = new HashMap<String, Metric>();
+		final Map<String, Metric> gauges = new HashMap<>();
 		List<String> interfaces = NETWORK_STATISTICS.getInterfaceNames();
 		for (String interfaceName : interfaces) {
             final String name = WHITESPACE.matcher(interfaceName).replaceAll("-");
-            gauges.put(name("network.interfaces", name, "bytes_sent"), new Gauge<Long>() {
-                @Override
-                public Long getValue() {
-                    return NETWORK_STATISTICS.getBytesSent(interfaceName);
-                }
-            });
-            gauges.put(name("network.interfaces", name, "bytes_received"), new Gauge<Long>() {
-                @Override
-                public Long getValue() {
-                	return NETWORK_STATISTICS.getBytesReceived(interfaceName);
-                }
-            });
-            gauges.put(name("network.interfaces", name, "packets_sent"), new Gauge<Long>() {
-                @Override
-                public Long getValue() {
-                    return NETWORK_STATISTICS.getPacketsSent(interfaceName);
-                }
-            });
-            gauges.put(name("network.interfaces", name, "packets_received"), new Gauge<Long>() {
-                @Override
-                public Long getValue() {
-                	return NETWORK_STATISTICS.getPacketsReceived(interfaceName);
-                }
-            });            
+            gauges.put(name("network.interfaces", name, "bytes_sent"), (Gauge<Long>) () -> NETWORK_STATISTICS.getBytesSent(interfaceName));
+            gauges.put(name("network.interfaces", name, "bytes_received"), (Gauge<Long>) () -> NETWORK_STATISTICS.getBytesReceived(interfaceName));
+            gauges.put(name("network.interfaces", name, "packets_sent"), (Gauge<Long>) () -> NETWORK_STATISTICS.getPacketsSent(interfaceName));
+            gauges.put(name("network.interfaces", name, "packets_received"), (Gauge<Long>) () -> NETWORK_STATISTICS.getPacketsReceived(interfaceName));
 		}
 		return gauges;
 	}
@@ -69,9 +49,9 @@ public class NetworkMetricSet implements MetricSet {
 		private final int BYTES_SENT_IX = 9;
 		private final int PACKETS_SENT_IX = 10;
 		
-		private final Long MINUS_ONE = new Long(0);
+		private final Long MINUS_ONE = 0L;
 		
-		private Map<String, String[]> interfaceLines = new HashMap<>();
+		private final Map<String, String[]> interfaceLines = new HashMap<>();
 		private long lastUpdated = 0;
 
 		

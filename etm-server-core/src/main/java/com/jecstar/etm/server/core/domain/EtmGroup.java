@@ -13,8 +13,8 @@ public class EtmGroup implements Serializable {
 	 */
 	private static final long serialVersionUID = 7152085459917438053L;
 	
-	private String name;
-	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
+	private final String name;
+	private final Set<EtmPrincipalRole> roles = new HashSet<>();
 	private String filterQuery = null;
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
 	private boolean alwaysShowCorrelatedEvents = false;
@@ -64,7 +64,7 @@ public class EtmGroup implements Serializable {
 		return Collections.unmodifiableSet(this.roles);
 	}
 	
-	public void addRole(EtmPrincipalRole role) {
+	private void addRole(EtmPrincipalRole role) {
 		if (role != null && !this.roles.contains(role)) {
 			this.roles.add(role);
 		}
@@ -103,11 +103,8 @@ public class EtmGroup implements Serializable {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof EtmGroup) {
-			return this.name.equals(((EtmGroup)obj).getName());
-		}
-		return false;
-	}
+        return obj instanceof EtmGroup && this.name.equals(((EtmGroup) obj).getName());
+    }
 	
 	@Override
 	public int hashCode() {

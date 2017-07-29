@@ -23,8 +23,8 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 	
 	private SearchResponse response;
 	private String currentScrollId;
-	private Set<String> scrollIds = new HashSet<>();
-	boolean nextBatchRequired = false;
+	private final Set<String> scrollIds = new HashSet<>();
+	private boolean nextBatchRequired = false;
 	private int currentIndexInResponse = 0;
 	
 	public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder) {
@@ -35,7 +35,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
 		this(client, searchRequestBuilder, startIx, 25);
 	}
 	
-	public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int startIx, int scrollSize) {
+	private ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int startIx, int scrollSize) {
 		this.client = client;
 		this.searchRequestBuilder = searchRequestBuilder;
 		this.requestTimeout = searchRequestBuilder.request().source().timeout().getMillis();

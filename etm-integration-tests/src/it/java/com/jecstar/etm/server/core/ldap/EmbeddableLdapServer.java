@@ -41,8 +41,8 @@ public class EmbeddableLdapServer {
 	public static final String BIND_PASSWORD = "admin-password";
 	public static final String GROUP_BASE_DN = "ou=groups,dc=jecstar,dc=com";
 	public static final String USER_BASE_DN = "ou=people,dc=jecstar,dc=com";
-	public static final String DEPARTMENT_1_USER_BASE_DN = "ou=department1," + USER_BASE_DN;
-	public static final String DEPARTMENT_2_USER_BASE_DN = "ou=department2," + USER_BASE_DN;
+	private static final String DEPARTMENT_1_USER_BASE_DN = "ou=department1," + USER_BASE_DN;
+	private static final String DEPARTMENT_2_USER_BASE_DN = "ou=department2," + USER_BASE_DN;
 	
 	public static final String USER_ID_ATTRIBUTE = "uid";
 	public static final String USER_NAME_ATTRIBUTE = "cn";

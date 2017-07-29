@@ -6,8 +6,8 @@ public class Keyword {
 	public final static Keyword MISSING = new Keyword("_missing_", null);
 	public final static Keyword TYPE = new Keyword("_type", null);
 
-	private String name;
-	private String type;
+	private final String name;
+	private final String type;
 
 	public Keyword(String name, String type) {
 		this.name = name;

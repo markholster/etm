@@ -76,7 +76,7 @@ public class UserService extends AbstractJsonService {
 		Map<String, Object> valueMap = toMap(json);
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		
-		Map<String, Object> updateMap = new HashMap<String, Object>();
+		Map<String, Object> updateMap = new HashMap<>();
 		if (etmPrincipal.isLdapBase()) {
 			updateMap.put(this.tags.getNameTag(), valueMap.get(this.tags.getNameTag()));
 			updateMap.put(this.tags.getEmailTag(), valueMap.get(this.tags.getEmailTag()));
@@ -99,7 +99,7 @@ public class UserService extends AbstractJsonService {
 		
 		if (newHistorySize < etmPrincipal.getHistorySize()) {
 			// History size is smaller. Make sure the stored queries are sliced to the new size.
-			Map<String, Object> scriptParams = new HashMap<String, Object>();
+			Map<String, Object> scriptParams = new HashMap<>();
 			scriptParams.put("history_size", newHistorySize);
 			UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 					.setScript(new Script(ScriptType.STORED, "painless", "etm_update-search-history", scriptParams))
@@ -134,7 +134,7 @@ public class UserService extends AbstractJsonService {
 			throw new EtmException(EtmException.PASSWORD_NOT_CHANGED);
 		}
 		String newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt());
-		Map<String, Object> updateMap = new HashMap<String, Object>();
+		Map<String, Object> updateMap = new HashMap<>();
 		updateMap.put(this.tags.getPasswordHashTag(), newHash);
 		updateMap.put(this.tags.getChangePasswordOnLogonTag(), false);
 		
@@ -160,11 +160,7 @@ public class UserService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLocales() {
 		Locale requestedLocale = getEtmPrincipal().getLocale();
-		return "{\"locales\": [" + Arrays.stream(Locale.getAvailableLocales()).filter(p -> p.getCountry().length() > 0).sorted(new Comparator<Locale>() {
-			@Override
-			public int compare(Locale o1, Locale o2) {
-				return o1.getDisplayName(requestedLocale).compareTo(o2.getDisplayName(requestedLocale));
-			}}).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
+		return "{\"locales\": [" + Arrays.stream(Locale.getAvailableLocales()).filter(p -> p.getCountry().length() > 0).sorted((o1, o2) -> o1.getDisplayName(requestedLocale).compareTo(o2.getDisplayName(requestedLocale))).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
 				.collect(Collectors.joining(",")) 
 			+ "], \"default_locale\": {" + escapeObjectToJsonNameValuePair("name", Locale.getDefault().getDisplayName(requestedLocale)) 
 			+ ", " + escapeObjectToJsonNameValuePair("value", Locale.getDefault().toLanguageTag())+ "}}";

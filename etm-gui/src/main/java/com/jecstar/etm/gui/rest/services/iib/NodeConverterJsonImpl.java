@@ -27,9 +27,8 @@ public class NodeConverterJsonImpl implements NodeConverter<String> {
 	@Override
 	public String write(Node node) {
 		final StringBuilder sb = new StringBuilder();
-		boolean added = false;
 		sb.append("{");
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, !added)  || added;
+		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, true);
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), node.getHost(), sb, !added)  || added;
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), node.getPort(), sb, !added)  || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getUsernameTag(), node.getUsername(), sb, !added)  || added;

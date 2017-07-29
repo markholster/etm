@@ -10,9 +10,9 @@ import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
-public class JsonPathDefaults implements Defaults {
+class JsonPathDefaults implements Defaults {
 
-	private JacksonMappingProvider mappingProvider = new JacksonMappingProvider();
+	private final JacksonMappingProvider mappingProvider = new JacksonMappingProvider();
 	
 	@Override
     public JsonProvider jsonProvider() {

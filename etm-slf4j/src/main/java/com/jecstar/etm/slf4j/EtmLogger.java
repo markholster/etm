@@ -18,7 +18,7 @@ import com.jecstar.etm.domain.builders.EndpointBuilder;
 import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
 
-public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
+class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
 	private static final long serialVersionUID = 3661857038951845151L;
 	
@@ -31,15 +31,14 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 	private final static String FQCN = EtmLogger.class.getName();
 	private final EtmLogForwarder logForwarder;
 	private final Configuration configuration;
-	private String logLevel;
-	private int logLevelAsInt;
+    private final int logLevelAsInt;
 
 	public EtmLogger(EtmLogForwarder logForwarder, String loggerName, Configuration configuration) {
 		this.name = loggerName;
 		this.logForwarder = logForwarder;
 		this.configuration = configuration;
-		this.logLevel = this.configuration.getLogLevel(getName());
-		this.logLevelAsInt = determineLevelAsInteger(this.logLevel);
+        String logLevel = this.configuration.getLogLevel(getName());
+		this.logLevelAsInt = determineLevelAsInteger(logLevel);
 	}
 	
 	@Override

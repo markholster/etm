@@ -42,7 +42,7 @@ public class JsonConverter extends JsonWriter {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
+    private Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
 		if (valueMap.containsKey(tag)) {
 			return (Map<String, Object>) valueMap.get(tag);
 		}
@@ -94,7 +94,7 @@ public class JsonConverter extends JsonWriter {
 		return getLong(tag, valueMap, null);
 	}
 
-	public Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
+	private Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
 		if (valueMap.get(tag) != null) {
 			return ((Number)valueMap.get(tag)).longValue();
 		}

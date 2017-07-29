@@ -12,20 +12,20 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 
 public enum DateInterval {
 
-	SECONDS("yyyy-MM-dd'T'HH:mm:ss", DateHistogramInterval.SECOND, 1000l), 
-	MINUTES("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.MINUTE, 60 * 1000l), 
-	HOURS("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.HOUR, 60 * 60 * 1000l), 
-	DAYS("yyyy-MM-dd", DateHistogramInterval.DAY , 24 * 60 * 60 * 1000l), 
-	WEEKS("yyyy-ww", DateHistogramInterval.WEEK, 7 * 24 * 60 * 60 * 1000l), 
-	MONTHS("yyyy-MM", DateHistogramInterval.MONTH, 30 * 24 * 60 * 60 * 1000l), 
-	QUARTERS(null, DateHistogramInterval.QUARTER, 13 * 7 * 24 * 60 * 60 * 1000l), 
-	YEARS("yyyy", DateHistogramInterval.YEAR, 365 * 24 * 60 * 60 * 1000l);
+	SECONDS("yyyy-MM-dd'T'HH:mm:ss", DateHistogramInterval.SECOND, 1000L),
+	MINUTES("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.MINUTE, 60 * 1000L),
+	HOURS("yyyy-MM-dd'T'HH:mm", DateHistogramInterval.HOUR, 60 * 60 * 1000L),
+	DAYS("yyyy-MM-dd", DateHistogramInterval.DAY , 24 * 60 * 60 * 1000L),
+	WEEKS("yyyy-ww", DateHistogramInterval.WEEK, 7 * 24 * 60 * 60 * 1000L),
+	MONTHS("yyyy-MM", DateHistogramInterval.MONTH, 30 * 24 * 60 * 60 * 1000L),
+	QUARTERS(null, DateHistogramInterval.QUARTER, 13 * 7 * 24 * 60 * 60 * 1000L),
+	YEARS("yyyy", DateHistogramInterval.YEAR, 365 * 24 * 60 * 60 * 1000L);
 	
 	private final DateHistogramInterval dateHistogramInterval;
 	private final String simpleDateFormat;
 	private final long milliseconds;
 
-	private DateInterval(String simpleDateFormat, DateHistogramInterval dateHistogramInterval, long milliseconds) {
+	DateInterval(String simpleDateFormat, DateHistogramInterval dateHistogramInterval, long milliseconds) {
 		this.simpleDateFormat = simpleDateFormat;
 		this.dateHistogramInterval = dateHistogramInterval;
 		this.milliseconds = milliseconds;
@@ -110,7 +110,7 @@ public enum DateInterval {
 		@Override
 		public StringBuffer format(Date date, StringBuffer toAppendTo, FieldPosition pos) {
 			this.calendar.setTime(date);
-			return super.format(date, toAppendTo, pos).append(" Q" + ((this.calendar.get(Calendar.MONTH) / 3) + 1));
+			return super.format(date, toAppendTo, pos).append(" Q").append((this.calendar.get(Calendar.MONTH) / 3) + 1);
 		}
 	}
 	

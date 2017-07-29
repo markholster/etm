@@ -22,7 +22,7 @@ public class ConversionMessagingTelemetryEventWriterJsonImpl extends MessagingTe
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append("\"" + getTags().getCorrelationsTag() + "\": [");
+			buffer.append("\"").append(getTags().getCorrelationsTag()).append("\": [");
 			buffer.append(this.currentBuilder.getCorrelations().stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(",")));
 			buffer.append("]");
 			added = true;

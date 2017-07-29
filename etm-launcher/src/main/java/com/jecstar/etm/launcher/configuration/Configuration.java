@@ -10,11 +10,11 @@ public class Configuration {
 	public String bindingAddress = "127.0.0.1";
 	public int bindingPortOffset = 0;
 	
-	public Elasticsearch elasticsearch = new Elasticsearch();
-	public Http http = new Http();
-	public Logging logging = new Logging();
+	public final Elasticsearch elasticsearch = new Elasticsearch();
+	public final Http http = new Http();
+	public final Logging logging = new Logging();
 	
-	public IbmMq ibmMq = new IbmMq();
+	public final IbmMq ibmMq = new IbmMq();
 
 	public boolean isHttpServerNecessary() {
 		return this.http.restProcessorEnabled || this.http.guiEnabled;

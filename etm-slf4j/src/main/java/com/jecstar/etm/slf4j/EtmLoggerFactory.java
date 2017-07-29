@@ -45,7 +45,7 @@ public class EtmLoggerFactory implements ILoggerFactory {
 	private EtmLogForwarder logForwarder;
 	
 	public EtmLoggerFactory() {
-		this.loggerMap = new ConcurrentHashMap<String, Logger>();
+		this.loggerMap = new ConcurrentHashMap<>();
 		try {
 			@SuppressWarnings("unchecked")
 			Class<EtmLogForwarder> clazz = (Class<EtmLogForwarder>) Class.forName("com.jecstar.etm.slf4j.InternalEtmLogForwarder");

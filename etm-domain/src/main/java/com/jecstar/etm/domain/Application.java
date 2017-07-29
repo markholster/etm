@@ -52,10 +52,7 @@ public class Application {
 	}
 
 	public boolean isSet() {
-		if (this.name != null || this.instance != null || this.principal != null || this.version != null || this.hostAddress != null) {
-			return true;
-		}
-		return false; 
-	} 
+		return this.name != null || this.instance != null || this.principal != null || this.version != null || this.hostAddress != null;
+	}
 
 }

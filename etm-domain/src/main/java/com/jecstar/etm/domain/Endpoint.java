@@ -14,7 +14,7 @@ public class Endpoint {
 	/**
 	 * The handlers that were reading the event.
 	 */
-	public List<EndpointHandler> readingEndpointHandlers = new ArrayList<EndpointHandler>();
+	public final List<EndpointHandler> readingEndpointHandlers = new ArrayList<>();
 	
 	/**
 	 * The handler that was writing the event.

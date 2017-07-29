@@ -39,7 +39,7 @@ public class InternalBulkProcessorWrapper implements AutoCloseable {
 	private LogTelemetryEventPersister logPersister;
 	private BusinessTelemetryEventPersister businessPersister;
 	
-	private List<TelemetryEvent<?>> startupBuffer = new ArrayList<>();
+	private final List<TelemetryEvent<?>> startupBuffer = new ArrayList<>();
 	
 	private boolean open = true;
 	

@@ -10,7 +10,7 @@ public enum EtmPrincipalRole {
 	
 	private final String roleName;
 	
-	private EtmPrincipalRole(String roleName) {
+	EtmPrincipalRole(String roleName) {
 		this.roleName = roleName;
 	}
 	

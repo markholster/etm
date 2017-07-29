@@ -4,18 +4,18 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 import com.jecstar.etm.server.core.domain.QueryOccurrence;
 
-public class FilterQuery {
+class FilterQuery {
 
-	private QueryOccurrence queryOccurrence;
+	private final QueryOccurrence queryOccurrence;
 	
-	private QueryBuilder query;
+	private final QueryBuilder query;
 	
 	public FilterQuery(QueryOccurrence queryOccurrence, QueryBuilder query) {
 		this.queryOccurrence = queryOccurrence;
 		this.query = query;
 	}
 	
-	public QueryOccurrence getQueryOccurence() {
+	public QueryOccurrence getQueryOccurrence() {
 		return this.queryOccurrence;
 	}
 	

@@ -96,7 +96,7 @@ public class LicenseUpdater implements Runnable {
 		return null;
 	}
 	
-    protected ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
+    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
     	if (-1 == etmConfiguration.getWaitForActiveShards()) {
     		return ActiveShardCount.ALL;
     	} else if (0 == etmConfiguration.getWaitForActiveShards()) {

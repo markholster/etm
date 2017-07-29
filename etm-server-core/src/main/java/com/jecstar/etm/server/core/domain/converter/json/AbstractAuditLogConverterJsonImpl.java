@@ -8,7 +8,7 @@ import com.jecstar.etm.server.core.domain.converter.AuditLogTags;
 
 public abstract class AbstractAuditLogConverterJsonImpl<Audit extends AuditLog<Audit>> extends JsonConverter implements AuditLogConverter<String, Audit> {
 	
-	AuditLogTags tags = new AuditLogTagsJsonImpl();
+	private final AuditLogTags tags = new AuditLogTagsJsonImpl();
 
 	Map<String, Object> read(String content, Audit audit) {
 		Map<String, Object> valueMap = toMap(content);

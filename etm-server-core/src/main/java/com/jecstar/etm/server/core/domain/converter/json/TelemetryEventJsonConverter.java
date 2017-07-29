@@ -12,7 +12,7 @@ import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.domain.writers.TelemetryEventTags;
 import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 
-public class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
+class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
 
 	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 	

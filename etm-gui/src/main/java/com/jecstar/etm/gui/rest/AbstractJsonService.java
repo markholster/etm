@@ -35,7 +35,7 @@ public class AbstractJsonService extends JsonConverter {
     	return (EtmPrincipal)this.securityContext.getUserPrincipal();
     }
     
-    protected List<FilterQuery> getEtmPrincipalFilterQueries() {
+    private List<FilterQuery> getEtmPrincipalFilterQueries() {
     	List<FilterQuery> result = new ArrayList<>();
     	String filterQuery = getEtmPrincipal().getFilterQuery();
     	if (filterQuery != null && filterQuery.trim().length() > 0) {
@@ -79,9 +79,9 @@ public class AbstractJsonService extends JsonConverter {
     	}
     	BoolQueryBuilder filteredQuery = new BoolQueryBuilder().must(queryBuilder);
     	for (FilterQuery filterQuery : filterQueries) {
-    		if (QueryOccurrence.MUST.equals(filterQuery.getQueryOccurence())) {
+    		if (QueryOccurrence.MUST.equals(filterQuery.getQueryOccurrence())) {
     			filteredQuery.filter(filterQuery.getQuery());
-    		} else if (QueryOccurrence.MUST_NOT.equals(filterQuery.getQueryOccurence())) {
+    		} else if (QueryOccurrence.MUST_NOT.equals(filterQuery.getQueryOccurrence())) {
     			filteredQuery.mustNot(filterQuery.getQuery());
     		}
     	}
@@ -106,17 +106,17 @@ public class AbstractJsonService extends JsonConverter {
     	result.append("{");
     	addStringElementToJsonBuffer("decimal", "" + decimalFormatSymbols.getDecimalSeparator(), result, true);
     	addStringElementToJsonBuffer("thousands", "" + decimalFormatSymbols.getGroupingSeparator(), result, false);
-    	result.append(",\"grouping\": [" + numberFormat.getMaximumFractionDigits() + "]");
-    	result.append(",\"currency\": [\"" + numberFormat.getCurrency().getSymbol() + "\", \"\"]");
+    	result.append(",\"grouping\": [").append(numberFormat.getMaximumFractionDigits()).append("]");
+    	result.append(",\"currency\": [\"").append(numberFormat.getCurrency().getSymbol()).append("\", \"\"]");
     	// TODO dateTime and time should be dynamic and based on the locale.
     	addStringElementToJsonBuffer("dateTime", "%a %b %e %X %Y", result, false);
     	addStringElementToJsonBuffer("date", "%m/%d/%Y", result, false);
     	addStringElementToJsonBuffer("time", "%H:%M:%S", result, false);
-    	result.append(",\"periods\": [\"" + Arrays.stream(dateFormatSymbols.getAmPmStrings()).collect(Collectors.joining("\",\"")) + "\"]" );
-    	result.append(",\"days\": [\"" + Arrays.stream(dateFormatSymbols.getWeekdays()).collect(Collectors.joining("\",\"")) + "\"]");
-    	result.append(",\"shortDays\": [\"" + Arrays.stream(dateFormatSymbols.getShortWeekdays()).collect(Collectors.joining("\",\"")) + "\"]");
-    	result.append(",\"months\": [\"" + Arrays.stream(dateFormatSymbols.getMonths()).collect(Collectors.joining("\",\"")) + "\"]");
-    	result.append(",\"shortMonths\": [\"" + Arrays.stream(dateFormatSymbols.getShortMonths()).collect(Collectors.joining("\",\"")) + "\"]");
+    	result.append(",\"periods\": [\"").append(Arrays.stream(dateFormatSymbols.getAmPmStrings()).collect(Collectors.joining("\",\""))).append("\"]");
+    	result.append(",\"days\": [\"").append(Arrays.stream(dateFormatSymbols.getWeekdays()).collect(Collectors.joining("\",\""))).append("\"]");
+    	result.append(",\"shortDays\": [\"").append(Arrays.stream(dateFormatSymbols.getShortWeekdays()).collect(Collectors.joining("\",\""))).append("\"]");
+    	result.append(",\"months\": [\"").append(Arrays.stream(dateFormatSymbols.getMonths()).collect(Collectors.joining("\",\""))).append("\"]");
+    	result.append(",\"shortMonths\": [\"").append(Arrays.stream(dateFormatSymbols.getShortMonths()).collect(Collectors.joining("\",\""))).append("\"]");
     	result.append("}");
     	return result.toString();
     }

@@ -86,13 +86,13 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 		result.append("{");
 		this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), endpointConfiguration.name, result, true);
 		if (endpointConfiguration.eventEnhancer != null) {
-			result.append(",\"" + this.tags.getEnhancerTag() + "\": {");
+			result.append(",\"").append(this.tags.getEnhancerTag()).append("\": {");
 			if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
 				DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfiguration.eventEnhancer;
 				this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), DEFAULT_ENHANCER_TYPE, result, true);
 				this.converter.addBooleanElementToJsonBuffer(this.tags.getEnhancePayloadFormatTag(), enhancer.isEnhancePayloadFormat(), result, false);
 				result.append(",");
-				result.append(this.converter.escapeToJson(this.tags.getFieldsTag(), true) + ": [");
+				result.append(this.converter.escapeToJson(this.tags.getFieldsTag(), true)).append(": [");
 				boolean first = true;
 				for (DefaultField field : enhancer.getFields()) {
 					if (!first) {
@@ -101,7 +101,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 					result.append("{");
 					this.converter.addStringElementToJsonBuffer(this.tags.getFieldTag(), field.getName(), result, true);
 					this.converter.addStringElementToJsonBuffer(this.tags.getWritePolicyTag(), field.getWritePolicy().name(), result, false);
-					result.append(",\"" + this.tags.getParsersTag() + "\": [");
+					result.append(",\"").append(this.tags.getParsersTag()).append("\": [");
 					boolean firstParser = true;
 					for (ExpressionParser expressionParser : field.getParsers()) {
 						if (!firstParser) {

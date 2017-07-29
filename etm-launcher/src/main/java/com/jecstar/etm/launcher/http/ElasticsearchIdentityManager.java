@@ -138,7 +138,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			changed = true;
 		}
 		if (changed) {
-			Map<String, Object> updateMap = new HashMap<String, Object>();
+			Map<String, Object> updateMap = new HashMap<>();
 				updateMap.put(this.etmPrincipalTags.getNameTag(), storedPrincipal.getName());
 				updateMap.put(this.etmPrincipalTags.getEmailTag(), storedPrincipal.getEmailAddress());
 			client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, storedPrincipal.getId())
@@ -184,8 +184,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				}
 				return null;
 			}
-			EtmAccount etmAccount = new EtmAccount(principal);
-			return etmAccount;
+			return new EtmAccount(principal);
 		}
 		return null;
 	}
@@ -203,9 +202,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group);
 			}
 			MultiGetResponse multiGetResponse = multiGetBuilder.get();
-			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
-			while (iterator.hasNext()) {
-				MultiGetItemResponse item = iterator.next();
+			for (MultiGetItemResponse item : multiGetResponse) {
 				EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
 				principal.addGroup(etmGroup);
 			}
@@ -220,9 +217,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group.getName());
 			}
 			MultiGetResponse multiGetResponse = multiGetBuilder.get();
-			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
-			while (iterator.hasNext()) {
-				MultiGetItemResponse item = iterator.next();
+			for (MultiGetItemResponse item : multiGetResponse) {
 				if (!item.isFailed() && item.getResponse().isExists() && !item.getResponse().isSourceEmpty()) {
 					EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
 					if (etmGroup.isLdapBase()) {

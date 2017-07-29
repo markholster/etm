@@ -7,7 +7,7 @@ import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.parsers.XPathExpressionParser;
 
-public class CustomAchmeaEnhancements {
+class CustomAchmeaEnhancements {
 
 	private final EtmConfiguration etmConfiguration;
 	

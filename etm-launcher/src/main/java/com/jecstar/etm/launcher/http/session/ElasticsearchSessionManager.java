@@ -23,7 +23,7 @@ import io.undertow.server.session.SessionListeners;
 import io.undertow.server.session.SessionManager;
 import io.undertow.server.session.SessionManagerStatistics;
 
-public class ElasticsearchSessionManager implements SessionManager {
+class ElasticsearchSessionManager implements SessionManager {
 
 	private final Client client;
 	private final SessionIdGenerator sessionIdGenerator;

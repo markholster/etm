@@ -7,7 +7,7 @@ class EventChainItem {
 
 	private final String eventId;
 	private final String transactionId;
-	private long handlingTime;
+	private final long handlingTime;
 	private String correlationId;
 	private String name;
 	private String applicationName;
@@ -76,10 +76,7 @@ class EventChainItem {
 	}
 	
 	public boolean isAsync() {
-		if ("messaging".equals(this.eventType)) {
-			return MessagingEventType.FIRE_FORGET.name().equals(this.subType);
-		}
-		return false;
+		return "messaging".equals(this.eventType) && MessagingEventType.FIRE_FORGET.name().equals(this.subType);
 	}
 	
 	public boolean isHttpEvent() {

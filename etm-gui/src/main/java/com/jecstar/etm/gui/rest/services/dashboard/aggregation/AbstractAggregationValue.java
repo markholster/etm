@@ -9,7 +9,7 @@ public abstract class AbstractAggregationValue<T> implements AggregationValue<T>
 	private final String label;
 	private boolean percentage;
 
-	protected AbstractAggregationValue(String label) {
+	AbstractAggregationValue(String label) {
 		this.label = label;
 	}
 	

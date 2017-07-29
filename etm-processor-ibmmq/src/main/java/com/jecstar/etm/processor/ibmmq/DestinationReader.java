@@ -32,7 +32,7 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
 
-public class DestinationReader implements Runnable {
+class DestinationReader implements Runnable {
 	
 	private static final LogWrapper log = LogFactory.getLogger(DestinationReader.class);
 
@@ -94,7 +94,7 @@ public class DestinationReader implements Runnable {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Read message with id '" + byteArrayToString(message.messageId) + "'.");
 				}
-				HandlerResult result = null;
+				HandlerResult result;
 				if ("etmevent".equalsIgnoreCase(this.destination.getMessagesType())) {
 					result = this.etmEventHandler.handleMessage(message);
 				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessagesType())) {
@@ -221,7 +221,7 @@ public class DestinationReader implements Runnable {
 			log.logDebugMessage("Connecting to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
 		}
 		try {
-			Hashtable<String, Object> connectionProperties = new Hashtable<String, Object>();
+			Hashtable<String, Object> connectionProperties = new Hashtable<>();
 			connectionProperties.put(CMQC.TRANSPORT_PROPERTY, CMQC.TRANSPORT_MQSERIES_CLIENT);
 			connectionProperties.put(CMQC.HOST_NAME_PROPERTY, this.queueManager.getHost());
 			connectionProperties.put(CMQC.APPNAME_PROPERTY, "ETM-" + this.configurationName);
@@ -344,9 +344,9 @@ public class DestinationReader implements Runnable {
 		}
 		this.byteArrayBuilder.setLength(0);
 		boolean allZero = true;
-		for (int i = 0; i < bytes.length; i++) {
-			this.byteArrayBuilder.append(String.format("%02x", bytes[i]));
-			if (bytes[i] != 0) {
+		for (byte aByte : bytes) {
+			this.byteArrayBuilder.append(String.format("%02x", aByte));
+			if (aByte != 0) {
 				allZero = false;
 			}
 		}

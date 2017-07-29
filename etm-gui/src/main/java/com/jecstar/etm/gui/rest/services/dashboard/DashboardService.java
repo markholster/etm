@@ -70,28 +70,26 @@ public class DashboardService extends AbstractIndexMetadataService {
 		Map<String, List<Keyword>> names = getIndexFields(DashboardService.client, indexName);
 		result.append("{ \"keywords\":[");
 		Set<Entry<String, List<Keyword>>> entries = names.entrySet();
-		if (entries != null) {
-			boolean first = true;
-			for (Entry<String, List<Keyword>> entry : entries) {
-				if (!first) {
-					result.append(", ");
-				}
-				first = false;
-				result.append("{");
-				result.append("\"index\": " + escapeToJson(indexName, true) + ",");
-				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
-				result.append("\"keywords\": [" + entry.getValue().stream().map(n -> {
-					StringBuilder kw = new StringBuilder();
-					kw.append("{");
-					addStringElementToJsonBuffer("name", n.getName(), kw, true);
-					addStringElementToJsonBuffer("type", n.getType(), kw, false);
-					addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-					addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-					kw.append("}");
-					return kw.toString();
-				}).collect(Collectors.joining(", ")) + "]");
-				result.append("}");
+		boolean first = true;
+		for (Entry<String, List<Keyword>> entry : entries) {
+			if (!first) {
+				result.append(", ");
 			}
+			first = false;
+			result.append("{");
+			result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+			result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
+			result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
+				StringBuilder kw = new StringBuilder();
+				kw.append("{");
+				addStringElementToJsonBuffer("name", n.getName(), kw, true);
+				addStringElementToJsonBuffer("type", n.getType(), kw, false);
+				addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+				addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+				kw.append("}");
+				return kw.toString();
+			}).collect(Collectors.joining(", "))).append("]");
+			result.append("}");
 		}
 		result.append("]}");
 		return result.toString();
@@ -389,7 +387,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 		// Start building the response
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		result.append("\"d3_formatter\": " + getD3Formatter());
+		result.append("\"d3_formatter\": ").append(getD3Formatter());
 		addStringElementToJsonBuffer("type", type, result, false);
 		result.append(",\"data\": ");
 		

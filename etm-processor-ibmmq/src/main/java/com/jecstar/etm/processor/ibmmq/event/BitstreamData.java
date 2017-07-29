@@ -50,7 +50,7 @@ import javax.xml.bind.annotation.XmlValue;
 public class BitstreamData {
 
     @XmlElement(required = true)
-    protected BitstreamData.Bitstream bitstream;
+    private BitstreamData.Bitstream bitstream;
 
     /**
      * Gets the value of the bitstream property.
@@ -101,9 +101,9 @@ public class BitstreamData {
     public static class Bitstream {
 
         @XmlValue
-        protected String value;
+        String value;
         @XmlAttribute(name = "encoding", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-        protected EncodingType encoding;
+        EncodingType encoding;
 
         /**
          * Gets the value of the value property.

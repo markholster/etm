@@ -8,15 +8,14 @@ import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
 import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedException;
 import com.ibm.broker.config.proxy.MessageFlowProxy;
 import com.ibm.broker.config.proxy.MessageFlowProxy.Node;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBMessageFlow;
 import com.jecstar.etm.server.core.EtmException;
 
 public class IIBMessageFlow {
 	
-	static final String RUNTIME_PROPERTY_MONITORING = "This/monitoring";
-	static final String RUNTIME_PROPERTY_MONITORING_PROFILE = "This/monitoringProfile";
+	private static final String RUNTIME_PROPERTY_MONITORING = "This/monitoring";
+	private static final String RUNTIME_PROPERTY_MONITORING_PROFILE = "This/monitoringProfile";
 	
-	private MessageFlowProxy messageFlow;
+	private final MessageFlowProxy messageFlow;
 
 	public IIBMessageFlow(MessageFlowProxy messageFlowProxy) {
 		this.messageFlow = messageFlowProxy;
@@ -57,7 +56,7 @@ public class IIBMessageFlow {
 			Enumeration<Node> nodeProxy = this.messageFlow.getNodes();
 			while (nodeProxy.hasMoreElements()) {
 				IIBNode iibNode = new IIBNode(nodeProxy.nextElement());
-				if (!nodes.stream().anyMatch(n -> n.getName().equals(iibNode.getName()))) {
+				if (nodes.stream().noneMatch(n -> n.getName().equals(iibNode.getName()))) {
 					// Filter nodes with the same name. Although it should not
 					// be possible to have 2 nodes with the same name in a
 					// single IIB flow it might be the case when a Publication

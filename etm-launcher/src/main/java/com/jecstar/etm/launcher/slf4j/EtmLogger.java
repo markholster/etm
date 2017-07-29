@@ -19,7 +19,7 @@ import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
 import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 
-public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
+class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
 	private static final long serialVersionUID = 3661857038951845151L;
 	
@@ -33,14 +33,13 @@ public class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger
 
 	private final LogConfiguration configuration;
 	private final InternalBulkProcessorWrapper internalBulkProcessorWrapper;
-	private String logLevel;
-	private int logLevelAsInt;
+    private final int logLevelAsInt;
 
 	public EtmLogger(String loggerName, LogConfiguration configuration, InternalBulkProcessorWrapper internalBulkProcessorWrapper) {
 		this.name = loggerName;
 		this.configuration = configuration;
-		this.logLevel = this.configuration.getLogLevel(getName());
-		this.logLevelAsInt = determineLevelAsInteger(this.logLevel);
+        String logLevel = this.configuration.getLogLevel(getName());
+		this.logLevelAsInt = determineLevelAsInteger(logLevel);
 		this.internalBulkProcessorWrapper = internalBulkProcessorWrapper;
 	}
 	

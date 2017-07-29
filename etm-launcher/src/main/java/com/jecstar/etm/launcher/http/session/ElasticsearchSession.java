@@ -16,7 +16,7 @@ import io.undertow.server.session.SessionManager;
 import io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler;
 import io.undertow.util.AttachmentKey;
 
-public class ElasticsearchSession implements Session {
+class ElasticsearchSession implements Session {
 
 	static final AttachmentKey<ElasticsearchSession> ETM_SESSION = AttachmentKey.create(ElasticsearchSession.class);
 	private static final String SSO_ATTRIBUTE = SingleSignOnAuthenticationMechanism.class.getName() + ".SSOID";

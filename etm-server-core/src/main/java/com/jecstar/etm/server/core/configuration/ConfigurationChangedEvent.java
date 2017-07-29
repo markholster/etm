@@ -4,7 +4,7 @@ import java.util.List;
 
 public class ConfigurationChangedEvent {
 
-	private List<String> changedConfigurationKeys;
+	private final List<String> changedConfigurationKeys;
 
 	public ConfigurationChangedEvent(List<String> changedConfigurationKeys) {
 		this.changedConfigurationKeys = changedConfigurationKeys;

@@ -11,23 +11,23 @@ import com.jecstar.etm.server.core.util.ObjectUtils;
 
 public class EtmConfiguration {
 	//License configuration
-	public static final String CONFIG_KEY_LICENSE 							= "license";
+	private static final String CONFIG_KEY_LICENSE 							= "license";
 	
 	// Cluster configuration
-	public static final String CONFIG_KEY_SESSION_TIMEOUT 					= "sessionTimeout";
+	private static final String CONFIG_KEY_SESSION_TIMEOUT 					= "sessionTimeout";
 	public static final String CONFIG_KEY_SHARDS_PER_INDEX 					= "shardsPerIndex";
 	public static final String CONFIG_KEY_REPLICAS_PER_INDEX 				= "replicasPerIndex";
-	public static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT 			= "maxEventIndexCount";
-	public static final String CONFIG_KEY_MAX_METRICS_INDEX_COUNT 			= "maxMetricsIndexCount";
-	public static final String CONFIG_KEY_MAX_AUDIT_LOG_INDEX_COUNT 		= "maxAuditLogIndexCount";	
-	public static final String CONFIG_KEY_WAIT_FOR_ACTIVE_SHARDS 			= "waitForActiveShards";
-	public static final String CONFIG_KEY_QUERY_TIMEOUT 					= "queryTimeout";
-	public static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
-	public static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS 	= "maxSearchResultDownloadRows";
-	public static final String CONFIG_KEY_MAX_SEARCH_TEMPLATE_COUNT 		= "maxSearchTemplateCount";
-	public static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT 			= "maxSearchHistoryCount";
-	public static final String CONFIG_KEY_MAX_GRAPH_COUNT 					= "maxGraphCount";
-	public static final String CONFIG_KEY_MAX_DASHBOARD_COUNT 				= "maxDashboardCount";
+	private static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT 			= "maxEventIndexCount";
+	private static final String CONFIG_KEY_MAX_METRICS_INDEX_COUNT 			= "maxMetricsIndexCount";
+	private static final String CONFIG_KEY_MAX_AUDIT_LOG_INDEX_COUNT 		= "maxAuditLogIndexCount";
+	private static final String CONFIG_KEY_WAIT_FOR_ACTIVE_SHARDS 			= "waitForActiveShards";
+	private static final String CONFIG_KEY_QUERY_TIMEOUT 					= "queryTimeout";
+	private static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
+	private static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS 	= "maxSearchResultDownloadRows";
+	private static final String CONFIG_KEY_MAX_SEARCH_TEMPLATE_COUNT 		= "maxSearchTemplateCount";
+	private static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT 			= "maxSearchHistoryCount";
+	private static final String CONFIG_KEY_MAX_GRAPH_COUNT 					= "maxGraphCount";
+	private static final String CONFIG_KEY_MAX_DASHBOARD_COUNT 				= "maxDashboardCount";
 	
 	// Node configurations
 	public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT 			= "enhancingHandlerCount";
@@ -80,7 +80,7 @@ public class EtmConfiguration {
 	
 	private Directory directory;
 
-	private List<ConfigurationChangeListener> changeListeners = new ArrayList<ConfigurationChangeListener>();
+	private final List<ConfigurationChangeListener> changeListeners = new ArrayList<>();
 
 	public EtmConfiguration(String nodeName) {
 		this.nodeName = nodeName;
@@ -119,7 +119,7 @@ public class EtmConfiguration {
 	 * @return <code>true</code> if the license is syntactically correct,
 	 *         <code>false</code> otherwise.
 	 */
-	public boolean isValidLicenseKey(String licenseKey) {
+    protected boolean isValidLicenseKey(String licenseKey) {
 		if (licenseKey == null || licenseKey.trim().length() == 0) {
 			return false;
 		}		
@@ -381,39 +381,24 @@ public class EtmConfiguration {
 	}
 	
 	public boolean isLicenseExpired() {
-		if (this.license == null) {
-			return true;
-		}
-		return !isLicenseValidAt(Instant.now());
-	}
+        return this.license == null || !isLicenseValidAt(Instant.now());
+    }
 
 	public Boolean isLicenseAlmostExpired() {
-		if (this.license == null) {
-			return false;
-		}		
-		return !isLicenseExpired() && !isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
-	}
+        return this.license != null && !isLicenseExpired() && !isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
+    }
 	
 	public Boolean isLicenseCountExceeded() {
-		if (this.license == null) {
-			return true;
-		}
-		return false;
+		return this.license == null;
 	}
 	
 	public Boolean isLicenseSizeExceeded() {
-		if (this.license == null) {
-			return true;
-		}
-		return false;
+		return this.license == null;
 	}
 	
 	private boolean isLicenseValidAt(Instant moment) {
-		if (this.license == null) {
-			return false;
-		}
-		return !moment.isAfter(this.license.getExpiryDate());
-	}
+        return this.license != null && !moment.isAfter(this.license.getExpiryDate());
+    }
 
 	/**
 	 * Merge the configuration items from the given
@@ -430,7 +415,7 @@ public class EtmConfiguration {
 			return false;
 		}
 		
-		List<String> changed = new ArrayList<String>();
+		List<String> changed = new ArrayList<>();
 		if (!ObjectUtils.equalsNullProof(this.license, etmConfiguration.getLicense())) {
 			this.license = etmConfiguration.getLicense();
 			changed.add(CONFIG_KEY_LICENSE);

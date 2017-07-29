@@ -11,13 +11,13 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.lmax.disruptor.ExceptionHandler;
 
-public class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryCommand> {
+class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryCommand> {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(TelemetryCommandExceptionHandler.class);
-	private final Map<CommandType, Counter> counters = new HashMap<CommandType, Counter>();
+	private final Map<CommandType, Counter> counters = new HashMap<>();
 	private final Counter totalCounter;
 
 	public TelemetryCommandExceptionHandler(final MetricRegistry metricRegistry) {

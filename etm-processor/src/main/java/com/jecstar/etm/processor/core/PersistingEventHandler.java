@@ -19,7 +19,7 @@ import com.jecstar.etm.server.core.domain.converter.json.MessagingTelemetryEvent
 import com.jecstar.etm.server.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
 import com.lmax.disruptor.EventHandler;
 
-public class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeable {
+class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeable {
 
 	private final long ordinal;
 	private final long numberOfConsumers;

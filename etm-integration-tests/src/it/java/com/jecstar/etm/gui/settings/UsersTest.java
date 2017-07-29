@@ -60,7 +60,7 @@ public class UsersTest extends AbstractIntegrationTest {
 		// An error box should be shows.
 		waitForShow("users_errorBox");
 		// And make sure the error box contains the correct error.
-		findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT);
+		assertTrue(findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT));
 
 		// Somehow the remove button isn't enabled at this point
 		waitFor(ExpectedConditions.elementToBeClickable(By.id("btn-confirm-remove-user")));
@@ -75,7 +75,7 @@ public class UsersTest extends AbstractIntegrationTest {
 		// An error box should be shows.
 		waitForShow("users_errorBox");
 		// And make sure the error box contains the correct error.
-		findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT);
+		assertTrue(findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT));
 	}
 
 }

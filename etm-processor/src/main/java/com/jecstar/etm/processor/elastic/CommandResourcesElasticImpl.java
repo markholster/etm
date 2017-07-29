@@ -45,11 +45,11 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	
 	
 	@SuppressWarnings("rawtypes")
-	private Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
+	private final Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
 	
 	private BulkProcessor bulkProcessor;
 
-	private Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
+	private final Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
 	
 	public CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
 		this.elasticClient = elasticClient;

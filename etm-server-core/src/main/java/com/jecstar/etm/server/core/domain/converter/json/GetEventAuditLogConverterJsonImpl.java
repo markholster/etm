@@ -39,13 +39,12 @@ public class GetEventAuditLogConverterJsonImpl extends AbstractAuditLogConverter
 			if (added) {
 				buffer.append(",");
 			}
-			buffer.append(escapeToJson(getTags().getCorrelatedEventsTag(), true) + ": [");
+			buffer.append(escapeToJson(getTags().getCorrelatedEventsTag(), true)).append(": [");
 			buffer.append(audit.correlatedEvents.entrySet().stream()
 				.map(c -> "{" + escapeObjectToJsonNameValuePair(getTags().getEventIdTag(), c.getKey()) + "," + escapeObjectToJsonNameValuePair(getTags().getEventTypeTag(), c.getValue()) + "}")
 				.collect(Collectors.joining(","))
 			);
 			buffer.append("]");
-			added = true;
 		}
 		buffer.append("}");
 		return buffer.toString();

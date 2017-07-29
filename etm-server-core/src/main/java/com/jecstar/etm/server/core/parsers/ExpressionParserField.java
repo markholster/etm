@@ -15,7 +15,7 @@ public enum ExpressionParserField {
 	
 	private final String jsonTag;
 
-	private ExpressionParserField(String jsonTag) {
+	ExpressionParserField(String jsonTag) {
 		this.jsonTag = jsonTag;
 	}
 	

@@ -6,7 +6,7 @@ package com.jecstar.etm.core.util;
  * 
  * @author Mark Holster
  */
-public class DateUtilsTest {
+class DateUtilsTest {
 	
 
 }

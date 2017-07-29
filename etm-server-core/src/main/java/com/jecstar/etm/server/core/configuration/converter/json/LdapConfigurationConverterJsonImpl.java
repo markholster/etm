@@ -18,7 +18,7 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 		return read(this.converter.toMap(jsonContent));
 	}
 	
-	public LdapConfiguration read(Map<String, Object> valueMap) {
+	private LdapConfiguration read(Map<String, Object> valueMap) {
 		LdapConfiguration ldapConfiguration = new LdapConfiguration();
 		ldapConfiguration.setHost(this.converter.getString(this.tags.getHostTag(), valueMap));
 		ldapConfiguration.setPort(this.converter.getInteger(this.tags.getPortTag(), valueMap));
@@ -50,9 +50,8 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 	@Override
 	public String write(LdapConfiguration ldapConfiguration) {
 		final StringBuilder sb = new StringBuilder();
-		boolean added = false;
 		sb.append("{");
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), ldapConfiguration.getHost(), sb, !added) || added;
+		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), ldapConfiguration.getHost(), sb, true);
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), ldapConfiguration.getPort(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getConnectionSecurityTag(), ldapConfiguration.getConnectionSecurity() != null ? ldapConfiguration.getConnectionSecurity().name() : null, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getBindDnTag(), ldapConfiguration.getBindDn(), sb, !added) || added;

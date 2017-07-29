@@ -471,7 +471,7 @@ public class BCrypt {
 	 * @param lr	an array containing the two 32-bit half blocks
 	 * @param off	the position in the array of the blocks
 	 */
-	private final void encipher(int lr[], int off) {
+	private void encipher(int lr[], int off) {
 		int i, n, l = lr[off], r = lr[off + 1];
 
 		l ^= P[0];
@@ -519,8 +519,8 @@ public class BCrypt {
 	 * Initialise the Blowfish key schedule
 	 */
 	private void init_key() {
-		P = (int[])P_orig.clone();
-		S = (int[])S_orig.clone();
+		P = P_orig.clone();
+		S = S_orig.clone();
 	}
 
 	/**
@@ -592,8 +592,8 @@ public class BCrypt {
 	 * @param cdata         the plaintext to encrypt
 	 * @return	an array containing the binary hashed password
 	 */
-	public byte[] crypt_raw(byte password[], byte salt[], int log_rounds,
-	    int cdata[]) {
+    private byte[] crypt_raw(byte password[], byte salt[], int log_rounds,
+                             int cdata[]) {
 		int rounds, i, j;
 		int clen = cdata.length;
 		byte ret[];
@@ -638,7 +638,7 @@ public class BCrypt {
 		String real_salt;
 		byte passwordb[], saltb[], hashed[];
 		char minor = (char)0;
-		int rounds, off = 0;
+		int rounds, off;
 		StringBuilder rs = new StringBuilder();
 
 		if (salt.charAt(0) != '$' || salt.charAt(1) != '2')
@@ -668,7 +668,7 @@ public class BCrypt {
 
 		B = new BCrypt();
 		hashed = B.crypt_raw(passwordb, saltb, rounds,
-		    (int[])bf_crypt_ciphertext.clone());
+                bf_crypt_ciphertext.clone());
 
 		rs.append("$2");
 		if (minor >= 'a')
@@ -696,7 +696,7 @@ public class BCrypt {
 	 * @param random		an instance of SecureRandom to use
 	 * @return	an encoded salt value
 	 */
-	public static String gensalt(int log_rounds, SecureRandom random) {
+	private static String gensalt(int log_rounds, SecureRandom random) {
 		StringBuilder rs = new StringBuilder();
 		byte rnd[] = new byte[BCRYPT_SALT_LEN];
 
@@ -722,7 +722,7 @@ public class BCrypt {
 	 * 2**log_rounds.
 	 * @return	an encoded salt value
 	 */
-	public static String gensalt(int log_rounds) {
+	private static String gensalt(int log_rounds) {
 		return gensalt(log_rounds, new SecureRandom());
 	}
 

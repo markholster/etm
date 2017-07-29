@@ -28,7 +28,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
-public class QueryExporter {
+class QueryExporter {
 
 	private static final SimpleDateFormat ISO_UTC_FORMATTER = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	static {
@@ -37,12 +37,7 @@ public class QueryExporter {
 	
 	private final JsonConverter converter = new JsonConverter();
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
-	private final Comparator<Object> objectComparator = new Comparator<Object>() {
-		@Override
-		public int compare(Object o1, Object o2) {
-			return o1.toString().compareTo(o2.toString());
-		}
-	};
+	private final Comparator<Object> objectComparator = (o1, o2) -> o1.toString().compareTo(o2.toString());
 	
 	public String getContentType(String fileType) {
 		if ("csv".equalsIgnoreCase(fileType)) {
@@ -192,15 +187,15 @@ public class QueryExporter {
 
 	private Object selectValue(List<Object> values, Map<String, Object> fieldLayout) {
 		String array = this.converter.getString("array", fieldLayout, "first");
-		Object value = null;
+		Object value;
 		// When changed also change the searchresults-layout.js with the same functionality.
 		if ("last".equals(array)) {
 			value = values.get(values.size() - 1);
 		} else if ("lowest".equals(array)) {
-			Collections.sort(values, this.objectComparator);
+			values.sort(this.objectComparator);
 			value = values.get(0);
 		} else if ("highest".equals(array))  {
-			Collections.sort(values, this.objectComparator);
+			values.sort(this.objectComparator);
 			value = values.get(values.size() - 1);
 		} else {
 			value = values.get(0);
@@ -231,7 +226,7 @@ public class QueryExporter {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<Object> collectValuesFromPath(String path, Map<String, Object> valueMap) {
+    private List<Object> collectValuesFromPath(String path, Map<String, Object> valueMap) {
 		List<Object> values = new ArrayList<>();
 		String[] pathElements = path.split("\\.");
 		if (pathElements.length > 1) {
@@ -261,7 +256,7 @@ public class QueryExporter {
 		if (value == null) {
 			return "\"\"";
 		}
-		return "\"" + value.toString().replaceAll("\"", "\"\"") + "\"";
+		return "\"" + value.replaceAll("\"", "\"\"") + "\"";
 	}
 
 }

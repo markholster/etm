@@ -6,6 +6,6 @@ import java.util.Map;
 public class Logging {
 
 	public String rootLogger = "INFO";
-	public Map<String, String> loggers = new HashMap<>();
+	public final Map<String, String> loggers = new HashMap<>();
 
 }

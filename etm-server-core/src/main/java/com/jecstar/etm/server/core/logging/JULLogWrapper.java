@@ -19,7 +19,7 @@ public class JULLogWrapper extends AbstractDelegateLogWrapper {
 	/**
 	 * The JUL logger.
 	 */
-	private Logger logger;
+	private final Logger logger;
 
 	/**
 	 * JUL doesn't support a FATAL level. We have to keep track of the current
@@ -55,34 +55,13 @@ public class JULLogWrapper extends AbstractDelegateLogWrapper {
 
 	@Override
 	public boolean isErrorLevelEnabled() {
-		if (this.logger.isLoggable(Level.SEVERE)) {
-			return LogLevel.DEBUG.equals(this.currentLogLevel) 
-					|| LogLevel.INFO.equals(this.currentLogLevel)
-			        || LogLevel.WARNING.equals(this.currentLogLevel) 
-			        || LogLevel.ERROR.equals(this.currentLogLevel)
-			        || Level.ALL.equals(this.logger.getLevel())
-			        || Level.CONFIG.equals(this.logger.getLevel())
-			        || Level.FINER.equals(this.logger.getLevel())
-			        || Level.FINEST.equals(this.logger.getLevel());
-		}
-		return false;
-	}
+        return this.logger.isLoggable(Level.SEVERE) && (LogLevel.DEBUG.equals(this.currentLogLevel) || LogLevel.INFO.equals(this.currentLogLevel) || LogLevel.WARNING.equals(this.currentLogLevel) || LogLevel.ERROR.equals(this.currentLogLevel) || Level.ALL.equals(this.logger.getLevel()) || Level.CONFIG.equals(this.logger.getLevel()) || Level.FINER.equals(this.logger.getLevel()) || Level.FINEST.equals(this.logger.getLevel()));
+    }
 
 	@Override
 	public boolean isFatalLevelEnabled() {
-		if (this.logger.isLoggable(Level.SEVERE)) {
-			return LogLevel.DEBUG.equals(this.currentLogLevel) 
-					|| LogLevel.INFO.equals(this.currentLogLevel)
-			        || LogLevel.WARNING.equals(this.currentLogLevel) 
-			        || LogLevel.ERROR.equals(this.currentLogLevel)
-			        || LogLevel.FATAL.equals(this.currentLogLevel)
-			        || Level.ALL.equals(this.logger.getLevel())
-			        || Level.CONFIG.equals(this.logger.getLevel())
-			        || Level.FINER.equals(this.logger.getLevel())
-			        || Level.FINEST.equals(this.logger.getLevel());
-		}
-		return false;
-	}
+        return this.logger.isLoggable(Level.SEVERE) && (LogLevel.DEBUG.equals(this.currentLogLevel) || LogLevel.INFO.equals(this.currentLogLevel) || LogLevel.WARNING.equals(this.currentLogLevel) || LogLevel.ERROR.equals(this.currentLogLevel) || LogLevel.FATAL.equals(this.currentLogLevel) || Level.ALL.equals(this.logger.getLevel()) || Level.CONFIG.equals(this.logger.getLevel()) || Level.FINER.equals(this.logger.getLevel()) || Level.FINEST.equals(this.logger.getLevel()));
+    }
 
 	@Override
 	public boolean isInfoLevelEnabled() {

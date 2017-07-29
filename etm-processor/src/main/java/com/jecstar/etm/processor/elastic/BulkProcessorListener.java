@@ -23,7 +23,7 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class BulkProcessorListener implements BulkProcessor.Listener {
+class BulkProcessorListener implements BulkProcessor.Listener {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -34,17 +34,12 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 	private static final int BLACKLIST_TIME = 60 * 60 * 1000; // Blacklist potential dangerous events for an hour.
 	
 	private final Timer bulkTimer;
-	private Map<Long, Context> metricContext = new ConcurrentHashMap<Long, Context>();
-	private Map<String, Long> blacklistedIds = new ConcurrentHashMap<String, Long>();
+	private final Map<Long, Context> metricContext = new ConcurrentHashMap<>();
+	private final Map<String, Long> blacklistedIds = new ConcurrentHashMap<>();
 	
 	public BulkProcessorListener(final MetricRegistry metricRegistry) {
 		this.bulkTimer = metricRegistry.timer("event-processor.persisting-repository-bulk-update");
-		Gauge<Integer> blacklistGauge = new Gauge<Integer>() {
-
-			@Override
-			public Integer getValue() {
-				return BulkProcessorListener.this.blacklistedIds.size();
-			}};
+		Gauge<Integer> blacklistGauge = () -> BulkProcessorListener.this.blacklistedIds.size();
 		metricRegistry.register("event-processor.blacklist_size", blacklistGauge);
 	}
 	
@@ -92,11 +87,11 @@ public class BulkProcessorListener implements BulkProcessor.Listener {
 	
 	private String getEventId(DocWriteRequest<?> action) {
         if (action instanceof IndexRequest) {
-        	return ((IndexRequest) action).id();
+        	return action.id();
         }  else if (action instanceof UpdateRequest) {
-        	return ((UpdateRequest) action).id();
+        	return action.id();
         } else if (action instanceof DeleteRequest) {
-        	return ((DeleteRequest) action).id();
+        	return action.id();
         } else {
             throw new IllegalArgumentException("No support for request [" + action + "]");
         }

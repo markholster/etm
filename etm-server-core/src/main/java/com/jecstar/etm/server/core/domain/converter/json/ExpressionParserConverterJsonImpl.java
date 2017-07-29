@@ -74,8 +74,7 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
 	public String write(ExpressionParser expressionParser) {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		boolean added = false;
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), expressionParser.getName(), result, !added) || added;
+		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), expressionParser.getName(), result, true);
 		if (expressionParser instanceof FixedPositionExpressionParser) {
 			FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
 			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_position", result, !added) || added;

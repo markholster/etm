@@ -30,9 +30,9 @@ import com.jecstar.etm.domain.builders.EndpointBuilder;
 import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
 
 
-public class Startup {
+class Startup {
 
-	public static void main(String[] args) throws FileNotFoundException, IOException {
+	public static void main(String[] args) throws IOException {
 		JsonConverter jsonConverter = new JsonConverter();
 		Configuration config = loadConfiguration();
 		Settings settings = Settings.settingsBuilder()
@@ -111,7 +111,7 @@ public class Startup {
 	}
 
 
-	private static Configuration loadConfiguration() throws FileNotFoundException, IOException {
+	private static Configuration loadConfiguration() throws IOException {
 		try (Reader reader = new FileReader(new File("migration.yml"));) {
 			Yaml yaml = new Yaml();
 			return yaml.loadAs(reader, Configuration.class);

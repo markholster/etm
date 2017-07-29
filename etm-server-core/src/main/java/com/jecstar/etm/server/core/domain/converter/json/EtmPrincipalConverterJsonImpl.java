@@ -21,9 +21,8 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 	@Override
 	public String writePrincipal(EtmPrincipal etmPrincipal) {
 		final StringBuilder sb = new StringBuilder();
-		boolean added = false;
 		sb.append("{");
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, !added) || added;
+		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, true);
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
@@ -34,8 +33,8 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getChangePasswordOnLogonTag(), etmPrincipal.isChangePasswordOnLogon(), sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmPrincipal.isLdapBase(), sb, !added) || added;
-		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles().stream().map(c -> c.getRoleName()).collect(Collectors.toSet()), true, sb, !added) || added;
-		added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(c -> c.getName()).collect(Collectors.toSet()), true, sb, !added) || added;
+		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles().stream().map(EtmPrincipalRole::getRoleName).collect(Collectors.toSet()), true, sb, !added) || added;
+		added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
@@ -49,14 +48,13 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 	@Override
 	public String writeGroup(EtmGroup etmGroup) {
 		final StringBuilder sb = new StringBuilder();
-		boolean added = false;
 		sb.append("{");
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmGroup.getName(), true, sb, !added) || added;
+		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmGroup.getName(), true, sb, true);
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmGroup.isLdapBase(), sb, !added) || added;
-		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles().stream().map(c -> c.getRoleName()).collect(Collectors.toSet()), true, sb, !added) || added;
+		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles().stream().map(EtmPrincipalRole::getRoleName).collect(Collectors.toSet()), true, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
 	}
@@ -87,7 +85,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		}
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
-			principal.addRoles(roles.stream().map(c -> EtmPrincipalRole.fromRoleName(c)).collect(Collectors.toSet()));
+			principal.addRoles(roles.stream().map(EtmPrincipalRole::fromRoleName).collect(Collectors.toSet()));
 		}
 		return principal;
 	}
@@ -100,7 +98,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		group.setLdapBase(this.converter.getBoolean(this.tags.getLdapBaseTag(), valueMap, Boolean.FALSE));
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
-			group.addRoles(roles.stream().map(c -> EtmPrincipalRole.fromRoleName(c)).collect(Collectors.toSet()));
+			group.addRoles(roles.stream().map(EtmPrincipalRole::fromRoleName).collect(Collectors.toSet()));
 		}
 		return group;
 	}

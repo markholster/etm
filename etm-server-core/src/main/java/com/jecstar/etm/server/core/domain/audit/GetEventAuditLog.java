@@ -33,6 +33,6 @@ public class GetEventAuditLog extends AuditLog<GetEventAuditLog> {
 	/**
 	 * The map that contains the correlated events returned with the main event. The key will be the eventId and the value the eventType.
 	 */
-	public Map<String, String> correlatedEvents = new HashMap<String, String>();
+	public final Map<String, String> correlatedEvents = new HashMap<>();
 
 }

@@ -39,14 +39,14 @@ public class SSLContextBuilder {
 				return null;
 			}
 			KeyStore loadedKeystore = KeyStore.getInstance(type);
-			loadedKeystore.load(stream, storePassword == null ? null : storePassword);
+			loadedKeystore.load(stream, storePassword);
 			return loadedKeystore;
 		}
 	}
 
 	private KeyManager[] buildKeyManagers(final KeyStore keyStore, final char[] storePassword) throws NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException {
 		KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		keyManagerFactory.init(keyStore, storePassword == null ? null : storePassword);
+		keyManagerFactory.init(keyStore, storePassword);
 		return keyManagerFactory.getKeyManagers();
 	}
 

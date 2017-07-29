@@ -13,21 +13,21 @@ import java.lang.reflect.Method;
  * 
  * @author Mark Holster
  */
-public class LogLocation implements Serializable {
+class LogLocation implements Serializable {
 
 	private static final long serialVersionUID = 514776389276203707L;
 	private final static String LINE_SEP = System.getProperty("line.separator");
 	private final static int LINE_SEP_LEN = LINE_SEP.length();
 	private final static String NA = "?";
 
-	transient String lineNumber;
-	transient String fileName;
-	transient String className;
-	transient String methodName;
+	private transient String lineNumber;
+	private transient String fileName;
+	private transient String className;
+	private transient String methodName;
 	public String fullInfo;
 
-	private static StringWriter sw = new StringWriter();
-	private static PrintWriter pw = new PrintWriter(sw);
+	private static final StringWriter sw = new StringWriter();
+	private static final PrintWriter pw = new PrintWriter(sw);
 
 	private static Method getStackTraceMethod;
 	private static Method getClassNameMethod;
@@ -36,7 +36,7 @@ public class LogLocation implements Serializable {
 	private static Method getLineNumberMethod;
 
 	// Check if we are running in IBM's visual age.
-	static boolean inVisualAge = false;
+	private static boolean inVisualAge = false;
 
 	static {
 		try {
@@ -44,17 +44,15 @@ public class LogLocation implements Serializable {
 		} catch (Throwable e) {
 		}
 		try {
-			Class<?>[] noArgs = null;
-			getStackTraceMethod = Throwable.class.getMethod("getStackTrace", noArgs);
+			getStackTraceMethod = Throwable.class.getMethod("getStackTrace", null);
 			Class<?> stackTraceElementClass = Class.forName("java.lang.StackTraceElement");
-			getClassNameMethod = stackTraceElementClass.getMethod("getClassName", noArgs);
-			getMethodNameMethod = stackTraceElementClass.getMethod("getMethodName", noArgs);
-			getFileNameMethod = stackTraceElementClass.getMethod("getFileName", noArgs);
-			getLineNumberMethod = stackTraceElementClass.getMethod("getLineNumber", noArgs);
-		} catch (ClassNotFoundException ex) {
-		} catch (NoSuchMethodException ex) {
+			getClassNameMethod = stackTraceElementClass.getMethod("getClassName", null);
+			getMethodNameMethod = stackTraceElementClass.getMethod("getMethodName", null);
+			getFileNameMethod = stackTraceElementClass.getMethod("getFileName", null);
+			getLineNumberMethod = stackTraceElementClass.getMethod("getLineNumber", null);
+		} catch (ClassNotFoundException | NoSuchMethodException ex) {
 		}
-	}
+    }
 
 	/**
 	 * Instantiate location information based on a Throwable. We expect the
@@ -88,51 +86,48 @@ public class LogLocation implements Serializable {
 			return;
 		if (getLineNumberMethod != null) {
 			try {
-				Object[] noArgs = null;
-				Object[] elements = (Object[]) getStackTraceMethod.invoke(t, noArgs);
+				Object[] elements = (Object[]) getStackTraceMethod.invoke(t, null);
 				String prevClass = NA;
 				for (int i = elements.length - 1; i >= 0; i--) {
-					String thisClass = (String) getClassNameMethod.invoke(elements[i], noArgs);
+					String thisClass = (String) getClassNameMethod.invoke(elements[i], null);
 					if (fqnOfCallingClass.equals(thisClass)) {
 						int caller = i + 1;
 						if (caller < elements.length) {
 							className = prevClass;
-							methodName = (String) getMethodNameMethod.invoke(elements[caller], noArgs);
-							fileName = (String) getFileNameMethod.invoke(elements[caller], noArgs);
+							methodName = (String) getMethodNameMethod.invoke(elements[caller], null);
+							fileName = (String) getFileNameMethod.invoke(elements[caller], null);
 							if (fileName == null) {
 								fileName = NA;
 							}
-							int line = ((Integer) getLineNumberMethod.invoke(elements[caller], noArgs)).intValue();
+							int line = (Integer) getLineNumberMethod.invoke(elements[caller], null);
 							if (line < 0) {
 								lineNumber = NA;
 							} else {
 								lineNumber = String.valueOf(line);
 							}
-							StringBuilder buf = new StringBuilder();
-							buf.append(className);
-							buf.append(".");
-							buf.append(methodName);
-							buf.append("(");
-							buf.append(fileName);
-							buf.append(":");
-							buf.append(lineNumber);
-							buf.append(")");
-							this.fullInfo = buf.toString();
+                            String buf = className +
+                                    "." +
+                                    methodName +
+                                    "(" +
+                                    fileName +
+                                    ":" +
+                                    lineNumber +
+                                    ")";
+                            this.fullInfo = buf;
 						}
 						return;
 					}
 					prevClass = thisClass;
 				}
 				return;
-			} catch (IllegalAccessException ex) {
+			} catch (IllegalAccessException | RuntimeException ex) {
 			} catch (InvocationTargetException ex) {
 				if (ex.getTargetException() instanceof InterruptedException
 						|| ex.getTargetException() instanceof InterruptedIOException) {
 					Thread.currentThread().interrupt();
 				}
-			} catch (RuntimeException ex) {
 			}
-		}
+        }
 
 		String s;
 		// Protect against multiple access to sw.
@@ -203,7 +198,7 @@ public class LogLocation implements Serializable {
 	 *            value of NA will be appended.
 	 * @since 1.2.15
 	 */
-	private static final void appendFragment(final StringBuilder buf, final String fragment) {
+	private static void appendFragment(final StringBuilder buf, final String fragment) {
 		if (fragment == null) {
 			buf.append(NA);
 		} else {

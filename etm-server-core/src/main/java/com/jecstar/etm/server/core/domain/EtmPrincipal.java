@@ -27,8 +27,8 @@ public class EtmPrincipal implements Principal, Serializable {
 	private String name = null;
 	private String emailAddress = null;
 	private Locale locale = Locale.getDefault();
-	private Set<EtmPrincipalRole> roles = new HashSet<EtmPrincipalRole>();
-	private Set<EtmGroup> groups = new HashSet<EtmGroup>();
+	private final Set<EtmPrincipalRole> roles = new HashSet<>();
+	private final Set<EtmGroup> groups = new HashSet<>();
 	private TimeZone timeZone = TimeZone.getDefault();
 	private String filterQuery = null;
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;

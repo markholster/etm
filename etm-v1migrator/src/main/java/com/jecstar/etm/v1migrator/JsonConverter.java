@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
-public class JsonConverter {
+class JsonConverter {
 
 	@SuppressWarnings("unchecked")
 	public Map<String, Object> getObject(String tag, Map<String, Object> valueMap) {
@@ -30,7 +30,7 @@ public class JsonConverter {
 		return getBoolean(tag, valueMap, null);
 	}
 
-	public Boolean getBoolean(String tag, Map<String, Object> valueMap, Boolean defaultValue) {
+	private Boolean getBoolean(String tag, Map<String, Object> valueMap, Boolean defaultValue) {
 		if (valueMap.get(tag) != null) {
 			return (Boolean) valueMap.get(tag);
 		}
@@ -41,7 +41,7 @@ public class JsonConverter {
 		return getString(tag, valueMap, null);
 	}
 
-	public String getString(String tag, Map<String, Object> valueMap, String defaultValue) {
+	private String getString(String tag, Map<String, Object> valueMap, String defaultValue) {
 		if (valueMap.get(tag) != null) {
 			return valueMap.get(tag).toString();
 		}
@@ -52,9 +52,9 @@ public class JsonConverter {
 		return getInteger(tag, valueMap, null);
 	}
 
-	public Integer getInteger(String tag, Map<String, Object> valueMap, Integer defaultValue) {
+	private Integer getInteger(String tag, Map<String, Object> valueMap, Integer defaultValue) {
 		if (valueMap.get(tag) != null) {
-			return Integer.valueOf(((Number) valueMap.get(tag)).intValue());
+			return ((Number) valueMap.get(tag)).intValue();
 		}
 		return defaultValue;
 	}
@@ -63,9 +63,9 @@ public class JsonConverter {
 		return getLong(tag, valueMap, null);
 	}
 
-	public Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
+	private Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
 		if (valueMap.get(tag) != null) {
-			return Long.valueOf(((Number) valueMap.get(tag)).longValue());
+			return ((Number) valueMap.get(tag)).longValue();
 		}
 		return defaultValue;
 	}
@@ -74,9 +74,9 @@ public class JsonConverter {
 		return getDouble(tag, valueMap, null);
 	}
 
-	public Double getDouble(String tag, Map<String, Object> valueMap, Double defaultValue) {
+	private Double getDouble(String tag, Map<String, Object> valueMap, Double defaultValue) {
 		if (valueMap.get(tag) != null) {
-			return Double.valueOf(((Number) valueMap.get(tag)).doubleValue());
+			return ((Number) valueMap.get(tag)).doubleValue();
 		}
 		return defaultValue;
 	}
@@ -103,7 +103,7 @@ public class JsonConverter {
 			return valueMap.get(tag + "_as_boolean");
 		}
 		if (valueMap.containsKey(tag + "_as_date")) {
-			return new Date(((Long) valueMap.get(tag + "_as_date")).longValue());
+			return new Date((Long) valueMap.get(tag + "_as_date"));
 		}
 		if (valueMap.containsKey(tag)) {
 			return valueMap.get(tag);

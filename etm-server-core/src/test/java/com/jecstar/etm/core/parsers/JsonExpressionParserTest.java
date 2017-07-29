@@ -13,7 +13,7 @@ import com.jecstar.etm.server.core.parsers.JsonPathExpressionParser;
  */
 public class JsonExpressionParserTest {
 
-	final String json = "{ \"store\": {\n" + 
+	private final String json = "{ \"store\": {\n" +
 			"    \"book\": [ \n" + 
 			"      { \"category\": \"reference\",\n" + 
 			"        \"author\": \"Nigel Rees\",\n" + 

@@ -6,7 +6,7 @@ import java.util.List;
 public class IbmMq {
 
 	public boolean enabled = false;
-	public List<QueueManager> queueManagers = new ArrayList<>();
+	public final List<QueueManager> queueManagers = new ArrayList<>();
 	
 	public int getTotalNumberOfListeners() {
 		if (this.queueManagers == null) {
@@ -15,7 +15,7 @@ public class IbmMq {
 		int total = 0;
 		for (QueueManager queueManager : this.queueManagers) {
 			if (queueManager.getDestinations() != null) {
-				total += queueManager.getDestinations().stream().mapToInt(d -> d.getNrOfListeners()).sum(); 
+				total += queueManager.getDestinations().stream().mapToInt(Destination::getNrOfListeners).sum();
 			}
 		}
 		return total;

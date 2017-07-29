@@ -62,7 +62,7 @@ public class Directory implements AutoCloseable {
 	
 	private static final Duration CONNECTION_TIMEOUT = Duration.ofMillis(2500);
 	
-	private final Pattern attributePattern = Pattern.compile("\\{(.*?)\\}");
+	private final Pattern attributePattern = Pattern.compile("\\{(.*?)}");
 	private LdapConfiguration ldapConfiguration;
 	private AbstractConnectionPool connectionPool;
 	private ConnectionFactory connectionFactory;
@@ -78,7 +78,6 @@ public class Directory implements AutoCloseable {
 		this.connectionPool.close();
 		this.connectionPool = null;
 		this.connectionFactory = null;
-		return;
 	}
 	
 	public void test() {
@@ -189,13 +188,7 @@ public class Directory implements AutoCloseable {
 		}
 		// Jikes, dunno how to query based on DN.
 		Set<EtmGroup> groups = getGroups();
-		Iterator<EtmGroup> groupIterator = groups.iterator();
-		while (groupIterator.hasNext()) {
-			EtmGroup etmGroup = groupIterator.next();
-			if (!groupDn.equals(etmGroup.getName())) {
-				groupIterator.remove();
-			}
-		}
+		groups.removeIf(etmGroup -> !groupDn.equals(etmGroup.getName()));
 		if (groups.size() != 1) {
 			// TODO logging
 			return null;		
@@ -285,7 +278,7 @@ public class Directory implements AutoCloseable {
 			this.connectionFactory = new PooledConnectionFactory(this.connectionPool);
 			return true;
 		} catch (Exception e) {
-			if (this.connectionPool.isInitialized()) {
+			if (this.connectionPool != null && this.connectionPool.isInitialized()) {
 				this.connectionPool.close();
 			}
 			this.connectionPool = null;
@@ -306,9 +299,8 @@ public class Directory implements AutoCloseable {
 			ConnectionConfig connectionConfig = createConnectionConfig(ldapConfiguration);
 			AbstractConnectionPool newConnectionPool = createConnectionPool(ldapConfiguration.getMinPoolSize(), ldapConfiguration.getMaxPoolSize(), ldapConfiguration, connectionConfig);
 			newConnectionPool.initialize();
-			ConnectionFactory newConnectionFactory = new PooledConnectionFactory(newConnectionPool);
-			
-			this.connectionFactory = newConnectionFactory;
+
+			this.connectionFactory = new PooledConnectionFactory(newConnectionPool);
 			this.ldapConfiguration = ldapConfiguration;
 			this.connectionPool = newConnectionPool;
 			
@@ -448,11 +440,11 @@ public class Directory implements AutoCloseable {
 	}
 	
 	private String getGroupFilter(LdapConfiguration ldapConfiguration, String groupName) {
-		return this.ldapConfiguration.getGroupSearchFilter().replaceAll("\\{group\\}", groupName);
+		return this.ldapConfiguration.getGroupSearchFilter().replaceAll("\\{group}", groupName);
 	}
 	
 	private String getSearchFilter(LdapConfiguration ldapConfiguration, String userName) {
-		return this.ldapConfiguration.getUserSearchFilter().replaceAll("\\{user\\}", userName);
+		return this.ldapConfiguration.getUserSearchFilter().replaceAll("\\{user}", userName);
 	}
 
 	public synchronized void merge(LdapConfiguration ldapConfiguration) {

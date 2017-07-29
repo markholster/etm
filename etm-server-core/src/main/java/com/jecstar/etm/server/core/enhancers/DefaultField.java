@@ -25,11 +25,11 @@ public class DefaultField {
 	};
 
 
-	private String name;
+	private final String name;
 	
 	private WritePolicy writePolicy = WritePolicy.WHEN_EMPTY;
 	
-	private List<ExpressionParser> parsers = new ArrayList<>();
+	private final List<ExpressionParser> parsers = new ArrayList<>();
 	
 	public DefaultField(String name) {
 		this.name = name;

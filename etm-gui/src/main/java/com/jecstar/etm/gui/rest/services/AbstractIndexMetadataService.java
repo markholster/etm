@@ -30,20 +30,16 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 	 * @return
 	 */
 	protected Map<String, List<Keyword>> getIndexFields(Client client, String indexName) {
-		Map<String, List<Keyword>> names = new HashMap<String, List<Keyword>>();
+		Map<String, List<Keyword>> names = new HashMap<>();
 		GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(client, GetMappingsAction.INSTANCE, indexName).get();
 		ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
-		Iterator<ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>>> mappingsIterator = mappings.iterator();
-		while (mappingsIterator.hasNext()) {
-			ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor = mappingsIterator.next();
-			Iterator<ObjectObjectCursor<String, MappingMetaData>> mappingMetaDataIterator = mappingsCursor.value.iterator();
-			while (mappingMetaDataIterator.hasNext()) {
-				ObjectObjectCursor<String, MappingMetaData> mappingMetadataCursor = mappingMetaDataIterator.next();
+		for (ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor : mappings) {
+			for (ObjectObjectCursor<String, MappingMetaData> mappingMetadataCursor : mappingsCursor.value) {
 				if ("_default_".equals(mappingMetadataCursor.key)) {
 					continue;
 				}
 				MappingMetaData mappingMetaData = mappingMetadataCursor.value;
-				List<Keyword> foundKeywords = new ArrayList<Keyword>();
+				List<Keyword> foundKeywords = new ArrayList<>();
 				foundKeywords.add(Keyword.EXISTS);
 				foundKeywords.add(Keyword.MISSING);
 				foundKeywords.add(Keyword.TYPE);
@@ -61,10 +57,10 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 						names.put(mappingMetadataCursor.key, foundKeywords);
 					}
 				} catch (IOException e) {
-					// Error will never been thrown. See mappingMetaData.getSourceAsMap() sources for detailes.
+					// Error will never been thrown. See mappingMetaData.getSourceAsMap() sources for details.
 				}
 			}
-			
+
 		}
 		return names;
 	}

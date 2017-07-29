@@ -30,7 +30,7 @@ public class RestGuiApplication extends Application {
 
 	@Override
 	public Set<Class<?>> getClasses() {
-		HashSet<Class<?>> classes = new HashSet<Class<?>>();
+		HashSet<Class<?>> classes = new HashSet<>();
 		classes.add(SearchService.class);
 		classes.add(UserService.class);
 		classes.add(SettingsService.class);

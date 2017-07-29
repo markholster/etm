@@ -11,29 +11,29 @@ import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
-public class SearchRequestParameters {
+class SearchRequestParameters {
 	
 	private static final Integer DEFAULT_START_IX = 0;
 	private static final Integer DEFAULT_MAX_SIZE = 50;
 	
 	private final JsonConverter converter = new JsonConverter();
-	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
-	
-	private String queryString;
-	private Integer startIndex;
-	private Integer maxResults;
-	private String sortField;
-	private String sortOrder;
+
+	private final String queryString;
+	private final Integer startIndex;
+	private final Integer maxResults;
+	private final String sortField;
+	private final String sortOrder;
 	private Long notAfterTimestamp;
-	private List<String> types;
+	private final List<String> types;
 	private List<String> fields;
-	private List<Map<String, Object>> fieldsLayout;
+	private final List<Map<String, Object>> fieldsLayout;
 
 	public SearchRequestParameters(String query) {
 		this.queryString = query;
 		this.startIndex = 0;
 		this.maxResults = 50;
-		this.sortField = this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag();
+		TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
+		this.sortField = tags.getEndpointsTag() + "." + tags.getWritingEndpointHandlerTag() + "." + tags.getEndpointHandlerHandlingTimeTag();
 		this.sortOrder = "desc";
 		this.types = new ArrayList<>(5);
 		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_BUSINESS);
@@ -42,19 +42,19 @@ public class SearchRequestParameters {
 		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING);
 		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_SQL);
 		this.fields = new ArrayList<>(2);
-		this.fields.add(this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag());
-		this.fields.add(this.tags.getNameTag());
+		this.fields.add(tags.getEndpointsTag() + "." + tags.getWritingEndpointHandlerTag() + "." + tags.getEndpointHandlerHandlingTimeTag());
+		this.fields.add(tags.getNameTag());
 		this.fieldsLayout = new ArrayList<>();
 		Map<String, Object> layout = new HashMap<>();
 		layout.put("array", "lowest");
-		layout.put("field", this.tags.getEndpointsTag() + "." + this.tags.getWritingEndpointHandlerTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag());
+		layout.put("field", tags.getEndpointsTag() + "." + tags.getWritingEndpointHandlerTag() + "." + tags.getEndpointHandlerHandlingTimeTag());
 		layout.put("format", "isotimestamp");
 		layout.put("link", true);
 		layout.put("name", "Timestamp");
 		this.fieldsLayout.add(layout);
 		layout = new HashMap<>();
 		layout.put("array", "first");
-		layout.put("field", this.tags.getNameTag());
+		layout.put("field", tags.getNameTag());
 		layout.put("format", "plain");
 		layout.put("link", false);
 		layout.put("name", "Name");
@@ -71,7 +71,7 @@ public class SearchRequestParameters {
 		this.types = this.converter.getArray("types", requestValues);
 		this.fields = this.converter.getArray("fields", requestValues);
 		if (this.fields == null) {
-			this.fields = new ArrayList<String>(2);
+			this.fields = new ArrayList<>(2);
 		}
 		this.notAfterTimestamp = this.converter.getLong("timestamp", requestValues);
 		if (this.notAfterTimestamp == null) {

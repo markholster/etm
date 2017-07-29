@@ -19,13 +19,13 @@ public class MultiBucketResult {
 	public enum SortOrder {ASC, DESC}
 	
 	private boolean addMissingKeys = false;
-	private Map<String, Map<AggregationKey, AggregationValue<?>>> values = new HashMap<>();
+	private final Map<String, Map<AggregationKey, AggregationValue<?>>> values = new HashMap<>();
 	private SortOrder sortOrder = SortOrder.ASC;
-	private Set<AggregationKey> keys = new HashSet<>();
+	private final Set<AggregationKey> keys = new HashSet<>();
 	
 	public void addValueToSerie(String seriesName, AggregationKey key, AggregationValue<?> value) {
 		if (!this.values.containsKey(seriesName)) {
-			this.values.put(seriesName, new HashMap<AggregationKey, AggregationValue<?>>());
+			this.values.put(seriesName, new HashMap<>());
 		}
 		Map<AggregationKey, AggregationValue<?>> map = this.values.get(seriesName);
 		map.put(key, value);
@@ -84,7 +84,7 @@ public class MultiBucketResult {
 				firstItem = false;
 			}
 			buffer.append("]");
-			buffer.append(", \"max_label_length\": " + labelLength);
+			buffer.append(", \"max_label_length\": ").append(labelLength);
 			buffer.append("}");
 			firstSerie = false;
 		}

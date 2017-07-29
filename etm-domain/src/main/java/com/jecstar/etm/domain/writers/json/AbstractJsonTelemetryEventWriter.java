@@ -22,7 +22,7 @@ import com.jecstar.etm.domain.writers.TelemetryEventTags;
 public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEvent<Event>> implements TelemetryEventWriter<String, Event> {
 	
 	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
-	protected final JsonWriter jsonWriter = new JsonWriter();
+	final JsonWriter jsonWriter = new JsonWriter();
 
 	@Override
 	public String write(Event event) {
@@ -32,9 +32,8 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 	@Override
 	public String write(Event event, boolean forUpdate) {
 		final StringBuilder sb = new StringBuilder();
-		boolean added = false;
 		sb.append("{");
-		added = this.jsonWriter.addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), sb, !added) || added;
+		boolean added = this.jsonWriter.addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), sb, true);
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
@@ -42,10 +41,10 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				sb.append(", ");
 			}
-			sb.append(this.jsonWriter.escapeToJson(getTags().getEndpointsTag(), true)  + ": [");
+			sb.append(this.jsonWriter.escapeToJson(getTags().getEndpointsTag(), true)).append(": [");
 			boolean endpointAdded = false;
 			for (int i = 0; i < event.endpoints.size(); i++) {
-				endpointAdded = addEndpointToJsonBuffer(event.endpoints.get(i), sb, i == 0 ? true : !endpointAdded, getTags(), forUpdate) || endpointAdded;
+				endpointAdded = addEndpointToJsonBuffer(event.endpoints.get(i), sb, i == 0 || !endpointAdded, getTags(), forUpdate) || endpointAdded;
 			}
 			sb.append("]");			
 			added = endpointAdded || added;
@@ -54,7 +53,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				sb.append(", ");
 			}
-			sb.append(this.jsonWriter.escapeToJson(getTags().getEventHashesTag(), true) + ": [");
+			sb.append(this.jsonWriter.escapeToJson(getTags().getEventHashesTag(), true)).append(": [");
 			sb.append(event.getCalculatedHash());
 			sb.append("]");
 			added = true;
@@ -76,14 +75,14 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 	
 	abstract boolean doWrite(Event event, StringBuilder buffer, boolean firstElement);
 	
-	protected boolean addMapElementToJsonBuffer(String elementName, Map<String, Object> elementValues, StringBuilder buffer, boolean firstElement) {
+	private boolean addMapElementToJsonBuffer(String elementName, Map<String, Object> elementValues, StringBuilder buffer, boolean firstElement) {
 		if (elementValues.size() < 1) {
 			return false;
 		}
 		if (!firstElement) {
 			buffer.append(", ");
 		}
-		buffer.append(this.jsonWriter.escapeToJson(elementName, true) + ": {");
+		buffer.append(this.jsonWriter.escapeToJson(elementName, true)).append(": {");
 		firstElement = true;
 		for (Entry<String, Object> entry : elementValues.entrySet()) {
 			if (!firstElement) {
@@ -117,10 +116,10 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append(this.jsonWriter.escapeToJson(getTags().getReadingEndpointHandlersTag(), true) + ": [");
+			buffer.append(this.jsonWriter.escapeToJson(getTags().getReadingEndpointHandlersTag(), true)).append(": [");
 			added = false;
 			for (int i = 0; i < endpoint.readingEndpointHandlers.size(); i++) {
-				added = addEndpointHandlerToJsonBuffer(endpoint.writingEndpointHandler.handlingTime, endpoint.readingEndpointHandlers.get(i), buffer, i == 0 ? true : !added, getTags(), forUpdate) || added;
+				added = addEndpointHandlerToJsonBuffer(endpoint.writingEndpointHandler.handlingTime, endpoint.readingEndpointHandlers.get(i), buffer, i == 0 || !added, getTags(), forUpdate) || added;
 			}
 			buffer.append("]");
 			added = true;
@@ -129,7 +128,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append(this.jsonWriter.escapeToJson(this.tags.getWritingEndpointHandlerTag(), true) + ": ");
+			buffer.append(this.jsonWriter.escapeToJson(this.tags.getWritingEndpointHandlerTag(), true)).append(": ");
 			added = addEndpointHandlerToJsonBuffer(null, endpoint.writingEndpointHandler, buffer, true, this.tags, forUpdate) || added;
 		}
 		buffer.append("}");
@@ -160,7 +159,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerApplicationTag(), true) + ": {");
+			buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerApplicationTag(), true)).append(": {");
 			added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationNameTag(), application.name, buffer, true);
 			added = this.jsonWriter.addInetAddressElementToJsonBuffer(tags.getApplicationHostAddressTag(), tags.getApplicationHostNameTag(), application.hostAddress, buffer, !added) || added;
 			added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationInstanceTag(), application.instance, buffer, !added) || added;
@@ -173,7 +172,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			if (added) {
 				buffer.append(", ");
 			}
-			buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerLocationTag(), true) + ": {");
+			buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerLocationTag(), true)).append(": {");
 			added = this.jsonWriter.addDoubleElementToJsonBuffer(tags.getLatitudeTag(), location.latitude, buffer, true);
 			added = this.jsonWriter.addDoubleElementToJsonBuffer(tags.getLongitudeTag(), location.longitude, buffer, !added) || added;
 			buffer.append("}");			

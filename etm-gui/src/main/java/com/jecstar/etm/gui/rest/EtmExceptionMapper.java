@@ -91,7 +91,7 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 	}
 
 	private String getRootCauseMessage(Throwable ex) {
-		List<Throwable> stack = new ArrayList<Throwable>();
+		List<Throwable> stack = new ArrayList<>();
 		return getRootCauseMessage(ex, stack);
 	}
 

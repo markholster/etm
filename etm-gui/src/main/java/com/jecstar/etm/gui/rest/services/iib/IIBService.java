@@ -51,8 +51,8 @@ public class IIBService extends AbstractJsonService {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(IIBService.class);
 	
-	public static final String MONITORING_PROFILES = "MonitoringProfiles";
-	public static final String PROFILE_PROPERTIES = "profileProperties";
+	private static final String MONITORING_PROFILES = "MonitoringProfiles";
+	private static final String PROFILE_PROPERTIES = "profileProperties";
 	
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
@@ -156,7 +156,7 @@ public class IIBService extends AbstractJsonService {
 			return null;
 		}
 		Node node = this.nodeConverter.read(getResponse.getSourceAsString());
-		String result = null;
+		String result;
 		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
 			nodeConnection.connect();
 			nodeConnection.setSynchronous(240000);
@@ -414,12 +414,12 @@ public class IIBService extends AbstractJsonService {
 		}
 		StringBuilder configurableServiceName = new StringBuilder("etm-" + nodeConnection.getNode().getName() + "_" + integrationServer.getName());
 		if (application != null) {
-			configurableServiceName.append("_" + application);
+			configurableServiceName.append("_").append(application);
 		}
 		if (library != null) {
-			configurableServiceName.append("_" + library);
+			configurableServiceName.append("_").append(library);
 		}
-		configurableServiceName.append("_" + flow.getName());
+		configurableServiceName.append("_").append(flow.getName());
 		ConfigurableService configurableService = nodeConnection.getConfigurableService(MONITORING_PROFILES, configurableServiceName.toString());
 		if (configurableService == null) {
 			nodeConnection.createConfigurableService(MONITORING_PROFILES, configurableServiceName.toString()); 
@@ -464,11 +464,8 @@ public class IIBService extends AbstractJsonService {
 		return builder.build();		
 	}
 
-	public boolean isMonitoringSetInProfile(String profile, String nodeName) {
-		if (profile == null) {
-			return false;
-		}
-		return profile.indexOf("profile:eventSourceAddress=\"" + nodeName + ".") >= 0;
+	private boolean isMonitoringSetInProfile(String profile, String nodeName) {
+		return profile != null && profile.indexOf("profile:eventSourceAddress=\"" + nodeName + ".") >= 0;
 	}
 	
 	private IIBNodeConnection createIIBConnectionInstance(Node node) {

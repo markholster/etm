@@ -6,7 +6,7 @@ import javax.xml.transform.TransformerException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class XmlErrorListener implements ErrorListener {
+class XmlErrorListener implements ErrorListener {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.

@@ -10,13 +10,9 @@ class EventChainEvent {
 	private final String eventType;
 	private String correlationId;
 	
-	private List<EventChainEndpoint> endpoints = new ArrayList<>();
+	private final List<EventChainEndpoint> endpoints = new ArrayList<>();
 	
-	private Comparator<EventChainEndpoint> handlingTimeComparator = new Comparator<EventChainEndpoint>(){
-		@Override
-		public int compare(EventChainEndpoint o1, EventChainEndpoint o2) {
-			return Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime());
-		}};
+	private final Comparator<EventChainEndpoint> handlingTimeComparator = (o1, o2) -> Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime());
 
 	EventChainEvent(String eventId, String eventType) {
 		this.eventId = eventId;

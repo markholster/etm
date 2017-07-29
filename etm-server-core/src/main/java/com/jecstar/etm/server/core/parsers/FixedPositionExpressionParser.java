@@ -2,9 +2,9 @@ package com.jecstar.etm.server.core.parsers;
 
 public class FixedPositionExpressionParser extends AbstractExpressionParser {
 	
-	private Integer startIx;
-	private Integer endIx;
-	private Integer line;
+	private final Integer startIx;
+	private final Integer endIx;
+	private final Integer line;
 	
 	public FixedPositionExpressionParser(final String name, final Integer line, final Integer startIx, final Integer endIx) {
 		super(name);
@@ -18,7 +18,7 @@ public class FixedPositionExpressionParser extends AbstractExpressionParser {
 		if (content == null) {
 			return null;
 		}
-		String line = null;
+		String line;
 		if (this.line != null) {
 			String lines[] = content.split("\n");
 			if (lines.length <= this.line) {

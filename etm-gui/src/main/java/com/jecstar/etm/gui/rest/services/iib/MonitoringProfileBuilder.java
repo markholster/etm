@@ -3,7 +3,7 @@ package com.jecstar.etm.gui.rest.services.iib;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MonitoringProfileBuilder {
+class MonitoringProfileBuilder {
 	
 	private static final String CORRELATION_PLACEHOLDER = "<applicationData>";
 	
@@ -76,7 +76,7 @@ public class MonitoringProfileBuilder {
 			"		<profile:bitstreamDataQuery profile:bitstreamContent=\"all\" profile:encoding=\"base64Binary\" />\r\n" + 
 			"	</profile:eventSource>";	
 	
-	private List<Node> nodes = new ArrayList<>();
+	private final List<Node> nodes = new ArrayList<>();
 
 	
 	public void addNode(String name, String nodeType, String containerName, String containerVersion) {
@@ -125,10 +125,10 @@ public class MonitoringProfileBuilder {
 	
 	private class Node {
 		
-		private String name;
-		private String nodeType;
-		private String containerName;
-		private String containerVersion;
+		private final String name;
+		private final String nodeType;
+		private final String containerName;
+		private final String containerVersion;
 		
 		private Node(String name, String nodeType, String containerName, String containerVersion) {
 			this.name = name;

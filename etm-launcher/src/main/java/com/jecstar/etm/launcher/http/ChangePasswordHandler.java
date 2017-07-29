@@ -9,10 +9,10 @@ import io.undertow.util.Headers;
 import io.undertow.util.Methods;
 import io.undertow.util.StatusCodes;
 
-public class ChangePasswordHandler implements HttpHandler {
+class ChangePasswordHandler implements HttpHandler {
 
-	private HttpHandler next;
-	private String contextRoot;
+	private final HttpHandler next;
+	private final String contextRoot;
 	
 	public ChangePasswordHandler(final String contextRoot, final HttpHandler next) {
 		this.next = next;

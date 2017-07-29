@@ -40,7 +40,7 @@ import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class Launcher {
+class Launcher {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -105,41 +105,38 @@ public class Launcher {
 	}
 
 	private void addShutdownHooks(Configuration configuration) {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
-				}
-				if (Launcher.this.indexTemplateCreator != null) {
-					try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.backgroundScheduler != null) {
-					try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.ibmMqProcessor != null) {
-					try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.httpServer != null) {
-					try { Launcher.this.httpServer.stop(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.processor != null) {
-					try { Launcher.this.processor.stopAll(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.metricReporter != null) {
-					try { Launcher.this.metricReporter.close(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.bulkProcessorWrapper != null) {
-					try { 
-						BusinessEventLogger.logEtmShutdown();
-						Launcher.this.bulkProcessorWrapper.close(); 
-					} catch (Throwable t) {}
-				}
-				if (Launcher.this.elasticClient != null) {
-					try { Launcher.this.elasticClient.close(); } catch (Throwable t) {}
-				}
-			}
-		});
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (log.isInfoLevelEnabled()) {
+                log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
+            }
+            if (Launcher.this.indexTemplateCreator != null) {
+                try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.backgroundScheduler != null) {
+                try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.ibmMqProcessor != null) {
+                try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.httpServer != null) {
+                try { Launcher.this.httpServer.stop(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.processor != null) {
+                try { Launcher.this.processor.stopAll(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.metricReporter != null) {
+                try { Launcher.this.metricReporter.close(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.bulkProcessorWrapper != null) {
+                try {
+                    BusinessEventLogger.logEtmShutdown();
+                    Launcher.this.bulkProcessorWrapper.close();
+                } catch (Throwable t) {}
+            }
+            if (Launcher.this.elasticClient != null) {
+                try { Launcher.this.elasticClient.close(); } catch (Throwable t) {}
+            }
+        }));
 	}
 	
 	
@@ -172,7 +169,7 @@ public class Launcher {
 		Builder settingsBuilder = Settings.builder()
 			.put("cluster.name", configuration.elasticsearch.clusterName)
 			.put("client.transport.sniff", true);
-		TransportClient transportClient = null;
+		TransportClient transportClient;
 		if (configuration.elasticsearch.username != null && configuration.elasticsearch.password != null) {
 			settingsBuilder.put("xpack.security.user", configuration.elasticsearch.username + ":" + configuration.elasticsearch.password);
 			if (configuration.elasticsearch.sslKeyLocation != null) {

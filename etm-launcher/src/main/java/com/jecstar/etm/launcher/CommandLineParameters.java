@@ -5,7 +5,7 @@ import org.yaml.snakeyaml.Yaml;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.server.core.util.BCrypt;
 
-public class CommandLineParameters {
+class CommandLineParameters {
 
 	private static final String PARAM_CONFIG_DIRECTORY = "--config-dir=";
 	private static final String PARAM_CREATE_PASSWORD = "--create-passwordhash=";

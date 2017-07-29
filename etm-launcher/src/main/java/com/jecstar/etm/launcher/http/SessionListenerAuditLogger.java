@@ -23,7 +23,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionListener;
 
-public class SessionListenerAuditLogger implements SessionListener {
+class SessionListenerAuditLogger implements SessionListener {
 
 	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 

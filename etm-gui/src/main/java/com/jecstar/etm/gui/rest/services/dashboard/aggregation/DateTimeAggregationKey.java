@@ -16,7 +16,7 @@ public class DateTimeAggregationKey implements AggregationKey {
 	public int compareTo(AggregationKey o) {
 		if (o instanceof DateTimeAggregationKey) {
 			DateTimeAggregationKey other = (DateTimeAggregationKey) o;
-			return (this.epochtime < other.epochtime) ? -1 : ((this.epochtime == other.epochtime) ? 0 : 1);
+			return Long.compare(this.epochtime, other.epochtime);
 		}
 		return 0;
 	}

@@ -1,6 +1,6 @@
 package com.jecstar.etm.processor;
 
-public class NoSuchEventException extends RuntimeException {
+class NoSuchEventException extends RuntimeException {
 
 	private static final long serialVersionUID = -5013113610442814312L;
 	

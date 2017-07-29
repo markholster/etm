@@ -35,7 +35,7 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
 		if (String.class.getName().equals(type)) {
 			return getString(this.tags.getAttributeValueTag(), attribute);
 		} else if (Boolean.class.getName().equals(type)) {
-			return new Boolean(getString(this.tags.getAttributeValueTag(), attribute));
+			return Boolean.valueOf(getString(this.tags.getAttributeValueTag(), attribute));
 		}
 		return deserializeAttribute(getString(this.tags.getAttributeValueTag(), attribute));
 	}
@@ -45,7 +45,7 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		addLongElementToJsonBuffer(this.tags.getLastAccessedTag(), session.getLastAccessedTime(), sb, true);
-		sb.append(", " + escapeToJson(this.tags.getAttributesTag(), true) + ": [");
+		sb.append(", ").append(escapeToJson(this.tags.getAttributesTag(), true)).append(": [");
 		Set<String> attributeNames = session.getAttributeNames();
 		boolean first = true;
 		for (String name : attributeNames) {

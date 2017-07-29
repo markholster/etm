@@ -43,7 +43,7 @@ public class HttpSessionCleaner implements Runnable {
 			SearchRequestBuilder searchRequestBuilder = this.client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME).setTypes(ElasticsearchLayout.STATE_INDEX_TYPE_SESSION)
 				.setFetchSource(false)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.setQuery(QueryBuilders.rangeQuery(this.tags.getLastAccessedTag()).lt(System.currentTimeMillis() - this.etmConfiguration.getSessionTimeout()).from(0l));
+				.setQuery(QueryBuilders.rangeQuery(this.tags.getLastAccessedTag()).lt(System.currentTimeMillis() - this.etmConfiguration.getSessionTimeout()).from(0L));
 			ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
 			if (!scrollableSearch.hasNext()) {
 				return;

@@ -45,7 +45,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 	private EtmConfiguration etmConfiguration;
 	private DisruptorEnvironment disruptorEnvironment;
 	private PersistenceEnvironment persistenceEnvironment;
-	private MetricRegistry metricRegistry;
+	private final MetricRegistry metricRegistry;
 	private Timer offerTimer;
 	
 	private boolean licenseExpiredLogged = false;
@@ -68,11 +68,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		this.offerTimer = this.metricRegistry.timer("event-processor.offering");
 		this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, this.threadFactory, this.persistenceEnvironment, this.metricRegistry);
 		this.ringBuffer = this.disruptorEnvironment.start();
-		this.metricRegistry.register("event-processor.ringbuffer-capacity", new Gauge<Long>() {
-			@Override
-			public Long getValue() {
-				return TelemetryCommandProcessor.this.ringBuffer.remainingCapacity();
-			}});
+		this.metricRegistry.register("event-processor.ringbuffer-capacity", (Gauge<Long>) () -> TelemetryCommandProcessor.this.ringBuffer.remainingCapacity());
 		this.metricRegistry.registerAll(new GarbageCollectorMetricSet());
 		this.metricRegistry.registerAll(new MemoryUsageMetricSet());
 		this.metricRegistry.registerAll(new OperatingSystemMetricSet());
@@ -81,7 +77,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		}
 	}
 	
-	public void hotRestart() {
+	private void hotRestart() {
 		if (!this.started) {
 			throw new IllegalStateException();
 		}
@@ -137,8 +133,10 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to initialize sql event with id '" + event.id + "'.", e);
-			}		
-			target.initializeToNoop();
+			}
+			if (target != null) {
+				target.initializeToNoop();
+			}
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -163,8 +161,10 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to initialize http event with id '" + event.id + "'.", e);
-			}			
-			target.initializeToNoop();
+			}
+			if (target != null) {
+				target.initializeToNoop();
+			}
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -186,8 +186,10 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to initialize log event with id '" + event.id + "'.", e);
-			}		
-			target.initializeToNoop();
+			}
+			if (target != null) {
+				target.initializeToNoop();
+			}
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -212,8 +214,10 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to initialize messaging event with id '" + event.id + "'.", e);
-			}	
-			target.initializeToNoop();
+			}
+			if (target != null) {
+				target.initializeToNoop();
+			}
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -239,7 +243,9 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to initialize business event with id '" + event.id + "'.", e);
 			}
-			target.initializeToNoop();
+			if (target != null) {
+				target.initializeToNoop();
+			}
 		} finally {
 			this.ringBuffer.publish(sequence);
 			timerContext.stop();
@@ -254,10 +260,7 @@ public class TelemetryCommandProcessor implements ConfigurationChangeListener {
 		if (!this.started) {
 			return false;
 		}
-		if (this.etmConfiguration.isLicenseExpired()) {
-			return false;
-		}
-		return true;
+		return !this.etmConfiguration.isLicenseExpired();
 	}
 	
 	private void preProcess() {

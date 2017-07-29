@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 public interface MetricConverterTags {
 	
-	public enum RateType {EVENTS, CALLS};
+	enum RateType {EVENTS, CALLS};
 
 	String getTimestampTag();
 

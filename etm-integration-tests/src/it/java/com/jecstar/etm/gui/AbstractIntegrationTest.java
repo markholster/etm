@@ -67,7 +67,7 @@ public abstract class AbstractIntegrationTest {
 	protected void waitForHide(String elementId) {
 		waitFor(ExpectedConditions.invisibilityOfElementLocated(By.id(elementId)));
 	}
-	
+
 	protected WebElement findById(String id) {
 		return this.driver.findElement(By.id(id));
 	}

@@ -22,11 +22,10 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 	@Override
 	public String write(EtmConfiguration nodeConfiguration, EtmConfiguration defaultConfiguration) {
 		final StringBuilder sb = new StringBuilder();
-		boolean added = false;
 		sb.append("{");
 		if (nodeConfiguration == null) {
 			// only add the defaults.
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, !added) || added;
+			boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, true);
 			added = this.converter.addLongElementToJsonBuffer(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -49,7 +48,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addLongElementToJsonBuffer(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
 		} else {
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, !added) || added;
+			boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, true);
 			added = addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -137,25 +136,16 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 	}
 	
 	private boolean addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, StringBuilder buffer, boolean firstElement) {
-		if (defaultValue == specificValue) {
-			return false;
-		}
-		return this.converter.addIntegerElementToJsonBuffer(tag, specificValue, buffer, firstElement);
-	}
+        return defaultValue != specificValue && this.converter.addIntegerElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+    }
 	
 	private boolean addLongWhenNotDefault(String tag, long defaultValue, long specificValue, StringBuilder buffer, boolean firstElement) {
-		if (defaultValue == specificValue) {
-			return false;
-		}
-		return this.converter.addLongElementToJsonBuffer(tag, specificValue, buffer, firstElement);
-	}
+        return defaultValue != specificValue && this.converter.addLongElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+    }
 	
 	private boolean addStringWhenNotDefault(String tag, String defaultValue, String specificValue, StringBuilder buffer, boolean firstElement) {
-		if (defaultValue.equals(specificValue)) {
-			return false;
-		}
-		return this.converter.addStringElementToJsonBuffer(tag, specificValue, buffer, firstElement);
-	}
+        return !defaultValue.equals(specificValue) && this.converter.addStringElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+    }
 
 	@Override
 	public EtmConfigurationTags getTags() {

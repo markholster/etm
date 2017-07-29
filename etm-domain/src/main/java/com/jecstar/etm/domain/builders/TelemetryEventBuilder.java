@@ -9,9 +9,9 @@ import com.jecstar.etm.domain.TelemetryEvent;
 
 public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>, Builder extends TelemetryEventBuilder<Event, Builder>> {
 	
-	protected Event event;
+	final Event event;
 
-	protected TelemetryEventBuilder(Event event) {
+	TelemetryEventBuilder(Event event) {
 		this.event = event;
 	}
 
@@ -68,7 +68,7 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
 	}
 
 	@SuppressWarnings("unchecked")
-	public Builder addOrMergeEndpoint(Endpoint endpoint) {
+    private Builder addOrMergeEndpoint(Endpoint endpoint) {
 		int ix = this.event.endpoints.indexOf(endpoint);
 		if (ix == -1) {
 			this.event.endpoints.add(endpoint);

@@ -59,14 +59,13 @@ public class HttpServer {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(HttpServer.class);
 
-	private Configuration configuration;
-	private Undertow server;
-	private GracefulShutdownHandler shutdownHandler;
+    private final Undertow server;
+	private final GracefulShutdownHandler shutdownHandler;
 	private boolean started;
 	private final SessionManagerFactory sessionManagerFactory;
 
 	public HttpServer(final IdentityManager identityManager, Configuration configuration, EtmConfiguration etmConfiguration, TelemetryCommandProcessor processor, Client client) {;
-		this.configuration = configuration;
+        Configuration configuration1 = configuration;
 		this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
 		final PathHandler root = Handlers.path();
 		this.shutdownHandler = Handlers.gracefulShutdown(root);
@@ -75,14 +74,14 @@ public class HttpServer {
 			.setIoThreads(configuration.http.ioThreads)
 			.setWorkerThreads(configuration.http.workerThreads);
 		
-		if (this.configuration.getHttpPort() > 0) {
-			builder.addHttpListener(this.configuration.getHttpPort(), this.configuration.bindingAddress);
+		if (configuration1.getHttpPort() > 0) {
+			builder.addHttpListener(configuration1.getHttpPort(), configuration1.bindingAddress);
 			if (log.isInfoLevelEnabled()) {
-				log.logInfoMessage("Binding http listener to '" + this.configuration.bindingAddress + ":" + this.configuration.getHttpPort() + "'");
+				log.logInfoMessage("Binding http listener to '" + configuration1.bindingAddress + ":" + configuration1.getHttpPort() + "'");
 			}
 		}
-		if (this.configuration.getHttpsPort() > 0) {
-			if (this.configuration.http.sslKeystoreLocation == null) {
+		if (configuration1.getHttpsPort() > 0) {
+			if (configuration1.http.sslKeystoreLocation == null) {
 				if (log.isWarningLevelEnabled()) {
 					log.logWarningMessage("SSL keystore not provided. Https listener not started.");
 				}
@@ -95,12 +94,12 @@ public class HttpServer {
 							configuration.http.sslKeystorePassword == null ? null : configuration.http.sslKeystorePassword.toCharArray(), 
 							configuration.http.sslTruststoreLocation, 
 							configuration.http.sslTruststoreType, 
-							configuration.http.sslTruststorePassword == null ? null : configuration.http.sslKeystorePassword.toCharArray());
+							configuration.http.sslTruststorePassword == null ? null : configuration.http.sslTruststorePassword.toCharArray());
 					
-					builder.addHttpsListener(this.configuration.getHttpsPort(), this.configuration.bindingAddress, sslContext);
+					builder.addHttpsListener(configuration1.getHttpsPort(), configuration1.bindingAddress, sslContext);
 					builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
 					if (log.isInfoLevelEnabled()) {
-						log.logInfoMessage("Binding https listener to '" + this.configuration.bindingAddress + ":" + this.configuration.getHttpsPort() + "'");
+						log.logInfoMessage("Binding https listener to '" + configuration1.bindingAddress + ":" + configuration1.getHttpsPort() + "'");
 					}
 				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
 					if (log.isErrorLevelEnabled()) {
@@ -112,8 +111,8 @@ public class HttpServer {
 		this.server = builder.setHandler(root).build();
 		SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
 		
-		if (this.configuration.http.restProcessorEnabled) {
-			DeploymentInfo di = createProcessorDeploymentInfo(processor, this.configuration.http.restProcessorLoginRequired ? identityManager : null);
+		if (configuration1.http.restProcessorEnabled) {
+			DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration1.http.restProcessorLoginRequired ? identityManager : null);
 			di.setDefaultSessionTimeout(configuration.http.restProcessorSessionTimeout * 60);
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
@@ -140,7 +139,7 @@ public class HttpServer {
 				}
 			}
 		}
-		if (this.configuration.http.guiEnabled) {
+		if (configuration1.http.guiEnabled) {
 			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
 			di.setDefaultSessionTimeout(configuration.http.guiSessionTimeout * 60);
 			DeploymentManager manager = container.addDeployment(di);
@@ -240,12 +239,7 @@ public class HttpServer {
 		deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());
 		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
 		di.setSessionManagerFactory(this.sessionManagerFactory);
-		di.addInnerHandlerChainWrapper(new HandlerWrapper() {
-			@Override
-			public HttpHandler wrap(HttpHandler handler) {
-				return new ChangePasswordHandler("/gui/", handler);
-			}
-		});
+		di.addInnerHandlerChainWrapper(handler -> new ChangePasswordHandler("/gui/", handler));
 		di.addWelcomePage("index.html");
 		di.setContextPath(contextRoot);
 		deployment.setSecurityEnabled(true);

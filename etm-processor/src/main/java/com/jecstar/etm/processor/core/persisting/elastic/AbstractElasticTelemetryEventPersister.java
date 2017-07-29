@@ -25,12 +25,12 @@ import com.jecstar.etm.server.core.util.DateUtils;
  */
 public abstract class AbstractElasticTelemetryEventPersister {
 	
-	protected BulkProcessor bulkProcessor;
+	BulkProcessor bulkProcessor;
 	
 	private final EtmConfiguration etmConfiguration;
 	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 	
-	public AbstractElasticTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
+	AbstractElasticTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
 		this.bulkProcessor = bulkProcessor;
 		this.etmConfiguration = etmConfiguration;
 	}
@@ -49,25 +49,25 @@ public abstract class AbstractElasticTelemetryEventPersister {
 		this.bulkProcessor = bulkProcessor;
 	}
     
-    protected String getElasticIndexName() {
+    String getElasticIndexName() {
     	return ElasticsearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
     
     protected abstract String getElasticTypeName();
     
-    protected IndexRequest createIndexRequest(String id) {
+    IndexRequest createIndexRequest(String id) {
     	return new IndexRequest(getElasticIndexName(), getElasticTypeName(), id)
     			.waitForActiveShards(getActiveShardCount(this.etmConfiguration));
     }
     
-    protected UpdateRequest createUpdateRequest(String id) {
+    UpdateRequest createUpdateRequest(String id) {
     	return new UpdateRequest(getElasticIndexName(), getElasticTypeName(), id)
     			.waitForActiveShards(getActiveShardCount(this.etmConfiguration))
     			.retryOnConflict(this.etmConfiguration.getRetryOnConflictCount());
     	
     }
     
-    protected ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
+    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
     	if (-1 == etmConfiguration.getWaitForActiveShards()) {
     		return ActiveShardCount.ALL;
     	} else if (0 == etmConfiguration.getWaitForActiveShards()) {
@@ -76,7 +76,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
     	return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
     }
     
-    protected void setCorrelationOnParent(TelemetryEvent<?> event) {
+    void setCorrelationOnParent(TelemetryEvent<?> event) {
     	if (event.correlationId == null || event.correlationId.equals(event.id)) {
     		return;
     	}
