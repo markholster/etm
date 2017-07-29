@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
-import com.jecstar.etm.domain.writers.json.HttpTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.HttpTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.TelemetryEventConverter;
 
 public class HttpTelemetryEventConverterJsonImpl extends HttpTelemetryEventWriterJsonImpl implements TelemetryEventConverter<String, HttpTelemetryEvent> {

@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.jecstar.etm.domain.writers.TelemetryEventTags;
-import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 class SearchRequestParameters {

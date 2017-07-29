@@ -4,8 +4,8 @@ import java.util.UUID;
 
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.parsers.XPathExpressionParser;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.parser.XPathExpressionParser;
 
 class CustomAchmeaEnhancements {
 

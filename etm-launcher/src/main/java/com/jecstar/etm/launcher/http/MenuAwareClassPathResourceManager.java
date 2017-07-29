@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 import com.jecstar.etm.launcher.http.MenuAwareURLResource.MenuContext;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.Resource;

@@ -2,7 +2,6 @@ package com.jecstar.etm.gui.rest.services.user;
 
 import java.text.NumberFormat;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -26,11 +25,11 @@ import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
-import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
+import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.util.BCrypt;
 
 @Path("/user")

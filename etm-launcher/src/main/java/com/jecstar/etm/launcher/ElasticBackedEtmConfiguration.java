@@ -12,15 +12,15 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.configuration.License;
-import com.jecstar.etm.server.core.configuration.WaitStrategy;
-import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
-import com.jecstar.etm.server.core.configuration.converter.LdapConfigurationConverter;
-import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.configuration.converter.json.LdapConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
+import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.util.DateUtils;
 

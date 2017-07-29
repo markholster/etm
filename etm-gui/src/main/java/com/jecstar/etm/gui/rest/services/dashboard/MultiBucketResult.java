@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.jecstar.etm.domain.writers.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonWriter;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationValue;

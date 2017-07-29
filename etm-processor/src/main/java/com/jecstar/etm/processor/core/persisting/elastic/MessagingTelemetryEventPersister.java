@@ -13,10 +13,10 @@ import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.writers.json.MessagingTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
 		implements TelemetryEventPersister<MessagingTelemetryEvent, MessagingTelemetryEventWriterJsonImpl> {

@@ -2,7 +2,7 @@ package com.jecstar.etm.v1migrator;
 
 import java.util.Collection;
 
-import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 
 public class ConversionMessagingTelemetryEventBuilder extends MessagingTelemetryEventBuilder {
 

@@ -27,22 +27,22 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
-import com.jecstar.etm.domain.writers.TelemetryEventTags;
-import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
-import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
-import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
-import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
-import com.jecstar.etm.server.core.domain.converter.AuditLogTags;
-import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
-import com.jecstar.etm.server.core.domain.converter.json.AuditLogTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener;
+import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEvent;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
+import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -554,7 +554,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"			long handlingTime = (long)dataForReader.get(\"handling_time\");\n" + 
 				"			boolean updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);\n" + 
 				"			if (!updated && appName == null) {\n" + 
-				"				// When the appName == null also update the writers\n" + 
+				"				// When the appName == null also update the writer\n" +
 				"				updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);\n" + 
 				"			}\n" + 
 				"			if (updated) {\n" + 
@@ -698,7 +698,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"		Map inputWritingEndpointHandler = (Map)inputEndpoint.get(\"writing_endpoint_handler\");\n" + 
 				"        if (inputWritingEndpointHandler != null && \n" + 
 				"        	(inputWritingEndpointHandler.get(\"application\") == null || ((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") == null)) { \n" + 
-				"			// This is a writer on an endpoint without an application defined. Update the response time on target readers + writers without an application defined. \n" + 
+				"			// This is a writer on an endpoint without an application defined. Update the response time on target readers + writer without an application defined. \n" +
 				"			long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" + 
 				"        	boolean readerFound = false;\n" + 
 				"        	if (targetEndpoints != null) {\n" + 
@@ -743,7 +743,7 @@ public class ElasticsearchIndextemplateCreator implements ConfigurationChangeLis
 				"        if (inputReadingEndpointHandlers != null) {\n" + 
 				"        	for (Map inputReadingEndpointHandler : inputReadingEndpointHandlers) {\n" + 
 				"        		if (inputReadingEndpointHandler.get(\"application\") == null || ((Map)inputReadingEndpointHandler.get(\"application\")).get(\"name\") == null) {\n" + 
-				"        			// This is a reader on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.\n" + 
+				"        			// This is a reader on an endpoint without an application defined. Update the response time on target readers + writer without an application defined.\n" +
 				"		        	long readerHandlingTime = (long)inputReadingEndpointHandler.get(\"handling_time\");\n" + 
 				"        			boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, null, readerHandlingTime);\n" + 
 				"        			boolean readerFound = false;\n" + 

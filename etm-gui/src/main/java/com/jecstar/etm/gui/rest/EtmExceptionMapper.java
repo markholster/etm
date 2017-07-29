@@ -10,7 +10,7 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 
 @Provider
 public class EtmExceptionMapper implements ExceptionMapper<Throwable> {

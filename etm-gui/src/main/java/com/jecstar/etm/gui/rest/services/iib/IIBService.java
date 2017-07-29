@@ -38,8 +38,8 @@ import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNode;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNodeConnection;
 import com.jecstar.etm.gui.rest.services.iib.proxy.IIBSubFlow;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 

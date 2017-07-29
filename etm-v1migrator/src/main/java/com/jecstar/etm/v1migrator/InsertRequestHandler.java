@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
-import com.jecstar.etm.domain.writers.json.ConversionMessagingTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.ConversionMessagingTelemetryEventWriterJsonImpl;
 
 class InsertRequestHandler {
 

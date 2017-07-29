@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.enhancers;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.jecstar.etm.server.core.parsers.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 
 public class DefaultField {
 	

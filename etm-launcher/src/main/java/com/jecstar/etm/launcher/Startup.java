@@ -12,9 +12,9 @@ import java.time.ZonedDateTime;
 
 import org.yaml.snakeyaml.Yaml;
 
-import com.jecstar.etm.domain.builders.ApplicationBuilder;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.ApplicationBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import com.jecstar.etm.launcher.slf4j.LogConfiguration;

@@ -48,25 +48,25 @@ import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.writers.TelemetryEventTags;
-import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmGroup;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
-import com.jecstar.etm.server.core.domain.audit.builders.GetEventAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.builders.QueryAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.converter.AuditLogTags;
-import com.jecstar.etm.server.core.domain.converter.json.AuditLogTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.GetEventAuditLogConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.QueryAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.builder.QueryAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
+import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.json.GetEventAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.json.QueryAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.util.DateUtils;
 
 @Path("/search")
@@ -742,7 +742,7 @@ public class SearchService extends AbstractIndexMetadataService {
 					result.append("}");
 					first = false;			
 				}
-				// Add all writers as item.
+				// Add all writer as item.
 				for (EventChainItem item : endpoint.getReaders()) {
 					if (!first) {
 						result.append(",");
@@ -808,7 +808,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (event.isRequest()) {
 				// If the last part of the request chain is an endpoint (without
 				// a reader) and the first part of the request chain has no
-				// writers then we lay a connection between the endpoints.
+				// writer then we lay a connection between the endpoints.
 				EventChainEvent responseEvent = eventChain.findResponse(event.getEventId());
 				// TODO, add an missing response when responseEvent == null?
 				if (responseEvent != null) {

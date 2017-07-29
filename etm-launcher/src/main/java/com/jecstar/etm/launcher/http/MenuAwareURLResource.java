@@ -15,9 +15,9 @@ import java.util.stream.Collectors;
 import org.xnio.IoUtils;
 
 import com.jecstar.etm.gui.rest.IIBApi;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 
 import io.undertow.UndertowLogger;
 import io.undertow.io.IoCallback;

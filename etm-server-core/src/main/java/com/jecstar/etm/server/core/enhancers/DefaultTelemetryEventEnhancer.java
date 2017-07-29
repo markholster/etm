@@ -13,8 +13,8 @@ import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
-import com.jecstar.etm.server.core.parsers.ExpressionParser;
-import com.jecstar.etm.server.core.parsers.ExpressionParserField;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 
 public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	

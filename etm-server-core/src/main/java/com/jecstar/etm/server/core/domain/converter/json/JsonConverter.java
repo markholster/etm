@@ -14,7 +14,7 @@ import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jecstar.etm.domain.writers.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonWriter;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;

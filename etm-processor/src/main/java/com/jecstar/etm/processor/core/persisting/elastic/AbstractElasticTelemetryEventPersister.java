@@ -14,8 +14,8 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.util.DateUtils;
 
 /**

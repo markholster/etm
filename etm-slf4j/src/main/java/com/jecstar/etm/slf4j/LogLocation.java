@@ -44,12 +44,12 @@ class LogLocation implements Serializable {
 		} catch (Throwable e) {
 		}
 		try {
-			getStackTraceMethod = Throwable.class.getMethod("getStackTrace", null);
+			getStackTraceMethod = Throwable.class.getMethod("getStackTrace", (Class<?>[]) null);
 			Class<?> stackTraceElementClass = Class.forName("java.lang.StackTraceElement");
-			getClassNameMethod = stackTraceElementClass.getMethod("getClassName", null);
-			getMethodNameMethod = stackTraceElementClass.getMethod("getMethodName", null);
-			getFileNameMethod = stackTraceElementClass.getMethod("getFileName", null);
-			getLineNumberMethod = stackTraceElementClass.getMethod("getLineNumber", null);
+			getClassNameMethod = stackTraceElementClass.getMethod("getClassName", (Class<?>[]) null);
+			getMethodNameMethod = stackTraceElementClass.getMethod("getMethodName", (Class<?>[]) null);
+			getFileNameMethod = stackTraceElementClass.getMethod("getFileName", (Class<?>[]) null);
+			getLineNumberMethod = stackTraceElementClass.getMethod("getLineNumber", (Class<?>[]) null);
 		} catch (ClassNotFoundException | NoSuchMethodException ex) {
 		}
 	}
@@ -86,21 +86,20 @@ class LogLocation implements Serializable {
 			return;
 		if (getLineNumberMethod != null) {
 			try {
-				Object[] noArgs = null;
-				Object[] elements = (Object[]) getStackTraceMethod.invoke(t, null);
+				Object[] elements = (Object[]) getStackTraceMethod.invoke(t, (Object[]) null);
 				String prevClass = NA;
 				for (int i = elements.length - 1; i >= 0; i--) {
-					String thisClass = (String) getClassNameMethod.invoke(elements[i], null);
+					String thisClass = (String) getClassNameMethod.invoke(elements[i], (Object[]) null);
 					if (fqnOfCallingClass.equals(thisClass)) {
 						int caller = i + 1;
 						if (caller < elements.length) {
 							className = prevClass;
-							methodName = (String) getMethodNameMethod.invoke(elements[caller], null);
-							fileName = (String) getFileNameMethod.invoke(elements[caller], null);
+							methodName = (String) getMethodNameMethod.invoke(elements[caller], (Object[]) null);
+							fileName = (String) getFileNameMethod.invoke(elements[caller], (Object[]) null);
 							if (fileName == null) {
 								fileName = NA;
 							}
-							int line = (Integer) getLineNumberMethod.invoke(elements[caller], noArgs);
+							int line = (Integer) getLineNumberMethod.invoke(elements[caller], (Object[]) null);
 							if (line < 0) {
 								lineNumber = NA;
 							} else {

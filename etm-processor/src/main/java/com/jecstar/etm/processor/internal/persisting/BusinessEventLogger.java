@@ -2,9 +2,9 @@ package com.jecstar.etm.processor.internal.persisting;
 
 import com.jecstar.etm.domain.BusinessTelemetryEvent;
 import com.jecstar.etm.domain.PayloadFormat;
-import com.jecstar.etm.domain.builders.BusinessTelemetryEventBuilder;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.writers.json.JsonWriter;
+import com.jecstar.etm.domain.builder.BusinessTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.writer.json.JsonWriter;
 
 public class BusinessEventLogger {
 

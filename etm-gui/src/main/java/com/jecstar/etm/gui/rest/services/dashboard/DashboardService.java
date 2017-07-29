@@ -47,9 +47,9 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregation
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.LongAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.StringAggregationKey;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 
 @Path("/dashboard")
 public class DashboardService extends AbstractIndexMetadataService {

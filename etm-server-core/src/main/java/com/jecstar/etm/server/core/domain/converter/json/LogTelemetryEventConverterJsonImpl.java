@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.domain.converter.json;
 import java.util.Map;
 
 import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.TelemetryEventConverter;
 
 public class LogTelemetryEventConverterJsonImpl extends LogTelemetryEventWriterJsonImpl implements TelemetryEventConverter<String, LogTelemetryEvent> {

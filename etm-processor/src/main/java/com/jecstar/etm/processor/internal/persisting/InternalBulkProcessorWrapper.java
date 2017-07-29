@@ -15,11 +15,11 @@ import org.elasticsearch.common.unit.TimeValue;
 import com.jecstar.etm.domain.BusinessTelemetryEvent;
 import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.domain.writers.json.BusinessTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.BusinessTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.core.persisting.elastic.BusinessTelemetryEventPersister;
 import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 /**
  * Bulk processor for ETM internal logging. Used for persisting events without

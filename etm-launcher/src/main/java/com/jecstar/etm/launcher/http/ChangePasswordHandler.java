@@ -1,6 +1,6 @@
 package com.jecstar.etm.launcher.http;
 
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 
 import io.undertow.security.idm.Account;
 import io.undertow.server.HttpHandler;

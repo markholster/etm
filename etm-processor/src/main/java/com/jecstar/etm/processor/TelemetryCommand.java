@@ -5,7 +5,7 @@ import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 
 public class TelemetryCommand {
 

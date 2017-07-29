@@ -1,7 +1,6 @@
 package com.jecstar.etm.v1migrator;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -26,8 +25,8 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.yaml.snakeyaml.Yaml;
 
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 
 
 class Startup {

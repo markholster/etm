@@ -4,7 +4,7 @@ import java.util.concurrent.ThreadFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
@@ -44,7 +44,7 @@ class DisruptorEnvironment {
 		}
 	}
 	
-	private WaitStrategy convertWaitStrategy(com.jecstar.etm.server.core.configuration.WaitStrategy waitStrategy) {
+	private WaitStrategy convertWaitStrategy(com.jecstar.etm.server.core.domain.configuration.WaitStrategy waitStrategy) {
 		switch (waitStrategy) {
 		case BLOCKING:
 			return new BlockingWaitStrategy();

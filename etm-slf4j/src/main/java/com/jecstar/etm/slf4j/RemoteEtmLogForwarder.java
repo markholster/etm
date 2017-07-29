@@ -15,8 +15,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.writers.TelemetryEventWriter;
-import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 
 public class RemoteEtmLogForwarder implements EtmLogForwarder {
 

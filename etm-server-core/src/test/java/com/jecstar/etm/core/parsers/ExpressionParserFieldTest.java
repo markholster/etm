@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.jecstar.etm.server.core.parsers.ExpressionParserField;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 
 /**
  * Test class for the <code>ExpressionParserField</code> class.
