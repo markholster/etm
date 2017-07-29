@@ -14,7 +14,7 @@ public class XPathExpressionParserTest {
 
 	@Test
 	public void testNamePoolLimitExceptionWorkaround() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		Field declaredField = NamePool.class.getDeclaredField("MAX_PREFIXES_PER_URI");
+		Field declaredField = NamePool.class.getDeclaredField("MAX_FINGERPRINT");
 		declaredField.setAccessible(true);
 		Integer maxPrefixesPerUri = (Integer) declaredField.get(NamePool.class);		
 		XPathExpressionParser parser = new XPathExpressionParser("test", "local-name(/*)");
