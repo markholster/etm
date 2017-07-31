@@ -28,6 +28,9 @@ public class IbmMqProcessorImpl implements IbmMqProcessor {
 	}
 	
 	public void start() {
+		if (this.config.getTotalNumberOfListeners() <= 0) {
+			return;
+		}
 		this.executorService = Executors.newFixedThreadPool(this.config.getTotalNumberOfListeners());
 		for (QueueManager queueManager : this.config.getQueueManagers()) {
 			for (Destination destination : queueManager.getDestinations()) {

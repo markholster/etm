@@ -9,7 +9,7 @@ public class IbmMq {
 	public final List<QueueManager> queueManagers = new ArrayList<>();
 	
 	public int getTotalNumberOfListeners() {
-		if (this.queueManagers == null) {
+		if (this.queueManagers.isEmpty()) {
 			return 0;
 		}
 		int total = 0;

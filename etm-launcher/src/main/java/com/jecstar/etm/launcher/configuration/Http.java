@@ -13,13 +13,11 @@ public class Http {
 	public boolean guiEnabled = true;
 	public int guiMaxConcurrentRequests = 50;
 	public int guiMaxQueuedRequests = 50;
-	public int guiSessionTimeout = 30;
 
 	public boolean restProcessorEnabled = true;
 	public boolean restProcessorLoginRequired = false;
 	public int restProcessorMaxConcurrentRequests = 50;
 	public int restProcessorMaxQueuedRequests = 50;
-	public int restProcessorSessionTimeout = 5;
 
 	public String sslProtocol = "TLSv1.2";
 	public File sslKeystoreLocation;

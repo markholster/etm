@@ -111,7 +111,7 @@ public class HttpServer {
 		
 		if (configuration1.http.restProcessorEnabled) {
 			DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration1.http.restProcessorLoginRequired ? identityManager : null);
-			di.setDefaultSessionTimeout(configuration.http.restProcessorSessionTimeout * 60);
+			di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
@@ -139,7 +139,7 @@ public class HttpServer {
 		}
 		if (configuration1.http.guiEnabled) {
 			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
-			di.setDefaultSessionTimeout(configuration.http.guiSessionTimeout * 60);
+			di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
 			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);

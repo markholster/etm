@@ -30,18 +30,24 @@ elasticsearch:
 #  sslCertificateAuthoritiesLocation: /path/to/ca.crt
 # The http configuration options  
 http:
-# Should the gui be enabled. Set this option to false if you want this node to be an processing node only.
-  guiEnabled: true
 # The http port this node should be listening on.
   httpPort: 8080
 # The https port this node should be listening on. If no keystore is provides, no https binding will be created.
   httpsPort: 8443
-# The maximum number of requests that can be handled concurrently. This is the maximum for the rest processor and gui combined. If the number of requests exceeds this number they will be queued.
-  maxConcurrentRequests: 100
-# The maximum number of request that can be queued before the server will reject further requests.  
-  maxQueuedRequests: 100
+# Should the gui be enabled. Set this option to false if you want this node to be an processing node only.
+  guiEnabled: true
+# The maximum number of requests that can be handled concurrently. If the number of requests exceeds this number they will be queued.
+  guiMaxConcurrentRequests: 50
+# The maximum number of request that can be queued before the server will reject further requests.
+  guiMaxQueuedRequests: 50
 # Should the rest processor be enabled. Set this option to false if you don't want this node to process events over a rest interface.
   restProcessorEnabled: true
+# Should the rest processor protected with a basic authentication login?
+  restProcessorLoginRequired: false
+# The maximum number of requests that can be handled concurrently. If the number of requests exceeds this number they will be queued.
+  restProcessorMaxConcurrentRequests: 50
+# The maximum number of request that can be queued before the server will reject further requests.
+  restProcessorMaxQueuedRequests: 50
 # The location of the keystore that holds the https client certificate. If none provided, the https interface will not start.
   sslKeystoreLocation: null
 # The password of the keystore.
