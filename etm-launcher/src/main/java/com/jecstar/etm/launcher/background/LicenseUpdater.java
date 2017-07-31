@@ -13,10 +13,10 @@ import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.configuration.License;
-import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -96,7 +96,7 @@ public class LicenseUpdater implements Runnable {
 		return null;
 	}
 	
-    protected ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
+    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
     	if (-1 == etmConfiguration.getWaitForActiveShards()) {
     		return ActiveShardCount.ALL;
     	} else if (0 == etmConfiguration.getWaitForActiveShards()) {

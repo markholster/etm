@@ -2,7 +2,7 @@ package com.jecstar.etm.launcher.http.session;
 
 import org.elasticsearch.client.Client;
 
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 import io.undertow.server.session.SessionManager;
 import io.undertow.servlet.api.Deployment;

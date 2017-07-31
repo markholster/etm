@@ -20,7 +20,7 @@ public class EtmLoggerFactory implements ILoggerFactory {
 	}
 	
 	public EtmLoggerFactory() {
-		this.loggerMap = new ConcurrentHashMap<String, Logger>();
+		this.loggerMap = new ConcurrentHashMap<>();
 		this.logConfiguration = new LogConfiguration();
 	}
 	

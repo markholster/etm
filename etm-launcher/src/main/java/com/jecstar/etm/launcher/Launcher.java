@@ -13,10 +13,12 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.discovery.MasterNotDiscoveredException;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.jboss.netty.logging.InternalLoggerFactory;
 import org.jboss.netty.logging.Slf4JLoggerFactory;
 
@@ -34,11 +36,11 @@ import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class Launcher {
+class Launcher {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -103,41 +105,38 @@ public class Launcher {
 	}
 
 	private void addShutdownHooks(Configuration configuration) {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
-				}
-				if (Launcher.this.indexTemplateCreator != null) {
-					try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.backgroundScheduler != null) {
-					try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.ibmMqProcessor != null) {
-					try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.httpServer != null) {
-					try { Launcher.this.httpServer.stop(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.processor != null) {
-					try { Launcher.this.processor.stopAll(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.metricReporter != null) {
-					try { Launcher.this.metricReporter.close(); } catch (Throwable t) {}
-				}
-				if (Launcher.this.bulkProcessorWrapper != null) {
-					try { 
-						BusinessEventLogger.logEtmShutdown();
-						Launcher.this.bulkProcessorWrapper.close(); 
-					} catch (Throwable t) {}
-				}
-				if (Launcher.this.elasticClient != null) {
-					try { Launcher.this.elasticClient.close(); } catch (Throwable t) {}
-				}
-			}
-		});
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (log.isInfoLevelEnabled()) {
+                log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
+            }
+            if (Launcher.this.indexTemplateCreator != null) {
+                try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.backgroundScheduler != null) {
+                try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.ibmMqProcessor != null) {
+                try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.httpServer != null) {
+                try { Launcher.this.httpServer.stop(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.processor != null) {
+                try { Launcher.this.processor.stopAll(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.metricReporter != null) {
+                try { Launcher.this.metricReporter.close(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.bulkProcessorWrapper != null) {
+                try {
+                    BusinessEventLogger.logEtmShutdown();
+                    Launcher.this.bulkProcessorWrapper.close();
+                } catch (Throwable t) {}
+            }
+            if (Launcher.this.elasticClient != null) {
+                try { Launcher.this.elasticClient.close(); } catch (Throwable t) {}
+            }
+        }));
 	}
 	
 	
@@ -167,9 +166,28 @@ public class Launcher {
 		if (this.elasticClient != null) {
 			return;
 		}
-		TransportClient transportClient = new PreBuiltTransportClient(Settings.builder()
-				.put("cluster.name", configuration.elasticsearch.clusterName)
-				.put("client.transport.sniff", true).build());
+		Builder settingsBuilder = Settings.builder()
+			.put("cluster.name", configuration.elasticsearch.clusterName)
+			.put("client.transport.sniff", true);
+		TransportClient transportClient;
+		if (configuration.elasticsearch.username != null && configuration.elasticsearch.password != null) {
+			settingsBuilder.put("xpack.security.user", configuration.elasticsearch.username + ":" + configuration.elasticsearch.password);
+			if (configuration.elasticsearch.sslKeyLocation != null) {
+				settingsBuilder.put("xpack.ssl.key", configuration.elasticsearch.sslKeyLocation.getAbsolutePath());
+			}
+			if (configuration.elasticsearch.sslCertificateLocation != null) {
+				settingsBuilder.put("xpack.ssl.certificate", configuration.elasticsearch.sslCertificateLocation.getAbsolutePath());
+			}
+			if (configuration.elasticsearch.sslCertificateAuthoritiesLocation != null) {
+				settingsBuilder.put("xpack.ssl.certificate_authorities", configuration.elasticsearch.sslCertificateAuthoritiesLocation.getAbsolutePath());
+			}
+			if (configuration.elasticsearch.sslEnabled) {
+				settingsBuilder.put("xpack.security.transport.ssl.enabled", "true");
+			}
+			transportClient = new PreBuiltXPackTransportClient(settingsBuilder.build());
+		} else {
+			transportClient = new PreBuiltTransportClient(settingsBuilder.build());
+		}
 		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
 		int hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
 		if (configuration.elasticsearch.waitForConnectionOnStartup) {
@@ -270,7 +288,7 @@ public class Launcher {
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			if (log.isWarningLevelEnabled()) {
-				log.logWarningMessage("Unable to instantiate Ibm MQ Processor. Is the \"com.ibm.mq.allclient.jar\" file added to the lib directory?", e);
+				log.logWarningMessage("Unable to instantiate Ibm MQ Processor. Is the \"com.ibm.mq.allclient.jar\" file added to the lib/ext directory?", e);
 			}
 		}
 	}

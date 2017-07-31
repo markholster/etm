@@ -1,7 +1,7 @@
 package com.jecstar.etm.processor.core.persisting;
 
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.domain.writers.TelemetryEventWriter;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
 
 public interface TelemetryEventPersister<Event extends TelemetryEvent<Event>, Writer extends TelemetryEventWriter<String, Event>> {
 

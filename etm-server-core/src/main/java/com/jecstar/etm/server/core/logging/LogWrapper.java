@@ -12,7 +12,7 @@ public interface LogWrapper {
      * 
      * @author Mark Holster
      */
-    public enum LogLevel {
+    enum LogLevel {
         /**
          * The debug level.
          */
@@ -43,14 +43,14 @@ public interface LogWrapper {
      * @param clazz
      *            The class that is wrapping the logging system.
      */
-    public void setLogWrapperClass(Class<?> clazz);
+    void setLogWrapperClass(Class<?> clazz);
 
     /**
      * Gives the name of the logger.
      * 
      * @return The name of the logger.
      */
-    public String getName();
+    String getName();
 
     /**
      * Log a message at debug level.
@@ -187,7 +187,7 @@ public interface LogWrapper {
      * 
      * @return <code>true</code> when this is a managed logger, <code>false</code> otherwise.
      */
-    public boolean isManaged();
+    boolean isManaged();
 
     /**
      * Set the logging level to a given level. Works only on managed loggers. Unmanaged logger should ignore
@@ -196,36 +196,36 @@ public interface LogWrapper {
      * @param logLevel
      *            The log level to set.
      */
-    public void setToLevel(LogLevel logLevel);
+    void setToLevel(LogLevel logLevel);
 
     /**
      * Set the logging level to debug. Works only on managed loggers. Unmanaged logger should ignore this
      * method call.
      */
-    public void setToDebugLevel();
+    void setToDebugLevel();
 
     /**
      * Set the logging level to info. Works only on managed loggers. Unmanaged logger should ignore this
      * method call.
      */
-    public void setToInfoLevel();
+    void setToInfoLevel();
 
     /**
      * Set the logging level to warning. Works only on managed loggers. Unmanaged logger should ignore this
      * method call.
      */
-    public void setToWarningLevel();
+    void setToWarningLevel();
 
     /**
      * Set the logging level to error. Works only on managed loggers. Unmanaged logger should ignore this
      * method call.
      */
-    public void setToErrorLevel();
+    void setToErrorLevel();
 
     /**
      * Set the logging level to fatal. Works only on managed loggers. Unmanaged logger should ignore this
      * method call.
      */
-    public void setToFatalLevel();
+    void setToFatalLevel();
 
 }

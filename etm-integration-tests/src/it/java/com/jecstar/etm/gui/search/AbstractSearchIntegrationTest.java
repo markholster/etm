@@ -5,8 +5,9 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 
 import com.jecstar.etm.gui.AbstractIntegrationTest;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
-public abstract class AbstractSearchIntegrationTest extends AbstractIntegrationTest {
+abstract class AbstractSearchIntegrationTest extends AbstractIntegrationTest {
 
 	/**
 	 * Wait for an event id to show up. This can be useful if an event is added,
@@ -17,9 +18,10 @@ public abstract class AbstractSearchIntegrationTest extends AbstractIntegrationT
 	 *            The event to search for,
 	 * @return 
 	 */
-	protected WebElement waitForSearchResult(String eventId) {
+    WebElement waitForSearchResult(String eventId) {
 		this.driver.findElement(By.id("query-string")).clear();
 		this.driver.findElement(By.id("query-string")).sendKeys("id: " + eventId);
+		waitFor(ExpectedConditions.elementToBeClickable(By.id(eventId)));
 		this.driver.findElement(By.id("btn-search")).click();
 		long startTime = System.currentTimeMillis();
 		while (System.currentTimeMillis() - startTime < 10000) {

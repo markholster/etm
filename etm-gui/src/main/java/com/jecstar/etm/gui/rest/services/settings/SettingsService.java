@@ -50,27 +50,27 @@ import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.configuration.License;
-import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.configuration.converter.json.LdapConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
-import com.jecstar.etm.server.core.domain.EtmGroup;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
-import com.jecstar.etm.server.core.domain.converter.ExpressionParserConverter;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
+import com.jecstar.etm.server.core.domain.parser.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.ExpressionParserConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.parser.converter.json.ExpressionParserConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.ldap.Directory;
-import com.jecstar.etm.server.core.parsers.ExpressionParser;
-import com.jecstar.etm.server.core.parsers.ExpressionParserField;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 import com.jecstar.etm.server.core.util.BCrypt;
 
 @Path("/settings")
@@ -107,11 +107,10 @@ public class SettingsService extends AbstractJsonService {
 		if (license == null) {
 			return null;
 		}
-		boolean added = false;
 		NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
+		boolean added = addStringElementToJsonBuffer("owner", license.getOwner(), result, true);
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
 		added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), result, !added) || added;
@@ -144,10 +143,9 @@ public class SettingsService extends AbstractJsonService {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		NumberFormat numberFormat = etmPrincipal.getNumberFormat();
 		License license = etmConfiguration.getLicense();
-		boolean added = false;
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		added = addStringElementToJsonBuffer("status", "success", result, !added) || added;
+		boolean added = addStringElementToJsonBuffer("status", "success", result, true);
 		added = addStringElementToJsonBuffer("owner", license.getOwner(), result, !added) || added;
 		added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), result, !added) || added;
 		added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), result, !added) || added;
@@ -337,7 +335,7 @@ public class SettingsService extends AbstractJsonService {
 		NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
 		StringBuilder result = new StringBuilder();
 		result.append("{");
-		result.append("\"d3_formatter\": " + getD3Formatter());
+		result.append("\"d3_formatter\": ").append(getD3Formatter());
 		result.append(",\"totals\": {");
 		addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted(), result, true);	
 		addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted()), result, false);	
@@ -634,7 +632,7 @@ public class SettingsService extends AbstractJsonService {
 			result.append(searchHit.getSourceAsString());
 			first = false;
 		}
-		result.append("], \"has_ldap\": " + (etmConfiguration.getDirectory() != null) + "}");
+		result.append("], \"has_ldap\": ").append(etmConfiguration.getDirectory() != null).append("}");
 		return result.toString();
 	}
 
@@ -703,7 +701,7 @@ public class SettingsService extends AbstractJsonService {
 		if (principal == null) {
 			throw new EtmException(EtmException.INVALID_LDAP_USER);
 		}
-		EtmPrincipal currentPrincipal = loadPrincipal(userId);
+		EtmPrincipal currentPrincipal = loadPrincipal(principal.getId());
 		if (currentPrincipal != null) {
 			// Merge the current and the LDAP principal.
 			currentPrincipal.setPasswordHash(null);
@@ -713,7 +711,7 @@ public class SettingsService extends AbstractJsonService {
 			principal = currentPrincipal;
 		}
 		principal.setLdapBase(true);
-		client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, userId)
+		client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, principal.getId())
 			.setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -815,7 +813,7 @@ public class SettingsService extends AbstractJsonService {
 			result.append(searchHit.getSourceAsString());
 			first = false;
 		}
-		result.append("], \"has_ldap\": " + (etmConfiguration.getDirectory() != null) + "}");
+		result.append("], \"has_ldap\": ").append(etmConfiguration.getDirectory() != null).append("}");
 		return result.toString();
 	}
 	
@@ -958,7 +956,7 @@ public class SettingsService extends AbstractJsonService {
 		for (SearchHit searchHit : scrollableSearch) {
 			boolean updated = false;
 			EtmPrincipal principal = loadPrincipal(searchHit.getId());
-			if (principal.isInGroup(groupName)) {
+			if (principal != null && principal.isInGroup(groupName)) {
 				Iterator<EtmGroup> it = principal.getGroups().iterator();
 				while (it.hasNext()) {
 					EtmGroup group = it.next();
@@ -1016,12 +1014,10 @@ public class SettingsService extends AbstractJsonService {
 				multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group);
 			}
 			MultiGetResponse multiGetResponse = multiGetBuilder.get();
-			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
-			while (iterator.hasNext()) {
-				MultiGetItemResponse item = iterator.next();
-				EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
-				principal.addGroup(etmGroup);
-			}
+            for (MultiGetItemResponse item : multiGetResponse) {
+                EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
+                principal.addGroup(etmGroup);
+            }
 		}
 		return principal;		
 	}
@@ -1051,7 +1047,7 @@ public class SettingsService extends AbstractJsonService {
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP)
 				.setFetchSource(true)
-				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), Arrays.stream(roles).map(c -> c.getRoleName()).collect(Collectors.toList())))
+				.setQuery(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), Arrays.stream(roles).map(EtmPrincipalRole::getRoleName).collect(Collectors.toList())))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
 		List<String> groups = new ArrayList<>();
@@ -1086,7 +1082,7 @@ public class SettingsService extends AbstractJsonService {
 	 * @return The number of users with the admin role.
 	 */
 	private long getNumberOfUsersWithAdminRole(Collection<String> adminGroups) {
-		QueryBuilder query = null;
+		QueryBuilder query;
 		if (adminGroups == null || adminGroups.isEmpty()) {
 			query = QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), EtmPrincipalRole.ADMIN.getRoleName());
 		} else {

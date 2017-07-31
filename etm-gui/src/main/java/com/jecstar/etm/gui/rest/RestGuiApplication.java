@@ -12,7 +12,7 @@ import com.jecstar.etm.gui.rest.services.search.SearchService;
 import com.jecstar.etm.gui.rest.services.settings.AuditService;
 import com.jecstar.etm.gui.rest.services.settings.SettingsService;
 import com.jecstar.etm.gui.rest.services.user.UserService;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 public class RestGuiApplication extends Application {
 
@@ -30,7 +30,7 @@ public class RestGuiApplication extends Application {
 
 	@Override
 	public Set<Class<?>> getClasses() {
-		HashSet<Class<?>> classes = new HashSet<Class<?>>();
+		HashSet<Class<?>> classes = new HashSet<>();
 		classes.add(SearchService.class);
 		classes.add(UserService.class);
 		classes.add(SettingsService.class);

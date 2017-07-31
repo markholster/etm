@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.jecstar.etm.domain.SqlTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
-import com.jecstar.etm.domain.writers.json.SqlTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.TelemetryEventConverter;
 
 public class SqlTelemetryEventConverterJsonImpl extends SqlTelemetryEventWriterJsonImpl implements TelemetryEventConverter<String, SqlTelemetryEvent> {

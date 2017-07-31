@@ -5,10 +5,10 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 public class LogTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
 		implements TelemetryEventPersister<LogTelemetryEvent, LogTelemetryEventWriterJsonImpl> {

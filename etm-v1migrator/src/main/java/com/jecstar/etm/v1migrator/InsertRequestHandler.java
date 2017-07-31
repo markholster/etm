@@ -13,11 +13,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
-import com.jecstar.etm.domain.writers.json.ConversionMessagingTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.ConversionMessagingTelemetryEventWriterJsonImpl;
 
-public class InsertRequestHandler {
+class InsertRequestHandler {
 
-	public static final DateTimeFormatter dateTimeFormatterIndexPerDay = new DateTimeFormatterBuilder()
+	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = new DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4)
 			.appendLiteral("-")
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
@@ -28,10 +28,7 @@ public class InsertRequestHandler {
 	private final StringBuilder buffer = new StringBuilder();
 	private final ConversionMessagingTelemetryEventWriterJsonImpl writer;
 
-	private final long flushLength = 1024 * 1024 * 2;
-	private final int flushMaxCount = 100;
-
-	private int callCount;
+    private int callCount;
 
 	public InsertRequestHandler(String apiLocation) throws MalformedURLException {
 		this.writer = new ConversionMessagingTelemetryEventWriterJsonImpl();
@@ -39,21 +36,20 @@ public class InsertRequestHandler {
 	}
 
 	public void addBuilder(ConversionMessagingTelemetryEventBuilder builder, ZonedDateTime timestamp) {
-		this.buffer.append("{ \"index\" : { \"_index\" : \"etm_event_" + dateTimeFormatterIndexPerDay.format(timestamp) + "\", \"_type\" : \"messaging\", \"_id\" : \"" + builder.getId() + "\" } }\n");
-		this.buffer.append(this.writer.write(builder) + "\n");
+		this.buffer.append("{ \"index\" : { \"_index\" : \"etm_event_").append(dateTimeFormatterIndexPerDay.format(timestamp)).append("\", \"_type\" : \"messaging\", \"_id\" : \"").append(builder.getId()).append("\" } }\n");
+		this.buffer.append(this.writer.write(builder)).append("\n");
 		this.callCount++;
 	}
 
 	public boolean shouldFlush() {
-		return this.buffer.length() > this.flushLength || this.callCount >= flushMaxCount;	
+        int flushMaxCount = 100;
+        long flushLength = 1024 * 1024 * 2;
+        return this.buffer.length() > flushLength || this.callCount >= flushMaxCount;
 	}
 	
 	public boolean flush() {
-		if (this.buffer.length() == 0) {
-			return true;
-		}
-		return flushBuffer();
-	}
+        return this.buffer.length() == 0 || flushBuffer();
+    }
 
 	private boolean flushBuffer() {
 		HttpURLConnection con = null;
@@ -73,7 +69,7 @@ public class InsertRequestHandler {
 
 			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 			String inputLine;
-			StringBuffer response = new StringBuffer();
+			StringBuilder response = new StringBuilder();
 
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);

@@ -12,20 +12,19 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
-public class BucketAggregatorWrapper {
+class BucketAggregatorWrapper {
 	
-	public static final String AGGREGATOR_BASE = "bucket";
+	private static final String AGGREGATOR_BASE = "bucket";
 	
 	private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	private final Map<String, Object> jsonData;
 	private final JsonConverter jsonConverter = new JsonConverter();
 	private final String aggregatorType;
 	private final String field;
-	private final String fieldType;
-	private final Format fieldFormat;
+    private final Format fieldFormat;
 	private final AggregationBuilder aggregationBuilder;
 	private DateInterval requiredDateInterval;
 
@@ -37,7 +36,7 @@ public class BucketAggregatorWrapper {
 		this.jsonData = jsonData;
 		this.aggregatorType = this.jsonConverter.getString("aggregator", jsonData);
 		this.field = this.jsonConverter.getString("field", jsonData);
-		this.fieldType = this.jsonConverter.getString("field_type", jsonData);
+        String fieldType = this.jsonConverter.getString("field_type", jsonData);
 		if ("date_histogram".equals(this.aggregatorType)) {
 			if ("auto".equals(this.jsonConverter.getString("interval", jsonData))) {
 				this.requiredDateInterval = calculateInterval(searchRequest, this.field);
@@ -46,7 +45,7 @@ public class BucketAggregatorWrapper {
 			}
 			this.fieldFormat = this.requiredDateInterval.getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
 		} else {
-			this.fieldFormat = "date".equals(this.fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
+			this.fieldFormat = "date".equals(fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
 		}
 		this.aggregationBuilder = createBucketAggregationBuilder();
 	}
@@ -70,9 +69,8 @@ public class BucketAggregatorWrapper {
 			String internalLabel = "Date of " + this.field;
 			builder = AggregationBuilders.dateHistogram(internalLabel).field(this.field).dateHistogramInterval(this.requiredDateInterval.getDateHistogramInterval());		
 		} else if ("histogram".equals(this.aggregatorType)) {
-			String internalLabel = this.field;
 			Double interval = this.jsonConverter.getDouble("interval", this.jsonData, 1D);
-			builder = AggregationBuilders.histogram(internalLabel).field(this.field).interval(interval);
+			builder = AggregationBuilders.histogram(this.field).field(this.field).interval(interval);
 		} else if ("significant_term".equals(this.aggregatorType)) {
 			String internalLabel = "Unusual terms of " + this.field;
 			int top = this.jsonConverter.getInteger("top", this.jsonData, 5);
@@ -82,7 +80,7 @@ public class BucketAggregatorWrapper {
 			String order = this.jsonConverter.getString("order", this.jsonData);
 			int top = this.jsonConverter.getInteger("top", this.jsonData, 5);
 			String internalLabel = "Top " + top + " of " + this.field;
-			Terms.Order termsOrder = null;
+			Terms.Order termsOrder;
 			if ("term".equals(orderBy)) {
 				termsOrder = Terms.Order.term("asc".equals(order));
 			} else if (orderBy.startsWith("metric_")) {

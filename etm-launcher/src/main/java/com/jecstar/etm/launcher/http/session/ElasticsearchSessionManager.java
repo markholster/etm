@@ -10,8 +10,8 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 import io.undertow.UndertowMessages;
 import io.undertow.server.HttpServerExchange;
@@ -23,7 +23,7 @@ import io.undertow.server.session.SessionListeners;
 import io.undertow.server.session.SessionManager;
 import io.undertow.server.session.SessionManagerStatistics;
 
-public class ElasticsearchSessionManager implements SessionManager {
+class ElasticsearchSessionManager implements SessionManager {
 
 	private final Client client;
 	private final SessionIdGenerator sessionIdGenerator;

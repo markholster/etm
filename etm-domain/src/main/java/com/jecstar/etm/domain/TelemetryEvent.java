@@ -27,7 +27,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	/**
 	 * The endpoints this event was send to, and received from.
 	 */
-	public List<Endpoint> endpoints = new ArrayList<>();
+	public final List<Endpoint> endpoints = new ArrayList<>();
 	
 	/**
 	 * Data to be used to query on.
@@ -60,7 +60,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	 * A list with event id's that correlate to this event. This is a read only
 	 * field and will only be filled when the even is read from the database.
 	 */
-	public List<String> correlations = new ArrayList<>();
+	public final List<String> correlations = new ArrayList<>();
 	
 	/**
 	 * Initialize this <code>TelemetryEvent</code> with the default data. 
@@ -68,7 +68,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	 */
 	public abstract T initialize();
 	
-	protected final void internalInitialize() {
+	final void internalInitialize() {
 		this.id = null;
 		this.correlationId = null;
 		this.correlationData.clear();
@@ -93,7 +93,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 	 */
 	public abstract T initialize(T copy);
 	
-	protected final void internalInitialize(TelemetryEvent<?> copy) {
+	final void internalInitialize(TelemetryEvent<?> copy) {
 		this.initialize();
 		if (copy == null) {
 			return;
@@ -141,8 +141,6 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
 			for (int i = 0; i < this.id.length(); i++) {
 			    hash = hash * 31 + this.id.charAt(i);
 			}
-		} else {
-			
 		}
 		for (Endpoint endpoint : this.endpoints) {
 			hash = hash * 31 + endpoint.getCalculatedHash();

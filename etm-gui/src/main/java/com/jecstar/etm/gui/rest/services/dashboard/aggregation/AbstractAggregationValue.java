@@ -2,14 +2,14 @@ package com.jecstar.etm.gui.rest.services.dashboard.aggregation;
 
 import java.text.Format;
 
-import com.jecstar.etm.domain.writers.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonWriter;
 
 public abstract class AbstractAggregationValue<T> implements AggregationValue<T> {
 
 	private final String label;
 	private boolean percentage;
 
-	protected AbstractAggregationValue(String label) {
+	AbstractAggregationValue(String label) {
 		this.label = label;
 	}
 	

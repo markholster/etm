@@ -13,7 +13,7 @@ import com.jecstar.etm.server.core.EtmException;
 
 public class IIBSubFlowV10Impl implements IIBSubFlow {
 
-	private SubFlowProxy subFlow;
+	private final SubFlowProxy subFlow;
 
 	IIBSubFlowV10Impl(SubFlowProxy subFlowProxy) {
 		this.subFlow = subFlowProxy;

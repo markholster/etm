@@ -44,9 +44,9 @@ import javax.xml.bind.annotation.XmlType;
 public class Event {
 
     @XmlElement(required = true)
-    protected EventPointData eventPointData;
-    protected ApplicationData applicationData;
-    protected BitstreamData bitstreamData;
+    private EventPointData eventPointData;
+    private ApplicationData applicationData;
+    private BitstreamData bitstreamData;
 
     /**
      * Gets the value of the eventPointData property.

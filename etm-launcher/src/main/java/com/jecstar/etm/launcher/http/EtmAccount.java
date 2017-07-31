@@ -3,13 +3,13 @@ package com.jecstar.etm.launcher.http;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.jecstar.etm.server.core.domain.EtmGroup;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 
 import io.undertow.security.idm.Account;
 
-public class EtmAccount implements Account {
+class EtmAccount implements Account {
 	
 	/**
 	 * The serialVersionUID for this class.
@@ -17,8 +17,8 @@ public class EtmAccount implements Account {
 	private static final long serialVersionUID = -7980565495248385591L;
 	
 	private final EtmPrincipal principal;
-	private long lastUpdated;
-	private Set<String> roles = new HashSet<>();
+	private final long lastUpdated;
+	private final Set<String> roles = new HashSet<>();
 	
 	EtmAccount(EtmPrincipal principal) {
 		this.principal = principal;

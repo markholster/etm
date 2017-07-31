@@ -15,9 +15,9 @@ import com.jecstar.etm.server.core.EtmException;
 
 public class IIBLibraryV9Impl implements IIBLibrary {
 
-	private LibraryProxy library;
+	private final LibraryProxy library;
 
-	protected IIBLibraryV9Impl(LibraryProxy libraryProxy) {
+	IIBLibraryV9Impl(LibraryProxy libraryProxy) {
 		this.library = libraryProxy;
 	}
 	

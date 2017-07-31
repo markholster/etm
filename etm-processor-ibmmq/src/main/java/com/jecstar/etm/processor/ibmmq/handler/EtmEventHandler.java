@@ -102,9 +102,9 @@ public class EtmEventHandler extends AbstractEventHandler {
 	private String byteArrayToString(byte[] bytes) {
 		this.byteArrayBuilder.setLength(0);
 		boolean allZero = true;
-		for (int i = 0; i < bytes.length; i++) {
-			this.byteArrayBuilder.append(String.format("%02x", bytes[i]));
-			if (bytes[i] != 0) {
+		for (byte aByte : bytes) {
+			this.byteArrayBuilder.append(String.format("%02x", aByte));
+			if (aByte != 0) {
 				allZero = false;
 			}
 		}

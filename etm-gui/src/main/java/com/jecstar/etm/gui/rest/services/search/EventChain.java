@@ -6,11 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EventChain {
+class EventChain {
 
 	
-	Map<String, EventChainTransaction> transactions = new HashMap<>();
-	Map<String, EventChainEvent> events = new HashMap<>();
+	final Map<String, EventChainTransaction> transactions = new HashMap<>();
+	final Map<String, EventChainEvent> events = new HashMap<>();
 	
 	public boolean containsTransaction(String transactionId) {
 		return this.transactions.containsKey(transactionId);
@@ -42,22 +42,14 @@ public class EventChain {
 	
 	private void addItem(EventChainItem item, String endpointName, boolean writer) {
 		if (item.getTransactionId() != null) {
-			EventChainTransaction transaction = this.transactions.get(item.getTransactionId());
-			if (transaction == null) {
-				transaction = new EventChainTransaction(item.getTransactionId());
-				this.transactions.put(item.getTransactionId(), transaction);
-			}
+			EventChainTransaction transaction = this.transactions.computeIfAbsent(item.getTransactionId(), k -> new EventChainTransaction(item.getTransactionId()));
 			if (writer) {
 				transaction.addWriter(item);
 			} else {
 				transaction.addReader(item);
 			}
 		}
-		EventChainEvent event = this.events.get(item.getEventId());
-		if (event == null) {
-			event = new EventChainEvent(item.getEventId(), item.getEventType());
-			this.events.put(item.getEventId(), event);
-		}
+		EventChainEvent event = this.events.computeIfAbsent(item.getEventId(), k -> new EventChainEvent(item.getEventId(), item.getEventType()));
 		EventChainEndpoint endpoint = event.getEndpoint(endpointName);
 		if (endpoint == null) {
 			endpoint = new EventChainEndpoint(endpointName, item.getEventId());
@@ -74,7 +66,7 @@ public class EventChain {
 	}
 	
 	public List<String> getApplications() {
-		List<String> result = new ArrayList<String>();
+		List<String> result = new ArrayList<>();
 		for (EventChainEvent event : this.events.values()) {
 			for (EventChainEndpoint endpoint : event.getEndpoints()) {
 				if (endpoint.getWriter() != null 
@@ -100,12 +92,7 @@ public class EventChain {
 			event.sort();
 		}
 		List<EventChainEvent> values = new ArrayList<>(this.events.values());
-		values.sort(new Comparator<EventChainEvent>() {
-			@Override
-			public int compare(EventChainEvent o1, EventChainEvent o2) {
-				return Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime());
-			}
-		});
+		values.sort((o1, o2) -> Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime()));
 		if (values.isEmpty()) {
 			return;
 		}

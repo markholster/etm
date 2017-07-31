@@ -9,10 +9,10 @@ import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.domain.writers.TelemetryEventTags;
-import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 
-public class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
+class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
 
 	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 	

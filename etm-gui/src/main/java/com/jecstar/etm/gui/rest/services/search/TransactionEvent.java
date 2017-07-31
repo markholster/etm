@@ -1,6 +1,6 @@
 package com.jecstar.etm.gui.rest.services.search;
 
-public class TransactionEvent {
+class TransactionEvent {
 
 	public String index;
 	public String type;

@@ -15,8 +15,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.writers.TelemetryEventWriter;
-import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 
 public class RemoteEtmLogForwarder implements EtmLogForwarder {
 
@@ -24,9 +24,9 @@ public class RemoteEtmLogForwarder implements EtmLogForwarder {
 
 	private int urlIndex = 0;
 
-	private final Queue<String> eventQueue = new ConcurrentLinkedQueue<String>();
+	private final Queue<String> eventQueue = new ConcurrentLinkedQueue<>();
 	private final TelemetryEventWriter<String, LogTelemetryEvent> writer = new LogTelemetryEventWriterJsonImpl();
-	private ScheduledExecutorService scheduler;
+	private final ScheduledExecutorService scheduler;
 
 	private static final RemoteEtmLogForwarder INSTANCE = new RemoteEtmLogForwarder();
 
@@ -59,7 +59,7 @@ public class RemoteEtmLogForwarder implements EtmLogForwarder {
 
 	private class QueueDrainer implements Runnable {
 
-		private StringBuilder content = new StringBuilder();
+		private final StringBuilder content = new StringBuilder();
 		
 		@Override
 		public void run() {
@@ -79,7 +79,7 @@ public class RemoteEtmLogForwarder implements EtmLogForwarder {
 						if (batchIx != 0) {
 							this.content.append(",");
 						}
-						this.content.append("{\"type\": \"log\", \"data\": " + element + "}");
+						this.content.append("{\"type\": \"log\", \"data\": ").append(element).append("}");
 						batchIx++;
 						element = RemoteEtmLogForwarder.this.eventQueue.poll();
 					}

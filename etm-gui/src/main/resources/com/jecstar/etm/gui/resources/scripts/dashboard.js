@@ -128,7 +128,6 @@ function loadDashboardPage() {
 			currentDashboard = dashboardData;
 			saveDashboard();
 		}
-		$('#modal-dashboard-overwrite').modal('hide');
 		$('#dashboard-container').show();
 		buildDashboard(currentDashboard);
 		$('#dashboard-settings').hide();
@@ -272,7 +271,6 @@ function loadDashboardPage() {
 		}
 		$("div[data-col-id='" + currentGraph.id + "']").replaceWith(createCell(currentGraph));
 		saveDashboard();
-		$('#modal-graph-settings').modal('hide');
 	});	
 
 	$('#sel-graph').on("change", function(event) {
@@ -571,8 +569,8 @@ function loadDashboardPage() {
     		        	});
     		        	col.chart.update();
     		        } else {
-    		        	formatter = d3.locale(data.d3_formatter);
-    		        	numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format ? graphData.bar.y_axis.format : ',f');
+    		        	var formatter = d3.locale(data.d3_formatter);
+    		        	var numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format ? graphData.bar.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.multiBarChart()
 	        		            .x(function(d) { return d.label })
@@ -601,8 +599,8 @@ function loadDashboardPage() {
     		        	});
     		        	col.chart.update();
     		        } else {
-    		        	formatter = d3.locale(data.d3_formatter);
-    		        	numberFormatter = formatter.numberFormat(graphData.line.y_axis.format ? graphData.line.y_axis.format : ',f');
+    		        	var formatter = d3.locale(data.d3_formatter);
+    		        	var numberFormatter = formatter.numberFormat(graphData.line.y_axis.format ? graphData.line.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.lineChart()
 							    .showYAxis(true)
@@ -644,8 +642,8 @@ function loadDashboardPage() {
     		        	});
     		        	col.chart.update();
     		        } else {
-	        			formatter = d3.locale(data.d3_formatter);
-	        			numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format ? graphData.stacked_area.y_axis.format : ',f');
+    		        	var formatter = d3.locale(data.d3_formatter);
+	        			var numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format ? graphData.stacked_area.y_axis.format : ',f');
 	        		    nv.addGraph(function() {
 	        		    	col.chart = nv.models.stackedAreaChart()
 	        		            .useInteractiveGuideline(true)
@@ -783,7 +781,14 @@ function loadDashboardPage() {
         		$('#dashboard-settings_infoBox').text('Dashboard \'' + dashboardData.name + '\' saved.').show('fast').delay(5000).hide('fast');
         		enableOrDisableButtons();
             }
-        });   		
+        }).always(function () {
+        	if ($('#modal-dashboard-overwrite').is(':visible')) {
+        		$('#modal-dashboard-overwrite').modal('hide');
+        	}
+        	if ($('#modal-graph-settings').is(':visible')) {
+        		$('#modal-graph-settings').modal('hide');
+        	}
+        });
 	}
 	
 	function createDashboardData() {
@@ -815,7 +820,12 @@ function loadDashboardPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	$('#modal-dashboard-remove').modal('hide');
+        	if ($('#modal-dashboard-remove').is(':visible')) {
+        		$('#modal-dashboard-remove').modal('hide');
+        	}
+        	if ($('#modal-graph-settings').is(':visible')) {
+        		$('#modal-graph-settings').modal('hide');
+        	}
         });    		
 	}
 	

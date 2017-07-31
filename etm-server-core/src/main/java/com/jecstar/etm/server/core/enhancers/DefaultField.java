@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.enhancers;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.jecstar.etm.server.core.parsers.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 
 public class DefaultField {
 	
@@ -25,11 +25,11 @@ public class DefaultField {
 	};
 
 
-	private String name;
+	private final String name;
 	
 	private WritePolicy writePolicy = WritePolicy.WHEN_EMPTY;
 	
-	private List<ExpressionParser> parsers = new ArrayList<>();
+	private final List<ExpressionParser> parsers = new ArrayList<>();
 	
 	public DefaultField(String name) {
 		this.name = name;

@@ -7,8 +7,8 @@ import java.util.TreeMap;
 
 public class DefaultConfiguration implements Configuration {
 
-	private List<String> endpointUrls = new ArrayList<String>();
-	private TreeMap<String, String> loggers = new TreeMap<String, String>();
+	private final List<String> endpointUrls = new ArrayList<>();
+	private final TreeMap<String, String> loggers = new TreeMap<>();
 	
 	public DefaultConfiguration() {
 	}

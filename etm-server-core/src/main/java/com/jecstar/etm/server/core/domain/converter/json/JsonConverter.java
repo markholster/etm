@@ -4,14 +4,17 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jecstar.etm.domain.writers.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonWriter;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -39,7 +42,7 @@ public class JsonConverter extends JsonWriter {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
+    private Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
 		if (valueMap.containsKey(tag)) {
 			return (Map<String, Object>) valueMap.get(tag);
 		}
@@ -91,7 +94,7 @@ public class JsonConverter extends JsonWriter {
 		return getLong(tag, valueMap, null);
 	}
 
-	public Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
+	private Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
 		if (valueMap.get(tag) != null) {
 			return ((Number)valueMap.get(tag)).longValue();
 		}
@@ -135,6 +138,30 @@ public class JsonConverter extends JsonWriter {
 			return valueMap.get(tag);
 		}
 		return null;
+	}
+	
+	public String encodeBase64(String stringToEncode, int rounds) {
+		if (stringToEncode == null) {
+			return null;
+		}
+		Encoder encoder = Base64.getEncoder();
+		byte[] encoded = stringToEncode.getBytes();
+		for (int i=0; i < rounds; i++) {
+			encoded = encoder.encode(encoded);
+		}
+		return new String(encoded);
+	}
+	
+	public String decodeBase64(String stringToDecode, int rounds) {
+		if (stringToDecode == null) {
+			return null;
+		}
+		Decoder decoder = Base64.getDecoder();
+		byte[] decoded = stringToDecode.getBytes();
+		for (int i=0; i < rounds; i++) {
+			decoded = decoder.decode(decoded);
+		}
+		return new String(decoded);
 	}
 	
 }

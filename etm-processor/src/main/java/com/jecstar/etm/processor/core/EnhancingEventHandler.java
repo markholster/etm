@@ -8,12 +8,12 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.lmax.disruptor.EventHandler;
 
-public class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
+class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 
 	
 	private final long ordinal;

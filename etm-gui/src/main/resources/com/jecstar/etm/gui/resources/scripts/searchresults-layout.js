@@ -282,6 +282,8 @@ $('#btn-apply-table-settings').click(function () {
     	tableLayout.timestamp = new Date().getTime();
         executeQuery(createQuery(true));    
     }
-    $('#modal-table-settings').modal('hide');
+    if ($('#modal-table-settings').is(':visible')) {
+    	$('#modal-table-settings').modal('hide');
+    }
 });
 

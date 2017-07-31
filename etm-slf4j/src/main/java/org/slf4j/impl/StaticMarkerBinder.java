@@ -9,9 +9,9 @@ public class StaticMarkerBinder implements MarkerFactoryBinder {
 	/**
 	 * The unique instance of this class.
 	 */
-	public static final StaticMarkerBinder SINGLETON = new StaticMarkerBinder();
+	private static final StaticMarkerBinder SINGLETON = new StaticMarkerBinder();
 
-	final IMarkerFactory markerFactory = new BasicMarkerFactory();
+	private final IMarkerFactory markerFactory = new BasicMarkerFactory();
 
 	private StaticMarkerBinder() {
 	}

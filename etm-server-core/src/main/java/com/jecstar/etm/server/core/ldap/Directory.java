@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -44,10 +43,10 @@ import org.ldaptive.pool.SearchValidator;
 import org.ldaptive.ssl.SslConfig;
 
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.configuration.LdapConfiguration.ConnectionSecurity;
-import com.jecstar.etm.server.core.domain.EtmGroup;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration.ConnectionSecurity;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.TrustAllTrustManager;
@@ -62,7 +61,7 @@ public class Directory implements AutoCloseable {
 	
 	private static final Duration CONNECTION_TIMEOUT = Duration.ofMillis(2500);
 	
-	private final Pattern attributePattern = Pattern.compile("\\{(.*?)\\}");
+	private final Pattern attributePattern = Pattern.compile("\\{(.*?)}");
 	private LdapConfiguration ldapConfiguration;
 	private AbstractConnectionPool connectionPool;
 	private ConnectionFactory connectionFactory;
@@ -78,7 +77,6 @@ public class Directory implements AutoCloseable {
 		this.connectionPool.close();
 		this.connectionPool = null;
 		this.connectionFactory = null;
-		return;
 	}
 	
 	public void test() {
@@ -189,13 +187,7 @@ public class Directory implements AutoCloseable {
 		}
 		// Jikes, dunno how to query based on DN.
 		Set<EtmGroup> groups = getGroups();
-		Iterator<EtmGroup> groupIterator = groups.iterator();
-		while (groupIterator.hasNext()) {
-			EtmGroup etmGroup = groupIterator.next();
-			if (!groupDn.equals(etmGroup.getName())) {
-				groupIterator.remove();
-			}
-		}
+		groups.removeIf(etmGroup -> !groupDn.equals(etmGroup.getName()));
 		if (groups.size() != 1) {
 			// TODO logging
 			return null;		
@@ -285,7 +277,7 @@ public class Directory implements AutoCloseable {
 			this.connectionFactory = new PooledConnectionFactory(this.connectionPool);
 			return true;
 		} catch (Exception e) {
-			if (this.connectionPool.isInitialized()) {
+			if (this.connectionPool != null && this.connectionPool.isInitialized()) {
 				this.connectionPool.close();
 			}
 			this.connectionPool = null;
@@ -306,9 +298,8 @@ public class Directory implements AutoCloseable {
 			ConnectionConfig connectionConfig = createConnectionConfig(ldapConfiguration);
 			AbstractConnectionPool newConnectionPool = createConnectionPool(ldapConfiguration.getMinPoolSize(), ldapConfiguration.getMaxPoolSize(), ldapConfiguration, connectionConfig);
 			newConnectionPool.initialize();
-			ConnectionFactory newConnectionFactory = new PooledConnectionFactory(newConnectionPool);
-			
-			this.connectionFactory = newConnectionFactory;
+
+			this.connectionFactory = new PooledConnectionFactory(newConnectionPool);
 			this.ldapConfiguration = ldapConfiguration;
 			this.connectionPool = newConnectionPool;
 			
@@ -393,10 +384,14 @@ public class Directory implements AutoCloseable {
 			}
 		}
 		executor.setSearchFilter(searchFilter);
+		Set<EtmGroup> availableEtmGroups = getGroups();
 		try {
 			SearchResult result = executor.search(this.connectionFactory).getResult();
 			for (LdapEntry entry : result.getEntries()) {
 				EtmGroup etmGroup = new EtmGroup(entry.getDn());
+				if (!availableEtmGroups.contains(etmGroup)) {
+					continue;
+				}
 				etmGroup.setLdapBase(true);
 				principal.addGroup(etmGroup);
 			}
@@ -409,8 +404,12 @@ public class Directory implements AutoCloseable {
 		if (principal == null || groupDns == null) {
 			return;
 		}
+		Set<EtmGroup> availableEtmGroups = getGroups();
 		for (String groupDn : groupDns) {
 			EtmGroup etmGroup = new EtmGroup(groupDn);
+			if (!availableEtmGroups.contains(etmGroup)) {
+				continue;
+			}
 			etmGroup.setLdapBase(true);
 			principal.addGroup(etmGroup);
 		}
@@ -440,11 +439,11 @@ public class Directory implements AutoCloseable {
 	}
 	
 	private String getGroupFilter(LdapConfiguration ldapConfiguration, String groupName) {
-		return this.ldapConfiguration.getGroupSearchFilter().replaceAll("\\{group\\}", groupName);
+		return this.ldapConfiguration.getGroupSearchFilter().replaceAll("\\{group}", groupName);
 	}
 	
 	private String getSearchFilter(LdapConfiguration ldapConfiguration, String userName) {
-		return this.ldapConfiguration.getUserSearchFilter().replaceAll("\\{user\\}", userName);
+		return this.ldapConfiguration.getUserSearchFilter().replaceAll("\\{user}", userName);
 	}
 
 	public synchronized void merge(LdapConfiguration ldapConfiguration) {

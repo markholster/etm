@@ -13,7 +13,7 @@ import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.After;
 import org.junit.Before;
 
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 /**
  * Super class for all integration tests. This class requires a running
@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.configuration.EtmConfiguration;
 public abstract class AbstractIntegrationTest {
 
 	protected final EtmConfiguration etmConfiguration = new EtmConfiguration("integration-test");
-	protected Client client; 
+	private Client client;
 	protected BulkProcessor bulkProcessor;
 	
 	protected abstract BulkProcessor.Listener createBuilkListener();
@@ -59,7 +59,7 @@ public abstract class AbstractIntegrationTest {
 		do {
 			GetResponse getResponse = this.client.prepareGet(index, type, id).get();
 			if (getResponse.isExists()) {
-				if (version == null || getResponse.getVersion() == version.longValue()) {
+				if (version == null || getResponse.getVersion() == version) {
 					return getResponse;
 				}
 			}

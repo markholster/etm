@@ -13,9 +13,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.jecstar.etm.server.core.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.domain.EtmGroup;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 
 public class DirectoryTest {
 

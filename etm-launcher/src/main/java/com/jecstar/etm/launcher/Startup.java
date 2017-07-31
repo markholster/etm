@@ -12,16 +12,16 @@ import java.time.ZonedDateTime;
 
 import org.yaml.snakeyaml.Yaml;
 
-import com.jecstar.etm.domain.builders.ApplicationBuilder;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.ApplicationBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import com.jecstar.etm.launcher.slf4j.LogConfiguration;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 
-public class Startup {
+class Startup {
 
 	public static void main(String[] args) {
 		CommandLineParameters commandLineParameters = new CommandLineParameters(args);
@@ -47,13 +47,10 @@ public class Startup {
 			new Launcher().launch(commandLineParameters, configuration, bulkProcessorWrapper);
 		} catch (FileNotFoundException e) {
 			System.err.println("Configuration file not found: " + e.getMessage());
-			return;
 		} catch (UnknownHostException e) {
 			System.err.println("Invalid binding address: " + e.getMessage());
-			return;
 		} catch (IOException e) {
 			System.err.println("Error loading configuration: " + e.getMessage());
-			return;
 		}
 	}
 
@@ -75,7 +72,7 @@ public class Startup {
 		if (!configFile.exists() || !configFile.isFile() || !configFile.canRead()) {
 			throw new FileNotFoundException(configFile.getAbsolutePath());
 		}
-		Configuration configuration = null;
+		Configuration configuration;
 		try (Reader reader = new FileReader(configFile);) {
 			Yaml yaml = new Yaml();
 			configuration = yaml.loadAs(reader, Configuration.class);
@@ -102,7 +99,7 @@ public class Startup {
 					if (field.getType().equals(String.class)) {
 						field.set(configurationInstance, value);
 					} else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)){
-						field.set(configurationInstance, new Boolean(value));
+						field.set(configurationInstance, Boolean.valueOf(value));
 					} else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
 						field.set(configurationInstance, new Integer(value));
 					} else if (field.getType().equals(File.class)) {

@@ -1,7 +1,6 @@
 package com.jecstar.etm.v1migrator;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -26,13 +25,13 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.yaml.snakeyaml.Yaml;
 
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 
 
-public class Startup {
+class Startup {
 
-	public static void main(String[] args) throws FileNotFoundException, IOException {
+	public static void main(String[] args) throws IOException {
 		JsonConverter jsonConverter = new JsonConverter();
 		Configuration config = loadConfiguration();
 		Settings settings = Settings.settingsBuilder()
@@ -111,7 +110,7 @@ public class Startup {
 	}
 
 
-	private static Configuration loadConfiguration() throws FileNotFoundException, IOException {
+	private static Configuration loadConfiguration() throws IOException {
 		try (Reader reader = new FileReader(new File("migration.yml"));) {
 			Yaml yaml = new Yaml();
 			return yaml.loadAs(reader, Configuration.class);

@@ -6,16 +6,12 @@ import java.util.List;
 
 class EventChainTransaction {
 
-	private String transactionId;
+	private final String transactionId;
 	
-	private List<EventChainItem> readers = new ArrayList<>();
-	private List<EventChainItem> writers = new ArrayList<>();
+	private final List<EventChainItem> readers = new ArrayList<>();
+	private final List<EventChainItem> writers = new ArrayList<>();
 	
-	private Comparator<EventChainItem> handlingTimeComparator = new Comparator<EventChainItem>(){
-		@Override
-		public int compare(EventChainItem o1, EventChainItem o2) {
-			return new Long(o1.getHandlingTime()).compareTo(new Long(o2.getHandlingTime()));
-		}};
+	private final Comparator<EventChainItem> handlingTimeComparator = (o1, o2) -> new Long(o1.getHandlingTime()).compareTo(o2.getHandlingTime());
 
 	EventChainTransaction(String transactionId) {
 		this.transactionId = transactionId;

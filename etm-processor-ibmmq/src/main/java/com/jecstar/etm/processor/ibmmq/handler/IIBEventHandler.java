@@ -34,12 +34,12 @@ import com.ibm.mq.headers.MQMD;
 import com.ibm.mq.headers.MQRFH2;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.builders.ApplicationBuilder;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
-import com.jecstar.etm.domain.builders.HttpTelemetryEventBuilder;
-import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
-import com.jecstar.etm.domain.builders.TelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.ApplicationBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.HttpTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.TelemetryEventBuilder;
 import com.jecstar.etm.processor.ibmmq.event.ApplicationData.ComplexContent;
 import com.jecstar.etm.processor.ibmmq.event.ApplicationData.SimpleContent;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
@@ -135,8 +135,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 		// TODO, filteren op output terminal? Events op de in terminal van de MqOutputNode hebben nog geen msg id.
 		if (event.getApplicationData() != null && event.getApplicationData().getComplexContent() != null) {
 			for (ComplexContent complexContent : event.getApplicationData().getComplexContent()) {
-				if (!("DestinationData".equals(complexContent.getElementName())
-						|| "WrittenDestination".equals(complexContent.getElementName()))) {
+				if (!("DestinationData".equals(complexContent.getElementName()))) {
 					continue;
 				}
 				NodeList nodeList = complexContent.getAny().getElementsByTagName("queueName");
@@ -437,12 +436,12 @@ public class IIBEventHandler extends AbstractEventHandler {
 	private String byteArrayToString(byte[] bytes) {
 		this.byteArrayBuilder.setLength(0);
 		boolean allZero = true;
-		for (int i = 0; i < bytes.length; i++) {
-			this.byteArrayBuilder.append(String.format("%02x", bytes[i]));
-			if (bytes[i] != 0) {
-				allZero = false;
-			}
-		}
+        for (byte aByte : bytes) {
+            this.byteArrayBuilder.append(String.format("%02x", aByte));
+            if (aByte != 0) {
+                allZero = false;
+            }
+        }
 		return allZero ? null : this.byteArrayBuilder.toString();
 	}
 

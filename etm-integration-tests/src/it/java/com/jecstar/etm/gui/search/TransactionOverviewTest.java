@@ -21,18 +21,18 @@ import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.SqlTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
-import com.jecstar.etm.domain.builders.ApplicationBuilder;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
-import com.jecstar.etm.domain.builders.HttpTelemetryEventBuilder;
-import com.jecstar.etm.domain.builders.LogTelemetryEventBuilder;
-import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
-import com.jecstar.etm.domain.builders.SqlTelemetryEventBuilder;
-import com.jecstar.etm.domain.writers.TelemetryEventWriter;
-import com.jecstar.etm.domain.writers.json.HttpTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writers.json.LogTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writers.json.MessagingTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writers.json.SqlTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.builder.ApplicationBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.HttpTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.LogTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.SqlTelemetryEventBuilder;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
+import com.jecstar.etm.domain.writer.json.HttpTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
 
 /**
  * Class testing the event overview.

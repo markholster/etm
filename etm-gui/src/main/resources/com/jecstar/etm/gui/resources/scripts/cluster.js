@@ -67,9 +67,12 @@ function buildClusterPage() {
 				document.getElementById('form-ldap').reset();
 				$('#btn-confirm-remove-ldap').attr('disabled', 'disabled');
 				$('#cluster_infoBox').text('Ldap configuration removed.').show('fast').delay(5000).hide('fast');
-				$('#modal-ldap-remove').modal('hide');
 		    }
-		});
+		}).always(function () {
+        	if ($('#modal-ldap-remove').is(':visible')) {
+        		$('#modal-ldap-remove').modal('hide');
+        	}
+        });
 	});
 	
 	$.ajax({

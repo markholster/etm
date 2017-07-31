@@ -9,10 +9,10 @@ import java.util.UUID;
 import org.junit.Test;
 
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.builders.ApplicationBuilder;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
-import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.ApplicationBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 
 /**
  * Test class for the <code>TelemetryEvent</code> class.

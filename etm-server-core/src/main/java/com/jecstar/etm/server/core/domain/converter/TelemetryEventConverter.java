@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.domain.converter;
 import java.util.Map;
 
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.domain.writers.TelemetryEventWriter;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
 
 public interface TelemetryEventConverter<T, Event extends TelemetryEvent<Event>> extends TelemetryEventWriter<T, Event> {
 

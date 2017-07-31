@@ -17,9 +17,9 @@ import com.jecstar.etm.server.core.EtmException;
 
 public class IIBApplicationV10Impl implements IIBApplication {
 
-	private ApplicationProxy application;
+	private final ApplicationProxy application;
 
-	protected IIBApplicationV10Impl(ApplicationProxy applicationProxy) {
+	IIBApplicationV10Impl(ApplicationProxy applicationProxy) {
 		this.application = applicationProxy;
 	}
 

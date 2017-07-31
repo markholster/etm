@@ -7,12 +7,12 @@ import java.util.Map;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
-public class MetricAggregatorWrapper {
+class MetricAggregatorWrapper {
 
-	public static final String AGGREGATOR_BASE = "metric";
+	private static final String AGGREGATOR_BASE = "metric";
 	
 	private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	private final Map<String, Object> jsonData;
@@ -20,8 +20,7 @@ public class MetricAggregatorWrapper {
 	private final String aggregatorType;
 	private final String id;
 	private final String field;
-	private final String fieldType;
-	private final String label;
+    private final String label;
 	private final Format fieldFormat;
 	private final AggregationBuilder aggregationBuilder;
 	
@@ -30,9 +29,9 @@ public class MetricAggregatorWrapper {
 		this.aggregatorType = this.jsonConverter.getString("aggregator", jsonData);
 		this.id = this.jsonConverter.getString("id", jsonData);
 		this.field = this.jsonConverter.getString("field", jsonData);
-		this.fieldType = this.jsonConverter.getString("field_type", jsonData);
+        String fieldType = this.jsonConverter.getString("field_type", jsonData);
 		this.label = this.jsonConverter.getString("label", jsonData);
-		this.fieldFormat = "date".equals(this.fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
+		this.fieldFormat = "date".equals(fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
 		this.aggregationBuilder = createMetricAggregationBuilder(etmPrincipal);
 	}
 	

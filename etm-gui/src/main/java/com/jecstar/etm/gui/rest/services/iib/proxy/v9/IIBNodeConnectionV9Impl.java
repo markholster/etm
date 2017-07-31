@@ -18,6 +18,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
+@SuppressWarnings("deprecation")
 public class IIBNodeConnectionV9Impl implements IIBNodeConnection {
 	
 	/**
@@ -27,9 +28,9 @@ public class IIBNodeConnectionV9Impl implements IIBNodeConnection {
 
 
 	private BrokerProxy brokerProxy;
-	private Node node;
+	private final Node node;
 	
-	public IIBNodeConnectionV9Impl(Node node) {
+	private IIBNodeConnectionV9Impl(Node node) {
 		this.node = node;
 	}
 	
@@ -39,6 +40,12 @@ public class IIBNodeConnectionV9Impl implements IIBNodeConnection {
 
 	public void connect() {
 		MQBrokerConnectionParameters bcp = new MQBrokerConnectionParameters(this.node.getHost(), this.node.getPort(), this.node.getQueueManager());
+		if (this.node.getUsername() != null) {
+			bcp.setUserID(this.node.getUsername());
+		}
+		if (this.node.getPassword() != null) {
+			bcp.setPassword(this.node.getPassword());
+		}
 		if (this.node.getChannel()!= null) {
 			bcp.setAdvancedConnectionParameters(this.node.getChannel(), null, null, -1, -1, null);
 		}

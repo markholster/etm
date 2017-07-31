@@ -29,11 +29,11 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.launcher.MetricConverterTags.RateType;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class MetricReporterElasticImpl extends ScheduledReporter {
+class MetricReporterElasticImpl extends ScheduledReporter {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -65,7 +65,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 		final ObjectMapper objectMapper = new ObjectMapper();
 		
 		Instant now = Instant.now();
-		SortedMap<String, Object> root = new TreeMap<String, Object>();
+		SortedMap<String, Object> root = new TreeMap<>();
 		root.put(this.tags.getTimestampTag(), now.toEpochMilli());
 		appendNodeInfo(root);
 		if (gauges != null && !gauges.isEmpty()) {
@@ -121,7 +121,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 			if (valueMap.containsKey(name)) {
 				valueMap = (Map<String, Object>) valueMap.get(name);
 			} else {
-				Map<String, Object> map = new TreeMap<String, Object>();
+				Map<String, Object> map = new TreeMap<>();
 				valueMap.put(name, map);
 				valueMap = map;
 			}
@@ -148,7 +148,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 			if (valueMap.containsKey(name)) {
 				valueMap = (Map<String, Object>) valueMap.get(name);
 			} else {
-				Map<String, Object> map = new TreeMap<String, Object>();
+				Map<String, Object> map = new TreeMap<>();
 				valueMap.put(name, map);
 				valueMap = map;
 			}
@@ -168,7 +168,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 			if (valueMap.containsKey(name)) {
 				valueMap = (Map<String, Object>) valueMap.get(name);
 			} else {
-				Map<String, Object> map = new TreeMap<String, Object>();
+				Map<String, Object> map = new TreeMap<>();
 				valueMap.put(name, map);
 				valueMap = map;
 			}
@@ -200,11 +200,11 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 			return parent;
 		}
 		String name = split[0];
-		SortedMap<String, Object> result = null;
+		SortedMap<String, Object> result;
 		if (parent.containsKey(name)) {
 			result = (SortedMap<String, Object>) parent.get(name);
 		} else {
-			result = new TreeMap<String, Object>();
+			result = new TreeMap<>();
 			parent.put(name, result);
 		}
 		return getValueMap(result, key.substring(name.length() + 1)); 
@@ -225,7 +225,7 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 
 	
 	private void appendNodeInfo(Map<String, Object> root) {
-		Map<String, Object> nodeMap = new LinkedHashMap<String, Object>();
+		Map<String, Object> nodeMap = new LinkedHashMap<>();
 		root.put(this.tags.getNodeTag(), nodeMap);
 		nodeMap.put(this.tags.getNameTag(), this.nodeName);
 	}
@@ -234,12 +234,12 @@ public class MetricReporterElasticImpl extends ScheduledReporter {
 	 * Gives the name of the elastic index of the given
 	 * <code>TelemetryEvent</code>.
 	 * 
-	 * @param event
-	 *            The <code>TelemetryEvent</code> to determine the elastic index
+	 * @param instant
+	 *            The <code>Instant</code> to determine the elastic index
 	 *            name from.
 	 * @return The name of the index.
 	 */
-	public String getElasticIndexName(Instant instant) {
+	private String getElasticIndexName(Instant instant) {
 		return ElasticsearchLayout.ETM_METRICS_INDEX_PREFIX + this.dateTimeFormatter.format(instant);		
 	}
 	

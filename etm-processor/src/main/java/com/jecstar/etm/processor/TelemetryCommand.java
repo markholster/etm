@@ -5,7 +5,7 @@ import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 
 public class TelemetryCommand {
 
@@ -19,7 +19,7 @@ public class TelemetryCommand {
 		
 		private final String type;
 
-		private CommandType(String type) {
+		CommandType(String type) {
 			this.type = type;
 		}
 		
@@ -45,11 +45,11 @@ public class TelemetryCommand {
 
 	public CommandType commandType;
 
-	public BusinessTelemetryEvent businessTelemetryEvent = new BusinessTelemetryEvent();
-	public HttpTelemetryEvent httpTelemetryEvent = new HttpTelemetryEvent();
-	public LogTelemetryEvent logTelemetryEvent = new LogTelemetryEvent();
-	public MessagingTelemetryEvent messagingTelemetryEvent = new MessagingTelemetryEvent();
-	public SqlTelemetryEvent sqlTelemetryEvent = new SqlTelemetryEvent();
+	public final BusinessTelemetryEvent businessTelemetryEvent = new BusinessTelemetryEvent();
+	public final HttpTelemetryEvent httpTelemetryEvent = new HttpTelemetryEvent();
+	public final LogTelemetryEvent logTelemetryEvent = new LogTelemetryEvent();
+	public final MessagingTelemetryEvent messagingTelemetryEvent = new MessagingTelemetryEvent();
+	public final SqlTelemetryEvent sqlTelemetryEvent = new SqlTelemetryEvent();
 
 	public void initialize(BusinessTelemetryEvent businessTelemetryEvent) {
 		this.commandType = CommandType.BUSINESS_EVENT;

@@ -9,9 +9,9 @@ import java.util.Map;
 import com.ibm.mq.MQMessage;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.builders.EndpointBuilder;
-import com.jecstar.etm.domain.builders.EndpointHandlerBuilder;
-import com.jecstar.etm.domain.builders.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -96,9 +96,9 @@ public class ClonedMessageHandler extends AbstractEventHandler {
 		}
 		this.byteArrayBuilder.setLength(0);
 		boolean allZero = true;
-		for (int i = 0; i < bytes.length; i++) {
-			this.byteArrayBuilder.append(String.format("%02x", bytes[i]));
-			if (bytes[i] != 0) {
+		for (byte aByte : bytes) {
+			this.byteArrayBuilder.append(String.format("%02x", aByte));
+			if (aByte != 0) {
 				allZero = false;
 			}
 		}

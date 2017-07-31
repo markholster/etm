@@ -27,7 +27,7 @@ public class StringAggregationKey implements AggregationKey {
 	public boolean equals(Object obj) {
 		if (obj instanceof StringAggregationKey) {
 			StringAggregationKey other = (StringAggregationKey) obj;
-			return this.key.equals(other);
+			return this.key.equals(other.key);
 		}
 		return super.equals(obj);
 	}

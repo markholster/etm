@@ -23,10 +23,10 @@ import com.jecstar.etm.processor.core.persisting.elastic.HttpTelemetryEventPersi
 import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
 import com.jecstar.etm.processor.core.persisting.elastic.MessagingTelemetryEventPersister;
 import com.jecstar.etm.processor.core.persisting.elastic.SqlTelemetryEventPersister;
-import com.jecstar.etm.server.core.configuration.ConfigurationChangeListener;
-import com.jecstar.etm.server.core.configuration.ConfigurationChangedEvent;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener;
+import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEvent;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
@@ -45,11 +45,11 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	
 	
 	@SuppressWarnings("rawtypes")
-	private Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
+	private final Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
 	
 	private BulkProcessor bulkProcessor;
 
-	private Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
+	private final Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
 	
 	public CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
 		this.elasticClient = elasticClient;

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -16,9 +15,9 @@ import java.util.stream.Collectors;
 import org.xnio.IoUtils;
 
 import com.jecstar.etm.gui.rest.IIBApi;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 
 import io.undertow.UndertowLogger;
 import io.undertow.io.IoCallback;
@@ -44,8 +43,8 @@ public class MenuAwareURLResource extends URLResource {
 	private final URL url;
 
 
-	public MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, MenuContext menuContext, URL url, URLConnection connection, String path) {
-		super(url, connection, path);
+	public MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, MenuContext menuContext, URL url, String path) {
+		super(url, path);
 		this.etmConfiguration = etmConfiguration;
 		this.pathPrefixToContextRoot = pathPrefixToContextRoot;
 		this.menuContext = menuContext;
@@ -90,7 +89,7 @@ public class MenuAwareURLResource extends URLResource {
     
 	
 	
-    public void serveImpl(final EtmAccount etmAccount, final Sender sender, final HttpServerExchange exchange, final long start, final long end, final boolean range, final IoCallback completionCallback) {
+    private void serveImpl(final EtmAccount etmAccount, final Sender sender, final HttpServerExchange exchange, final long start, final long end, final boolean range, final IoCallback completionCallback) {
 
         class ServerTask implements Runnable, IoCallback {
 
@@ -98,7 +97,7 @@ public class MenuAwareURLResource extends URLResource {
             private byte[] buffer;
 
             long toSkip = start;
-            long remaining = end - start + 1;
+            final long remaining = end - start + 1;
 
             @Override
             public void run() {
@@ -189,7 +188,7 @@ public class MenuAwareURLResource extends URLResource {
         			} else {
         				html.append("<li class=\"nav-item\">");
         			}
-        			html.append("<a class=\"nav-link\" href=\"" + pathPrefixToContextRoot + "search/\"><span class=\"fa fa-search fa-lg hidden-md-down\">&nbsp;</span>Search</a>");
+        			html.append("<a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("search/\"><span class=\"fa fa-search fa-lg hidden-md-down\">&nbsp;</span>Search</a>");
         			html.append("</li>");
         		}
         		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER)) {
@@ -200,8 +199,8 @@ public class MenuAwareURLResource extends URLResource {
         			}
         			html.append("<a class=\"nav-link dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" href=\"#\"><span class=\"fa fa-dashboard fa-lg hidden-md-down\">&nbsp;</span>Visualizations</a>");
         			html.append("<div class=\"dropdown-menu\">");
-        			html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "dashboard/graphs.html\">Graphs</a>");
-        			html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "dashboard/dashboards.html\">Dashboards</a>");
+        			html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("dashboard/graphs.html\">Graphs</a>");
+        			html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("dashboard/dashboards.html\">Dashboards</a>");
         			html.append("</div></li>");
         		}
         		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER, EtmPrincipalRole.SEARCHER, EtmPrincipalRole.IIB_ADMIN)) {
@@ -210,7 +209,7 @@ public class MenuAwareURLResource extends URLResource {
         			} else {
         				html.append("<li class=\"nav-item\">");
         			}
-        			html.append("<a class=\"nav-link\" href=\"" + pathPrefixToContextRoot + "preferences/\"><span class=\"fa fa-user fa-lg hidden-md-down\">&nbsp;</span>Preferences</a>");
+        			html.append("<a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("preferences/\"><span class=\"fa fa-user fa-lg hidden-md-down\">&nbsp;</span>Preferences</a>");
         			html.append("</li>");
         		}
         		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN)) {
@@ -224,42 +223,42 @@ public class MenuAwareURLResource extends URLResource {
         			boolean added = false;
         			if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
         				added = true;
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/users.html\">Users</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/groups.html\">Groups</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/users.html\">Users</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/groups.html\">Groups</a>");
         				
         				html.append("<div class=\"dropdown-divider\"></div>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/cluster.html\">Cluster</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/nodes.html\">Nodes</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/parsers.html\">Parsers</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/endpoints.html\">Endpoints</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/cluster.html\">Cluster</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/nodes.html\">Nodes</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/parsers.html\">Parsers</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/endpoints.html\">Endpoints</a>");
         				
         				html.append("<div class=\"dropdown-divider\"></div>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/auditlogs.html\">Audit logs</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/indexstats.html\">Index statistics</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/auditlogs.html\">Audit logs</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/indexstats.html\">Index statistics</a>");
         			}
         			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && IIBApi.IIB_PROXY_ON_CLASSPATH) {
         				if (added) {
         					html.append("<div class=\"dropdown-divider\"></div>");
         				}
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "iib/nodes.html\">IIB Nodes</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "iib/events.html\">IIB Events</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("iib/nodes.html\">IIB Nodes</a>");
+        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("iib/events.html\">IIB Events</a>");
         			}
         			if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
         				html.append("<div class=\"dropdown-divider\"></div>");
         				if (MenuAwareURLResource.this.etmConfiguration.isLicenseExpired()) {
-        					html.append("<a class=\"dropdown-item alert-danger\" href=\"" + pathPrefixToContextRoot + "settings/license.html\">");
+        					html.append("<a class=\"dropdown-item alert-danger\" href=\"").append(pathPrefixToContextRoot).append("settings/license.html\">");
         					html.append("<span class=\"fa fa-ban\">&nbsp;</span>");
         				} else if (MenuAwareURLResource.this.etmConfiguration.isLicenseAlmostExpired()) {
-        					html.append("<a class=\"dropdown-item alert-warning\" href=\"" + pathPrefixToContextRoot + "settings/license.html\">");
+        					html.append("<a class=\"dropdown-item alert-warning\" href=\"").append(pathPrefixToContextRoot).append("settings/license.html\">");
         					html.append("<span class=\"fa fa-exclamation-triangle\">&nbsp;</span>");
         				} else {
-        					html.append("<a class=\"dropdown-item\" href=\"" + pathPrefixToContextRoot + "settings/license.html\">");
+        					html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/license.html\">");
         				}
         				html.append("License</a>");
         			}
         			html.append("</div></li>");
         		}
-    			html.append("<li class=\"nav-item\"><a class=\"nav-link\" href=\"" + pathPrefixToContextRoot + "logout?source=./\"><span class=\"fa fa-sign-out fa-lg hidden-md-down\">&nbsp;</span>Sign out</a></li>");
+    			html.append("<li class=\"nav-item\"><a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("logout?source=./\"><span class=\"fa fa-sign-out fa-lg hidden-md-down\">&nbsp;</span>Sign out</a></li>");
 				return html.toString();
 			}
         }

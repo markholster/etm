@@ -22,7 +22,9 @@ $('#btn-save-template').click(function() {
 });
 
 $('#btn-overwrite-template').click(function() {
-    $('#modal-template-overwrite').modal('hide');
+	if ($('#modal-template-overwrite').is(':visible')) {
+		$('#modal-template-overwrite').modal('hide');
+	}
     storeTemplate(createTemplate(), true);
 });
 
@@ -39,8 +41,11 @@ $('#btn-remove-template').click(function(event) {
                 }).parent().remove();
             validateMaxTemplates();
         }
+    }).always(function () {
+    	if ($('#modal-template-remove').is(':visible')) {
+    		$('#modal-template-remove').modal('hide');
+    	}
     });        
-    $('#modal-template-remove').modal('hide');
 });
 
 

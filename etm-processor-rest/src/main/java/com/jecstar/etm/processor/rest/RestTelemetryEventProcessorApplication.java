@@ -16,7 +16,7 @@ public class RestTelemetryEventProcessorApplication extends Application {
 	@Override
     public Set<Class<?>> getClasses()
     {
-       HashSet<Class<?>> classes = new HashSet<Class<?>>();
+       HashSet<Class<?>> classes = new HashSet<>();
        classes.add(RestTelemetryEventProcessor.class);
        return classes;
     }

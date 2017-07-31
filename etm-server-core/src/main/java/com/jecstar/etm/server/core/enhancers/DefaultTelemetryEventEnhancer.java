@@ -13,14 +13,14 @@ import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
-import com.jecstar.etm.server.core.parsers.ExpressionParser;
-import com.jecstar.etm.server.core.parsers.ExpressionParserField;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 
 public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	
 	private boolean enhancePayloadFormat = true;
 	
-	private List<DefaultField> fields = new ArrayList<>();
+	private final List<DefaultField> fields = new ArrayList<>();
 	
 	@Override
 	public void enhance(TelemetryEvent<?> event, ZonedDateTime enhanceTime) {
@@ -131,9 +131,9 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 			return null;
 		}
 		String trimmed = payload.toLowerCase().trim();
-		if (trimmed.indexOf("http://schemas.xmlsoap.org/soap/envelope/") != -1 || trimmed.indexOf("http://www.w3.org/2003/05/soap-envelope") != -1) {
+		if (trimmed.contains("http://schemas.xmlsoap.org/soap/envelope/") || trimmed.contains("http://www.w3.org/2003/05/soap-envelope")) {
 			return PayloadFormat.SOAP;
-		} else if (trimmed.indexOf("<!doctype html") != -1) {
+		} else if (trimmed.contains("<!doctype html")) {
 			return PayloadFormat.HTML;
 		} else if (trimmed.startsWith("<?xml ")) {
 			return PayloadFormat.XML;

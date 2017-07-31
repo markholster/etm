@@ -9,8 +9,8 @@ import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 
 public interface CommandResources extends Closeable {
 
-	public <T> T getPersister(CommandType commandType);
+	<T> T getPersister(CommandType commandType);
 	
-	public void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration);
+	void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration);
 	
 }

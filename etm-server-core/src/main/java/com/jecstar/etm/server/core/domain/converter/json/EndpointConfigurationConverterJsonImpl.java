@@ -7,13 +7,14 @@ import java.util.Map;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationTags;
+import com.jecstar.etm.server.core.domain.parser.converter.json.ExpressionParserConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.enhancers.TelemetryEventEnhancer;
 import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import com.jecstar.etm.server.core.parsers.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 
 public class EndpointConfigurationConverterJsonImpl implements EndpointConfigurationConverter<String> {
 
@@ -86,13 +87,13 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 		result.append("{");
 		this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), endpointConfiguration.name, result, true);
 		if (endpointConfiguration.eventEnhancer != null) {
-			result.append(",\"" + this.tags.getEnhancerTag() + "\": {");
+			result.append(",\"").append(this.tags.getEnhancerTag()).append("\": {");
 			if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
 				DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfiguration.eventEnhancer;
 				this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), DEFAULT_ENHANCER_TYPE, result, true);
 				this.converter.addBooleanElementToJsonBuffer(this.tags.getEnhancePayloadFormatTag(), enhancer.isEnhancePayloadFormat(), result, false);
 				result.append(",");
-				result.append(this.converter.escapeToJson(this.tags.getFieldsTag(), true) + ": [");
+				result.append(this.converter.escapeToJson(this.tags.getFieldsTag(), true)).append(": [");
 				boolean first = true;
 				for (DefaultField field : enhancer.getFields()) {
 					if (!first) {
@@ -101,7 +102,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 					result.append("{");
 					this.converter.addStringElementToJsonBuffer(this.tags.getFieldTag(), field.getName(), result, true);
 					this.converter.addStringElementToJsonBuffer(this.tags.getWritePolicyTag(), field.getWritePolicy().name(), result, false);
-					result.append(",\"" + this.tags.getParsersTag() + "\": [");
+					result.append(",\"").append(this.tags.getParsersTag()).append("\": [");
 					boolean firstParser = true;
 					for (ExpressionParser expressionParser : field.getParsers()) {
 						if (!firstParser) {

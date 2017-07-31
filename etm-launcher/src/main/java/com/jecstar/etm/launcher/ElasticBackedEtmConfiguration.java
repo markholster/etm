@@ -12,15 +12,15 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.configuration.License;
-import com.jecstar.etm.server.core.configuration.WaitStrategy;
-import com.jecstar.etm.server.core.configuration.converter.EtmConfigurationConverter;
-import com.jecstar.etm.server.core.configuration.converter.LdapConfigurationConverter;
-import com.jecstar.etm.server.core.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.configuration.converter.json.LdapConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
+import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.util.DateUtils;
 
@@ -30,9 +30,8 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	private final Client elasticClient;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final LdapConfigurationConverter<String> ldapConfigurationConverter = new LdapConfigurationConverterJsonImpl();
-	
-	private final long updateCheckInterval = 60 * 1000;
-	private long lastCheckedForUpdates;
+
+    private long lastCheckedForUpdates;
 	
 	private long eventsPersistedToday = 0;
 	private long sizePersistedToday = 0;
@@ -189,16 +188,13 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	
 	@Override
 	public Boolean isLicenseCountExceeded() {
-		reloadConfigurationWhenNecessary();
-		License license = getLicense();
-		if (license == null) {
-			return true;
-		}
-		if (license.getMaxEventsPerDay() == -1) {
-			return false;
-		}
-		return this.eventsPersistedToday > license.getMaxEventsPerDay();  
-	}
+        reloadConfigurationWhenNecessary();
+        License license = getLicense();
+        if (license == null) {
+            return true;
+        }
+        return license.getMaxEventsPerDay() != -1 && this.eventsPersistedToday > license.getMaxEventsPerDay();
+    }
 	
 	@Override
 	public Boolean isLicenseSizeExceeded() {
@@ -207,10 +203,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		if (license == null) {
 			return true;
 		}
-		if (license.getMaxSizePerDay() == -1) {
-			return false;
-		}
-		return this.sizePersistedToday > license.getMaxSizePerDay();  
+		return license.getMaxSizePerDay() != -1 && this.sizePersistedToday > license.getMaxSizePerDay();
 	}
 	
 	@Override
@@ -220,9 +213,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	}
 	
 	private boolean reloadConfigurationWhenNecessary() {
-		boolean changed = false;
-		if (System.currentTimeMillis() - this.lastCheckedForUpdates <= this.updateCheckInterval) {
-			return changed;
+        long updateCheckInterval = 60 * 1000;
+        if (System.currentTimeMillis() - this.lastCheckedForUpdates <= updateCheckInterval) {
+			return false;
 		}
 		
 		String indexNameOfToday = ElasticsearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
@@ -282,7 +275,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 		} else {
 			setDirectory(null);
 		}
-		changed = this.mergeAndNotify(etmConfiguration);
+		boolean changed = this.mergeAndNotify(etmConfiguration);
 		this.lastCheckedForUpdates = System.currentTimeMillis();
 		return changed;
 	}

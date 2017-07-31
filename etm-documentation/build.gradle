@@ -25,5 +25,6 @@ asciidoctor {
        		 'stylesheet': 'github.css',
     		 'stylesdir': 'stylesheets',
     		 
-    		 'etm': 'Enterprise Telemetry Monitor'
+    		 'etm': 'Enterprise Telemetry Monitor',
+    		 'elasticsearch-version': version_elasticsearch
 }

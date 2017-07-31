@@ -649,7 +649,9 @@ function buildGraphsPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	$('#modal-graph-overwrite').modal('hide');
+        	if ($('#modal-graph-overwrite').is(':visible')) {
+        		$('#modal-graph-overwrite').modal('hide');
+        	}
         });    		
 	}
 	
@@ -670,7 +672,9 @@ function buildGraphsPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	$('#modal-graph-remove').modal('hide');
+        	if ($('#modal-graph-remove').is(':visible')) {
+        		$('#modal-graph-remove').modal('hide');
+        	}
         });    		
 	}
 	

@@ -12,7 +12,7 @@ public abstract class AbstractDelegateLogWrapper implements LogWrapper {
 	/**
 	 * The name of the logger.
 	 */
-	private String loggerName;
+	private final String loggerName;
 
 	/**
 	 * The class name that "invokes" the logging statements.
@@ -25,7 +25,7 @@ public abstract class AbstractDelegateLogWrapper implements LogWrapper {
 	 * @param loggerName
 	 *            The name of the logger to be created.
 	 */
-	public AbstractDelegateLogWrapper(String loggerName) {
+    AbstractDelegateLogWrapper(String loggerName) {
 		this.loggerName = loggerName;
 		setLogWrapperClass(AbstractDelegateLogWrapper.class);
 	}
@@ -49,7 +49,7 @@ public abstract class AbstractDelegateLogWrapper implements LogWrapper {
 	 * 
 	 * @return The name of the class that is delegating the logging statements.
 	 */
-	public String getLoggingClassName() {
+    String getLoggingClassName() {
 		return this.loggingClassName;
 	}
 

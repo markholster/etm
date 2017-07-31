@@ -148,9 +148,9 @@ import javax.xml.datatype.XMLGregorianCalendar;
 public class EventPointData {
 
     @XmlElement(required = true)
-    protected EventPointData.EventData eventData;
+    private EventPointData.EventData eventData;
     @XmlElement(required = true)
-    protected EventPointData.MessageFlowData messageFlowData;
+    private EventPointData.MessageFlowData messageFlowData;
 
     /**
      * Gets the value of the eventData property.
@@ -267,17 +267,17 @@ public class EventPointData {
     public static class EventData {
 
         @XmlElement(required = true)
-        protected EventPointData.EventData.EventIdentity eventIdentity;
+        EventPointData.EventData.EventIdentity eventIdentity;
         @XmlElement(required = true)
-        protected EventPointData.EventData.EventSequence eventSequence;
+        EventPointData.EventData.EventSequence eventSequence;
         @XmlElement(required = true)
-        protected EventPointData.EventData.EventCorrelation eventCorrelation;
+        EventPointData.EventData.EventCorrelation eventCorrelation;
         @XmlAttribute(name = "productVersion", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-        protected String productVersion;
+        String productVersion;
         @XmlAttribute(name = "eventSchemaVersion", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-        protected String eventSchemaVersion;
+        String eventSchemaVersion;
         @XmlAttribute(name = "eventSourceAddress", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-        protected String eventSourceAddress;
+        String eventSourceAddress;
 
         /**
          * Gets the value of the eventIdentity property.
@@ -448,11 +448,11 @@ public class EventPointData {
         public static class EventCorrelation {
 
             @XmlAttribute(name = "localTransactionId", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String localTransactionId;
+            String localTransactionId;
             @XmlAttribute(name = "parentTransactionId", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String parentTransactionId;
+            String parentTransactionId;
             @XmlAttribute(name = "globalTransactionId", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String globalTransactionId;
+            String globalTransactionId;
 
             /**
              * Gets the value of the localTransactionId property.
@@ -554,13 +554,13 @@ public class EventPointData {
         public static class EventIdentity {
 
             @XmlAttribute(name = "eventName", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String eventName;
+            String eventName;
             @XmlAttribute(name = "severity", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String severity;
+            String severity;
             @XmlAttribute(name = "priority", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String priority;
+            String priority;
             @XmlAttribute(name = "successDisposition", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String successDisposition;
+            String successDisposition;
 
             /**
              * Gets the value of the eventName property.
@@ -688,16 +688,16 @@ public class EventPointData {
 
             @XmlAttribute(name = "creationTime", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
             @XmlSchemaType(name = "dateTime")
-            protected XMLGregorianCalendar creationTime;
+            XMLGregorianCalendar creationTime;
             @XmlAttribute(name = "counter", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected BigInteger counter;
+            BigInteger counter;
             @XmlAttribute(name = "value", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
             @XmlSchemaType(name = "anySimpleType")
-            protected String value;
+            String value;
             @XmlAttribute(name = "name", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String name;
+            String name;
             @XmlAttribute(name = "dataType", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected SequenceDataType dataType;
+            SequenceDataType dataType;
 
             /**
              * Gets the value of the creationTime property.
@@ -897,13 +897,13 @@ public class EventPointData {
     public static class MessageFlowData {
 
         @XmlElement(required = true)
-        protected EventPointData.MessageFlowData.Broker broker;
+        EventPointData.MessageFlowData.Broker broker;
         @XmlElement(required = true)
-        protected EventPointData.MessageFlowData.ExecutionGroup executionGroup;
+        EventPointData.MessageFlowData.ExecutionGroup executionGroup;
         @XmlElement(required = true)
-        protected EventPointData.MessageFlowData.MessageFlow messageFlow;
+        EventPointData.MessageFlowData.MessageFlow messageFlow;
         @XmlElement(required = true)
-        protected EventPointData.MessageFlowData.Node node;
+        EventPointData.MessageFlowData.Node node;
 
         /**
          * Gets the value of the broker property.
@@ -1026,11 +1026,11 @@ public class EventPointData {
         public static class Broker {
 
             @XmlAttribute(name = "name", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String name;
+            String name;
             @XmlAttribute(name = "UUID", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String uuid;
+            String uuid;
             @XmlAttribute(name = "hostName", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String hostName;
+            String hostName;
 
             /**
              * Gets the value of the name property.
@@ -1130,9 +1130,9 @@ public class EventPointData {
         public static class ExecutionGroup {
 
             @XmlAttribute(name = "name", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String name;
+            String name;
             @XmlAttribute(name = "UUID", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String uuid;
+            String uuid;
 
             /**
              * Gets the value of the name property.
@@ -1210,13 +1210,13 @@ public class EventPointData {
         public static class MessageFlow {
 
             @XmlAttribute(name = "name", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String name;
+            String name;
             @XmlAttribute(name = "UUID", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String uuid;
+            String uuid;
             @XmlAttribute(name = "threadId", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String threadId;
+            String threadId;
             @XmlAttribute(name = "uniqueFlowName", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String uniqueFlowName;
+            String uniqueFlowName;
 
             /**
              * Gets the value of the name property.
@@ -1342,13 +1342,13 @@ public class EventPointData {
         public static class Node {
 
             @XmlAttribute(name = "nodeLabel", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String nodeLabel;
+            String nodeLabel;
             @XmlAttribute(name = "nodeType", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-            protected String nodeType;
+            String nodeType;
             @XmlAttribute(name = "terminal", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String terminal;
+            String terminal;
             @XmlAttribute(name = "detail", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-            protected String detail;
+            String detail;
 
             /**
              * Gets the value of the nodeLabel property.

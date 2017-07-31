@@ -13,10 +13,10 @@ import org.elasticsearch.script.ScriptType;
 
 import com.jecstar.etm.domain.SqlTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
-import com.jecstar.etm.domain.writers.json.SqlTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 
 public class SqlTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
 		implements TelemetryEventPersister<SqlTelemetryEvent, SqlTelemetryEventWriterJsonImpl> {

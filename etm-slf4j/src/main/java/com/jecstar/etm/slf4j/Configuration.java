@@ -14,7 +14,7 @@ import java.util.TreeMap;
  * 
  * @author Mark Holster
  */
-public interface Configuration {
+interface Configuration {
 
 	/**
 	 * Gives a list with endpoint urls for the ETM rest processor bulk api.

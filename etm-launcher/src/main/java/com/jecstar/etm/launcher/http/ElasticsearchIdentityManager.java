@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.elasticsearch.action.get.GetResponse;
@@ -18,18 +17,18 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmGroup;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.audit.LoginAuditLog;
-import com.jecstar.etm.server.core.domain.audit.builders.LoginAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.converter.EtmPrincipalConverter;
-import com.jecstar.etm.server.core.domain.converter.EtmPrincipalTags;
-import com.jecstar.etm.server.core.domain.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.builder.LoginAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
+import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
-import com.jecstar.etm.server.core.domain.converter.json.LoginAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.json.LoginAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -109,7 +108,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				logLoginAttempt(id, false);
 				return null;				
 			}
-			EtmPrincipal storedPrincipal = loadPrincipal(id);
+			EtmPrincipal storedPrincipal = loadPrincipal(principal.getId());
 			if (storedPrincipal == null) {
 				createLdapUser(principal);
 				storedPrincipal = loadPrincipal(id);
@@ -138,7 +137,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 			changed = true;
 		}
 		if (changed) {
-			Map<String, Object> updateMap = new HashMap<String, Object>();
+			Map<String, Object> updateMap = new HashMap<>();
 				updateMap.put(this.etmPrincipalTags.getNameTag(), storedPrincipal.getName());
 				updateMap.put(this.etmPrincipalTags.getEmailTag(), storedPrincipal.getEmailAddress());
 			client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, storedPrincipal.getId())
@@ -184,8 +183,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				}
 				return null;
 			}
-			EtmAccount etmAccount = new EtmAccount(principal);
-			return etmAccount;
+			return new EtmAccount(principal);
 		}
 		return null;
 	}
@@ -203,9 +201,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group);
 			}
 			MultiGetResponse multiGetResponse = multiGetBuilder.get();
-			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
-			while (iterator.hasNext()) {
-				MultiGetItemResponse item = iterator.next();
+			for (MultiGetItemResponse item : multiGetResponse) {
 				EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
 				principal.addGroup(etmGroup);
 			}
@@ -220,9 +216,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 				multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_GROUP, group.getName());
 			}
 			MultiGetResponse multiGetResponse = multiGetBuilder.get();
-			Iterator<MultiGetItemResponse> iterator = multiGetResponse.iterator();
-			while (iterator.hasNext()) {
-				MultiGetItemResponse item = iterator.next();
+			for (MultiGetItemResponse item : multiGetResponse) {
 				if (!item.isFailed() && item.getResponse().isExists() && !item.getResponse().isSourceEmpty()) {
 					EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
 					if (etmGroup.isLdapBase()) {

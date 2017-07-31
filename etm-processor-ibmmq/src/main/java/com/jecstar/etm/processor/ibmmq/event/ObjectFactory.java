@@ -29,7 +29,7 @@ import javax.xml.namespace.QName;
  * 
  */
 @XmlRegistry
-public class ObjectFactory {
+class ObjectFactory {
 
     private final static QName _Event_QNAME = new QName("http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", "event");
 
@@ -174,7 +174,7 @@ public class ObjectFactory {
      */
     @XmlElementDecl(namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", name = "event")
     public JAXBElement<Event> createEvent(Event value) {
-        return new JAXBElement<Event>(_Event_QNAME, Event.class, null, value);
+        return new JAXBElement<>(_Event_QNAME, Event.class, null, value);
     }
 
 }

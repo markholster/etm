@@ -16,19 +16,23 @@ public class NodeConverterJsonImpl implements NodeConverter<String> {
 		String name = this.converter.getString(this.tags.getNameTag(), valueMap);
 		String host = this.converter.getString(this.tags.getHostTag(), valueMap);
 		int port = this.converter.getInteger(this.tags.getPortTag(), valueMap);
-		String qmgr = this.converter.getString(this.tags.getQueueManagerTag(), valueMap);
-		Node node = new Node(name, host, port, qmgr);
+		Node node = new Node(name, host, port);
+		node.setUsername(this.converter.getString(this.tags.getUsernameTag(), valueMap));
+		node.setPassword(this.converter.decodeBase64(this.converter.getString(this.tags.getPasswordTag(), valueMap), 7));
 		node.setChannel(this.converter.getString(this.tags.getChannelTag(), valueMap));
+		node.setQueueManager(this.converter.getString(this.tags.getQueueManagerTag(), valueMap));
 		return node;
 	}
 
 	@Override
 	public String write(Node node) {
 		final StringBuilder sb = new StringBuilder();
-		boolean added = false;
 		sb.append("{");
-		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, !added)  || added;
+		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, true);
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), node.getHost(), sb, !added)  || added;
+		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), node.getPort(), sb, !added)  || added;
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getUsernameTag(), node.getUsername(), sb, !added)  || added;
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordTag(),this.converter.encodeBase64( node.getPassword(), 7), sb, !added)  || added;
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), node.getPort(), sb, !added)  || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getQueueManagerTag(), node.getQueueManager(), sb, !added)  || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getChannelTag(), node.getChannel(), sb, !added)  || added;

@@ -4,7 +4,7 @@ package com.jecstar.etm.core.parsers;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.jecstar.etm.server.core.parsers.JsonPathExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.JsonPathExpressionParser;
 
 /**
  * Test class for the <code>JsonPathExpressionParser</code> class.
@@ -13,7 +13,7 @@ import com.jecstar.etm.server.core.parsers.JsonPathExpressionParser;
  */
 public class JsonExpressionParserTest {
 
-	final String json = "{ \"store\": {\n" + 
+	private final String json = "{ \"store\": {\n" +
 			"    \"book\": [ \n" + 
 			"      { \"category\": \"reference\",\n" + 
 			"        \"author\": \"Nigel Rees\",\n" + 

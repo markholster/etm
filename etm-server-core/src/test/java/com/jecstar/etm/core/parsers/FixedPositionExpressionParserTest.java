@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.jecstar.etm.server.core.parsers.ExpressionParser;
-import com.jecstar.etm.server.core.parsers.FixedPositionExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.FixedPositionExpressionParser;
 
 /**
  * Test class for the <code>FixedPositionExpressionParser</code> class.

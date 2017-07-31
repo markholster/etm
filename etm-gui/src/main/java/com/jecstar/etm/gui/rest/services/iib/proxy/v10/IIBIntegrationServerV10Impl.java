@@ -17,9 +17,9 @@ import com.jecstar.etm.server.core.EtmException;
 
 public class IIBIntegrationServerV10Impl implements IIBIntegrationServer {
 
-	private ExecutionGroupProxy integrationServer;
+	private final ExecutionGroupProxy integrationServer;
 
-	protected IIBIntegrationServerV10Impl(ExecutionGroupProxy executionGroupProxy) {
+	IIBIntegrationServerV10Impl(ExecutionGroupProxy executionGroupProxy) {
 		this.integrationServer = executionGroupProxy;
 	}
 

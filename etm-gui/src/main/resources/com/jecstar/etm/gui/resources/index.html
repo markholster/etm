@@ -42,7 +42,7 @@ body { padding-top: 60px; }
     <div class="card card-block">
       <img class="card-img" src="images/jecstar.svg" alt="Jecstar Innovation Logo" style="opacity: 0.1; filter: alpha(opacity=10); margin:0px auto;display:block;">
       <div class="card-img-overlay">
-	      <h5 class="card-title">Enterprise Telemetry Monitor</h5>
+	      <h5 id="etm-header" class="card-title">Enterprise Telemetry Monitor</h5>
 		    <div class="card-text">
 				<p>
 					Welcome at <a href="https://www.jecstar.com" target="_blank">Jecstar's</a>
@@ -94,12 +94,15 @@ body { padding-top: 60px; }
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
-	    url: 'rest/user/eventstats',
+	    url: 'rest/user/etminfo',
 	    success: function(data) {
 	        if (!data) {
 	            return;
 	        }
 	        $('#event-count').text(data.event_count_as_string);
+	        if (data.etm_version) {
+	        	$('#etm-header').text($('#etm-header').text() + ' - ' + data.etm_version);
+	        }
 	    }
 	});
   </script>

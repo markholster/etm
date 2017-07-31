@@ -6,18 +6,18 @@ import java.util.TreeMap;
 public class LogConfiguration {
 
 	public static String rootLogLevel = "INFO";
-	public static TreeMap<String, String> loggers = new TreeMap<String, String>();
-	public static String applicationName = "Enterprise Telemetry Monitor";
-	public static String applicationVersion = System.getProperty("app.version");
+	public static final TreeMap<String, String> loggers = new TreeMap<>();
+	private static final String applicationName = "Enterprise Telemetry Monitor";
+	private static final String applicationVersion = System.getProperty("app.version");
 	public static String applicationInstance = null;
-	public static String principalName = System.getProperty("user.name");
+	private static final String principalName = System.getProperty("user.name");
 	public static InetAddress hostAddress = null;
 	
-	public String getRootLogLevel() {
+	private String getRootLogLevel() {
 		return rootLogLevel;
 	}
 
-	public TreeMap<String, String> getLoggers() {
+	private TreeMap<String, String> getLoggers() {
 		return loggers;
 	}
 

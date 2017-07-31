@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface IIBLibrary {
 
-	public String getName();
+	String getName();
 	
 	List<IIBMessageFlow> getMessageFlows();
 	IIBMessageFlow getMessageFlowByName(String flowName);

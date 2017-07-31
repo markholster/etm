@@ -7,7 +7,7 @@ import org.elasticsearch.client.Client;
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.core.CommandResources;
 import com.jecstar.etm.processor.core.PersistenceEnvironment;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 

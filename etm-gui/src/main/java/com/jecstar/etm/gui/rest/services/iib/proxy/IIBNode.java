@@ -5,7 +5,7 @@ import com.ibm.broker.config.proxy.MessageFlowProxy.Node;
 
 public class IIBNode {
 
-	private Node node;
+	private final Node node;
 
 	public IIBNode(MessageFlowProxy.Node node) {
 		this.node = node;

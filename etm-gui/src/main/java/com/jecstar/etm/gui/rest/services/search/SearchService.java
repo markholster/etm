@@ -5,14 +5,8 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
@@ -54,25 +48,25 @@ import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.writers.TelemetryEventTags;
-import com.jecstar.etm.domain.writers.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmGroup;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
-import com.jecstar.etm.server.core.domain.audit.builders.GetEventAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.builders.QueryAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.converter.AuditLogTags;
-import com.jecstar.etm.server.core.domain.converter.json.AuditLogTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.GetEventAuditLogConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.QueryAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.builder.QueryAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
+import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.json.GetEventAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.json.QueryAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.util.DateUtils;
 
 @Path("/search")
@@ -131,8 +125,8 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String addSearchTemplate(@PathParam("templateName") String templateName, String json) {
 		Map<String, Object> requestValues = toMap(json); 
-		Map<String, Object> scriptParams = new HashMap<String, Object>();
-		Map<String, Object> template = new HashMap<String, Object>();
+		Map<String, Object> scriptParams = new HashMap<>();
+		Map<String, Object> template = new HashMap<>();
 		template.put("name", templateName);
 		template.put("query", getString("query", requestValues));
 		template.put("types", getArray("types", requestValues));
@@ -156,7 +150,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Path("/templates/{templateName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String removeSearchTemplate(@PathParam("templateName") String templateName) {
-		Map<String, Object> scriptParams = new HashMap<String, Object>();
+		Map<String, Object> scriptParams = new HashMap<>();
 		scriptParams.put("name", templateName);
 		SearchService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
 			.setScript(new Script(ScriptType.STORED, "painless", "etm_remove-search-template", scriptParams))
@@ -175,28 +169,27 @@ public class SearchService extends AbstractIndexMetadataService {
 		Map<String, List<Keyword>> names = getIndexFields(SearchService.client, indexName);
 		result.append("{ \"keywords\":[");
 		Set<Entry<String, List<Keyword>>> entries = names.entrySet();
-		if (entries != null) {
-			boolean first = true;
-			for (Entry<String, List<Keyword>> entry : entries) {
-				if (!first) {
-					result.append(", ");
-				}
-				first = false;
-				result.append("{");
-				result.append("\"index\": " + escapeToJson(indexName, true) + ",");
-				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
-				result.append("\"keywords\": [" + entry.getValue().stream().map(n -> 
-					{StringBuilder kw = new StringBuilder();
-					kw.append("{");
-					addStringElementToJsonBuffer("name", n.getName(), kw, true);
-					addStringElementToJsonBuffer("type", n.getType(), kw, false);
-					addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-					addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-					kw.append("}");
-					return kw.toString();
-				}).collect(Collectors.joining(", ")) + "]");
-				result.append("}");
+		boolean first = true;
+		for (Entry<String, List<Keyword>> entry : entries) {
+			if (!first) {
+				result.append(", ");
 			}
+			first = false;
+			result.append("{");
+			result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+			result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
+			result.append("\"keywords\": [").append(entry.getValue().stream().map(n ->
+			{
+				StringBuilder kw = new StringBuilder();
+				kw.append("{");
+				addStringElementToJsonBuffer("name", n.getName(), kw, true);
+				addStringElementToJsonBuffer("type", n.getType(), kw, false);
+				addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+				addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+				kw.append("}");
+				return kw.toString();
+			}).collect(Collectors.joining(", "))).append("]");
+			result.append("}");
 		}
 		result.append("]}");
 		return result.toString();
@@ -220,21 +213,21 @@ public class SearchService extends AbstractIndexMetadataService {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"status\": \"success\"");
-		result.append(",\"history_size\": " + etmPrincipal.getHistorySize());
-		result.append(",\"hits\": " + response.getHits().getTotalHits());
-		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
-		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
-		result.append(",\"start_ix\": " + parameters.getStartIndex());
-		result.append(",\"end_ix\": " + (parameters.getStartIndex() + response.getHits().getHits().length - 1));
-		result.append(",\"has_more_results\": " + (parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1));
-		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
-		result.append(",\"max_downloads\": " + etmConfiguration.getMaxSearchResultDownloadRows());
+		result.append(",\"history_size\": ").append(etmPrincipal.getHistorySize());
+		result.append(",\"hits\": ").append(response.getHits().getTotalHits());
+		result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits())).append("\"");
+		result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
+		result.append(",\"start_ix\": ").append(parameters.getStartIndex());
+		result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
+		result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1);
+		result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
+		result.append(",\"max_downloads\": ").append(etmConfiguration.getMaxSearchResultDownloadRows());
 		result.append(",\"results\": [");
 		addSearchHits(result, response.getHits());
 		result.append("]");
 		long queryTime = System.currentTimeMillis() - startTime;
-		result.append(",\"query_time\": " + queryTime);
-		result.append(",\"query_time_as_string\": \"" + numberFormat.format(queryTime) + "\"");
+		result.append(",\"query_time\": ").append(queryTime);
+		result.append(",\"query_time_as_string\": \"").append(numberFormat.format(queryTime)).append("\"");
 		result.append("}");
 		
 		if (parameters.getStartIndex() == 0) {
@@ -292,8 +285,8 @@ public class SearchService extends AbstractIndexMetadataService {
 	}
 	
 	private void writeQueryHistory(long timestamp, SearchRequestParameters parameters, EtmPrincipal etmPrincipal, int history_size) {
-		Map<String, Object> scriptParams = new HashMap<String, Object>();
-		Map<String, Object> query = new HashMap<String, Object>();
+		Map<String, Object> scriptParams = new HashMap<>();
+		Map<String, Object> query = new HashMap<>();
 		query.put("timestamp", timestamp);
 		query.put("query", parameters.getQueryString());
 		query.put("types", parameters.getTypes());
@@ -370,7 +363,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
 			addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
 			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
-			result.append(", \"source\": " + searchHit.getSourceAsString());
+			result.append(", \"source\": ").append(searchHit.getSourceAsString());
 			result.append("}");
 			Map<String, Object> valueMap = searchHit.getSource();
 			// Add the name to the audit log.
@@ -381,14 +374,12 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (correlatedToId != null && !correlatedToId.equals(eventId)) {
 				SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedToId);
 				if (correlatedEvent != null) {
-					if (!correlationAdded) {
-						result.append(", \"correlated_events\": [");
-					}
+					result.append(", \"correlated_events\": [");
 					result.append("{");
 					addStringElementToJsonBuffer("index", correlatedEvent.getIndex() , result, true);
 					addStringElementToJsonBuffer("type", correlatedEvent.getType() , result, false);
 					addStringElementToJsonBuffer("id", correlatedEvent.getId() , result, false);
-					result.append(", \"source\": " + correlatedEvent.getSourceAsString());
+					result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
 					result.append("}");
 					correlationAdded = true;
 					auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
@@ -416,7 +407,7 @@ public class SearchService extends AbstractIndexMetadataService {
 						addStringElementToJsonBuffer("index", correlatedEvent.getIndex() , result, true);
 						addStringElementToJsonBuffer("type", correlatedEvent.getType() , result, false);
 						addStringElementToJsonBuffer("id", correlatedEvent.getId() , result, false);
-						result.append(", \"source\": " + correlatedEvent.getSourceAsString());
+						result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
 						result.append("}");
 						correlationAdded = true;
 						auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
@@ -440,7 +431,7 @@ public class SearchService extends AbstractIndexMetadataService {
 							auditLogAdded = true;
 						}
 						result.append("{");
-						addBooleanElementToJsonBuffer("direct", getString(this.auditLogTags.getEventIdTag(), auditLogValues).equals(eventId) ? true : false, result, true);
+						addBooleanElementToJsonBuffer("direct", getString(this.auditLogTags.getEventIdTag(), auditLogValues).equals(eventId), result, true);
 						addLongElementToJsonBuffer("handling_time", getLong(this.auditLogTags.getHandlingTimeTag(), auditLogValues), result, false);
 						addStringElementToJsonBuffer("principal_id", getString(this.auditLogTags.getPrincipalIdTag(), auditLogValues), result, false);
 						result.append("}");
@@ -490,7 +481,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
 			addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
 			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
-			result.append(", \"source\": " + searchHit.getSourceAsString());
+			result.append(", \"source\": ").append(searchHit.getSourceAsString());
 			result.append("}");
 		}
 		result.append("}");
@@ -604,7 +595,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
 			if (endpoints != null) {
 				for (Map<String, Object> endpoint : endpoints) {
-					Map<String, Object> writingEndpointHandler = (Map<String, Object>) getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
+					Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
 					if (isWithinTransaction(writingEndpointHandler, applicationName, transactionId)) {
 						event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
 						event.direction = "outgoing";
@@ -632,7 +623,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			}
 			events.add(event);
 		}
-		Collections.sort(events, (e1, e2) -> e1.handlingTime.compareTo(e2.handlingTime));
+		events.sort(Comparator.comparing(e -> e.handlingTime));
 		result.append("{");
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
 		result.append(",\"events\":[");
@@ -726,10 +717,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (!first) {
 				result.append(",");
 			}
-			result.append("{\"id\": " + escapeToJson(application, true) 
-				+ ", \"label\": " + escapeToJson(application, true) 
-				+ ", \"node_type\": \"application\""
-				+ ", \"missing\": " + eventChain.isApplicationMissing(application) + "}");
+			result.append("{\"id\": ").append(escapeToJson(application, true)).append(", \"label\": ").append(escapeToJson(application, true)).append(", \"node_type\": \"application\"").append(", \"missing\": ").append(eventChain.isApplicationMissing(application)).append("}");
 			first = false;
 		}
 		for (EventChainEvent event : eventChain.events.values()) {
@@ -739,12 +727,7 @@ public class SearchService extends AbstractIndexMetadataService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{\"id\": " + escapeToJson(endpoint.getKey(), true) 
-						+ ", \"label\": " + escapeToJson(endpoint.getName(), true) 
-						+ ", \"event_id\": " + escapeToJson(event.getEventId(), true) 
-						+ ", \"event_type\": " + escapeToJson(event.getEventType(), true)
-						+ ", \"node_type\": \"endpoint\""
-						+ ", \"missing\": " + endpoint.isMissing() + "}");
+					result.append("{\"id\": ").append(escapeToJson(endpoint.getKey(), true)).append(", \"label\": ").append(escapeToJson(endpoint.getName(), true)).append(", \"event_id\": ").append(escapeToJson(event.getEventId(), true)).append(", \"event_type\": ").append(escapeToJson(event.getEventType(), true)).append(", \"node_type\": \"endpoint\"").append(", \"missing\": ").append(endpoint.isMissing()).append("}");
 					first = false;				
 				}
 				// Add the reader as item.
@@ -752,35 +735,21 @@ public class SearchService extends AbstractIndexMetadataService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{\"id\": " + escapeToJson(endpoint.getWriter().getKey(), true) 
-						+ ", \"label\": " + escapeToJson(endpoint.getWriter().getName(), true) 
-						+ ", \"event_id\": " + escapeToJson(event.getEventId(), true) 
-						+ ", \"event_type\": " + escapeToJson(event.getEventType(), true) 
-						+ ", \"endpoint\": " + escapeToJson(endpoint.getName(), true) 
-						+ ", \"transaction_id\": " + escapeToJson(endpoint.getWriter().getTransactionId(), true) 
-						+ ", \"node_type\": \"event\""
-						+ ", \"missing\": " + endpoint.getWriter().isMissing());
+					result.append("{\"id\": ").append(escapeToJson(endpoint.getWriter().getKey(), true)).append(", \"label\": ").append(escapeToJson(endpoint.getWriter().getName(), true)).append(", \"event_id\": ").append(escapeToJson(event.getEventId(), true)).append(", \"event_type\": ").append(escapeToJson(event.getEventType(), true)).append(", \"endpoint\": ").append(escapeToJson(endpoint.getName(), true)).append(", \"transaction_id\": ").append(escapeToJson(endpoint.getWriter().getTransactionId(), true)).append(", \"node_type\": \"event\"").append(", \"missing\": ").append(endpoint.getWriter().isMissing());
 					if (endpoint.getWriter().getApplicationName() != null) {
-						result.append(", \"parent\": " + escapeToJson(endpoint.getWriter().getApplicationName(), true)); 
+						result.append(", \"parent\": ").append(escapeToJson(endpoint.getWriter().getApplicationName(), true));
 					}
 					result.append("}");
 					first = false;			
 				}
-				// Add all writers as item.
+				// Add all writer as item.
 				for (EventChainItem item : endpoint.getReaders()) {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{\"id\": " + escapeToJson(item.getKey(), true) 
-						+ ", \"label\": " + escapeToJson(item.getName(), true) 
-						+ ", \"event_id\": " + escapeToJson(event.getEventId(), true) 
-						+ ", \"event_type\": " + escapeToJson(event.getEventType(), true) 
-						+ ", \"endpoint\": " + escapeToJson(endpoint.getName(), true) 
-						+ ", \"transaction_id\": " + escapeToJson(item.getTransactionId(), true) 
-						+ ", \"node_type\": \"event\""
-						+ ", \"missing\": " + item.isMissing());
+					result.append("{\"id\": ").append(escapeToJson(item.getKey(), true)).append(", \"label\": ").append(escapeToJson(item.getName(), true)).append(", \"event_id\": ").append(escapeToJson(event.getEventId(), true)).append(", \"event_type\": ").append(escapeToJson(event.getEventType(), true)).append(", \"endpoint\": ").append(escapeToJson(endpoint.getName(), true)).append(", \"transaction_id\": ").append(escapeToJson(item.getTransactionId(), true)).append(", \"node_type\": \"event\"").append(", \"missing\": ").append(item.isMissing());
 					if (item.getApplicationName() != null) {
-						result.append(", \"parent\": " + escapeToJson(item.getApplicationName(), true)); 
+						result.append(", \"parent\": ").append(escapeToJson(item.getApplicationName(), true));
 					}
 					result.append("}");
 					first = false;							
@@ -797,8 +766,7 @@ public class SearchService extends AbstractIndexMetadataService {
 							result.append(",");
 						}
 						// Add the connection from the writer to the endpoint.
-						result.append("{\"source\": " + escapeToJson(endpoint.getWriter().getKey(), true) 
-								+ ", \"target\": " + escapeToJson(endpoint.getKey(), true));
+						result.append("{\"source\": ").append(escapeToJson(endpoint.getWriter().getKey(), true)).append(", \"target\": ").append(escapeToJson(endpoint.getKey(), true));
 						if (!endpoint.getWriter().isMissing()) {
 							result.append(", \"transition_time_percentage\": 0.0");
 						}
@@ -810,11 +778,10 @@ public class SearchService extends AbstractIndexMetadataService {
 						if (!first) {
 							result.append(",");
 						}
-						result.append("{ \"source\": " +  escapeToJson(endpoint.getKey(), true)
-							+ ", \"target\": " + escapeToJson(item.getKey(), true)); 
+						result.append("{ \"source\": ").append(escapeToJson(endpoint.getKey(), true)).append(", \"target\": ").append(escapeToJson(item.getKey(), true));
 						Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, endpoint, item);
 						if (edgePercentage != null) {
-							result.append(", \"transition_time_percentage\": " + edgePercentage);
+							result.append(", \"transition_time_percentage\": ").append(edgePercentage);
 						}
 						result.append("}");
 						first = false;							
@@ -827,11 +794,10 @@ public class SearchService extends AbstractIndexMetadataService {
 							if (!first) {
 								result.append(",");
 							}
-							result.append("{ \"source\": " +  escapeToJson(endpoint.getWriter().getKey(), true)
-								+ ", \"target\": " + escapeToJson(item.getKey(), true)); 
+							result.append("{ \"source\": ").append(escapeToJson(endpoint.getWriter().getKey(), true)).append(", \"target\": ").append(escapeToJson(item.getKey(), true));
 							Float edgePercentage = eventChain.calculateEdgePercentageFromEndpointToItem(event, endpoint, item);
 							if (edgePercentage != null) {
-								result.append(", \"transition_time_percentage\": " + edgePercentage);
+								result.append(", \"transition_time_percentage\": ").append(edgePercentage);
 							}						
 							result.append("}");
 							first = false;							
@@ -842,7 +808,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			if (event.isRequest()) {
 				// If the last part of the request chain is an endpoint (without
 				// a reader) and the first part of the request chain has no
-				// writers then we lay a connection between the endpoints.
+				// writer then we lay a connection between the endpoints.
 				EventChainEvent responseEvent = eventChain.findResponse(event.getEventId());
 				// TODO, add an missing response when responseEvent == null?
 				if (responseEvent != null) {
@@ -854,11 +820,10 @@ public class SearchService extends AbstractIndexMetadataService {
 						if (!first) {
 							result.append(",");
 						}
-						result.append("{ \"source\": " +  escapeToJson(from, true)
-							+ ", \"target\": " + escapeToJson(to, true)); 
+						result.append("{ \"source\": ").append(escapeToJson(from, true)).append(", \"target\": ").append(escapeToJson(to, true));
 						Float edgePercentage = eventChain.calculateEdgePercentageFromItemToItem(lastRequestEndpoint.getWriter(), firstResponseEndpoint.getReaders().get(0));
 						if (edgePercentage != null) {
-							result.append(", \"transition_time_percentage\": " + edgePercentage);
+							result.append(", \"transition_time_percentage\": ").append(edgePercentage);
 						}
 						result.append("}");
 						first = false;													
@@ -880,10 +845,10 @@ public class SearchService extends AbstractIndexMetadataService {
 					if (!first) {
 						result.append(",");
 					}
-					result.append("{ \"source\": " + escapeToJson(reader.getKey(), true) + ", \"target\": " + escapeToJson(transaction.getWriters().get(writerIx).getKey(), true));
+					result.append("{ \"source\": ").append(escapeToJson(reader.getKey(), true)).append(", \"target\": ").append(escapeToJson(transaction.getWriters().get(writerIx).getKey(), true));
 					Float edgePercentage = eventChain.calculateEdgePercentageFromItemToItem(reader, transaction.getWriters().get(writerIx));
 					if (edgePercentage != null) {
-						result.append(", \"transition_time_percentage\": " + edgePercentage);
+						result.append(", \"transition_time_percentage\": ").append(edgePercentage);
 					}						
 					result.append("}");					
 					first = false;												
@@ -1017,7 +982,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			} else if (MessagingEventType.RESPONSE.equals(messagingEventType) && correlationId != null) {
 				queryBuilder = new IdsQueryBuilder().types("messaging").addIds(correlationId);
 			}
-		} else if ("http".equals("type")) {
+		} else if ("http".equals(type)) {
 			HttpEventType httpEventType = HttpEventType.safeValueOf(subType);
 			if (HttpEventType.RESPONSE.equals(httpEventType) && correlationId != null) {
 				queryBuilder = new IdsQueryBuilder().types("http").addIds(correlationId);
@@ -1095,7 +1060,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
 			addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
 			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
-			result.append(", \"source\": " + searchHit.getSourceAsString());
+			result.append(", \"source\": ").append(searchHit.getSourceAsString());
 			result.append("}");
 		}
 	}

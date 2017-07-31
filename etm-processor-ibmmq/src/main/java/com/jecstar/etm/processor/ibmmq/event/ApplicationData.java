@@ -69,8 +69,8 @@ import org.w3c.dom.Element;
 })
 public class ApplicationData {
 
-    protected List<ApplicationData.SimpleContent> simpleContent;
-    protected List<ApplicationData.ComplexContent> complexContent;
+    private List<ApplicationData.SimpleContent> simpleContent;
+    private List<ApplicationData.ComplexContent> complexContent;
 
     /**
      * Gets the value of the simpleContent property.
@@ -96,7 +96,7 @@ public class ApplicationData {
      */
     public List<ApplicationData.SimpleContent> getSimpleContent() {
         if (simpleContent == null) {
-            simpleContent = new ArrayList<ApplicationData.SimpleContent>();
+            simpleContent = new ArrayList<>();
         }
         return this.simpleContent;
     }
@@ -125,7 +125,7 @@ public class ApplicationData {
      */
     public List<ApplicationData.ComplexContent> getComplexContent() {
         if (complexContent == null) {
-            complexContent = new ArrayList<ApplicationData.ComplexContent>();
+            complexContent = new ArrayList<>();
         }
         return this.complexContent;
     }
@@ -159,11 +159,11 @@ public class ApplicationData {
     public static class ComplexContent {
 
         @XmlAnyElement
-        protected Element any;
+        Element any;
         @XmlAttribute(name = "elementName", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-        protected String elementName;
+        String elementName;
         @XmlAttribute(name = "targetNamespace", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-        protected String targetNamespace;
+        String targetNamespace;
 
         /**
          * Gets the value of the any property.
@@ -265,14 +265,14 @@ public class ApplicationData {
     public static class SimpleContent {
 
         @XmlAttribute(name = "name", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-        protected String name;
+        String name;
         @XmlAttribute(name = "value", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
         @XmlSchemaType(name = "anySimpleType")
-        protected String value;
+        String value;
         @XmlAttribute(name = "targetNamespace", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event")
-        protected String targetNamespace;
+        String targetNamespace;
         @XmlAttribute(name = "dataType", namespace = "http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event", required = true)
-        protected SimpleContentDataType dataType;
+        SimpleContentDataType dataType;
 
         /**
          * Gets the value of the name property.

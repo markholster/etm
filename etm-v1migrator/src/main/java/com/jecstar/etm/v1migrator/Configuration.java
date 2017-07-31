@@ -1,11 +1,11 @@
 package com.jecstar.etm.v1migrator;
 
-public class Configuration {
+class Configuration {
 
 	public String inputClusterName;
 	public String inputHostname;
 	public int inputPort;
-	public int bulkSize = 100;
+	public final int bulkSize = 100;
 	public String bulkApiLocation;
-	public boolean deleteSource = false;
+	public final boolean deleteSource = false;
 }

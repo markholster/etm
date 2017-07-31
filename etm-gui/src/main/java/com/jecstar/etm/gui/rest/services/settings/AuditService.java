@@ -30,9 +30,9 @@ import org.joda.time.DateTimeZone;
 
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 
 @Path("/audit")
 public class AuditService extends AbstractIndexMetadataService {
@@ -54,28 +54,26 @@ public class AuditService extends AbstractIndexMetadataService {
 		Map<String, List<Keyword>> names = getIndexFields(AuditService.client, indexName);
 		result.append("{ \"keywords\":[");
 		Set<Entry<String, List<Keyword>>> entries = names.entrySet();
-		if (entries != null) {
-			boolean first = true;
-			for (Entry<String, List<Keyword>> entry : entries) {
-				if (!first) {
-					result.append(", ");
-				}
-				first = false;
-				result.append("{");
-				result.append("\"index\": " + escapeToJson(indexName, true) + ",");
-				result.append("\"type\": " + escapeToJson(entry.getKey(), true) + ",");
-				result.append("\"keywords\": [" + entry.getValue().stream().map(n -> {
-					StringBuilder kw = new StringBuilder();
-					kw.append("{");
-					addStringElementToJsonBuffer("name", n.getName(), kw, true);
-					addStringElementToJsonBuffer("type", n.getType(), kw, false);
-					addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-					addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-					kw.append("}");
-					return kw.toString();
-				}).collect(Collectors.joining(", ")) + "]");
-				result.append("}");
+		boolean first = true;
+		for (Entry<String, List<Keyword>> entry : entries) {
+			if (!first) {
+				result.append(", ");
 			}
+			first = false;
+			result.append("{");
+			result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+			result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
+			result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
+				StringBuilder kw = new StringBuilder();
+				kw.append("{");
+				addStringElementToJsonBuffer("name", n.getName(), kw, true);
+				addStringElementToJsonBuffer("type", n.getType(), kw, false);
+				addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+				addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+				kw.append("}");
+				return kw.toString();
+			}).collect(Collectors.joining(", "))).append("]");
+			result.append("}");
 		}
 		result.append("]}");
 		return result.toString();
@@ -110,19 +108,19 @@ public class AuditService extends AbstractIndexMetadataService {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		result.append("\"status\": \"success\"");
-		result.append(",\"hits\": " + response.getHits().getTotalHits());
-		result.append(",\"hits_as_string\": \"" + numberFormat.format(response.getHits().getTotalHits()) + "\"");
-		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
-		result.append(",\"start_ix\": " + parameters.getStartIndex());
-		result.append(",\"end_ix\": " + (parameters.getStartIndex() + response.getHits().getHits().length - 1));
-		result.append(",\"has_more_results\": " + (parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1));
-		result.append(",\"time_zone\": \"" + etmPrincipal.getTimeZone().getID() + "\"");
+		result.append(",\"hits\": ").append(response.getHits().getTotalHits());
+		result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits())).append("\"");
+		result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
+		result.append(",\"start_ix\": ").append(parameters.getStartIndex());
+		result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
+		result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1);
+		result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
 		result.append(",\"results\": [");
 		addSearchHits(result, response.getHits());
 		result.append("]");
 		long queryTime = System.currentTimeMillis() - startTime;
-		result.append(",\"query_time\": " + queryTime);
-		result.append(",\"query_time_as_string\": \"" + numberFormat.format(queryTime) + "\"");
+		result.append(",\"query_time\": ").append(queryTime);
+		result.append(",\"query_time_as_string\": \"").append(numberFormat.format(queryTime)).append("\"");
 		result.append("}");		
 		return result.toString();
 	}
@@ -160,7 +158,7 @@ public class AuditService extends AbstractIndexMetadataService {
 			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
 			addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
 			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
-			result.append(", \"source\": " + searchHit.getSourceAsString());
+			result.append(", \"source\": ").append(searchHit.getSourceAsString());
 			result.append("}");
 		}
 	}

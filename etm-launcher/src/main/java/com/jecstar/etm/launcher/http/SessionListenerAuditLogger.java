@@ -8,13 +8,13 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import com.jecstar.etm.server.core.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.audit.LogoutAuditLog;
-import com.jecstar.etm.server.core.domain.audit.builders.LogoutAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.converter.json.LogoutAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.builder.LogoutAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.audit.converter.json.LogoutAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.util.DateUtils;
 
 import io.undertow.security.api.AuthenticatedSessionManager.AuthenticatedSession;
@@ -23,7 +23,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionListener;
 
-public class SessionListenerAuditLogger implements SessionListener {
+class SessionListenerAuditLogger implements SessionListener {
 
 	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 

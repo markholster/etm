@@ -35,7 +35,7 @@ public class DoubleAggregationKey implements AggregationKey {
 	public boolean equals(Object obj) {
 		if (obj instanceof DoubleAggregationKey) {
 			DoubleAggregationKey other = (DoubleAggregationKey) obj;
-			return this.key.equals(other);
+			return this.key.equals(other.key);
 		}
 		return super.equals(obj);
 	}
