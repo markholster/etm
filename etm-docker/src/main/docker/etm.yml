@@ -10,8 +10,6 @@ http:
   guiEnabled: true
   httpPort: 8080
   httpsPort: 8443
-  maxConcurrentRequests: 100
-  maxQueuedRequests: 100
   restProcessorEnabled: true
   sslKeystoreLocation: 
   sslKeystorePassword: 
