@@ -1,5 +1,8 @@
 == Changelog & upgrade
 
+=== Version 2.4.0
+* Fixed Terms and Significant Terms autocompletion fields in Graphs page.
+
 === Version 2.3.0
 * Support for x-pack secured Elasticsearch clusters.
 * Upgrade to Elasticsearch 5.5.x.

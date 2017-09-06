@@ -1,5 +1,17 @@
 package com.jecstar.etm.gui.rest;
 
+import com.jecstar.etm.server.core.domain.QueryOccurrence;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import org.elasticsearch.action.support.ActiveShardCount;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
+
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.SecurityContext;
 import java.text.DateFormatSymbols;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -9,23 +21,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.SecurityContext;
-
-import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
-
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.principal.EtmGroup;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.QueryOccurrence;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
-
 public class AbstractJsonService extends JsonConverter {
 
-	protected static final String KEYWORD_SUFFIX = ".keyword";
+	public static final String KEYWORD_SUFFIX = ".keyword";
 	
     @Context
     protected SecurityContext securityContext;

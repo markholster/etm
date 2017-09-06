@@ -299,7 +299,7 @@ function buildGraphsPage() {
 			        			} else if ('min' == agg || 'max' == agg) {
 			        				return !keyword.number && !keyword.date;
 			        			} else if ('cardinality' == agg) {
-			        				return !keyword.number && !keyword.date && 'keyword' != keyword.type;
+			        				return !keyword.number && !keyword.date && 'text' != keyword.type;
 			        			} else {
 			        				return true;
 			        			}
@@ -421,9 +421,9 @@ function buildGraphsPage() {
 			        			} else if ('histogram' == agg || 'range' == agg) {
 			        				return !keyword.number;
 			        			} else if ('significant_term' == agg) {
-				        			return 'keyword' != keyword.type;
+				        			return 'text' != keyword.type;
 			        			} else if ('term' == agg) {
-			        				return !keyword.number && !keyword.date && 'keyword' != keyword.type;
+			        				return !keyword.number && !keyword.date && 'text' != keyword.type;
 			        			} else {
 			        				return true;
 			        			}

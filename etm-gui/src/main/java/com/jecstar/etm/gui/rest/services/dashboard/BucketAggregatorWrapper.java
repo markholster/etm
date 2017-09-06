@@ -1,19 +1,19 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
-import java.text.Format;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
+import org.elasticsearch.search.aggregations.metrics.min.Min;
 
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import java.text.Format;
+import java.util.HashMap;
+import java.util.Map;
 
 class BucketAggregatorWrapper {
 	
@@ -35,9 +35,9 @@ class BucketAggregatorWrapper {
 	public BucketAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData, SearchRequestBuilder searchRequest) {
 		this.jsonData = jsonData;
 		this.aggregatorType = this.jsonConverter.getString("aggregator", jsonData);
-		this.field = this.jsonConverter.getString("field", jsonData);
         String fieldType = this.jsonConverter.getString("field_type", jsonData);
-		if ("date_histogram".equals(this.aggregatorType)) {
+		this.field = "text".equals(fieldType) ? this.jsonConverter.getString("field", jsonData) + AbstractJsonService.KEYWORD_SUFFIX : this.jsonConverter.getString("field", jsonData);
+        if ("date_histogram".equals(this.aggregatorType)) {
 			if ("auto".equals(this.jsonConverter.getString("interval", jsonData))) {
 				this.requiredDateInterval = calculateInterval(searchRequest, this.field);
 			} else {
