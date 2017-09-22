@@ -7,13 +7,18 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public abstract class AbstractIndexMetadataService extends AbstractJsonService {
+
+    // Alphabetic ascending list of keywords that need to be excludes for the user.
+    private static final String[] keywordsToExclude = new String[] {
+            "endpoints.reading_endpoint_handlers.forced",
+            "endpoints.writing_endpoint_handler.forced",
+            "event_hashes",
+            "temp_for_correlations"
+    };
 
 	/**
 	 * Gives a list of fields of an index per index type.
@@ -74,13 +79,13 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 		if (valueMap == null) {
 			return;
 		}
-		// Remove temp fields that are used for correlating events.
-		valueMap.remove("temp_for_correlations");
-		// Remove event hashes field. It is used for internal handling of events.
-		valueMap.remove("event_hashes");
 		for (Entry<String, Object> entry : valueMap.entrySet()) {
 			Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
 			String name = determinePropertyForFieldName(prefix, entry.getKey());
+			if (Arrays.binarySearch(keywordsToExclude, name) >=0) {
+			    continue;
+            }
+
 			if (entryValues.containsKey("properties")) {
 				addFieldProperties(keywords, name, entryValues);
 			} else {

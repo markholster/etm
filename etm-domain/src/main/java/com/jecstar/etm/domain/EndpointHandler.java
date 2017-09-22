@@ -76,6 +76,7 @@ public class EndpointHandler {
 		// Initialize read only fields.
 		this.latency = copy.latency;
 		this.responseTime = copy.responseTime;
+		this.forced = copy.forced;
 		return this;
 	}
 	
