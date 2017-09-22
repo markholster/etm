@@ -1,24 +1,17 @@
 package com.jecstar.etm.gui.rest.services;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsRequestBuilder;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.jecstar.etm.gui.rest.AbstractJsonService;
+import org.elasticsearch.action.admin.indices.mapping.get.*;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import com.jecstar.etm.gui.rest.AbstractJsonService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 
@@ -43,21 +36,17 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 				foundKeywords.add(Keyword.EXISTS);
 				foundKeywords.add(Keyword.MISSING);
 				foundKeywords.add(Keyword.TYPE);
-				try {
-					Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
-					addFieldProperties(foundKeywords, "", valueMap);
-					if (names.containsKey(mappingMetadataCursor.key)) {
-						List<Keyword> currentKeywords = names.get(mappingMetadataCursor.key);
-						for (Keyword value : foundKeywords) {
-							if (!currentKeywords.contains(value)) {
-								currentKeywords.add(value);
-							}
+				Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
+				addFieldProperties(foundKeywords, "", valueMap);
+				if (names.containsKey(mappingMetadataCursor.key)) {
+					List<Keyword> currentKeywords = names.get(mappingMetadataCursor.key);
+					for (Keyword value : foundKeywords) {
+						if (!currentKeywords.contains(value)) {
+							currentKeywords.add(value);
 						}
-					} else {
-						names.put(mappingMetadataCursor.key, foundKeywords);
 					}
-				} catch (IOException e) {
-					// Error will never been thrown. See mappingMetaData.getSourceAsMap() sources for details.
+				} else {
+					names.put(mappingMetadataCursor.key, foundKeywords);
 				}
 			}
 

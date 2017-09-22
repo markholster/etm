@@ -147,11 +147,12 @@ function buildAuditLogPage() {
                         var $body = $('#search_result_table > tfoot').remove();    
                     }
                 } else {
-                    $('#search-stats').text(':  Found ' + data.hits_as_string + ' audit logs in ' + data.query_time_as_string + 'ms. Showing audit logs ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
                     $('#result_card').empty();
                     if (data.hits === 0) {
-                       $('#result_card').append($('<p>').text('No results found'));
+                        $('#search-stats').text(':  No audit logs found in ' + data.query_time_as_string + 'ms.');
+                        $('#result_card').append($('<p>').text('No results found'));
                     } else {
+                        $('#search-stats').text(':  Found ' + data.hits_as_string + ' audit logs in ' + data.query_time_as_string + 'ms. Showing audit logs ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
                         var resultTable = $('<table id="search_result_table">');
                         $(resultTable)
                             .addClass('table table-hover table-sm')
