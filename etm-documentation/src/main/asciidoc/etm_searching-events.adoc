@@ -110,7 +110,7 @@ When searching for an exact match the term must be quoted.
 name: "My Name Should Be An Exact Match!"
 ----
 
-There are 3 reserved keywords, ''\_missing_'', ''\_exists_'' and ''\_type''. The first two take an event attribute as parameter. ''\_missing_'' queries for events that don't contain the provided attribute and ''\_exists_'' does the opposite. ''\_type'' makes it possible to filter on a certain event type.
+There are 2 reserved keywords, ''\_exists_'' and ''\_type''. The first one takes an event attribute as parameter. ''\_exists_'' queries for events that contain the provided attribute. ''\_type'' makes it possible to filter on a certain event type.
 
 ==== Wildcards
 Wildcards can be applied to terms, using ''?'' to replace a single character and ''*'' to replace zero or more characters.

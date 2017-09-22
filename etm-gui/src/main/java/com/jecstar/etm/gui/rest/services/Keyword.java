@@ -3,7 +3,6 @@ package com.jecstar.etm.gui.rest.services;
 public class Keyword {
 	
 	public final static Keyword EXISTS = new Keyword("_exists_", null);
-	public final static Keyword MISSING = new Keyword("_missing_", null);
 	public final static Keyword TYPE = new Keyword("_type", null);
 
 	private final String name;
