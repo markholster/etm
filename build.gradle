@@ -8,6 +8,7 @@ ext {
     dep_xpackTransportCclient = "org.elasticsearch.client:x-pack-transport:" + version_elasticsearch
     dep_htmlunitDriver = "org.seleniumhq.selenium:htmlunit-driver:2.26"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:2.8.9"
+    dep_jms = "javax.jms:javax.jms-api:2.0.1"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
     dep_junit = "junit:junit:4.12"
     dep_ldaptive = "org.ldaptive:ldaptive:1.2.2"

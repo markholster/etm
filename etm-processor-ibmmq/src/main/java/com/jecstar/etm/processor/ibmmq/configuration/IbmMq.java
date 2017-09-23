@@ -12,13 +12,9 @@ public class IbmMq {
 		if (this.queueManagers.isEmpty()) {
 			return 0;
 		}
-		int total = 0;
-		for (QueueManager queueManager : this.queueManagers) {
-			if (queueManager.getDestinations() != null) {
-				total += queueManager.getDestinations().stream().mapToInt(Destination::getNrOfListeners).sum();
-			}
-		}
-		return total;
+		return this.queueManagers.stream().mapToInt(
+				f -> f.getDestinations().stream().mapToInt(Destination::getNrOfListeners).sum()
+		).sum();
 	}
 	
 	public List<QueueManager> getQueueManagers() {

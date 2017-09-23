@@ -1,14 +1,15 @@
 package com.jecstar.etm.processor.ibmmq;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
+import com.jecstar.etm.server.core.util.NamedThreadFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class IbmMqProcessorImpl implements IbmMqProcessor {
 
@@ -31,7 +32,7 @@ public class IbmMqProcessorImpl implements IbmMqProcessor {
 		if (this.config.getTotalNumberOfListeners() <= 0) {
 			return;
 		}
-		this.executorService = Executors.newFixedThreadPool(this.config.getTotalNumberOfListeners());
+		this.executorService = Executors.newFixedThreadPool(this.config.getTotalNumberOfListeners(), new NamedThreadFactory("ibm_mq_processor"));
 		for (QueueManager queueManager : this.config.getQueueManagers()) {
 			for (Destination destination : queueManager.getDestinations()) {
 				for (int i=0; i < destination.getNrOfListeners(); i++) {
