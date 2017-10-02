@@ -7,7 +7,7 @@ public class Jms {
 
     public boolean enabled = false;
 
-    public final List<ConnectionFactory> connectionFactories = new ArrayList<>();
+    public final List<AbstractConnectionFactory> connectionFactories = new ArrayList<>();
 
     public int getTotalNumberOfListeners() {
         if (this.connectionFactories.isEmpty()) {
@@ -18,7 +18,7 @@ public class Jms {
         ).sum();
     }
 
-    public List<ConnectionFactory> getConnectionFactories() {
+    public List<AbstractConnectionFactory> getConnectionFactories() {
         return this.connectionFactories;
     }
 }

@@ -3,13 +3,7 @@ package com.jecstar.etm.processor.jms.configuration;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConnectionFactory {
-
-    public String factoryClassName;
-
-    public String className;
-
-    public String connectionURI;
+public abstract class AbstractConnectionFactory {
 
     public String userId;
 

@@ -1,4 +1,4 @@
-package com.jecstar.etm.processor.jms;
+package com.jecstar.etm.processor.jms.configuration;
 
 import javax.jms.ConnectionFactory;
 
