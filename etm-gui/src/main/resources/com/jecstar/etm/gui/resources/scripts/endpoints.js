@@ -113,7 +113,7 @@ function buildEndpointPage() {
     }
     
     function removeField(anchor)  {
-    	anchor.parent().parent().remove();
+    	anchor.parent().parent().parent().remove();
     }
     
     function createParserRow(parser) {
