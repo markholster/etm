@@ -7,9 +7,7 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
 
-import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -32,7 +30,6 @@ public class JmsProcessorImpl implements JmsProcessor {
     private final String clusterName;
     private final Jms config;
     private ExecutorService executorService;
-    private List<Connection> connections = new ArrayList<>();
     private List<Context> contexts = new ArrayList<>();
 
     public JmsProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, Jms config, String clusterName, String instanceName) {
@@ -51,24 +48,9 @@ public class JmsProcessorImpl implements JmsProcessor {
         this.executorService = Executors.newFixedThreadPool(this.config.getTotalNumberOfListeners(), new NamedThreadFactory("jms_processor"));
         for (AbstractConnectionFactory abstractConnectionFactory : this.config.getConnectionFactories()) {
             ConnectionFactory jmsConnectionFactory = createJmsConnectionFactory(abstractConnectionFactory);
-            Connection connection = null;
-            try {
-                if (abstractConnectionFactory.userId != null || abstractConnectionFactory.password != null) {
-                    connection = jmsConnectionFactory.createConnection(abstractConnectionFactory.userId, abstractConnectionFactory.password);
-                } else {
-                    connection = jmsConnectionFactory.createConnection();
-                }
-                connection.start();
-                this.connections.add(connection);
-            } catch (JMSException e) {
-                if (log.isErrorLevelEnabled()) {
-                    log.logErrorMessage("Unable to setup connection to messaging infrastructure.", e);
-                }
-                continue;
-            }
             for (Destination destination : abstractConnectionFactory.getDestinations()) {
                 for (int i = 0; i < destination.getNrOfListeners(); i++) {
-                    this.executorService.submit(new DestinationReader(this.clusterName + "_" + this.instanceName, this.processor, this.metricRegistry, connection, destination));
+                    this.executorService.submit(new DestinationReader(this.clusterName + "_" + this.instanceName, this.processor, this.metricRegistry, jmsConnectionFactory, destination, abstractConnectionFactory.userId, abstractConnectionFactory.password));
                 }
             }
         }
@@ -85,16 +67,6 @@ public class JmsProcessorImpl implements JmsProcessor {
             }
             this.executorService = null;
         }
-        for (Connection connection : this.connections) {
-            try {
-                connection.close();
-            } catch (JMSException e) {
-                if (log.isDebugLevelEnabled()) {
-                    log.logDebugMessage("Unable to close connection to messaging infrastructure.", e);
-                }
-            }
-        }
-        this.connections.clear();
         for (Context context : this.contexts) {
             try {
                 context.close();

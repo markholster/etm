@@ -1,28 +1,31 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
+import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
+import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
+import com.jecstar.etm.server.core.domain.parser.converter.ExpressionParserConverter;
+import com.jecstar.etm.server.core.domain.parser.converter.json.ExpressionParserConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
+import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.enhancers.DefaultField;
+import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
+import com.jecstar.etm.server.core.ldap.Directory;
+import com.jecstar.etm.server.core.util.BCrypt;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsAction;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsRequestBuilder;
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse;
@@ -46,32 +49,13 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
-import com.jecstar.etm.gui.rest.AbstractJsonService;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
-import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.domain.configuration.License;
-import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.EndpointConfiguration;
-import com.jecstar.etm.server.core.domain.principal.EtmGroup;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
-import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
-import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
-import com.jecstar.etm.server.core.domain.parser.converter.ExpressionParserConverter;
-import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.parser.converter.json.ExpressionParserConverterJsonImpl;
-import com.jecstar.etm.server.core.enhancers.DefaultField;
-import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.ldap.Directory;
-import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
-import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
-import com.jecstar.etm.server.core.util.BCrypt;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 @Path("/settings")
 public class SettingsService extends AbstractJsonService {
@@ -702,7 +686,11 @@ public class SettingsService extends AbstractJsonService {
 			throw new EtmException(EtmException.INVALID_LDAP_USER);
 		}
 		EtmPrincipal currentPrincipal = loadPrincipal(principal.getId());
-		if (currentPrincipal != null) {
+		if (currentPrincipal != null ) {
+		    if (currentPrincipal.isLdapBase()) {
+		        // LDAP user already present. No need to import the user again.
+                return null;
+            }
 			// Merge the current and the LDAP principal.
 			currentPrincipal.setPasswordHash(null);
 			currentPrincipal.setName(principal.getName());

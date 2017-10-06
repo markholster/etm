@@ -267,7 +267,7 @@ function buildUserPage() {
 		        if (!user) {
 		            return;
 		        }
-				// First the group if it is already present
+				// First remove the user when it is already present
 				$('#sel-user > option').each(function () {
 				    if(user.id == $(this).attr('value')) {
 				        $(this).remove();
