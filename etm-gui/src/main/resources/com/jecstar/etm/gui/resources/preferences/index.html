@@ -88,7 +88,7 @@ body { padding-top: 60px; }
       </div>
     </div>
     <br />
-    <div id="change-password-container" class="card card-block">
+    <div id="change-password-container" class="card card-block" style="display: none;">
       <h5 class="card-title">Change password</h5>
       <div class="card-text">
       	<form id="password_form">
@@ -188,11 +188,11 @@ body { padding-top: 60px; }
                 $('#input-search-history-size').val(data.search_history_size);
                 $('#input-search-history-size').attr('max', data.max_search_history_size);
                 if (data.ldap_base) {
-                	$('#change-password-container').hide();
                 	$('#input-user-name').attr('disabled', 'disabled');
                 	$('#input-user-email').attr('disabled', 'disabled');
                 	$('#input-locale').focus();
                 } else {
+                	$('#change-password-container').show();
                 	$('#input-user-name').focus();
                 }
             }
