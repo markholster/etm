@@ -27,7 +27,7 @@ public abstract class AbstractIntegrationTest {
 //		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 //		this.driver = new ChromeDriver();
 
-		System.setProperty("webdriver.gecko.driver", new File("./drivers/geckodriver-v0.16.1-linux64").getAbsolutePath());
+		System.setProperty("webdriver.gecko.driver", new File("./drivers/geckodriver-v0.19.0-linux64").getAbsolutePath());
 		this.driver = new FirefoxDriver();
 	}
 	
