@@ -50,7 +50,7 @@ public class JmsProcessorImpl implements JmsProcessor {
             ConnectionFactory jmsConnectionFactory = createJmsConnectionFactory(abstractConnectionFactory);
             for (Destination destination : abstractConnectionFactory.getDestinations()) {
                 for (int i = 0; i < destination.getNrOfListeners(); i++) {
-                    this.executorService.submit(new DestinationReader(this.clusterName + "_" + this.instanceName, this.processor, this.metricRegistry, jmsConnectionFactory, destination, abstractConnectionFactory.userId, abstractConnectionFactory.password));
+                    this.executorService.submit(new DestinationReader(this.processor, this.metricRegistry, jmsConnectionFactory, destination, abstractConnectionFactory.userId, abstractConnectionFactory.password));
                 }
             }
         }
