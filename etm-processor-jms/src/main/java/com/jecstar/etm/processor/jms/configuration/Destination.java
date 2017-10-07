@@ -5,6 +5,7 @@ public class Destination {
 	private String name;
 	private String type = "queue";
 	private int nrOfListeners = 1;
+	private String messagesType = "auto"; // etmevent, clone
 
 	public void setName(String name) {
 		this.name = name;
@@ -38,4 +39,17 @@ public class Destination {
 		}
 		this.nrOfListeners = nrOfListeners;
 	}
+
+    public String getMessagesType() {
+        return this.messagesType;
+    }
+
+    public void setMessagesType(String messagesType) {
+        if (!"auto".equalsIgnoreCase(messagesType)
+                && !"etmevent".equalsIgnoreCase(messagesType)
+                && !"clone".equalsIgnoreCase(messagesType)) {
+            throw new IllegalArgumentException("'" + messagesType + "' is an invalid messages type.");
+        }
+        this.messagesType = messagesType;
+    }
 }

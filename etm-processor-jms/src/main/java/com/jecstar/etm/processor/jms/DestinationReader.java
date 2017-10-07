@@ -23,7 +23,6 @@ public class DestinationReader implements Runnable {
         this.userId = userId;
         this.password = password;
 //        this.etmEventHandler = new EtmEventHandler(processor);
-//        this.iibEventHandler = new IIBEventHandler(processor);
 //        this.clonedMessageEventHandler = new ClonedMessageHandler(processor);
         this.jmsGetTimer = metricRegistry.timer("jms-processor.mqget." + destination.getName().replaceAll("\\.", "_"));
     }

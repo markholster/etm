@@ -1,14 +1,5 @@
 package com.jecstar.etm.gui;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.Charset;
-
 import org.junit.After;
 import org.junit.Before;
 import org.openqa.selenium.By;
@@ -16,10 +7,14 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.Charset;
 
 public abstract class AbstractIntegrationTest {
 	
@@ -33,9 +28,7 @@ public abstract class AbstractIntegrationTest {
 //		this.driver = new ChromeDriver();
 
 		System.setProperty("webdriver.gecko.driver", new File("./drivers/geckodriver-v0.16.1-linux64").getAbsolutePath());
-		DesiredCapabilities capabilities = DesiredCapabilities.firefox();
-		capabilities.setJavascriptEnabled(true);
-		this.driver = new FirefoxDriver(capabilities);
+		this.driver = new FirefoxDriver();
 	}
 	
 	@After
