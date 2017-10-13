@@ -1,8 +1,12 @@
 ext {
     version_resteasy = "3.1.4.Final"
     version_elasticsearch = "5.6.2"
+    version_artemis = "2.3.0"
 
     dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M24"
+    dep_artemisJmsClient = "org.apache.activemq:artemis-jms-client:" + version_artemis
+    dep_artemisJmsServer = "org.apache.activemq:artemis-jms-server:" + version_artemis
+    dep_artemisServer = "org.apache.activemq:artemis-server:" + version_artemis
     dep_disruptor = "com.lmax:disruptor:3.3.7"
     dep_elasticsearchClient = "org.elasticsearch.client:transport:" + version_elasticsearch
     dep_xpackTransportCclient = "org.elasticsearch.client:x-pack-transport:" + version_elasticsearch
@@ -21,8 +25,8 @@ ext {
     dep_saxonHE = "net.sf.saxon:Saxon-HE:9.8.0-4"
     dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:3.6.0"
     dep_slf4jApi = "org.slf4j:slf4j-api:1.7.25"
-    dep_undertowServlet = "io.undertow:undertow-servlet:1.4.20.Final"
     dep_snakeyaml = "org.yaml:snakeyaml:1.18"
+    dep_undertowServlet = "io.undertow:undertow-servlet:1.4.20.Final"
 }
 
 allprojects {

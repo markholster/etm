@@ -9,6 +9,7 @@ import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
@@ -155,7 +156,7 @@ class Launcher {
 	
 	private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration, EtmConfiguration etmConfiguration) {
 		if (this.processor == null) {
-			this.processor = new TelemetryCommandProcessor(metricRegistry);
+			this.processor = new TelemetryCommandProcessorImpl(metricRegistry);
 			this.processor.start(new NamedThreadFactory("etm_processor"), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
 		}
 	}
@@ -271,7 +272,7 @@ class Launcher {
 			Class<?> clazz = Class.forName("com.jecstar.etm.processor.ibmmq.IbmMqProcessorImpl");
 			this.ibmMqProcessor = (IbmMqProcessor) clazz
 					.getConstructor(
-							TelemetryCommandProcessor.class, 
+							TelemetryCommandProcessorImpl.class,
 							MetricRegistry.class,
 							IbmMq.class, 
 							String.class,

@@ -26,18 +26,14 @@ public class JmsProcessorImpl implements JmsProcessor {
 
     private final TelemetryCommandProcessor processor;
     private final MetricRegistry metricRegistry;
-    private final String instanceName;
-    private final String clusterName;
     private final Jms config;
     private ExecutorService executorService;
     private List<Context> contexts = new ArrayList<>();
 
-    public JmsProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, Jms config, String clusterName, String instanceName) {
+    public JmsProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, Jms config) {
         this.processor = processor;
         this.metricRegistry = metricRegistry;
         this.config = config;
-        this.clusterName = clusterName;
-        this.instanceName = instanceName;
     }
 
     @Override
