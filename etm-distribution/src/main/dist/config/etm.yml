@@ -80,7 +80,35 @@ ibmMq:
 #      messagesType: auto
   queueManagers: []
 
-# The logging options.  
+# The JMS configuration options.
+jms:
+# Should the JMS processor be enabled. Set this option to true if you want to process events from a jms queue or topic. This option can only be enabled if the correct jar files are added to the Node's classpath.
+  enabled: false
+# The connectionfactories and queues that need to be read. The following example will demonstrate the usage of this option:
+#  connectionFactories:
+# Use the native connection factory to directly instantiate a JMC Connection Factory.
+#  - !nativeConnectionFactory
+#    className: org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory
+#    parameters:
+#      brokerURL: tcp://localhost:61616
+#    destinations:
+#    - name: etm.queue.1
+#      type: queue
+#      nrOfListeners: 1
+#      messagesType: auto
+# Use the jdni connection factory to lookup the connection factory in a JNDI registry.
+#  - !jndiConnectionFactory
+#    initialContextFactory: org.apache.activemq.artemis.jndi.ActiveMQInitialContextFactory
+#    providerURL: tcp://localhost:61616
+#    jndiName: ConnectionFactory
+#    destinations:
+#    - name: etm.queue.2
+#      type: queue
+#      nrOfListeners: 1
+#      messagesType: auto
+  connectionFactories: []
+
+# The logging options.
 logging:
 # Set a specific logger to a specific level. For example
 #  loggers:

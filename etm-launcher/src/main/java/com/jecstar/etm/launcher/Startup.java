@@ -8,7 +8,13 @@ import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import com.jecstar.etm.launcher.slf4j.LogConfiguration;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
+import com.jecstar.etm.processor.jms.configuration.CustomConnectionFactory;
+import com.jecstar.etm.processor.jms.configuration.JNDIConnectionFactory;
+import com.jecstar.etm.processor.jms.configuration.NativeConnectionFactory;
+import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -69,8 +75,13 @@ class Startup {
 		}
 		Configuration configuration;
 		try (Reader reader = new FileReader(configFile);) {
-			Yaml yaml = new Yaml();
-			configuration = yaml.loadAs(reader, Configuration.class);
+            Constructor constructor = new Constructor();
+            constructor.addTypeDescription(new TypeDescription(NativeConnectionFactory.class, new Tag("!nativeConnectionFactory")));
+            constructor.addTypeDescription(new TypeDescription(JNDIConnectionFactory.class, new Tag("!jndiConnectionFactory")));
+            constructor.addTypeDescription(new TypeDescription(CustomConnectionFactory.class, new Tag("!customConnectionFactory")));
+            Yaml yaml = new Yaml(constructor);
+
+            configuration = yaml.loadAs(reader, Configuration.class);
 		}
 		addEnvironmentToConfigruation(configuration, null);
 		return configuration;

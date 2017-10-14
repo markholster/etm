@@ -14,7 +14,7 @@ public class Jms {
             return 0;
         }
         return this.connectionFactories.stream().mapToInt(
-                f -> f.getDestinations().stream().mapToInt(Destination::getNrOfListeners).sum()
+                f -> f.destinations.stream().mapToInt(Destination::getNrOfListeners).sum()
         ).sum();
     }
 

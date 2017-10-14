@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher.configuration;
 
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
+import com.jecstar.etm.processor.jms.configuration.Jms;
 
 public class Configuration {
 
@@ -15,6 +16,7 @@ public class Configuration {
 	public final Logging logging = new Logging();
 	
 	public final IbmMq ibmMq = new IbmMq();
+	public final Jms jms = new Jms();
 
 	public boolean isHttpServerNecessary() {
 		return this.http.restProcessorEnabled || this.http.guiEnabled;

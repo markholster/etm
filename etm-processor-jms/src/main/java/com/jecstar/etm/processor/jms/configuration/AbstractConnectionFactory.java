@@ -9,9 +9,6 @@ public abstract class AbstractConnectionFactory {
 
     public String password;
 
-    private List<Destination> destinations = new ArrayList<>();
+    public List<Destination> destinations = new ArrayList<>();
 
-    public List<Destination> getDestinations() {
-        return this.destinations;
-    }
 }

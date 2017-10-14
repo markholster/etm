@@ -44,7 +44,7 @@ public class JmsProcessorImpl implements JmsProcessor {
         this.executorService = Executors.newFixedThreadPool(this.config.getTotalNumberOfListeners(), new NamedThreadFactory("jms_processor"));
         for (AbstractConnectionFactory abstractConnectionFactory : this.config.getConnectionFactories()) {
             ConnectionFactory jmsConnectionFactory = createJmsConnectionFactory(abstractConnectionFactory);
-            for (Destination destination : abstractConnectionFactory.getDestinations()) {
+            for (Destination destination : abstractConnectionFactory.destinations) {
                 for (int i = 0; i < destination.getNrOfListeners(); i++) {
                     this.executorService.submit(new DestinationReader(this.processor, this.metricRegistry, jmsConnectionFactory, destination, abstractConnectionFactory.userId, abstractConnectionFactory.password));
                 }
@@ -136,6 +136,7 @@ public class JmsProcessorImpl implements JmsProcessor {
                     }
                     return null;
                 }
+                return (ConnectionFactory) object;
             } catch (NamingException e) {
                 if (log.isErrorLevelEnabled()) {
                     log.logErrorMessage("Unable to locate '" + jndiConnectionFactory.jndiName + "'.", e);

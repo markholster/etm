@@ -198,7 +198,12 @@ Depending on your IIB version you need to copy some files to the <INSTALL_DIR>/l
 |websocket-api.jar||✔
 |websocket-client.jar||✔
 |websocket-common.jar||✔
-|======================= 
+|=======================
+
+=== Integration with JMS
+{etm} is able to process messages from any JMS 2.x compatible message provider. To connect to the desired messaging system you have to add the JMS client jar files of the messaging system to the <INSTALL_DIR>/lib/ext directory of the {etm} installation.
+
+For configuring the connections and destinations that should be read see the <<JMS section in etm.yml>> chapter.
 
 === Node configuration
 Each {etm} Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with {etm} the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.
@@ -242,6 +247,7 @@ General configuration options have no indentation in the etm.yml file. The follo
 |elasticsearch||The elasticsearch configuration. See <<Elasticsearch section in etm.yml>> to view the nested options.
 |http||The http configuration. See <<Http section in etm.yml>> to view the nested options.
 |ibmMq||The IBM MQ configuration. See <<IBM MQ section in etm.yml>> to view the nested options.
+|jms||The JMS configuration. See <<JMS section in etm.yml>> to view the nested options.
 |logging||The logging configuration. See <<Logging section in etm.yml>> to view the nested options.
 |======================= 
 
@@ -331,7 +337,7 @@ The ''ibmMq'' section contains all options that are necessary to process {etm} e
 |=======================
 |Name|Default value|Description
 |name||The name of the Queue or Topic to connect to.
-|type|queue|The destination type. Can be one of ''queue'' or ''destination''.
+|type|queue|The destination type. Can be one of ''queue'' or ''topic''.
 |nrOfListeners|1|The number of listeners to connect to the destination. In most cases 1 will be enough because the processor processes the events asynchronous.
 |channel||The channel to use to setup the connection to the QueueManager.
 |messagesType|auto|Can be one of ''auto'' which auto detect the message type but is the slowest, ''iibevent'' which is capable of handling http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm[IIB Monitoring Events],  ''etmevent'' which is capable of handling events in the {etm} json format or ''clone'' which assumes the message read is a clone of the original message. See the section <<Event layout>> for a description of the {etm} json format.
@@ -340,6 +346,55 @@ The ''ibmMq'' section contains all options that are necessary to process {etm} e
 |commitInterval|10000|The maximum number of milliseconds the processor can read messages without executing a MQCMIT.
 |destinationGetOptions|MQGMO_WAIT + MQGMO_FAIL_IF_QUIESCING + MQGMO_SYNCPOINT + MQGMO_LOGICAL_ORDER + MQGMO_ALL_SEGMENTS_AVAILABLE + MQGMO_COMPLETE_MSG|The MQ Get options.
 |destinationOpenOptions|MQOO_INQUIRE + MQOO_FAIL_IF_QUIESCING + MQOO_INPUT_SHARED|The MQ Open options.
+|=======================
+
+==== JMS section in etm.yml
+The ''jms'' section contains all options that are necessary to process {etm} events from a JMS queue or topic. Make sure to add the required JMS libraries to the classpath of the Node. See the <<Integration with JMS>> section.
+
+.JMS configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|enabled|false|Should the JMS processor be enabled? Set this value to true to process events from defined JMS queue's.
+|connectionFactories||A list of connection factories to connect to. See <<connection-factory-options>> to view the nested options.
+|=======================
+
+[[connection-factory-options]]
+{etm} supports 2 types of JMS Connection Factory instantiation. Each type has its own tag in the yaml configuration file.
+
+When the Connection Factory must be looked up into a JNDI registry the tag ''!jndiConnectionFactory'' should be used. The JNDI connection factory lookup supports the following options:
+
+.JNDI Connection factory options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|initialContextFactory||The full classname of the Initial Context Factory.
+|providerURL||The url used to connect to the Intial Context Factory.
+|jndiName||The name of the Connection Factory in the JNDI.
+|parameters||A map with parameters that will be used to connect to the Iitial Context Factory.
+|destinations||A list of destinations to listen on. See <<jms-destination-options>> to view the nested options.
+|=======================
+
+When the Connection Factory does not resides in a JNDI registry but should be instantiated directly the tag ''!nativeConnectionFactory'' should be used. The native connection factory instantiation supports the following options:
+
+.Native Connection factory options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|className||The full classname of the Connection Factory.
+|parameters||A map with parameters that will be set on the Connection Factory instance.
+|destinations||A list of destinations to listen on. See <<jms-destination-options>> to view the nested options.
+|=======================
+
+[[jms-destination-options]]
+.Destination options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|name||The name of the Queue or Topic to connect to.
+|type|queue|The destination type. ''queue'' is the only supported option.
+|nrOfListeners|1|The number of listeners to connect to the destination. In most cases 1 will be enough because the processor processes the events asynchronous.
+|messagesType|auto|Can be one of ''auto'' which auto detect the message type but is the slowest, ''etmevent'' which is capable of handling events in the {etm} json format or ''clone'' which assumes the message read is a clone of the original message. See the section <<Event layout>> for a description of the {etm} json format.
 |=======================
 
 ==== Logging section in etm.yml

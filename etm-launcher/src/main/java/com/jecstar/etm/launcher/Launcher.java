@@ -15,6 +15,8 @@ import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
+import com.jecstar.etm.processor.jms.JmsProcessor;
+import com.jecstar.etm.processor.jms.JmsProcessorImpl;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -52,6 +54,7 @@ class Launcher {
 	private Client elasticClient;
 	private ScheduledReporter metricReporter;
 	private IbmMqProcessor ibmMqProcessor;
+	private JmsProcessor jmsProcessor;
 	private ScheduledExecutorService backgroundScheduler;
 	private InternalBulkProcessorWrapper bulkProcessorWrapper;
 	
@@ -86,6 +89,10 @@ class Launcher {
 			if (configuration.ibmMq.enabled) {
 				initializeMqProcessor(metricRegistry, configuration);
 			}
+			if (configuration.jms.enabled) {
+				initializeJmsProcessor(metricRegistry, configuration);
+			}
+
 			if (!commandLineParameters.isQuiet()) {
 				System.out.println("Enterprise Telemetry Monitor started.");
 			}
@@ -114,6 +121,9 @@ class Launcher {
             if (Launcher.this.backgroundScheduler != null) {
                 try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
             }
+            if (Launcher.this.jmsProcessor != null) {
+				try { Launcher.this.jmsProcessor.stop(); } catch (Throwable t) {}
+			}
             if (Launcher.this.ibmMqProcessor != null) {
                 try { Launcher.this.ibmMqProcessor.stop(); } catch (Throwable t) {}
             }
@@ -153,7 +163,6 @@ class Launcher {
 		
 	}
 
-	
 	private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration, EtmConfiguration etmConfiguration) {
 		if (this.processor == null) {
 			this.processor = new TelemetryCommandProcessorImpl(metricRegistry);
@@ -290,6 +299,11 @@ class Launcher {
 				log.logWarningMessage("Unable to instantiate Ibm MQ Processor. Is the \"com.ibm.mq.allclient.jar\" file added to the lib/ext directory?", e);
 			}
 		}
+	}
+
+	private void initializeJmsProcessor(MetricRegistry metricRegistry, Configuration configuration) {
+		this.jmsProcessor = new JmsProcessorImpl(this.processor, metricRegistry, configuration.jms);
+		this.jmsProcessor.start();
 	}
 	
 	
