@@ -1,13 +1,5 @@
 package com.jecstar.etm.server.core.ldap;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.name.Dn;
@@ -32,6 +24,14 @@ import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.i18n.I18n;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class EmbeddableLdapServer {
 	
@@ -262,7 +262,7 @@ public class EmbeddableLdapServer {
 			Entry entryGroup = service.newEntry(dnGroup);
 			entryGroup.add("objectClass", "groupOfNames", "top");
 			entryGroup.add("cn", "Etm admin group");
-			entryGroup.add("member", "cn=etm-admin,ou=people,dc=jecstar,dc=com");
+			entryGroup.add("member", "cn=" + ADMIN_USER_ID + ",ou=people,dc=jecstar,dc=com");
 			service.getAdminSession().add(entryGroup);
 
 			dnGroup = new Dn("cn=etm-searchers-group,ou=groups,dc=jecstar,dc=com");
@@ -270,7 +270,7 @@ public class EmbeddableLdapServer {
 			entryGroup.add("objectClass", "groupOfNames", "top");
 			entryGroup.add("cn", "Etm searchers group");
 			entryGroup.add("member", "cn=etm-searcher,ou=people,dc=jecstar,dc=com");
-			entryGroup.add("member", "cn=etm-admin,ou=people,dc=jecstar,dc=com");
+			entryGroup.add("member", "cn=" + ADMIN_USER_ID + ",ou=people,dc=jecstar,dc=com");
 			service.getAdminSession().add(entryGroup);
 		}
 

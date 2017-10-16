@@ -59,6 +59,7 @@ class Launcher {
 	private InternalBulkProcessorWrapper bulkProcessorWrapper;
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration, InternalBulkProcessorWrapper bulkProcessorWrapper) {
+		// TODO maak een thread die periodiek door de LDAP entries heenloopt om te kijken of er gebruikers weggegooid moeten worden.
 		this.bulkProcessorWrapper = bulkProcessorWrapper;
 		addShutdownHooks(configuration);
 		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());

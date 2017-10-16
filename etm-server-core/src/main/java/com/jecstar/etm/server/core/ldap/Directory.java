@@ -1,47 +1,5 @@
 package com.jecstar.etm.server.core.ldap;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.ldaptive.BindConnectionInitializer;
-import org.ldaptive.ConnectionConfig;
-import org.ldaptive.ConnectionFactory;
-import org.ldaptive.Credential;
-import org.ldaptive.DefaultConnectionFactory;
-import org.ldaptive.LdapAttribute;
-import org.ldaptive.LdapEntry;
-import org.ldaptive.LdapException;
-import org.ldaptive.ReturnAttributes;
-import org.ldaptive.SearchExecutor;
-import org.ldaptive.SearchFilter;
-import org.ldaptive.SearchRequest;
-import org.ldaptive.SearchResult;
-import org.ldaptive.SearchScope;
-import org.ldaptive.SortBehavior;
-import org.ldaptive.auth.AccountState;
-import org.ldaptive.auth.AuthenticationRequest;
-import org.ldaptive.auth.AuthenticationResponse;
-import org.ldaptive.auth.Authenticator;
-import org.ldaptive.auth.BindAuthenticationHandler;
-import org.ldaptive.auth.SearchDnResolver;
-import org.ldaptive.auth.SearchEntryResolver;
-import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
-import org.ldaptive.control.PasswordPolicyControl;
-import org.ldaptive.pool.AbstractConnectionPool;
-import org.ldaptive.pool.BlockingConnectionPool;
-import org.ldaptive.pool.ConnectionPool;
-import org.ldaptive.pool.PoolConfig;
-import org.ldaptive.pool.PooledConnectionFactory;
-import org.ldaptive.pool.SearchValidator;
-import org.ldaptive.ssl.SslConfig;
-
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration.ConnectionSecurity;
@@ -51,6 +9,18 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.TrustAllTrustManager;
 import com.jecstar.etm.server.core.util.ObjectUtils;
+import org.ldaptive.*;
+import org.ldaptive.auth.*;
+import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
+import org.ldaptive.control.PasswordPolicyControl;
+import org.ldaptive.pool.*;
+import org.ldaptive.ssl.SslConfig;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Directory implements AutoCloseable {
 
@@ -64,7 +34,7 @@ public class Directory implements AutoCloseable {
 	private final Pattern attributePattern = Pattern.compile("\\{(.*?)}");
 	private LdapConfiguration ldapConfiguration;
 	private AbstractConnectionPool connectionPool;
-	private ConnectionFactory connectionFactory;
+	private PooledConnectionFactory connectionFactory;
 	
 	public Directory(LdapConfiguration ldapConfiguration) {
 		this.ldapConfiguration = ldapConfiguration;
@@ -115,8 +85,8 @@ public class Directory implements AutoCloseable {
 		dnResolver.setBaseDn(this.ldapConfiguration.getUserBaseDn() == null ? "" : this.ldapConfiguration.getUserBaseDn());
 		dnResolver.setUserFilter(this.ldapConfiguration.getUserSearchFilter());
 		dnResolver.setSubtreeSearch(this.ldapConfiguration.isUserSearchInSubtree());
-		
-		BindAuthenticationHandler authHandler = new BindAuthenticationHandler(this.connectionFactory);
+
+        PooledBindAuthenticationHandler authHandler = new PooledBindAuthenticationHandler(this.connectionFactory);
 		authHandler.setAuthenticationControls(new PasswordPolicyControl());
 		
 		SearchEntryResolver searchEntryResolver = new SearchEntryResolver(this.connectionFactory);
