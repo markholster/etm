@@ -1,21 +1,15 @@
 package com.jecstar.etm.server.core.ldap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Set;
-
+import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.domain.principal.EtmGroup;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 public class DirectoryTest {
 
@@ -33,11 +27,6 @@ public class DirectoryTest {
 			server.stopServer();
 		}
 	}
-	
-	public static void main(String[] args) {
-		setup();
-	}
-	
 	
 	private LdapConfiguration createLdapConfiguration() {
 		LdapConfiguration ldapConfiguration = new LdapConfiguration();
@@ -77,6 +66,14 @@ public class DirectoryTest {
 		assertEquals("etm-admin", principal.getId());
 		assertEquals("etm-admin@localhost", principal.getEmailAddress());
 		assertSame(2, principal.getGroups().size());
+	}
+
+	@Test
+	public void testAuthenticateWithWrongPassword() {
+		Directory directory = new Directory(createLdapConfiguration());
+		EtmPrincipal principal = directory.authenticate("etm-admin", "wrongPassword");
+		directory.close();
+		assertNull(principal);
 	}
 	
 	@Test
