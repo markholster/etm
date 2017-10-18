@@ -1,27 +1,27 @@
 package com.jecstar.etm.gui.rest.services.search;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-
+import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
+import com.jecstar.etm.gui.rest.services.Keyword;
+import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
+import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.builder.QueryAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
+import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.json.GetEventAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.json.QueryAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -32,12 +32,7 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.IdsQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
-import org.elasticsearch.index.query.RangeQueryBuilder;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
@@ -46,28 +41,18 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTimeZone;
 
-import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
-import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.writer.TelemetryEventTags;
-import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
-import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.principal.EtmGroup;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
-import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
-import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
-import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.builder.QueryAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
-import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.audit.converter.json.GetEventAuditLogConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.audit.converter.json.QueryAuditLogConverterJsonImpl;
-import com.jecstar.etm.server.core.util.DateUtils;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import java.io.File;
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 @Path("/search")
 public class SearchService extends AbstractIndexMetadataService {
@@ -333,7 +318,6 @@ public class SearchService extends AbstractIndexMetadataService {
 	    response.encoding(System.getProperty("file.encoding"));
 	    response.header("Content-Type", this.queryExporter.getContentType(fileType));
 	    return response.build();
-
 	}
 
 	@GET

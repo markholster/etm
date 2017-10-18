@@ -51,6 +51,7 @@ import org.elasticsearch.search.SearchHit;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.*;
@@ -618,6 +619,30 @@ public class SettingsService extends AbstractJsonService {
 		}
 		result.append("], \"has_ldap\": ").append(etmConfiguration.getDirectory() != null).append("}");
 		return result.toString();
+	}
+
+	@GET
+	@Path("/download/users")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getDownloadUsers() {
+		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+				.setTypes(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER)
+				.setFetchSource(new String[] {"*"}, new String[] {this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getSearchTemplatesTag(), this.etmPrincipalTags.getSearchHistoryTag()})
+				.setQuery(QueryBuilders.matchAllQuery())
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+		if (!scrollableSearch.hasNext()) {
+			return null;
+		}
+		return null;
+//		String fileType = getString("fileType", valueMap);
+//		File result = this.queryExporter.exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), parameters, etmPrincipal);
+//		scrollableSearch.clearScrollIds();
+//		Response.ResponseBuilder response = Response.ok(result);
+//		response.header("Content-Disposition", "attachment; filename=etm-results." + fileType);
+//		response.encoding(System.getProperty("file.encoding"));
+//		response.header("Content-Type", this.queryExporter.getContentType(fileType));
+//		return response.build();
 	}
 
 	@GET
