@@ -637,7 +637,7 @@ public class SettingsService extends AbstractJsonService {
 		Map<String, Object> valueMap = toMap(json);
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-				.setFetchSource(Arrays.stream(this.exportPrincipalFields).map(f -> f.getField()).toArray(String[]::new), null)
+				.setFetchSource(Arrays.stream(this.exportPrincipalFields).map(FieldLayout::getField).toArray(String[]::new), null)
 				.setQuery(QueryBuilders.matchAllQuery())
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
