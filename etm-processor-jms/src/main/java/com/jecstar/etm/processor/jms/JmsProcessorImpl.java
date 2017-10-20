@@ -11,7 +11,9 @@ import javax.jms.ConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -101,7 +103,13 @@ public class JmsProcessorImpl implements JmsProcessor {
             NativeConnectionFactory nativeConnectionFactory = (NativeConnectionFactory) abstractConnectionFactory;
             try {
                 Class<?> clazz = Class.forName(nativeConnectionFactory.className);
-                Object object = clazz.newInstance();
+                Object object = null;
+                if (nativeConnectionFactory.constructorParameters.isEmpty()) {
+                    object = clazz.newInstance();
+                } else {
+                    Constructor<?> constructor = clazz.getConstructor(nativeConnectionFactory.constructorParameters.stream().map(Object::getClass).toArray(Class[]::new));
+                    object = constructor.newInstance(nativeConnectionFactory.constructorParameters.toArray());
+                }
                 if (!(object instanceof ConnectionFactory)) {
                     if (log.isErrorLevelEnabled()) {
                         log.logErrorMessage("'" + nativeConnectionFactory.className + "' is not of type '" +
@@ -112,7 +120,7 @@ public class JmsProcessorImpl implements JmsProcessor {
                 }
                 addParameters(object, nativeConnectionFactory.parameters);
                 return (ConnectionFactory) object;
-            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchFieldException e) {
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchFieldException | NoSuchMethodException | InvocationTargetException e ) {
                 if (log.isErrorLevelEnabled()) {
                     log.logErrorMessage("Unable to instantiate '" + nativeConnectionFactory.className + "'.", e);
                 }

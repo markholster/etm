@@ -155,10 +155,6 @@ public class QueryExporter {
         }
     }
 
-
-
-
-
     @SuppressWarnings("unchecked")
     private List<Object> collectValuesFromPath(String path, Map<String, Object> valueMap) {
         List<Object> values = new ArrayList<>();

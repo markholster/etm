@@ -382,6 +382,7 @@ When the Connection Factory does not resides in a JNDI registry but should be in
 |=======================
 |Name|Default value|Description
 |className||The full classname of the Connection Factory.
+|constructorParameters||A list with parameters that will be passes to the constructor while instantiating the class.
 |parameters||A map with parameters that will be set on the Connection Factory instance.
 |destinations||A list of destinations to listen on. See <<jms-destination-options>> to view the nested options.
 |=======================

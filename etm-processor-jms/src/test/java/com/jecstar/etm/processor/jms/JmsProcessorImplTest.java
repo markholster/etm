@@ -152,7 +152,7 @@ public class JmsProcessorImplTest {
         NativeConnectionFactory factory = new NativeConnectionFactory();
         factory.className = "org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory";
         factory.destinations.add(destination);
-        factory.parameters.put("brokerURL", "tcp://localhost:61616");
+        factory.constructorParameters.add("tcp://localhost:61616");
 
         config.getConnectionFactories().add(factory);
 
