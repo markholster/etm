@@ -1,15 +1,18 @@
 package com.jecstar.etm.gui.rest.services.search;
 
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.gui.rest.export.FieldLayout;
+import com.jecstar.etm.gui.rest.export.FieldType;
+import com.jecstar.etm.gui.rest.export.MultiSelect;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import com.jecstar.etm.domain.writer.TelemetryEventTags;
-import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 class SearchRequestParameters {
 	
@@ -144,6 +147,20 @@ class SearchRequestParameters {
 	
 	public List<Map<String, Object>> getFieldsLayout() {
 		return this.fieldsLayout;
+	}
+
+	public FieldLayout[] toFieldLayouts() {
+        FieldLayout[] fieldLayouts = new FieldLayout[this.fieldsLayout.size()];
+		for (int i=0; i < this.fieldsLayout.size(); i++) {
+		    Map<String, Object> values = this.fieldsLayout.get(i);
+		    fieldLayouts[i] = new FieldLayout(
+					this.converter.getString("name", values),
+					this.converter.getString("field", values),
+                    FieldType.fromJsonValue(this.converter.getString("format", values)),
+                    MultiSelect.valueOf(this.converter.getString("array", values).toUpperCase())
+            );
+        }
+        return fieldLayouts;
 	}
 	
 	public Long getNotAfterTimestamp() {

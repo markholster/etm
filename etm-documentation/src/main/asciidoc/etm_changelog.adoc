@@ -5,7 +5,8 @@
 * Upgrade to Elasticsearch 5.6.x.
 * Removed _missing_ query parameter. It should be replaced with NOT _exists_
 * Added JMS processor.
-* Fixed LDAP Authentication bug
+* Fixed LDAP Authentication bug.
+* Option to download all users to and csv or excel sheet.
 
 === Version 2.3.0
 * Support for x-pack secured Elasticsearch clusters.

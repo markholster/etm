@@ -214,6 +214,20 @@ function buildUserPage() {
         	$('#sel-change-password-on-logon').attr('disabled', 'disabled');			
 		}
 	});
+
+    $('#link-request-download').click(function(event) {
+        event.preventDefault();
+        $('#modal-download-users').modal();
+    });
+
+    $('#btn-download-users').click(function(event) {
+        event.preventDefault();
+        $('#modal-download-users').modal('hide');
+        var q = {
+            fileType: $('#sel-download-type').val()
+        };
+        window.location.href = '../rest/settings/download/users?q=' + encodeURIComponent(JSON.stringify(q));
+    });
 	
 	$('#btn-confirm-save-user').click(function(event) {
 		$('#input-new-password1, #input-new-password2').parent().removeClass('has-danger');

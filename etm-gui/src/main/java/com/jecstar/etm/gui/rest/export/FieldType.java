@@ -44,4 +44,15 @@ public enum FieldType {
 
     abstract String formatValue(Object value, ZoneId zoneId);
 
+    public static FieldType fromJsonValue(String jsonValue) {
+        if ("plain".equals(jsonValue)) {
+            return PLAIN;
+        } else if ("isoutctimestamp".equals(jsonValue)) {
+            return ISO_UTC_TIMESTAMP;
+        } else if ("isotimestamp".equals(jsonValue)) {
+            return ISO_TIMESTAMP;
+        }
+        return null;
+    }
+
 }

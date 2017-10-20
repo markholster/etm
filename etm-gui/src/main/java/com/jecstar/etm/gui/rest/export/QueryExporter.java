@@ -63,12 +63,12 @@ public class QueryExporter {
                         writer.append(csvSeparator);
                     }
                     first = false;
-                    String fieldName = field.getName();
-                    if (Keyword.TYPE.getName().equals(fieldName)) {
+                    String dbFieldName = field.getField();
+                    if (Keyword.TYPE.getName().equals(dbFieldName)) {
                         writer.append(escapeToQuotedCsvField(searchHit.getType()));
                         continue;
                     }
-                    List<Object> values = collectValuesFromPath(fieldName, sourceValues);
+                    List<Object> values = collectValuesFromPath(dbFieldName, sourceValues);
                     if (values.isEmpty()) {
                         writer.append(escapeToQuotedCsvField(null));
                         continue;
@@ -89,13 +89,13 @@ public class QueryExporter {
             // if the field is a payload field. We can skip the last field,
             // because if it is a payload field its already at the end of the
             // list.
-            if (this.eventTags.getPayloadTag().equals(fields[i].getName())) {
+            if (this.eventTags.getPayloadTag().equals(fields[i].getField())) {
                 FieldLayout[] temp = new FieldLayout[fields.length];
 
                 // Copy the start of the array until the payload field (at ix == i) to the temp array
                 System.arraycopy(fields, 0, temp, 0, i);
                 // Copy the end of the array (after the payload field) to the temp array.
-                System.arraycopy(fields, i + 1, temp, i, fields.length - i);
+                System.arraycopy(fields, i + 1, temp, i, fields.length - i - 1);
                 // Move the payload field (at ix == i) to the end of the array.
                 temp[fields.length - 1] = fields[i];
                 // Reassign temp array to fields
@@ -117,13 +117,13 @@ public class QueryExporter {
                 row = sheet.createRow(rowIx++);
                 cellIx = 0;
                 for (FieldLayout field: fields) {
-                    String fieldName = field.getName();
-                    if (Keyword.TYPE.getName().equals(field.getName())) {
+                    String dbFieldName = field.getField();
+                    if (Keyword.TYPE.getName().equals(dbFieldName)) {
                         XSSFCell cell = row.createCell(cellIx++);
                         cell.setCellValue(searchHit.getType());
                         continue;
                     }
-                    List<Object> values = collectValuesFromPath(fieldName, sourceValues);
+                    List<Object> values = collectValuesFromPath(dbFieldName, sourceValues);
                     if (values.isEmpty()) {
                         cellIx++;
                         continue;
@@ -131,7 +131,7 @@ public class QueryExporter {
                     Object value = field.getMultiSelect().select(values);
                     String formattedValue = field.getType().formatValue(value, etmPrincipal.getTimeZone().toZoneId());
 
-                    if (this.eventTags.getPayloadTag().equals(fieldName)) {
+                    if (this.eventTags.getPayloadTag().equals(dbFieldName)) {
                         String payload = value.toString();
                         for (int k=0; k < payload.length(); k += charsPerCell) {
                             XSSFCell cell = row.createCell(cellIx++);
@@ -143,7 +143,7 @@ public class QueryExporter {
                         }
                     } else {
                         XSSFCell cell = row.createCell(cellIx++);
-                         if (value instanceof Number){
+                         if (value instanceof Number && FieldType.PLAIN.equals(field.getType())){
                             cell.setCellValue(((Number)value).doubleValue());
                         } else {
                             cell.setCellValue(formattedValue);

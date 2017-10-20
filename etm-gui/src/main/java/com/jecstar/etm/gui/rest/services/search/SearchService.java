@@ -4,6 +4,8 @@ import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.gui.rest.export.FileType;
+import com.jecstar.etm.gui.rest.export.QueryExporter;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
@@ -310,13 +312,13 @@ public class SearchService extends AbstractIndexMetadataService {
 		SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
 		
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder, parameters.getStartIndex());
-		String fileType = getString("fileType", valueMap);
-		File result = this.queryExporter.exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), parameters, etmPrincipal);
+		FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
+		File result = new QueryExporter().exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), etmPrincipal, parameters.toFieldLayouts());
 	    scrollableSearch.clearScrollIds();
 		ResponseBuilder response = Response.ok(result);
-	    response.header("Content-Disposition", "attachment; filename=etm-results." + fileType);
+	    response.header("Content-Disposition", "attachment; filename=etm-results." + fileType.name().toLowerCase());
 	    response.encoding(System.getProperty("file.encoding"));
-	    response.header("Content-Type", this.queryExporter.getContentType(fileType));
+	    response.header("Content-Type", fileType.getContentType());
 	    return response.build();
 	}
 

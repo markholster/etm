@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.export.*;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.server.core.EtmException;
@@ -52,6 +53,7 @@ import org.elasticsearch.search.SearchHit;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.*;
@@ -66,15 +68,21 @@ public class SettingsService extends AbstractJsonService {
 	private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
 	private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 	private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
-	
+	private final EtmPrincipalTags etmPrincipalTags = this.etmPrincipalConverter.getTags();
+
+	private final FieldLayout[] exportPrincipalFields = new FieldLayout[] {
+	        new FieldLayout("Account ID", this.etmPrincipalTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST),
+            new FieldLayout("Name", this.etmPrincipalTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST),
+            new FieldLayout("E-mail", this.etmPrincipalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
+	};
+
 	private final String parserInEnpointTag = this.endpointConfigurationConverter.getTags().getEnhancerTag() +
 			"." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
 			"." + this.endpointConfigurationConverter.getTags().getParsersTag() +
 			"." + this.endpointConfigurationConverter.getTags().getNameTag();
-	
-	
-	private final EtmPrincipalTags etmPrincipalTags = this.etmPrincipalConverter.getTags();
-	
+
+
+
 	private static Client client;
 	private static EtmConfiguration etmConfiguration;
 	
@@ -624,25 +632,26 @@ public class SettingsService extends AbstractJsonService {
 	@GET
 	@Path("/download/users")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getDownloadUsers() {
+	public Response getDownloadUsers(@QueryParam("q") String json) {
+		EtmPrincipal etmPrincipal = getEtmPrincipal();
+		Map<String, Object> valueMap = toMap(json);
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER)
-				.setFetchSource(new String[] {"*"}, new String[] {this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getSearchTemplatesTag(), this.etmPrincipalTags.getSearchHistoryTag()})
+				.setFetchSource(Arrays.stream(this.exportPrincipalFields).map(f -> f.getField()).toArray(String[]::new), null)
 				.setQuery(QueryBuilders.matchAllQuery())
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
 		if (!scrollableSearch.hasNext()) {
 			return null;
 		}
-		return null;
-//		String fileType = getString("fileType", valueMap);
-//		File result = this.queryExporter.exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), parameters, etmPrincipal);
-//		scrollableSearch.clearScrollIds();
-//		Response.ResponseBuilder response = Response.ok(result);
-//		response.header("Content-Disposition", "attachment; filename=etm-results." + fileType);
-//		response.encoding(System.getProperty("file.encoding"));
-//		response.header("Content-Type", this.queryExporter.getContentType(fileType));
-//		return response.build();
+        FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
+        File result = new QueryExporter().exportToFile(scrollableSearch, fileType, Integer.MAX_VALUE, etmPrincipal, this.exportPrincipalFields);
+		scrollableSearch.clearScrollIds();
+		Response.ResponseBuilder response = Response.ok(result);
+		response.header("Content-Disposition", "attachment; filename=etm-users." + fileType.name().toLowerCase());
+		response.encoding(System.getProperty("file.encoding"));
+		response.header("Content-Type", fileType.getContentType());
+		return response.build();
 	}
 
 	@GET

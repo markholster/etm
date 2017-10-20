@@ -11,7 +11,7 @@ public enum MultiSelect {
             if (values == null || values.isEmpty()) {
                 return null;
             }
-            values.sort(this.objectComparator);
+            values.sort(objectComparator);
             return values.get(0);
         }
     }, HIGHEST() {
@@ -20,7 +20,7 @@ public enum MultiSelect {
             if (values == null || values.isEmpty()) {
                 return null;
             }
-            values.sort(this.objectComparator);
+            values.sort(objectComparator);
             return values.get(values.size() - 1);
         }
     }, FIRST() {

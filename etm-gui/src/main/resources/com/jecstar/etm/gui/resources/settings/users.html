@@ -40,7 +40,7 @@ body { padding-top: 60px; }
   
   <div class="container" style="margin-top: 1em;">
     <div class="card card-block">
-      <h5 class="card-title">Users</h5>
+      <h5 class="card-title">Users<small><a id="link-request-download" href="#" class="fa fa-download pull-right" title="Download users"></a></small></h5>
       <div class="card-text">
         <div id="users_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
         <div id="users_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
@@ -222,7 +222,37 @@ body { padding-top: 60px; }
     </div>    
   
   </div>
-  
+
+
+  <div class="modal fade" id="modal-download-users" tabindex="-1" role="dialog" aria-labelledby="download-users-modal-label" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                  </button>
+                  <h4 class="modal-title" id="download-users-modal-label">Download users</h4>
+              </div>
+              <div class="modal-body">
+                  <p>Select the options you desire, and click on the link below to download the users.</p>
+                  <div class="form-group row">
+                      <label for="sel-download-type" class="col-sm-3 col-form-label">File type</label>
+                      <div class="col-sm-9">
+                          <select id="sel-download-type" class="form-control custom-select">
+                              <option value="csv">Comma separated file (csv)</option>
+                              <option value="xlsx">Microsoft Excel (xlsx)</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div class="modal-footer">
+                      <button id="btn-download-users" type="button" class="btn btn-primary">Download</button>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+
   <!-- jQuery first, then Bootstrap JS. -->
   <script src="../scripts/tether.min.js"></script>
   <script src="../scripts/jquery.min.js"></script>
