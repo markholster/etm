@@ -1,7 +1,7 @@
 == Setup {etm}
 This section explains in detail the steps to download, configure and run an {etm} installation. Because {etm} is a pure Java application it should be able to run on any machine with a proper Java runtime installed. At a minimum a link:http://www.oracle.com/technetwork/java/javase/downloads/index.html[Java 8] runtime should be available. It is recommended to install JDK from Oracle's site, but {etm} might run with other JDK suppliers as well.
 
-For the storage of the events {etm} relies on an link:http://www.elastic.co/downloads[Elasticsearch 5.5] or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of {etm} and need to be installed, configured and managed separately.
+For the storage of the events {etm} relies on an link:http://www.elastic.co/downloads[Elasticsearch {elasticsearch-major-version}] or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of {etm} and need to be installed, configured and managed separately.
 
 === System requirements
 {etm} works best on machines that are equipped with 8 to 64 GiB of RAM. More than 64 GiB makes the Java garbage collections run so long that it has an overall negative impact on the performance. In most situations 8 GiB is more than sufficient, but when you need to process a lot of big events you might need some more memory.

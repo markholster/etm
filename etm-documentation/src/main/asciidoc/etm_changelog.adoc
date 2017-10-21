@@ -3,10 +3,23 @@
 === Version 2.4.0
 * Fixed Terms and Significant Terms autocompletion fields in Graphs page.
 * Upgrade to Elasticsearch 5.6.x.
-* Removed _missing_ query parameter. It should be replaced with NOT _exists_
+* Removed \_missing_ query parameter. It should be replaced with NOT \_exists_
 * Added JMS processor.
 * Fixed LDAP Authentication bug.
-* Option to download all users to and csv or excel sheet.
+* Option to download all users to a csv or excel sheet.
+
+==== Upgrade from version 2.x to 2.4.0
+. Make sure you have a backup of all Elasticsearch data!
+. Download and uncompress Elasticsearch 5.6.x to a new directory.
+. Stop all {etm} nodes.
+. Stop your current Elasticsearch nodes.
+. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
+. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
+. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
+. Dowload and uncompress {etm} 2.4.0 to a new directory.
+. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
+. Copy the file 'config/etm.yml' from your old {etm} installation to the new one. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' under the http chapter. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
+. Start your {etm} nodes.
 
 === Version 2.3.0
 * Support for x-pack secured Elasticsearch clusters.
