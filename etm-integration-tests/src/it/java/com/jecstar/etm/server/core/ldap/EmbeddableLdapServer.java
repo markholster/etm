@@ -37,6 +37,7 @@ public class EmbeddableLdapServer {
 	
 	public static final String HOST = "127.0.0.1";
 	public static final int PORT = 10389;
+	public static final int SECURE_PORT = 10636;
 	public static final String BIND_DN = "cn=jecstar-admin,ou=system,dc=jecstar,dc=com";
 	public static final String BIND_PASSWORD = "admin-password";
 	public static final String GROUP_BASE_DN = "ou=groups,dc=jecstar,dc=com";

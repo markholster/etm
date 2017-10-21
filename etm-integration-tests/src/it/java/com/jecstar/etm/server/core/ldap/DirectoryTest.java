@@ -33,6 +33,7 @@ public class DirectoryTest {
 		// Setup the connection.
 		ldapConfiguration.setHost(EmbeddableLdapServer.HOST);
 		ldapConfiguration.setPort(EmbeddableLdapServer.PORT);
+		ldapConfiguration.setConnectionSecurity(LdapConfiguration.ConnectionSecurity.STARTTLS);
 		ldapConfiguration.setBindDn(EmbeddableLdapServer.BIND_DN);
 		ldapConfiguration.setBindPassword(EmbeddableLdapServer.BIND_PASSWORD);
 		// Setup the connection validator
@@ -72,8 +73,10 @@ public class DirectoryTest {
 	public void testAuthenticateWithWrongPassword() {
 		Directory directory = new Directory(createLdapConfiguration());
 		EtmPrincipal principal = directory.authenticate("etm-admin", "wrongPassword");
-		directory.close();
-		assertNull(principal);
+        assertNull(principal);
+        principal = directory.authenticate("etm-admin", "password");
+        assertNotNull(principal);
+        directory.close();
 	}
 	
 	@Test

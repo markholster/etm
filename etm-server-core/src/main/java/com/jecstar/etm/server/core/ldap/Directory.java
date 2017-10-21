@@ -14,6 +14,7 @@ import org.ldaptive.auth.*;
 import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
 import org.ldaptive.control.PasswordPolicyControl;
 import org.ldaptive.pool.*;
+import org.ldaptive.ssl.AllowAnyHostnameVerifier;
 import org.ldaptive.ssl.SslConfig;
 
 import java.time.Duration;
@@ -100,7 +101,7 @@ public class Directory implements AutoCloseable {
 		
 		AuthenticationResponse response;
 		try {
-			response = auth.authenticate(new AuthenticationRequest(userId, new Credential(password), createUserAttributes(this.ldapConfiguration).toArray(new String[0])));
+            response = auth.authenticate(new AuthenticationRequest(userId, new Credential(password), createUserAttributes(this.ldapConfiguration).toArray(new String[0])));
 		} catch (LdapException e) {
 			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
 		}
@@ -245,6 +246,7 @@ public class Directory implements AutoCloseable {
 			this.connectionPool = createConnectionPool(this.ldapConfiguration.getMinPoolSize(), this.ldapConfiguration.getMaxPoolSize(), this.ldapConfiguration, connectionConfig);
 			this.connectionPool.initialize();
 			this.connectionFactory = new PooledConnectionFactory(this.connectionPool);
+			this.connectionFactory.getConnection().close();
 			return true;
 		} catch (Exception e) {
 			if (this.connectionPool != null && this.connectionPool.isInitialized()) {
@@ -284,6 +286,10 @@ public class Directory implements AutoCloseable {
 		poolConfig.setValidateTimeout(CONNECTION_TIMEOUT);
 		if (ldapConfiguration.getConnectionTestSearchFilter() != null) {
 			poolConfig.setValidateOnCheckOut(true);
+			// Also validate on connection checkin. This is necessary because when a user provides a wrong password the
+            // connection in the connection pool is invalid. This wil result in a ValidationException the next time the
+            // connection is used.
+			poolConfig.setValidateOnCheckIn(true);
 		}
 		AbstractConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, new DefaultConnectionFactory(connectionConfig));
 		
@@ -317,8 +323,10 @@ public class Directory implements AutoCloseable {
 			connectionConfig.setConnectionInitializer(new BindConnectionInitializer(ldapConfiguration.getBindDn(), new Credential(ldapConfiguration.getBindPassword())));
 		}
 		if (connectionConfig.getUseSSL() || connectionConfig.getUseStartTLS()) {
-			// TODO trustmanager zou eigenlijk configurabel moeten zijn
-			connectionConfig.setSslConfig(new SslConfig(new TrustAllTrustManager()));
+			// TODO trustmanager & hostname verifier zouden eigenlijk configurabel moeten zijn
+            SslConfig sslConfig = new SslConfig(new TrustAllTrustManager());
+            sslConfig.setHostnameVerifier(new AllowAnyHostnameVerifier());
+            connectionConfig.setSslConfig(sslConfig);
 		}
 		return connectionConfig;
 	}

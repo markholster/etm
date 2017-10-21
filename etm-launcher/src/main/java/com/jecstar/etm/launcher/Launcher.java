@@ -282,7 +282,7 @@ class Launcher {
 			Class<?> clazz = Class.forName("com.jecstar.etm.processor.ibmmq.IbmMqProcessorImpl");
 			this.ibmMqProcessor = (IbmMqProcessor) clazz
 					.getConstructor(
-							TelemetryCommandProcessorImpl.class,
+							TelemetryCommandProcessor.class,
 							MetricRegistry.class,
 							IbmMq.class, 
 							String.class,
