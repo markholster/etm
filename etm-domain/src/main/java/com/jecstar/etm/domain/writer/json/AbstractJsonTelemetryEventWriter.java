@@ -1,16 +1,12 @@
 package com.jecstar.etm.domain.writer.json;
 
+import com.jecstar.etm.domain.*;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
+
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.jecstar.etm.domain.Application;
-import com.jecstar.etm.domain.Endpoint;
-import com.jecstar.etm.domain.EndpointHandler;
-import com.jecstar.etm.domain.Location;
-import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.domain.writer.TelemetryEventWriter;
-import com.jecstar.etm.domain.writer.TelemetryEventTags;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
@@ -34,6 +30,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean added = this.jsonWriter.addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), sb, true);
+		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getTypeTag(), getType(), sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
@@ -72,6 +69,8 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 		sb.append("}");
 		return sb.toString();
 	}
+
+	abstract String getType();
 	
 	abstract boolean doWrite(Event event, StringBuilder buffer, boolean firstElement);
 	

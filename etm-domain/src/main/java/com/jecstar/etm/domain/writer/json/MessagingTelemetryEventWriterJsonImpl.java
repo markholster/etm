@@ -1,10 +1,16 @@
 package com.jecstar.etm.domain.writer.json;
 
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
 
 public class MessagingTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventWriter<MessagingTelemetryEvent> {
 
-	@Override
+    @Override
+    String getType() {
+        return TelemetryEventTags.EVENT_TYPE_MESSAGING;
+    }
+
+    @Override
 	boolean doWrite(MessagingTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
 		boolean added = !firstElement;
 		if (event.expiry != null) {

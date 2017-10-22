@@ -1,5 +1,7 @@
 package com.jecstar.etm.server.core.domain.configuration;
 
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+
 public class ElasticsearchLayout {
 
 	public static final String ETM_METRICS_TEMPLATE_NAME = "etm_metrics";
@@ -9,11 +11,11 @@ public class ElasticsearchLayout {
 	public static final String ETM_EVENT_TEMPLATE_NAME = "etm_event";
 	public static final String ETM_EVENT_INDEX_PREFIX = ETM_EVENT_TEMPLATE_NAME + "_";
 	public static final String ETM_EVENT_INDEX_ALIAS_ALL = ETM_EVENT_INDEX_PREFIX + "all";
-	public static final String ETM_EVENT_INDEX_TYPE_BUSINESS = "business";
-	public static final String ETM_EVENT_INDEX_TYPE_HTTP = "http";
-	public static final String ETM_EVENT_INDEX_TYPE_LOG = "log";
-	public static final String ETM_EVENT_INDEX_TYPE_MESSAGING = "messaging";
-	public static final String ETM_EVENT_INDEX_TYPE_SQL = "sql";
+	public static final String ETM_EVENT_INDEX_TYPE_BUSINESS = TelemetryEventTags.EVENT_TYPE_BUSINESS;
+	public static final String ETM_EVENT_INDEX_TYPE_HTTP = TelemetryEventTags.EVENT_TYPE_HTTP;
+	public static final String ETM_EVENT_INDEX_TYPE_LOG = TelemetryEventTags.EVENT_TYPE_LOG;
+	public static final String ETM_EVENT_INDEX_TYPE_MESSAGING = TelemetryEventTags.EVENT_TYPE_MESSAGING;
+	public static final String ETM_EVENT_INDEX_TYPE_SQL = TelemetryEventTags.EVENT_TYPE_SQL;
 	
 	public static final String CONFIGURATION_INDEX_NAME = "etm_configuration";
 	public static final String CONFIGURATION_INDEX_TYPE_DASHBOARD = "dashboard";

@@ -1,8 +1,14 @@
 package com.jecstar.etm.domain.writer.json;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
 
 public class HttpTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventWriter<HttpTelemetryEvent>{
+
+	@Override
+	String getType() {
+		return TelemetryEventTags.EVENT_TYPE_HTTP;
+	}
 
 	@Override
 	boolean doWrite(HttpTelemetryEvent event, StringBuilder buffer, boolean firstElement) {

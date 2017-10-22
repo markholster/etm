@@ -2,8 +2,15 @@ package com.jecstar.etm.domain.writer;
 
 public interface TelemetryEventTags {
 
+    public static final String EVENT_TYPE_BUSINESS = "business";
+    public static final String EVENT_TYPE_HTTP = "http";
+    public static final String EVENT_TYPE_LOG = "log";
+    public static final String EVENT_TYPE_MESSAGING = "messaging";
+    public static final String EVENT_TYPE_SQL = "sql";
+
 	// TelemetryEvent attributes.
 	String getTimestampTag();
+	String getTypeTag();
 	String getIdTag();
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
