@@ -516,15 +516,17 @@ function loadDashboardPage() {
 		col.interval = null;
 		var cellContainer = $('<div>').attr('data-col-id', col.id).attr('data-col-bordered', col.bordered).addClass('col-lg-' + col.parts).attr('style', 'height: 100%;');
 		var card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
+		var cardBody = $('<div>').addClass('card-body');
+		card.append(cardBody);
 		cellContainer.append(card);
 		if (!col.bordered) {
 			card.addClass('noBorder');
 		}
 		
-		card.append(
-		  $('<h5>').addClass('card-title').text(col.title).append(
-		    $('<a>').attr('href', '#').attr('data-link-action', 'edit-graph').addClass('fa fa-pencil-square-o pull-right invisible')
-		  )
+		cardBody.append(
+          $('<h5>').addClass('card-title').text(col.title).append(
+            $('<a>').attr('href', '#').attr('data-link-action', 'edit-graph').addClass('fa fa-pencil-square-o pull-right invisible')
+          )
 		);
 		
 		var graphData = graphMap[col.graph];
@@ -536,9 +538,9 @@ function loadDashboardPage() {
 			if (col.interpolation) {
 				graphData.interpolation = col.interpolation;
 			}
-			updateChart(graphData, col, card);
+			updateChart(graphData, col, cardBody);
 			if (col.refresh_rate) {
-				col.interval = setInterval( function() { updateChart(graphData, col, card); }, col.refresh_rate * 1000 );
+				col.interval = setInterval( function() { updateChart(graphData, col, cardBody); }, col.refresh_rate * 1000 );
 			}
 		}
 		// Bottom right resize icon
@@ -546,7 +548,7 @@ function loadDashboardPage() {
 		return cellContainer;
 	}
 	
-	function updateChart(graphData, col, card) {
+	function updateChart(graphData, col, cardBody) {
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
@@ -584,7 +586,7 @@ function loadDashboardPage() {
 	        		    	col.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
 	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
 	        		    	col.chartData = data.data;
-	        		    	d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		    	d3.selectAll($(cardBody).toArray()).append("svg").attr("style", "height: 100%;")
 	        		        	.datum(col.chartData)
 	        		        	.call(col.chart);
 	        		        nv.utils.windowResize(col.chart.update);
@@ -619,7 +621,7 @@ function loadDashboardPage() {
 	       		            });
 	        		    	col.chart.interpolate(graphData.interpolation);
 	        		    	col.chart.margin({left: 75, bottom: 50, right: 50});
-	        		    	d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		    	d3.selectAll($(cardBody).toArray()).append("svg").attr("style", "height: 100%;")
 	        		        	.datum(col.chartData)
 	        		        	.call(col.chart);
 	        		        nv.utils.windowResize(col.chart.update);
@@ -627,11 +629,11 @@ function loadDashboardPage() {
 	        		    });
     		        }
         		} else if ('number' == data.type) {
-        			$currentValue = $(card).find("h1[data-element-type='number-graph']");
+        			$currentValue = $(cardBody).find("h1[data-element-type='number-graph']");
         			if ($currentValue.length) {
         				$currentValue.text(data.value_as_string);
         			} else {
-        				$(card).append($('<h1>').attr('data-element-type', 'number-graph').text(data.value_as_string),$('<h4>').text(data.label));
+        				$(cardBody).append($('<h1>').attr('data-element-type', 'number-graph').text(data.value_as_string),$('<h4>').text(data.label));
         			}
         		} else if ('pie' == data.type) {
         		} else if ('stacked_area' == data.type) {
@@ -660,7 +662,7 @@ function loadDashboardPage() {
 	       		            	return col.chartData[0].values[d].label;
 	       		            });
 	        		        col.chart.margin({left: 75, bottom: 50, right: 50});
-	        		        d3.selectAll($(card).toArray()).append("svg").attr("style", "height: 100%;")
+	        		        d3.selectAll($(cardBody).toArray()).append("svg").attr("style", "height: 100%;")
 	        		        	.datum(col.chartData)
 	        		        	.call(col.chart);
 	        		        nv.utils.windowResize(col.chart.update);
@@ -730,10 +732,9 @@ function loadDashboardPage() {
 		);
 		
 		$.each(dashboardData.rows, function(rowIx, row) {
-			var rowContainer = $('<div>').addClass('row').attr('data-row-id', row.id).attr('style', 'height: ' + row.height + 'rem; padding-bottom: 15px;');
+			var rowContainer = $('<div>').addClass('row pb-1').attr('data-row-id', row.id).attr('style', 'height: ' + row.height + 'rem;');
 			if (rowIx != 0) {
-				var oldStyle = $(rowContainer).attr('style');
-				$(rowContainer).attr('style', oldStyle + ' padding-top: 15px;');
+			    $(rowContainer).addClass('pt-2');
 			}
 			$.each(row.cols, function (colIx, col) {
 				var cell = createCell(col);

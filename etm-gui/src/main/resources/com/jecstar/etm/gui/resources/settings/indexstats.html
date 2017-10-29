@@ -1,95 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-<title>Jecstar - Enterprise Telemetry Monitor</title>
+    <title>Jecstar - Enterprise Telemetry Monitor</title>
 
-<link rel="stylesheet" href="../styles/bootstrap.min.css">
-<link rel="stylesheet" href="../styles/font-awesome.min.css">
-<link rel="stylesheet" href="../styles/spinner.css">
-<link rel="stylesheet" href="../styles/nv.d3.min.css">
-<style type="text/css">
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/font-awesome.min.css">
+    <link rel="stylesheet" href="../styles/spinner.css">
+    <link rel="stylesheet" href="../styles/nv.d3.min.css">
+    <style type="text/css">
 body { padding-top: 60px; }
-</style>
+
+
+    </style>
 
 </head>
 <body>
-  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
     <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
-      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
-      Jecstar
+        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
+             alt="">
+        Jecstar
     </a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
-      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-        <li id="placeholder-for-MenuAwareURLResource"></li>
-      </ul>
+        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+            <li id="placeholder-for-MenuAwareURLResource"></li>
+        </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
-      <div class="spinner_line"></div>
-      <div class="spinner_line spinner_line_2"></div>
-      <div class="spinner_line spinner_line_3"></div>
-      <div class="spinner_line spinner_line_4"></div>
+        <div class="spinner_line"></div>
+        <div class="spinner_line spinner_line_2"></div>
+        <div class="spinner_line spinner_line_3"></div>
+        <div class="spinner_line spinner_line_4"></div>
     </div>
-  </nav>
-  
-  <div class="container" style="margin-top: 1em;">
+</nav>
+
+<div class="container" style="margin-top: 1em;">
     <div class="card card-block">
-      <h5 class="card-title">Index statistics</h5>
-      <div class="card-text">
-        <div id="index_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-        <div id="index_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <div id="index_box">
-	      <div class="row">
-            <div class=col-sm-12>
-		      <div class="form-group row">
-		        <label for="text-total-events" class="col-sm-3 col-form-label">Total events</label>
-				<div class="col-sm-3">
-				  <p id="text-total-events" class="form-control-static"></p>
-				</div>
-		        <label for="text-total-size" class="col-sm-3 col-form-label">Total size in bytes</label>
-				<div class="col-sm-3">
-				  <p id="text-total-size" class="form-control-static"></p>
-				</div>
-			  </div>
-		    </div>      
-          </div>
-	      <div class="row">
-            <div id="count_chart" class=col-sm-12>
-              <p class="text-center">Event count per index</p>
-              <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
+        <div class="card-body">
+            <h5 class="card-title">Index statistics</h5>
+            <div class="card-text">
+                <div id="index_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+                <div id="index_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                <div id="index_box">
+                    <div class="row">
+                        <div class=col-sm-12>
+                            <div class="form-group row">
+                                <label for="text-total-events" class="col-sm-3 col-form-label">Total events</label>
+                                <div class="col-sm-3">
+                                    <p id="text-total-events" class="form-control-static"></p>
+                                </div>
+                                <label for="text-total-size" class="col-sm-3 col-form-label">Total size in bytes</label>
+                                <div class="col-sm-3">
+                                    <p id="text-total-size" class="form-control-static"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div id="count_chart" class=col-sm-12>
+                            <p class="text-center">Event count per index</p>
+                            <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div id="size_chart" class=col-sm-12>
+                            <p class="text-center">Size per index in bytes</p>
+                            <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div id="performance_chart" class=col-sm-12>
+                            <p class="text-center">Performance averages in milliseconds</p>
+                            <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>  
-	      <div class="row">
-            <div id="size_chart" class=col-sm-12>
-              <p class="text-center">Size per index in bytes</p>
-              <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
-            </div>
-          </div>  
-	      <div class="row">
-            <div id="performance_chart" class=col-sm-12>
-              <p class="text-center">Performance averages in milliseconds</p>
-              <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
-            </div>
-          </div>  
         </div>
-      </div>
     </div>
-  </div>
-  
-  <!-- jQuery first, then Bootstrap JS. -->
-  <script src="../scripts/tether.min.js"></script>
-  <script src="../scripts/jquery.min.js"></script>
-  <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/d3.min.js"></script>
-  <script src="../scripts/nv.d3.min.js"></script>  
-  <script src="../scripts/indexstats.js"></script>
-  <script>
+</div>
+
+<!-- jQuery first, then Bootstrap JS. -->
+<script src="../scripts/tether.min.js"></script>
+<script src="../scripts/jquery.min.js"></script>
+<script src="../scripts/popper.min.js"></script>
+<script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/d3.min.js"></script>
+<script src="../scripts/nv.d3.min.js"></script>
+<script src="../scripts/indexstats.js"></script>
+<script>
     $(document).ajaxStart(function () {
         $("#index_errorBox").hide('fast');
         $('#spinner').show('fast');
@@ -123,7 +131,9 @@ body { padding-top: 60px; }
     }
   	buildIndexStatsPage();
   	
-  </script>
-  
+
+
+</script>
+
 </body>
 </html>

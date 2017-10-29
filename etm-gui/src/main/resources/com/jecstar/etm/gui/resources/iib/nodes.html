@@ -1,161 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-<title>Jecstar - Enterprise Telemetry Monitor</title>
+    <title>Jecstar - Enterprise Telemetry Monitor</title>
 
-<link rel="stylesheet" href="../styles/bootstrap.min.css">
-<link rel="stylesheet" href="../styles/font-awesome.min.css">
-<link rel="stylesheet" href="../styles/jquery-ui.min.css">
-<link rel="stylesheet" href="../styles/spinner.css">
-<style type="text/css">
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/font-awesome.min.css">
+    <link rel="stylesheet" href="../styles/jquery-ui.min.css">
+    <link rel="stylesheet" href="../styles/spinner.css">
+    <style type="text/css">
 body { padding-top: 60px; }
-</style>
+
+    </style>
 </head>
 <body>
-  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
     <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
-      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
-      Jecstar
+        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
+             alt="">
+        Jecstar
     </a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
-      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-        <li id="placeholder-for-MenuAwareURLResource"></li>
-      </ul>
+        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+            <li id="placeholder-for-MenuAwareURLResource"></li>
+        </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
-      <div class="spinner_line"></div>
-      <div class="spinner_line spinner_line_2"></div>
-      <div class="spinner_line spinner_line_3"></div>
-      <div class="spinner_line spinner_line_4"></div>
+        <div class="spinner_line"></div>
+        <div class="spinner_line spinner_line_2"></div>
+        <div class="spinner_line spinner_line_3"></div>
+        <div class="spinner_line spinner_line_4"></div>
     </div>
-  </nav>
-  
-  <div class="container" style="margin-top: 1em;">
+</nav>
+
+<div class="container" style="margin-top: 1em;">
     <div class="card card-block">
-      <h5 class="card-title">Nodes</h5>
-      <div class="card-text">
-        <div id="nodes_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-        <div id="nodes_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <div id="nodes_box">
-          <div class="row">
-            <div class=col-sm-12>
-	          <select id="sel-node" class="form-control custom-select" autofocus="autofocus">
-	          	<option selected="selected"></option>
-	          </select>
-	        </div>
-	      </div>  
-	      <hr />
-	      <div class="row">
-            <div class=col-sm-12>
-		      <form id="node_form">
-		        <div class="form-group row">
-				  <label for="input-node-name" class="col-sm-3 col-form-label">Name</label>
-				  <div class="col-sm-9">
-				    <input id="input-node-name" type="text" class="form-control" placeholder="Unique name of the node..." required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-host" class="col-sm-3 col-form-label">Host</label>
-				  <div class="col-sm-9">
-				    <input id="input-host" type="text" class="form-control" required="required" />
-				  </div>
-				</div>				
-		        <div class="form-group row">
-				  <label for="input-port" class="col-sm-3 col-form-label">Port</label>
-				  <div class="col-sm-9">
-				    <input id="input-port" type="number" class="form-control" required="required" min="1" max="65535" value="1414"/>
-				  </div>
-				</div>				
-                <div class="form-group row">
-                  <label for="input-username" class="col-sm-3 col-form-label">Username</label>
-                  <div class="col-sm-9">
-                    <input id="input-username" type="text" class="form-control" />
-                  </div>
-                </div>        
-                <div class="form-group row">
-                  <label for="input-password" class="col-sm-3 col-form-label">Password</label>
-                  <div class="col-sm-9">
-                    <input id="input-password" type="password" class="form-control" />
-                  </div>
-                </div>        
-		        <div class="form-group row">
-				  <label for="input-queue-manager" class="col-sm-3 col-form-label">Queue manager</label>
-				  <div class="col-sm-9">
-				    <input id="input-queue-manager" type="text" class="form-control" />
-				  </div>
-				</div>				
-		        <div class="form-group row">
-				  <label for="input-channel" class="col-sm-3 col-form-label">Channel</label>
-				  <div class="col-sm-9">
-				    <input id="input-channel" type="text" class="form-control" />
-				  </div>
-				</div>				
-		        <div class="modal-footer">
-                  <input type="submit" id="btn-confirm-remove-node" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
-                  <input type="submit" id="btn-confirm-save-node" class="btn btn-primary" value="Save" disabled="disabled" />
-		        </div>				
-		      </form>
-		    </div>      
-          </div>
+        <div class="card-body">
+            <h5 class="card-title">Nodes</h5>
+            <div class="card-text">
+                <div id="nodes_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+                <div id="nodes_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                <div id="nodes_box">
+                    <div class="row">
+                        <div class=col-sm-12>
+                            <select id="sel-node" class="form-control custom-select" autofocus="autofocus">
+                                <option selected="selected"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="row">
+                        <div class=col-sm-12>
+                            <form id="node_form">
+                                <div class="form-group row">
+                                    <label for="input-node-name" class="col-sm-3 col-form-label">Name</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-node-name" type="text" class="form-control"
+                                               placeholder="Unique name of the node..." required="required"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-host" class="col-sm-3 col-form-label">Host</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-host" type="text" class="form-control" required="required"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-port" class="col-sm-3 col-form-label">Port</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-port" type="number" class="form-control" required="required"
+                                               min="1" max="65535" value="1414"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-username" class="col-sm-3 col-form-label">Username</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-username" type="text" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-password" class="col-sm-3 col-form-label">Password</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-password" type="password" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-queue-manager" class="col-sm-3 col-form-label">Queue
+                                        manager</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-queue-manager" type="text" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-channel" class="col-sm-3 col-form-label">Channel</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-channel" type="text" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <input type="submit" id="btn-confirm-remove-node" class="btn btn-danger"
+                                           value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
+                                    <input type="submit" id="btn-confirm-save-node" class="btn btn-primary" value="Save"
+                                           disabled="disabled"/>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  
-    <div class="modal fade" id="modal-node-overwrite" tabindex="-1" role="dialog" aria-labelledby="node-overwrite-modal-label" aria-hidden="true">
-       <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-             <h4 class="modal-title" id="node-overwrite-modal-label">Node already exists</h4>
-           </div>
-           <div class="modal-body">
-            A node with the name '<i id="overwrite-node-name"></i>' already exists. Do you want to overwrite that node?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-            <button id="btn-save-node" type="button" class="btn btn-primary">Yes</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="modal fade" id="modal-node-remove" tabindex="-1" role="dialog" aria-labelledby="node-remove-modal-label" aria-hidden="true">
-      <div class="modal-dialog" role="document">
+</div>
+
+<div class="modal fade" id="modal-node-overwrite">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title" id="node-remove-modal-label">Confirm removal</h4>
-          </div>
-          <div class="modal-body">
-            Are you sure you want to remove the node '<i id="remove-node-name"></i>'?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-            <button id="btn-remove-node" type="button" class="btn btn-primary">Yes</button>
-          </div>
+            <div class="modal-header">
+                <h4 class="modal-title" id="node-overwrite-modal-label">Node already exists</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                A node with the name '<i id="overwrite-node-name"></i>' already exists. Do you want to overwrite that
+                node?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-save-node" type="button" class="btn btn-primary">Yes</button>
+            </div>
         </div>
-      </div>
-    </div>  
-  
-  </div>
-  
-  <!-- jQuery first, then Bootstrap JS. -->
-  <script src="../scripts/tether.min.js"></script>
-  <script src="../scripts/jquery.min.js"></script>
-  <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/iib-nodes.js"></script>
-  <script>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-node-remove">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="node-remove-modal-label">Confirm removal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove the node '<i id="remove-node-name"></i>'?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-remove-node" type="button" class="btn btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery first, then Bootstrap JS. -->
+<script src="../scripts/tether.min.js"></script>
+<script src="../scripts/jquery.min.js"></script>
+<script src="../scripts/popper.min.js"></script>
+<script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/iib-nodes.js"></script>
+<script>
     $(document).ajaxStart(function () {
         $("#nodes_errorBox").hide('fast');
         $('#spinner').show('fast');
@@ -179,7 +191,8 @@ body { padding-top: 60px; }
     });
   	buildNodePage();
   	
-  </script>
-  
+
+</script>
+
 </body>
 </html>

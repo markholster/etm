@@ -167,6 +167,7 @@ function buildEndpointPage() {
 		}
 		var card = $('<div>').addClass('card card-block etm-field-card');
 		card.append(
+		    $('<div>').addClass('card-body').append(
 				$('<div>').addClass('form-group row').append(
 					$('<div>').addClass('col-sm-12').append(
 						$('<a href="#">').addClass('pull-right').text('Remove this field').click(function (event) {event.preventDefault(); removeField($(this))})
@@ -189,6 +190,7 @@ function buildEndpointPage() {
 					$('<label>').text('Parsers'),
 					parserRow
 				)
+			)
 		)
 		return card;
 	}

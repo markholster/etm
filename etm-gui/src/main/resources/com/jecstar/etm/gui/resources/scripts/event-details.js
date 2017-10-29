@@ -75,7 +75,7 @@ function showEvent(scrollTo, type, id) {
 							.attr('aria-labelledby', 'correlation-header' + index)
 							.attr('role', 'tabpanel')
 							.attr('aria-expanded', 'false')
-							.addClass('tab-pane fade')
+							.addClass('tab-pane fade pt-3')
 					);
 					writeEventDataToTab($('#correlation-' + index), $('#correlation-header-' + index), correlated_event, data.time_zone);
 				}); 
@@ -480,7 +480,7 @@ function showEvent(scrollTo, type, id) {
 					.attr('aria-labelledby', 'endpoint-tab-header')
 					.attr('role', 'tabpanel')
 					.attr('aria-expanded', 'false')
-					.addClass('tab-pane fade')
+					.addClass('tab-pane fade pt-3')
 					.append(
 							$('<div>').addClass('row').append(
 									$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + ((rowIx == 0 ? 1 : rowIx) * height) + 'px; width: 100%;')
@@ -796,7 +796,7 @@ function showEvent(scrollTo, type, id) {
 				.attr('aria-labelledby', 'audit-log-tab-header')
 				.attr('role', 'tabpanel')
 				.attr('aria-expanded', 'false')
-				.addClass('tab-pane fade')
+				.addClass('tab-pane fade pt-3')
 				.append($auditTable)
 		);
 
@@ -820,7 +820,7 @@ function showEvent(scrollTo, type, id) {
 					.attr('aria-labelledby', 'event-chain-tab-header')
 					.attr('role', 'tabpanel')
 					.attr('aria-expanded', 'false')
-					.addClass('tab-pane fade')
+					.addClass('tab-pane fade pt-3')
 					.append(
 							$('<div>').addClass('row').append(
 									$('<br/>'),

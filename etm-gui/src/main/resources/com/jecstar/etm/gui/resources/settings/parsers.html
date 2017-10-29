@@ -1,178 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-<title>Jecstar - Enterprise Telemetry Monitor</title>
+    <title>Jecstar - Enterprise Telemetry Monitor</title>
 
-<link rel="stylesheet" href="../styles/bootstrap.min.css">
-<link rel="stylesheet" href="../styles/font-awesome.min.css">
-<link rel="stylesheet" href="../styles/spinner.css">
-<style type="text/css">
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/font-awesome.min.css">
+    <link rel="stylesheet" href="../styles/spinner.css">
+    <style type="text/css">
 body { padding-top: 60px; }
-</style>
+
+
+    </style>
 </head>
 <body>
-  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
     <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
-      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
-      Jecstar
+        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
+             alt="">
+        Jecstar
     </a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
-      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-        <li id="placeholder-for-MenuAwareURLResource"></li>
-      </ul>
+        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+            <li id="placeholder-for-MenuAwareURLResource"></li>
+        </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
-      <div class="spinner_line"></div>
-      <div class="spinner_line spinner_line_2"></div>
-      <div class="spinner_line spinner_line_3"></div>
-      <div class="spinner_line spinner_line_4"></div>
+        <div class="spinner_line"></div>
+        <div class="spinner_line spinner_line_2"></div>
+        <div class="spinner_line spinner_line_3"></div>
+        <div class="spinner_line spinner_line_4"></div>
     </div>
-  </nav>
-  
-  <div class="container" style="margin-top: 1em;">
+</nav>
+
+<div class="container" style="margin-top: 1em;">
     <div class="card card-block">
-      <h5 class="card-title">Parsers</h5>
-      <div class="card-text">
-        <div id="parsers_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-        <div id="parsers_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <div id="parsers_box">
-          <div class="row">
-            <div class=col-sm-12>
-	          <select id="sel-parser" class="form-control custom-select" autofocus="autofocus">
-	          	<option selected="selected"></option>
-	          </select>
-	        </div>
-	      </div>  
-	      <hr />
-	      <div class="row">
-            <div class=col-sm-12>
-		      <form id="parser_form">
-		        <div class="form-group row">
-				  <label for="input-parser-name" class="col-sm-3 col-form-label">Name</label>
-				  <div class="col-sm-9">
-				    <input id="input-parser-name" type="text" class="form-control" placeholder="Descriptive name of the parser..." required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-parser-type" class="col-sm-3 col-form-label">Type</label>
-				  <div class="col-sm-9">
-                    <select id="input-parser-type" class="form-control custom-select">
-	    			  <option value="fixed_position">Fixed position</option>
-		    		  <option value="fixed_value">Fixed value</option>
-			    	  <option value="jsonpath">JsonPath</option>
-				      <option value="xpath">XPath</option>
-				      <option value="xslt">XSLT</option>
-				    </select>
-				  </div>  
-				</div>
-				<div id="grp-fixed_position">
-				  <div class="form-group row">
-				  	<label for="input-fixed_position-line" class="col-sm-3 col-form-label">Line</label>
-				  	<div class="col-sm-9">
-				  	  <input id="input-fixed_position-line" type="number" min="1" class="form-control" required="required" value="1"/>
-				    </div>
-				  </div>
-				  <div class="form-group row">
-				  	<label for="input-fixed_position-start-ix" class="col-sm-3 col-form-label">Start position</label>
-				  	<div class="col-sm-9">
-				  	  <input id="input-fixed_position-start-ix" type="number" min="1" class="form-control" required="required" value="1"/>
-				    </div>
-				  </div>
-				  <div class="form-group row">
-				  	<label for="input-fixed_position-end-ix" class="col-sm-3 col-form-label">End position (excluded)</label>
-				  	<div class="col-sm-9">
-				  	  <input id="input-fixed_position-end-ix" type="number" min="2" class="form-control" required="required" value="2"/>
-				    </div>
-				  </div>
-				</div>
-				<div id="grp-fixed_value" class="form-group row" style="display: none;">
-				  <label for="input-fixed-value" class="col-sm-3 col-form-label">Fixed value</label>
-				  <div class="col-sm-9">
-				    <input id="input-fixed-value" type="text" class="form-control" required="required" disabled="disabled" />
-				  </div>
-				</div>
-				<div id="grp-jsonpath" class="form-group row" style="display: none;">
-				  <label for="input-jsonpath-expression" class="col-sm-3 col-form-label">JsonPath expression</label>
-				  <div class="col-sm-9">
-				    <input id="input-jsonpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
-				  </div>
-				</div>
-				<div id="grp-xpath" class="form-group row" style="display: none;">
-				  <label for="input-xpath-expression" class="col-sm-3 col-form-label">XPath expression</label>
-				  <div class="col-sm-9">  
-				    <input id="input-xpath-expression" type="text" class="form-control" required="required" disabled="disabled" />
-				  </div>
-				</div>
-				<div id="grp-xslt" class="form-group" style="display: none;">
-					<label for="input-xslt-template">XSLT template</label>
-					<textarea id="input-xslt-template" class="form-control" rows="10" required="required" disabled="disabled"></textarea>
-				</div>
-		        <div class="modal-footer">
-                  <input type="submit" id="btn-confirm-remove-parser" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />  		        
-                  <input type="submit" id="btn-confirm-save-parser" class="btn btn-primary" value="Save" disabled="disabled" />
-		        </div>
-		      </form>
-		    </div>      
-          </div>
+        <div class="card-body">
+            <h5 class="card-title">Parsers</h5>
+            <div class="card-text">
+                <div id="parsers_errorBox" class="alert alert-danger errorBox" style="display: none;"
+                     role="alert"></div>
+                <div id="parsers_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                <div id="parsers_box">
+                    <div class="row">
+                        <div class=col-sm-12>
+                            <select id="sel-parser" class="form-control custom-select" autofocus="autofocus">
+                                <option selected="selected"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="row">
+                        <div class=col-sm-12>
+                            <form id="parser_form">
+                                <div class="form-group row">
+                                    <label for="input-parser-name" class="col-sm-3 col-form-label">Name</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-parser-name" type="text" class="form-control"
+                                               placeholder="Descriptive name of the parser..." required="required"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-parser-type" class="col-sm-3 col-form-label">Type</label>
+                                    <div class="col-sm-9">
+                                        <select id="input-parser-type" class="form-control custom-select">
+                                            <option value="fixed_position">Fixed position</option>
+                                            <option value="fixed_value">Fixed value</option>
+                                            <option value="jsonpath">JsonPath</option>
+                                            <option value="xpath">XPath</option>
+                                            <option value="xslt">XSLT</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="grp-fixed_position">
+                                    <div class="form-group row">
+                                        <label for="input-fixed_position-line"
+                                               class="col-sm-3 col-form-label">Line</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-fixed_position-line" type="number" min="1"
+                                                   class="form-control" required="required" value="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="input-fixed_position-start-ix" class="col-sm-3 col-form-label">Start
+                                            position</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-fixed_position-start-ix" type="number" min="1"
+                                                   class="form-control" required="required" value="1"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="input-fixed_position-end-ix" class="col-sm-3 col-form-label">End
+                                            position (excluded)</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-fixed_position-end-ix" type="number" min="2"
+                                                   class="form-control" required="required" value="2"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="grp-fixed_value" class="form-group row" style="display: none;">
+                                    <label for="input-fixed-value" class="col-sm-3 col-form-label">Fixed value</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-fixed-value" type="text" class="form-control"
+                                               required="required" disabled="disabled"/>
+                                    </div>
+                                </div>
+                                <div id="grp-jsonpath" class="form-group row" style="display: none;">
+                                    <label for="input-jsonpath-expression" class="col-sm-3 col-form-label">JsonPath
+                                        expression</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-jsonpath-expression" type="text" class="form-control"
+                                               required="required" disabled="disabled"/>
+                                    </div>
+                                </div>
+                                <div id="grp-xpath" class="form-group row" style="display: none;">
+                                    <label for="input-xpath-expression" class="col-sm-3 col-form-label">XPath
+                                        expression</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-xpath-expression" type="text" class="form-control"
+                                               required="required" disabled="disabled"/>
+                                    </div>
+                                </div>
+                                <div id="grp-xslt" class="form-group" style="display: none;">
+                                    <label for="input-xslt-template">XSLT template</label>
+                                    <textarea id="input-xslt-template" class="form-control" rows="10"
+                                              required="required" disabled="disabled"></textarea>
+                                </div>
+                                <div class="modal-footer">
+                                    <input type="submit" id="btn-confirm-remove-parser" class="btn btn-danger"
+                                           value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
+                                    <input type="submit" id="btn-confirm-save-parser" class="btn btn-primary"
+                                           value="Save" disabled="disabled"/>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  
-    <div class="modal fade" id="modal-parser-overwrite" tabindex="-1" role="dialog" aria-labelledby="parser-overwrite-modal-label" aria-hidden="true">
-       <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-             <h4 class="modal-title" id="parser-overwrite-modal-label">Parser already exists</h4>
-           </div>
-           <div class="modal-body">
-            A parser with the name '<i id="overwrite-parser-name"></i>' already exists. Do you want to overwrite that parser?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-            <button id="btn-save-parser" type="button" class="btn btn-primary">Yes</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="modal fade" id="modal-parser-remove" tabindex="-1" role="dialog" aria-labelledby="parser-remove-modal-label" aria-hidden="true">
-      <div class="modal-dialog" role="document">
+</div>
+
+<div class="modal fade" id="modal-parser-overwrite">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title" id="parser-remove-modal-label">Confirm removal</h4>
-          </div>
-          <div class="modal-body">
-            Are you sure you want to remove the parser '<i id="remove-parser-name"></i>'?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-            <button id="btn-remove-parser" type="button" class="btn btn-primary">Yes</button>
-          </div>
+            <div class="modal-header">
+                <h4 class="modal-title" id="parser-overwrite-modal-label">Parser already exists</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                A parser with the name '<i id="overwrite-parser-name"></i>' already exists. Do you want to overwrite
+                that parser?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-save-parser" type="button" class="btn btn-primary">Yes</button>
+            </div>
         </div>
-      </div>
-    </div>  
-  
-  </div>
-  
-  <!-- jQuery first, then Bootstrap JS. -->
-  <script src="../scripts/tether.min.js"></script>
-  <script src="../scripts/jquery.min.js"></script>
-  <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/parsers.js"></script>
-  <script>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-parser-remove">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="parser-remove-modal-label">Confirm removal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove the parser '<i id="remove-parser-name"></i>'?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-remove-parser" type="button" class="btn btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery first, then Bootstrap JS. -->
+<script src="../scripts/tether.min.js"></script>
+<script src="../scripts/jquery.min.js"></script>
+<script src="../scripts/popper.min.js"></script>
+<script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/parsers.js"></script>
+<script>
     $(document).ajaxStart(function () {
         $("#parsers_errorBox").hide('fast');
         $('#spinner').show('fast');
@@ -196,7 +220,9 @@ body { padding-top: 60px; }
     });
   	buildParserPage();
   	
-  </script>
-  
+
+
+</script>
+
 </body>
 </html>

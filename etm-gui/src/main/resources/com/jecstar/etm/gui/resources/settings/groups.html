@@ -1,180 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-<title>Jecstar - Enterprise Telemetry Monitor</title>
+    <title>Jecstar - Enterprise Telemetry Monitor</title>
 
-<link rel="stylesheet" href="../styles/bootstrap.min.css">
-<link rel="stylesheet" href="../styles/font-awesome.min.css">
-<link rel="stylesheet" href="../styles/jquery-ui.min.css">
-<link rel="stylesheet" href="../styles/autocomplete.css">
-<link rel="stylesheet" href="../styles/spinner.css">
-<style type="text/css">
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/font-awesome.min.css">
+    <link rel="stylesheet" href="../styles/jquery-ui.min.css">
+    <link rel="stylesheet" href="../styles/autocomplete.css">
+    <link rel="stylesheet" href="../styles/spinner.css">
+    <style type="text/css">
 body { padding-top: 60px; }
-</style>
+
+
+    </style>
 </head>
 <body>
-  <nav class="navbar fixed-top navbar-toggleable-sm navbar-inverse" style="background-color: #777;">
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
     <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
-      <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
-      Jecstar
+        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
+             alt="">
+        Jecstar
     </a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
     <div class="collapse navbar-collapse" id="collapsing_navbar">
-      <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-        <li id="placeholder-for-MenuAwareURLResource"></li>
-      </ul>
+        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+            <li id="placeholder-for-MenuAwareURLResource"></li>
+        </ul>
     </div>
     <div class="spinner" id="spinner" style="display: none;">
-      <div class="spinner_line"></div>
-      <div class="spinner_line spinner_line_2"></div>
-      <div class="spinner_line spinner_line_3"></div>
-      <div class="spinner_line spinner_line_4"></div>
+        <div class="spinner_line"></div>
+        <div class="spinner_line spinner_line_2"></div>
+        <div class="spinner_line spinner_line_3"></div>
+        <div class="spinner_line spinner_line_4"></div>
     </div>
-  </nav>
-  
-  <div class="container" style="margin-top: 1em;">
+</nav>
+
+<div class="container" style="margin-top: 1em;">
     <div class="card card-block">
-      <h5 class="card-title">Groups</h5>
-      <div class="card-text">
-        <div id="groups_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-        <div id="groups_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-        <div id="groups_box">
-          <div class="row">
-            <div class=col-sm-12>
-	          <select id="sel-group" class="form-control custom-select" autofocus="autofocus">
-	          	<option selected="selected"></option>
-	          </select>
-	        </div>
-	      </div>  
-	      <hr />
-	      <div class="row">
-            <div class=col-sm-12>
-		      <form id="group_form">
-		        <div class="form-group row">
-				  <label for="input-group-name" class="col-sm-3 col-form-label">Name</label>
-				  <div class="col-sm-9">
-				  	<input id="input-group-name" type="text" class="form-control" placeholder="Unique name of the group..." required="required" />
-				  </div>
-				</div>
-		        <div class="form-group row">
-				  <label for="input-filter-query" class="col-sm-3 col-form-label">Filter query</label>
-				  <div class="col-sm-9">
-				    <input id="input-filter-query" type="text" class="form-control" />
-				  </div>
-				</div>				
-		        <div class="form-group row">
-            	  <label for="sel-filter-query-occurrence" class="col-sm-3 col-form-label">Filter query occurrence</label>
-            	  <div class="col-sm-9">
-            	    <select id="sel-filter-query-occurrence" class="form-control custom-select">
-            	    	<option value="MUST">Must</option>
-            	    	<option value="MUST_NOT">Must not</option>
-            	    </select>				
-            	  </div>
-            	</div>
-		        <div class="form-group row">
-            	  <label for="sel-always-show-correlated-events" class="col-sm-3 col-form-label">Always show correlated events</label>
-            	  <div class="col-sm-9">
-            	    <select id="sel-always-show-correlated-events" class="form-control custom-select">
-		          	  <option value="true">Yes</option>
-		          	  <option value="false" selected="selected">No</option>            	    
-            	    </select>				
-            	  </div>
-            	</div>								            	
-            	<div class="form-group row">
-            		<label class="col-sm-3 col-form-label">Roles</label>
-            		<div class="col-sm-9" id="group-roles-container">
-            		</div>
-            	</div>		
-		        <div class="modal-footer">
-                  <input type="submit" id="btn-confirm-remove-group" class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled" />
-                  <input type="submit" id="btn-confirm-import-group" class="btn btn-secondary" value="Import" formnovalidate="formnovalidate" style="display: none;" />  		        
-                  <input type="submit" id="btn-confirm-save-group" class="btn btn-primary" value="Save" disabled="disabled" />
-		        </div>				
-		      </form>
-		    </div>      
-          </div>
+        <div class="card-body">
+            <h5 class="card-title">Groups</h5>
+            <div class="card-text">
+                <div id="groups_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+                <div id="groups_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                <div id="groups_box">
+                    <div class="row">
+                        <div class=col-sm-12>
+                            <select id="sel-group" class="form-control custom-select" autofocus="autofocus">
+                                <option selected="selected"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="row">
+                        <div class=col-sm-12>
+                            <form id="group_form">
+                                <div class="form-group row">
+                                    <label for="input-group-name" class="col-sm-3 col-form-label">Name</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-group-name" type="text" class="form-control"
+                                               placeholder="Unique name of the group..." required="required"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-filter-query" class="col-sm-3 col-form-label">Filter query</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-filter-query" type="text" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="sel-filter-query-occurrence" class="col-sm-3 col-form-label">Filter
+                                        query
+                                        occurrence</label>
+                                    <div class="col-sm-9">
+                                        <select id="sel-filter-query-occurrence" class="form-control custom-select">
+                                            <option value="MUST">Must</option>
+                                            <option value="MUST_NOT">Must not</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="sel-always-show-correlated-events" class="col-sm-3 col-form-label">Always
+                                        show correlated events</label>
+                                    <div class="col-sm-9">
+                                        <select id="sel-always-show-correlated-events"
+                                                class="form-control custom-select">
+                                            <option value="true">Yes</option>
+                                            <option value="false" selected="selected">No</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 col-form-label">Roles</label>
+                                    <div class="col-sm-9" id="group-roles-container">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <input type="submit" id="btn-confirm-remove-group" class="btn btn-danger"
+                                           value="Remove"
+                                           formnovalidate="formnovalidate" disabled="disabled"/>
+                                    <input type="submit" id="btn-confirm-import-group" class="btn btn-secondary"
+                                           value="Import" formnovalidate="formnovalidate" style="display: none;"/>
+                                    <input type="submit" id="btn-confirm-save-group" class="btn btn-primary"
+                                           value="Save"
+                                           disabled="disabled"/>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  
-    <div class="modal fade" id="modal-group-overwrite" tabindex="-1" role="dialog" aria-labelledby="group-overwrite-modal-label" aria-hidden="true">
-       <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-             <h4 class="modal-title" id="group-overwrite-modal-label">Group already exists</h4>
-           </div>
-           <div class="modal-body">
-            A group with the name '<i id="overwrite-group-name"></i>' already exists. Do you want to overwrite that group?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-            <button id="btn-save-group" type="button" class="btn btn-primary">Yes</button>
-          </div>
+
+    <div class="modal fade" id="modal-group-overwrite">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="group-overwrite-modal-label">Group already exists</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    A group with the name '<i id="overwrite-group-name"></i>' already exists. Do you want to overwrite
+                    that group?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button id="btn-save-group" type="button" class="btn btn-primary">Yes</button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-    
-    <div class="modal fade" id="modal-group-remove" tabindex="-1" role="dialog" aria-labelledby="group-remove-modal-label" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <h4 class="modal-title" id="group-remove-modal-label">Confirm removal</h4>
-          </div>
-          <div class="modal-body">
-            Are you sure you want to remove the group '<i id="remove-group-name"></i>'?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-            <button id="btn-remove-group" type="button" class="btn btn-primary">Yes</button>
-          </div>
+
+    <div class="modal fade" id="modal-group-remove">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="group-remove-modal-label">Confirm removal</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to remove the group '<i id="remove-group-name"></i>'?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button id="btn-remove-group" type="button" class="btn btn-primary">Yes</button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-    
-    <div class="modal fade" id="modal-group-import" tabindex="-1" role="dialog" aria-labelledby="group-import-modal-label" aria-hidden="true">
-       <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-             <h4 class="modal-title" id="group-import-modal-label">Import LDAP groups</h4>
-           </div>
-           <div class="modal-body">
-             <p>Please select the group that needs to be imported</p>
-            <select id="sel-import-group" class="form-control custom-select">
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button id="btn-import-group" type="button" class="btn btn-primary">Import</button>
-          </div>
+
+    <div class="modal fade" id="modal-group-import">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="group-import-modal-label">Import LDAP groups</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Please select the group that needs to be imported</p>
+                    <select id="sel-import-group" class="form-control custom-select">
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button id="btn-import-group" type="button" class="btn btn-primary">Import</button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>      
-  
-  </div>
-  
-  <!-- jQuery first, then Bootstrap JS. -->
-  <script src="../scripts/tether.min.js"></script>
-  <script src="../scripts/jquery.min.js"></script>
-  <script src="../scripts/jquery-ui.min.js"></script>
-  <script src="../scripts/bootstrap.min.js"></script>
-  <script src="../scripts/autocomplete_fields.js"></script>  
-  <script src="../scripts/groups.js"></script>
-  <script>
+    </div>
+
+</div>
+
+<!-- jQuery first, then Bootstrap JS. -->
+<script src="../scripts/tether.min.js"></script>
+<script src="../scripts/jquery.min.js"></script>
+<script src="../scripts/jquery-ui.min.js"></script>
+<script src="../scripts/popper.min.js"></script>
+<script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/autocomplete_fields.js"></script>
+<script src="../scripts/groups.js"></script>
+<script>
     $(document).ajaxStart(function () {
         $("#groups_errorBox").hide('fast');
         $('#spinner').show('fast');
@@ -197,8 +216,8 @@ body { padding-top: 60px; }
         $('html,body').animate({scrollTop: 0},'fast');
     });
   	buildGroupPage();
-  	
-  </script>
-  
+
+</script>
+
 </body>
 </html>
