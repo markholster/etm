@@ -1,24 +1,9 @@
 package com.jecstar.etm.processor.ibmmq;
 
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.Hashtable;
-
-import javax.net.ssl.SSLContext;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
-import com.ibm.mq.MQDestination;
-import com.ibm.mq.MQException;
-import com.ibm.mq.MQGetMessageOptions;
-import com.ibm.mq.MQMessage;
-import com.ibm.mq.MQQueue;
-import com.ibm.mq.MQQueueManager;
+import com.ibm.mq.*;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
@@ -31,6 +16,15 @@ import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
+
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.Hashtable;
 
 class DestinationReader implements Runnable {
 	
@@ -84,7 +78,7 @@ class DestinationReader implements Runnable {
 				try {
 					this.mqDestination.get(message, getOptions, this.destination.getMaxMessageSize());
 				} catch (MQException e) {
-					continueProcessing = handleMQException(e);
+					continueProcessing = handleMQException(e, message);
 				} finally {
 					mqGetContext.stop();
 				}
@@ -148,7 +142,7 @@ class DestinationReader implements Runnable {
 		disconnect();
 	}
 	
-	private boolean handleMQException(MQException e) {
+	private boolean handleMQException(MQException e, MQMessage message) {
 		if (e.completionCode == CMQC.MQCC_FAILED && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
 			// No message available, retry
 			if (shouldCommit()) {
@@ -157,37 +151,43 @@ class DestinationReader implements Runnable {
 			return false;
 		}
 		switch (e.reasonCode) {
-		case CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
-			if (log.isInfoLevelEnabled()) {
-				log.logInfoMessage("Accepted a truncated message.");
-			}
-			return true;
-		case CMQC.MQRC_CONNECTION_BROKEN:
-		case CMQC.MQRC_CONNECTION_QUIESCING:
-		case CMQC.MQRC_CONNECTION_STOPPING:
-		case CMQC.MQRC_Q_MGR_QUIESCING:
-		case CMQC.MQRC_Q_MGR_STOPPING:
-		case CMQC.MQRC_Q_MGR_NOT_AVAILABLE:
-		case CMQC.MQRC_Q_MGR_NOT_ACTIVE:
-		case CMQC.MQRC_CLIENT_CONN_ERROR:
-		case CMQC.MQRC_CHANNEL_STOPPED_BY_USER:
-		case CMQC.MQRC_HCONN_ERROR:
-		case CMQC.MQRC_HOBJ_ERROR:
-		case CMQC.MQRC_UNEXPECTED_ERROR:
-			if (log.isInfoLevelEnabled()) {
-				log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Trying to reconnect.");
-			}
-			disconnect();
-			try {
-				Thread.sleep(this.waitInterval);
-			} catch (InterruptedException interruptedException) {
-				Thread.currentThread().interrupt();
-			}
-			connect();
-			return false;
+		    case CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
+			    if (log.isInfoLevelEnabled()) {
+				    log.logInfoMessage("Accepted a truncated message with id '" + byteArrayToString(message.messageId) + "'.");
+			    }
+			    return true;
+			case CMQC.MQRC_TRUNCATED_MSG_FAILED:
+                if (log.isInfoLevelEnabled()) {
+                    log.logInfoMessage("Message with id '" + byteArrayToString(message.messageId) + "' is too big for configured buffer. Message will be ignored.");
+                }
+                removeMessage(message.messageId);
+			    return false;
+		    case CMQC.MQRC_CONNECTION_BROKEN:
+            case CMQC.MQRC_CONNECTION_QUIESCING:
+            case CMQC.MQRC_CONNECTION_STOPPING:
+            case CMQC.MQRC_Q_MGR_QUIESCING:
+            case CMQC.MQRC_Q_MGR_STOPPING:
+            case CMQC.MQRC_Q_MGR_NOT_AVAILABLE:
+            case CMQC.MQRC_Q_MGR_NOT_ACTIVE:
+            case CMQC.MQRC_CLIENT_CONN_ERROR:
+            case CMQC.MQRC_CHANNEL_STOPPED_BY_USER:
+            case CMQC.MQRC_HCONN_ERROR:
+            case CMQC.MQRC_HOBJ_ERROR:
+            case CMQC.MQRC_UNEXPECTED_ERROR:
+                if (log.isInfoLevelEnabled()) {
+                    log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Trying to reconnect.");
+                }
+                disconnect();
+                try {
+                    Thread.sleep(this.waitInterval);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                connect();
+                return false;
 			default:
 				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Ignoring message.");
+					log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Ignoring message with id '" + byteArrayToString(message.messageId) + "'.");
 				}
 				return false;
 		}
@@ -303,6 +303,41 @@ class DestinationReader implements Runnable {
 			log.logDebugMessage("Disconnected from queuemanager");
 		}
 	}
+
+    /**
+     * Remove a message from the destination.
+     *
+     * @param messageId The id of the message that should be removed.
+     */
+	private void removeMessage(byte[] messageId) {
+        if (messageId == null) {
+            return;
+        }
+	    MQGetMessageOptions getOptions = new MQGetMessageOptions();
+        getOptions.waitInterval = this.waitInterval;
+        getOptions.options = Destination.DEFAULT_GET_OPTIONS + CMQC.MQGMO_ACCEPT_TRUNCATED_MSG;
+        getOptions.matchOptions = CMQC.MQMO_MATCH_MSG_ID;
+
+        MQMessage message = new MQMessage();
+        message.messageId = messageId;
+
+        try {
+            // We don't want to load the message into memory, so the maxMsgSize is set to zero.
+            this.mqDestination.get(message, getOptions, 0);
+        } catch (MQException e) {
+            if (e.reasonCode == CMQC.MQRC_TRUNCATED_MSG_ACCEPTED) {
+                // Because the maxMsgSize is set to zero, the message will be truncated.
+                this.counter++;
+                if (shouldCommit()) {
+                    commit();
+                }
+            } else {
+                if (log.isInfoLevelEnabled()) {
+                    log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Failed to remove message with id '" + byteArrayToString(messageId) + "'.");
+                }
+            }
+        }
+    }
 	
 	private boolean tryBackout(MQMessage message) {
 		MQQueue backoutQueue = null;

@@ -4,6 +4,8 @@ import com.ibm.mq.constants.CMQC;
 
 public class Destination {
 
+	public static final int DEFAULT_GET_OPTIONS = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_SYNCPOINT + CMQC.MQGMO_LOGICAL_ORDER + CMQC.MQGMO_ALL_SEGMENTS_AVAILABLE + CMQC.MQGMO_COMPLETE_MSG;
+
 	private String name;
 	private String type = "queue";
 	private int nrOfListeners = 1;
@@ -12,7 +14,7 @@ public class Destination {
 	private int maxMessageSize = 1024 * 1024 * 4;
 	private int commitSize = 500;
 	private int commitInterval = 10000;
-	private int destinationGetOptions = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING + CMQC.MQGMO_SYNCPOINT + CMQC.MQGMO_LOGICAL_ORDER + CMQC.MQGMO_ALL_SEGMENTS_AVAILABLE + CMQC.MQGMO_COMPLETE_MSG;
+	private int destinationGetOptions = DEFAULT_GET_OPTIONS;
 	private int destinationOpenOptions = CMQC.MQOO_INQUIRE + CMQC.MQOO_FAIL_IF_QUIESCING + CMQC.MQOO_INPUT_SHARED;
 	
 	public String getName() {
