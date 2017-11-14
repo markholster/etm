@@ -1,14 +1,12 @@
-package com.jecstar.etm.core.parsers;
+package com.jecstar.etm.server.core.domain.parsers;
 
-import static org.junit.Assert.assertEquals;
+import com.jecstar.etm.server.core.domain.parser.XPathExpressionParser;
+import net.sf.saxon.om.NamePool;
+import org.junit.Test;
 
 import java.lang.reflect.Field;
 
-import org.junit.Test;
-
-import com.jecstar.etm.server.core.domain.parser.XPathExpressionParser;
-
-import net.sf.saxon.om.NamePool;
+import static org.junit.Assert.assertEquals;
 
 public class XPathExpressionParserTest {
 

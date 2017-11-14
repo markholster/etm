@@ -1,20 +1,22 @@
 package com.jecstar.etm.server.core.domain.converter.json;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationTags;
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 import com.jecstar.etm.server.core.domain.parser.converter.json.ExpressionParserConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultField;
+import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.enhancers.TelemetryEventEnhancer;
-import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class EndpointConfigurationConverterJsonImpl implements EndpointConfigurationConverter<String> {
 
@@ -25,6 +27,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 	private static final String DEFAULT_ENHANCER_TYPE = "DEFAULT";
 	
 	private final EndpointConfigurationTags tags = new EndpointConfigurationTagsJsonImpl();
+	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	private final JsonConverter converter = new JsonConverter();
 	
 	private final ExpressionParserConverterJsonImpl expressionParserConverter = new ExpressionParserConverterJsonImpl();
@@ -74,7 +77,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 				}
 				field.addParsers(expressionParsers);
 				field.setWritePolicy(WritePolicy.safeValueOf(this.converter.getString(this.tags.getWritePolicyTag(), fieldValues)));
-				
+				field.setParsersSource(this.converter.getString(this.tags.getParsersSourceTag(), fieldValues, eventTags.getPayloadTag()));
 				enhancer.addField(field);
 			}
 		}
@@ -102,7 +105,8 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 					result.append("{");
 					this.converter.addStringElementToJsonBuffer(this.tags.getFieldTag(), field.getName(), result, true);
 					this.converter.addStringElementToJsonBuffer(this.tags.getWritePolicyTag(), field.getWritePolicy().name(), result, false);
-					result.append(",\"").append(this.tags.getParsersTag()).append("\": [");
+                    this.converter.addStringElementToJsonBuffer(this.tags.getParsersSourceTag(), field.getParsersSource(), result, false);
+                    result.append(",\"").append(this.tags.getParsersTag()).append("\": [");
 					boolean firstParser = true;
 					for (ExpressionParser expressionParser : field.getParsers()) {
 						if (!firstParser) {

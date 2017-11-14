@@ -34,7 +34,10 @@ public class EndpointConfigurationTagsJsonImpl implements EndpointConfigurationT
 		return "write_policy";
 	}
 
-	@Override
+    @Override
+    public String getParsersSourceTag() { return "parsers_source"; }
+
+    @Override
 	public String getFieldTag() {
 		return "field";
 	}

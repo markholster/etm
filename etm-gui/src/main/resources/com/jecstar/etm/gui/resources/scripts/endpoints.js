@@ -1,6 +1,7 @@
 function buildEndpointPage() {
 	var parserMap = {};
 	var endpointMap = {};
+	var keywords;
 	$parserSelect = $('<select>').addClass('form-control custom-select etm-expression-parser');
 	$parserFieldSelect = $('<select>').addClass('form-control custom-select etm-parser-field');
 	
@@ -75,7 +76,18 @@ function buildEndpointPage() {
 		        });
 		        sortSelectOptions($parserFieldSelect);
 		    }
-		})		
+		}),
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/audit/keywords/etm_event_all',
+            success: function(data) {
+                if (!data || !data.keywords) {
+                    return;
+                }
+                keywords = data.keywords;
+            }
+        })
 	).done(function () {
 		$('#link-add-field').click(function(event) {
 			event.preventDefault();
@@ -101,8 +113,14 @@ function buildEndpointPage() {
 		        $endpointSelect.val('');
 		    }
 		});
-		
 	});
+
+    // Add the autocomplete handling.
+    $('#endpoint_form').on('keydown', "input[data-element-type='autocomplete-input']", function(event) {
+        if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+            event.stopPropagation();
+        }
+    });
 	
     function removeParserRow(anchor) {
     	anchor.parent().parent().parent().remove();
@@ -118,11 +136,13 @@ function buildEndpointPage() {
     
     function createParserRow(parser) {
     	var parserRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
-					$('<div>').addClass('input-group').append(
-							$parserSelect.clone(true), 
-							$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeParserRow($(this));}))
-					)
-			);
+            $('<div>').addClass('input-group').append(
+                $parserSelect.clone(true),
+                $('<span>').addClass('input-group-addon').append(
+                    $('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeParserRow($(this));})
+                )
+            )
+		);
     	if (parser) {
     		$(parserRow).find('.etm-expression-parser').val(parser.name)
     	}
@@ -140,10 +160,25 @@ function buildEndpointPage() {
 			}
 		});
 		var writePolicySelect = $('<select>').addClass('form-control custom-select etm-writy-policy').append(
-				$('<option>').attr('value', 'ALWAYS_OVERWRITE').text('Always overwrite'),
-				$('<option>').attr('value', 'OVERWRITE_WHEN_FOUND').text('Overwrite when found'),
-				$('<option>').attr('value', 'WHEN_EMPTY').text('When empty').attr('selected', 'selected')
-			);
+            $('<option>').attr('value', 'ALWAYS_OVERWRITE').text('Always overwrite'),
+            $('<option>').attr('value', 'OVERWRITE_WHEN_FOUND').text('Overwrite when found'),
+            $('<option>').attr('value', 'WHEN_EMPTY').text('When empty').attr('selected', 'selected')
+		);
+		var parsersSource = $('<input>')
+		    .attr('type', 'text')
+		    .attr('required', 'required')
+		    .attr('data-element-type', 'autocomplete-input')
+		    .addClass('form-control etm-parsers-source')
+		    .val('payload')
+		    .autocompleteFieldQuery(
+                {
+                    queryKeywords: keywords,
+                    mode: 'field',
+                    keywordFilter: function(index, group, keyword) {
+                        return !('payload' === keyword.name || keyword.name.indexOf('metadata.') === 0);
+                    }
+                }
+            )
 		var parserRow = $('<ol>');
 		if (fieldData) {
 			var options = $parserFieldSelect.children("option").map(function(){return $(this).attr("value");}).get();
@@ -159,6 +194,7 @@ function buildEndpointPage() {
 				}
 			});
 			writePolicySelect.val(fieldData.write_policy ? fieldData.write_policy : 'WHEN_EMPTY');
+			parsersSource.val(fieldData.parsers_source ? fieldData.parsers_source : 'payload');
 			$.each(fieldData.parsers, function(index, parser) {
 				parserRow.append(createParserRow(parser))				
 			})
@@ -182,9 +218,13 @@ function buildEndpointPage() {
 					$('<div>').addClass('col-sm-9').append(inputKey)
 				),
 				$('<div>').addClass('form-group row').append(
-						$('<label>').addClass('col-sm-3 col-form-label').text('Write policy'),
-						$('<div>').addClass('col-sm-9').append(writePolicySelect)
+					$('<label>').addClass('col-sm-3 col-form-label').text('Write policy'),
+					$('<div>').addClass('col-sm-9').append(writePolicySelect)
 				),
+				$('<div>').addClass('form-group row').append(
+                	$('<label>').addClass('col-sm-3 col-form-label').text('Parsers source'),
+                	$('<div>').addClass('col-sm-9').append(parsersSource)
+                ),
 				$('<fieldset>').addClass('form-group').append(
 					$('<a href="#">').addClass('pull-right').text('Add parser').click(function (event) {event.preventDefault(); addParserRow($(this))}),
 					$('<label>').text('Parsers'),
@@ -306,7 +346,8 @@ function buildEndpointPage() {
 		$('.etm-field-card').each(function (index, block) {
 			var field = {
 			    field: endsWith($(block).find('.etm-parser-field').val(), '.') ? $(block).find('.etm-parser-field').val() + $(block).find('.etm-collection-key').val() : $(block).find('.etm-parser-field').val(),
-			    write_policy: $(block).find('.etm-writy-policy').val(),	
+			    write_policy: $(block).find('.etm-writy-policy').val(),
+			    parsers_source:	$(block).find('.etm-parsers-source').val(),
 			    parsers: []
 			}
 			$(block).find('.etm-expression-parser').each(function (index, parser) {

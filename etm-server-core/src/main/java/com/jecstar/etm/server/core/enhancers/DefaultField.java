@@ -1,9 +1,9 @@
 package com.jecstar.etm.server.core.enhancers;
 
+import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 
 public class DefaultField {
 	
@@ -28,6 +28,8 @@ public class DefaultField {
 	private final String name;
 	
 	private WritePolicy writePolicy = WritePolicy.WHEN_EMPTY;
+
+	private String parsersSource;
 	
 	private final List<ExpressionParser> parsers = new ArrayList<>();
 	
@@ -45,7 +47,15 @@ public class DefaultField {
 		}
 	}
 
-	public String getName() {
+    public String getParsersSource() {
+        return this.parsersSource;
+    }
+
+    public void setParsersSource(String parsersSource) {
+        this.parsersSource = parsersSource;
+    }
+
+    public String getName() {
 		return name;
 	}
 

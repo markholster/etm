@@ -1,4 +1,4 @@
-package com.jecstar.etm.core.util;
+package com.jecstar.etm.server.core.util;
 
 
 /**

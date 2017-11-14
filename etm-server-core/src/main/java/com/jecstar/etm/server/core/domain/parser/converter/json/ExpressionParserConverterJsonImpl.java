@@ -1,19 +1,14 @@
 package com.jecstar.etm.server.core.domain.parser.converter.json;
 
-import java.util.Map;
-
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.domain.parser.*;
 import com.jecstar.etm.server.core.domain.parser.converter.ExpressionParserConverter;
 import com.jecstar.etm.server.core.domain.parser.converter.ExpressionParserTags;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
-import com.jecstar.etm.server.core.domain.parser.FixedPositionExpressionParser;
-import com.jecstar.etm.server.core.domain.parser.FixedValueExpressionParser;
-import com.jecstar.etm.server.core.domain.parser.JsonPathExpressionParser;
-import com.jecstar.etm.server.core.domain.parser.XPathExpressionParser;
-import com.jecstar.etm.server.core.domain.parser.XsltExpressionParser;
+
+import java.util.Map;
 
 public class ExpressionParserConverterJsonImpl implements ExpressionParserConverter<String> {
 
@@ -64,6 +59,8 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
 			return new XPathExpressionParser(name, this.converter.getString(this.tags.getExpressionTag(), valueMap));
 		} else if ("xslt".equals(type)) {
 			return new XsltExpressionParser(name, this.converter.getString(this.tags.getTemplateTag(), valueMap));
+		} else if ("copy_value".equals(type)) {
+			return new CopyValueExpressionParser(name);
 		}
 		if (log.isErrorLevelEnabled()) {
 			log.logErrorMessage("Unknown expression parser type: '" + type + "'.");
@@ -97,7 +94,9 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
 		} else if (expressionParser instanceof XsltExpressionParser) {
 			XsltExpressionParser parser = (XsltExpressionParser) expressionParser;
 			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "xslt", result, !added) || added;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTemplateTag(), parser.getTemplate(), result, !added) || added;									
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getTemplateTag(), parser.getTemplate(), result, !added) || added;
+		} else if (expressionParser instanceof CopyValueExpressionParser) {
+			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "copy_value", result, !added) || added;
 		} else {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Unknown expression parser type: '" + expressionParser.getClass().getName() + "'.");

@@ -1,7 +1,7 @@
 function buildParserPage() {
 	var parserMap = {};
 	$('#input-parser-type').change(function() {
-		$('#grp-fixed_position, #grp-fixed_value, #grp-jsonpath, #grp-xpath,#grp-xslt').hide();
+		$('#grp-copy_value, #grp-fixed_position, #grp-fixed_value, #grp-jsonpath, #grp-xpath, #grp-xslt').hide();
 		// Disable all input fields otherwise form validation will fail.
 		$('#grp-fixed_position input, #grp-fixed_value input, #grp-jsonpath input, #grp-xpath input ,#grp-xslt textarea').attr('disabled', 'disabled');
 		$('#grp-' +$(this).val() + ' input').removeAttr('disabled'); 
@@ -165,7 +165,8 @@ function buildParserPage() {
 			name: $('#input-parser-name').val(),
 			type: $('#input-parser-type').val()
 		}
-		if ('fixed_position' == parserData.type) {
+		if ('copy_value' == parserData.type) {
+		} else if ('fixed_position' == parserData.type) {
 			parserData['line'] = Number($('#input-fixed_position-line').val()) - 1;
 			parserData['start_ix'] = Number($('#input-fixed_position-start-ix').val()) - 1;
 			parserData['end_ix'] = Number($('#input-fixed_position-end-ix').val()) - 1;
@@ -183,10 +184,7 @@ function buildParserPage() {
 
 	function resetValues() {
 		$('#input-parser-name').val('');
-		$('#input-parser-type').val('fixed_position').change();
-		$('#input-fixed_position-line').val(1)
-		$('#input-fixed_position-start-ix').val(1);
-		$('#input-fixed_position-end-ix').val(2)
+		$('#input-parser-type').val('copy_value').change();
 		enableOrDisableButtons();
 	}
 }

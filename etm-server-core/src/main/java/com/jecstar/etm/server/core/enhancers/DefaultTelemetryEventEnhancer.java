@@ -1,24 +1,23 @@
 package com.jecstar.etm.server.core.enhancers;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
+import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
+
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	
 	private boolean enhancePayloadFormat = true;
+	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 	
 	private final List<DefaultField> fields = new ArrayList<>();
 	
@@ -170,9 +169,9 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		if (ExpressionParserField.ID.getJsonTag().equals(field.getName())) {
 			if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
 				|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && event.id == null)) {
-				event.id = parseValue(field.getParsers(), event.payload);
+				event.id = parseValue(field, event);
 			} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
-				String value = parseValue(field.getParsers(), event.payload);
+				String value = parseValue(field, event);
 				if (value != null) {
 					event.id = value;
 				}
@@ -180,9 +179,9 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		} else if (ExpressionParserField.CORRELATION_ID.getJsonTag().equals(field.getName())) {
 			if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
 					|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && event.correlationId == null)) {
-				event.correlationId = parseValue(field.getParsers(), event.payload);
+				event.correlationId = parseValue(field, event);
 			} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
-				String value = parseValue(field.getParsers(), event.payload);
+				String value = parseValue(field, event);
 				if (value != null) {
 					event.correlationId = value;
 				}
@@ -190,9 +189,9 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		} else if (ExpressionParserField.NAME.getJsonTag().equals(field.getName())) {
 			if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
 					|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && event.name == null)) {
-				event.name = parseValue(field.getParsers(), event.payload);
+				event.name = parseValue(field, event);
 			} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
-				String value = parseValue(field.getParsers(), event.payload);
+				String value = parseValue(field, event);
 				if (value != null) {
 					event.name = value;
 				}
@@ -218,7 +217,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		}
 		// Do everything to prevent the slow extraction of the field value from the data. Speed is everything...
 		if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE)) {
-			String transactionId = parseValue(field.getParsers(), event.payload);
+			String transactionId = parseValue(field, event);
 			if (transactionId != null) {
 				for (Endpoint endpoint : event.endpoints) {
 					endpoint.writingEndpointHandler.transactionId = transactionId;
@@ -227,7 +226,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		} else {
 			List<EndpointHandler> emptyEndpointHanlders = event.endpoints.stream().map(f -> f.writingEndpointHandler).filter(p -> p.transactionId == null).collect(Collectors.toList());
 			if (emptyEndpointHanlders != null && emptyEndpointHanlders.size() > 0) {
-				String transactionId = parseValue(field.getParsers(), event.payload);
+				String transactionId = parseValue(field, event);
 				for (EndpointHandler endpointHandler : emptyEndpointHanlders) {
 					if ((field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND) && transactionId != null) || endpointHandler.transactionId == null) {
 						endpointHandler.transactionId = transactionId;
@@ -243,7 +242,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		}
 		// Do everything to prevent the slow extraction of the field value from the data. Speed is everything...
 		if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE)) {
-			String transactionId = parseValue(field.getParsers(), event.payload);
+			String transactionId = parseValue(field, event);
 			if (transactionId != null) {
 				for (Endpoint endpoint : event.endpoints) {
 					for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
@@ -254,7 +253,7 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		} else {
 			List<EndpointHandler> emptyEndpointHanlders = event.endpoints.stream().flatMap(f -> f.readingEndpointHandlers.stream()).filter(p -> p.transactionId == null).collect(Collectors.toList());
 			if (emptyEndpointHanlders != null && emptyEndpointHanlders.size() > 0) {
-				String transactionId = parseValue(field.getParsers(), event.payload);
+				String transactionId = parseValue(field, event);
 				for (EndpointHandler endpointHandler : emptyEndpointHanlders) {
 					if ((field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND) && transactionId != null) || endpointHandler.transactionId == null) {
 						endpointHandler.transactionId = transactionId;
@@ -268,38 +267,56 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 		String dataKey = parserField.getCollectionKeyName(field.getName());
 		if (field.getWritePolicy().equals(WritePolicy.ALWAYS_OVERWRITE) 
 				|| (field.getWritePolicy().equals(WritePolicy.WHEN_EMPTY) && !container.containsKey(dataKey))) {
-			String value = parseValue(field.getParsers(), event.payload);
+			String value = parseValue(field, event);
 			if (value == null) {
 				container.remove(dataKey);
 			} else {
-				container.put(dataKey, parseValue(field.getParsers(), event.payload));
+				container.put(dataKey, parseValue(field, event));
 			}
 		} else if (field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND)) {
-			String value = parseValue(field.getParsers(), event.payload);
+			String value = parseValue(field, event);
 			if (value != null) {
 				container.put(dataKey, value);
 			}
 		}
 	}
 	
-	private String parseValue(List<ExpressionParser> expressionParsers, String payload) {
-		if (payload == null || expressionParsers == null) {
+	private String parseValue(DefaultField field, TelemetryEvent<?> event) {
+		if (field.getParsers().isEmpty()) {
 			return null;
 		}
-		for (ExpressionParser expressionParser : expressionParsers) {
-			String value = parseValue(expressionParser, payload);
+		String valueSource = extractValueFromEvent(field.getParsersSource(), event);
+		if (valueSource == null) {
+		    return null;
+        }
+		for (ExpressionParser expressionParser : field.getParsers()) {
+			String value = parseValue(expressionParser, valueSource);
 			if (value != null) {
 				return value;
 			}
 		}
 		return null;
     }
-	
-	private String parseValue(ExpressionParser expressionParser, String payload) {
-		if (expressionParser == null || payload == null) {
+
+	private String extractValueFromEvent(String parsersSource, TelemetryEvent<?> event) {
+		if (this.tags.getPayloadTag().equals(parsersSource)) {
+		    // Fast method for payload extraction.
+		    return event.payload;
+        } else if (parsersSource.startsWith(this.tags.getMetadataTag())) {
+            Object value = event.metadata.get(parsersSource.substring(this.tags.getMetadataTag().length() + 1));
+            if (value == null) {
+                return null;
+            }
+            return value.toString();
+        }
+        return event.payload;
+	}
+
+	private String parseValue(ExpressionParser expressionParser, String content) {
+		if (expressionParser == null || content == null) {
 			return null;
 		}
-		String value = expressionParser.evaluate(payload);
+		String value = expressionParser.evaluate(content);
 		if (value != null && value.trim().length() > 0) {
 			return value;
 		}

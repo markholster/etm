@@ -1,11 +1,10 @@
-package com.jecstar.etm.core.parsers;
-
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
+package com.jecstar.etm.server.core.domain.parsers;
 
 import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 import com.jecstar.etm.server.core.domain.parser.FixedPositionExpressionParser;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test class for the <code>FixedPositionExpressionParser</code> class.

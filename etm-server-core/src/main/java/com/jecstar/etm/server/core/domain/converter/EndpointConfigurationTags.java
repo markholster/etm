@@ -15,6 +15,8 @@ public interface EndpointConfigurationTags {
 	String getFieldTag();
 	
 	String getWritePolicyTag();
+
+	String getParsersSourceTag();
 	
 	String getParsersTag();
 
