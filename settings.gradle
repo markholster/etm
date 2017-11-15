@@ -12,5 +12,4 @@ include 'etm-domain',
         'etm-license-generator',
         'etm-distribution',
         'etm-documentation',
-        'etm-v1migrator',
-        'etm-docker' 
+        'etm-docker'

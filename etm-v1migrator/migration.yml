@@ -1,6 +1,0 @@
-inputClusterName: Enterprise Telemetry Monitor
-inputHostname: 127.0.0.1
-inputPort: 9300
-bulkSize: 10
-bulkApiLocation: http://127.0.0.1:9200/_bulk
-deleteSource: false
