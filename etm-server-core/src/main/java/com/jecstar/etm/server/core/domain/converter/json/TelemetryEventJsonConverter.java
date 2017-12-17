@@ -1,10 +1,5 @@
 package com.jecstar.etm.server.core.domain.converter.json;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.List;
-import java.util.Map;
-
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.PayloadFormat;
@@ -12,13 +7,18 @@ import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
+
 class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
 
 	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 	
-	public void convert(Map<String, Object> valueMap, Event telemetryEvent) {
+	public void convert(Map<String, Object> valueMap, Event telemetryEvent, String id) {
 		telemetryEvent.initialize();
-		telemetryEvent.id = getString(this.tags.getIdTag(), valueMap);
+		telemetryEvent.id = id;
 		telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
 		Map<String, Object> eventMap = getObject(this.tags.getCorrelationDataTag(), valueMap);
 		List<String> correlations = getArray(this.tags.getCorrelationsTag(), valueMap);

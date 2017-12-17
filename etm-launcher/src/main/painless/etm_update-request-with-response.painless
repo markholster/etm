@@ -85,6 +85,7 @@ void addDataForWriter(Map source, long handlingTime, String applicationName) {
 
 Map inputSource = (Map)params.get("source");
 Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
+String inputEventId = (String)params.get("event_id");
 
 List correlations = (List)targetSource.get("correlations");
 // Add the ID as a correlation.
@@ -92,8 +93,8 @@ if (correlations == null) {
 	correlations = new ArrayList();
 	targetSource.put("correlations", correlations);
 }
-if (!correlations.contains(inputSource.get("id"))) {
-	correlations.add(inputSource.get("id"));
+if (!correlations.contains(inputEventId)) {
+	correlations.add(inputEventId);
 }
 // Merge the response times back in the endpoints.
 List inputEndpoints = (List)inputSource.get("endpoints");

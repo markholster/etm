@@ -1,20 +1,10 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
-import java.text.NumberFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
+import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
+import com.jecstar.etm.gui.rest.services.Keyword;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -28,11 +18,14 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTimeZone;
 
-import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
-import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("/audit")
 public class AuditService extends AbstractIndexMetadataService {
@@ -80,13 +73,13 @@ public class AuditService extends AbstractIndexMetadataService {
 	}
 
 	@GET
-	@Path("/{index}/{type}/{id}")
+	@Path("/{index}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getAuditLog(@PathParam("index") String index, @PathParam("type") String type, @PathParam("id") String id) {
-		if (!index.startsWith(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX)) {
+	public String getAuditLog(@PathParam("index") String index, @PathParam("id") String id) {
+		if (!index.startsWith(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX)) {
 			return null;
 		}
-		GetResponse getResponse = client.prepareGet(index, type, id)
+		GetResponse getResponse = client.prepareGet(index, ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
 			.setFetchSource(true)
 			.get();
 		return getResponse.getSourceAsString();
@@ -126,22 +119,21 @@ public class AuditService extends AbstractIndexMetadataService {
 	}
 	
 	private SearchRequestBuilder createRequestFromInput(AuditSearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
-		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString())
-			.allowLeadingWildcard(true)
-			.analyzeWildcard(true)
-			.defaultField("_all")
-			.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+		QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString()).allowLeadingWildcard(true)
+				.analyzeWildcard(true)
+				.defaultField("_all")
+				.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
 		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 		boolQueryBuilder.must(queryStringBuilder);
 		boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
-		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL)
-			.setQuery(boolQueryBuilder)
-			.setFetchSource(true)
-			.setFrom(parameters.getStartIndex())
-			.setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())
-			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+		SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL).setQuery(boolQueryBuilder)
+				.setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+				.setFetchSource(true)
+				.setFrom(parameters.getStartIndex())
+				.setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())
+				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-			requestBuilder.addSort(getSortProperty(client, ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL, null ,parameters.getSortField()), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+			requestBuilder.addSort(getSortProperty(client, ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL, null ,parameters.getSortField()), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
 		}
 		return requestBuilder;
 	}
@@ -156,7 +148,6 @@ public class AuditService extends AbstractIndexMetadataService {
 				result.append(", {");
 			}
 			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
-			addStringElementToJsonBuffer("type", searchHit.getType() , result, false);
 			addStringElementToJsonBuffer("id", searchHit.getId() , result, false);
 			result.append(", \"source\": ").append(searchHit.getSourceAsString());
 			result.append("}");

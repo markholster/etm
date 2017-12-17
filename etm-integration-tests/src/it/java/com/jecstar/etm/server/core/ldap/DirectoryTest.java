@@ -33,7 +33,7 @@ public class DirectoryTest {
 		// Setup the connection.
 		ldapConfiguration.setHost(EmbeddableLdapServer.HOST);
 		ldapConfiguration.setPort(EmbeddableLdapServer.PORT);
-		ldapConfiguration.setConnectionSecurity(LdapConfiguration.ConnectionSecurity.STARTTLS);
+//		ldapConfiguration.setConnectionSecurity(LdapConfiguration.ConnectionSecurity.STARTTLS);
 		ldapConfiguration.setBindDn(EmbeddableLdapServer.BIND_DN);
 		ldapConfiguration.setBindPassword(EmbeddableLdapServer.BIND_PASSWORD);
 		// Setup the connection validator

@@ -1,5 +1,15 @@
 package com.jecstar.etm.launcher;
 
+import com.codahale.metrics.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jecstar.etm.launcher.MetricConverterTags.RateType;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
+import org.elasticsearch.action.support.ActiveShardCount;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.xcontent.XContentType;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Instant;
@@ -13,25 +23,6 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-
-import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.xcontent.XContentType;
-
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.Timer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jecstar.etm.launcher.MetricConverterTags.RateType;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
 
 class MetricReporterElasticImpl extends ScheduledReporter {
 	
@@ -53,7 +44,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 			.appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
 	private final MetricConverterTags tags = new MetricConverterTagsJsonImpl();
 
-	public MetricReporterElasticImpl(MetricRegistry registry, String nodeName, Client elasticClient) {
+	MetricReporterElasticImpl(MetricRegistry registry, String nodeName, Client elasticClient) {
 		super(registry, nodeName, MetricFilter.ALL, rateUnit, durationUnit);
 		this.elasticClient = elasticClient;
 		this.nodeName = nodeName;
@@ -67,6 +58,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 		Instant now = Instant.now();
 		SortedMap<String, Object> root = new TreeMap<>();
 		root.put(this.tags.getTimestampTag(), now.toEpochMilli());
+		root.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE);
 		appendNodeInfo(root);
 		if (gauges != null && !gauges.isEmpty()) {
 			addGauges(root, gauges);
@@ -86,7 +78,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 		
 		try (StringWriter sw = new StringWriter()){
 			objectMapper.writeValue(sw, root);
-	        this.elasticClient.prepareIndex(getElasticIndexName(now), this.nodeName, "" + now.toEpochMilli())
+	        this.elasticClient.prepareIndex(getElasticIndexName(now), ElasticsearchLayout.ETM_DEFAULT_TYPE)
         	.setWaitForActiveShards(ActiveShardCount.ONE)
         	.setSource(sw.toString(), XContentType.JSON).get();
 		} catch (IOException e) {
@@ -240,7 +232,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 	 * @return The name of the index.
 	 */
 	private String getElasticIndexName(Instant instant) {
-		return ElasticsearchLayout.ETM_METRICS_INDEX_PREFIX + this.dateTimeFormatter.format(instant);		
+		return ElasticsearchLayout.METRICS_INDEX_PREFIX + this.dateTimeFormatter.format(instant);
 	}
 	
 }

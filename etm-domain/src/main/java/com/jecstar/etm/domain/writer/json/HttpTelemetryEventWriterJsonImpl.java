@@ -7,7 +7,7 @@ public class HttpTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEvent
 
 	@Override
 	String getType() {
-		return TelemetryEventTags.EVENT_TYPE_HTTP;
+		return TelemetryEventTags.EVENT_OBJECT_TYPE_HTTP;
 	}
 
 	@Override

@@ -20,18 +20,26 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 	final JsonWriter jsonWriter = new JsonWriter();
 
-	@Override
-	public String write(Event event) {
-		return write(event, false);
+    @Override
+    public String write(Event event) {
+        return write(event, true,false);
+    }
+
+
+    @Override
+	public String write(Event event, boolean includeId) {
+		return write(event, includeId,false);
 	}	
 	
 	@Override
-	public String write(Event event, boolean forUpdate) {
+	public String write(Event event, boolean includeId, boolean forUpdate) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean added = this.jsonWriter.addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), sb, true);
-		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getTypeTag(), getType(), sb, !added) || added;
-		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
+		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getObjectTypeTag(), getType(), sb, !added) || added;
+		if (includeId) {
+			added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
+		}
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
 		added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
 		if (event.endpoints.size() != 0) {

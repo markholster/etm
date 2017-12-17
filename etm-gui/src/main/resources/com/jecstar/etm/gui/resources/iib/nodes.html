@@ -13,8 +13,12 @@
     <link rel="stylesheet" href="../styles/spinner.css">
     <style type="text/css">
 body { padding-top: 60px; }
-
     </style>
+    <!-- jQuery first, then Bootstrap JS. -->
+    <script src="../scripts/tether.min.js"></script>
+    <script src="../scripts/jquery.min.js"></script>
+    <script src="../scripts/popper.min.js"></script>
+    <script src="../scripts/bootstrap.min.js"></script>
 </head>
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
@@ -161,11 +165,6 @@ body { padding-top: 60px; }
     </div>
 </div>
 
-<!-- jQuery first, then Bootstrap JS. -->
-<script src="../scripts/tether.min.js"></script>
-<script src="../scripts/jquery.min.js"></script>
-<script src="../scripts/popper.min.js"></script>
-<script src="../scripts/bootstrap.min.js"></script>
 <script src="../scripts/iib-nodes.js"></script>
 <script>
     $(document).ajaxStart(function () {
@@ -190,8 +189,6 @@ body { padding-top: 60px; }
         $('html,body').animate({scrollTop: 0},'fast');
     });
   	buildNodePage();
-  	
-
 </script>
 
 </body>

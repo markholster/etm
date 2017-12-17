@@ -155,6 +155,7 @@ function buildClusterPage() {
 		$("#input-persisting-bulk-count").val(data.persisting_bulk_count);
 		$("#input-persisting-bulk-size").val(data.persisting_bulk_size);
 		$("#input-persisting-bulk-time").val(data.persisting_bulk_time);
+		$("#input-persisting-bulk-threads").val(data.persisting_bulk_threads);
 	}
 	
 	function createClusterData(context) {
@@ -178,6 +179,7 @@ function buildClusterPage() {
 			clusterData.persisting_bulk_count = Number($("#input-persisting-bulk-count").val());
 			clusterData.persisting_bulk_size = Number($("#input-persisting-bulk-size").val());
 			clusterData.persisting_bulk_time = Number($("#input-persisting-bulk-time").val());
+			clusterData.persisting_bulk_threads = Number($("#input-persisting-bulk-threads").val());
 		} else if ('Search' == context) {
 			clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
 			clusterData.max_search_template_count = Number($("#input-search-max-templates").val());

@@ -3,10 +3,10 @@ package com.jecstar.etm.processor.jms;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.handler.HandlerResults;
 import com.jecstar.etm.processor.jms.configuration.Destination;
 import com.jecstar.etm.processor.jms.handler.ClonedMessageHandler;
 import com.jecstar.etm.processor.jms.handler.EtmEventHandler;
-import com.jecstar.etm.processor.jms.handler.HandlerResult;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -55,15 +55,15 @@ public class DestinationReader implements Runnable {
                 jmsGetContext.stop();
             }
             if (message != null) {
-                HandlerResult result;
+                HandlerResults results;
                 if ("etmevent".equalsIgnoreCase(this.destination.getMessagesType())) {
-                    result = this.etmEventHandler.handleMessage(message);
+                    results = this.etmEventHandler.handleMessage(message);
                 } else if ("clone".equalsIgnoreCase(this.destination.getMessagesType())) {
-                    result = this.clonedMessageEventHandler.handleMessage(message);
+                    results = this.clonedMessageEventHandler.handleMessage(message);
                 } else {
-                    result = this.etmEventHandler.handleMessage(message);
-                    if (HandlerResult.PARSE_FAILURE.equals(result)) {
-                        result = this.clonedMessageEventHandler.handleMessage(message);
+                    results = this.etmEventHandler.handleMessage(message);
+                    if (results.hasParseFailures()) {
+                        results = this.clonedMessageEventHandler.handleMessage(message);
                     }
                 }
             }

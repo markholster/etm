@@ -7,7 +7,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 
@@ -80,11 +80,11 @@ class BucketAggregatorWrapper {
 			String order = this.jsonConverter.getString("order", this.jsonData);
 			int top = this.jsonConverter.getInteger("top", this.jsonData, 5);
 			String internalLabel = "Top " + top + " of " + this.field;
-			Terms.Order termsOrder;
+			BucketOrder termsOrder;
 			if ("term".equals(orderBy)) {
-				termsOrder = Terms.Order.term("asc".equals(order));
+                termsOrder = BucketOrder.key("asc".equals(order));
 			} else if (orderBy.startsWith("metric_")) {
-				termsOrder = Terms.Order.aggregation(orderBy, "asc".equals(order));
+				termsOrder = BucketOrder.aggregation(orderBy, "asc".equals(order));
 			} else {
 				throw new IllegalArgumentException("'" + orderBy + "' is an invalid term order.");
 			}

@@ -25,6 +25,8 @@ var tableLayout = {
         var result = '';
         if ('_type' == tableColumn.field) {
         	values.push(searchResult.type);
+        } else if ('_id' == tableColumn.field) {
+            values.push(searchResult.id);
         } else {
         	tableLayout.retrieveValuesFromSource(searchResult.source, fieldParts, values);
         }
@@ -175,10 +177,7 @@ $('#link-edit-table').click(function (event) {
                  .autocompleteFieldQuery(
                 		 {
                 		 	queryKeywords: queryKeywords, 
-                		 	mode: 'field',
-                			keywordGroupFilter: function(index, group) {
-                				return $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get().indexOf(group) == -1;
-                		    }
+                		 	mode: 'field'
                 		 }
                 )),
             $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm custom-select')

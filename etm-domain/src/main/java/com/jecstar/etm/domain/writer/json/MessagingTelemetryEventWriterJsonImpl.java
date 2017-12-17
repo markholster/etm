@@ -7,7 +7,7 @@ public class MessagingTelemetryEventWriterJsonImpl extends AbstractJsonTelemetry
 
     @Override
     String getType() {
-        return TelemetryEventTags.EVENT_TYPE_MESSAGING;
+        return TelemetryEventTags.EVENT_OBJECT_TYPE_MESSAGING;
     }
 
     @Override

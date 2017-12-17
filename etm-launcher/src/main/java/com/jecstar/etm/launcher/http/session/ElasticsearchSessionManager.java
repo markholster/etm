@@ -1,27 +1,19 @@
 package com.jecstar.etm.launcher.http.session;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Set;
-
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import io.undertow.UndertowMessages;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.session.*;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-
-import io.undertow.UndertowMessages;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.server.session.Session;
-import io.undertow.server.session.SessionConfig;
-import io.undertow.server.session.SessionIdGenerator;
-import io.undertow.server.session.SessionListener;
-import io.undertow.server.session.SessionListeners;
-import io.undertow.server.session.SessionManager;
-import io.undertow.server.session.SessionManagerStatistics;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Set;
 
 class ElasticsearchSessionManager implements SessionManager {
 
@@ -63,7 +55,10 @@ class ElasticsearchSessionManager implements SessionManager {
 		int count = 0;
 		while (sessionId == null) {
 			sessionId = createSessionId();
-			GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, hashSessionId(sessionId)).setFetchSource(false).get();
+			GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+					ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(sessionId))
+                    .setFetchSource(false)
+                    .get();
 			if (getResponse.isExists()) {
 				sessionId = null;
 			}
@@ -100,7 +95,10 @@ class ElasticsearchSessionManager implements SessionManager {
 		if (sessionId == null) {
 			return null;
 		}
-		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, hashSessionId(sessionId)).setFetchSource(true).get();
+		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+                ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(sessionId))
+                .setFetchSource(true)
+                .get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -153,7 +151,8 @@ class ElasticsearchSessionManager implements SessionManager {
 	}
 	
 	void persistSession(ElasticsearchSession session) {
-		this.client.prepareIndex(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, hashSessionId(session.getId()))
+		this.client.prepareIndex(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+                ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(session.getId()))
 			.setSource(this.converter.write(session), XContentType.JSON)
 			.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -161,7 +160,8 @@ class ElasticsearchSessionManager implements SessionManager {
 	}
 
 	void removeSession(ElasticsearchSession session) {
-		this.client.prepareDelete(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, hashSessionId(session.getId()))
+		this.client.prepareDelete(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+                ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(session.getId()))
 			.setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
 			.setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
 			.get();
@@ -172,16 +172,19 @@ class ElasticsearchSessionManager implements SessionManager {
 	}
 
 	void changeSessionId(String oldId, String newId) {
-		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, hashSessionId(oldId))
+		GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+                ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(oldId))
 			.setFetchSource(true)
 			.get();
 		if (getResponse.isExists()) {
-			this.client.prepareIndex(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, hashSessionId(newId))
+			this.client.prepareIndex(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+                    ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(newId))
 				.setSource(getResponse.getSource())
 				.setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
 				.setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
 				.get();
-			this.client.prepareDelete(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_TYPE_SESSION, hashSessionId(oldId))
+			this.client.prepareDelete(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+                    ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(oldId))
 				.setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
 				.setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
 				.get();

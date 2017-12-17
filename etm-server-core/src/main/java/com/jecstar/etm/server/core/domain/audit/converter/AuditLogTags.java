@@ -23,9 +23,5 @@ public interface AuditLogTags {
 	String getUserQueryTag();
 	String getExecutedQueryTag();
 	String getNumberOfResultsTag();
-	
-
-	
-	
-	
+    String getQueryTimeTag();
 }

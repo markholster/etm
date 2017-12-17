@@ -1,18 +1,14 @@
 package com.jecstar.etm.launcher.http.session;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+
+import java.io.*;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 public class ElasticsearchSessionConverterJsonImpl extends JsonConverter implements ElasticsearchSessionConverter<String> {
 
@@ -45,16 +41,18 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		addLongElementToJsonBuffer(this.tags.getLastAccessedTag(), session.getLastAccessedTime(), sb, true);
-		sb.append(", ").append(escapeToJson(this.tags.getAttributesTag(), true)).append(": [");
-		Set<String> attributeNames = session.getAttributeNames();
-		boolean first = true;
-		for (String name : attributeNames) {
-			if (!first) {
-				sb.append(",");
-			}
-			first = false;
-			sb.append("{");
-			addStringElementToJsonBuffer(this.tags.getAttributeKeyTag(), name, sb, true);
+        addStringElementToJsonBuffer(this.getTags().getIdTag(), session.getId(), sb, false);
+        addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, sb, false);
+        sb.append(", ").append(escapeToJson(this.tags.getAttributesTag(), true)).append(": [");
+        Set<String> attributeNames = session.getAttributeNames();
+        boolean first = true;
+        for (String name : attributeNames) {
+            if (!first) {
+                sb.append(",");
+            }
+            first = false;
+            sb.append("{");
+            addStringElementToJsonBuffer(this.tags.getAttributeKeyTag(), name, sb, true);
 			Object attribute = session.getAttribute(name);
 			if (attribute instanceof String) {
 				addStringElementToJsonBuffer(this.tags.getAttributeValueTypeTag(), String.class.getName(), sb, false);

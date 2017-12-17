@@ -8,12 +8,10 @@ function showEvent(scrollTo, type, id) {
 	$('#search-container').hide();
 	$('#event-tabs').children().slice(1).remove();
 	$('#tabcontents').children().slice(1).remove();
-	$eventTab = $('#event-tab');
-	$eventTab.empty();	
-	$eventTab.tab('show');
-	$('#event-tab-header').addClass('active').attr('area-expanded', 'true');
+	$('#event-tab').empty();
+	$('#event-tabs a:first').tab('show');
 	intialize();
-	
+
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -50,7 +48,7 @@ function showEvent(scrollTo, type, id) {
 
 	function addContent(data) {
 		$('#event-card-title').text('Event ' + data.event.id);
-		$('#event-tab-header').text(capitalize(data.event.type));
+		$('#event-tab-header').text(capitalize(data.event.type === 'doc' ? data.event.source.type : data.event.type));
 		$eventTab = $('#event-tab');
 		if (data.event.source) {
 			if (data.event.source.name) {
@@ -62,19 +60,19 @@ function showEvent(scrollTo, type, id) {
 					$('#event-tabs').children().eq(0).after(
 						$('<li>').addClass('nav-item').append(
 							$('<a>').attr('id',  'correlation-header-' + index)
-								.attr('aria-expanded', 'false')
-								.attr('role', 'tab')
 								.attr('data-toggle', 'tab')
 								.attr('href', '#' + 'correlation-' + index)
+								.attr('role', 'tab')
+								.attr('aria-controls', 'correlation-' + index)
+								.attr('aria-selected', 'false')
 								.addClass('nav-link')
 								.text('Correlating event ' + index)
 						)
 					);
 					$('#tabcontents').children().eq(0).after(
 						$('<div>').attr('id', 'correlation-' + index)
-							.attr('aria-labelledby', 'correlation-header' + index)
 							.attr('role', 'tabpanel')
-							.attr('aria-expanded', 'false')
+							.attr('aria-labelledby', 'correlation-header' + index)
 							.addClass('tab-pane fade pt-3')
 					);
 					writeEventDataToTab($('#correlation-' + index), $('#correlation-header-' + index), correlated_event, data.time_zone);
@@ -148,9 +146,9 @@ function showEvent(scrollTo, type, id) {
 			}).get();			
 			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		}
-		if ('log' === data.type) {
+		if ('log' === data.type || 'log' === data.source.type) {
 			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
-		} else if ('http' === data.type) {
+		} else if ('http' === data.type || 'http' === data.source.type) {
 			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -183,7 +181,7 @@ function showEvent(scrollTo, type, id) {
 					}					
 				}
 			}
-		} else if ('messaging' === data.type) {
+		} else if ('messaging' === data.type || 'messaging' === data.source.type) {
 			appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -218,7 +216,7 @@ function showEvent(scrollTo, type, id) {
 					$tabHeader.text('Fire-forget message');
 				}
 			}
-		} else if ('sql' === data.type) {
+		} else if ('sql' === data.type || 'sql' === data.source.type) {
 			appendToContainerInRow($eventTab, 'Sql type', data.source.sql_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -287,7 +285,7 @@ function showEvent(scrollTo, type, id) {
 	    	}
 	    	worker.postMessage([payloadCode.text(), data.source.payload_format]);
 	    }
-	    if ('log' === data.type && "undefined" != typeof data.source.stack_trace) {
+	    if (('log' === data.type || 'log' === data.source.type) && "undefined" != typeof data.source.stack_trace) {
 	    	$eventTab.append(
 	    		$('<div>').addClass('row').append(
 	    				$('<div>').addClass('col-sm-12').append(
@@ -394,10 +392,11 @@ function showEvent(scrollTo, type, id) {
 		$('#event-tabs').append(
 				$('<li>').addClass('nav-item').append(
 						$('<a>').attr('id', 'endpoint-tab-header')
-							.attr('aria-expanded', 'false')
-							.attr('role', 'tab')
 							.attr('data-toggle', 'tab')
 							.attr('href', '#endpoint-tab')
+							.attr('role', 'tab')
+							.attr('aria-controls', 'endpoint-tab')
+							.attr('aria-selected', 'false')
 							.addClass('nav-link')
 							.text('Endpoints')
 				)
@@ -477,9 +476,8 @@ function showEvent(scrollTo, type, id) {
 		var height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight) / 10;
 		$('#tabcontents').append(
 				$('<div>').attr('id', 'endpoint-tab')
-					.attr('aria-labelledby', 'endpoint-tab-header')
 					.attr('role', 'tabpanel')
-					.attr('aria-expanded', 'false')
+					.attr('aria-labelledby', 'endpoint-tab-header')
 					.addClass('tab-pane fade pt-3')
 					.append(
 							$('<div>').addClass('row').append(
@@ -760,10 +758,11 @@ function showEvent(scrollTo, type, id) {
 		$('#event-tabs').append(
 				$('<li>').addClass('nav-item').append(
 						$('<a>').attr('id', 'audit-log-tab-header')
-						.attr('aria-expanded', 'false')
-						.attr('role', 'tab')
 						.attr('data-toggle', 'tab')
 						.attr('href', '#audit-log-tab')
+						.attr('role', 'tab')
+						.attr('aria-controls', 'audit-log-tab')
+						.attr('aria-selected', 'false')
 						.addClass('nav-link')
 						.text('Audit logs')
 				)
@@ -793,9 +792,8 @@ function showEvent(scrollTo, type, id) {
 		
 		$('#tabcontents').append(
 			$('<div>').attr('id', 'audit-log-tab')
-				.attr('aria-labelledby', 'audit-log-tab-header')
 				.attr('role', 'tabpanel')
-				.attr('aria-expanded', 'false')
+				.attr('aria-labelledby', 'audit-log-tab-header')
 				.addClass('tab-pane fade pt-3')
 				.append($auditTable)
 		);
@@ -806,10 +804,11 @@ function showEvent(scrollTo, type, id) {
 		$('#event-tabs').append(
 			$('<li>').addClass('nav-item').append(
 					$('<a>').attr('id', 'event-chain-tab-header')
-						.attr('aria-expanded', 'false')
-						.attr('role', 'tab')
 						.attr('data-toggle', 'tab')
 						.attr('href', '#event-chain-tab')
+						.attr('role', 'tab')
+						.attr('aria-controls', 'event-chain-tab')
+						.attr('aria-selected', 'fals')
 						.addClass('nav-link')
 						.text('Event chain')
 			)
@@ -817,9 +816,8 @@ function showEvent(scrollTo, type, id) {
 	
 		$('#tabcontents').append(
 				$('<div>').attr('id', 'event-chain-tab')
-					.attr('aria-labelledby', 'event-chain-tab-header')
 					.attr('role', 'tabpanel')
-					.attr('aria-expanded', 'false')
+					.attr('aria-labelledby', 'event-chain-tab-header')
 					.addClass('tab-pane fade pt-3')
 					.append(
 							$('<div>').addClass('row').append(

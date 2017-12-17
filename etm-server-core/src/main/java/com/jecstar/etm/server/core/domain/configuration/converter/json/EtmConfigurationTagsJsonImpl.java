@@ -55,6 +55,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
 	}
 
 	@Override
+	public String getPersistingBulkThreadsTag() {
+		return "persisting_bulk_threads";
+	}
+
+	@Override
 	public String getShardsPerIndexTag() {
 		return "shards_per_index";
 	}

@@ -1,7 +1,19 @@
 package com.jecstar.etm.gui.search;
 
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import com.jecstar.etm.domain.*;
+import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
+import com.jecstar.etm.domain.builder.*;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
+import com.jecstar.etm.domain.writer.json.HttpTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
+import org.junit.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -9,30 +21,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-
-import com.jecstar.etm.domain.HttpTelemetryEvent;
-import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
-import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.MessagingTelemetryEvent;
-import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.PayloadFormat;
-import com.jecstar.etm.domain.SqlTelemetryEvent;
-import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
-import com.jecstar.etm.domain.builder.ApplicationBuilder;
-import com.jecstar.etm.domain.builder.EndpointBuilder;
-import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
-import com.jecstar.etm.domain.builder.HttpTelemetryEventBuilder;
-import com.jecstar.etm.domain.builder.LogTelemetryEventBuilder;
-import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
-import com.jecstar.etm.domain.builder.SqlTelemetryEventBuilder;
-import com.jecstar.etm.domain.writer.TelemetryEventWriter;
-import com.jecstar.etm.domain.writer.json.HttpTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Class testing the event overview.
@@ -205,9 +195,9 @@ public class TransactionOverviewTest extends AbstractSearchIntegrationTest {
 				.build())));
 		
 		// Now get the index page.
-		getSecurePage(this.httpHost + "/gui/search/index.html", "query-string");
-	    
-	    // Now find the event and click on it.
+		getSecurePage(this.httpHost + "/gui/search/index.html", c -> ExpectedConditions.visibilityOf(findById("query-string")), 1000);
+
+		// Now find the event and click on it.
 	    waitForSearchResult(eventId).click();
 	    // Wait for the endpoints tab to show up.
 	    waitForShow("endpoint-tab-header");

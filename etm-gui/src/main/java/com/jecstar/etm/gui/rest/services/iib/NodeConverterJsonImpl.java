@@ -1,8 +1,9 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
-import java.util.Map;
-
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+
+import java.util.Map;
 
 public class NodeConverterJsonImpl implements NodeConverter<String> {
 
@@ -28,7 +29,8 @@ public class NodeConverterJsonImpl implements NodeConverter<String> {
 	public String write(Node node) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, true);
+		boolean added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE, sb, true);
+		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), node.getHost(), sb, !added)  || added;
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), node.getPort(), sb, !added)  || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getUsernameTag(), node.getUsername(), sb, !added)  || added;

@@ -1,16 +1,16 @@
 package com.jecstar.etm.gui.settings;
 
-import static org.junit.Assert.assertEquals;
-
+import com.jecstar.etm.gui.AbstractIntegrationTest;
+import com.jecstar.etm.server.core.ldap.EmbeddableLdapServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 
-import com.jecstar.etm.gui.AbstractIntegrationTest;
-import com.jecstar.etm.server.core.ldap.EmbeddableLdapServer;
+import static org.junit.Assert.assertEquals;
 
 public class LdapTest extends AbstractIntegrationTest {
 
@@ -31,7 +31,8 @@ public class LdapTest extends AbstractIntegrationTest {
 	
 	@Test
 	public void testSetupAndUseLdap() {
-		getSecurePage(this.httpHost + "/gui/settings/cluster.html", "ldap-tab-header");
+	    // remove user and group if already present.
+		getSecurePage(this.httpHost + "/gui/settings/cluster.html", c -> ExpectedConditions.visibilityOf(findById("ldap-tab-header")), 1000);
 		
 		// Select the Ldap tab.
 		findById("ldap-tab-header").click();
@@ -64,21 +65,22 @@ public class LdapTest extends AbstractIntegrationTest {
 		findById("btn-save-ldap").click();
 		
 		// Ldap configuration saved. Now import some users and groups.
-		this.driver.navigate().to(this.httpHost + "/gui/settings/users.html");
+        getSecurePage(this.httpHost + "/gui/settings/users.html", null, 1000);
 		
 		Select userSelect = new Select(findById("sel-user"));
 		if (userSelect.getOptions().stream().anyMatch(p -> EmbeddableLdapServer.ADMIN_USER_ID.equals(p.getAttribute("value")))) {
 			// The user is imported... remove it otherwise we cannot test the import.
 			userSelect.selectByValue(EmbeddableLdapServer.ADMIN_USER_ID);
 			findById("btn-confirm-remove-user").click();
-			waitForShow("modal-user-remove");
+			waitForShow("modal-user-remove", false);
 			findById("btn-remove-user").click();
 			waitForHide("modal-user-remove");
 		}
-		
+
 		// Now we are going to import the user from ldap.
-		findById("btn-confirm-import-user").click();
-		waitForShow("modal-user-import");
+        waitFor(ExpectedConditions.elementToBeClickable(By.id("btn-confirm-import-user")));
+        findById("btn-confirm-import-user").click();
+		waitForShow("modal-user-import", false);
 		// Set the user name
 		findById("input-import-user-id").sendKeys(EmbeddableLdapServer.ADMIN_USER_ID);
 		// And import the user
@@ -88,32 +90,39 @@ public class LdapTest extends AbstractIntegrationTest {
 		assertEquals(EmbeddableLdapServer.ADMIN_USER_ID,  findById("input-user-id").getAttribute("value"));
 		
 		// The user is imported, now import the group
-		this.driver.navigate().to(this.httpHost + "/gui/settings/groups.html");
+        getSecurePage(this.httpHost + "/gui/settings/groups.html", null, 1000);
 		Select groupSelect = new Select(findById("sel-group"));
 		if (groupSelect.getOptions().stream().anyMatch(p -> EmbeddableLdapServer.ADMIN_GROUP_DN.equals(p.getAttribute("value")))) {
 			// The group is imported... remove it otherwise we cannot test the import.
 			groupSelect.selectByValue(EmbeddableLdapServer.ADMIN_GROUP_DN);
 			findById("btn-confirm-remove-group").click();
-			waitForShow("modal-group-remove");
+			waitForShow("modal-group-remove", false);
 			findById("btn-remove-group").click();
 			waitForHide("modal-group-remove");
 		}
 		
 		// Now we are going to import the group from ldap.
-		findById("btn-confirm-import-group").click();
-		waitForShow("modal-group-import");
+        waitFor(ExpectedConditions.elementToBeClickable(By.id("btn-confirm-import-group")));
+        findById("btn-confirm-import-group").click();
+		waitForShow("modal-group-import", false);
 		findById("sel-import-group").sendKeys(EmbeddableLdapServer.ADMIN_GROUP_DN);
 		findById("btn-import-group").click();
 		waitForHide("modal-group-import");
 		// Make sure the group is imported
 		assertEquals(EmbeddableLdapServer.ADMIN_GROUP_DN,  findById("input-group-name").getAttribute("value"));
-		
-		// Assign the admin role to the group
-		findById("check-role-admin").click();
 
-		// Now save the group
+        // Assign the admin role to the group
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        findById("check-role-admin").findElement(By.xpath("following-sibling::span[@class='custom-control-indicator']")).click();
+
+
+        // Now save the group
 		findById("btn-confirm-save-group").click();
-		waitForShow("modal-group-overwrite");
+		waitForShow("modal-group-overwrite", false);
 		findById("btn-save-group").click();
 		waitForHide("modal-group-overwrite");
 		
@@ -130,7 +139,7 @@ public class LdapTest extends AbstractIntegrationTest {
 		if (removeLdapButton.isEnabled()) {
 			removeLdapButton.click();
 			// Wait for the confirm removal popup to show.
-			waitForShow("modal-ldap-remove");
+			waitForShow("modal-ldap-remove", false);
 			// Remove the ldap configuration.
 			findById("btn-remove-ldap").click();
 			// wait until the modal is hidden

@@ -249,7 +249,7 @@ function loadDashboardPage() {
 	
 	$('#dashboard-container').on("click", "a[data-link-action='edit-graph']", function(event) {
     	event.preventDefault();
-    	editGraph($(this).parent().parent().parent().attr('data-col-id'));
+    	editGraph($(this).parent().parent().parent().parent().attr('data-col-id'));
 	});
 	
 	$('#btn-apply-graph-settings').click(function (event) {

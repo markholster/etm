@@ -1,22 +1,16 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
+import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
+import com.ibm.broker.config.proxy.ConfigurableService;
+import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.IIBApi;
+import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.gui.rest.services.iib.proxy.*;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
@@ -25,23 +19,11 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
-import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
-import com.ibm.broker.config.proxy.ConfigurableService;
-import com.jecstar.etm.gui.rest.AbstractJsonService;
-import com.jecstar.etm.gui.rest.IIBApi;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBApplication;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBIntegrationServer;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBLibrary;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBMessageFlow;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNode;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBNodeConnection;
-import com.jecstar.etm.gui.rest.services.iib.proxy.IIBSubFlow;
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 @Path("/iib")
 public class IIBService extends AbstractJsonService {
@@ -69,8 +51,8 @@ public class IIBService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getNodes() {
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
-				.setTypes(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE).setFetchSource(true)
-				.setQuery(QueryBuilders.matchAllQuery())
+				.setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE).setFetchSource(true)
+				.setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
 		ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
 		if (!scrollableSearch.hasNext()) {
@@ -95,7 +77,7 @@ public class IIBService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String deleteNode(@PathParam("nodeName") String nodeName) {
 		client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName)
+				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())).get();
 		return "{\"status\":\"success\"}";
@@ -110,7 +92,8 @@ public class IIBService extends AbstractJsonService {
 			nodeConnection.connect();
 		}
 		client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setDoc(this.nodeConverter.write(node), XContentType.JSON)
+				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+				.setDoc(this.nodeConverter.write(node), XContentType.JSON)
 				.setDocAsUpsert(true).setDetectNoop(true).setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount()).get();
@@ -122,7 +105,8 @@ public class IIBService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getServers(@PathParam("nodeName") String nodeName) {
 		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
+				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+				.setFetchSource(true).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -151,7 +135,8 @@ public class IIBService extends AbstractJsonService {
 	public String updateEventMonitoring(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName, @PathParam("objectType") String objectType, String json) {
 		Map<String, Object> valueMap = toMap(json);
 		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
+				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+                .setFetchSource(true).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}
@@ -206,7 +191,8 @@ public class IIBService extends AbstractJsonService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getServerDeployments(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName) {
 		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_IIB_NODE, nodeName).setFetchSource(true).get();
+				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+                .setFetchSource(true).get();
 		if (!getResponse.isExists()) {
 			return null;
 		}

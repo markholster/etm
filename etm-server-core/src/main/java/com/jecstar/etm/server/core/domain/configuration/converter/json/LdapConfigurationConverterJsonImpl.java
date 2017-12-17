@@ -1,12 +1,13 @@
 package com.jecstar.etm.server.core.domain.configuration.converter.json;
 
-import java.util.Map;
-
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration.ConnectionSecurity;
 import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationTags;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+
+import java.util.Map;
 
 public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConverter<String> {
 
@@ -51,8 +52,9 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
 	public String write(LdapConfiguration ldapConfiguration) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), ldapConfiguration.getHost(), sb, true);
-		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), ldapConfiguration.getPort(), sb, !added) || added;
+        boolean added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP, sb, true);
+        added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), ldapConfiguration.getHost(), sb, !added) || added;
+        added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), ldapConfiguration.getPort(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getConnectionSecurityTag(), ldapConfiguration.getConnectionSecurity() != null ? ldapConfiguration.getConnectionSecurity().name() : null, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getBindDnTag(), ldapConfiguration.getBindDn(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getBindPasswordTag(), this.converter.encodeBase64(ldapConfiguration.getBindPassword(), 7), sb, !added) || added;

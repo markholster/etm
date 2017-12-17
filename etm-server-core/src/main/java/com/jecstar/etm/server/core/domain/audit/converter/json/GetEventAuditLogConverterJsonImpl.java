@@ -1,11 +1,12 @@
 package com.jecstar.etm.server.core.domain.audit.converter.json;
 
+import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
 
 public class GetEventAuditLogConverterJsonImpl extends AbstractAuditLogConverterJsonImpl<GetEventAuditLog>  implements AuditLogConverter<String, GetEventAuditLog>{
 
@@ -30,7 +31,7 @@ public class GetEventAuditLogConverterJsonImpl extends AbstractAuditLogConverter
 	public String write(GetEventAuditLog audit) {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{");
-		boolean added = write(buffer, audit, true);
+		boolean added = write(buffer, audit, true, ElasticsearchLayout.AUDIT_LOG_OBJECT_TYPE_GET_EVENT);
 		added = addStringElementToJsonBuffer(getTags().getEventIdTag(), audit.eventId, buffer, !added) || added;
 		added = addStringElementToJsonBuffer(getTags().getEventTypeTag(), audit.eventType, buffer, !added) || added;
 		added = addStringElementToJsonBuffer(getTags().getEventNameTag(), audit.eventName, buffer, !added) || added;

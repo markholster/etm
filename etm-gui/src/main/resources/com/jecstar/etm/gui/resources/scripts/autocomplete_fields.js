@@ -3,7 +3,7 @@
 	$.fn.autocompleteFieldQuery = function(options) {
 	 
 	    var queryOperators = ['AND', 'AND NOT', 'OR'];
-	    var queryForFields = ['_exists_', '_type'];
+	    var queryForFields = ['_exists_'];
 		
         var settings = $.extend({
             keywordIndexFilter: function(index) {

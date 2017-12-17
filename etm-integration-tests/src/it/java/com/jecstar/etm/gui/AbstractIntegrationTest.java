@@ -27,10 +27,10 @@ public abstract class AbstractIntegrationTest {
 //		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 //		this.driver = new ChromeDriver();
 
-		System.setProperty("webdriver.gecko.driver", new File("./drivers/geckodriver-v0.19.0-linux64").getAbsolutePath());
+		System.setProperty("webdriver.gecko.driver", new File("./drivers/geckodriver-v0.19.1-linux64").getAbsolutePath());
 		this.driver = new FirefoxDriver();
 	}
-	
+
 	@After
 	public void tearDown() {
 		if (this.driver != null) {
@@ -39,23 +39,44 @@ public abstract class AbstractIntegrationTest {
 		}
 	}
 	
-	protected void getSecurePage(String url, String idOfElementToWaitFor) {
-	    this.driver.navigate().to(url);
-	    try {
-		    this.driver.findElement(By.id("j_username")).sendKeys("admin");     
-		    this.driver.findElement(By.id("j_password")).sendKeys("password");     
-		    this.driver.findElement(By.className("btn")).submit();
-		    waitForShow(idOfElementToWaitFor);
-	    } catch (NoSuchElementException e) {}
+	protected void getSecurePage(String url, ExpectedCondition<?> condition) {
+	    getSecurePage(url, condition, -1);
 	}
+
+    protected void getSecurePage(String url, ExpectedCondition<?> condition, int waitAfterPageLoad) {
+        this.driver.navigate().to(url);
+        try {
+            this.driver.findElement(By.id("j_username")).sendKeys("admin");
+            this.driver.findElement(By.id("j_password")).sendKeys("password");
+            this.driver.findElement(By.className("btn")).submit();
+            if (condition != null) {
+                waitFor(condition);
+            }
+        } catch (NoSuchElementException e) {}
+        if (waitAfterPageLoad >=0) {
+            try {
+                Thread.sleep(waitAfterPageLoad);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
 	
 	protected void waitFor(ExpectedCondition<?> condition) {
 	    new WebDriverWait(this.driver, 10).until(condition);
 	}
 	
 	protected void waitForShow(String elementId) {
-		waitFor(ExpectedConditions.visibilityOfElementLocated(By.id(elementId)));
+		waitForShow(elementId, true);
 	}
+
+    protected void waitForShow(String elementId, boolean ignoreOpacity) {
+        waitFor(ExpectedConditions.visibilityOfElementLocated(By.id(elementId)));
+        if (!ignoreOpacity) {
+            waitFor(c -> c.findElement(By.id(elementId)).getCssValue("opacity").equals("1"));
+        }
+    }
+
 	
 	protected void waitForHide(String elementId) {
 		waitFor(ExpectedConditions.invisibilityOfElementLocated(By.id(elementId)));
@@ -64,6 +85,12 @@ public abstract class AbstractIntegrationTest {
 	protected WebElement findById(String id) {
 		return this.driver.findElement(By.id(id));
 	}
+
+	protected void setTextToElement(WebElement element, String text) {
+	    element.clear();
+	    element.sendKeys(text);
+	    waitFor(ExpectedConditions.attributeContains(element, "value", text));
+    }
 	
 	protected boolean sendEventToEtm(String type, String data) throws IOException {
 		HttpURLConnection con = null;

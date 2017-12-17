@@ -1,27 +1,25 @@
 package com.jecstar.etm.launcher.http;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-
+import com.jecstar.etm.server.core.domain.audit.LogoutAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builder.LogoutAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.audit.converter.json.LogoutAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.util.DateUtils;
+import io.undertow.security.api.AuthenticatedSessionManager.AuthenticatedSession;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.server.session.Session;
+import io.undertow.server.session.SessionListener;
+import io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.audit.LogoutAuditLog;
-import com.jecstar.etm.server.core.domain.audit.builder.LogoutAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.audit.converter.json.LogoutAuditLogConverterJsonImpl;
-import com.jecstar.etm.server.core.util.DateUtils;
-
-import io.undertow.security.api.AuthenticatedSessionManager.AuthenticatedSession;
-import io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.server.session.Session;
-import io.undertow.server.session.SessionListener;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 class SessionListenerAuditLogger implements SessionListener {
 
@@ -40,8 +38,8 @@ class SessionListenerAuditLogger implements SessionListener {
 		ZonedDateTime now = ZonedDateTime.now();
 		LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
 				.setPrincipalId(id).setExpired(expired);
-		client.prepareIndex(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
-				ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_TYPE_LOGOUT)
+		client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
+				ElasticsearchLayout.ETM_DEFAULT_TYPE)
 				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 				.setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON).execute();

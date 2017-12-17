@@ -1,8 +1,26 @@
 == Changelog & upgrade
 
-=== Version 2.5.0
+=== Version 3.0.0
+* Migration to Elasticsearch 6.1.x.
+* Support for Java 9.
 * Parsers can use metadata as source for parsing.
 * Added a ''Copy value'' parser.
+* Make the number of update threads to Elasticsearch configurable.
+* Support for bulk events in JMS & MQ processor.
+
+==== Upgrade from version 2.4.0 to 3.0.0
+. Make sure you have a backup of all Elasticsearch data!
+. Download and uncompress Elasticsearch 5.6.x to a new directory.
+. Stop all {etm} nodes.
+. Stop your current Elasticsearch nodes.
+. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
+. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
+. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
+. Dowload and uncompress {etm} 3.0.0 to a new directory.
+. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
+. Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
+. Start a single {etm} node and wait for the data migration to complete.
+. Start all other {etm} nodes.
 
 === Version 2.4.0
 * Fixed Terms and Significant Terms autocompletion fields in Graphs page.

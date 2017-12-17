@@ -1,18 +1,18 @@
 package com.jecstar.etm.launcher.background;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.SortedMap;
-
-import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.metadata.AliasOrIndex;
-
+import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.metadata.AliasOrIndex;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedMap;
 
 public class IndexCleaner implements Runnable {
 	
@@ -32,15 +32,16 @@ public class IndexCleaner implements Runnable {
 	@Override
 	public void run() {
 		try {
-			cleanupIndex(ElasticsearchLayout.ETM_EVENT_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxEventIndexCount());
+			cleanupIndex(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxEventIndexCount());
 			if (Thread.currentThread().isInterrupted()) {
 				return;
 			}
-			cleanupIndex(ElasticsearchLayout.ETM_METRICS_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxMetricsIndexCount());
+			cleanupIndex(ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxMetricsIndexCount());
 			if (Thread.currentThread().isInterrupted()) {
 				return;
 			}
-			cleanupIndex(ElasticsearchLayout.ETM_AUDIT_LOG_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxAuditLogIndexCount());
+			cleanupIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxAuditLogIndexCount());
+            new MultiTypeDetector().detect(this.client);
 		} catch (Exception e) {
 			if (log.isErrorLevelEnabled()) {
 				log.logErrorMessage("Failed to clean indices", e);

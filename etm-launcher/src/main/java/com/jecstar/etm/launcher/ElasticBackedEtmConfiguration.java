@@ -1,10 +1,14 @@
 package com.jecstar.etm.launcher;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-
+import com.jecstar.etm.server.core.domain.configuration.*;
+import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.ldap.Directory;
+import com.jecstar.etm.server.core.util.DateUtils;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -12,17 +16,8 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
-import com.jecstar.etm.server.core.domain.configuration.License;
-import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
-import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
-import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
-import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.ldap.Directory;
-import com.jecstar.etm.server.core.util.DateUtils;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	
@@ -88,6 +83,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	public int getPersistingBulkTime() {
 		reloadConfigurationWhenNecessary();
 		return super.getPersistingBulkTime();
+	}
+
+	@Override
+	public int getPersistingBulkThreads() {
+		reloadConfigurationWhenNecessary();
+		return super.getPersistingBulkThreads();
 	}
 	
 	@Override
@@ -218,7 +219,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 			return false;
 		}
 		
-		String indexNameOfToday = ElasticsearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+		String indexNameOfToday = ElasticsearchLayout.EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
 		this.elasticClient.admin().indices().prepareStats(indexNameOfToday)
 				.clear()
 				.setStore(true)
@@ -244,10 +245,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 				public void onFailure(Exception e) {
 				}
 			});
-		ListenableActionFuture<GetResponse> licenseExecute = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID).execute();
-		ListenableActionFuture<GetResponse> ldapExecute = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_LDAP, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_LDAP_DEFAULT).execute();
-		GetResponse defaultResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT).get();
-		GetResponse nodeResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE, getNodeName()).get();
+		ActionFuture<GetResponse> licenseExecute = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT).execute();
+		ActionFuture<GetResponse> ldapExecute = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT).execute();
+		GetResponse defaultResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT).get();
+		GetResponse nodeResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()).get();
 
 		String defaultContent = defaultResponse.getSourceAsString();
 		String nodeContent = null;

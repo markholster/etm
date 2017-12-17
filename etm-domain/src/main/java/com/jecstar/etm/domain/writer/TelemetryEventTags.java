@@ -2,15 +2,15 @@ package com.jecstar.etm.domain.writer;
 
 public interface TelemetryEventTags {
 
-    public static final String EVENT_TYPE_BUSINESS = "business";
-    public static final String EVENT_TYPE_HTTP = "http";
-    public static final String EVENT_TYPE_LOG = "log";
-    public static final String EVENT_TYPE_MESSAGING = "messaging";
-    public static final String EVENT_TYPE_SQL = "sql";
+    String EVENT_OBJECT_TYPE_BUSINESS = "business";
+    String EVENT_OBJECT_TYPE_HTTP = "http";
+    String EVENT_OBJECT_TYPE_LOG = "log";
+    String EVENT_OBJECT_TYPE_MESSAGING = "messaging";
+    String EVENT_OBJECT_TYPE_SQL = "sql";
 
 	// TelemetryEvent attributes.
 	String getTimestampTag();
-	String getTypeTag();
+	String getObjectTypeTag();
 	String getIdTag();
 	String getCorrelationIdTag();
 	String getCorrelationDataTag();
@@ -22,7 +22,6 @@ public interface TelemetryEventTags {
 	String getPayloadTag();
 	String getPayloadFormatTag();
 	String getPayloadLengthTag();
-	String getTransportTag();
 	String getReadingEndpointHandlerTag();
 	String getReadingEndpointHandlersTag();
 	String getWritingEndpointHandlerTag();

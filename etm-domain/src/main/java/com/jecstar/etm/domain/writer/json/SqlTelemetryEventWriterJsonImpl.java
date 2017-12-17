@@ -7,7 +7,7 @@ public class SqlTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventW
 
     @Override
     String getType() {
-        return TelemetryEventTags.EVENT_TYPE_SQL;
+        return TelemetryEventTags.EVENT_OBJECT_TYPE_SQL;
     }
 
     @Override

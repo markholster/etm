@@ -15,6 +15,7 @@ public interface EtmConfigurationTags {
 	String getPersistingBulkCountTag();
 	String getPersistingBulkSizeTag();
 	String getPersistingBulkTimeTag();
+	String getPersistingBulkThreadsTag();
 
 	String getShardsPerIndexTag();
 	String getReplicasPerIndexTag();

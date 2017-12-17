@@ -1,6 +1,7 @@
 package com.jecstar.etm.server.core.domain.parser.converter.json;
 
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.parser.*;
 import com.jecstar.etm.server.core.domain.parser.converter.ExpressionParserConverter;
@@ -73,6 +74,7 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), expressionParser.getName(), result, true);
+        added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, result, !added) || added;
 		if (expressionParser instanceof FixedPositionExpressionParser) {
 			FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
 			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_position", result, !added) || added;

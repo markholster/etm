@@ -1,11 +1,11 @@
 package com.jecstar.etm.gui.search;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Class testing the search functionality of ETM.
@@ -21,8 +21,8 @@ public class QueryTest extends AbstractSearchIntegrationTest {
 		final String newColumnName = "New column";
 		final String newColumnField = "log_level";
 		
-		getSecurePage(this.httpHost + "/gui/search/index.html", "query-string");
-		
+		getSecurePage(this.httpHost + "/gui/search/index.html", null, 1000);
+
 		// Only search for log events.
 	    findById("check-type-business").click();
 	    findById("check-type-http").click();

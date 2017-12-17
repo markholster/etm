@@ -1,13 +1,5 @@
 package com.jecstar.etm.launcher.background;
 
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
@@ -15,6 +7,13 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.support.ActiveShardCount;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 
 public class HttpSessionCleaner implements Runnable {
 
@@ -40,10 +39,14 @@ public class HttpSessionCleaner implements Runnable {
 		}		
 		try {
 			// Not using a delete by query because it isn't able to delete in a certain type (by the Java api) and cannot delete documents with version equals to zero.
-			SearchRequestBuilder searchRequestBuilder = this.client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME).setTypes(ElasticsearchLayout.STATE_INDEX_TYPE_SESSION)
+			SearchRequestBuilder searchRequestBuilder = this.client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME).setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
 				.setFetchSource(false)
 				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.setQuery(QueryBuilders.rangeQuery(this.tags.getLastAccessedTag()).lt(System.currentTimeMillis() - this.etmConfiguration.getSessionTimeout()).from(0L));
+				.setQuery(
+				        QueryBuilders.boolQuery().must(
+				            QueryBuilders.rangeQuery(this.tags.getLastAccessedTag()).lt(System.currentTimeMillis() - this.etmConfiguration.getSessionTimeout()).from(0L)
+                        ).filter(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION))
+                );
 			ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
 			if (!scrollableSearch.hasNext()) {
 				return;

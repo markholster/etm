@@ -1,11 +1,9 @@
 package com.jecstar.etm.gui.search;
 
+import com.jecstar.etm.gui.AbstractIntegrationTest;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
-
-import com.jecstar.etm.gui.AbstractIntegrationTest;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 abstract class AbstractSearchIntegrationTest extends AbstractIntegrationTest {
 
@@ -19,10 +17,8 @@ abstract class AbstractSearchIntegrationTest extends AbstractIntegrationTest {
 	 * @return 
 	 */
     WebElement waitForSearchResult(String eventId) {
-		this.driver.findElement(By.id("query-string")).clear();
-		this.driver.findElement(By.id("query-string")).sendKeys("id: " + eventId);
-		waitFor(ExpectedConditions.elementToBeClickable(By.id(eventId)));
-		this.driver.findElement(By.id("btn-search")).click();
+    	setTextToElement(findById("query-string"),"_id: " + eventId);
+        this.driver.findElement(By.id("btn-search")).click();
 		long startTime = System.currentTimeMillis();
 		while (System.currentTimeMillis() - startTime < 10000) {
 			try {

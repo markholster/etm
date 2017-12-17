@@ -1,12 +1,11 @@
 package com.jecstar.etm.processor.elastic;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.Timer.Context;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -16,12 +15,12 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.codahale.metrics.Timer.Context;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 class BulkProcessorListener implements BulkProcessor.Listener {
 	
@@ -82,7 +81,11 @@ class BulkProcessorListener implements BulkProcessor.Listener {
 	}
 
 	private boolean isBlacklisted(DocWriteRequest<?> action) {
-		return this.blacklistedIds.containsKey(getEventId(action));
+		String id = getEventId(action);
+		if (id == null) {
+			return false;
+		}
+		return this.blacklistedIds.containsKey(id);
 	}
 	
 	private String getEventId(DocWriteRequest<?> action) {

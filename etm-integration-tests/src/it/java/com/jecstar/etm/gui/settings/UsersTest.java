@@ -1,25 +1,22 @@
 package com.jecstar.etm.gui.settings;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
+import com.jecstar.etm.gui.AbstractIntegrationTest;
+import com.jecstar.etm.server.core.EtmException;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 
-import com.jecstar.etm.gui.AbstractIntegrationTest;
-import com.jecstar.etm.server.core.EtmException;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class UsersTest extends AbstractIntegrationTest {
 	
 	@Test
 	public void testRemoveLatestAdminAccount() {
-		getSecurePage(this.httpHost + "/gui/settings/users.html", "input-user-id");
+		getSecurePage(this.httpHost + "/gui/settings/users.html", c -> ExpectedConditions.visibilityOf(findById("input-user-id")), 1000);
 		
 		Select userSelect = new Select(findById("sel-user"));
 		// Remove all users except the admin
@@ -33,7 +30,7 @@ public class UsersTest extends AbstractIntegrationTest {
 				userSelect.selectByValue(user.getAttribute("value"));
 				waitFor(ExpectedConditions.elementToBeClickable(By.id("btn-confirm-remove-user")));
 				findById("btn-confirm-remove-user").click();
-				waitForShow("modal-user-remove");
+				waitForShow("modal-user-remove", false);
 				findById("btn-remove-user").click();
 				waitForHide("modal-user-remove");
 			}
@@ -53,7 +50,7 @@ public class UsersTest extends AbstractIntegrationTest {
 		// Try to save the user, this should not work because we lose all admins.
 		findById("btn-confirm-save-user").click();
 		// Wait for the confirmation button to show up
-		waitForShow("modal-user-overwrite");
+		waitForShow("modal-user-overwrite", false);
 		findById("btn-save-user").click();
 		waitForHide("modal-user-overwrite");
 		
@@ -68,7 +65,7 @@ public class UsersTest extends AbstractIntegrationTest {
 		// Now try to remove the user
 		findById("btn-confirm-remove-user").click();
 		// Wait for the confirmation button to show up
-		waitForShow("modal-user-remove");
+		waitForShow("modal-user-remove", false);
 		findById("btn-remove-user").click();
 		waitForHide("modal-user-remove");
 		

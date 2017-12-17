@@ -131,8 +131,7 @@ if (targetSource.get("payload") == null &&
 // Merge several fields
 if (!correlatedBeforeInserted) {
 	for (String field : inputSource.keySet()) {
-		if (!"id".equals(field) 
-		    && !"endpoints".equals(field)
+		if (!"endpoints".equals(field)
 		    && !"event_hashes".equals(field)
 		   ) {
 				mergeEntity(targetSource, inputSource, field);		

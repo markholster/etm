@@ -11,7 +11,10 @@ import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
@@ -23,7 +26,6 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	
 	@Override
 	public void enhance(TelemetryEvent<?> event, ZonedDateTime enhanceTime) {
-		enchanceId(event);
 		enchancePayloadFormat(event);
 		enchanceWritingHandlerTimes(event, enhanceTime);
 		enhanceFields(event);
@@ -75,18 +77,6 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 				this.fields.add(field);
 			}
 		}
-	}
-	
-	private void enchanceId(final TelemetryEvent<?> event) {
-		Optional<DefaultField> optional =  this.fields.stream().filter(p -> p.getName().equals(ExpressionParserField.ID.getJsonTag())).findFirst();
-		// Check if the id needs to be set by a parsers.
-		if (optional.isPresent()) {
-			conditionallySetValue(event, optional.get());
-		}
-		if (event.id != null) {
-			return;
-		}
-		event.id = UUID.randomUUID().toString();
 	}
 	
 	private void enchancePayloadFormat(final TelemetryEvent<?> event) {

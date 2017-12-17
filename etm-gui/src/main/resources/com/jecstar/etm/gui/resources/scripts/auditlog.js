@@ -64,7 +64,7 @@ function buildAuditLogPage() {
    
    $('#result_card').on('click', '#search_result_table tbody a', function(event) {
 	   event.preventDefault();
-       showEvent($(window).scrollTop(), $(this).attr('data-event-index'), $(this).attr('data-event-type'), $(this).attr('id'), $(this).parent().parent().parent().attr('data-user-timezone'));
+       showEvent($(window).scrollTop(), $(this).attr('data-event-index'), $(this).attr('id'), $(this).parent().parent().parent().attr('data-user-timezone'));
        $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
   	   $(event.target).parent().parent().addClass('event-selected');
    });
@@ -160,7 +160,7 @@ function buildAuditLogPage() {
                             	$('<thead>').append(
                             		$('<tr>').append(
                             			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Hanlding time').attr('data-event-field', 'handling_time').addClass(getHeaderClass('handling_time')),
-                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Type').attr('data-event-field', '_type').addClass(getHeaderClass('_type')),
+                            			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Type').attr('data-event-field', 'object_type').addClass(getHeaderClass('object_type')),
                             			$('<th style="padding: 0.1rem; cursor: pointer;">').text('Principal id').attr('data-event-field', 'principal_id').addClass(getHeaderClass('principal_id'))
                             		)
                             	)
@@ -205,11 +205,10 @@ function buildAuditLogPage() {
 	            $('<a>')
 	            	.attr('href', '#')
 	            	.attr('id', auditLog.id)
-	            	.attr('data-event-type', auditLog.type)
 	            	.attr('data-event-index', auditLog.index)
 	            	.text(moment.tz(auditLog.source.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'))
         	),
-        	$('<td style="padding: 0.1rem">').text(auditLog.type),
+        	$('<td style="padding: 0.1rem">').text(auditLog.source.object_type),
         	$('<td style="padding: 0.1rem">').text(auditLog.source.principal_id)
         );
         return $tr;
@@ -243,25 +242,25 @@ function buildAuditLogPage() {
         }
     }
     
-    function showEvent(scrollTo, index, type, id, timeZone) {
+    function showEvent(scrollTo, index, id, timeZone) {
     	$('#search-container').hide();
     	$('#btn-back-to-results, #link-back-to-results').attr('data-scroll-to', scrollTo);
     	$('#event-detail').empty();
     	$.ajax({
             type: 'GET',
             contentType: 'application/json',
-            url: '../rest/audit/' + encodeURIComponent(index) + '/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
+            url: '../rest/audit/' + encodeURIComponent(index) + '/' + encodeURIComponent(id),
             success: function(data) {
                 if (!data) {
                     return;
                 }
-                if ('login' === type) {
+                if ('login' === data.object_type) {
                 	showLoginAuditLog(data, timeZone);
-                } else if ('logout' === type) {
+                } else if ('logout' === data.object_type) {
                 	showLogoutAuditLog(data, timeZone);
-                } else if ('getevent' === type) {
+                } else if ('getevent' === data.object_type) {
                     showGetEventAuditLog(data, timeZone);
-                } else if ('search' === type) {
+                } else if ('search' === data.object_type) {
                 	showSearchAuditLog(data, timeZone);
                 }
             }
@@ -332,6 +331,7 @@ function buildAuditLogPage() {
     	appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
     	appendToContainerInRow($('#event-detail'), 'Number of results', data.number_of_results);
     	appendToContainerInRow($('#event-detail'), 'Query', data.user_query);
+    	appendToContainerInRow($('#event-detail'), 'Query time', data.query_time);
     
     	$('#event-detail').append($('<br/>'));
     	$('#event-detail').append($('<label>').addClass('font-weight-bold form-control-static').text('Executed query on database'));

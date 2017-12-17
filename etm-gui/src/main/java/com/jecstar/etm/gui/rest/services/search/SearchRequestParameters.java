@@ -39,11 +39,11 @@ class SearchRequestParameters {
 		this.sortField = tags.getEndpointsTag() + "." + tags.getWritingEndpointHandlerTag() + "." + tags.getEndpointHandlerHandlingTimeTag();
 		this.sortOrder = "desc";
 		this.types = new ArrayList<>(5);
-		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_BUSINESS);
-		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_HTTP);
-		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_LOG);
-		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING);
-		this.types.add(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_SQL);
+		this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_BUSINESS);
+		this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_HTTP);
+		this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_LOG);
+		this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_MESSAGING);
+		this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_SQL);
 		this.fields = new ArrayList<>(2);
 		this.fields.add(tags.getEndpointsTag() + "." + tags.getWritingEndpointHandlerTag() + "." + tags.getEndpointHandlerHandlingTimeTag());
 		this.fields.add(tags.getNameTag());

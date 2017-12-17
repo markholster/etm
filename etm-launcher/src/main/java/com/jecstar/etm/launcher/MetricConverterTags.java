@@ -4,15 +4,13 @@ import java.util.concurrent.TimeUnit;
 
 public interface MetricConverterTags {
 	
-	enum RateType {EVENTS, CALLS};
+	enum RateType {EVENTS, CALLS}
 
 	String getTimestampTag();
 
 	String getNodeTag();
 	
 	String getNameTag();
-	
-	String getComponentTag();
 
 	String getCountTag();
 

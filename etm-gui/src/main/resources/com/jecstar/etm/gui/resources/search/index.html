@@ -41,6 +41,13 @@
 }
 body { padding-top: 60px; }
     </style>
+    <!-- jQuery first, then Bootstrap JS. -->
+    <script src="../scripts/tether.min.js"></script>
+    <script src="../scripts/jquery.min.js"></script>
+    <script src="../scripts/jquery-ui.min.js"></script>
+    <script src="../scripts/popper.min.js"></script>
+    <script src="../scripts/bootstrap.min.js"></script>
+
 </head>
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
@@ -207,13 +214,11 @@ body { padding-top: 60px; }
                         <div role="tabpanel">
                             <ul role="tablist" id="event-tabs" class="nav nav-tabs">
                                 <li class="nav-item">
-                                    <a id="event-tab-header" aria-expanded="true" role="tab" href="#event-tab"
-                                       data-toggle="tab" class="nav-link active">Event</a>
+                                    <a id="event-tab-header" data-toggle="tab" href="#event-tab" role="tab" aria-controls="event-tab" aria-selected="true" class="nav-link active">Event</a>
                                 </li>
                             </ul>
                             <div id="tabcontents" class="tab-content">
-                                <div id="event-tab" aria-labelledby="event-tab-header" role="tabpanel" aria-expanded="true"
-                                     class="tab-pane fade active in show pt-3">
+                                <div id="event-tab" role="tabpanel" aria-labelledby="event-tab-header" class="tab-pane fade show active in pt-3">
                                 </div>
                             </div>
                         </div>
@@ -368,12 +373,6 @@ body { padding-top: 60px; }
     </div>
 </div>
 
-    <!-- jQuery first, then Bootstrap JS. -->
-    <script src="../scripts/tether.min.js"></script>
-    <script src="../scripts/jquery.min.js"></script>
-    <script src="../scripts/jquery-ui.min.js"></script>
-    <script src="../scripts/popper.min.js"></script>
-    <script src="../scripts/bootstrap.min.js"></script>
     <script src="../scripts/moment.min.js"></script>
     <script src="../scripts/moment-timezone-with-data.min.js"></script>
     <script src="../scripts/cytoscape.min.js"></script>
@@ -401,7 +400,7 @@ body { padding-top: 60px; }
             // assume that our login has expired - reload our current page
             window.location.reload();
             return;
-        }          
+        }
     });
     var queryKeywords = null;
     $.ajax({
@@ -416,7 +415,7 @@ body { padding-top: 60px; }
             queryKeywords = data.keywords;
         }
     });
-    
+
 
 
     </script>
@@ -448,22 +447,19 @@ body { padding-top: 60px; }
         }
     }).autocompleteFieldQuery(
     		{
-    			queryKeywords: queryKeywords, 
-    			keywordGroupFilter: function(index, group) {
-    				return $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get().indexOf(group) == -1;
-    		    }
+    			queryKeywords: queryKeywords
     		}
     );
-    
+
     $('#btn-search').click(function() {
     	startNewQuery();
     });
-    
+
     $('#link-request-download').click(function(event) {
     	event.preventDefault();
     	$('#modal-download-results').modal();
     });
-    
+
     $('#btn-download-results').click(function(event) {
     	event.preventDefault();
     	$('#modal-download-results').modal('hide');
@@ -481,16 +477,16 @@ body { padding-top: 60px; }
         $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
    	    $(event.target).parent().parent().addClass('event-selected');
     });
-    
+
     $('#result_card').on('click', '#search_result_table thead th', function(event) {
     	event.preventDefault();
         sortResultTable($(this).attr('data-event-field'));
     });
-    
+
     $('#result_card').on('click', '#search_result_table tfoot a', function(event) {
         event.preventDefault();
         var query = createQuery(true);
-        query.start_ix = tableLayout.current_ix + tableLayout.results_per_page; 
+        query.start_ix = tableLayout.current_ix + tableLayout.results_per_page;
         executeQuery(query, true);
     });
 
@@ -500,23 +496,23 @@ body { padding-top: 60px; }
 		$('#search-container').show();
 		$('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))},'fast');
     });
-    
+
     $('#event-container').on('click', "a[data-link-type='show-event']", function(event) {
     	showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-type'), $(this).attr('data-event-id'))
     });
-    
+
     $('#event-container').on('click', "a[data-link-type='toggle-detail-map']", function(event) {
     	event.preventDefault();
     	$('#' + $(this).attr('data-panel-id')).collapse('toggle');
     });
-    
+
     function startNewQuery() {
     	tableLayout.timestamp = new Date().getTime();
     	var queryParams = createQuery(false);
     	queryParams.start_ix = 0;
         executeQuery(queryParams);
     }
-    
+
     function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
     		return false;
@@ -527,7 +523,7 @@ body { padding-top: 60px; }
         var elemBottom = elemTop + $(elem).height();
         return docViewBottom > elemTop;
     }
-    
+
     function enableOrDisableSearchButton() {
         if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
             $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
@@ -543,7 +539,7 @@ body { padding-top: 60px; }
             }
         }
     }
-    
+
     function createQuery(reusePreviousQueryString) {
     	if (!reusePreviousQueryString) {
     		if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
@@ -553,7 +549,7 @@ body { padding-top: 60px; }
         } else if (!tableLayout.current_query) {
         	return null;
         }
-        var query = { 
+        var query = {
             query: tableLayout.current_query,
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
             fields: tableLayout.getInternalFieldNames(),
@@ -566,7 +562,7 @@ body { padding-top: 60px; }
         };
         return query;
     }
-    
+
     var queryInProgress = false;
     function executeQuery(queryParameters, appendToCurrent) {
         if (!queryParameters || queryInProgress) {
@@ -599,7 +595,7 @@ body { padding-top: 60px; }
                         })
                     });
                     if (!data.has_more_results) {
-                        var $body = $('#search_result_table > tfoot').remove();    
+                        var $body = $('#search_result_table > tfoot').remove();
                     }
                 } else {
                     $('#result_card').empty();
@@ -624,7 +620,7 @@ body { padding-top: 60px; }
                                             }
                                         }
                                         $tr.append($th)
-                                    });    
+                                    });
                                     return $tr;
                                 })
                             )
@@ -659,7 +655,7 @@ body { padding-top: 60px; }
                         fields: queryParameters.fieldsLayout,
                         results_per_page: queryParameters.max_results,
                         sort_field: queryParameters.sort_field,
-                        sort_order: queryParameters.sort_order                                     
+                        sort_order: queryParameters.sort_order
                     }
                     updateHistory(query, data.history_size);
                 }
@@ -667,9 +663,9 @@ body { padding-top: 60px; }
             complete: function () {
             	queryInProgress = false;
             }
-        });    
+        });
     }
-    
+
     function createResultTableRow(searchResult, timeZone) {
         var $tr = $('<tr>');
         $(tableLayout.fields).each(function (index, field) {
@@ -681,15 +677,15 @@ body { padding-top: 60px; }
                         .attr('id', searchResult.id)
                         .attr('data-event-type', searchResult.type)
                         .text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
-                )    
+                )
             } else {
                 $td.text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
             }
             $tr.append($td);
-        });    
+        });
         return $tr;
     }
-    
+
     function sortResultTable(fieldName) {
     	if (queryInProgress) {
     		return false;

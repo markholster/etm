@@ -1,11 +1,5 @@
 package com.jecstar.etm.processor.ibmmq.handler;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.Map;
-
 import com.ibm.mq.MQMessage;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
@@ -13,10 +7,18 @@ import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.handler.HandlerResult;
+import com.jecstar.etm.processor.handler.HandlerResults;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
-public class ClonedMessageHandler extends AbstractEventHandler {
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Map;
+
+public class ClonedMessageHandler extends AbstractMQEventHandler {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -32,18 +34,26 @@ public class ClonedMessageHandler extends AbstractEventHandler {
 	public ClonedMessageHandler(TelemetryCommandProcessor telemetryCommandProcessor) {
 		this.telemetryCommandProcessor = telemetryCommandProcessor;
 	}
-	public HandlerResult handleMessage(MQMessage message) {
+
+	@Override
+	protected TelemetryCommandProcessor getProcessor() {
+		return this.telemetryCommandProcessor;
+	}
+
+	public HandlerResults handleMessage(MQMessage message) {
+		HandlerResults results = new HandlerResults();
 		this.messagingTelemetryEventBuilder.initialize();
 		try {
 			parseMessage(message);
 			this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
-			return HandlerResult.PROCESSED;
+			results.addHandlerResult(HandlerResult.processed());
 		} catch (IOException e) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Unable to process content.", e);
-			}			
-			return HandlerResult.PARSE_FAILURE;
+			}
+			results.addHandlerResult(HandlerResult.parserFailure(e));
 		}
+		return results;
 	}
 	
 	

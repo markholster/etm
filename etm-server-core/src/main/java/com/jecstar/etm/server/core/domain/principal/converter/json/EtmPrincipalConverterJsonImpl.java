@@ -1,18 +1,19 @@
 package com.jecstar.etm.server.core.domain.principal.converter.json;
 
+import com.jecstar.etm.server.core.domain.QueryOccurrence;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
+import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
+
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
-
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
-import com.jecstar.etm.server.core.domain.principal.EtmGroup;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
-import com.jecstar.etm.server.core.domain.QueryOccurrence;
-import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
-import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 
 public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<String> {
 
@@ -24,6 +25,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, true);
+		added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
@@ -51,6 +53,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmGroup.getName(), true, sb, true);
+		added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;

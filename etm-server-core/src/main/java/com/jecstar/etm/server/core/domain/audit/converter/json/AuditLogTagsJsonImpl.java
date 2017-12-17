@@ -65,8 +65,8 @@ public class AuditLogTagsJsonImpl implements AuditLogTags {
 	}
 
 	@Override
-	public String getNumberOfResultsTag() {
-		return "number_of_results";
-	}
-	
+	public String getNumberOfResultsTag() { return "number_of_results"; }
+
+	@Override
+	public String getQueryTimeTag() { return "query_time"; }
 }

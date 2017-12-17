@@ -8,12 +8,10 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	public String getTimestampTag() { return "timestamp"; }
 
 	@Override
-	public String getTypeTag() { return "type"; }
+	public String getObjectTypeTag() { return "object_type"; }
 
 	@Override
-	public String getIdTag() {
-		return "id";
-	}
+	public String getIdTag() { return "id";}
 
 	@Override
 	public String getCorrelationIdTag() {
@@ -90,11 +88,6 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 		return "reading_endpoint_handlers";
 	}
 	
-	@Override
-	public String getTransportTag() {
-		return "transport";
-	}
-
 	@Override
 	public String getWritingEndpointHandlerTag() {
 		return "writing_endpoint_handler";

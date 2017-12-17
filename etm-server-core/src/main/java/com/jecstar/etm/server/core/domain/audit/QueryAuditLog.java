@@ -22,5 +22,10 @@ public class QueryAuditLog extends AuditLog<QueryAuditLog> {
 	 * The number of matched results.
 	 */
 	public long numberOfResults;
-	
+
+	/**
+	 * The time in milliseconds the query took.
+	 */
+	public long queryTime;
+
 }

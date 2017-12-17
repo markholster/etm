@@ -1,20 +1,16 @@
 package com.jecstar.etm.processor;
 
-import com.jecstar.etm.domain.BusinessTelemetryEvent;
-import com.jecstar.etm.domain.HttpTelemetryEvent;
-import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.MessagingTelemetryEvent;
-import com.jecstar.etm.domain.SqlTelemetryEvent;
+import com.jecstar.etm.domain.*;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 
 public class TelemetryCommand {
 
 	public enum CommandType {
-		BUSINESS_EVENT(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_BUSINESS),
-		HTTP_EVENT(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_HTTP), 
-		LOG_EVENT(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_LOG), 
-		MESSAGING_EVENT(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_MESSAGING),
-		SQL_EVENT(ElasticsearchLayout.ETM_EVENT_INDEX_TYPE_SQL),
+		BUSINESS_EVENT(ElasticsearchLayout.EVENT_OBJECT_TYPE_BUSINESS),
+		HTTP_EVENT(ElasticsearchLayout.EVENT_OBJECT_TYPE_HTTP),
+		LOG_EVENT(ElasticsearchLayout.EVENT_OBJECT_TYPE_LOG),
+		MESSAGING_EVENT(ElasticsearchLayout.EVENT_OBJECT_TYPE_MESSAGING),
+		SQL_EVENT(ElasticsearchLayout.EVENT_OBJECT_TYPE_SQL),
 		NOOP(null);
 		
 		private final String type;

@@ -7,7 +7,7 @@ public class LogTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventW
 
     @Override
     String getType() {
-        return TelemetryEventTags.EVENT_TYPE_LOG;
+        return TelemetryEventTags.EVENT_OBJECT_TYPE_LOG;
     }
 
     @Override

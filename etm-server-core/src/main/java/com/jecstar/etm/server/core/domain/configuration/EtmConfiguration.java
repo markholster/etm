@@ -1,13 +1,13 @@
 package com.jecstar.etm.server.core.domain.configuration;
 
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.ldap.Directory;
+import com.jecstar.etm.server.core.util.ObjectUtils;
+
 import java.time.Instant;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.ldap.Directory;
-import com.jecstar.etm.server.core.util.ObjectUtils;
 
 public class EtmConfiguration {
 	//License configuration
@@ -25,7 +25,7 @@ public class EtmConfiguration {
 	private static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT 			= "retryOnConflictCount";
 	private static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS 	= "maxSearchResultDownloadRows";
 	private static final String CONFIG_KEY_MAX_SEARCH_TEMPLATE_COUNT 		= "maxSearchTemplateCount";
-	private static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT 			= "maxSearchHistoryCount";
+	private static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT 		= "maxSearchHistoryCount";
 	private static final String CONFIG_KEY_MAX_GRAPH_COUNT 					= "maxGraphCount";
 	private static final String CONFIG_KEY_MAX_DASHBOARD_COUNT 				= "maxDashboardCount";
 	
@@ -36,6 +36,7 @@ public class EtmConfiguration {
 	public static final String CONFIG_KEY_PERSISTING_BULK_COUNT 			= "persistingBulkCount";
 	public static final String CONFIG_KEY_PERSISTING_BULK_SIZE 				= "persistingBulkSize";
 	public static final String CONFIG_KEY_PERSISTING_BULK_TIME 				= "persistingBulkTime";
+	public static final String CONFIG_KEY_PERSISTING_BULK_THREADS			= "persistingBulkThreads";
 	public static final String CONFIG_KEY_WAIT_STRATEGY 					= "waitStrategy";
 	
 
@@ -49,6 +50,7 @@ public class EtmConfiguration {
 	private int persistingBulkSize = 1024 * 1024 * 5;
 	private int persistingBulkCount = 1000;
 	private int persistingBulkTime = 5000;
+	private int persistingBulkThreads = 2;
 	
 	private int shardsPerIndex = 5;
 	private int replicasPerIndex = 0;
@@ -210,6 +212,17 @@ public class EtmConfiguration {
 		}
 		return this;
 	}
+
+	public int getPersistingBulkThreads() {
+        return this.persistingBulkThreads;
+    }
+
+    public EtmConfiguration setPersistingBulkThreads(Integer persistingBulkThreads) {
+        if (persistingBulkThreads != null && persistingBulkThreads >= 1) {
+            this.persistingBulkThreads = persistingBulkThreads;
+        }
+        return this;
+    }
 	
 	public int getShardsPerIndex() {
 		return this.shardsPerIndex;
@@ -447,8 +460,12 @@ public class EtmConfiguration {
 		if (this.persistingBulkTime != etmConfiguration.getPersistingBulkTime()) {
 			setPersistingBulkTime(etmConfiguration.getPersistingBulkTime());
 			changed.add(CONFIG_KEY_PERSISTING_BULK_TIME);
-		}		
-		if (this.shardsPerIndex != etmConfiguration.getShardsPerIndex()) {
+		}
+        if (this.persistingBulkThreads != etmConfiguration.getPersistingBulkThreads()) {
+            setPersistingBulkThreads(etmConfiguration.getPersistingBulkThreads());
+            changed.add(CONFIG_KEY_PERSISTING_BULK_THREADS);
+        }
+        if (this.shardsPerIndex != etmConfiguration.getShardsPerIndex()) {
 			setShardsPerIndex(etmConfiguration.getShardsPerIndex());
 			changed.add(CONFIG_KEY_SHARDS_PER_INDEX);
 		}

@@ -8,6 +8,7 @@ import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
 import javax.ws.rs.core.Context;
@@ -70,20 +71,19 @@ public class AbstractJsonService extends JsonConverter {
     	return false;
     }
     
-    protected QueryBuilder addEtmPrincipalFilterQuery(QueryBuilder queryBuilder) {
+    protected QueryBuilder addEtmPrincipalFilterQuery(BoolQueryBuilder queryBuilder) {
     	List<FilterQuery> filterQueries = getEtmPrincipalFilterQueries();
     	if (filterQueries == null || filterQueries.isEmpty()) {
     		return queryBuilder;
     	}
-    	BoolQueryBuilder filteredQuery = new BoolQueryBuilder().must(queryBuilder);
     	for (FilterQuery filterQuery : filterQueries) {
     		if (QueryOccurrence.MUST.equals(filterQuery.getQueryOccurrence())) {
-    			filteredQuery.filter(filterQuery.getQuery());
+				queryBuilder.filter(filterQuery.getQuery());
     		} else if (QueryOccurrence.MUST_NOT.equals(filterQuery.getQueryOccurrence())) {
-    			filteredQuery.mustNot(filterQuery.getQuery());
+				queryBuilder.filter(QueryBuilders.boolQuery().mustNot(filterQuery.getQuery()));
     		}
     	}
-    	return filteredQuery;
+    	return queryBuilder;
     }
     
     protected ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {

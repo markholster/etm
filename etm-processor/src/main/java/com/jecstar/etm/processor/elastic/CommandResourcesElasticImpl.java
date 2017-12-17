@@ -1,9 +1,20 @@
 package com.jecstar.etm.processor.elastic;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.codahale.metrics.MetricRegistry;
+import com.jecstar.etm.domain.Endpoint;
+import com.jecstar.etm.domain.EndpointHandlingTimeComparator;
+import com.jecstar.etm.processor.TelemetryCommand.CommandType;
+import com.jecstar.etm.processor.core.CommandResources;
+import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.elastic.*;
+import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener;
+import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEvent;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
+import com.jecstar.etm.server.core.util.LruCache;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.Client;
@@ -11,26 +22,9 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
-import com.codahale.metrics.MetricRegistry;
-import com.jecstar.etm.domain.Endpoint;
-import com.jecstar.etm.domain.EndpointHandlingTimeComparator;
-import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.processor.core.CommandResources;
-import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.AbstractElasticTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.BusinessTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.HttpTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.MessagingTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.SqlTelemetryEventPersister;
-import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener;
-import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEvent;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.EndpointConfiguration;
-import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
-import com.jecstar.etm.server.core.util.LruCache;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CommandResourcesElasticImpl implements CommandResources, ConfigurationChangeListener {
 
@@ -80,7 +74,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 				mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
 			}
 		}
-		mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT_DEFAULT));
+		mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT));
 	}
 	
 	private EndpointConfiguration retrieveEndpoint(String endpointName) {
@@ -92,7 +86,9 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 				return cachedItem;
 			}
 		}
-		GetResponse getResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_ENDPOINT, endpointName)
+		GetResponse getResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+				ElasticsearchLayout.ETM_DEFAULT_TYPE,
+				ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
 			.setFetchSource(true)
 			.get();
 		if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
@@ -133,6 +129,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 				.setBulkActions(this.etmConfiguration.getPersistingBulkCount() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkCount())
 				.setBulkSize(new ByteSizeValue(this.etmConfiguration.getPersistingBulkSize() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkSize(), ByteSizeUnit.BYTES))
 				.setFlushInterval(this.etmConfiguration.getPersistingBulkTime() <= 0 ? null : TimeValue.timeValueMillis(this.etmConfiguration.getPersistingBulkTime()))
+				.setConcurrentRequests(this.etmConfiguration.getPersistingBulkThreads())
 				.build();
 	}
 
@@ -140,7 +137,8 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_COUNT, 
 				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE, 
-				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_TIME)) {
+				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_TIME,
+                EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_THREADS)) {
 			BulkProcessor oldBulkProcessor = this.bulkProcessor;
 			this.bulkProcessor = createBulkProcessor();
 			this.persisters.values().forEach(c -> ((AbstractElasticTelemetryEventPersister)c).setBulkProcessor(this.bulkProcessor));

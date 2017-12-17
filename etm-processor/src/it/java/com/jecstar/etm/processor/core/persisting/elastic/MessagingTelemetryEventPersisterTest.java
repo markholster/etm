@@ -1,17 +1,5 @@
 package com.jecstar.etm.processor.core.persisting.elastic;
 
-import static org.junit.Assert.*;
-
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.get.GetResponse;
-import org.junit.Test;
-
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
@@ -22,7 +10,19 @@ import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.processor.AbstractIntegrationTest;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetResponse;
+import org.junit.Test;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
+import static org.junit.Assert.*;
 
 public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTest {
 
@@ -85,7 +85,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 						.setWritingEndpointHandler(writingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 1L);
 		
 		builder.initialize()
 			.setId(eventId)
@@ -99,9 +99,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 						.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
-		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertEquals(eventId, eventId, readEvent.id);
 		assertEquals(eventId, 1, readEvent.endpoints.size());
 		Endpoint endpoint = readEvent.endpoints.get(0);
@@ -143,7 +143,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 1L);
 		
 		builder.initialize()
 			.setId(eventId)
@@ -155,9 +155,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.setWritingEndpointHandler(writingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
-		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertEquals(eventId, eventId, readEvent.id);
 		assertEquals(eventId, 1, readEvent.endpoints.size());
 		Endpoint endpoint = readEvent.endpoints.get(0);
@@ -198,7 +198,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 1L);
 
 		builder.initialize()
 			.setId(eventId)
@@ -211,9 +211,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
-		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertEquals(eventId, eventId, readEvent.id);
 		assertEquals(eventId, 2, readEvent.endpoints.size());
 	}
@@ -249,7 +249,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", eventId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 1L);
 
 		builder.initialize()
 			.setId(eventId)
@@ -265,9 +265,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", eventId, 2L);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
-		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertEquals(eventId, eventId, readEvent.id);
 		assertEquals(eventId, eventName, readEvent.name);
 		assertEquals(eventId, payload, readEvent.payload);
@@ -312,7 +312,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(respondingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 1L);
 		
 		builder.initialize()
 			.setId(responseId)
@@ -326,10 +326,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(requestingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(3)))
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", responseId, 1L);
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, responseId, 1L);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
 
-		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertEquals(event.id, 1, event.correlations.size());
 		assertEquals(event.id, responseId, event.correlations.get(0));
 		
@@ -375,7 +375,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(requestingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(3)))
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", responseId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, responseId, 1L);
 		
 		builder.initialize()
 			.setId(requestId)
@@ -388,9 +388,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(respondingEndpointHandler.setHandlingTime(timeStamp.plusSeconds(1)))
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
 
-		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertEquals(event.id, 1, event.correlations.size());
 		assertEquals(event.id, responseId, event.correlations.get(0));
 		
@@ -434,13 +434,13 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 					.addReadingEndpointHandler(respondingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
-		MessagingTelemetryEvent event_v1 = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 1L);
+		MessagingTelemetryEvent event_v1 = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		
 		persister.persist(builder.build(), this.messagingEventConverter);
-		getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
-		MessagingTelemetryEvent event_v2 = this.messagingEventConverter.read(getResponse.getSourceAsMap());
-		assertEquals(event_v1.getCalculatedHash(), event_v2.getCalculatedHash());
+		getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
+		MessagingTelemetryEvent event_v2 = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+		assertEquals(getResponse.getId(), event_v1.getCalculatedHash(), event_v2.getCalculatedHash());
 	}
 	
 	/**
@@ -463,7 +463,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 				.addOrMergeEndpoint(new EndpointBuilder().setWritingEndpointHandler(endpointHandler))
 				.setMessagingEventType(MessagingEventType.REQUEST);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 1L);
 		
 		endpointHandler.setHandlingTime(timestamp.plusSeconds(1));
 		builder
@@ -473,8 +473,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setMessagingEventType(MessagingEventType.RESPONSE);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		// wait for the request to be updated with the response time
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
-		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
+		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertNotNull(requestEvent.endpoints.get(0).writingEndpointHandler.responseTime);
 		long responsetTime = requestEvent.endpoints.get(0).writingEndpointHandler.responseTime;
 		assertEquals(requestId, 1000L, responsetTime);
@@ -501,7 +501,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 				.addOrMergeEndpoint(new EndpointBuilder().setWritingEndpointHandler(endpointHandler))
 				.setMessagingEventType(MessagingEventType.RESPONSE);
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", requestId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 1L);
 		
 		endpointHandler.setHandlingTime(timestamp);
 		builder
@@ -510,8 +510,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setMessagingEventType(MessagingEventType.REQUEST);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		// wait for the request to be updated with the response time
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", requestId, 2L);
-		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
+		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertNotNull(requestId, requestEvent.endpoints.get(0).writingEndpointHandler.responseTime);
 		long responsetTime = requestEvent.endpoints.get(0).writingEndpointHandler.responseTime;
 		assertEquals(requestId, 1000L, responsetTime);
@@ -536,14 +536,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 				.setMessagingEventType(MessagingEventType.FIRE_FORGET);
 		// Persist a fire-forget message.
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", firstId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, firstId, 1L);
 		
 		// Persist a second fire-forget message correlating the first fire-forget message.
 		builder.setId(secondId).setCorrelationId(firstId);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", firstId, 2L);
-		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, firstId, 2L);
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		
 		// Make sure the second event is referenced in the first event.
 		assertTrue(firstId, event.correlations.contains(secondId));
@@ -562,14 +562,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 				.setMessagingEventType(MessagingEventType.FIRE_FORGET);
 		// Persist a fire-forget message.
 		persister.persist(builder.build(), this.messagingEventConverter);
-		waitFor(persister.getElasticIndexName(), "messaging", firstId, 1L);
+		waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, firstId, 1L);
 		
 		// Persist a second fire-forget message correlating the first fire-forget message.
 		builder.setId(firstId).setCorrelationId(null);
 		persister.persist(builder.build(), this.messagingEventConverter);
 		
-		GetResponse getResponse = waitFor(persister.getElasticIndexName(), "messaging", firstId, 2L);
-		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap());
+		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, firstId, 2L);
+		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		
 		// Make sure the second event is referenced in the first event.
 		assertTrue(firstId, event.correlations.contains(secondId));

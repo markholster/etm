@@ -1,10 +1,9 @@
 package com.jecstar.etm.processor.core.persisting.elastic;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.jecstar.etm.domain.TelemetryEvent;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
@@ -13,10 +12,10 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
-import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.util.DateUtils;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Base class for <code>TelemetryEvent</code> persisters that store their data in elasticsearch.
@@ -50,18 +49,16 @@ public abstract class AbstractElasticTelemetryEventPersister {
 	}
     
     String getElasticIndexName() {
-    	return ElasticsearchLayout.ETM_EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+    	return ElasticsearchLayout.EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
     
-    protected abstract String getElasticTypeName();
-    
     IndexRequest createIndexRequest(String id) {
-    	return new IndexRequest(getElasticIndexName(), getElasticTypeName(), id)
+    	return new IndexRequest(getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
     			.waitForActiveShards(getActiveShardCount(this.etmConfiguration));
     }
     
     UpdateRequest createUpdateRequest(String id) {
-    	return new UpdateRequest(getElasticIndexName(), getElasticTypeName(), id)
+    	return new UpdateRequest(getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
     			.waitForActiveShards(getActiveShardCount(this.etmConfiguration))
     			.retryOnConflict(this.etmConfiguration.getRetryOnConflictCount());
     	
@@ -83,7 +80,7 @@ public abstract class AbstractElasticTelemetryEventPersister {
 		Map<String, Object> parameters =  new HashMap<>();
 		parameters.put("correlating_id", event.id);
 		bulkProcessor.add(createUpdateRequest(event.correlationId)
-				.script(new Script(ScriptType.STORED, "painless", "etm_update-event-with-correlation", parameters))
+				.script(new Script(ScriptType.STORED, null, "etm_update-event-with-correlation", parameters))
 				.upsert("{}", XContentType.JSON)
 				.scriptedUpsert(true));
     }

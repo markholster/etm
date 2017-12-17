@@ -55,7 +55,7 @@ public class QueryExporter {
 
             for (int i=0; i < maxResults && scrollableSearch.hasNext(); i++) {
                 SearchHit searchHit = scrollableSearch.next();
-                Map<String, Object> sourceValues = searchHit.getSource();
+                Map<String, Object> sourceValues = searchHit.getSourceAsMap();
                 writer.newLine();
                 first = true;
                 for (FieldLayout field : fields) {
@@ -113,7 +113,7 @@ public class QueryExporter {
             }
             for (int i=0; i < maxResults && scrollableSearch.hasNext(); i++) {
                 SearchHit searchHit = scrollableSearch.next();
-                Map<String, Object> sourceValues = searchHit.getSource();
+                Map<String, Object> sourceValues = searchHit.getSourceAsMap();
                 row = sheet.createRow(rowIx++);
                 cellIx = 0;
                 for (FieldLayout field: fields) {

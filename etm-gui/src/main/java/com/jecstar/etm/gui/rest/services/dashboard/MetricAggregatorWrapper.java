@@ -1,14 +1,13 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
-import java.text.Format;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import java.text.Format;
+import java.util.HashMap;
+import java.util.Map;
 
 class MetricAggregatorWrapper {
 
@@ -76,7 +75,7 @@ class MetricAggregatorWrapper {
 		} else if ("percentile_rank".equals(this.aggregatorType)) {
 			Double percentileData = this.jsonConverter.getDouble("percentile_data", this.jsonData);
 			metadata.put("label", this.label != null ? this.label : "Percentile rank " + etmPrincipal.getNumberFormat().format(percentileData) + " of " + this.field);
-			builder = AggregationBuilders.percentileRanks(this.id).field(this.field).values(percentileData);
+			builder = AggregationBuilders.percentileRanks(this.id, new double[] {percentileData}).field(this.field);
 		} else if ("sum".equals(this.aggregatorType)) {
 			metadata.put("label", this.label != null ? this.label : "Sum of " + this.field);
 			builder = AggregationBuilders.sum(this.id).field(this.field);

@@ -5,6 +5,8 @@ import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.handler.HandlerResult;
+import com.jecstar.etm.processor.handler.HandlerResults;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -15,7 +17,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-public class ClonedMessageHandler extends AbstractEventHandler {
+public class ClonedMessageHandler extends AbstractJMSEventHandler {
 	
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -31,18 +33,26 @@ public class ClonedMessageHandler extends AbstractEventHandler {
 	public ClonedMessageHandler(TelemetryCommandProcessor telemetryCommandProcessor) {
 		this.telemetryCommandProcessor = telemetryCommandProcessor;
 	}
-	public HandlerResult handleMessage(Message message) {
+
+	@Override
+	protected TelemetryCommandProcessor getProcessor() {
+		return this.telemetryCommandProcessor;
+	}
+
+	public HandlerResults handleMessage(Message message) {
+	    HandlerResults results = new HandlerResults();
 		this.messagingTelemetryEventBuilder.initialize();
 		try {
 			parseMessage(message);
 			this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
-			return HandlerResult.PROCESSED;
+			results.addHandlerResult(HandlerResult.processed());
 		} catch (JMSException e) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Unable to process content.", e);
-			}			
-			return HandlerResult.PARSE_FAILURE;
+			}
+			results.addHandlerResult(HandlerResult.parserFailure(e));
 		}
+		return results;
 	}
 	
 	

@@ -7,7 +7,7 @@ public class BusinessTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryE
 
 	@Override
 	String getType() {
-		return TelemetryEventTags.EVENT_TYPE_BUSINESS;
+		return TelemetryEventTags.EVENT_OBJECT_TYPE_BUSINESS;
 	}
 
 	@Override

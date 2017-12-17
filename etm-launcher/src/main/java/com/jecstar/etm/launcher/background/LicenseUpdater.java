@@ -1,5 +1,16 @@
 package com.jecstar.etm.launcher.background;
 
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
+import org.elasticsearch.action.support.ActiveShardCount;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,18 +19,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
-
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.configuration.License;
-import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
 
 public class LicenseUpdater implements Runnable {
 
@@ -49,7 +48,7 @@ public class LicenseUpdater implements Runnable {
 					etmConfiguration.setLicenseKey(licenseKey);
 					Map<String, Object> values = new HashMap<>();
 					values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
-					client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_LICENSE_ID)
+					client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT)
 						.setDoc(values)
 						.setDocAsUpsert(true)
 						.setWaitForActiveShards(getActiveShardCount(etmConfiguration))

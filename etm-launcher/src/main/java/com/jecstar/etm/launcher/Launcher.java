@@ -8,6 +8,9 @@ import com.jecstar.etm.launcher.background.LicenseUpdater;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
+import com.jecstar.etm.launcher.migrations.EtmMigrator;
+import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
+import com.jecstar.etm.launcher.migrations.ReindexToSingleTypeMigration;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
@@ -21,18 +24,18 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.discovery.MasterNotDiscoveredException;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
-import org.jboss.netty.logging.InternalLoggerFactory;
-import org.jboss.netty.logging.Slf4JLoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
@@ -48,7 +51,7 @@ class Launcher {
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(Launcher.class);
 	
-	private ElasticsearchIndextemplateCreator indexTemplateCreator;
+	private ElasticsearchIndexTemplateCreator indexTemplateCreator;
 	private TelemetryCommandProcessor processor;
 	private HttpServer httpServer;
 	private Client elasticClient;
@@ -59,25 +62,27 @@ class Launcher {
 	private InternalBulkProcessorWrapper bulkProcessorWrapper;
 	
 	public void launch(CommandLineParameters commandLineParameters, Configuration configuration, InternalBulkProcessorWrapper bulkProcessorWrapper) {
-		// TODO maak een thread die periodiek door de LDAP entries heenloopt om te kijken of er gebruikers weggegooid moeten worden.
+		// TODO maak een thread die periodiek door de LDAP entries heen loopt om te kijken of er gebruikers weggegooid moeten worden.
 		this.bulkProcessorWrapper = bulkProcessorWrapper;
 		addShutdownHooks(configuration);
-		InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
+		InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
 		try {
 			initializeElasticsearchClient(configuration);
 			this.bulkProcessorWrapper.setClient(this.elasticClient);
-			this.indexTemplateCreator = new ElasticsearchIndextemplateCreator(this.elasticClient);
-			this.indexTemplateCreator.createTemplates();
-			EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
-			this.bulkProcessorWrapper.setConfiguration(etmConfiguration);
-			this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
-			if (commandLineParameters.isReinitialize()) {
-				this.indexTemplateCreator.reinitialize();
-				if (!commandLineParameters.isQuiet()) {
-					System.out.println("Reinitialized system.");
-				}
-			}
-			MetricRegistry metricRegistry = new MetricRegistry();
+            boolean reinitializeTemplates = executeDatabaseMigrations(this.elasticClient);
+			new MultiTypeDetector().detect(this.elasticClient);
+            this.indexTemplateCreator = new ElasticsearchIndexTemplateCreator(this.elasticClient);
+            this.indexTemplateCreator.createTemplates();
+            EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
+            this.bulkProcessorWrapper.setConfiguration(etmConfiguration);
+            this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
+            if (commandLineParameters.isReinitialize() || reinitializeTemplates) {
+                this.indexTemplateCreator.reinitialize();
+                if (!commandLineParameters.isQuiet()) {
+                    System.out.println("Reinitialized system.");
+                }
+            }
+            MetricRegistry metricRegistry = new MetricRegistry();
 			initializeMetricReporter(metricRegistry, configuration);
 			initializeProcessor(metricRegistry, configuration, etmConfiguration);
 			initializeBackgroundProcesses(configuration, etmConfiguration, this.elasticClient);
@@ -170,6 +175,20 @@ class Launcher {
 			this.processor.start(new NamedThreadFactory("etm_processor"), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
 		}
 	}
+
+    /**
+     * Execute all necessary Elasticsearch data migrations.
+     * @param client The Elasticsearch client.
+     * @return <code>true</code> when the index templates need to be reinitialized, <code>false</code> otherwise.
+     */
+	private boolean executeDatabaseMigrations(Client client) {
+        EtmMigrator etmMigrator = new ReindexToSingleTypeMigration(client);
+        if (etmMigrator.shouldBeExecuted())  {
+            etmMigrator.migrate();
+            return true;
+        }
+        return false;
+	}
 	
 	private void initializeElasticsearchClient(Configuration configuration) {
 		if (this.elasticClient != null) {
@@ -236,7 +255,7 @@ class Launcher {
 			try {
 				InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
 				int port = Integer.parseInt(host.substring(ix + 1));
-				return new InetSocketTransportAddress(inetAddress, port);
+				return new TransportAddress(inetAddress, port);
 			} catch (UnknownHostException e) {
 				if (log.isWarningLevelEnabled()) {
 					log.logWarningMessage("Unable to connect to '" + host + "'", e);
@@ -258,20 +277,27 @@ class Launcher {
 				Thread.currentThread().interrupt();
 			}
 		}
-		ClusterHealthResponse clusterHealthResponse = null;
-		while (clusterHealthResponse == null || (clusterHealthResponse.getInitializingShards() != 0 && clusterHealthResponse.getNumberOfPendingTasks() != 0 && clusterHealthResponse.getNumberOfDataNodes() != 0)) {
-			if (Thread.currentThread().isInterrupted()) {
-				return;
-			}			
-			// Wait for all shards to be initialized and no more tasks pending and at least 1 data node to be available.
+		boolean esClusterInitialized = false;
+		while (!esClusterInitialized) {
 			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-			try {
-				clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
-			} catch (MasterNotDiscoveredException e) {}
+                ClusterHealthResponse clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
+                if (clusterHealthResponse.getInitializingShards() == 0
+                        && clusterHealthResponse.getNumberOfPendingTasks() == 0
+                        && clusterHealthResponse.getNumberOfDataNodes() > 0) {
+                    esClusterInitialized = true;
+                }
+			} catch (MasterNotDiscoveredException | ClusterBlockException e) {}
+			if (!esClusterInitialized) {
+                // Wait for all shards to be initialized and no more tasks pending and at least 1 data node to be available.
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                if (Thread.currentThread().isInterrupted()) {
+                    return;
+                }
+            }
 		}
 	
 		

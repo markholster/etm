@@ -1,13 +1,13 @@
 package com.jecstar.etm.server.core.domain.configuration.converter.json;
 
-import java.util.Map;
-
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationTags;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+
+import java.util.Map;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
@@ -25,7 +25,8 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		sb.append("{");
 		if (nodeConfiguration == null) {
 			// only add the defaults.
-			boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_NODE_DEFAULT, sb, true);
+			boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT, sb, true);
+			added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, sb, !added);
 			added = this.converter.addLongElementToJsonBuffer(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -34,6 +35,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), sb, !added) || added;
+			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkThreadsTag(), defaultConfiguration.getPersistingBulkThreads(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), sb, !added) || added;
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), sb, !added) || added;
@@ -49,6 +51,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
 		} else {
 			boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, true);
+			added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, sb, !added);
 			added = addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -57,7 +60,8 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), nodeConfiguration.getPersistingBulkCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), nodeConfiguration.getPersistingBulkSize(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), nodeConfiguration.getPersistingBulkTime(), sb, !added) || added;
-			added = addIntegerWhenNotDefault(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), nodeConfiguration.getShardsPerIndex(), sb, !added) || added;
+            added = addIntegerWhenNotDefault(this.tags.getPersistingBulkThreadsTag(), defaultConfiguration.getPersistingBulkThreads(), nodeConfiguration.getPersistingBulkThreads(), sb, !added) || added;
+            added = addIntegerWhenNotDefault(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), nodeConfiguration.getShardsPerIndex(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), nodeConfiguration.getReplicasPerIndex(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), nodeConfiguration.getMaxEventIndexCount(), sb, !added) || added;
 			added = addIntegerWhenNotDefault(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), nodeConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
@@ -92,6 +96,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 		etmConfiguration.setPersistingBulkCount(getIntValue(this.tags.getPersistingBulkCountTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingBulkSize(getIntValue(this.tags.getPersistingBulkSizeTag(), defaultMap, nodeMap));
 		etmConfiguration.setPersistingBulkTime(getIntValue(this.tags.getPersistingBulkTimeTag(), defaultMap, nodeMap));
+        etmConfiguration.setPersistingBulkThreads(getIntValue(this.tags.getPersistingBulkThreadsTag(), defaultMap, nodeMap));
 		etmConfiguration.setShardsPerIndex(getIntValue(this.tags.getShardsPerIndexTag(), defaultMap, nodeMap));
 		etmConfiguration.setReplicasPerIndex(getIntValue(this.tags.getReplicasPerIndexTag(), defaultMap, nodeMap));
 		etmConfiguration.setMaxEventIndexCount(getIntValue(this.tags.getMaxEventIndexCountTag(), defaultMap, nodeMap));

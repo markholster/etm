@@ -6,11 +6,11 @@ import com.codahale.metrics.Timer.Context;
 import com.ibm.mq.*;
 import com.ibm.mq.constants.CMQC;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.handler.HandlerResults;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
 import com.jecstar.etm.processor.ibmmq.handler.ClonedMessageHandler;
 import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
-import com.jecstar.etm.processor.ibmmq.handler.HandlerResult;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -88,23 +88,23 @@ class DestinationReader implements Runnable {
 				if (log.isDebugLevelEnabled()) {
 					log.logDebugMessage("Read message with id '" + byteArrayToString(message.messageId) + "'.");
 				}
-				HandlerResult result;
+				HandlerResults results;
 				if ("etmevent".equalsIgnoreCase(this.destination.getMessagesType())) {
-					result = this.etmEventHandler.handleMessage(message);
+					results = this.etmEventHandler.handleMessage(message);
 				} else if ("iibevent".equalsIgnoreCase(this.destination.getMessagesType())) {
-					result = this.iibEventHandler.handleMessage(message);
+					results = this.iibEventHandler.handleMessage(message);
 				} else if ("clone".equalsIgnoreCase(this.destination.getMessagesType())) {
-					result = this.clonedMessageEventHandler.handleMessage(message);
+					results = this.clonedMessageEventHandler.handleMessage(message);
 				} else {
-					result = this.etmEventHandler.handleMessage(message);
-					if (HandlerResult.PARSE_FAILURE.equals(result)) {
-						result = this.iibEventHandler.handleMessage(message);
+					results = this.etmEventHandler.handleMessage(message);
+					if (results.hasParseFailures()) {
+						results = this.iibEventHandler.handleMessage(message);
 					}
-					if (HandlerResult.PARSE_FAILURE.equals(result)) {
-						result = this.clonedMessageEventHandler.handleMessage(message);
+					if (results.hasParseFailures()) {
+						results = this.clonedMessageEventHandler.handleMessage(message);
 					}
 				}
-				if (!HandlerResult.PROCESSED.equals(result)) {
+				if (results.hasFailures()) {
 					tryBackout(message);
 				}
 				this.counter++;

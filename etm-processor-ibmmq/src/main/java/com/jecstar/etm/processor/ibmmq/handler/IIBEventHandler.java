@@ -1,12 +1,30 @@
 package com.jecstar.etm.processor.ibmmq.handler;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import com.ibm.mq.MQMessage;
+import com.ibm.mq.constants.CMQC;
+import com.ibm.mq.constants.MQConstants;
+import com.ibm.mq.headers.*;
+import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
+import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+import com.jecstar.etm.domain.builder.*;
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.handler.HandlerResult;
+import com.jecstar.etm.processor.handler.HandlerResults;
+import com.jecstar.etm.processor.ibmmq.event.ApplicationData.ComplexContent;
+import com.jecstar.etm.processor.ibmmq.event.ApplicationData.SimpleContent;
+import com.jecstar.etm.processor.ibmmq.event.EncodingType;
+import com.jecstar.etm.processor.ibmmq.event.Event;
+import com.jecstar.etm.processor.ibmmq.event.SimpleContentDataType;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
+import org.w3c.dom.NodeList;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -17,40 +35,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.TimeZone;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
-import org.w3c.dom.NodeList;
-
-import com.ibm.mq.MQMessage;
-import com.ibm.mq.constants.CMQC;
-import com.ibm.mq.constants.MQConstants;
-import com.ibm.mq.headers.CCSID;
-import com.ibm.mq.headers.Charsets;
-import com.ibm.mq.headers.MQDataException;
-import com.ibm.mq.headers.MQMD;
-import com.ibm.mq.headers.MQRFH2;
-import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
-import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
-import com.jecstar.etm.domain.builder.ApplicationBuilder;
-import com.jecstar.etm.domain.builder.EndpointBuilder;
-import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
-import com.jecstar.etm.domain.builder.HttpTelemetryEventBuilder;
-import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
-import com.jecstar.etm.domain.builder.TelemetryEventBuilder;
-import com.jecstar.etm.processor.ibmmq.event.ApplicationData.ComplexContent;
-import com.jecstar.etm.processor.ibmmq.event.ApplicationData.SimpleContent;
-import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
-import com.jecstar.etm.processor.ibmmq.event.EncodingType;
-import com.jecstar.etm.processor.ibmmq.event.Event;
-import com.jecstar.etm.processor.ibmmq.event.SimpleContentDataType;
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
-
-public class IIBEventHandler extends AbstractEventHandler {
+public class IIBEventHandler extends AbstractMQEventHandler {
 
 	/**
 	 * The <code>LogWrapper</code> for this class.
@@ -77,17 +62,24 @@ public class IIBEventHandler extends AbstractEventHandler {
 		}
 	}
 
+    @Override
+    protected TelemetryCommandProcessor getProcessor() {
+        return this.telemetryCommandProcessor;
+    }
+
 	@SuppressWarnings("unchecked")
-	public HandlerResult handleMessage(MQMessage message) {
+	public HandlerResults handleMessage(MQMessage message) {
+		HandlerResults results = new HandlerResults();
 		try (Reader reader = new InputStreamReader(new ByteArrayInputStream(getContent(message).getBytes()));) {
 			Event event = ((JAXBElement<Event>) this.unmarshaller.unmarshal(reader)).getValue();
-			return process(message.messageId, event);
+            results.addHandlerResult(process(message.messageId, event));
 		} catch (JAXBException | IOException e) {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Unable to unmarshall event.", e);
 			}
-			return HandlerResult.PARSE_FAILURE;
+			results.addHandlerResult(HandlerResult.parserFailure(e));
 		}
+		return results;
 	}
 
 	private HandlerResult process(byte[] messageId, Event event) {
@@ -97,7 +89,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("NodeType of event with id '" + byteArrayToString(messageId) + "' is null. Unable to determine event type. Event will not be processed.");
 			}
-			return HandlerResult.FAILED;
+			return HandlerResult.failed();
 		}
 		// See https://www.ibm.com/support/knowledgecenter/SSMKHH_10.0.0/com.ibm.etools.mft.doc/as36001_.htm for node types.
 		if (nodeType.startsWith("ComIbmMQ") || "ComIbmPublicationNode".equals(nodeType)) {
@@ -111,7 +103,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Event with id '" + byteArrayToString(messageId) + "' has an unsupported NodeType '" + nodeType + "'. Event will not be processed.");
 		}
-		return HandlerResult.FAILED;
+		return HandlerResult.failed();
 	}
 
 	private HandlerResult processAsMessagingEvent(byte[] messageId, Event event) {
@@ -172,7 +164,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Event with id '" + byteArrayToString(messageId) + "' has no bitstream. Event will not be processed.");
 			}
-			return HandlerResult.FAILED;
+			return HandlerResult.failed();
 		}
 		if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
 			if (log.isDebugLevelEnabled()) {
@@ -181,7 +173,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 						+ event.getBitstreamData().getBitstream().getEncoding().name() + "'. Use '"
 						+ EncodingType.BASE_64_BINARY.name() + "' instead.");
 			}
-			return HandlerResult.FAILED;
+			return HandlerResult.failed();
 		}
 		byte[] decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
 		try {
@@ -190,10 +182,10 @@ public class IIBEventHandler extends AbstractEventHandler {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Failed to parse MQ bitstream of event with id '" + byteArrayToString(messageId) + "'.", e);
 			}
-			return HandlerResult.FAILED;
+			return HandlerResult.failed();
 		}	
 		this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
-		return HandlerResult.PROCESSED;
+		return HandlerResult.processed();
 	}
 	
 	private HandlerResult processAsHttpEvent(byte[] messageId, Event event) {
@@ -246,7 +238,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Event with id '" + byteArrayToString(messageId) + "' has no bitstream. Event will not be processed.");
 			}
-			return HandlerResult.FAILED;
+			return HandlerResult.failed();
 		}
 		if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
 			if (log.isDebugLevelEnabled()) {
@@ -255,7 +247,7 @@ public class IIBEventHandler extends AbstractEventHandler {
 						+ event.getBitstreamData().getBitstream().getEncoding().name() + "'. Use '"
 						+ EncodingType.BASE_64_BINARY.name() + "' instead.");
 			}
-			return HandlerResult.FAILED;
+			return HandlerResult.failed();
 		}
 		byte[] decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
 		try {
@@ -264,11 +256,11 @@ public class IIBEventHandler extends AbstractEventHandler {
 			if (log.isDebugLevelEnabled()) {
 				log.logDebugMessage("Failed to parse HTTP bitstream of event with id '" + byteArrayToString(messageId) + "'.", e);
 			}
-			return HandlerResult.FAILED;
+			return HandlerResult.failed();
 		}	
 		this.httpTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
 		this.telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEventBuilder);
-		return HandlerResult.PROCESSED;
+		return HandlerResult.failed();
 	}
 	
 	private void addSourceInformation(Event event, TelemetryEventBuilder<?, ?> builder) {

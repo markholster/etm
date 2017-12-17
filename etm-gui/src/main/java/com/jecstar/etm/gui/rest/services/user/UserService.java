@@ -1,28 +1,5 @@
 package com.jecstar.etm.gui.rest.services.user;
 
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.stream.Collectors;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
-
 import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -31,6 +8,19 @@ import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.util.BCrypt;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Path("/user")
 public class UserService extends AbstractJsonService {
@@ -54,7 +44,7 @@ public class UserService extends AbstractJsonService {
 	@Path("/settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getUserSettings() {
-		GetResponse getResponse = UserService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+		GetResponse getResponse = UserService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
 				.setFetchSource(null, new String[] {"searchtemplates", "password_hash"})
 				.get();
 		if (getResponse.isSourceEmpty()) {
@@ -88,7 +78,7 @@ public class UserService extends AbstractJsonService {
 		}
 		updateMap.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
 		
-		UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, etmPrincipal.getId())
+		UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
 		.setDoc(updateMap)
 		.setDetectNoop(true)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -100,8 +90,8 @@ public class UserService extends AbstractJsonService {
 			// History size is smaller. Make sure the stored queries are sliced to the new size.
 			Map<String, Object> scriptParams = new HashMap<>();
 			scriptParams.put("history_size", newHistorySize);
-			UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
-					.setScript(new Script(ScriptType.STORED, "painless", "etm_update-search-history", scriptParams))
+			UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+					.setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams))
 					.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
 					.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 					.setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
@@ -137,7 +127,7 @@ public class UserService extends AbstractJsonService {
 		updateMap.put(this.tags.getPasswordHashTag(), newHash);
 		updateMap.put(this.tags.getChangePasswordOnLogonTag(), false);
 		
-		UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_INDEX_TYPE_USER, getEtmPrincipal().getId())
+		UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
 		.setDoc(updateMap)
 		.setDetectNoop(true)
 		.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -171,7 +161,7 @@ public class UserService extends AbstractJsonService {
 	public String getEvents() {
 		StringBuilder result = new StringBuilder();
 		NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
-		SearchResponse searchResponse = client.prepareSearch(ElasticsearchLayout.ETM_EVENT_INDEX_ALIAS_ALL)
+		SearchResponse searchResponse = client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
 			.setSize(0).setQuery(QueryBuilders.matchAllQuery())
 			.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
 			.get();

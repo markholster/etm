@@ -1,9 +1,10 @@
 package com.jecstar.etm.server.core.domain.audit.converter.json;
 
-import java.util.Map;
-
 import com.jecstar.etm.server.core.domain.audit.LogoutAuditLog;
 import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+
+import java.util.Map;
 
 public class LogoutAuditLogConverterJsonImpl extends AbstractAuditLogConverterJsonImpl<LogoutAuditLog>  implements AuditLogConverter<String, LogoutAuditLog>{
 
@@ -19,7 +20,7 @@ public class LogoutAuditLogConverterJsonImpl extends AbstractAuditLogConverterJs
 	public String write(LogoutAuditLog audit) {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("{");
-		boolean added = write(buffer, audit, true);
+		boolean added = write(buffer, audit, true, ElasticsearchLayout.AUDIT_LOG_OBJECT_TYPE_LOGOUT);
 		added = addBooleanElementToJsonBuffer(getTags().getExpiredTag(), audit.expired, buffer, !added) || added;
 		buffer.append("}");
 		return buffer.toString();

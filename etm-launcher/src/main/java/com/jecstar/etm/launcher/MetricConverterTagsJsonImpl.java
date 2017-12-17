@@ -16,11 +16,6 @@ public class MetricConverterTagsJsonImpl implements MetricConverterTags {
 	}
 	
 	@Override
-	public String getComponentTag() {
-		return "component";
-	}
-
-	@Override
 	public String getNameTag() {
 		return "name";
 	}

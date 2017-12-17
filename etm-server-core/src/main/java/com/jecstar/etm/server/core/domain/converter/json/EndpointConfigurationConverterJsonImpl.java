@@ -3,6 +3,7 @@ package com.jecstar.etm.server.core.domain.converter.json;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationTags;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
@@ -89,6 +90,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), endpointConfiguration.name, result, true);
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, result, false);
 		if (endpointConfiguration.eventEnhancer != null) {
 			result.append(",\"").append(this.tags.getEnhancerTag()).append("\": {");
 			if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
