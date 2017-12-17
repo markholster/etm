@@ -33,6 +33,7 @@ ext {
 
 allprojects {
     apply plugin: "eclipse"
+    apply plugin: "idea"
     version "3.0.0-SNAPSHOT"
     group "com.jecstar.etm"
     
