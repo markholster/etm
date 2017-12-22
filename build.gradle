@@ -1,0 +1,14 @@
+ext {
+    dep_junit = "junit:junit:4.12"
+}
+
+allprojects {
+    apply plugin: "eclipse"
+    apply plugin: "idea"
+    version "3.0.0-SNAPSHOT"
+    group "com.jecstar.etm"
+
+    repositories {
+        mavenCentral()
+    }    
+}
