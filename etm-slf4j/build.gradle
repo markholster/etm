@@ -1,5 +1,5 @@
 apply plugin: 'java'
 
 dependencies {
-    compile project(":etm-domain"), dep_slf4jApi
+    compile project(":etm-public:etm-domain"), dep_slf4jApi
 }

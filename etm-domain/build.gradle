@@ -1,5 +1,0 @@
-apply plugin: "java"
-
-dependencies {
-    testCompile dep_junit
-}

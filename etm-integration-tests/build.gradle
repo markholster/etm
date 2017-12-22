@@ -14,7 +14,7 @@ sourceSets {
 }
 
 dependencies {
-    integrationTestCompile project(":etm-domain"), project(":etm-server-core"), dep_junit, dep_seleniumJava, dep_htmlunitDriver, dep_apacheDs
+    integrationTestCompile project(":etm-public:etm-domain"), project(":etm-server-core"), dep_junit, dep_seleniumJava, dep_htmlunitDriver, dep_apacheDs
 }
 
 eclipse {

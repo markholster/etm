@@ -1,4 +1,4 @@
-include 'etm-domain',
+include 'etm-public:etm-domain',
         'etm-server-core', 
         'etm-processor', 
         'etm-processor-rest',

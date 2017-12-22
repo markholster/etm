@@ -1,7 +1,7 @@
 apply plugin: "java"
 
 dependencies {
-    compile project(":etm-domain")
+    compile project(":etm-public:etm-domain")
     compile dep_jacksonDatabind,
     		dep_ldaptive,
     		dep_saxonHE, 
