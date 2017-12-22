@@ -2,9 +2,9 @@ package com.jecstar.etm.processor.core.persisting.elastic;
 
 import com.jecstar.etm.domain.SqlTelemetryEvent;
 import com.jecstar.etm.domain.SqlTelemetryEvent.SqlEventType;
-import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.processor.core.persisting.TelemetryEventPersister;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -17,22 +17,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SqlTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
-		implements TelemetryEventPersister<SqlTelemetryEvent, SqlTelemetryEventWriterJsonImpl> {
+		implements TelemetryEventPersister<SqlTelemetryEvent, SqlTelemetryEventConverterJsonImpl> {
 
 	public SqlTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
 		super(bulkProcessor, etmConfiguration);
 	}
 
 	@Override
-	public void persist(SqlTelemetryEvent event, SqlTelemetryEventWriterJsonImpl writer) {
-        IndexRequest indexRequest = createIndexRequest(event.id).source(writer.write(event, false), XContentType.JSON);
+	public void persist(SqlTelemetryEvent event, SqlTelemetryEventConverterJsonImpl converter) {
+        IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false), XContentType.JSON);
 
         if (event.id == null) {
             // An event without an id can never be an update.
             bulkProcessor.add(indexRequest);
         } else {
             Map<String, Object> parameters =  new HashMap<>();
-            parameters.put("source", XContentHelper.convertToMap(new BytesArray(writer.write(event, true)), false, XContentType.JSON).v2());
+            parameters.put("source", XContentHelper.convertToMap(new BytesArray(converter.write(event, true)), false, XContentType.JSON).v2());
             bulkProcessor.add(createUpdateRequest(event.id)
                     .script(new Script(ScriptType.STORED, null, "etm_update-event", parameters))
                     .upsert(indexRequest));

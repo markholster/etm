@@ -9,7 +9,18 @@ import java.util.Map;
 public class LogTelemetryEventConverterJsonImpl extends LogTelemetryEventWriterJsonImpl implements TelemetryEventConverter<String, LogTelemetryEvent> {
 
 	private final TelemetryEventJsonConverter<LogTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
-	
+
+    @Override
+    public String write(LogTelemetryEvent event, boolean includeId) {
+        return super.write(event, includeId);
+    }
+
+    @Override
+	protected boolean doWrite(LogTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+		boolean added = this.converter.addDatabaseFields(buffer, event, firstElement);
+		return super.doWrite(event, buffer, !added);
+	}
+
 	@Override
 	public LogTelemetryEvent read(String content, String id) {
 		return read(this.converter.toMap(content), id);

@@ -9,8 +9,19 @@ import java.util.Map;
 public class BusinessTelemetryEventConverterJsonImpl extends BusinessTelemetryEventWriterJsonImpl implements TelemetryEventConverter<String, BusinessTelemetryEvent> {
 
 	private final TelemetryEventJsonConverter<BusinessTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
-	
-	@Override
+
+    @Override
+    public String write(BusinessTelemetryEvent event, boolean includeId) {
+        return super.write(event, includeId);
+    }
+
+    @Override
+    protected boolean doWrite(BusinessTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+	    boolean added = this.converter.addDatabaseFields(buffer, event, firstElement);
+        return super.doWrite(event, buffer, !added);
+    }
+
+    @Override
 	public BusinessTelemetryEvent read(String content, String id) {
 	    return read(this.converter.toMap(content), id);
 	}

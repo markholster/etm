@@ -20,16 +20,13 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 
     @Override
     public String write(Event event) {
-        return write(event, true);
+    	return write(event, true);
     }
 
-
-	@Override
-	public String write(Event event, boolean includeId) {
+	protected String write(Event event, boolean includeId) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		boolean added = this.jsonWriter.addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), sb, true);
-		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getObjectTypeTag(), getType(), sb, !added) || added;
+		boolean added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getObjectTypeTag(), getType(), sb, true);
 		if (includeId) {
 			added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
 		}
@@ -46,15 +43,6 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			}
 			sb.append("]");			
 			added = endpointAdded || added;
-		}
-		if (event.id != null) {
-			if (added) {
-				sb.append(", ");
-			}
-			sb.append(this.jsonWriter.escapeToJson(getTags().getEventHashesTag(), true)).append(": [");
-			sb.append(event.getCalculatedHash());
-			sb.append("]");
-			added = true;
 		}
 		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, sb, !added) || added;

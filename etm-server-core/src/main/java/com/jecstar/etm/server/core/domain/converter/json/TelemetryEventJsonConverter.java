@@ -12,6 +12,11 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Helper class for all event converters.
+ *
+ * @param <Event>
+ */
 class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
 
 	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
@@ -104,5 +109,20 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
 		}
 		return endpointHandler;
 	}
+
+	boolean addDatabaseFields(StringBuilder buffer, Event event, boolean firstElement) {
+        boolean added = addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), buffer, firstElement) || !firstElement;
+        if (event.id != null) {
+            if (added) {
+                buffer.append(", ");
+            }
+            buffer.append(escapeToJson(this.tags.getEventHashesTag(), true)).append(": [");
+            buffer.append(event.getCalculatedHash());
+            buffer.append("]");
+            added = true;
+        }
+        return added;
+    }
+
 
 }

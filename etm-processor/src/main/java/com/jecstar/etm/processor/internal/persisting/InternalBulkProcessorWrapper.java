@@ -1,8 +1,13 @@
 package com.jecstar.etm.processor.internal.persisting;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.jecstar.etm.domain.BusinessTelemetryEvent;
+import com.jecstar.etm.domain.LogTelemetryEvent;
+import com.jecstar.etm.domain.TelemetryEvent;
+import com.jecstar.etm.processor.core.persisting.elastic.BusinessTelemetryEventPersister;
+import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.converter.json.BusinessTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkProcessor.Listener;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -12,14 +17,8 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
-import com.jecstar.etm.domain.BusinessTelemetryEvent;
-import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.TelemetryEvent;
-import com.jecstar.etm.domain.writer.json.BusinessTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
-import com.jecstar.etm.processor.core.persisting.elastic.BusinessTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Bulk processor for ETM internal logging. Used for persisting events without
@@ -30,8 +29,8 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
  */
 public class InternalBulkProcessorWrapper implements AutoCloseable {
 
-	private static final LogTelemetryEventWriterJsonImpl logWriter = new LogTelemetryEventWriterJsonImpl();
-	private static final BusinessTelemetryEventWriterJsonImpl businessWriter = new BusinessTelemetryEventWriterJsonImpl();
+	private static final LogTelemetryEventConverterJsonImpl logWriter = new LogTelemetryEventConverterJsonImpl();
+	private static final BusinessTelemetryEventConverterJsonImpl businessWriter = new BusinessTelemetryEventConverterJsonImpl();
 	
 	private EtmConfiguration configuration;
 	private BulkProcessor bulkProcessor;

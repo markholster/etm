@@ -10,7 +10,18 @@ import java.util.Map;
 public class SqlTelemetryEventConverterJsonImpl extends SqlTelemetryEventWriterJsonImpl implements TelemetryEventConverter<String, SqlTelemetryEvent> {
 
 	private final TelemetryEventJsonConverter<SqlTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
-	
+
+    @Override
+    public String write(SqlTelemetryEvent event, boolean includeId) {
+        return super.write(event, includeId);
+    }
+
+    @Override
+	protected boolean doWrite(SqlTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+		boolean added = this.converter.addDatabaseFields(buffer, event, firstElement);
+		return super.doWrite(event, buffer, !added);
+	}
+
 	@Override
 	public SqlTelemetryEvent read(String content, String id) {
 	    return read(this.converter.toMap(content), id);

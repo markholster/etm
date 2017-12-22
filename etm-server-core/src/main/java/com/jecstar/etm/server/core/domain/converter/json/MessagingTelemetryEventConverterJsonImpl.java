@@ -10,7 +10,18 @@ import java.util.Map;
 public class MessagingTelemetryEventConverterJsonImpl extends MessagingTelemetryEventWriterJsonImpl implements TelemetryEventConverter<String, MessagingTelemetryEvent> {
 
 	private final TelemetryEventJsonConverter<MessagingTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
-	
+
+    @Override
+    public String write(MessagingTelemetryEvent event, boolean includeId) {
+        return super.write(event, includeId);
+    }
+
+    @Override
+	protected boolean doWrite(MessagingTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+		boolean added = this.converter.addDatabaseFields(buffer, event, firstElement);
+		return super.doWrite(event, buffer, !added);
+	}
+
 	@Override
 	public MessagingTelemetryEvent read(String content, String id) {
 		return read(this.converter.toMap(content), id);
