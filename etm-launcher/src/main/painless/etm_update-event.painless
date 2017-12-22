@@ -155,10 +155,9 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
             }
             targetEndpoints.add(inputEndpoint);
         } else {
-        	Map targetWritingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
         	Map inputWritingEndpointHandler = (Map)inputEndpoint.get("writing_endpoint_handler");
-            // Endpoint was present. Set writing handler to target if handler was not forced to be present.
-            if (!((boolean)inputWritingEndpointHandler.get("forced"))) { 
+            // Endpoint was present. Set writing handler to target.
+            if (inputWritingEndpointHandler != null) {
             	targetEndpoint.put("writing_endpoint_handler", inputWritingEndpointHandler);
             }
             List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers"); 

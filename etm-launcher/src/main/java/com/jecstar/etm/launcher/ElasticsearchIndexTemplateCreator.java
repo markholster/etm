@@ -530,10 +530,9 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 				"            }\n" + 
 				"            targetEndpoints.add(inputEndpoint);\n" + 
 				"        } else {\n" + 
-				"        	Map targetWritingEndpointHandler = (Map)targetEndpoint.get(\"writing_endpoint_handler\");\n" + 
-				"        	Map inputWritingEndpointHandler = (Map)inputEndpoint.get(\"writing_endpoint_handler\");\n" + 
-				"            // Endpoint was present. Set writing handler to target if handler was not forced to be present.\n" + 
-				"            if (!((boolean)inputWritingEndpointHandler.get(\"forced\"))) {\n" + 
+				"        	Map inputWritingEndpointHandler = (Map)inputEndpoint.get(\"writing_endpoint_handler\");\n" +
+				"            // Endpoint was present. Set writing handler to target.\n" +
+				"            if (inputWritingEndpointHandler != null) {\n" +
 				"            	targetEndpoint.put(\"writing_endpoint_handler\", inputWritingEndpointHandler);\n" + 
 				"            }\n" + 
 				"            List inputReadingEndpointHandlers = (List)inputEndpoint.get(\"reading_endpoint_handlers\"); \n" + 

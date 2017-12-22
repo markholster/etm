@@ -6,7 +6,6 @@ public interface TelemetryEventWriter<T, Event extends TelemetryEvent<Event>> {
 
 	T write(Event telemetryEvent);
 	T write(Event telemetryEvent, boolean includeId);
-	T write(Event telemetryEvent, boolean includeId, boolean forUpdate);
-	
+
 	TelemetryEventTags getTags();
 }

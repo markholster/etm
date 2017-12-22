@@ -181,7 +181,6 @@ body { padding-top: 60px; }
                 <div class="col-md">
                     <div id="search-result-card" class="card card-block">
                         <div class="card-body">
-
                             <h5 class="card-title">Search results
                                 <small id="search-stats"></small>
                                 <small style="font-size: 100%;"><a id="link-edit-table" href="#"
@@ -275,7 +274,7 @@ body { padding-top: 60px; }
 </div>
 
 <div class="modal fade" id="modal-table-settings">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg" role="document" style="max-width: 60%;">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
@@ -308,8 +307,10 @@ body { padding-top: 60px; }
                     </div>
                 </div>
                 <div class="card card-block">
-                    <div class="card-title"><h5>Columns</h5></div>
-                    <div id="table-settings-columns">
+                    <div class="card-body">
+                        <div class="card-title"><h5>Columns</h5></div>
+                        <div id="table-settings-columns">
+                        </div>
                     </div>
                 </div>
             </div>

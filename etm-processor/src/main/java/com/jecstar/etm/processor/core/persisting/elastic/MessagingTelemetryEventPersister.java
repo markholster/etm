@@ -32,7 +32,7 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
             bulkProcessor.add(indexRequest);
         } else {
             Map<String, Object> parameters =  new HashMap<>();
-            parameters.put("source", XContentHelper.convertToMap(new BytesArray(writer.write(event, false, true)), false, XContentType.JSON).v2());
+            parameters.put("source", XContentHelper.convertToMap(new BytesArray(writer.write(event, false)), false, XContentType.JSON).v2());
             parameters.put("event_id", event.id);
             bulkProcessor.add(createUpdateRequest(event.id)
                     .script(new Script(ScriptType.STORED, null, "etm_update-event", parameters))

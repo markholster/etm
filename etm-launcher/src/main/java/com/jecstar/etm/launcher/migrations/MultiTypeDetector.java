@@ -2,6 +2,7 @@ package com.jecstar.etm.launcher.migrations;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
@@ -18,6 +19,11 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 public class MultiTypeDetector {
 
     public void detect(Client client) {
+        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL).get();
+        if (!indicesExistsResponse.isExists()) {
+            ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT = false;
+            return;
+        }
         GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(client, GetMappingsAction.INSTANCE, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL).get();
         ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
         for (ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor : mappings) {

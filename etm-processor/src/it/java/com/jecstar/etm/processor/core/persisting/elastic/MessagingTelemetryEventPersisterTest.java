@@ -94,8 +94,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setMessagingEventType(MessagingEventType.REQUEST)
 			.addOrMergeEndpoint(new EndpointBuilder()
 						.setName("TEST.QUEUE")
-						// Empty WritingEndpointHandler is added by the enhancer
-						.setWritingEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(readingEndpointHandler.handlingTime).setForced(true))
 						.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);
@@ -138,8 +136,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 			.setMessagingEventType(MessagingEventType.REQUEST)
 			.addOrMergeEndpoint(new EndpointBuilder()
 					.setName("TEST.QUEUE")
-					// Empty WritingEndpointHandler is added by the enhancer
-					.setWritingEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(readingEndpointHandler.handlingTime).setForced(true))
 					.addReadingEndpointHandler(readingEndpointHandler)
 					);
 		persister.persist(builder.build(), this.messagingEventConverter);

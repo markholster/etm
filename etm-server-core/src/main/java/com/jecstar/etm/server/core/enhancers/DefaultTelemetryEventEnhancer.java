@@ -27,7 +27,6 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	@Override
 	public void enhance(TelemetryEvent<?> event, ZonedDateTime enhanceTime) {
 		enchancePayloadFormat(event);
-		enchanceWritingHandlerTimes(event, enhanceTime);
 		enhanceFields(event);
 	}
 	
@@ -82,28 +81,6 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
 	private void enchancePayloadFormat(final TelemetryEvent<?> event) {
 		if (event.payloadFormat == null && this.enhancePayloadFormat) {
 			event.payloadFormat = detectPayloadFormat(event.payload);
-		}
-	}
-	
-	private void enchanceWritingHandlerTimes(final TelemetryEvent<?> event, final ZonedDateTime enhanceTime) {
-		if (event.endpoints.size() == 0) {
-			Endpoint endpoint = new Endpoint();
-			endpoint.writingEndpointHandler.handlingTime = enhanceTime;
-			// This writing endpoint handler is forced added because there should always be a writing endpoint handler. 
-			endpoint.writingEndpointHandler.forced = true;
-			event.endpoints.add(endpoint);
-		} else {
-			for (Endpoint endpoint : event.endpoints) {
-				if (endpoint.writingEndpointHandler.handlingTime == null) {
-					ZonedDateTime earliestReadTime = endpoint.getEarliestReadTime();
-					if (earliestReadTime != null) {
-						endpoint.writingEndpointHandler.handlingTime = earliestReadTime;
-					} else {
-						endpoint.writingEndpointHandler.handlingTime = enhanceTime;
-					}
-					endpoint.writingEndpointHandler.forced = true;
-				}				
-			}
 		}
 	}
 	

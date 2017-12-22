@@ -1,10 +1,10 @@
 var tableLayout = {
     fields: [
-        {name: 'Timestamp', field: 'endpoints.writing_endpoint_handler.handling_time', format: 'isotimestamp', array: 'lowest', link: true }, 
+        {name: 'Timestamp', field: 'timestamp', format: 'isotimestamp', array: 'lowest', link: true },
         {name: 'Name', field: 'name', format: 'plain', array: 'first', link: false}
     ],
     results_per_page: 50,
-    sort_field: 'endpoints.writing_endpoint_handler.handling_time',
+    sort_field: 'timestamp',
     sort_order: 'desc',
     timestamp: null,
     current_ix: 0,

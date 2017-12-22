@@ -4,6 +4,7 @@ import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import org.elasticsearch.action.DocWriteRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -41,6 +42,13 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
 
     @Override
     public boolean shouldBeExecuted() {
+        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.STATE_INDEX_NAME,
+                ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+                ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
+                ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL).get();
+        if (!indicesExistsResponse.isExists()) {
+            return false;
+        }
         SearchHits searchHits = client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
