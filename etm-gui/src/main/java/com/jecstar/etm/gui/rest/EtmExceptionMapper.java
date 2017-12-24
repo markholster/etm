@@ -1,19 +1,25 @@
 package com.jecstar.etm.gui.rest;
 
 
-import java.util.ArrayList;
-import java.util.List;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import java.util.ArrayList;
+import java.util.List;
 
 @Provider
 public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
+
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(EtmExceptionMapper.class);
 
 	@Override
 	public Response toResponse(Throwable ex) {
@@ -87,6 +93,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 			errorMessage.setCode(EtmException.WRAPPED_EXCEPTION);
 			errorMessage.setMessage(getRootCauseMessage(ex));
 		}
+		if (log.isErrorLevelEnabled()) {
+		    log.logErrorMessage(errorMessage.getCode() + ": " + errorMessage.getMessage(), ex);
+        }
 		return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity(errorMessage).type(MediaType.APPLICATION_JSON).build();
 	}
 

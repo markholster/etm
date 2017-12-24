@@ -65,7 +65,6 @@ public class SearchService extends AbstractIndexMetadataService {
 	
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	private final AuditLogTags auditLogTags = new AuditLogTagsJsonImpl();
-	private final QueryExporter queryExporter = new QueryExporter();
 	private final AuditLogConverter<String, QueryAuditLog> queryAuditLogConverter = new QueryAuditLogConverterJsonImpl();
 	private final AuditLogConverter<String, GetEventAuditLog> getEventAuditLogConverter = new GetEventAuditLogConverterJsonImpl();
 	
@@ -243,9 +242,7 @@ public class SearchService extends AbstractIndexMetadataService {
 		}
 		return result.toString();
 	}
-	
-	
-	
+
 	private SearchRequestBuilder createRequestFromInput(SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
 		if (parameters.getFields().isEmpty()) {
 			parameters.getFields().add(this.eventTags.getEndpointsTag() + "." + this.eventTags.getWritingEndpointHandlerTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());

@@ -4,6 +4,7 @@
 /.classpath
 /.project
 /.idea/
+/FFDC/
 **/*.iml
 /etm.ipr
 /etm.iws
