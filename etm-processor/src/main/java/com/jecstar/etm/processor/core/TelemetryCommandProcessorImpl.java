@@ -303,6 +303,14 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
 	}
 
 	@Override
+	public long getCurrentCapacity() {
+		if (!this.started) {
+			throw new IllegalStateException();
+		}
+		return this.ringBuffer.remainingCapacity();
+	}
+
+	@Override
 	public void configurationChanged(ConfigurationChangedEvent event) {
 		if (this.started && event.isAnyChanged(
 				EtmConfiguration.CONFIG_KEY_ENHANCING_HANDLER_COUNT,

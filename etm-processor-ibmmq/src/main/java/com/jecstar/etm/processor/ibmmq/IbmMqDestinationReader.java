@@ -13,6 +13,8 @@ import com.jecstar.etm.processor.ibmmq.handler.ClonedMessageHandler;
 import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
 import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
+import com.jecstar.etm.processor.reader.DestinationReader;
+import com.jecstar.etm.processor.reader.DestinationReaderInstantiationContext;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
@@ -26,19 +28,30 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Hashtable;
 
-class DestinationReader implements Runnable {
+class IbmMqDestinationReader implements DestinationReader {
 	
-	private static final LogWrapper log = LogFactory.getLogger(DestinationReader.class);
+	private static final LogWrapper log = LogFactory.getLogger(IbmMqDestinationReader.class);
 
 	private final String configurationName;
 	private final StringBuilder byteArrayBuilder = new StringBuilder();
 	
 	private final QueueManager queueManager;
 	private final Destination destination;
-	
-	private final int waitInterval = 5000;
-	private long lastCommitTime;
-	
+
+    /**
+     * The number of milliseconds waiting for a message on the destination.
+     */
+	private final int getMessageWaitInterval = 5_000;
+
+    /**
+     * The number of milliseconds between an increase or decrease check of the pool size.
+     */
+    private final int poolCheckInterval = 30_000;
+
+    private final DestinationReaderInstantiationContext<IbmMqDestinationReader> instantiationContext;
+    private long lastCommitTime;
+	private long lastPoolCheckTime;
+
 	private boolean stop = false;
 	
 	private MQQueueManager mqQueueManager;
@@ -53,7 +66,14 @@ class DestinationReader implements Runnable {
 
 	private final Timer mqGetTimer;
 	
-	public DestinationReader(String configurationName, final TelemetryCommandProcessor processor, MetricRegistry metricRegistry, final QueueManager queueManager, final Destination destination) {
+	public IbmMqDestinationReader(
+			final String configurationName,
+			final TelemetryCommandProcessor processor,
+			final MetricRegistry metricRegistry,
+			final QueueManager queueManager,
+			final Destination destination,
+			final DestinationReaderInstantiationContext<IbmMqDestinationReader> instantiationContext
+	) {
 		this.configurationName = configurationName;
 		this.queueManager = queueManager;
 		this.destination = destination;
@@ -61,16 +81,17 @@ class DestinationReader implements Runnable {
 		this.iibEventHandler = new IIBEventHandler(processor);
 		this.clonedMessageEventHandler = new ClonedMessageHandler(processor);
 		this.mqGetTimer = metricRegistry.timer("ibmmq-processor.mqget." + destination.getName().replaceAll("\\.", "_"));
+		this.instantiationContext = instantiationContext;
 	}
 	@Override
 	public void run() {
 		connect();
 		MQGetMessageOptions getOptions = new MQGetMessageOptions();
-		getOptions.waitInterval = this.waitInterval; // Wait interval in milliseconds.
+		getOptions.waitInterval = this.getMessageWaitInterval; // Wait interval in milliseconds.
 		getOptions.options = this.destination.getDestinationGetOptions();
-		this.lastCommitTime = System.currentTimeMillis();
+        this.lastPoolCheckTime = this.lastCommitTime = System.currentTimeMillis();
 		while (!this.stop) {
-			MQMessage message = null;
+            MQMessage message = null;
 			try {
 				message = new MQMessage();
 				boolean continueProcessing = true;
@@ -133,6 +154,7 @@ class DestinationReader implements Runnable {
 					} catch (IOException e) {
 					}
 				}
+				checkPoolSize();
 			}
 			if (Thread.currentThread().isInterrupted()) {
 				this.stop = true;
@@ -141,8 +163,12 @@ class DestinationReader implements Runnable {
 		commit();
 		disconnect();
 	}
-	
-	private boolean handleMQException(MQException e, MQMessage message) {
+
+    public void stop() {
+        this.stop = true;
+    }
+
+    private boolean handleMQException(MQException e, MQMessage message) {
 		if (e.completionCode == CMQC.MQCC_FAILED && e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) {
 			// No message available, retry
 			if (shouldCommit()) {
@@ -174,12 +200,17 @@ class DestinationReader implements Runnable {
             case CMQC.MQRC_HCONN_ERROR:
             case CMQC.MQRC_HOBJ_ERROR:
             case CMQC.MQRC_UNEXPECTED_ERROR:
+                // When decreasing the pool size this runnable might be interrupted. The MQGET call doesn't handle the interrupt very well; the interrupted exception is caught
+                // and and CMQC.MQRC_UNEXPECTED_ERROR is returned. The DestinationReaderPool calls the stop() method before interrupting the thread so we test for the stop property over here.
+                if (this.stop) {
+                    return false;
+                }
                 if (log.isInfoLevelEnabled()) {
                     log.logInfoMessage("Detected MQ error with reason '" + e.reasonCode+ "'. Trying to reconnect.");
                 }
                 disconnect();
                 try {
-                    Thread.sleep(this.waitInterval);
+                    Thread.sleep(this.getMessageWaitInterval);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                 }
@@ -192,6 +223,7 @@ class DestinationReader implements Runnable {
 				return false;
 		}
 	}
+
 	private void commit() {
 		if (this.mqQueueManager != null) {
 			try {
@@ -209,13 +241,13 @@ class DestinationReader implements Runnable {
 			}
 		}
 		this.counter = 0;
-		this.lastCommitTime = System.currentTimeMillis();		
+		this.lastCommitTime = System.currentTimeMillis();
 	}
-	
+
 	private boolean shouldCommit() {
 		return (this.counter >= this.destination.getCommitSize()) || (System.currentTimeMillis() - this.lastCommitTime > this.destination.getCommitInterval());
 	}
-	
+
 	private void connect() {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Connecting to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
@@ -232,13 +264,13 @@ class DestinationReader implements Runnable {
 			if (this.queueManager.getSslCipherSuite() != null) {
 				try {
 					SSLContext sslContext = new SSLContextBuilder().createSslContext(
-							queueManager.getSslProtocol(), 
-							queueManager.getSslKeystoreLocation(), 
-							queueManager.getSslKeystoreType(), 
-							queueManager.getSslKeystorePassword() == null ? null : queueManager.getSslKeystorePassword().toCharArray(), 
-							queueManager.getSslTruststoreLocation(), 
-							queueManager.getSslTruststoreType(), 
-							queueManager.getSslTruststorePassword() == null ? null : queueManager.getSslTruststorePassword().toCharArray()); 
+							queueManager.getSslProtocol(),
+							queueManager.getSslKeystoreLocation(),
+							queueManager.getSslKeystoreType(),
+							queueManager.getSslKeystorePassword() == null ? null : queueManager.getSslKeystorePassword().toCharArray(),
+							queueManager.getSslTruststoreLocation(),
+							queueManager.getSslTruststoreType(),
+							queueManager.getSslTruststorePassword() == null ? null : queueManager.getSslTruststorePassword().toCharArray());
 					connectionProperties.put(CMQC.SSL_CIPHER_SUITE_PROPERTY, this.queueManager.getSslCipherSuite());
 					connectionProperties.put(CMQC.SSL_SOCKET_FACTORY_PROPERTY, sslContext.getSocketFactory());
 				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
@@ -262,12 +294,12 @@ class DestinationReader implements Runnable {
 			}
 		}
 	}
-	
-	private void setConnectionPropertyWhenNotEmpty(String propertyKey, String propertyValue, Hashtable<String, Object> connectionProperties) {
+    private void setConnectionPropertyWhenNotEmpty(String propertyKey, String propertyValue, Hashtable<String, Object> connectionProperties) {
 		if (propertyValue != null) {
 			connectionProperties.put(propertyKey, propertyValue);
 		}
 	}
+
 	private void disconnect() {
 		if (log.isDebugLevelEnabled()) {
 			log.logDebugMessage("Disconnecting from queuemanager");
@@ -314,7 +346,7 @@ class DestinationReader implements Runnable {
             return;
         }
 	    MQGetMessageOptions getOptions = new MQGetMessageOptions();
-        getOptions.waitInterval = this.waitInterval;
+        getOptions.waitInterval = this.getMessageWaitInterval;
         getOptions.options = Destination.DEFAULT_GET_OPTIONS + CMQC.MQGMO_ACCEPT_TRUNCATED_MSG;
         getOptions.matchOptions = CMQC.MQMO_MATCH_MSG_ID;
 
@@ -338,7 +370,7 @@ class DestinationReader implements Runnable {
             }
         }
     }
-	
+
 	private boolean tryBackout(MQMessage message) {
 		MQQueue backoutQueue = null;
 		try {
@@ -351,7 +383,7 @@ class DestinationReader implements Runnable {
 			} else {
 				if (log.isWarningLevelEnabled()) {
 					log.logWarningMessage("No backout queue defined on destination '" + this.mqDestination.getName() + "'. Unable to backout messages.");
-				}				
+				}
 			}
 		} catch (MQException e) {
 			if (log.isWarningLevelEnabled()) {
@@ -368,10 +400,34 @@ class DestinationReader implements Runnable {
 		return false;
 	}
 
-	
-	public void stop() {
-		this.stop = true;
-	}
+
+	private void checkPoolSize() {
+	    if (this.instantiationContext.getIndexInPool() != 0) {
+	        // Only the first thread in the pool should check the pool size. It's worth nothing if every thread continuously
+            // checks the pool size.
+	        return;
+        }
+	    if (!(this.mqDestination instanceof MQQueue)) {
+            return;
+        }
+        if (System.currentTimeMillis() - this.lastPoolCheckTime < this.poolCheckInterval) {
+            return;
+        }
+        this.lastPoolCheckTime = System.currentTimeMillis();
+        MQQueue queue = (MQQueue) this.mqDestination;
+        try {
+            int currentDepth = queue.getCurrentDepth();
+            if (currentDepth > 500) {
+                this.instantiationContext.getDestinationReaderPool().increaseIfPossible();
+            } else if (currentDepth < 10) {
+                this.instantiationContext.getDestinationReaderPool().decreaseIfPossible();
+            }
+        } catch (MQException e) {
+            if (log.isInfoLevelEnabled()) {
+                log.logInfoMessage("Unable to determine queue depth on queue '" + this.destination.getName() + "'.");
+            }
+        }
+    }
 	
 	private String byteArrayToString(byte[] bytes) {
 		if (bytes == null) {

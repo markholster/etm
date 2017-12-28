@@ -118,9 +118,11 @@ class Launcher {
 
 	private void addShutdownHooks(Configuration configuration) {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (log.isInfoLevelEnabled()) {
-                log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
-            }
+			try {
+				if (log.isInfoLevelEnabled()) {
+					log.logInfoMessage("Shutting down Enterprise Telemetry Monitor.");
+				}
+			} catch (Throwable t) {}
             if (Launcher.this.indexTemplateCreator != null) {
                 try { Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener(); } catch (Throwable t) {}
             }

@@ -76,7 +76,6 @@ ibmMq:
 #    destinations:
 #    - name: MyDestination1
 #      type: queue
-#      nrOfListeners: 1
 #      messagesType: auto
   queueManagers: []
 
@@ -94,7 +93,6 @@ jms:
 #    destinations:
 #    - name: etm.queue.1
 #      type: queue
-#      nrOfListeners: 1
 #      messagesType: auto
 # Use the jdni connection factory to lookup the connection factory in a JNDI registry.
 #  - !jndiConnectionFactory
@@ -104,7 +102,6 @@ jms:
 #    destinations:
 #    - name: etm.queue.2
 #      type: queue
-#      nrOfListeners: 1
 #      messagesType: auto
   connectionFactories: []
 

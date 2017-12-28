@@ -9,12 +9,21 @@ public class Jms {
 
     public final List<AbstractConnectionFactory> connectionFactories = new ArrayList<>();
 
-    public int getTotalNumberOfListeners() {
+    public int getMinimumNumberOfListeners() {
         if (this.connectionFactories.isEmpty()) {
             return 0;
         }
         return this.connectionFactories.stream().mapToInt(
-                f -> f.destinations.stream().mapToInt(Destination::getNrOfListeners).sum()
+                f -> f.destinations.stream().mapToInt(Destination::getMinNrOfListeners).sum()
+        ).sum();
+    }
+
+    public int getMaximumNumberOfListeners() {
+        if (this.connectionFactories.isEmpty()) {
+            return 0;
+        }
+        return this.connectionFactories.stream().mapToInt(
+                f -> f.destinations.stream().mapToInt(Destination::getMaxNrOfListeners).sum()
         ).sum();
     }
 

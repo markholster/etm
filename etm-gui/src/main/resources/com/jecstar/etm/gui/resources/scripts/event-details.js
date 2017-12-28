@@ -146,9 +146,9 @@ function showEvent(scrollTo, type, id) {
 			}).get();			
 			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		}
-		if ('log' === data.type || 'log' === data.source.type) {
+		if ('log' === data.type || 'log' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
-		} else if ('http' === data.type || 'http' === data.source.type) {
+		} else if ('http' === data.type || 'http' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -181,7 +181,7 @@ function showEvent(scrollTo, type, id) {
 					}					
 				}
 			}
-		} else if ('messaging' === data.type || 'messaging' === data.source.type) {
+		} else if ('messaging' === data.type || 'messaging' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -216,7 +216,7 @@ function showEvent(scrollTo, type, id) {
 					$tabHeader.text('Fire-forget message');
 				}
 			}
-		} else if ('sql' === data.type || 'sql' === data.source.type) {
+		} else if ('sql' === data.type || 'sql' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Sql type', data.source.sql_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -285,8 +285,9 @@ function showEvent(scrollTo, type, id) {
 	    	}
 	    	worker.postMessage([payloadCode.text(), data.source.payload_format]);
 	    }
-	    if (('log' === data.type || 'log' === data.source.type) && "undefined" != typeof data.source.stack_trace) {
+	    if (('log' === data.type || 'log' === data.source.object_type) && "undefined" != typeof data.source.stack_trace) {
 	    	$eventTab.append(
+	    	    $('<br />'),
 	    		$('<div>').addClass('row').append(
 	    				$('<div>').addClass('col-sm-12').append(
 	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append($('<code>').text(data.source.stack_trace))

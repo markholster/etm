@@ -1,7 +1,7 @@
 ext {
     version_resteasy = "3.1.4.Final"
     version_elasticsearch_major = "6.1"
-    version_elasticsearch = version_elasticsearch_major + ".0"
+    version_elasticsearch = version_elasticsearch_major + ".1"
     version_artemis = "2.3.0"
 
     dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M24"

@@ -41,6 +41,8 @@ public interface TelemetryCommandProcessor extends ConfigurationChangeListener {
 
     boolean isReadyForProcessing();
 
+    long getCurrentCapacity();
+
     @Override
     void configurationChanged(ConfigurationChangedEvent event);
 }

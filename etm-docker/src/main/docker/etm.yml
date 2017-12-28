@@ -18,9 +18,6 @@ http:
   sslTruststoreLocation: 
   sslTruststorePassword: 
   sslTruststoreType: JKS
-ibmMq:
-  enabled: false
-  queueManagers: []
 logging:
   loggers: {}
   rootLogger: INFO

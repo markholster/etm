@@ -3,6 +3,7 @@ package com.jecstar.etm.processor.jms;
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.jms.configuration.*;
+import com.jecstar.etm.processor.reader.DestinationReaderPool;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
@@ -19,7 +20,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class JmsProcessorImpl implements JmsProcessor {
@@ -31,6 +33,7 @@ public class JmsProcessorImpl implements JmsProcessor {
     private final Jms config;
     private ExecutorService executorService;
     private List<Context> contexts = new ArrayList<>();
+    private ArrayList<DestinationReaderPool<JmsDestinationReader>> readerPools = new ArrayList<>();
 
     public JmsProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, Jms config) {
         this.processor = processor;
@@ -40,22 +43,43 @@ public class JmsProcessorImpl implements JmsProcessor {
 
     @Override
     public void start() {
-        if (this.config.getTotalNumberOfListeners() <= 0) {
+        if (this.config.getMinimumNumberOfListeners() <= 0) {
             return;
         }
-        this.executorService = Executors.newFixedThreadPool(this.config.getTotalNumberOfListeners(), new NamedThreadFactory("jms_processor"));
+        this.executorService = new ThreadPoolExecutor(this.config.getMinimumNumberOfListeners(), this.config.getMaximumNumberOfListeners(),
+                0L, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),
+                new NamedThreadFactory("jms_processor"));
         for (AbstractConnectionFactory abstractConnectionFactory : this.config.getConnectionFactories()) {
-            ConnectionFactory jmsConnectionFactory = createJmsConnectionFactory(abstractConnectionFactory);
+            final ConnectionFactory jmsConnectionFactory = createJmsConnectionFactory(abstractConnectionFactory);
             for (Destination destination : abstractConnectionFactory.destinations) {
-                for (int i = 0; i < destination.getNrOfListeners(); i++) {
-                    this.executorService.submit(new DestinationReader(this.processor, this.metricRegistry, jmsConnectionFactory, destination, abstractConnectionFactory.userId, abstractConnectionFactory.password));
-                }
+                DestinationReaderPool<JmsDestinationReader> readerPool = new DestinationReaderPool<>(
+                        this.processor,
+                        this.executorService,
+                        destination.getName(),
+                        destination.getMinNrOfListeners(),
+                        destination.getMaxNrOfListeners(),
+                        f -> new JmsDestinationReader(
+                                this.processor,
+                                this.metricRegistry,
+                                jmsConnectionFactory,
+                                destination,
+                                abstractConnectionFactory.userId,
+                                abstractConnectionFactory.password,
+                                f
+                        )
+                );
+                this.readerPools.add(readerPool);
             }
         }
     }
 
     @Override
     public void stop() {
+        for (DestinationReaderPool<JmsDestinationReader> readerPool : this.readerPools) {
+            readerPool.stop();
+        }
+        this.readerPools.clear();
         if (this.executorService != null) {
             this.executorService.shutdownNow();
             try {
@@ -78,7 +102,6 @@ public class JmsProcessorImpl implements JmsProcessor {
     }
 
     private ConnectionFactory createJmsConnectionFactory(AbstractConnectionFactory abstractConnectionFactory) {
-        ConnectionFactory jmsConnectionFactory = null;
         if (abstractConnectionFactory instanceof CustomConnectionFactory) {
             CustomConnectionFactory customConnectionFactory = (CustomConnectionFactory) abstractConnectionFactory;
             try {

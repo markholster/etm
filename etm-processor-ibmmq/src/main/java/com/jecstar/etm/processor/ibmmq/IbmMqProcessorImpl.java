@@ -5,10 +5,14 @@ import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
+import com.jecstar.etm.processor.reader.DestinationReaderPool;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class IbmMqProcessorImpl implements IbmMqProcessor {
@@ -19,6 +23,7 @@ public class IbmMqProcessorImpl implements IbmMqProcessor {
 	private final String clusterName;
 	private final IbmMq config;
 	private ExecutorService executorService;
+	private List<DestinationReaderPool<IbmMqDestinationReader>> readerPools = new ArrayList<>();
 
 	public IbmMqProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, IbmMq config, String clusterName, String instanceName) {
 		this.processor = processor;
@@ -27,22 +32,44 @@ public class IbmMqProcessorImpl implements IbmMqProcessor {
 		this.clusterName = clusterName;
 		this.instanceName = instanceName;
 	}
-	
+
+	@Override
 	public void start() {
-		if (this.config.getTotalNumberOfListeners() <= 0) {
+		if (this.config.getMinimumNumberOfListeners() <= 0) {
 			return;
 		}
-		this.executorService = Executors.newFixedThreadPool(this.config.getTotalNumberOfListeners(), new NamedThreadFactory("ibm_mq_processor"));
+        this.executorService = new ThreadPoolExecutor(this.config.getMinimumNumberOfListeners(), this.config.getMaximumNumberOfListeners(),
+                0L, TimeUnit.MILLISECONDS,
+                new SynchronousQueue<>(),
+                new NamedThreadFactory("ibm_mq_processor"));
 		for (QueueManager queueManager : this.config.getQueueManagers()) {
 			for (Destination destination : queueManager.getDestinations()) {
-				for (int i=0; i < destination.getNrOfListeners(); i++) {
-					this.executorService.submit(new DestinationReader(this.clusterName + "_" + this.instanceName, this.processor, this.metricRegistry, queueManager, destination));
-				}
-			}
+                DestinationReaderPool<IbmMqDestinationReader> readerPool = new DestinationReaderPool<>(
+                        this.processor,
+                        this.executorService,
+                        destination.getName(),
+                        destination.getMinNrOfListeners(),
+                        destination.getMaxNrOfListeners(),
+                        f -> new IbmMqDestinationReader(
+                                this.clusterName + "_" + this.instanceName,
+                                this.processor,
+                                this.metricRegistry,
+                                queueManager,
+                                destination,
+                                f
+                        )
+                );
+                this.readerPools.add(readerPool);
+            }
 		}
 	}
 
+	@Override
 	public void stop() {
+	    for (DestinationReaderPool<IbmMqDestinationReader> readerPool : this.readerPools) {
+	        readerPool.stop();
+        }
+        this.readerPools.clear();
 		if (this.executorService != null) {
 			this.executorService.shutdownNow();
 			try {

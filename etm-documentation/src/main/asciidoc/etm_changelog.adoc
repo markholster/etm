@@ -16,9 +16,9 @@
 . Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
 . If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
 . Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
-. Dowload and uncompress {etm} 3.0.0 to a new directory.
+. Download and uncompress {etm} 3.0.0 to a new directory.
 . Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
-. Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
+. Copy the file 'config/etm.yml' from your old {etm} installation to the new one. Remove the option 'nrOfListeners' under the ibmMq chapter. This option must be replaced with the 'minNrOfListeners' and 'maxNrOfListeners' options. See the <<IBM MQ section in etm.yml>> for more information.
 . Start a single {etm} node and wait for the data migration to complete.
 . Start all other {etm} nodes.
 

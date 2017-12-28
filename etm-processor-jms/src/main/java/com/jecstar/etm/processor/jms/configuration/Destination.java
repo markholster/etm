@@ -4,7 +4,9 @@ public class Destination {
 
 	private String name;
 	private String type = "queue";
-	private int nrOfListeners = 1;
+	private int minNrOfListeners = 1;
+	private int maxNrOfListeners = 5;
+
 	private String messagesType = "auto"; // etmevent, clone
 
 	public void setName(String name) {
@@ -25,20 +27,34 @@ public class Destination {
 		}
 		this.type = type;
 	}
-	
-	public int getNrOfListeners() {
-		if ("topic".equalsIgnoreCase(type)) {
-			return 1;
-		}
-		return this.nrOfListeners;
-	}
-	
-	public void setNrOfListeners(int nrOfListeners) {
-		if (nrOfListeners < 1 || nrOfListeners > 65535) {
-			throw new IllegalArgumentException(nrOfListeners + " is an invalid number of listeners");
-		}
-		this.nrOfListeners = nrOfListeners;
-	}
+
+    public int getMinNrOfListeners() {
+        if ("topic".equalsIgnoreCase(type)) {
+            return 1;
+        }
+        return this.minNrOfListeners;
+    }
+
+    public void setMinNrOfListeners(int minNrOfListeners) {
+        if (minNrOfListeners < 1 || minNrOfListeners > 65535) {
+            throw new IllegalArgumentException(minNrOfListeners + " is an invalid minimum number of listeners");
+        }
+        this.minNrOfListeners = minNrOfListeners;
+    }
+
+    public int getMaxNrOfListeners() {
+        if ("topic".equalsIgnoreCase(type)) {
+            return 1;
+        }
+        return this.maxNrOfListeners;
+    }
+
+    public void setMaxNrOfListeners(int maxNrOfListeners) {
+        if (maxNrOfListeners < 1 || maxNrOfListeners > 65535) {
+            throw new IllegalArgumentException(maxNrOfListeners + " is an invalid maximum number of listeners");
+        }
+        this.maxNrOfListeners = maxNrOfListeners;
+    }
 
     public String getMessagesType() {
         return this.messagesType;

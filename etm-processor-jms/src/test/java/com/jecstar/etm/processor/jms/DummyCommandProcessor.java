@@ -98,6 +98,11 @@ public class DummyCommandProcessor implements TelemetryCommandProcessor {
     }
 
     @Override
+    public long getCurrentCapacity() {
+        return 1000;
+    }
+
+    @Override
     public void configurationChanged(ConfigurationChangedEvent event) {
     }
 
