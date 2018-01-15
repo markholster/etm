@@ -9,6 +9,7 @@ import com.jecstar.etm.gui.rest.services.iib.proxy.*;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import org.elasticsearch.action.get.GetResponse;
@@ -19,6 +20,8 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Constructor;
@@ -26,6 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 @Path("/iib")
+@DeclareRoles(SecurityRoles.ALL_ROLES)
 public class IIBService extends AbstractJsonService {
 	
 	/**
@@ -49,6 +53,7 @@ public class IIBService extends AbstractJsonService {
 	@GET
 	@Path("/nodes")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.IIB_NODE_READ, SecurityRoles.IIB_NODE_READ_WRITE})
 	public String getNodes() {
 		SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
 				.setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE).setFetchSource(true)
@@ -75,6 +80,7 @@ public class IIBService extends AbstractJsonService {
 	@DELETE
 	@Path("/node/{nodeName}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
 	public String deleteNode(@PathParam("nodeName") String nodeName) {
 		client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
 				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
@@ -86,6 +92,7 @@ public class IIBService extends AbstractJsonService {
 	@PUT
 	@Path("/node/{nodeName}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
 	public String addNode(@PathParam("nodeName") String nodeName, String json) {
 		Node node = this.nodeConverter.read(json);
 		try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
@@ -103,6 +110,7 @@ public class IIBService extends AbstractJsonService {
 	@GET
 	@Path("/node/{nodeName}/servers")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE})
 	public String getServers(@PathParam("nodeName") String nodeName) {
 		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
 				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
@@ -132,6 +140,7 @@ public class IIBService extends AbstractJsonService {
 	@POST
 	@Path("/node/{nodeName}/server/{serverName}/{objectType}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.IIB_EVENT_READ_WRITE)
 	public String updateEventMonitoring(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName, @PathParam("objectType") String objectType, String json) {
 		Map<String, Object> valueMap = toMap(json);
 		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
@@ -189,6 +198,7 @@ public class IIBService extends AbstractJsonService {
 	@GET
 	@Path("/node/{nodeName}/server/{serverName}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE})
 	public String getServerDeployments(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName) {
 		GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
 				ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)

@@ -20,7 +20,7 @@ public class EtmException extends RuntimeException {
 	public static final int INVALID_XSLT_TEMPLATE 			= 201_003;
 	public static final int INVALID_JSON_EXPRESSION			= 201_004;
 	public static final int INVALID_EXPRESSION_PARSER_TYPE 	= 201_005;
-	public static final int NO_MORE_ADMINS_LEFT 			= 201_006;
+	public static final int NO_MORE_USER_ADMINS_LEFT 		= 201_006;
 	public static final int INVALID_LDAP_USER 				= 201_007;
 	public static final int INVALID_LDAP_GROUP 				= 201_008;
 	

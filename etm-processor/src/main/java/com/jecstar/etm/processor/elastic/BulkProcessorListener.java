@@ -36,12 +36,12 @@ class BulkProcessorListener implements BulkProcessor.Listener {
 	private final Map<Long, Context> metricContext = new ConcurrentHashMap<>();
 	private final Map<String, Long> blacklistedIds = new ConcurrentHashMap<>();
 	
-	public BulkProcessorListener(final MetricRegistry metricRegistry) {
+	BulkProcessorListener(final MetricRegistry metricRegistry) {
 		this.bulkTimer = metricRegistry.timer("event-processor.persisting-repository-bulk-update");
-		Gauge<Integer> blacklistGauge = () -> BulkProcessorListener.this.blacklistedIds.size();
+		Gauge<Integer> blacklistGauge = BulkProcessorListener.this.blacklistedIds::size;
 		metricRegistry.register("event-processor.blacklist_size", blacklistGauge);
 	}
-	
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void beforeBulk(long executionId, BulkRequest request) {

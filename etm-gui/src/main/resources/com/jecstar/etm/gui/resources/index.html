@@ -11,10 +11,7 @@
 <link rel="stylesheet" href="styles/font-awesome.min.css">
 <link rel="stylesheet" href="styles/jquery-ui.min.css">
 <link rel="stylesheet" href="styles/autocomplete.css">
-<link rel="stylesheet" href="styles/spinner.css">
-<style type="text/css">
-body { padding-top: 60px; }
-</style>
+<link rel="stylesheet" href="styles/etm-commons.css">
 <!-- jQuery first, then Bootstrap JS. -->
 <script src="scripts/tether.min.js"></script>
 <script src="scripts/jquery.min.js"></script>
@@ -23,7 +20,7 @@ body { padding-top: 60px; }
 
 </head>
 <body>
-    <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
         <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
             <img src="images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top" alt="">
             Jecstar
@@ -71,29 +68,8 @@ body { padding-top: 60px; }
         </div>
     </div>
   </div>
-  
+  <script src="scripts/etm-commons.js"></script>
   <script>
-    $(document).ajaxStart(function () {
-        $("#users_errorBox").hide('fast');
-        $('#spinner').show('fast');
-    }).ajaxStop(function () {
-        $('#spinner').hide('fast');
-    }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        if ("undefined" != typeof jqXHR.responseJSON) {
-            $('#users_errorBox').text('Error saving user configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
-        } else {
-            $('#users_errorBox').text('Error saving user configuration: ' +  thrownError).show('fast');
-        }
-        $('html,body').animate({scrollTop: 0},'fast');
-    }).ajaxComplete(function(event, jqXHR, settings) {
-        var contentType = jqXHR.getResponseHeader("Content-Type");
-        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
-            // assume that our login has expired - reload our current page
-            window.location.reload();
-            return;
-        }          
-        $('html,body').animate({scrollTop: 0},'fast');
-    });
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',

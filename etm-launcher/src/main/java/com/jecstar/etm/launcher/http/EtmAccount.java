@@ -1,13 +1,11 @@
 package com.jecstar.etm.launcher.http;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
-
 import io.undertow.security.idm.Account;
+
+import java.util.HashSet;
+import java.util.Set;
 
 class EtmAccount implements Account {
 	
@@ -22,13 +20,9 @@ class EtmAccount implements Account {
 	
 	EtmAccount(EtmPrincipal principal) {
 		this.principal = principal;
-		for (EtmPrincipalRole role : this.principal.getRoles()) {
-			roles.add(role.getRoleName());
-		}
+		this.roles.addAll(principal.getRoles());
 		for (EtmGroup group : this.principal.getGroups()) {
-			for (EtmPrincipalRole role : group.getRoles()) {
-				roles.add(role.getRoleName());
-			}			
+				this.roles.addAll(group.getRoles());
 		}
 		this.lastUpdated = System.currentTimeMillis();
 	}

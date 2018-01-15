@@ -1,23 +1,19 @@
 package com.jecstar.etm.server.core.domain.converter.json;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.domain.writer.json.JsonWriter;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 public class JsonConverter extends JsonWriter {
 	
@@ -36,6 +32,14 @@ public class JsonConverter extends JsonWriter {
 			throw new EtmException(EtmException.INVALID_JSON_EXPRESSION, e);
 		}
 	}
+
+	public String toString(Map<String, Object> object) {
+        try {
+            return this.objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new EtmException(EtmException.INVALID_JSON_EXPRESSION, e);
+        }
+    }
 	
 	public Map<String, Object> getObject(String tag, Map<String, Object> valueMap) {
 		return getObject(tag, valueMap, Collections.emptyMap());

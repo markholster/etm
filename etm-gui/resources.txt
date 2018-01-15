@@ -1,0 +1,1 @@
+bootstrap theme -> https://bootswatch.com/flatly/ -> daarna fonts uit bootstrap.min.css aanpassen naar lokaal url & #0f7864 vervangen door #008b8b

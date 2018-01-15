@@ -1,4 +1,5 @@
-var cyEndpoints; 
+"use strict";
+var cyEndpoints;
 var cyEventChain;
 var transactionMap = {};
 var eventMap = {};
@@ -49,7 +50,7 @@ function showEvent(scrollTo, type, id) {
 	function addContent(data) {
 		$('#event-card-title').text('Event ' + data.event.id);
 		$('#event-tab-header').text(capitalize(data.event.type === 'doc' ? data.event.source.type : data.event.type));
-		$eventTab = $('#event-tab');
+		var $eventTab = $('#event-tab');
 		if (data.event.source) {
 			if (data.event.source.name) {
 				$('#event-card-title').text(data.event.source.name);
@@ -112,8 +113,8 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function writeEventDataToTab(tab, tabHeader, data, timeZone) {
-		$eventTab = $(tab);
-		$tabHeader = $(tabHeader);
+		var $eventTab = $(tab);
+		var $tabHeader = $(tabHeader);
 		var dataLink = $('<a href="#">')
 			.text(data.id)
 			.addClass('form-control-static')
@@ -259,7 +260,7 @@ function showEvent(scrollTo, type, id) {
 	    
 	    $eventTab.append($('<br/>'));
 	    var payloadCode = $('<code>').text(indentCode(data.source.payload, data.source.payload_format));
-	    $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw payload to clipboard');
+	    var $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw payload to clipboard');
 	    $eventTab.append(
 	    		$('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
 	    				$('<div>').addClass('col-sm-12').append(
@@ -309,7 +310,9 @@ function showEvent(scrollTo, type, id) {
 	}
 		
 	function appendToContainerInRow(container, name, value) {
-		appendElementToContainerInRow(container, name, $('<p>').addClass('form-control-static').text(value));
+	    if ('undefined' != typeof value) {
+		    appendElementToContainerInRow(container, name, $('<p>').addClass('form-control-static').text(value));
+		}
 	}
 	
 	function appendElementToContainerInRow(container, name, element) {
@@ -333,7 +336,7 @@ function showEvent(scrollTo, type, id) {
 	
 	function createDetailMap(name, valueMap) {
 		var panelId = generateUUID();
-		$detailMap = $('<div>').addClass('panel panel-default').append(
+		var $detailMap = $('<div>').addClass('panel panel-default').append(
 				$('<div>').addClass('panel-heading clearfix').append(
 						$('<div>').addClass('pull-left').append(
 							$('<a>')
@@ -350,7 +353,7 @@ function showEvent(scrollTo, type, id) {
 										$('<table>').addClass('table table-sm table-striped table-hover').append(
 												$('<thead>').append($('<tr>').append($('<th>').attr('style', 'padding: 0.1rem;').text('Name')).append($('<th>').attr('style', 'padding: 0.1rem;').text('Value')))
 										).append(function () {
-											$tbody = $('<tbody>');
+											var $tbody = $('<tbody>');
 											var detailItems = [];
 											$.each(valueMap, function(key, value) {
 								            	if (endsWith(key, '_as_number') || endsWith(key, '_as_boolean') || endsWith(key, '_as_date')) {
@@ -414,7 +417,7 @@ function showEvent(scrollTo, type, id) {
 		$.each(endpoints, function (index, endpoint) {
 			rowIx++;
 			var endpointId = rowIx + '-1';
-			if (endpoint.writing_endpoint_handler.application) {
+			if (endpoint.writing_endpoint_handler && endpoint.writing_endpoint_handler.application) {
 				var name = endpoint.writing_endpoint_handler.application.name ? endpoint.writing_endpoint_handler.application.name : '?';
 				nodesData.push({
 					data: {
@@ -550,41 +553,43 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function displayWritingEndpointHandler(nodeDetailContainerId, transactionDetailContainerId, endpoint_handler, timeZone) {
-		$transactionDetails = $('#' + transactionDetailContainerId);
+		var $transactionDetails = $('#' + transactionDetailContainerId);
 		$transactionDetails.fadeOut('fast', function() {
 			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
-			$this = $(this).empty();
+			$(this).empty();
 			var eh = formatEndpointHandler(endpoint_handler, timeZone);
-			appendToContainerInRow($this, 'Write time', eh.handling_time);
-			appendToContainerInRow($this, 'Response time', eh.response_time);
-			appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
-			appendToContainerInRow($this, 'Location', eh.location);
-			appendToContainerInRow($this, 'Application name', eh.application_name);
-			appendToContainerInRow($this, 'Application version', eh.application_version);
-			appendToContainerInRow($this, 'Application instance', eh.application_instance);
-			appendToContainerInRow($this, 'Application user', eh.application_principal);
-			appendToContainerInRow($this, 'Application address', eh.application_host);
+			appendToContainerInRow($(this), 'Write time', eh.handling_time);
+			appendToContainerInRow($(this), 'Response time', eh.response_time);
+			appendToContainerInRow($(this), 'Transaction id', eh.transaction_id);
+			appendToContainerInRow($(this), 'Location', eh.location);
+			appendToContainerInRow($(this), 'Application name', eh.application_name);
+			appendToContainerInRow($(this), 'Application version', eh.application_version);
+			appendToContainerInRow($(this), 'Application instance', eh.application_instance);
+			appendToContainerInRow($(this), 'Application user', eh.application_principal);
+			appendToContainerInRow($(this), 'Application address', eh.application_host);
 			if (eh.transaction_id && eh.application_name) {
 				displayTransactionDetails($transactionDetails, eh.application_name, eh.transaction_id)
 				$transactionDetails.append('<br>');
 			} else {
-				$this.append('<br>');
+				$(this).append('<br>');
 			}
-			$this.fadeIn('fast');
+			$(this).fadeIn('fast');
 			$transactionDetails.fadeIn('fast');
 		});
 	}
 	
 	function displayEndpoint(nodeDetailContainerId, transactionDetailContainerId, endpoint, timeZone) {
 		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
-			$this = $(this).empty();
-			appendToContainerInRow($this, 'Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
-			appendToContainerInRow($this, 'Endpoint name', endpoint.name);
-			$this.append('<br>');
-			$this.fadeIn('fast');
+			$(this).empty();
+			if (endpoint && endpoint.writing_endpoint_handler) {
+			    appendToContainerInRow($(this), 'Write time', moment.tz(endpoint.writing_endpoint_handler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			}
+			appendToContainerInRow($(this), 'Endpoint name', endpoint.name);
+			$(this).append('<br>');
+			$(this).fadeIn('fast');
 		});
 		$('#' + transactionDetailContainerId).fadeOut('fast', function() {
 			$('#transaction-detail-table').detach();
@@ -593,38 +598,38 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function displayReadingEndpointHandler(nodeDetailContainerId, transactionDetailContainerId, endpoint_handler, timeZone) {
-		$transactionDetails = $('#' + transactionDetailContainerId);
+		var $transactionDetails = $('#' + transactionDetailContainerId);
 		$transactionDetails.fadeOut('fast', function() {
 			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
-			$this = $(this).empty();
+			$(this).empty();
 			var eh = formatEndpointHandler(endpoint_handler, timeZone);
-			appendToContainerInRow($this, 'Read time', eh.handling_time);
-			appendToContainerInRow($this, 'Response time', eh.response_time);
-			appendToContainerInRow($this, 'Transaction id', eh.transaction_id);
-			appendToContainerInRow($this, 'Location', eh.location);
-			appendToContainerInRow($this, 'Application name', eh.application_name);
-			appendToContainerInRow($this, 'Application version', eh.application_version);
-			appendToContainerInRow($this, 'Application instance', eh.application_instance);
-			appendToContainerInRow($this, 'Application user', eh.application_principal);
-			appendToContainerInRow($this, 'Application address', eh.application_host);
-			appendToContainerInRow($this, 'Latency', eh.latency);
+			appendToContainerInRow($(this), 'Read time', eh.handling_time);
+			appendToContainerInRow($(this), 'Response time', eh.response_time);
+			appendToContainerInRow($(this), 'Transaction id', eh.transaction_id);
+			appendToContainerInRow($(this), 'Location', eh.location);
+			appendToContainerInRow($(this), 'Application name', eh.application_name);
+			appendToContainerInRow($(this), 'Application version', eh.application_version);
+			appendToContainerInRow($(this), 'Application instance', eh.application_instance);
+			appendToContainerInRow($(this), 'Application user', eh.application_principal);
+			appendToContainerInRow($(this), 'Application address', eh.application_host);
+			appendToContainerInRow($(this), 'Latency', eh.latency);
 			if (eh.transaction_id && eh.application_name) {
 				displayTransactionDetails($transactionDetails, eh.application_name, eh.transaction_id)
 				$transactionDetails.append('<br>');
 			} else {
-				$this.append('<br>');
+				$(this).append('<br>');
 			}
-			$this.fadeIn('fast');
+			$(this).fadeIn('fast');
 			$transactionDetails.fadeIn('fast');
 		});
 	}
 	
 	function displayTransactionDetails(container, applicationName, transactionId) {
-		$container = $(container);
-		$transactionTable = transactionMap[transactionId];
+		var $container = $(container);
+		var $transactionTable = transactionMap[transactionId];
 		if ("undefined" != typeof $transactionTable) {
 			$container.append($transactionTable);
 		} else {
@@ -646,9 +651,9 @@ function showEvent(scrollTo, type, id) {
 			        		)
 			        	)
 			        ).append(function () {
-			        	$tbody = $('<tbody>');
+			        	var $tbody = $('<tbody>');
 			        	$.each(transaction_data.events, function(index, event) {
-			        		$link = $('<a href="#">')
+			        		var $link = $('<a href="#">')
 								.text(event.id)
 								.attr('data-link-type', 'show-event')
 								.attr('data-scroll-to', scrollTo)
@@ -658,7 +663,7 @@ function showEvent(scrollTo, type, id) {
 			        			$('<tr>').append(
 			        				event.id == id ? $('<td>').attr('style' ,'padding: 0.1rem;').text(event.id) : $('<td>').attr('style' ,'padding: 0.1rem;').append($link),
 			        				$('<td>').attr('style' ,'padding: 0.1rem;').text(moment.tz(event.handling_time, transaction_data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')),
-			        				$('<td>').attr('style' ,'padding: 0.1rem;').text('sql' == event.type ? 'SQL' : capitalize(event.type)),
+			        				$('<td>').attr('style' ,'padding: 0.1rem;').text('sql' == event.object_type ? 'SQL' : capitalize(event.object_type)),
 			        				$('<td>').attr('style' ,'padding: 0.1rem;').text(formatTransactionLine(event))
 			        			)
 			        		);	
@@ -971,7 +976,7 @@ function showEvent(scrollTo, type, id) {
 									    type: 'GET',
 									    contentType: 'application/json',
 									    async: false,
-									    url: '../rest/search/event/' + encodeURIComponent(eventType) + '/' + encodeURIComponent(eventId) + '/endpoints',
+									    url: '../rest/search/event/' + encodeURIComponent(eventId) + '/endpoints',
 									    success: function(data) {
 									        if (!data || !data.event || !data.event.source) {
 									        	eventMap[eventId] = "";

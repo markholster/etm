@@ -305,10 +305,8 @@ function buildEndpointPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	if ($('#modal-endpoint-overwrite').is(':visible')) {
-        		$('#modal-endpoint-overwrite').modal('hide');
-        	}
-        });    		
+            hideModals($('#modal-endpoint-overwrite'));
+        });
 	}
 	
 	function removeEndpoint(endpointName) {
@@ -328,10 +326,8 @@ function buildEndpointPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	if ($('#modal-endpoint-remove').is(':visible')) {
-        		$('#modal-endpoint-remove').modal('hide');
-        	}
-        });    		
+            hideModals($('#modal-endpoint-remove'));
+        });
 	}
 	
 	function createEndpointData() {

@@ -58,27 +58,6 @@ function buildUserPage() {
 	    $.ajax({
 	        type: 'GET',
 	        contentType: 'application/json',
-	        url: '../rest/settings/userroles',
-	        success: function(data) {
-	            if (!data || !data.user_roles) {
-	                return;
-	            }
-	            var $rolesContainer = $('#user-roles-container');
-	            $(data.user_roles).each(function (index, user_role) {
-	            	$rolesContainer.append(
-            			$('<label>').addClass('custom-control custom-checkbox').append(
-        					$('<input>').attr('type', 'checkbox').attr('id', 'check-role-' + user_role.value).attr('name', 'check-user-roles').attr('value', user_role.value).addClass('custom-control-input'),
-        					$('<span>').addClass('custom-control-indicator'),
-        					$('<span>').addClass('custom-control-description').text(user_role.name)
-            			)
-	            	);
-	            });
-	            
-	        }
-	    }),
-	    $.ajax({
-	        type: 'GET',
-	        contentType: 'application/json',
 	        url: '../rest/settings/groups',
 	        success: function(data) {
 	            if (!data || !data.groups) {
@@ -162,9 +141,10 @@ function buildUserPage() {
 		$('#sel-change-password-on-logon').val(userData.change_password_on_logon ? 'true' : 'false');
 		$('#user-roles-container > label > input').prop('checked', false);
 		if (userData.roles) {
-			$.each(userData.roles, function(index, role) {
-				$('#check-role-' + role).prop('checked', true);
-			});
+			$('#card-acl').find('select').val('none');
+            $.each(userData.roles, function(index, role) {
+                $('#card-acl').find("option[value='" + role + "']").parent().val(role);
+            });
 		}
 		if (userData.groups) {
 			$.each(userData.groups, function(index, groupName) {
@@ -222,7 +202,7 @@ function buildUserPage() {
 
     $('#btn-download-users').click(function(event) {
         event.preventDefault();
-        $('#modal-download-users').modal('hide');
+        hideModals($('#modal-download-users'));
         var q = {
             fileType: $('#sel-download-type').val()
         };
@@ -294,9 +274,7 @@ function buildUserPage() {
 		        $('#sel-user').val(user.id).trigger('change');
 		    }
 		}).always(function () {
-        	if ($('#modal-user-import').is(':visible')) {
-        		$('#modal-user-import').modal('hide');
-        	}
+		    hideModals($('#modal-user-import'));
         });
 	});
 	
@@ -383,10 +361,8 @@ function buildUserPage() {
         		$('#users_infoBox').text('User \'' + userData.id+ '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	if ($('#modal-user-overwrite').is(':visible')) {
-        		$('#modal-user-overwrite').modal('hide');
-        	}
-        });  		
+            hideModals($('#modal-user-overwrite'));
+        });
 	}
 	
 	function removeUser(userId) {
@@ -405,10 +381,8 @@ function buildUserPage() {
         		$('#users_infoBox').text('User \'' + userId + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	if ($('#modal-user-remove').is(':visible')) {
-        		$('#modal-user-remove').modal('hide');
-        	}
-        });		
+            hideModals($('#modal-user-remove'));
+        });
 	}
 	
 	function checkOrInvalidateFormInCaseOfPasswordMismatch() {
@@ -440,9 +414,11 @@ function buildUserPage() {
         if ($('#input-new-password1').val()) {
         	userData.new_password = $('#input-new-password1').val();
         }
-		$('#user-roles-container > label > input:checked').each(function () {
-			userData.roles.push($(this).val());
-		});
+		$('#card-acl').find('select').each(function () {
+            if ($(this).val() !== 'none') {
+                userData.roles.push($(this).val());
+            }
+        });
 		$('.etm-group').each(function () {
 			var groupName = $(this).val();
 			if (-1 == userData.groups.indexOf(groupName)) {

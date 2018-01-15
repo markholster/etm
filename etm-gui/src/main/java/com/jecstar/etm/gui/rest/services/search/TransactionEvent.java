@@ -4,6 +4,7 @@ class TransactionEvent {
 
 	public String index;
 	public String type;
+	public String objectType;
 	public String id;
 	public String name;
 	public Long handlingTime;

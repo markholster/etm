@@ -45,7 +45,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 
 	private final Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
 	
-	public CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
+	CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
 		this.elasticClient = elasticClient;
 		this.etmConfiguration = etmConfiguration;
 		this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
@@ -88,7 +88,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 		}
 		GetResponse getResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
 				ElasticsearchLayout.ETM_DEFAULT_TYPE,
-				ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
+				ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT.equals(endpointName) ? ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT : ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
 			.setFetchSource(true)
 			.get();
 		if (getResponse.isExists() && !getResponse.isSourceEmpty()) {

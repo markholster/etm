@@ -22,7 +22,7 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.get.GetResponse;
@@ -43,6 +43,8 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTimeZone;
 
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -57,6 +59,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 @Path("/search")
+@DeclareRoles(SecurityRoles.ALL_ROLES)
 public class SearchService extends AbstractIndexMetadataService {
 
 	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
@@ -77,6 +80,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/templates")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String getSearchTemplates() {
 		GetResponse getResponse = SearchService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
 				.setFetchSource("search_templates", null)
@@ -94,6 +98,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/history")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String getRecentQueries() {
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		GetResponse getResponse = SearchService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
@@ -109,6 +114,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Path("/templates/{templateName}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String addSearchTemplate(@PathParam("templateName") String templateName, String json) {
 		Map<String, Object> requestValues = toMap(json); 
 		Map<String, Object> scriptParams = new HashMap<>();
@@ -135,6 +141,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@DELETE
 	@Path("/templates/{templateName}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String removeSearchTemplate(@PathParam("templateName") String templateName) {
 		Map<String, Object> scriptParams = new HashMap<>();
 		scriptParams.put("name", templateName);
@@ -150,6 +157,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/keywords/{indexName}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String getKeywords(@PathParam("indexName") String indexName) {
 		StringBuilder result = new StringBuilder();
 		Map<String, List<Keyword>> names = getIndexFields(SearchService.client, indexName);
@@ -184,6 +192,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Path("/query")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String executeQuery(String json) {
 		long startTime = System.currentTimeMillis();
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
@@ -305,6 +314,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/download")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public Response getDownload(@QueryParam("q") String json) {
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 
 		Map<String, Object> valueMap = toMap(json);
@@ -335,6 +345,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/event/{type}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
 		ZonedDateTime now = ZonedDateTime.now();
 		GetEventAuditLogBuilder auditLogBuilder = new GetEventAuditLogBuilder()
@@ -345,8 +356,8 @@ public class SearchService extends AbstractIndexMetadataService {
 			.setEventType(eventType)
 			.setFound(false);
 		ActionFuture<SearchResponse> auditLogsForEvent = null;
-		if (getEtmPrincipal().isInRole(EtmPrincipalRole.ADMIN)) {
-			// We've got an admin requesting the event. Also add the audit logs of this event to the response.
+		if (getEtmPrincipal().isInAnyRole(SecurityRoles.AUDIT_LOG_READ)) {
+			// We've got an principal with audit logs roles requesting the event. Also add the audit logs of this event to the response.
 			auditLogsForEvent = findAuditLogsForEvent(eventType, eventId);
 		}
 		StringBuilder result = new StringBuilder();
@@ -387,6 +398,9 @@ public class SearchService extends AbstractIndexMetadataService {
 				int added = 0;
 				for (int i = 0; i < correlations.size() &&  added <= 10; i++) {
 					String correlationId = correlations.get(i);
+					if (correlationId == null) {
+						continue;
+					}
 					if (eventId.equals(correlationId)) {
 						// An event correlates to itself.
 						continue;
@@ -465,13 +479,14 @@ public class SearchService extends AbstractIndexMetadataService {
 	}
 
 	@GET
-	@Path("/event/{type}/{id}/endpoints")
+	@Path("/event/{id}/endpoints")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getEventChainEndpoint(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
+	public String getEventChainEndpoint(@PathParam("id") String eventId) {
 		StringBuilder result = new StringBuilder();
 		result.append("{");
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
-		SearchHit searchHit = getEvent(eventType, eventId, false, new String[] {this.eventTags.getEndpointsTag() + ".*"}, null);
+		SearchHit searchHit = getEvent(null, eventId, false, new String[] {this.eventTags.getEndpointsTag() + ".*"}, null);
 		if (searchHit != null) {
 			result.append(", \"event\": {");
 			addStringElementToJsonBuffer("index", searchHit.getIndex() , result, true);
@@ -486,8 +501,10 @@ public class SearchService extends AbstractIndexMetadataService {
 	
 	private SearchHit getEvent(String eventType, String eventId, boolean fetchAll, String[] includes, String[] excludes) {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
-				.types(eventType)
 				.addIds(eventId);
+		if (eventType != null) {
+			idsQueryBuilder.types(eventType);
+		}
 		BoolQueryBuilder query = new BoolQueryBuilder();
 		query.must(idsQueryBuilder);
         SearchRequestBuilder builder = client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
@@ -540,7 +557,8 @@ public class SearchService extends AbstractIndexMetadataService {
 	
 	@GET
 	@Path("/transaction/{application}/{id}")
-	@Produces(MediaType.APPLICATION_JSON)	
+	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String getTransaction(@PathParam("application") String applicationName, @PathParam("id") String transactionId) {
 		BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
 			.minimumShouldMatch(1)
@@ -569,6 +587,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			.setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
 			.addSort(SortBuilders.fieldSort("_doc"))
 			.setFetchSource(new String[] {
+					this.eventTags.getObjectTypeTag(),
 					this.eventTags.getEndpointsTag() + ".*", 
 					this.eventTags.getNameTag(), 
 					this.eventTags.getPayloadTag(),
@@ -587,6 +606,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			TransactionEvent event = new TransactionEvent();
 			event.index = searchHit.getIndex();
 			event.type = searchHit.getType();
+			event.objectType = getEventType(searchHit);
 			event.id = searchHit.getId();
 			Map<String, Object> source = searchHit.getSourceAsMap();
 			event.name = getString(this.eventTags.getNameTag(), source);
@@ -611,11 +631,11 @@ public class SearchService extends AbstractIndexMetadataService {
 							}
 						}
 					}
-					if ("http".equals(searchHit.getType())) {
+					if ("http".equals(event.objectType)) {
 						event.subType = getString(this.eventTags.getHttpEventTypeTag(), source);
-					} else if ("messaging".equals(searchHit.getType())) {
+					} else if ("messaging".equals(event.objectType)) {
 						event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
-					} else if ("sql".equals(searchHit.getType())) {
+					} else if ("sql".equals(event.objectType)) {
 						event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
 					}
 				}
@@ -636,6 +656,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			}
 			addStringElementToJsonBuffer("index", event.index , result, true);
 			addStringElementToJsonBuffer("type", event.type , result, false);
+			addStringElementToJsonBuffer("object_type", event.objectType , result, false);
 			addStringElementToJsonBuffer("sub_type", event.subType , result, false);
 			addStringElementToJsonBuffer("id", event.id , result, false);
 			addLongElementToJsonBuffer("handling_time", event.handlingTime , result, false);
@@ -654,6 +675,7 @@ public class SearchService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/event/{type}/{id}/chain")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String getEventChain(@PathParam("type") String eventType, @PathParam("id") String eventId) {
 		IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
 				.types(eventType)
@@ -871,12 +893,22 @@ public class SearchService extends AbstractIndexMetadataService {
 				.should(new TermQueryBuilder(this.eventTags.getEndpointsTag() + 
 						"." + this.eventTags.getWritingEndpointHandlerTag() + 
 						"." + this.eventTags.getEndpointHandlerTransactionIdTag()+ KEYWORD_SUFFIX, transactionId));
+		if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
+			findEventsQuery.filter(QueryBuilders.boolQuery()
+                    .should(QueryBuilders.termsQuery("_type", "http", "messaging"))
+                    .should(QueryBuilders.boolQuery()
+                            .must(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE))
+                            .must(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), "http", "messaging")))
+                    .minimumShouldMatch(1));
+        } else {
+        	findEventsQuery.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), "http", "messaging"));
+        }
 		// No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
 		SearchRequestBuilder searchRequest = client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
-				.setTypes("http", "messaging")
 				.setQuery(findEventsQuery)
 				.addSort(SortBuilders.fieldSort("_doc"))
 				.setFetchSource(new String[] {
+						this.eventTags.getObjectTypeTag(),
 						this.eventTags.getEndpointsTag() + ".*",
 						this.eventTags.getExpiryTag(),
 						this.eventTags.getNameTag(), 
@@ -893,9 +925,9 @@ public class SearchService extends AbstractIndexMetadataService {
 			String eventName = getString(this.eventTags.getNameTag(), source, "?");
 			Long expiry = getLong(this.eventTags.getExpiryTag(), source);
 			String subType = null;
-			if ("http".equals(searchHit.getType())) {
+			if ("http".equals(getEventType(searchHit))) {
 				subType = getString(this.eventTags.getHttpEventTypeTag(), source);
-			} else if ("messaging".equals(searchHit.getType())) {
+			} else if ("messaging".equals(getEventType(searchHit))) {
 				subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
 			}
 			String correlationId = getString(this.eventTags.getCorrelationIdTag(), source);
@@ -909,7 +941,7 @@ public class SearchService extends AbstractIndexMetadataService {
 							true, 
 							searchHit.getId(), 
 							eventName, 
-							searchHit.getType(), 
+							getEventType(searchHit),
 							correlationId, 
 							subType,
 							endpointName, 
@@ -923,7 +955,7 @@ public class SearchService extends AbstractIndexMetadataService {
 									false, 
 									searchHit.getId(), 
 									eventName, 
-									searchHit.getType(), 
+									getEventType(searchHit),
 									correlationId,
 									subType,
 									endpointName, 
@@ -934,7 +966,7 @@ public class SearchService extends AbstractIndexMetadataService {
 				}
 			}
 			// Check for request/response correlation and add those transactions as well.
-			addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, searchHit.getType(), subType);
+			addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, getEventType(searchHit), subType);
 		}
 	}
 	
@@ -1064,4 +1096,20 @@ public class SearchService extends AbstractIndexMetadataService {
 		}
 	}
 
+
+    /**
+     * Gives the event type of a <code>SearchHit</code> instance.
+     * @param searchHit The <code>SearchHit</code> to determine the event type for.
+     * @return The event type, or <code>null</code> if the event type cannot determined.
+     */
+	private String getEventType(SearchHit searchHit) {
+		if (searchHit == null) {
+			return null;
+		}
+		if (ElasticsearchLayout.ETM_DEFAULT_TYPE.equals(searchHit.getType())) {
+		    return getString(this.eventTags.getObjectTypeTag(), searchHit.getSourceAsMap());
+        } else {
+		    return searchHit.getType();
+        }
+	}
 }

@@ -1,7 +1,7 @@
 package com.jecstar.etm.gui;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
@@ -21,7 +21,7 @@ public abstract class AbstractIntegrationTest {
 	protected final String httpHost = "http://127.0.0.1:8080";
 	protected WebDriver driver;
 	
-	@Before
+	@BeforeEach
 	public void setup() {
 //		this.driver = new HtmlUnitDriver(true);
 //		System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
@@ -31,7 +31,7 @@ public abstract class AbstractIntegrationTest {
 		this.driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		if (this.driver != null) {
 			this.driver.quit();
@@ -47,7 +47,7 @@ public abstract class AbstractIntegrationTest {
         this.driver.navigate().to(url);
         try {
             this.driver.findElement(By.id("j_username")).sendKeys("admin");
-            this.driver.findElement(By.id("j_password")).sendKeys("password");
+            this.driver.findElement(By.id("j_password")).sendKeys("Welkom01");
             this.driver.findElement(By.className("btn")).submit();
             if (condition != null) {
                 waitFor(condition);

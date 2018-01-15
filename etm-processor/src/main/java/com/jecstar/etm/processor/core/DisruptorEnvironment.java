@@ -1,25 +1,20 @@
 package com.jecstar.etm.processor.core;
 
-import java.util.concurrent.ThreadFactory;
-
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.lmax.disruptor.BlockingWaitStrategy;
-import com.lmax.disruptor.BusySpinWaitStrategy;
-import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.SleepingWaitStrategy;
-import com.lmax.disruptor.WaitStrategy;
-import com.lmax.disruptor.YieldingWaitStrategy;
+import com.lmax.disruptor.*;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+
+import java.util.concurrent.ThreadFactory;
 
 class DisruptorEnvironment {
 
 	private final Disruptor<TelemetryCommand> disruptor;
 	private final PersistingEventHandler[] persistingEventHandlers;
 
-	public DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ThreadFactory threadFactory, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
+	DisruptorEnvironment(final EtmConfiguration etmConfiguration, final ThreadFactory threadFactory, final PersistenceEnvironment persistenceEnvironment, final MetricRegistry metricRegistry) {
 		this.disruptor = new Disruptor<>(TelemetryCommand::new, etmConfiguration.getEventBufferSize(), threadFactory, ProducerType.MULTI, convertWaitStrategy(etmConfiguration.getWaitStrategy()));
 		this.disruptor.setDefaultExceptionHandler(new TelemetryCommandExceptionHandler(metricRegistry));
 		int enhancingHandlerCount = etmConfiguration.getEnhancingHandlerCount();

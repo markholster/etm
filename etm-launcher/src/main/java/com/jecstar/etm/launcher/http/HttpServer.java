@@ -1,20 +1,5 @@
 package com.jecstar.etm.launcher.http;
 
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-
-import javax.net.ssl.SSLContext;
-import javax.servlet.ServletException;
-
-import org.elasticsearch.client.Client;
-import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
-import org.jboss.resteasy.spi.ResteasyDeployment;
-import org.jboss.resteasy.wadl.ResteasyWadlServlet;
-
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
@@ -22,11 +7,10 @@ import com.jecstar.etm.launcher.http.session.ElasticsearchSessionManagerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
-
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
@@ -41,14 +25,20 @@ import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
 import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.DeploymentInfo;
-import io.undertow.servlet.api.DeploymentManager;
-import io.undertow.servlet.api.LoginConfig;
-import io.undertow.servlet.api.SecurityConstraint;
-import io.undertow.servlet.api.ServletContainer;
-import io.undertow.servlet.api.ServletInfo;
-import io.undertow.servlet.api.SessionManagerFactory;
-import io.undertow.servlet.api.WebResourceCollection;
+import io.undertow.servlet.api.*;
+import org.elasticsearch.client.Client;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.jboss.resteasy.spi.ResteasyDeployment;
+import org.jboss.resteasy.wadl.ResteasyWadlServlet;
+
+import javax.net.ssl.SSLContext;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 public class HttpServer {
 
@@ -62,8 +52,13 @@ public class HttpServer {
 	private boolean started;
 	private final SessionManagerFactory sessionManagerFactory;
 
-	public HttpServer(final IdentityManager identityManager, Configuration configuration, EtmConfiguration etmConfiguration, TelemetryCommandProcessor processor, Client client) {;
-        Configuration configuration1 = configuration;
+	public HttpServer(
+	        final IdentityManager identityManager,
+            final Configuration configuration,
+            final EtmConfiguration etmConfiguration,
+            final TelemetryCommandProcessor processor,
+            final Client client)
+    {
 		this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
 		final PathHandler root = Handlers.path();
 		this.shutdownHandler = Handlers.gracefulShutdown(root);
@@ -72,14 +67,14 @@ public class HttpServer {
 			.setIoThreads(configuration.http.ioThreads)
 			.setWorkerThreads(configuration.http.workerThreads);
 		
-		if (configuration1.getHttpPort() > 0) {
-			builder.addHttpListener(configuration1.getHttpPort(), configuration1.bindingAddress);
+		if (configuration.getHttpPort() > 0) {
+			builder.addHttpListener(configuration.getHttpPort(), configuration.bindingAddress);
 			if (log.isInfoLevelEnabled()) {
-				log.logInfoMessage("Binding http listener to '" + configuration1.bindingAddress + ":" + configuration1.getHttpPort() + "'");
+				log.logInfoMessage("Binding http listener to '" + configuration.bindingAddress + ":" + configuration.getHttpPort() + "'");
 			}
 		}
-		if (configuration1.getHttpsPort() > 0) {
-			if (configuration1.http.sslKeystoreLocation == null) {
+		if (configuration.getHttpsPort() > 0) {
+			if (configuration.http.sslKeystoreLocation == null) {
 				if (log.isWarningLevelEnabled()) {
 					log.logWarningMessage("SSL keystore not provided. Https listener not started.");
 				}
@@ -94,10 +89,10 @@ public class HttpServer {
 							configuration.http.sslTruststoreType, 
 							configuration.http.sslTruststorePassword == null ? null : configuration.http.sslTruststorePassword.toCharArray());
 					
-					builder.addHttpsListener(configuration1.getHttpsPort(), configuration1.bindingAddress, sslContext);
+					builder.addHttpsListener(configuration.getHttpsPort(), configuration.bindingAddress, sslContext);
 					builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
 					if (log.isInfoLevelEnabled()) {
-						log.logInfoMessage("Binding https listener to '" + configuration1.bindingAddress + ":" + configuration1.getHttpsPort() + "'");
+						log.logInfoMessage("Binding https listener to '" + configuration.bindingAddress + ":" + configuration.getHttpsPort() + "'");
 					}
 				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
 					if (log.isErrorLevelEnabled()) {
@@ -109,8 +104,8 @@ public class HttpServer {
 		this.server = builder.setHandler(root).build();
 		SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
 		
-		if (configuration1.http.restProcessorEnabled) {
-			DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration1.http.restProcessorLoginRequired ? identityManager : null);
+		if (configuration.http.restProcessorEnabled) {
+			DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration.http.restProcessorLoginRequired ? identityManager : null);
 			di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
 			DeploymentManager manager = container.addDeployment(di);
 			manager.deploy();
@@ -137,7 +132,7 @@ public class HttpServer {
 				}
 			}
 		}
-		if (configuration1.http.guiEnabled) {
+		if (configuration.http.guiEnabled) {
 			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
 			di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
 			DeploymentManager manager = container.addDeployment(di);
@@ -203,12 +198,10 @@ public class HttpServer {
 		if (identityManager != null) {
 			deployment.setSecurityEnabled(true);
 			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.PROCESSOR.getRoleName())
+					.addRolesAllowed(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE)
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
-			di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.PROCESSOR.getRoleName());
+			di.addSecurityRoles(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE);
 			di.setIdentityManager(identityManager);
-//			di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
-//			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor").addFirstAuthMethod("SSO"));
 			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
 		}
 		di.setClassLoader(processorApplication.getClass().getClassLoader());
@@ -242,24 +235,52 @@ public class HttpServer {
 		di.setContextPath(contextRoot);
 		deployment.setSecurityEnabled(true);
 		di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
+					.addRolesAllowed(SecurityRoles.ALL_ROLES_ARRAY)
 					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/").addUrlPattern("/index.html").addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
 		di.addSecurityConstraint(new SecurityConstraint()
-				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName())
+				.addRolesAllowed(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)
 				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
 		di.addSecurityConstraint(new SecurityConstraint()
-				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName())
-				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/*").addUrlPattern("/rest/dashboard/*")));
-		di.addSecurityConstraint(new SecurityConstraint()
-				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName())
-				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/*").addUrlPattern("/rest/settings/*").addUrlPattern("/rest/audit/*")));
-		di.addSecurityConstraint(new SecurityConstraint()
-				.addRolesAllowed(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName())
-				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/*").addUrlPattern("/rest/iib/*")));
-		di.addSecurityRoles(EtmPrincipalRole.ADMIN.getRoleName(), EtmPrincipalRole.SEARCHER.getRoleName(), EtmPrincipalRole.CONTROLLER.getRoleName(), EtmPrincipalRole.IIB_ADMIN.getRoleName());
+				.addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
+				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/graphs.html").addUrlPattern("/rest/dashboard/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/dashboards.html").addUrlPattern("/rest/dashboard/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.IIB_NODE_READ, SecurityRoles.IIB_NODE_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/nodes.html").addUrlPattern("/rest/iib/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/events.html").addUrlPattern("/rest/iib/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.AUDIT_LOG_READ)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/auditlogs.html").addUrlPattern("/rest/audit/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ, SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/cluster.html").addUrlPattern("/rest/settings/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/endpoints.html").addUrlPattern("/rest/settings/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.GROUP_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/groups.html").addUrlPattern("/rest/settings/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.INDEX_STATISTICS_READ)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/indexstats.html").addUrlPattern("/rest/settings/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.LICENSE_READ, SecurityRoles.LICENSE_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/license.html").addUrlPattern("/rest/settings/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.NODE_SETTINGS_READ, SecurityRoles.NODE_SETTINGS_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/nodes.html").addUrlPattern("/rest/settings/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/parsers.html").addUrlPattern("/rest/settings/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/users.html").addUrlPattern("/rest/settings/*")));
+		di.addSecurityRoles(SecurityRoles.ALL_ROLES_ARRAY);
 		di.setIdentityManager(identityManager);
-//		di.addAuthenticationMechanism("SSO", new ImmediateAuthenticationMechanismFactory(new SingleSignOnAuthenticationMechanism(this.singleSignOnManager, identityManager).setPath(di.getContextPath())));
-//		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html").addFirstAuthMethod("SSO"));
 		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
 		di.setClassLoader(guiApplication.getClass().getClassLoader());
 		di.setResourceManager(new MenuAwareClassPathResourceManager(etmConfiguration, guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));

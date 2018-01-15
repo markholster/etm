@@ -1,9 +1,9 @@
 package com.jecstar.etm.gui.rest.services.iib.proxy;
 
-import java.util.List;
-
 import com.ibm.broker.config.proxy.ConfigurableService;
 import com.jecstar.etm.gui.rest.services.iib.Node;
+
+import java.util.List;
 
 public interface IIBNodeConnection extends AutoCloseable {
 	

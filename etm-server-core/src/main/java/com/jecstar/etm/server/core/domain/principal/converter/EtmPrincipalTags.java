@@ -16,6 +16,8 @@ public interface EtmPrincipalTags {
 	String getGroupsTag();
 	String getTimeZoneTag();
 	String getLdapBaseTag();
+	String getDashboardsTag();
+	String getGraphsTag();
 	
 	String getSearchHistoryTag();
 	String getSearchTemplatesTag();

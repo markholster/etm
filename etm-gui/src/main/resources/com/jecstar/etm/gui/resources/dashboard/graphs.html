@@ -11,12 +11,8 @@
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
-    <link rel="stylesheet" href="../styles/spinner.css">
+    <link rel="stylesheet" href="../styles/etm-commons.css">
     <link rel="stylesheet" href="../styles/nv.d3.min.css">
-    <style type="text/css">
-body { padding-top: 60px; }
-
-    </style>
     <script src="../scripts/tether.min.js"></script>
     <script src="../scripts/jquery.min.js"></script>
     <script src="../scripts/jquery-ui.min.js"></script>
@@ -24,7 +20,7 @@ body { padding-top: 60px; }
     <script src="../scripts/bootstrap.min.js"></script>
 </head>
 <body>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
     <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
         <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
              alt="">
@@ -186,12 +182,12 @@ body { padding-top: 60px; }
                                         </div>
 
                                         <div class="modal-footer">
-                                            <input type="submit" id="btn-confirm-remove-graph" class="btn btn-danger"
-                                                   value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
-                                            <input type="submit" id="btn-preview-graph" class="btn btn-primary"
+                                            <input type="submit" id="btn-confirm-remove-graph" data-element-type="acl-aware"
+                                                   class="btn btn-danger" value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
+                                            <input type="submit" id="btn-preview-graph" class="btn btn-secondary"
                                                    value="Preview" formnovalidate="formnovalidate" disabled="disabled"/>
-                                            <input type="submit" id="btn-confirm-save-graph" class="btn btn-primary"
-                                                   value="Save" disabled="disabled"/>
+                                            <input type="submit" id="btn-confirm-save-graph" data-element-type="acl-aware"
+                                                   class="btn btn-primary" value="Save" disabled="disabled"/>
                                         </div>
                                     </form>
                                 </div>
@@ -260,29 +256,22 @@ body { padding-top: 60px; }
 <script src="../scripts/nv.d3.min.js"></script>
 <script src="../scripts/autocomplete_fields.js"></script>
 <script src="../scripts/graphs.js"></script>
+<script src="../scripts/etm-commons.js"></script>
 <script>
-    $(document).ajaxStart(function () {
-        $('.errorBox').hide('fast');
-        $('#spinner').show('fast');
-    }).ajaxStop(function () {
-        $('#spinner').hide('fast');
-    }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        if ("undefined" != typeof jqXHR.responseJSON) {
-            $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
-        } else {
-            $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
-        }
-        $('html,body').animate({scrollTop: 0},'fast');
-    }).ajaxComplete(function(event, jqXHR, settings) {
-        var contentType = jqXHR.getResponseHeader("Content-Type");
-        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
-            // assume that our login has expired - reload our current page
-            window.location.reload();
-            return;
-        }          
-    });
-    buildGraphsPage();
-
+    addAjaxHandlers(
+        null,
+        null,
+        function(event, jqXHR, settings, thrownError) {
+            if ("undefined" != typeof jqXHR.responseJSON) {
+                $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+            } else {
+                $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+            }
+            $('html,body').animate({scrollTop: 0},'fast');
+        },
+        null
+    );
+    buildGraphsPage(queryString['group']);
 </script>
 </body>
 </html>

@@ -1,30 +1,27 @@
 package com.jecstar.etm.launcher.http;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.stream.Collectors;
-
-import org.xnio.IoUtils;
-
 import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
-
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import com.jecstar.etm.server.core.util.StringUtils;
 import io.undertow.UndertowLogger;
 import io.undertow.io.IoCallback;
 import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.resource.URLResource;
 import io.undertow.util.StatusCodes;
+import org.xnio.IoUtils;
+
+import java.io.*;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <code>URLResource</code> extension that injects the ETM main menu based on the roles the user is assigned to.
@@ -43,7 +40,7 @@ public class MenuAwareURLResource extends URLResource {
 	private final URL url;
 
 
-	public MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, MenuContext menuContext, URL url, String path) {
+	MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, MenuContext menuContext, URL url, String path) {
 		super(url, path);
 		this.etmConfiguration = etmConfiguration;
 		this.pathPrefixToContextRoot = pathPrefixToContextRoot;
@@ -96,8 +93,8 @@ public class MenuAwareURLResource extends URLResource {
             private InputStream inputStream;
             private byte[] buffer;
 
-            long toSkip = start;
-            final long remaining = end - start + 1;
+            private long toSkip = start;
+            private final long remaining = end - start + 1;
 
             @Override
             public void run() {
@@ -180,9 +177,10 @@ public class MenuAwareURLResource extends URLResource {
             }
 
             private CharSequence buildHtmlMenu(EtmAccount etmAccount) {
+                final String divider = "<li><div class=\"dropdown-divider\"></div></li>";
             	StringBuilder html = new StringBuilder();
             	EtmPrincipal principal = etmAccount.getPrincipal();
-        		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.SEARCHER)) {
+        		if (principal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)) {
         			if (MenuContext.SEARCH.equals(menuContext)) {
         				html.append("<li class=\"nav-item active\">");
         			} else {
@@ -190,20 +188,111 @@ public class MenuAwareURLResource extends URLResource {
         			}
         			html.append("<a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("search/\"><span class=\"fa fa-search fa-lg hidden-md-down\">&nbsp;</span>Search</a>");
         			html.append("</li>");
-        		}
-        		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER)) {
-        			if (MenuContext.DASHBOARD.equals(menuContext)) {
-        				html.append("<li class=\"nav-item active dropdown\">");
-        			} else {
-        				html.append("<li class=\"nav-item dropdown\">");
-        			}
-        			html.append("<a class=\"nav-link dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" href=\"#\"><span class=\"fa fa-dashboard fa-lg hidden-md-down\">&nbsp;</span>Visualizations</a>");
-        			html.append("<div class=\"dropdown-menu\">");
-        			html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("dashboard/graphs.html\">Graphs</a>");
-        			html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("dashboard/dashboards.html\">Dashboards</a>");
-        			html.append("</div></li>");
-        		}
-        		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.CONTROLLER, EtmPrincipalRole.SEARCHER, EtmPrincipalRole.IIB_ADMIN)) {
+                }
+
+                boolean hasDashboardsToShow = true;
+                List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getName)).collect(Collectors.toList());
+                if (principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ) && !principal.isInRole(SecurityRoles.USER_DASHBOARD_READ_WRITE) && !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
+                    // User has only read only access to group dashboards. Check if they are present, otherwise we can skip this menu option.
+                    hasDashboardsToShow = groups.stream().anyMatch(g -> g.getDashboards().size() > 0);
+                }
+                if (principal.isInAnyRole(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE) && hasDashboardsToShow) {
+                    boolean hasGroupMenu = false;
+                    if (MenuContext.DASHBOARD.equals(menuContext)) {
+                        html.append("<li class=\"nav-item active dropdown\">");
+                    } else {
+                        html.append("<li class=\"nav-item dropdown\">");
+                    }
+                    html.append("<a class=\"nav-link dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" href=\"#\"><span class=\"fa fa-dashboard fa-lg hidden-md-down\">&nbsp;</span>Visualizations</a>");
+                    html.append("<ul class=\"dropdown-menu\">");
+                    if (principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
+                        // First display the group names
+                        for (EtmGroup group : groups) {
+                            if (group.getDashboards().size() == 0 && principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ)) {
+                                // Skip a group when it has no dashboards and the user has read only access.
+                                continue;
+                            }
+                            html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\"><span class=\"fa fa-users hidden-md-down\">&nbsp;</span>" + StringUtils.escapeToHtml(group.getName())+ "</a>");
+                            html.append("<ul class=\"dropdown-menu\">");
+                            for (String dashboard : group.getDashboards()) {
+                                appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
+                            }
+                            if (principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
+                                if (group.getDashboards().size() > 0) {
+                                    html.append(divider);
+                                }
+                                appendMenuOption(html, "Graphs", "dashboard/graphs.html?group=" + StringUtils.urlEncode(group.getName()), false);
+                                appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new&group=" + StringUtils.urlEncode(group.getName()), false);
+                            }
+                            html.append("</ul></li>");
+                            hasGroupMenu = true;
+                        }
+                    }
+                    if (principal.isInRole(SecurityRoles.USER_DASHBOARD_READ_WRITE)) {
+                        if (hasGroupMenu) {
+                            html.append(divider);
+                            // Only add a submenu when there are group menus displayed.
+                            html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\">" + StringUtils.escapeToHtml(principal.getName())+ "</a>");
+                            html.append("<ul class=\"dropdown-menu\">");
+                        }
+                        for (String dashboard : principal.getDashboards()) {
+                            appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard), false);
+                        }
+                        if (principal.getDashboards().size() > 0) {
+                            html.append(divider);
+                        }
+                        appendMenuOption(html, "Graphs", "dashboard/graphs.html", false);
+                        appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new", false);
+                        if (hasGroupMenu) {
+                            html.append("</ul>");
+                        }
+                        html.append("</li>");
+                    }
+                    html.append("</ul></li>");
+
+
+
+//                    if (principal.isInRole(SecurityRoles.USER_DASHBOARD_READ_WRITE)) {
+//                        appendMenuOption(html, "Graphs", "dashboard/graphs.html", false);
+//                    }
+//                    html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\">Dashboards</a>");
+//                    html.append("<ul class=\"dropdown-menu\">");
+//
+//                    // TODO als group read & write -> Altijd optie tot nieuw dashboard in group
+//                    // als group read & group heeft geen dashboards -> group overslaan
+//                    // Als user read_write dan zelfde menu structuur, maar met username i.p.v. groupname.
+//
+//
+//                    List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getName)).collect(Collectors.toList());
+//                    for (EtmGroup group : groups) {
+//                        if (group.getDashboards().size() != 0 || principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
+//                            html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\"><span class=\"fa fa-users hidden-md-down\">&nbsp;</span>" + StringUtils.escapeToHtml(group.getName())+ "</a>");
+//                            html.append("<ul class=\"dropdown-menu\">");
+//                            for (String dashboard : group.getDashboards()) {
+//                                appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
+//                            }
+//                            if (principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
+//                                if (group.getDashboards().size() != 0) {
+//                                    html.append(divider);
+//                                }
+//                                appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new&group=" + StringUtils.urlEncode(group.getName()), false);
+//                            }
+//                            html.append("</ul></li>");
+//                        }
+//                    }
+//                    if (principal.getDashboards().size() != 0) {
+//                        for (String dashboard : principal.getDashboards()) {
+//                            appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard), !principal.isInRole(SecurityRoles.DASHBOARD_READ_WRITE));
+//                        }
+//                        if (principal.isInRole(SecurityRoles.DASHBOARD_READ_WRITE)) {
+//                            html.append(divider);
+//                            appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new", false);
+//                        }
+//                    }
+//                    html.append("</ul></li>");
+//                    html.append("</ul></li>");
+                }
+                if (principal.isInAnyRole(SecurityRoles.ALL_ROLES_ARRAY)) {
         			if (MenuContext.PREFERENCES.equals(menuContext)) {
         				html.append("<li class=\"nav-item active\">");
         			} else {
@@ -212,51 +301,123 @@ public class MenuAwareURLResource extends URLResource {
         			html.append("<a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("preferences/\"><span class=\"fa fa-user fa-lg hidden-md-down\">&nbsp;</span>Preferences</a>");
         			html.append("</li>");
         		}
-        		if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN)) {
-        			if (MenuContext.SETTINGS.equals(menuContext)) {
-        				html.append("<li class=\"nav-item active dropdown\">");
-        			} else {
-        				html.append("<li class=\"nav-item dropdown\">");
-        			}
-        			html.append("<a class=\"nav-link dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" href=\"#\"><span class=\"fa fa-wrench fa-lg hidden-md-down\">&nbsp;</span>Settings</a>");
-        			html.append("<div class=\"dropdown-menu\">");
-        			boolean added = false;
-        			if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
-        				added = true;
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/users.html\">Users</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/groups.html\">Groups</a>");
-        				
-        				html.append("<div class=\"dropdown-divider\"></div>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/cluster.html\">Cluster</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/nodes.html\">Nodes</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/parsers.html\">Parsers</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/endpoints.html\">Endpoints</a>");
-        				
-        				html.append("<div class=\"dropdown-divider\"></div>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/auditlogs.html\">Audit logs</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/indexstats.html\">Index statistics</a>");
-        			}
-        			if (principal.isInAnyRole(EtmPrincipalRole.ADMIN, EtmPrincipalRole.IIB_ADMIN) && IIBApi.IIB_PROXY_ON_CLASSPATH) {
-        				if (added) {
-        					html.append("<div class=\"dropdown-divider\"></div>");
-        				}
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("iib/nodes.html\">IIB Nodes</a>");
-        				html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("iib/events.html\">IIB Events</a>");
-        			}
-        			if (principal.isInRole(EtmPrincipalRole.ADMIN)) {
-        				html.append("<div class=\"dropdown-divider\"></div>");
+        		if (principal.isInAnyRole(
+        				SecurityRoles.IIB_NODE_READ,
+						SecurityRoles.IIB_NODE_READ_WRITE,
+                        SecurityRoles.IIB_EVENT_READ,
+                        SecurityRoles.IIB_EVENT_READ_WRITE,
+                        SecurityRoles.AUDIT_LOG_READ,
+                        SecurityRoles.CLUSTER_SETTINGS_READ,
+                        SecurityRoles.CLUSTER_SETTINGS_READ_WRITE,
+                        SecurityRoles.ENDPOINT_SETTINGS_READ,
+                        SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE,
+                        SecurityRoles.GROUP_SETTINGS_READ,
+                        SecurityRoles.GROUP_SETTINGS_READ_WRITE,
+                        SecurityRoles.INDEX_STATISTICS_READ,
+                        SecurityRoles.LICENSE_READ,
+                        SecurityRoles.LICENSE_READ_WRITE,
+                        SecurityRoles.NODE_SETTINGS_READ,
+                        SecurityRoles.NODE_SETTINGS_READ_WRITE,
+                        SecurityRoles.PARSER_SETTINGS_READ,
+                        SecurityRoles.PARSER_SETTINGS_READ_WRITE,
+                        SecurityRoles.USER_SETTINGS_READ,
+                        SecurityRoles.USER_SETTINGS_READ_WRITE
+				)) {
+                    if (MenuContext.SETTINGS.equals(menuContext)) {
+                        html.append("<li class=\"nav-item active dropdown\">");
+                    } else {
+                        html.append("<li class=\"nav-item dropdown\">");
+                    }
+                    html.append("<a class=\"nav-link dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" href=\"#\"><span class=\"fa fa-wrench fa-lg hidden-md-down\">&nbsp;</span>Settings</a>");
+                    html.append("<ul class=\"dropdown-menu\">");
+        			boolean addedBeforeDivider = false;
+        			if (principal.isInAnyRole(SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Users", "settings/users.html", !principal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE));
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.GROUP_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Groups", "settings/groups.html", !principal.isInRole(SecurityRoles.GROUP_SETTINGS_READ_WRITE));
+                    }
+
+                    // DIVIDER
+                    if (addedBeforeDivider) {
+                        addedBeforeDivider = false;
+                        html.append(divider);
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.CLUSTER_SETTINGS_READ, SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Cluster", "settings/cluster.html", !principal.isInRole(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE));
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.NODE_SETTINGS_READ, SecurityRoles.NODE_SETTINGS_READ_WRITE)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Nodes", "settings/nodes.html", !principal.isInRole(SecurityRoles.NODE_SETTINGS_READ_WRITE));
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Parsers", "settings/parsers.html", !principal.isInRole(SecurityRoles.PARSER_SETTINGS_READ_WRITE));
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Endpoints", "settings/endpoints.html", !principal.isInRole(SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE));
+                    }
+
+                    // DIVIDER
+                    if (addedBeforeDivider) {
+                        addedBeforeDivider = false;
+                        html.append(divider);
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.AUDIT_LOG_READ)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Audit logs", "settings/auditlogs.html", false);
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.INDEX_STATISTICS_READ)) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "Index statistics", "settings/indexstats.html", false);
+                    }
+
+                    // DIVIDER
+                    if (addedBeforeDivider) {
+                        addedBeforeDivider = false;
+                        html.append(divider);
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.IIB_NODE_READ, SecurityRoles.IIB_NODE_READ_WRITE) && IIBApi.IIB_PROXY_ON_CLASSPATH) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "IIB nodes", "iib/nodes.html", !principal.isInRole(SecurityRoles.IIB_NODE_READ_WRITE));
+                    }
+                    if (principal.isInAnyRole(SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE) && IIBApi.IIB_PROXY_ON_CLASSPATH) {
+                        addedBeforeDivider = true;
+                        appendMenuOption(html, "IIB events", "iib/events.html", !principal.isInRole(SecurityRoles.IIB_EVENT_READ_WRITE));
+                    }
+
+                    // DIVIDER
+                    if (addedBeforeDivider) {
+                        addedBeforeDivider = false;
+                        html.append(divider);
+                    }
+        			if (principal.isInAnyRole(SecurityRoles.LICENSE_READ, SecurityRoles.LICENSE_READ_WRITE)) {
+        			    html.append("<li>");
+        			    String page = "settings/license.html";
+        			    if (!principal.isInRole(SecurityRoles.LICENSE_READ_WRITE)) {
+                            page += "?readonly=true";
+                        }
         				if (MenuAwareURLResource.this.etmConfiguration.isLicenseExpired()) {
-        					html.append("<a class=\"dropdown-item alert-danger\" href=\"").append(pathPrefixToContextRoot).append("settings/license.html\">");
+        					html.append("<a class=\"dropdown-item alert-danger\" href=\"").append(pathPrefixToContextRoot).append(page + "\">");
         					html.append("<span class=\"fa fa-ban\">&nbsp;</span>");
         				} else if (MenuAwareURLResource.this.etmConfiguration.isLicenseAlmostExpired()) {
-        					html.append("<a class=\"dropdown-item alert-warning\" href=\"").append(pathPrefixToContextRoot).append("settings/license.html\">");
+        					html.append("<a class=\"dropdown-item alert-warning\" href=\"").append(pathPrefixToContextRoot).append(page + "\">");
         					html.append("<span class=\"fa fa-exclamation-triangle\">&nbsp;</span>");
         				} else {
-        					html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append("settings/license.html\">");
+        					html.append("<a class=\"dropdown-item\" href=\"").append(pathPrefixToContextRoot).append(page + "\">");
         				}
-        				html.append("License</a>");
+        				html.append("License</a></li>");
         			}
-        			html.append("</div></li>");
+
+        			// Remove last divider if no content after it.
+                    if (html.lastIndexOf(divider) == html.length() - divider.length()) {
+        			    html.delete(html.lastIndexOf(divider), html.length());
+                    }
+        			html.append("</ul></li>");
         		}
     			html.append("<li class=\"nav-item\"><a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("logout?source=./\"><span class=\"fa fa-sign-out fa-lg hidden-md-down\">&nbsp;</span>Sign out</a></li>");
 				return html.toString();
@@ -271,5 +432,13 @@ public class MenuAwareURLResource extends URLResource {
         }
     }
 
-
+    private void appendMenuOption(StringBuilder html, String name, String page, boolean readOnly) {
+	    String url = page;
+	    if (readOnly) {
+            url += (page.contains("?") ? "&" : "?") +"readonly=true";
+        }
+        html.append("<li><a class=\"dropdown-item\" href=\"")
+            .append(this.pathPrefixToContextRoot)
+            .append(url + "\">" + name + "</a></li>");
+    }
 }

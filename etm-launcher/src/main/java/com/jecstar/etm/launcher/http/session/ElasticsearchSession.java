@@ -1,11 +1,6 @@
 package com.jecstar.etm.launcher.http.session;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-
 import io.undertow.UndertowMessages;
 import io.undertow.security.impl.SingleSignOnAuthenticationMechanism;
 import io.undertow.server.HttpServerExchange;
@@ -15,6 +10,10 @@ import io.undertow.server.session.SessionListener;
 import io.undertow.server.session.SessionManager;
 import io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler;
 import io.undertow.util.AttachmentKey;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 class ElasticsearchSession implements Session {
 
@@ -33,7 +32,7 @@ class ElasticsearchSession implements Session {
 
 
 	
-	public ElasticsearchSession(String sessionId, EtmConfiguration etmConfiguration, ElasticsearchSessionManager sessionManager, SessionConfig sessionConfig) {
+	ElasticsearchSession(String sessionId, EtmConfiguration etmConfiguration, ElasticsearchSessionManager sessionManager, SessionConfig sessionConfig) {
 		this.sessionId = sessionId;
 		this.creationTime = lastAccessedTime = System.currentTimeMillis();
 		this.etmConfiguration = etmConfiguration;

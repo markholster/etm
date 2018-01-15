@@ -3,12 +3,13 @@ package com.jecstar.etm.server.core.enhancers;
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.builder.HttpTelemetryEventBuilder;
 import com.jecstar.etm.server.core.domain.parser.CopyValueExpressionParser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 
 public class DefaultTelemetryEventEnhancerTest {
 

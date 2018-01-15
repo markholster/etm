@@ -1,12 +1,12 @@
 package com.jecstar.etm.launcher;
 
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import org.junit.jupiter.api.Test;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test class for the <code>ElasticBackedEtmConfiguration</code> class.
@@ -27,8 +27,8 @@ public class ElasticBackedEtmConfigurationTest {
 			String methodName = method.getName(); 
 			if (methodName.startsWith("get") && !methodName.equals("getNodeName")
 					&& !methodName.equals("getComponent")) {
-				Assert.assertTrue("Methode '" + methodName + "' not overriden in " + ElasticBackedEtmConfiguration.class.getName(),
-						Arrays.stream(overriddenMethods).anyMatch(p -> p.getName().equals(methodName)));
+				assertTrue(Arrays.stream(overriddenMethods).anyMatch(p -> p.getName().equals(methodName)),
+						"Methode '" + methodName + "' not overriden in " + ElasticBackedEtmConfiguration.class.getName());
 			}
 		}
 	}

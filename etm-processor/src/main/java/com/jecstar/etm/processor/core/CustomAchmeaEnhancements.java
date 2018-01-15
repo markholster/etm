@@ -1,11 +1,11 @@
 package com.jecstar.etm.processor.core;
 
-import java.util.UUID;
-
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.parser.XPathExpressionParser;
+
+import java.util.UUID;
 
 class CustomAchmeaEnhancements {
 
@@ -15,7 +15,7 @@ class CustomAchmeaEnhancements {
 	private final XPathExpressionParser oudAchmeaExpression;
 	private final XPathExpressionParser soapBodyExpression;
 
-	public CustomAchmeaEnhancements(EtmConfiguration etmConfiguration) {
+	CustomAchmeaEnhancements(EtmConfiguration etmConfiguration) {
 		this.etmConfiguration = etmConfiguration;
 		this.ibfExpression = new XPathExpressionParser("custom-achmea-ibf-type", "/*[local-name()='Envelope']/*[local-name()='Header']/*[local-name()='IBFheader']/*[local-name()='MessageType']");
 		this.oudAchmeaExpression = new XPathExpressionParser("custom-achmea-oax-type", "/*/*[local-name()='Header']/*[local-name()='Berichttype']/*[local-name()='identificatie']");		

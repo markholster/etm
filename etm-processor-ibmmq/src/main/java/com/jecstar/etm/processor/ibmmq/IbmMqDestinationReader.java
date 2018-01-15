@@ -89,7 +89,7 @@ class IbmMqDestinationReader implements DestinationReader {
 		MQGetMessageOptions getOptions = new MQGetMessageOptions();
 		getOptions.waitInterval = this.getMessageWaitInterval; // Wait interval in milliseconds.
 		getOptions.options = this.destination.getDestinationGetOptions();
-        this.lastPoolCheckTime = this.lastCommitTime = System.currentTimeMillis();
+        this.lastCommitTime = System.currentTimeMillis();
 		while (!this.stop) {
             MQMessage message = null;
 			try {
@@ -134,13 +134,13 @@ class IbmMqDestinationReader implements DestinationReader {
 				}
 			} catch (Error e) {
 				if (log.isFatalLevelEnabled()) {
-					log.logFatalMessage("Error detected while processing message with id '" + byteArrayToString(message.messageId) + "'. Stopping reader to prevent further unexpected behaviour.", e);
+					log.logFatalMessage("Error detected while processing message with id '" + message != null ? byteArrayToString(message.messageId) : "unknown" + "'. Stopping reader to prevent further unexpected behaviour.", e);
 				}
 				BusinessEventLogger.logMqProcessorEmergencyShutdown(e);
 				this.stop = true;
 			} catch (Exception e) {
 				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("Failed to process message with id '" + byteArrayToString(message.messageId) + "'. Trying to put it on the backout queue.", e);
+					log.logWarningMessage("Failed to process message with id '" + message != null ? byteArrayToString(message.messageId) : "unknown" + "'. Trying to put it on the backout queue.", e);
 				}
 				tryBackout(message);
 				this.counter++;

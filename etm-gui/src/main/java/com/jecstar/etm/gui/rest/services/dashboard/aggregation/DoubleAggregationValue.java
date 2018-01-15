@@ -1,8 +1,8 @@
 package com.jecstar.etm.gui.rest.services.dashboard.aggregation;
 
-import java.text.Format;
-
 import com.jecstar.etm.domain.writer.json.JsonWriter;
+
+import java.text.Format;
 
 public class DoubleAggregationValue extends AbstractAggregationValue<Double> {
 

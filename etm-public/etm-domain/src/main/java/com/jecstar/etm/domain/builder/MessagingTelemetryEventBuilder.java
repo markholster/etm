@@ -1,9 +1,9 @@
 package com.jecstar.etm.domain.builder;
 
-import java.time.ZonedDateTime;
-
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+
+import java.time.ZonedDateTime;
 
 public class MessagingTelemetryEventBuilder extends TelemetryEventBuilder<MessagingTelemetryEvent, MessagingTelemetryEventBuilder> {
 

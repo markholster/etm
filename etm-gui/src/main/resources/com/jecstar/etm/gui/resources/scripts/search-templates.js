@@ -22,9 +22,7 @@ $('#btn-save-template').click(function() {
 });
 
 $('#btn-overwrite-template').click(function() {
-	if ($('#modal-template-overwrite').is(':visible')) {
-		$('#modal-template-overwrite').modal('hide');
-	}
+    hideModals($('#modal-template-overwrite'));
     storeTemplate(createTemplate(), true);
 });
 
@@ -42,10 +40,8 @@ $('#btn-remove-template').click(function(event) {
             validateMaxTemplates();
         }
     }).always(function () {
-    	if ($('#modal-template-remove').is(':visible')) {
-    		$('#modal-template-remove').modal('hide');
-    	}
-    });        
+        hideModals($('#modal-template-remove'));
+    });
 });
 
 

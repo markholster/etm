@@ -1,5 +1,9 @@
 package com.jecstar.etm.slf4j;
 
+import com.jecstar.etm.domain.LogTelemetryEvent;
+import com.jecstar.etm.domain.writer.TelemetryEventWriter;
+import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -8,15 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
-import com.jecstar.etm.domain.LogTelemetryEvent;
-import com.jecstar.etm.domain.writer.TelemetryEventWriter;
-import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
+import java.util.concurrent.*;
 
 public class RemoteEtmLogForwarder implements EtmLogForwarder {
 

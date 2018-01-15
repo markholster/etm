@@ -1,23 +1,15 @@
 package com.jecstar.etm.processor.core;
 
-import java.io.Closeable;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.processor.core.persisting.elastic.BusinessTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.HttpTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.LogTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.MessagingTelemetryEventPersister;
-import com.jecstar.etm.processor.core.persisting.elastic.SqlTelemetryEventPersister;
-import com.jecstar.etm.server.core.domain.converter.json.BusinessTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.HttpTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.SqlTelemetryEventConverterJsonImpl;
+import com.jecstar.etm.processor.core.persisting.elastic.*;
+import com.jecstar.etm.server.core.domain.converter.json.*;
 import com.lmax.disruptor.EventHandler;
+
+import java.io.Closeable;
 
 class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeable {
 
@@ -32,7 +24,7 @@ class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeabl
 	private final MessagingTelemetryEventConverterJsonImpl messagingTelemetryEventConverter = new MessagingTelemetryEventConverterJsonImpl();
 	private final SqlTelemetryEventConverterJsonImpl sqlTelemetryEventConverter = new SqlTelemetryEventConverterJsonImpl();
 
-	public PersistingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
+	PersistingEventHandler(final long ordinal, final long numberOfConsumers, final CommandResources commandResources, final MetricRegistry metricRegistry) {
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.commandResources = commandResources;
@@ -40,7 +32,7 @@ class PersistingEventHandler implements EventHandler<TelemetryCommand>, Closeabl
 	}
 
 	@Override
-	public void onEvent(TelemetryCommand command, long sequence, boolean endOfBatch) throws Exception {
+	public void onEvent(TelemetryCommand command, long sequence, boolean endOfBatch) {
 		if (sequence % this.numberOfConsumers != this.ordinal || CommandType.NOOP.equals(command.commandType)) {
 			return;
 		}

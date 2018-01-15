@@ -1,5 +1,6 @@
 package com.jecstar.etm.processor.jms;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.jms.configuration.*;
@@ -69,6 +70,8 @@ public class JmsProcessorImpl implements JmsProcessor {
                                 f
                         )
                 );
+                Gauge<Integer> readerPoolGauge = readerPool::getNumberOfActiveReaders;
+                this.metricRegistry.register("jms-processor.readerpool." + destination.getName().replaceAll("\\.", "_") + ".size", readerPoolGauge);
                 this.readerPools.add(readerPool);
             }
         }

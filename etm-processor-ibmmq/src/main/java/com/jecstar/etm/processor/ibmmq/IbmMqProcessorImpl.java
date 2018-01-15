@@ -1,5 +1,6 @@
 package com.jecstar.etm.processor.ibmmq;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
@@ -59,6 +60,8 @@ public class IbmMqProcessorImpl implements IbmMqProcessor {
                                 f
                         )
                 );
+                Gauge<Integer> readerPoolGauge = readerPool::getNumberOfActiveReaders;
+                this.metricRegistry.register("ibmmq-processor.readerpool." + destination.getName().replaceAll("\\.", "_") + ".size", readerPoolGauge);
                 this.readerPools.add(readerPool);
             }
 		}

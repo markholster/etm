@@ -1,8 +1,8 @@
 package com.jecstar.etm.server.core.domain.audit.builder;
 
-import java.time.ZonedDateTime;
-
 import com.jecstar.etm.server.core.domain.audit.AuditLog;
+
+import java.time.ZonedDateTime;
 
 abstract class AbstractAuditLogBuilder<Audit extends AuditLog<Audit>, Builder extends AbstractAuditLogBuilder<Audit, Builder>> {
 

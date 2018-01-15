@@ -11,10 +11,7 @@
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
-    <link rel="stylesheet" href="../styles/spinner.css">
-    <style type="text/css">
-body { padding-top: 60px; }
-    </style>
+    <link rel="stylesheet" href="../styles/etm-commons.css">
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/tether.min.js"></script>
     <script src="../scripts/jquery.min.js"></script>
@@ -23,7 +20,7 @@ body { padding-top: 60px; }
     <script src="../scripts/bootstrap.min.js"></script>
 </head>
 <body>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
     <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
         <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
              alt="">
@@ -101,12 +98,152 @@ body { padding-top: 60px; }
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group row">
-                                    <label class="col-sm-3 col-form-label">Roles</label>
-                                    <div class="col-sm-9" id="group-roles-container">
+                                <div class="card card-block">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Access control</h6>
+                                        <div class="card-text" id="card-acl">
+                                            <div class="row">
+                                                <label for="sel-audit-log-acl" class="col-sm-3 col-form-label">Audit logs</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-audit-log-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="audit_log_read">Read</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-cluster-settings-acl" class="col-sm-3 col-form-label">Cluster settings</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-cluster-settings-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="cluster_settings_read">Read</option>
+                                                        <option value="cluster_settings_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-endpoint-settings-acl" class="col-sm-3 col-form-label">Endpoint settings</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-endpoint-settings-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="endpoint_settings_read">Read</option>
+                                                        <option value="endpoint_settings_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-event-acl" class="col-sm-3 col-form-label">Events</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-event-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="etm_event_read">Read</option>
+                                                        <option value="etm_event_write">Write</option>
+                                                        <option value="etm_event_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-group-dashboard-acl" class="col-sm-3 col-form-label">Group dashboards</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-group-dashboard-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="group_dashboard_read">Read</option>
+                                                        <option value="group_dashboard_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-group-settings-acl" class="col-sm-3 col-form-label">Group settings</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-group-settings-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="group_settings_read">Read</option>
+                                                        <option value="group_settings_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-iib-event-acl" class="col-sm-3 col-form-label">IIB events</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-iib-event-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="iib_event_read">Read</option>
+                                                        <option value="iib_event_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-iib-node-acl" class="col-sm-3 col-form-label">IIB nodes</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-iib-node-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="iib_node_read">Read</option>
+                                                        <option value="iib_node_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-index-statistics-acl" class="col-sm-3 col-form-label">Index statistics</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-index-statistics-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="index_statistics_read">Read</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-license-acl" class="col-sm-3 col-form-label">License</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-license-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="license_read">Read</option>
+                                                        <option value="license_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-node-settings-acl" class="col-sm-3 col-form-label">Node settings</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-node-settings-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="node_settings_read">Read</option>
+                                                        <option value="node_settings_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-parser-settings-acl" class="col-sm-3 col-form-label">Parser settings</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-parser-settings-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="parser_settings_read">Read</option>
+                                                        <option value="parser_settings_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-user-dashboard-acl" class="col-sm-3 col-form-label">User dashboards</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-user-dashboard-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="user_dashboard_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <label for="sel-user-settings-acl" class="col-sm-3 col-form-label">User settings</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-user-settings-acl" class="form-control form-control-sm custom-select">
+                                                        <option value="none">None</option>
+                                                        <option value="user_settings_read">Read</option>
+                                                        <option value="user_settings_read_write">Read & write</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="modal-footer">
+                                <div class="modal-footer" data-element-type="acl-aware">
                                     <input type="submit" id="btn-confirm-remove-group" class="btn btn-danger"
                                            value="Remove"
                                            formnovalidate="formnovalidate" disabled="disabled"/>
@@ -191,30 +328,24 @@ body { padding-top: 60px; }
 
 <script src="../scripts/autocomplete_fields.js"></script>
 <script src="../scripts/groups.js"></script>
+<script src="../scripts/etm-commons.js"></script>
 <script>
-    $(document).ajaxStart(function () {
-        $("#groups_errorBox").hide('fast');
-        $('#spinner').show('fast');
-    }).ajaxStop(function () {
-        $('#spinner').hide('fast');
-    }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        if ("undefined" != typeof jqXHR.responseJSON) {
-            $('#groups_errorBox').text('Error saving group configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
-        } else {
-            $('#groups_errorBox').text('Error saving group configuration: ' +  thrownError).show('fast');
+    addAjaxHandlers(
+        null,
+        null,
+        function(event, jqXHR, settings, thrownError) {
+            if ("undefined" != typeof jqXHR.responseJSON) {
+                $('#groups_errorBox').text('Error saving group configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+            } else {
+                $('#groups_errorBox').text('Error saving group configuration: ' +  thrownError).show('fast');
+            }
+            $('html,body').animate({scrollTop: 0},'fast');
+        },
+        function() {
+            $('html,body').animate({scrollTop: 0},'fast');
         }
-        $('html,body').animate({scrollTop: 0},'fast');
-    }).ajaxComplete(function(event, jqXHR, settings) {
-        var contentType = jqXHR.getResponseHeader("Content-Type");
-        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
-            // assume that our login has expired - reload our current page
-            window.location.reload();
-            return;
-        }
-        $('html,body').animate({scrollTop: 0},'fast');
-    });
+    );
   	buildGroupPage();
-
 </script>
 
 </body>

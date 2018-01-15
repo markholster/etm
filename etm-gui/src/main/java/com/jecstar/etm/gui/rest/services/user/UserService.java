@@ -5,6 +5,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -16,6 +17,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.text.NumberFormat;
@@ -23,6 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Path("/user")
+@DeclareRoles(SecurityRoles.ALL_ROLES)
+@PermitAll
 public class UserService extends AbstractJsonService {
 	
 	private static Client client;
@@ -61,7 +66,7 @@ public class UserService extends AbstractJsonService {
 	@Path("/settings")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String setUserSettings(String json) throws Exception {
+	public String setUserSettings(String json) {
 		Map<String, Object> valueMap = toMap(json);
 		EtmPrincipal etmPrincipal = getEtmPrincipal();
 		
@@ -105,7 +110,7 @@ public class UserService extends AbstractJsonService {
 	@Path("/password")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String setPassword(String json) throws Exception {
+	public String setPassword(String json) {
 		if (getEtmPrincipal().isLdapBase()) {
 			// TODO gooi exceptie
 			return null;
@@ -150,7 +155,7 @@ public class UserService extends AbstractJsonService {
 	public String getLocales() {
 		Locale requestedLocale = getEtmPrincipal().getLocale();
 		return "{\"locales\": [" + Arrays.stream(Locale.getAvailableLocales()).filter(p -> p.getCountry().length() > 0).sorted((o1, o2) -> o1.getDisplayName(requestedLocale).compareTo(o2.getDisplayName(requestedLocale))).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
-				.collect(Collectors.joining(",")) 
+				.collect(Collectors.joining(","))
 			+ "], \"default_locale\": {" + escapeObjectToJsonNameValuePair("name", Locale.getDefault().getDisplayName(requestedLocale)) 
 			+ ", " + escapeObjectToJsonNameValuePair("value", Locale.getDefault().toLanguageTag())+ "}}";
 	}

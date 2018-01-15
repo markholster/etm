@@ -1,23 +1,22 @@
 package com.jecstar.etm.launcher.slf4j;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.time.ZonedDateTime;
-
-import org.slf4j.Marker;
-import org.slf4j.helpers.FormattingTuple;
-import org.slf4j.helpers.MarkerIgnoringBase;
-import org.slf4j.helpers.MessageFormatter;
-import org.slf4j.spi.LocationAwareLogger;
-
 import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.domain.builder.ApplicationBuilder;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.LogTelemetryEventBuilder;
 import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
+import org.slf4j.Marker;
+import org.slf4j.helpers.FormattingTuple;
+import org.slf4j.helpers.MarkerIgnoringBase;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.spi.LocationAwareLogger;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.time.ZonedDateTime;
 
 class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
@@ -35,7 +34,7 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 	private final InternalBulkProcessorWrapper internalBulkProcessorWrapper;
     private final int logLevelAsInt;
 
-	public EtmLogger(String loggerName, LogConfiguration configuration, InternalBulkProcessorWrapper internalBulkProcessorWrapper) {
+	EtmLogger(String loggerName, LogConfiguration configuration, InternalBulkProcessorWrapper internalBulkProcessorWrapper) {
 		this.name = loggerName;
 		this.configuration = configuration;
         String logLevel = this.configuration.getLogLevel(getName());

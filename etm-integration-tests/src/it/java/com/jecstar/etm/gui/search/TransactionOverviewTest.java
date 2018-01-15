@@ -10,7 +10,7 @@ import com.jecstar.etm.domain.writer.json.HttpTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -21,8 +21,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 /**
  * Class testing the event overview.

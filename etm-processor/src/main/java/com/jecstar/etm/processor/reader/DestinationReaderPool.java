@@ -32,7 +32,7 @@ public class DestinationReaderPool<T extends DestinationReader> {
     private final int maxReaders;
     private final Function<DestinationReaderInstantiationContext<T>, T> readerInstantiator;
 
-    private List<DestinationReaderContext> currentReaders = new ArrayList<>();
+    private final List<DestinationReaderContext> currentReaders = new ArrayList<>();
 
     /**
      * Constructs a new <code>DestinationReaderPool</code> instance.
@@ -41,7 +41,7 @@ public class DestinationReaderPool<T extends DestinationReader> {
      *
      * @param processor The <code>TelemetryCommandProcessor</code> used to query for the available ringbuffer space.
      * @param executorService The <code>ExecutorService</code> used to spawn new threads.
-     * @param destinationName The name of the destination. Only necessary for logging purposes.
+     * @param destinationName The name of the destination.
      * @param minReaders The minimum number of <code>DestinationReader</code> instances that should be started.
      * @param maxReaders The maximum number of <code>DestinationReader</code> instances that is allowed to be started.
      * @param readerInstantiator The <code>Function</code> that instantiates new <code>DestinationReader</code>.
@@ -69,7 +69,7 @@ public class DestinationReaderPool<T extends DestinationReader> {
     private void initialize() {
         synchronized (this.currentReaders) {
             for (int i = 0; i < this.minReaders; i++) {
-                T reader = this.readerInstantiator.apply(new DestinationReaderInstantiationContext<T>(this, i));
+                T reader = this.readerInstantiator.apply(new DestinationReaderInstantiationContext<>(this, i));
                 Future<?> future = this.executorService.submit(reader);
                 this.currentReaders.add(new DestinationReaderContext(reader, future));
             }
@@ -90,7 +90,7 @@ public class DestinationReaderPool<T extends DestinationReader> {
         synchronized (this.currentReaders) {
             removeFinishedFutures();
             if (this.currentReaders.size() < this.maxReaders) {
-                T reader = this.readerInstantiator.apply(new DestinationReaderInstantiationContext<T>(this, this.currentReaders.size()));
+                T reader = this.readerInstantiator.apply(new DestinationReaderInstantiationContext<>(this, this.currentReaders.size()));
                 Future<?> future = this.executorService.submit(reader);
                 this.currentReaders.add(new DestinationReaderContext(reader, future));
                 if (log.isInfoLevelEnabled()) {
@@ -137,12 +137,7 @@ public class DestinationReaderPool<T extends DestinationReader> {
      */
     private void removeFinishedFutures() {
         Iterator<DestinationReaderContext> iterator = this.currentReaders.iterator();
-        while (iterator.hasNext()) {
-            DestinationReaderContext context = iterator.next();
-            if (context.future.isDone()) {
-                iterator.remove();
-            }
-        }
+        this.currentReaders.removeIf(p -> p.future.isDone());
     }
 
     /**

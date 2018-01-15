@@ -1,18 +1,16 @@
 package com.jecstar.etm.gui.rest;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.ws.rs.core.Application;
-
-import org.elasticsearch.client.Client;
-
 import com.jecstar.etm.gui.rest.services.dashboard.DashboardService;
 import com.jecstar.etm.gui.rest.services.search.SearchService;
 import com.jecstar.etm.gui.rest.services.settings.AuditService;
 import com.jecstar.etm.gui.rest.services.settings.SettingsService;
 import com.jecstar.etm.gui.rest.services.user.UserService;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import org.elasticsearch.client.Client;
+
+import javax.ws.rs.core.Application;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RestGuiApplication extends Application {
 

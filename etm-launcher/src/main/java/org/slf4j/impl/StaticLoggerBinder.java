@@ -1,9 +1,8 @@
 package org.slf4j.impl;
 
+import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.spi.LoggerFactoryBinder;
-
-import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 
 public class StaticLoggerBinder implements LoggerFactoryBinder {
 	

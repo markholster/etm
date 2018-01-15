@@ -33,6 +33,7 @@ public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPe
         } else {
             Map<String, Object> parameters =  new HashMap<>();
             parameters.put("source", XContentHelper.convertToMap(new BytesArray(converter.write(event, true)), false, XContentType.JSON).v2());
+            parameters.put("event_id", event.id);
             bulkProcessor.add(createUpdateRequest(event.id)
                     .script(new Script(ScriptType.STORED, null, "etm_update-event", parameters))
                     .upsert(indexRequest));

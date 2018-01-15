@@ -1,21 +1,12 @@
 package com.jecstar.etm.server.core.ssl;
 
+import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 
 
 public class SSLContextBuilder {
@@ -34,7 +25,7 @@ public class SSLContextBuilder {
 	}
 
 	private KeyStore loadKeyStore(final File location, String type, final char[] storePassword) throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException {
-		try (final InputStream stream = location == null ? null : new FileInputStream(location);) {
+		try (final InputStream stream = location == null ? null : new FileInputStream(location)) {
 			if (stream == null) {
 				return null;
 			}

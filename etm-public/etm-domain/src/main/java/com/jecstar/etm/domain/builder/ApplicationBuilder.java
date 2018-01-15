@@ -1,8 +1,8 @@
 package com.jecstar.etm.domain.builder;
 
-import java.net.InetAddress;
-
 import com.jecstar.etm.domain.Application;
+
+import java.net.InetAddress;
 
 public class ApplicationBuilder {
 

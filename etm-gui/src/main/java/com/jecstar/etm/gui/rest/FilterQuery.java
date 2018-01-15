@@ -1,8 +1,7 @@
 package com.jecstar.etm.gui.rest;
 
-import org.elasticsearch.index.query.QueryBuilder;
-
 import com.jecstar.etm.server.core.domain.QueryOccurrence;
+import org.elasticsearch.index.query.QueryBuilder;
 
 class FilterQuery {
 
@@ -10,7 +9,7 @@ class FilterQuery {
 	
 	private final QueryBuilder query;
 	
-	public FilterQuery(QueryOccurrence queryOccurrence, QueryBuilder query) {
+	FilterQuery(QueryOccurrence queryOccurrence, QueryBuilder query) {
 		this.queryOccurrence = queryOccurrence;
 		this.query = query;
 	}

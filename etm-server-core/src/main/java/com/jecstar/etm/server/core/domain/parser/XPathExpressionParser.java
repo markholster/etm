@@ -1,20 +1,17 @@
 package com.jecstar.etm.server.core.domain.parser;
 
-import java.io.StringReader;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
+import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NamePool.NamePoolLimitException;
+import net.sf.saxon.xpath.XPathFactoryImpl;
+import org.xml.sax.InputSource;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-
-import org.xml.sax.InputSource;
-
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
-
-import net.sf.saxon.Configuration;
-import net.sf.saxon.om.NamePool.NamePoolLimitException;
-import net.sf.saxon.xpath.XPathFactoryImpl;
+import java.io.StringReader;
 
 public class XPathExpressionParser extends AbstractExpressionParser {
 	

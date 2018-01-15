@@ -1,15 +1,14 @@
 package com.jecstar.etm.launcher.http;
 
+import com.jecstar.etm.launcher.http.MenuAwareURLResource.MenuContext;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import io.undertow.server.handlers.resource.ClassPathResourceManager;
+import io.undertow.server.handlers.resource.Resource;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.stream.Collectors;
-
-import com.jecstar.etm.launcher.http.MenuAwareURLResource.MenuContext;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-
-import io.undertow.server.handlers.resource.ClassPathResourceManager;
-import io.undertow.server.handlers.resource.Resource;
 
 class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
 
@@ -17,7 +16,7 @@ class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
     private final String prefix;
     private final ClassLoader classLoader;
 
-    public MenuAwareClassPathResourceManager(EtmConfiguration etmConfiguration, ClassLoader classLoader, String prefix) {
+    MenuAwareClassPathResourceManager(EtmConfiguration etmConfiguration, ClassLoader classLoader, String prefix) {
         super(classLoader, prefix);
         this.etmConfiguration = etmConfiguration;
         this.prefix = prefix;

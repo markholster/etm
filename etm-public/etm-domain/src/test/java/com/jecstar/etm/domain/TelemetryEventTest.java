@@ -1,18 +1,17 @@
 package com.jecstar.etm.domain;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
-import org.junit.Test;
-
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.builder.ApplicationBuilder;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
+import org.junit.Test;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * Test class for the <code>TelemetryEvent</code> class.

@@ -13,7 +13,7 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -42,10 +42,8 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.SortedMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeListener {
 	
@@ -293,7 +291,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 	
 	private void insertAdminUser(Client elasticClient) {
 		EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
-		adminUser.addRole(EtmPrincipalRole.ADMIN);
+		adminUser.addRoles(Arrays.stream(SecurityRoles.ALL_READ_WRITE_SECURITY_ROLES).collect(Collectors.toCollection(ArrayList::new)));
 		adminUser.setChangePasswordOnLogon(true);
 		elasticClient.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + adminUser.getId())
 			.setWaitForActiveShards(ActiveShardCount.ALL)

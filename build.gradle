@@ -16,7 +16,7 @@ ext {
     dep_jms = "javax.jms:javax.jms-api:2.0.1"
     dep_jaxb = "javax.xml.bind:jaxb-api:2.3.0"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
-    dep_junit = "junit:junit:4.12"
+    dep_junit = "org.junit.jupiter:junit-jupiter-api:5.0.2"
     dep_ldaptive = "org.ldaptive:ldaptive:1.2.3"
     dep_log4jToSlf4j = "org.apache.logging.log4j:log4j-to-slf4j:2.9.1"
     dep_metricsCore = "io.dropwizard.metrics:metrics-core:3.2.5"

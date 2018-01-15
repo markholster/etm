@@ -132,10 +132,8 @@ function buildParserPage() {
         		$('#parsers_infoBox').text('Parser \'' + parserData.name + '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	if ($('#modal-parser-overwrite').is(':visible')) {
-        		$('#modal-parser-overwrite').modal('hide');
-        	}
-        });    		
+            hideModals($('#modal-parser-overwrite'));
+        });
 	}
 	
 	function removeParser(parserName) {
@@ -154,10 +152,8 @@ function buildParserPage() {
         		$('#parsers_infoBox').text('Parser \'' + parserName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	if ($('#modal-parser-remove').is(':visible')) {
-        		$('#modal-parser-remove').modal('hide');
-        	}
-        });    		
+            hideModals($('#modal-parser-remove'));
+        });
 	}
 	
 	function createParserData() {

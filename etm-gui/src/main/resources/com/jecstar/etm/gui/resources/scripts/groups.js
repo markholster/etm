@@ -14,28 +14,7 @@ function buildGroupPage() {
             }).autocompleteFieldQuery({queryKeywords: data.keywords});       
         }
     });
-    $.ajax({
-        type: 'GET',
-        contentType: 'application/json',
-        url: '../rest/settings/userroles',
-        success: function(data) {
-            if (!data || !data.user_roles) {
-                return;
-            }
-            var $rolesContainer = $('#group-roles-container');
-            $(data.user_roles).each(function (index, user_role) {
-            	$rolesContainer.append(
-        			$('<label>').addClass('custom-control custom-checkbox').append(
-    					$('<input>').attr('type', 'checkbox').attr('id', 'check-role-' + user_role.value).attr('name', 'check-user-roles').attr('value', user_role.value).addClass('custom-control-input'),
-    					$('<span>').addClass('custom-control-indicator'),
-    					$('<span>').addClass('custom-control-description').text(user_role.name)
-        			)
-            	);
-            });
-            
-        }
-    });
-	
+
 	var groupMap = {};
 	$('#sel-group').change(function(event) {
 		event.preventDefault();
@@ -50,8 +29,9 @@ function buildGroupPage() {
 		$('#sel-always-show-correlated-events').val(groupData.always_show_correlated_events ? 'true' : 'false');
 		$('#group-roles-container > label > input').prop('checked', false);
 		if (groupData.roles) {
+		    $('#card-acl').find('select').val('none');
 			$.each(groupData.roles, function(index, role) {
-				$('#check-role-' + role).prop('checked', true);
+			    $('#card-acl').find("option[value='" + role + "']").parent().val(role);
 			});
 		}
 		enableOrDisableButtons();
@@ -134,9 +114,7 @@ function buildGroupPage() {
 		        $('#sel-group').val(group.name).trigger('change');
 		    }
 		}).always(function () {
-        	if ($('#modal-group-import').is(':visible')) {
-        		$('#modal-group-import').modal('hide');
-        	}
+		    hideModals($('#modal-group-import'));
         });
 	});
 	
@@ -211,10 +189,8 @@ function buildGroupPage() {
         		$('#groups_infoBox').text('Group \'' + groupData.name+ '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	if ($('#modal-group-overwrite').is(':visible')) {
-        		$('#modal-group-overwrite').modal('hide');
-        	}
-        });		
+            hideModals($('#modal-group-overwrite'));
+        });
 	}
 	
 	function removeGroup(groupName) {
@@ -233,10 +209,8 @@ function buildGroupPage() {
         		$('#groups_infoBox').text('Group \'' + groupName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	if ($('#modal-group-remove').is(':visible')) {
-        		$('#modal-group-remove').modal('hide');
-        	}
-        });	
+            hideModals(('#modal-group-remove'));
+        });
 	}
 	
 	function createGroupData() {
@@ -247,8 +221,10 @@ function buildGroupPage() {
 			always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,
 			roles: []
 		}
-		$('#group-roles-container > label > input:checked').each(function () {
-			groupData.roles.push($(this).val());
+		$('#card-acl').find('select').each(function () {
+		    if ($(this).val() !== 'none') {
+			    groupData.roles.push($(this).val());
+			}
 		});
 		return groupData;
 	}
@@ -258,7 +234,7 @@ function buildGroupPage() {
 		$('#input-filter-query').val('');
 		$('#sel-filter-query-occurrence').val('MUST');
 		$('#sel-always-show-correlated-event').val('false');
-		$('#group-roles-container > label > input').prop('checked', false);
+		$('#card-acl').find('select').val('none');
 		enableOrDisableButtons();
 	}
 }

@@ -116,10 +116,8 @@ function buildNodePage() {
         		$('#nodes_infoBox').text('Node \'' + nodeData.name + '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-        	if ($('#modal-node-overwrite').is(':visible')) {
-        		$('#modal-node-overwrite').modal('hide');
-        	}
-        });  		
+            hideModals($('#modal-node-overwrite'));
+        });
 	}
 	
 	function removeNode(nodeName) {
@@ -138,10 +136,8 @@ function buildNodePage() {
         		$('#nodes_infoBox').text('Node \'' + nodeName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function() {
-        	if ($('#modal-node-remove').is(':visible')) {
-        		$('#modal-node-remove').modal('hide');
-        	}
-        });  		
+            hideModals($('#modal-node-remove'));
+        });
 	}
 	
 	function createNodeData() {

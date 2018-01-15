@@ -5,7 +5,6 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 
@@ -36,7 +35,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getChangePasswordOnLogonTag(), etmPrincipal.isChangePasswordOnLogon(), sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmPrincipal.isLdapBase(), sb, !added) || added;
-		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles().stream().map(EtmPrincipalRole::getRoleName).collect(Collectors.toSet()), true, sb, !added) || added;
+		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles(), true, sb, !added) || added;
 		added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
 		sb.append("}");
@@ -58,7 +57,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmGroup.isLdapBase(), sb, !added) || added;
-		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles().stream().map(EtmPrincipalRole::getRoleName).collect(Collectors.toSet()), true, sb, !added) || added;
+		added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles(), true, sb, !added) || added;
 		sb.append("}");
 		return sb.toString();
 	}
@@ -89,7 +88,14 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		}
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
-			principal.addRoles(roles.stream().map(EtmPrincipalRole::fromRoleName).collect(Collectors.toSet()));
+			principal.addRoles(roles);
+		}
+		// Add the dashboard names. These are readonly properties added by the DashboardService.
+		List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);
+		if (dashboards != null) {
+			for (Map<String, Object> dashboard : dashboards) {
+				principal.addDashboard(this.converter.getString(this.tags.getNameTag(), dashboard));
+			}
 		}
 		return principal;
 	}
@@ -102,8 +108,15 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		group.setLdapBase(this.converter.getBoolean(this.tags.getLdapBaseTag(), valueMap, Boolean.FALSE));
 		List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
 		if (roles != null) {
-			group.addRoles(roles.stream().map(EtmPrincipalRole::fromRoleName).collect(Collectors.toSet()));
+			group.addRoles(roles);
 		}
+        // Add the dashboard names. These are readonly properties added by the DashboardService.
+        List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);
+        if (dashboards != null) {
+            for (Map<String, Object> dashboard : dashboards) {
+                group.addDashboard(this.converter.getString(this.tags.getNameTag(), dashboard));
+            }
+        }
 		return group;
 	}
 

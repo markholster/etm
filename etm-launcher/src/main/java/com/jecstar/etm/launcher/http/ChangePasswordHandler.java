@@ -1,7 +1,6 @@
 package com.jecstar.etm.launcher.http;
 
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-
 import io.undertow.security.idm.Account;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -14,7 +13,7 @@ class ChangePasswordHandler implements HttpHandler {
 	private final HttpHandler next;
 	private final String contextRoot;
 	
-	public ChangePasswordHandler(final String contextRoot, final HttpHandler next) {
+	ChangePasswordHandler(final String contextRoot, final HttpHandler next) {
 		this.next = next;
 		this.contextRoot = contextRoot;
 	}

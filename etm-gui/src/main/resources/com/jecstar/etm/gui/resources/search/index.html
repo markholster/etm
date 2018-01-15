@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
-    <link rel="stylesheet" href="../styles/spinner.css">
+    <link rel="stylesheet" href="../styles/etm-commons.css">
     <link rel="stylesheet" href="../styles/highlightjs-googlecode.css">
     <style type="text/css">
 .headerSortAsc, .headerSortDesc {
@@ -39,7 +39,6 @@
 .event-selected {
 	font-weight: bold;
 }
-body { padding-top: 60px; }
     </style>
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/tether.min.js"></script>
@@ -50,7 +49,7 @@ body { padding-top: 60px; }
 
 </head>
 <body>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #777;">
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
     <a class="navbar-brand" href="https://www.jecstar.com" target="_blank">
         <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
              alt="">
@@ -135,37 +134,32 @@ body { padding-top: 60px; }
                                     to the field value.
                                 </p>
                                 <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-                                <label class="custom-control custom-checkbox">
+                                <div class="custom-control custom-checkbox custom-control-inline">
                                     <input type="checkbox" id="check-type-business" value="business" checked="checked"
                                            class="custom-control-input">
-                                    <span class="custom-control-indicator"></span>
-                                    <span class="custom-control-description">Business</span>
-                                </label>
-                                <label class="custom-control custom-checkbox">
+                                    <label class="custom-control-label" for="check-type-business">Business</label>
+                                </div>
+                                <div class="custom-control custom-checkbox custom-control-inline">
                                     <input type="checkbox" id="check-type-http" value="http" checked="checked"
                                            class="custom-control-input">
-                                    <span class="custom-control-indicator"></span>
-                                    <span class="custom-control-description">Http</span>
-                                </label>
-                                <label class="custom-control custom-checkbox">
+                                    <label class="custom-control-label" for="check-type-http" >Http</label>
+                                </div>
+                                <div class="custom-control custom-checkbox custom-control-inline">
                                     <input type="checkbox" id="check-type-log" value="log" checked="checked"
                                            class="custom-control-input">
-                                    <span class="custom-control-indicator"></span>
-                                    <span class="custom-control-description">Log</span>
-                                </label>
-                                <label class="custom-control custom-checkbox">
+                                    <label class="custom-control-label" for="check-type-log">Log</label>
+                                </div>
+                                <div class="custom-control custom-checkbox custom-control-inline">
                                     <input type="checkbox" id="check-type-messaging" value="messaging" checked="checked"
                                            class="custom-control-input">
-                                    <span class="custom-control-indicator"></span>
-                                    <span class="custom-control-description">Messaging</span>
-                                </label>
-                                <label class="custom-control custom-checkbox">
+                                    <label class="custom-control-label" for="check-type-messaging">Messaging</label>
+                                </div>
+                                <div class="custom-control custom-checkbox custom-control-inline">
                                     <input type="checkbox" id="check-type-sql" value="sql" checked="checked"
                                            class="custom-control-input">
-                                    <span class="custom-control-indicator"></span>
-                                    <span class="custom-control-description">SQL</span>
-                                </label>
-                                <div class="input-group">
+                                    <label class="custom-control-label" for="check-type-sql">SQL</label>
+                                </div>
+                                <div class="input-group" style="margin-top: 5px;">
                                     <input id="query-string" type="text" class="form-control" placeholder="Search for..."
                                            autocomplete="off" autofocus="autofocus">
                                     <span class="input-group-btn">
@@ -381,28 +375,22 @@ body { padding-top: 60px; }
     <script src="../scripts/cytoscape-dagre.js"></script>
     <script src="../scripts/vkbeautify.js"></script>
     <script src="../scripts/clipboard.min.js"></script>
+    <script src="../scripts/etm-commons.js"></script>
 
     <script>
-    $(document).ajaxStart(function () {
-        $('.errorBox').hide('fast');
-        $('#spinner').show('fast');
-    }).ajaxStop(function () {
-        $('#spinner').hide('fast');
-    }).ajaxError(function(event, jqXHR, settings, thrownError) {
-        if ("undefined" != typeof jqXHR.responseJSON) {
-            $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
-        } else {
-            $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
-        }
-        $('html,body').animate({scrollTop: 0},'fast');
-    }).ajaxComplete(function(event, jqXHR, settings) {
-        var contentType = jqXHR.getResponseHeader("Content-Type");
-        if (jqXHR.status === 200 && contentType.toLowerCase().indexOf("text/html") >= 0) {
-            // assume that our login has expired - reload our current page
-            window.location.reload();
-            return;
-        }
-    });
+    addAjaxHandlers(
+        null,
+        null,
+        function(event, jqXHR, settings, thrownError) {
+            if ("undefined" != typeof jqXHR.responseJSON) {
+                $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+            } else {
+                $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+            }
+            $('html,body').animate({scrollTop: 0},'fast');
+        },
+        null
+    );
     var queryKeywords = null;
     $.ajax({
         type: 'GET',
@@ -512,17 +500,6 @@ body { padding-top: 60px; }
     	var queryParams = createQuery(false);
     	queryParams.start_ix = 0;
         executeQuery(queryParams);
-    }
-
-    function isInViewport(elem) {
-    	if (!$(elem).is(':visible')) {
-    		return false;
-    	}
-        var docViewTop = $(window).scrollTop();
-        var docViewBottom = docViewTop + $(window).height();
-        var elemTop = $(elem).offset().top;
-        var elemBottom = elemTop + $(elem).height();
-        return docViewBottom > elemTop;
     }
 
     function enableOrDisableSearchButton() {
@@ -727,9 +704,6 @@ body { padding-top: 60px; }
     if (queryString['id'] && queryString['type']) {
         showEvent(null, queryString['type'], queryString['id']);
     }
-
-
-
     </script>
 
 </body>

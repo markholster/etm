@@ -1,17 +1,17 @@
 package com.jecstar.etm.processor.core;
 
-import java.time.ZonedDateTime;
-
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.lmax.disruptor.EventHandler;
+
+import java.time.ZonedDateTime;
 
 class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 
@@ -26,7 +26,7 @@ class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	private final CustomAchmeaEnhancements achmeaEnhancements;
 	private final Timer timer;
 	
-	public EnhancingEventHandler(final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration, final CommandResources commandResources, final MetricRegistry metricRegistry) {
+	EnhancingEventHandler(final long ordinal, final long numberOfConsumers, final EtmConfiguration etmConfiguration, final CommandResources commandResources, final MetricRegistry metricRegistry) {
 		this.ordinal = ordinal;
 		this.numberOfConsumers = numberOfConsumers;
 		this.commandResources = commandResources;
@@ -36,7 +36,7 @@ class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
 	}
 
 	@Override
-	public void onEvent(final TelemetryCommand command, final long sequence, final boolean endOfBatch) throws Exception {
+	public void onEvent(final TelemetryCommand command, final long sequence, final boolean endOfBatch) {
 		if (sequence % this.numberOfConsumers != this.ordinal || CommandType.NOOP.equals(command.commandType)) {
 			return;
 		}

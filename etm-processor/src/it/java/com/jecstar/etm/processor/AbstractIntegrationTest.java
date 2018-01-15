@@ -8,8 +8,9 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import org.junit.After;
-import org.junit.Before;
+import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -26,15 +27,23 @@ public abstract class AbstractIntegrationTest {
 	protected final EtmConfiguration etmConfiguration = new EtmConfiguration("integration-test");
 	private Client client;
 	protected BulkProcessor bulkProcessor;
+	private final String elasticCredentials = "elastic:5+2vTgPUNPxJas*LBm9~";
 	
 	protected abstract BulkProcessor.Listener createBuilkListener();
 	
-	@Before
-	public void setup() throws UnknownHostException {
+	@BeforeEach
+	public void setup() {
 		this.etmConfiguration.setEventBufferSize(1);
-		TransportClient transportClient = new PreBuiltTransportClient(Settings.builder()
-				.put("cluster.name", "Enterprise Telemetry Monitor")
-				.put("client.transport.sniff", false).build());
+        Settings.Builder builder = Settings.builder()
+                .put("cluster.name", "Enterprise Telemetry Monitor")
+                .put("client.transport.sniff", false);
+        TransportClient transportClient = null;
+		if (this.elasticCredentials != null) {
+            builder.put("xpack.security.user", elasticCredentials);
+            transportClient = new PreBuiltXPackTransportClient(builder.build());
+		} else {
+			transportClient = new PreBuiltTransportClient(builder.build());
+		}
 		transportClient.addTransportAddress(new TransportAddress(InetAddress.getLoopbackAddress(), 9300));
 		this.client = transportClient;
 		this.bulkProcessor = BulkProcessor.builder(this.client,  createBuilkListener())
@@ -42,7 +51,7 @@ public abstract class AbstractIntegrationTest {
 			.build();
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() {
 		if (this.bulkProcessor != null) {
 			this.bulkProcessor.close();

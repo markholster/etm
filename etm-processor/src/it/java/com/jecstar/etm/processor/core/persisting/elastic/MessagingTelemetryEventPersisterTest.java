@@ -17,12 +17,13 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTest {
 
@@ -100,13 +101,13 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
 		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertEquals(eventId, eventId, readEvent.id);
-		assertEquals(eventId, 1, readEvent.endpoints.size());
+		assertEquals(eventId, readEvent.id, eventId);
+		assertEquals(1, readEvent.endpoints.size(), eventId);
 		Endpoint endpoint = readEvent.endpoints.get(0);
-		assertEquals(eventId, "TEST.QUEUE", endpoint.name);
-		assertEquals(eventId, "Writing app", endpoint.writingEndpointHandler.application.name);
-		assertEquals(eventId, 1, endpoint.readingEndpointHandlers.size());
-		assertEquals(eventId, "Reading app", endpoint.readingEndpointHandlers.get(0).application.name);
+		assertEquals("TEST.QUEUE", endpoint.name, eventId);
+		assertEquals("Writing app", endpoint.writingEndpointHandler.application.name, eventId);
+		assertEquals(1, endpoint.readingEndpointHandlers.size(), eventId);
+		assertEquals("Reading app", endpoint.readingEndpointHandlers.get(0).application.name, eventId);
 	}
 	
 	/**
@@ -154,13 +155,13 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
 		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertEquals(eventId, eventId, readEvent.id);
-		assertEquals(eventId, 1, readEvent.endpoints.size());
+		assertEquals(eventId, readEvent.id, eventId);
+		assertEquals(1, readEvent.endpoints.size(), eventId);
 		Endpoint endpoint = readEvent.endpoints.get(0);
-		assertEquals(eventId, "TEST.QUEUE", endpoint.name);
-		assertEquals(eventId, "Writing app", endpoint.writingEndpointHandler.application.name);
-		assertEquals(eventId, 1, endpoint.readingEndpointHandlers.size());
-		assertEquals(eventId, "Reading app", endpoint.readingEndpointHandlers.get(0).application.name);
+		assertEquals("TEST.QUEUE", endpoint.name, eventId);
+		assertEquals("Writing app", endpoint.writingEndpointHandler.application.name, eventId);
+		assertEquals(1, endpoint.readingEndpointHandlers.size(), eventId);
+		assertEquals("Reading app", endpoint.readingEndpointHandlers.get(0).application.name, eventId);
 	}
 	
 	/**
@@ -210,8 +211,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
 		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertEquals(eventId, eventId, readEvent.id);
-		assertEquals(eventId, 2, readEvent.endpoints.size());
+		assertEquals(eventId, readEvent.id, eventId);
+		assertEquals(2, readEvent.endpoints.size(), eventId);
 	}
 	
 	/**
@@ -264,13 +265,13 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, eventId, 2L);
 		
 		MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertEquals(eventId, eventId, readEvent.id);
-		assertEquals(eventId, eventName, readEvent.name);
-		assertEquals(eventId, payload, readEvent.payload);
-		assertEquals(eventId, PayloadFormat.TEXT, readEvent.payloadFormat);
-		assertEquals(eventId, MessagingEventType.REQUEST, readEvent.messagingEventType);
-		assertEquals(eventId, "initial value", readEvent.metadata.get("key1"));
-		assertEquals(eventId, "merged value", readEvent.metadata.get("key2"));
+		assertEquals(eventId, readEvent.id, eventId);
+		assertEquals(eventName, readEvent.name, eventId);
+		assertEquals(payload, readEvent.payload, eventId);
+		assertEquals(PayloadFormat.TEXT, readEvent.payloadFormat, eventId);
+		assertEquals(MessagingEventType.REQUEST, readEvent.messagingEventType, eventId);
+		assertEquals("initial value", readEvent.metadata.get("key1"), eventId);
+		assertEquals("merged value", readEvent.metadata.get("key2"), eventId);
 	}
 	
 	/**
@@ -326,14 +327,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
 
 		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertEquals(event.id, 1, event.correlations.size());
-		assertEquals(event.id, responseId, event.correlations.get(0));
+		assertEquals(1, event.correlations.size(), event.id);
+		assertEquals(responseId, event.correlations.get(0), event.id);
 		
-		assertEquals(event.id, 1, event.endpoints.size());
+		assertEquals(1, event.endpoints.size(), event.id);
 		Endpoint endpoint = event.endpoints.get(0);
-		assertEquals(event.id, 1000, endpoint.readingEndpointHandlers.get(0).responseTime.longValue());
-		assertEquals(event.id, 1000, endpoint.readingEndpointHandlers.get(0).latency.longValue());
-		assertEquals(event.id, 3000, endpoint.writingEndpointHandler.responseTime.longValue());	}
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).responseTime.longValue(), event.id);
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).latency.longValue(), event.id);
+		assertEquals(3000, endpoint.writingEndpointHandler.responseTime.longValue(), event.id);	}
 	
 	/**
 	 * Test if the response data (correlation id, response time etc) is merged in the request when the response is added after the request.  
@@ -387,14 +388,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
 
 		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertEquals(event.id, 1, event.correlations.size());
-		assertEquals(event.id, responseId, event.correlations.get(0));
+		assertEquals(1, event.correlations.size(), event.id);
+		assertEquals(responseId, event.correlations.get(0), event.id);
 		
-		assertEquals(event.id, 1, event.endpoints.size());
+		assertEquals(1, event.endpoints.size(), event.id);
 		Endpoint endpoint = event.endpoints.get(0);
-		assertEquals(event.id, 1000, endpoint.readingEndpointHandlers.get(0).responseTime.longValue());
-		assertEquals(event.id, 1000, endpoint.readingEndpointHandlers.get(0).latency.longValue());
-		assertEquals(event.id, 3000, endpoint.writingEndpointHandler.responseTime.longValue());
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).responseTime.longValue(), event.id);
+		assertEquals(1000, endpoint.readingEndpointHandlers.get(0).latency.longValue(), event.id);
+		assertEquals(3000, endpoint.writingEndpointHandler.responseTime.longValue(), event.id);
 	}
 	
 	/**
@@ -436,7 +437,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		persister.persist(builder.build(), this.messagingEventConverter);
 		getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
 		MessagingTelemetryEvent event_v2 = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertEquals(getResponse.getId(), event_v1.getCalculatedHash(), event_v2.getCalculatedHash());
+		assertEquals(event_v1.getCalculatedHash(), event_v2.getCalculatedHash(), getResponse.getId());
 	}
 	
 	/**
@@ -473,7 +474,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		assertNotNull(requestEvent.endpoints.get(0).writingEndpointHandler.responseTime);
 		long responsetTime = requestEvent.endpoints.get(0).writingEndpointHandler.responseTime;
-		assertEquals(requestId, 1000L, responsetTime);
+		assertEquals(1000L, responsetTime, requestId);
 	}
 	
 	/**
@@ -508,9 +509,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		// wait for the request to be updated with the response time
 		GetResponse getResponse = waitFor(persister.getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, requestId, 2L);
 		MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
-		assertNotNull(requestId, requestEvent.endpoints.get(0).writingEndpointHandler.responseTime);
+		assertNotNull(requestEvent.endpoints.get(0).writingEndpointHandler.responseTime, requestId);
 		long responsetTime = requestEvent.endpoints.get(0).writingEndpointHandler.responseTime;
-		assertEquals(requestId, 1000L, responsetTime);
+		assertEquals(1000L, responsetTime, requestId);
 	}
 	
 	/**
@@ -542,7 +543,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		
 		// Make sure the second event is referenced in the first event.
-		assertTrue(firstId, event.correlations.contains(secondId));
+		assertTrue(event.correlations.contains(secondId), firstId);
 	}
 	
 	@Test
@@ -568,7 +569,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 		MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 		
 		// Make sure the second event is referenced in the first event.
-		assertTrue(firstId, event.correlations.contains(secondId));
+		assertTrue(event.correlations.contains(secondId), firstId);
 	}
 	
 }

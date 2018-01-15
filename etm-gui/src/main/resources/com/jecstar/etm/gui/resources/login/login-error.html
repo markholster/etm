@@ -44,11 +44,10 @@
                    <input type="password" id="j_password" name="j_password" class="form-control" required="required" autocomplete="off" /> 
                 </fieldset>
                 <fieldset class="form-group">
-                  <label class="custom-control custom-checkbox">
-                    <input type="checkbox" id="check-show-password" class="custom-control-input" onclick="toggelPasswordVisibility()">
-                    <span class="custom-control-indicator"></span>
-                    <span class="custom-control-description">Show password</span>
-                  </label>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" id="check-show-password" class="custom-control-input" onclick="toggelPasswordVisibility()">
+                        <label class="custom-control-label" for="check-show-password">Show password</label>
+                    </div>
                 </fieldset>
                 <input type="submit" class="btn btn-primary" value="Login" />
             </form>

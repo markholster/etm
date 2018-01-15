@@ -3,25 +3,26 @@ package com.jecstar.etm.server.core.ldap;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class DirectoryTest {
 
 	private static EmbeddableLdapServer server;
 	
-	@BeforeClass
+	@BeforeAll
 	public static void setup() {
 		server = new EmbeddableLdapServer();
 		server.startServer();
 	}
 	
-	@AfterClass
+	@AfterAll
 	public static void tearDown() {
 		if (server != null) {
 			server.stopServer();

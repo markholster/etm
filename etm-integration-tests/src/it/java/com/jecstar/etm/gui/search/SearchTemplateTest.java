@@ -1,11 +1,12 @@
 package com.jecstar.etm.gui.search;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * Class testing the usage of the search templates in the GUI.
@@ -24,9 +25,9 @@ public class SearchTemplateTest extends AbstractSearchIntegrationTest {
 		getSecurePage(this.httpHost + "/gui/search/index.html", c -> ExpectedConditions.visibilityOf(findById("query-string")), 1000);
 
         // Check if certain fields are disabled.
-	    assertFalse("Search button is enabled when search string is not provided", findById("btn-search").isEnabled());
-	    assertFalse("Template name input is enabled when search string is not provided", findById("template-name").isEnabled());
-	    assertFalse("Template save button is enabled when search string is not provided", findById("btn-save-template").isEnabled());
+	    assertFalse(findById("btn-search").isEnabled(), "Search button is enabled when search string is not provided");
+	    assertFalse(findById("template-name").isEnabled(), "Template name input is enabled when search string is not provided");
+	    assertFalse(findById("btn-save-template").isEnabled(), "Template save button is enabled when search string is not provided");
 	    
 	    // Fill in the query field.
         setTextToElement(findById("query-string"), templateQuery);
@@ -34,7 +35,7 @@ public class SearchTemplateTest extends AbstractSearchIntegrationTest {
 		waitFor(ExpectedConditions.elementToBeClickable(findById("btn-search")));
         waitFor(ExpectedConditions.elementToBeClickable(findById("template-name")));
 	    // Make sure the template save button is still disabled because the template name is still empty.
-	    assertFalse("Template save button is enabled when template name is not provided", findById("btn-save-template").isEnabled());
+	    assertFalse(findById("btn-save-template").isEnabled(), "Template save button is enabled when template name is not provided");
 	    
 	    // Execute the query and wait for the result table. This table is created with Javascript, so not present before the query is executed.
 	    findById("btn-search").click();
@@ -43,7 +44,7 @@ public class SearchTemplateTest extends AbstractSearchIntegrationTest {
 	    // Fill the name of the search template.
 	    setTextToElement(findById("template-name"), templateName);
 	    // Make sure the template save button is enabled now.
-	    assertTrue("Template save button is enabled when template name is not provided", findById("btn-save-template").isEnabled());
+	    assertTrue(findById("btn-save-template").isEnabled(), "Template save button is enabled when template name is not provided");
 	    // Save the template and make sure the template is available afterwards.
 	    findById("btn-save-template").click();
 	    waitFor(ExpectedConditions.presenceOfNestedElementLocatedBy(By.id("list-template-links"), By.xpath("./li/a[text()='" + templateName + "']")));

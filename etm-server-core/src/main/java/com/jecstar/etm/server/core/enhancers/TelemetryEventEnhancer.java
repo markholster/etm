@@ -1,8 +1,8 @@
 package com.jecstar.etm.server.core.enhancers;
 
-import java.time.ZonedDateTime;
-
 import com.jecstar.etm.domain.TelemetryEvent;
+
+import java.time.ZonedDateTime;
 
 /**
  * Interface for all enhancers. The purpose of an enhancer is to enrich the

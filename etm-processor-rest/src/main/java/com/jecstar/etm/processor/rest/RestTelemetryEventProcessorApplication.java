@@ -1,11 +1,10 @@
 package com.jecstar.etm.processor.rest;
 
-import java.util.HashSet;
-import java.util.Set;
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 
 import javax.ws.rs.core.Application;
-
-import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RestTelemetryEventProcessorApplication extends Application {
 

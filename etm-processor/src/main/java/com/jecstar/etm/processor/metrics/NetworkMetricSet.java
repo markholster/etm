@@ -1,6 +1,8 @@
 package com.jecstar.etm.processor.metrics;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricSet;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,9 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricSet;
+import static com.codahale.metrics.MetricRegistry.name;
 
 public class NetworkMetricSet implements MetricSet {
 

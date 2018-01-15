@@ -1,8 +1,5 @@
 package com.jecstar.etm.processor.core;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.TelemetryCommand;
@@ -10,6 +7,9 @@ import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.lmax.disruptor.ExceptionHandler;
+
+import java.util.HashMap;
+import java.util.Map;
 
 class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryCommand> {
 
@@ -20,7 +20,7 @@ class TelemetryCommandExceptionHandler implements ExceptionHandler<TelemetryComm
 	private final Map<CommandType, Counter> counters = new HashMap<>();
 	private final Counter totalCounter;
 
-	public TelemetryCommandExceptionHandler(final MetricRegistry metricRegistry) {
+	TelemetryCommandExceptionHandler(final MetricRegistry metricRegistry) {
 		for (CommandType commandType : CommandType.values()) {
 			this.counters.put(commandType, metricRegistry.counter("event-processor.failures." + commandType.toStringType() + "_events"));
 		}

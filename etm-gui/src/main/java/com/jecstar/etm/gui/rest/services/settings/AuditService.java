@@ -5,6 +5,7 @@ import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -18,6 +19,8 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTimeZone;
 
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.text.NumberFormat;
@@ -28,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path("/audit")
+@DeclareRoles(SecurityRoles.ALL_ROLES)
 public class AuditService extends AbstractIndexMetadataService {
 	
 
@@ -42,6 +46,7 @@ public class AuditService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/keywords/{indexName}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.AUDIT_LOG_READ)
 	public String getKeywords(@PathParam("indexName") String indexName) {
 		StringBuilder result = new StringBuilder();
 		Map<String, List<Keyword>> names = getIndexFields(AuditService.client, indexName);
@@ -75,6 +80,7 @@ public class AuditService extends AbstractIndexMetadataService {
 	@GET
 	@Path("/{index}/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.AUDIT_LOG_READ)
 	public String getAuditLog(@PathParam("index") String index, @PathParam("id") String id) {
 		if (!index.startsWith(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX)) {
 			return null;
@@ -90,6 +96,7 @@ public class AuditService extends AbstractIndexMetadataService {
 	@Path("/query")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.AUDIT_LOG_READ)
 	public String executeQuery(String json) {
 		long startTime = System.currentTimeMillis();
 		EtmPrincipal etmPrincipal = getEtmPrincipal(); 

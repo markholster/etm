@@ -1,8 +1,10 @@
+**/.directory
+**/.settings/
+**/out/
+**/bin/
+**/.classpath
+**/.project
 /.gradle/
-/.settings/
-/build/
-/.classpath
-/.project
 /.idea/
 /FFDC/
 **/*.iml

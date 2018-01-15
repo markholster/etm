@@ -69,9 +69,7 @@ function buildClusterPage() {
 				$('#cluster_infoBox').text('Ldap configuration removed.').show('fast').delay(5000).hide('fast');
 		    }
 		}).always(function () {
-        	if ($('#modal-ldap-remove').is(':visible')) {
-        		$('#modal-ldap-remove').modal('hide');
-        	}
+		    hideModals($('#modal-ldap-remove'));
         });
 	});
 	

@@ -2,7 +2,7 @@ package com.jecstar.etm.gui.rest;
 
 
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipalRole;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -60,8 +60,8 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
 				case EtmException.INVALID_EXPRESSION_PARSER_TYPE:
 					errorMessage.setMessage("Invalid expression parser type");
 					break;
-				case EtmException.NO_MORE_ADMINS_LEFT:
-					errorMessage.setMessage("No users with the '" + EtmPrincipalRole.ADMIN.getRoleName() + "' role left");
+				case EtmException.NO_MORE_USER_ADMINS_LEFT:
+					errorMessage.setMessage("No users with the '" + SecurityRoles.USER_SETTINGS_READ_WRITE + "' role left");
 					break;
 				case EtmException.INVALID_LDAP_USER:
 					errorMessage.setMessage("Invalid LDAP user");

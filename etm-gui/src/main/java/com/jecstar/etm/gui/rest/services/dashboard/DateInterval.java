@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
@@ -7,8 +9,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 
 public enum DateInterval {
 

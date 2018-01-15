@@ -1,28 +1,30 @@
 package com.jecstar.etm.gui.settings;
 
 import com.jecstar.etm.gui.AbstractIntegrationTest;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.ldap.EmbeddableLdapServer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class LdapTest extends AbstractIntegrationTest {
 
 	private static EmbeddableLdapServer server;
 	
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		server = new EmbeddableLdapServer();
 		server.startServer();
 	}
 	
-	@AfterClass
+	@AfterAll
 	public static void tearDownClass() {
 		if (server != null) {
 			server.stopServer();
@@ -111,14 +113,14 @@ public class LdapTest extends AbstractIntegrationTest {
 		// Make sure the group is imported
 		assertEquals(EmbeddableLdapServer.ADMIN_GROUP_DN,  findById("input-group-name").getAttribute("value"));
 
-        // Assign the admin role to the group
+        // Assign event read role to the admin group.
         try {
             Thread.sleep(250);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        findById("check-role-admin").findElement(By.xpath("following-sibling::span[@class='custom-control-indicator']")).click();
-
+		Select eventRoleSelect = new Select(findById("sel-event-acl"));
+		eventRoleSelect.selectByValue(SecurityRoles.ETM_EVENT_READ);
 
         // Now save the group
 		findById("btn-confirm-save-group").click();

@@ -1,9 +1,8 @@
 package com.jecstar.etm.launcher;
 
-import org.yaml.snakeyaml.Yaml;
-
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.server.core.util.BCrypt;
+import org.yaml.snakeyaml.Yaml;
 
 class CommandLineParameters {
 
@@ -19,7 +18,7 @@ class CommandLineParameters {
 	private boolean reinitialize = false;
 	private boolean proceedNormalStartup = true;
 	
-	public CommandLineParameters(String[] arguments) {
+	CommandLineParameters(String[] arguments) {
 		if (arguments == null || arguments.length == 0) {
 			return;
 		}

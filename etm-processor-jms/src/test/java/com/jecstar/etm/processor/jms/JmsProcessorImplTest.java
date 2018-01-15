@@ -17,14 +17,14 @@ import org.apache.activemq.artemis.jms.server.config.impl.ConnectionFactoryConfi
 import org.apache.activemq.artemis.jms.server.config.impl.JMSConfigurationImpl;
 import org.apache.activemq.artemis.jms.server.config.impl.JMSQueueConfigurationImpl;
 import org.apache.activemq.artemis.jms.server.embedded.EmbeddedJMS;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.jms.*;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 /**
@@ -34,7 +34,7 @@ public class JmsProcessorImplTest {
 
     private EmbeddedJMS server;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         Configuration configuration = new ConfigurationImpl()
                 .setPersistenceEnabled(false)
@@ -61,7 +61,7 @@ public class JmsProcessorImplTest {
         this.server.start();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         if (this.server != null) {
             this.server.stop();

@@ -2,7 +2,8 @@ package com.jecstar.etm.gui.settings;
 
 import com.jecstar.etm.gui.AbstractIntegrationTest;
 import com.jecstar.etm.server.core.EtmException;
-import org.junit.Test;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -10,7 +11,8 @@ import org.openqa.selenium.support.ui.Select;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class UsersTest extends AbstractIntegrationTest {
 	
@@ -40,13 +42,13 @@ public class UsersTest extends AbstractIntegrationTest {
 
 		// Make sure the admin data is loaded.
 		assertEquals("admin", findById("input-user-id").getAttribute("value"));
-		// And make sure the admin role is selected.
-		assertTrue(findById("check-role-admin").isSelected());
-		
-		// Now deselect the admin role checkbox to remove the admin role.
-		findById("check-role-admin").click();
-		assertFalse(findById("check-role-admin").isSelected());
-		
+		// Make sure the user settings write role is loaded.
+		Select userSettingRoleSelect = new Select(findById("sel-user-settings-acl"));
+		assertEquals(SecurityRoles.USER_SETTINGS_READ_WRITE, userSettingRoleSelect.getFirstSelectedOption().getAttribute("value"));
+
+		// Now remove the user settings write role.
+		userSettingRoleSelect.selectByValue("none");
+
 		// Try to save the user, this should not work because we lose all admins.
 		findById("btn-confirm-save-user").click();
 		// Wait for the confirmation button to show up
@@ -57,7 +59,7 @@ public class UsersTest extends AbstractIntegrationTest {
 		// An error box should be shows.
 		waitForShow("users_errorBox");
 		// And make sure the error box contains the correct error.
-		assertTrue(findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT));
+		assertTrue(findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_USER_ADMINS_LEFT));
 
 		// Somehow the remove button isn't enabled at this point
 		waitFor(ExpectedConditions.elementToBeClickable(By.id("btn-confirm-remove-user")));
@@ -72,7 +74,7 @@ public class UsersTest extends AbstractIntegrationTest {
 		// An error box should be shows.
 		waitForShow("users_errorBox");
 		// And make sure the error box contains the correct error.
-		assertTrue(findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_ADMINS_LEFT));
+		assertTrue(findById("users_errorBox").getText().contains("" + EtmException.NO_MORE_USER_ADMINS_LEFT));
 	}
 
 }

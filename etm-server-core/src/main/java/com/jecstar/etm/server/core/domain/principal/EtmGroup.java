@@ -16,11 +16,12 @@ public class EtmGroup implements Serializable {
 	private static final long serialVersionUID = 7152085459917438053L;
 	
 	private final String name;
-	private final Set<EtmPrincipalRole> roles = new HashSet<>();
+	private final Set<String> roles = new HashSet<>();
 	private String filterQuery = null;
 	private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
 	private boolean alwaysShowCorrelatedEvents = false;
 	private boolean ldapBase;
+	private Set<String> dashboards = new HashSet<>();
 	
 	public EtmGroup(String name) {
 		this.name = name;
@@ -62,31 +63,31 @@ public class EtmGroup implements Serializable {
 		this.ldapBase = ldapBase;
 	}
 	
-	public Set<EtmPrincipalRole> getRoles() {
+	public Set<String> getRoles() {
 		return Collections.unmodifiableSet(this.roles);
 	}
 	
-	private void addRole(EtmPrincipalRole role) {
+	private void addRole(String role) {
 		if (role != null && !this.roles.contains(role)) {
 			this.roles.add(role);
 		}
 	}
 	
-	public void addRoles(Collection<EtmPrincipalRole> roles) {
+	public void addRoles(Collection<String> roles) {
 		if (roles == null) {
 			return;
 		}
-		for (EtmPrincipalRole role : roles) {
+		for (String role : roles) {
 			addRole(role);
 		}
 	}
 	
-	public boolean isInRole(EtmPrincipalRole role) {
+	public boolean isInRole(String role) {
 		return this.roles.contains(role);
 	}
 	
-	public boolean isInAnyRole(EtmPrincipalRole... roles) {
-		for (EtmPrincipalRole role : roles) {
+	public boolean isInAnyRole(String... roles) {
+		for (String role : roles) {
 			if (this.roles.contains(role)) {
 				return true;
 			}
@@ -94,14 +95,22 @@ public class EtmGroup implements Serializable {
 		return false;
 	}
 	
-	public boolean isInAllRoles(EtmPrincipalRole... roles) {
-		for (EtmPrincipalRole role : roles) {
+	public boolean isInAllRoles(String... roles) {
+		for (String role : roles) {
 			if (!this.roles.contains(role)) {
 				return false;
 			}
 		}
 		return true;		
 	}
+
+    public Set<String> getDashboards() {
+        return this.dashboards;
+    }
+
+    public void addDashboard(String dashboard) {
+        this.dashboards.add(dashboard);
+    }
 	
 	@Override
 	public boolean equals(Object obj) {

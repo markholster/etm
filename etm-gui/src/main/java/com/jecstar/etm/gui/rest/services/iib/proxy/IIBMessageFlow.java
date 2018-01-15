@@ -1,14 +1,14 @@
 package com.jecstar.etm.gui.rest.services.iib.proxy;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-
 import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
 import com.ibm.broker.config.proxy.ConfigManagerProxyPropertyNotInitializedException;
 import com.ibm.broker.config.proxy.MessageFlowProxy;
 import com.ibm.broker.config.proxy.MessageFlowProxy.Node;
 import com.jecstar.etm.server.core.EtmException;
+
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 
 public class IIBMessageFlow {
 	

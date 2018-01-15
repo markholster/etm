@@ -1,10 +1,10 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
-import java.util.Map;
-
 import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
 import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+
+import java.util.Map;
 
 class AuditSearchRequestParameters {
 	

@@ -2,8 +2,9 @@ package com.jecstar.etm.server.core.domain.parsers;
 
 
 import com.jecstar.etm.server.core.domain.parser.JsonPathExpressionParser;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test class for the <code>JsonPathExpressionParser</code> class.
@@ -47,7 +48,7 @@ public class JsonExpressionParserTest {
 	@Test
 	public void testEvaluate() {
 		JsonPathExpressionParser parser = new JsonPathExpressionParser("test", "$.store.book[0].author");
-		Assert.assertEquals("Nigel Rees", parser.evaluate(json));
+		assertEquals("Nigel Rees", parser.evaluate(json));
 		
 	}
 }

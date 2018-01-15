@@ -1,7 +1,11 @@
 package com.jecstar.etm.server.core.domain.parser;
 
-import java.io.StringReader;
-import java.io.StringWriter;
+import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
+import net.sf.saxon.Configuration;
+import net.sf.saxon.TransformerFactoryImpl;
+import net.sf.saxon.om.NamePool.NamePoolLimitException;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -9,14 +13,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-
-import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.logging.LogFactory;
-import com.jecstar.etm.server.core.logging.LogWrapper;
-
-import net.sf.saxon.Configuration;
-import net.sf.saxon.TransformerFactoryImpl;
-import net.sf.saxon.om.NamePool.NamePoolLimitException;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 public class XsltExpressionParser extends AbstractExpressionParser {
 	

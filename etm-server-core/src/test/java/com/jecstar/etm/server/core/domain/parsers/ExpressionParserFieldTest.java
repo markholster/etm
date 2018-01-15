@@ -1,9 +1,9 @@
 package com.jecstar.etm.server.core.domain.parsers;
 
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test class for the <code>ExpressionParserField</code> class.

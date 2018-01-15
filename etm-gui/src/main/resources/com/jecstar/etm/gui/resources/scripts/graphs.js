@@ -1,11 +1,15 @@
-function buildGraphsPage() {
+function buildGraphsPage(groupName) {
+    var contextRoot = '../rest/visualization/';
+    if (groupName) {
+        contextRoot += encodeURIComponent(groupName) + '/'
+    }
 	var graphMap = {};
 	var keywords = [];
 	$.when(
 		$.ajax({
 	        type: 'GET',
 	        contentType: 'application/json',
-	        url: '../rest/dashboard/keywords/etm_event_all',
+	        url: '../rest/visualization/keywords/etm_event_all',
 	        success: function(data) {
 	            if (!data || !data.keywords) {
 	                return;
@@ -16,7 +20,7 @@ function buildGraphsPage() {
 	    $.ajax({
 	        type: 'GET',
 	        contentType: 'application/json',
-	        url: '../rest/dashboard/keywords/etm_metrics_all',
+	        url: '../rest/visualization/keywords/etm_metrics_all',
 	        success: function(data) {
 	            if (!data || !data.keywords) {
 	                return;
@@ -68,7 +72,7 @@ function buildGraphsPage() {
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
-	    url: '../rest/dashboard/graphs',
+	    url: contextRoot + 'graphs',
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -633,7 +637,7 @@ function buildGraphsPage() {
 		$.ajax({
             type: 'PUT',
             contentType: 'application/json',
-            url: '../rest/dashboard/graph/' + encodeURIComponent(graphData.name),
+            url: contextRoot + 'graph/' + encodeURIComponent(graphData.name),
             data: JSON.stringify(graphData),
             success: function(data) {
                 if (!data) {
@@ -649,17 +653,15 @@ function buildGraphsPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	if ($('#modal-graph-overwrite').is(':visible')) {
-        		$('#modal-graph-overwrite').modal('hide');
-        	}
-        });    		
+            hideModals($('#modal-graph-overwrite'));
+        });
 	}
 	
 	function removeGraph(graphName) {
 		$.ajax({
             type: 'DELETE',
             contentType: 'application/json',
-            url: '../rest/dashboard/graph/' + encodeURIComponent(graphName),
+            url: contextRoot + 'graph/' + encodeURIComponent(graphName),
             success: function(data) {
                 if (!data) {
                     return;
@@ -672,10 +674,8 @@ function buildGraphsPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-        	if ($('#modal-graph-remove').is(':visible')) {
-        		$('#modal-graph-remove').modal('hide');
-        	}
-        });    		
+            hideModals($('#modal-graph-remove'));
+        });
 	}
 	
 	function preview() {
@@ -683,7 +683,7 @@ function buildGraphsPage() {
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
-            url: '../rest/dashboard/graphdata',
+            url: '../rest/visualization/graphdata',
             data: JSON.stringify(graphData),
             success: function(data) {
                 if (!data) {
