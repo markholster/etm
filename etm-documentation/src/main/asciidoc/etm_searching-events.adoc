@@ -4,7 +4,7 @@ So, you've set up your {etm} nodes and your processors are handling thousands of
 To search through all events browse to http://localhost:8080/gui/search/ or select the menu option ''Search''. The first time you enter this page it looks similar to the image below.
 
 .Search overview
-image::images/etm-search-overview.png["Search overview",link="./images/etm-search-overview.png"]
+image::images/etm-v3/etm-search-overview.png["Search overview",link="./images/etm-v3/etm-search-overview.png"]
 
 === Search widget
 The left part of the search screen shows an input field in which you can enter your search terms. Also you can (un)check the event types you want to be in- or excluded from the search. 
@@ -29,7 +29,7 @@ The content of this widget is not bound to any session, so if you login via any 
 As soon as a query is executed the Search result widget will show up. This widget will show you the events that match your query. The default layout of the Search result widget may look like this:
 
 .Search result
-image::images/etm-search-result.png["Search result",link="./images/etm-search-result.png"]
+image::images/etm-v3/etm-search-result.png["Search result",link="./images/etm-v3/etm-search-result.png"]
 
 The sorting order can be adjusted by clicking on the column header and auto-scrolling through the results will kick in as soon as your browser hit the end of the page. The top of the result table is showing the number of events that match the query and the ones that are shown. 
 
@@ -37,7 +37,7 @@ The sorting order can be adjusted by clicking on the column header and auto-scro
 By default only the lowest handling time of any of the writing event handlers and the name of the event will be shown. This may be a good starting point for most of the queries, but is most likely not covering all of your needs. Fortunately all table settings can be adjusted by clicking on the edit table icon in the result table header. This is the right most icon next to the download icon. The following screen will show up when you click on the button:
 
 .Edit search result table
-image::images/etm-edit-search-result-table.png["Edit search result table",link="./images/etm-edit-search-result-table.png"]
+image::images/etm-v3/etm-edit-search-result-table.png["Edit search result table",link="./images/etm-v3/etm-edit-search-result-table.png"]
 
 This screen enables you to change sort settings and the number of results per page that should be retrieved. Also an option is given to alter the column layout of the result table. Columns can be added, deleted an re-arranged. Per column the following options are available:
 
@@ -70,14 +70,14 @@ Although you may not have access right to see all events the Event chain tab wil
 Lets consider the following event chain:
 
 .Event chain
-image::images/etm-event-chain.png["Event chain",link="./images/etm-event-chain.png"]
+image::images/etm-v3/etm-event-chain.png["Event chain",link="./images/etm-v3/etm-event-chain.png"]
 
 This chain shows an incoming http request on the 'Gui application'. The 'Gui application' transforms the http request to an messaging requests and send it to endpoint 'BACKEND.QUEUE.1'. On that queue the application 'My Backend' receives the request and handles it. As you can see a thick red arrow show that handling this request takes 84% of the total chain time. When you are experiencing performance issues the 'My Backend' application is a good place to start your investigation. 
 
 By clicking on 'ShoppingCardReqest' you will see everything that happened within that transaction:
 
 .Transaction overview
-image::images/etm-transaction-overview.png["Transaction overview",link="./images/etm-transaction-overview.png"]
+image::images/etm-v3/etm-transaction-overview.png["Transaction overview",link="./images/etm-v3/etm-transaction-overview.png"]
  
 As we can see the query that selected the shopping card from the database took about 300 milliseconds. Depending on your needs that might or might not be an issue. Nevertheless {etm} will give you a quick inside in what is happening where an what applications and components take most of the execution time of an entire application chain. That is awesome isn't it?
 

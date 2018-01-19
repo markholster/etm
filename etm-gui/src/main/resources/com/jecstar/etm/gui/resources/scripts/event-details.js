@@ -678,13 +678,13 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function formatTransactionLine(event) {
-		if ('business' == event.type) {
+		if ('business' == event.type || 'business' == event.object_type) {
 			return event.name ? event.name : '?';
-		} else if ('http' == event.type) {			
+		} else if ('http' == event.type || 'http' == event.object_type) {
 			return ('incoming' == event.direction ? 'Received ' : 'Send ') + ("RESPONSE" == event.sub_type ? 'http response ' : 'http ') + (event.name ? event.name : '?')
-		} else if ('log' == event.type) {
+		} else if ('log' == event.type || 'log' == event.object_type) {
 			return event.payload;
-		} else if ('messaging' == event.type) {
+		} else if ('messaging' == event.type || 'messaging' == event.object_type) {
 			if ('REQUEST' == event.sub_type) {
 				if ('incoming' == event.direction) {
 					return 'Received request message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
@@ -704,7 +704,7 @@ function showEvent(scrollTo, type, id) {
 					return 'Send fire-forget message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			}
-		} else if ('sql' == event.type) {
+		} else if ('sql' == event.type || 'sql' == event.object_type) {
 			if ('incoming' == event.direction) {
 				return 'Received ' + ("RESULTSET" == event.sub_type ? 'sql resultset' : event.payload);
 			} else {

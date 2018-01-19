@@ -122,12 +122,12 @@ A dashboard contains of a set of horizontal rows below each other. Each row can 
 On the first screen you can enter a dashboard name and add some rows. Change the number of columns per row as needed, and give the rows a suitable height. Don't worry over the exact height of each row right now. When the dashboard is create you can drag the height to the best fit for your screen. When you're done organizing your rows and columns click on the ''Save and show'' button to go to your dashboard. Your dashboard might look like the following image:
 
 .Empty dashboard
-image::images/etm-dashboard-start.png["Empty dashboard",link="./images/etm-dashboard-start.png"]
+image::images/etm-v3/etm-dashboard-start.png["Empty dashboard",link="./images/etm-v3/etm-dashboard-start.png"]
 
 Not much to see there right? The only thing left is to add some <<Graphs>> to the dashboard. When hovering over a graph container the blue edit button of that container will show up in the top right corner. A model window will show up with all settings applied to that specific container. Go ahead and select a graph you wish to display. Depending on the graph type several other options will be shown:
 
 .Dashboard graph settings
-image::images/etm-dashboard-graph-settings.png["Dashboard graph settings",link="./images/etm-dashboard-graph-settings.png"]
+image::images/etm-v3/etm-dashboard-graph-settings.png["Dashboard graph settings",link="./images/etm-v3/etm-dashboard-graph-settings.png"]
 
 When finished hit the apply button and your graph will be added to the dashboard. There is no need to save the dashboard again, changes are automatically stored.
 
@@ -147,7 +147,7 @@ A graph on a dashboard can have the follwing attributes:
 Repeat these steps for all graph containers and your dashboard may look like this:
 
 .Dashboard
-image::images/etm-dashboard.png["Dashboard",link="./images/etm-dashboard.png"]
+image::images/etm-v3/etm-dashboard.png["Dashboard",link="./images/etm-v3/etm-dashboard.png"]
 
 When you want to edit the dashboard settings click on the dashboard name and the initial screen will show up. To resize your graph containers drag the bottom right corner of the specific container around on your screen until it has the appropriate size. The dashboard will be automatically saved when any of the graph containers is resized.
 
