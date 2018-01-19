@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher.migrations;
 
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.launcher.configuration.Elasticsearch;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -9,6 +10,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -40,11 +43,10 @@ import java.util.function.Function;
  */
 public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
 
-    // TODO deze class moet nog uitgebreid getest worden. Eigenlijk is het beter een nieuwe (tijdelijke) index aan te maken,
-    // daarheen te indexeren, dan de oude index verwijderen. Nogmaals te indexeren van de tijdelijke index naar de naam van de oude index.
     private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
     private final Client client;
+    private final String migrationIndexPrefix = "migetm_";
 
     public ReindexToSingleTypeMigration(Client client) {
         this.client = client;
@@ -75,88 +77,171 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
             return;
         }
 
-        FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
-        BulkProcessor bulkProcessor = BulkProcessor.builder(this.client, listener).setBulkActions(20).build();
+        GetIndexResponse indexResponse = this.client.admin().indices().prepareGetIndex().addIndices(this.migrationIndexPrefix + "*").get();
+        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
+            System.out.println("Found migration indices from a previous run. Deleting those indices.");
+            for (String index : indexResponse.getIndices()) {
+                this.client.admin().indices().prepareDelete(index).get();
+                System.out.println("Removed migration index '" + index + "'.");
+            }
+        }
 
-        migrateMetrics(this.client, bulkProcessor, listener);
-        migrateHttpSessions(this.client, bulkProcessor, listener);
-        migrateAudits(this.client, bulkProcessor, listener);
-        migrateLicense(this.client, bulkProcessor, listener);
-        migrateUsers(this.client, bulkProcessor, listener);
-        migrateGroups(this.client, bulkProcessor, listener);
-        migrateParsers(this.client, bulkProcessor, listener);
-        migrateEndpoints(this.client, bulkProcessor, listener);
-        migrateLdap(this.client, bulkProcessor, listener);
-        migrateNodes(this.client, bulkProcessor, listener);
-        migrateIIBNodes(this.client, bulkProcessor, listener);
-        migrateGraphs(this.client, bulkProcessor, listener);
-        migrateDashboards(this.client, bulkProcessor, listener);
-        bulkProcessor.close();
+        FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
+        boolean succeeded = migrateMetrics(this.client, listener);
+        if (succeeded) { succeeded = migrateHttpSessions(this.client, listener); }
+        if (succeeded) { succeeded = migrateAudits(this.client, listener); }
+        if (succeeded) { succeeded = migrateLicense(this.client, listener); }
+        if (succeeded) { succeeded = migrateUsers(this.client, listener); }
+        if (succeeded) { succeeded = migrateGroups(this.client, listener); }
+        if (succeeded) { succeeded = migrateParsers(this.client, listener); }
+        if (succeeded) { succeeded = migrateEndpoints(this.client, listener); }
+        if (succeeded) { succeeded = migrateLdap(this.client, listener); }
+        if (succeeded) { succeeded = migrateNodes(this.client, listener); }
+        if (succeeded) { succeeded = migrateIIBNodes(this.client, listener); }
+        if (succeeded) { succeeded = migrateGraphs(this.client, listener); }
+        if (succeeded) { succeeded = migrateDashboards(this.client, listener); }
+        if (!succeeded) {
+            System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
+            return;
+        }
+        deleteOldIndices(this.client);
+        reindexTemporaryIndicesToNew(this.client, listener);
+        deleteTemporaryIndices(this.client);
     }
 
-    private void migrateMetrics(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        migrateEntity("metrics",
+    private void deleteOldIndices(Client client) {
+        System.out.println("Start removing old indices.");
+        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(
+                ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
+                ElasticsearchLayout.STATE_INDEX_NAME,
+                ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL,
+                ElasticsearchLayout.CONFIGURATION_INDEX_NAME
+        ).get();
+        long lastPrint = 0, current = 0;
+        long total = indexResponse.getIndices().length;
+        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
+            for (String index : indexResponse.getIndices()) {
+                client.admin().indices().prepareDelete(index).get();
+                lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
+            }
+            printPercentageWhenChanged(lastPrint, ++current, total);
+        }
+        System.out.println("Done removing old indices.");
+    }
+
+    private void reindexTemporaryIndicesToNew(Client client, FailureDetectingBulkProcessorListener listener) {
+        System.out.println("Start moving temporary indices to permanent indices.");
+        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(this.migrationIndexPrefix + "*").get();
+        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
+            for (String index : indexResponse.getIndices()) {
+                System.out.println("Migrating index '" + index + "'.");
+                final BulkProcessor bulkProcessor = createBulkProcessor(listener);
+                SearchRequestBuilder searchRequestBuilder = client.prepareSearch(index)
+                        .setQuery(QueryBuilders.matchAllQuery())
+                        .setTimeout(TimeValue.timeValueSeconds(30))
+                        .setFetchSource(true);
+                ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
+                long total = searchHits.getNumberOfHits();
+                long current = 0, lastPrint = 0;
+                for (SearchHit searchHit : searchHits) {
+                    bulkProcessor.add(new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
+                            .setIndex(searchHit.getIndex().substring(this.migrationIndexPrefix.length()))
+                            .setType(searchHit.getType())
+                            .setId(searchHit.getId())
+                            .setSource(searchHit.getSourceAsMap())
+                            .request());
+                    lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
+                }
+                bulkProcessor.flush();
+                try {
+                    bulkProcessor.awaitClose(10, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                printPercentageWhenChanged(lastPrint, current, total);
+            }
+        }
+        System.out.println("Done moving temporary indices to permanent indices.");
+    }
+
+    private void deleteTemporaryIndices(Client client) {
+        System.out.println("Start removing temporary indices.");
+        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(this.migrationIndexPrefix + "*").get();
+        long lastPrint = 0, current = 0;
+        long total = indexResponse.getIndices().length;
+        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
+            for (String index : indexResponse.getIndices()) {
+                client.admin().indices().prepareDelete(index).get();
+                lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
+            }
+            printPercentageWhenChanged(lastPrint, ++current, total);
+        }
+        System.out.println("Done removing temporary indices.");
+    }
+
+    private boolean migrateMetrics(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("metrics",
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
                 null,
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 new DefaultIndexRequestCreator(client, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE, null)
         );
     }
 
-    private void migrateHttpSessions(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateHttpSessions(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
             sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION);
             // Add the id attribute, because the original id is replaced with an prefix.
             sourceMap.put(sessionTags.getIdTag(), searchHit.getId());
             return new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(searchHit.getIndex())
+                    .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + searchHit.getId())
                     .setSource(sourceMap)
                     .request();
         };
 
-        migrateEntity("http sessions",
+        return migrateEntity("http sessions",
                 ElasticsearchLayout.STATE_INDEX_NAME,
                 null,
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private void migrateAudits(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateAudits(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
             sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, searchHit.getType());
             return new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(searchHit.getIndex())
+                    .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(searchHit.getId())
                     .setSource(sourceMap)
                     .request();
         };
 
-        migrateEntity("audit logs",
+        return migrateEntity("audit logs",
                 ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL,
                 null,
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private void migrateLicense(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        migrateEntity("license",
+    private boolean migrateLicense(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("license",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "license",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -167,7 +252,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
     }
 
     @SuppressWarnings("unchecked")
-    private void migrateUsers(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateUsers(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
             sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
@@ -176,25 +261,25 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
             }
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(searchHit.getIndex())
+                    .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(sourceMap);
             builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId());
             return builder.request();
         };
 
-        migrateEntity("users",
+        return migrateEntity("users",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "user",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 requestBuilder
         );
     }
 
     @SuppressWarnings("unchecked")
-    private void migrateGroups(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateGroups(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
             sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
@@ -203,28 +288,28 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
             }
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(searchHit.getIndex())
+                    .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(sourceMap);
             builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + searchHit.getId());
             return builder.request();
         };
-        migrateEntity("groups",
+        return migrateEntity("groups",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "group",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private void migrateParsers(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        migrateEntity("parsers",
+    private boolean migrateParsers(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("parsers",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "parser",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -234,12 +319,12 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         );
     }
 
-    private void migrateEndpoints(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        migrateEntity("endpoints",
+    private boolean migrateEndpoints(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("endpoints",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "endpoint",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -249,12 +334,12 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         );
     }
 
-    private void migrateLdap(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        migrateEntity("ldap",
+    private boolean migrateLdap(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("ldap",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "ldap",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -264,12 +349,12 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         );
     }
 
-    private void migrateNodes(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        migrateEntity("nodes",
+    private boolean migrateNodes(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("nodes",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "node",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -279,12 +364,12 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         );
     }
 
-    private void migrateIIBNodes(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        migrateEntity("IIB nodes",
+    private boolean migrateIIBNodes(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("IIB nodes",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "iib-node",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -294,12 +379,12 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         );
     }
 
-    private void migrateGraphs(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateGraphs(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> params = new HashMap<>();
             params.put("graphs", searchHit.getSourceAsMap().get("graphs"));
             return new UpdateRequestBuilder(client, UpdateAction.INSTANCE)
-                    .setIndex(searchHit.getIndex())
+                    .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId())
                     .setScript(new Script(ScriptType.INLINE, "painless",
@@ -314,23 +399,22 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                     .request();
         };
 
-        migrateEntity("graphs",
+        return migrateEntity("graphs",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "graph",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private void migrateDashboards(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
-        // TODO dashboards.rows.cols.graph moet worden dashboards.rows.cols.name ->> Needs to be tested!!!
+    private boolean migrateDashboards(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> params = new HashMap<>();
             params.put("dashboards", searchHit.getSourceAsMap().get("dashboards"));
             return new UpdateRequestBuilder(client, UpdateAction.INSTANCE)
-                    .setIndex(searchHit.getIndex())
+                    .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId())
                     .setScript(new Script(ScriptType.INLINE, "painless",
@@ -351,18 +435,18 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                     .request();
         };
 
-        migrateEntity("dashboards",
+        return migrateEntity("dashboards",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "dashboard",
                 client,
-                bulkProcessor,
+                createBulkProcessor(listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private void migrateEntity(String entityName, String index, String type, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
-        System.out.println("Start migrating " + entityName + ".");
+    private boolean migrateEntity(String entityName, String index, String type, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+        System.out.println("Start migrating " + entityName + " to temporary index.");
         listener.reset();
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(index)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
@@ -382,27 +466,14 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
             lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
         }
         bulkProcessor.flush();
-        printPercentageWhenChanged(lastPrint, current, total);
-        System.out.println("Done migrating " + entityName + (listener.hasFailures() ? " with failures." : "."));
-
-        if (listener.hasFailures() || total == 0) {
-            return;
+        try {
+            bulkProcessor.awaitClose(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-
-        System.out.println("Removing old " + entityName + ".");
-        searchHits = new ScrollableSearch(client, searchRequestBuilder);
-        total = searchHits.getNumberOfHits();
-        current = lastPrint = 0;
-        for (SearchHit searchHit : searchHits) {
-            if (!ElasticsearchLayout.ETM_DEFAULT_TYPE.equals((searchHit.getType()))) {
-                bulkProcessor.add(client.prepareDelete(searchHit.getIndex(), searchHit.getType(), searchHit.getId())
-                        .request());
-            }
-            lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
-        }
-        bulkProcessor.flush();
         printPercentageWhenChanged(lastPrint, current, total);
-        System.out.println("Done removing old " + entityName + (listener.hasFailures() ? " with failures." : "."));
+        System.out.println("Done migrating " + entityName + (listener.hasFailures() ? " temporary index with failures." : "."));
+        return !listener.hasFailures();
     }
 
     /**
@@ -439,6 +510,10 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         }
     }
 
+    private BulkProcessor createBulkProcessor(BulkProcessor.Listener listener) {
+        return BulkProcessor.builder(this.client, listener).setBulkActions(20).build();
+    }
+
 
     private class DefaultIndexRequestCreator implements Function<SearchHit, DocWriteRequest> {
 
@@ -459,7 +534,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, this.etmTypeAttributeName);
             }
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(searchHit.getIndex())
+                    .setIndex(ReindexToSingleTypeMigration.this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(sourceMap);
             if (this.idPrefix != null) {

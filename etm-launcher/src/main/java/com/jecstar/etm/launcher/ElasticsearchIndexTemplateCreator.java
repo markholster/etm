@@ -51,7 +51,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 	 * The <code>LogWrapper</code> for this class.
 	 */
 	private static final LogWrapper log = LogFactory.getLogger(ElasticsearchIndexTemplateCreator.class);
-	
+
 	private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 	private final MetricConverterTags metricTags = new MetricConverterTagsJsonImpl();
 	private final AuditLogTags auditTags = new AuditLogTagsJsonImpl();
