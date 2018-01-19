@@ -6,6 +6,7 @@ import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.PayloadDecoder;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -20,7 +21,8 @@ import java.util.Map;
 class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
 
 	private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
-	
+    private final PayloadDecoder payloadDecoder = new PayloadDecoder();
+
 	public void convert(Map<String, Object> valueMap, Event telemetryEvent, String id) {
 		telemetryEvent.initialize();
 		telemetryEvent.id = id;
@@ -55,10 +57,10 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
 		if (eventMap != null && !eventMap.isEmpty()) {
 			telemetryEvent.metadata.putAll(eventMap);
 		}
-		telemetryEvent.payload = getString(this.tags.getPayloadTag(), valueMap);
+		telemetryEvent.payload = this.payloadDecoder.decode(getString(this.tags.getPayloadTag(), valueMap), getString(this.tags.getPayloadEncoding(), valueMap));
 		telemetryEvent.payloadFormat = PayloadFormat.safeValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
 	}
-	
+
 	private EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
 		if (valueMap.isEmpty()) {
 			return null;

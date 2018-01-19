@@ -69,6 +69,9 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	}
 
 	@Override
+	public String getPayloadEncoding() { return "payload_encoding"; }
+
+	@Override
 	public String getPayloadFormatTag() {
 		return "payload_format";
 	}
@@ -96,11 +99,6 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	@Override
 	public String getEndpointHandlerHandlingTimeTag() {
 		return "handling_time";
-	}
-	
-	@Override
-	public String getEndpointHandlerForcedTag() {
-		return "forced";
 	}
 	
 	@Override

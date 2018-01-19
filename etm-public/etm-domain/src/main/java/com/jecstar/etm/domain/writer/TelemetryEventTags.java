@@ -3,10 +3,13 @@ package com.jecstar.etm.domain.writer;
 public interface TelemetryEventTags {
 
     String EVENT_OBJECT_TYPE_BUSINESS = "business";
-    String EVENT_OBJECT_TYPE_HTTP = "http";
+	String EVENT_OBJECT_TYPE_HTTP = "http";
     String EVENT_OBJECT_TYPE_LOG = "log";
     String EVENT_OBJECT_TYPE_MESSAGING = "messaging";
     String EVENT_OBJECT_TYPE_SQL = "sql";
+
+    String PAYLOAD_ENCODING_BASE64 = "base64";
+	String PAYLOAD_ENCODING_BASE64_CA_API_GATEWAY = "base64CaApiGateway";
 
 	// TelemetryEvent attributes.
 	String getTimestampTag();
@@ -20,6 +23,7 @@ public interface TelemetryEventTags {
 	String getNameTag();
 	String getMetadataTag();
 	String getPayloadTag();
+	String getPayloadEncoding();
 	String getPayloadFormatTag();
 	String getPayloadLengthTag();
 	String getReadingEndpointHandlerTag();
@@ -35,7 +39,6 @@ public interface TelemetryEventTags {
 	String getEndpointHandlerLatencyTag();
 	String getEndpointHandlerResponseTimeTag();
 	String getEndpointHandlerTransactionIdTag();
-	String getEndpointHandlerForcedTag();
 	String getEndpointHandlerApplicationTag();
 	// Application attributes
 	String getApplicationNameTag();

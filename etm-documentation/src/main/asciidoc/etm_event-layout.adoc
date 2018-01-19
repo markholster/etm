@@ -16,6 +16,7 @@ All event types have a common set of attributes. This section describes these at
 |metadata|Empty map|A map that can be filled by any of the configured <<Parsers>>. The field has no processing functionality whatsoever.
 |name||The name of the event.
 |payload||The payload of the event.
+|payload_encoding||A write only attribute that needs to be filled when the payload isn't plain text. Supported values are ''base64'' and ''base64CaApiGateway''.
 |payload_format||The payload format. Can be one of HTML, JSON, SOAP, SQL, TEXT or XML.
 |payload_length||A calculated read only attributes that hold the length of the payload content. 
 |timestamp||A calculated read only attributes that hold the date/time the event got first processed. 
