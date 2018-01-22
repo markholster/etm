@@ -32,7 +32,5 @@ class LicenseReader {
 	    String license = new String(decryptedBytes);
 	    String[] split = license.split(":");
 	    System.out.println("Licensed to " + split[0] + ", valid till " + new Date(Long.valueOf(split[1])) + ", type " + split[2]);
-
-	    
     }
 }
