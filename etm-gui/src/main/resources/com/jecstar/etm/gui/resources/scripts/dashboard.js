@@ -333,8 +333,8 @@ function showSettings() {
         var oldRows = currentDashboard ? currentDashboard.rows : null;
         newDashboardData.rows = [];
         $('#dashboard-settings-columns > div.fieldConfigurationRow').each(function (rowIx, row) {
-            var nrOfCols = $(row).find("input[name='row-cols']").val();
-            var height = $(row).find("input[name='row-height']").val();
+            var nrOfCols = Number($(row).find("input[name='row-cols']").val());
+            var height = Number($(row).find("input[name='row-height']").val());
             var oldRow;
             var rowId = $(row).attr('data-row-id');
             if (oldRows && rowId) {

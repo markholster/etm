@@ -1,6 +1,8 @@
 package com.jecstar.etm.launcher.migrations;
 
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
+import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
 import com.jecstar.etm.launcher.configuration.Elasticsearch;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
@@ -111,6 +113,11 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
 
     private void deleteOldIndices(Client client) {
         System.out.println("Start removing old indices.");
+
+        ElasticsearchIndexTemplateCreator indexTemplateCreator = new ElasticsearchIndexTemplateCreator(client);
+        indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, client, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
+        indexTemplateCreator.reinitialize();
+
         GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
                 ElasticsearchLayout.STATE_INDEX_NAME,
@@ -426,7 +433,10 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                                     "        for (Map row : ((List)dashboard.get(\"rows\"))) {" +
                                     "            for (Map col : ((List)row.get(\"cols\"))) {" +
                                     "                col.put(\"name\", col.remove(\"graph\"));" +
-                                    "            }" +
+                                    "            }\n" +
+                                    "            if (row.get(\"height\") instanceof String) {" +
+                                    "                row.put(\"height\", Integer.parseInt(row.get(\"height\")));" +
+                                    "            }\n" +
                                     "        }" +
                                     "        ctx._source.dashboards.add(dashboard);\n" +
                                     "    }\n" +

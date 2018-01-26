@@ -23,6 +23,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	
 	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 	private final Client elasticClient;
+	private final String elasticsearchIndexName;
 	private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 	private final LdapConfigurationConverter<String> ldapConfigurationConverter = new LdapConfigurationConverterJsonImpl();
 
@@ -30,9 +31,29 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 	
 	private long eventsPersistedToday = 0;
 	private long sizePersistedToday = 0;
-	
+
+    /**
+     * Creates a new <code>ElasticBackedEtmConfiguration</code> instance.
+     *
+     * @param nodeName The name of the node this instance is running on.
+     * @param elasticClient The elasticsearch client.
+     */
 	public ElasticBackedEtmConfiguration(String nodeName, final Client elasticClient) {
+	    this(nodeName, elasticClient, ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+	}
+
+    /**
+     * Creates a new <code>ElasticBackedEtmConfiguration</code> instances. The data is loaded from the given elasticsearchIndexName.
+     *
+     * This constructor is mainly used when converting the database by an <code>EtmMigrator</code>.
+     *
+     * @param nodeName The name of the node this instance is running on.
+     * @param elasticClient The elasticsearch client.
+     * @param elasticsearchIndexName The name of the elasticsearch index to load the data from.
+     */
+	public ElasticBackedEtmConfiguration(String nodeName, final Client elasticClient, String elasticsearchIndexName) {
 		super(nodeName);
+		this.elasticsearchIndexName = elasticsearchIndexName;
 		this.elasticClient = elasticClient;
 		reloadConfigurationWhenNecessary();
 	}
@@ -245,10 +266,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 				public void onFailure(Exception e) {
 				}
 			});
-		ActionFuture<GetResponse> licenseExecute = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT).execute();
-		ActionFuture<GetResponse> ldapExecute = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT).execute();
-		GetResponse defaultResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT).get();
-		GetResponse nodeResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()).get();
+		ActionFuture<GetResponse> licenseExecute = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT).execute();
+		ActionFuture<GetResponse> ldapExecute = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT).execute();
+		GetResponse defaultResponse = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT).get();
+		GetResponse nodeResponse = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()).get();
 
 		String defaultContent = defaultResponse.getSourceAsString();
 		String nodeContent = null;
