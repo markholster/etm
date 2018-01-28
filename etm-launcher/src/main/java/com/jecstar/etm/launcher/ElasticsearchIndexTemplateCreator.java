@@ -822,6 +822,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 		if (event.isChanged(EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
 			List<String> indices = new ArrayList<>();
 			indices.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+			indices.add(ElasticsearchLayout.STATE_INDEX_NAME);
 			SortedMap<String, AliasOrIndex> aliases = this.elasticClient.admin().cluster()
 				    .prepareState().execute()
 				    .actionGet().getState()
