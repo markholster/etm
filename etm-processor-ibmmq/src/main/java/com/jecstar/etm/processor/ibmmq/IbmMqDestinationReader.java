@@ -417,9 +417,9 @@ class IbmMqDestinationReader implements DestinationReader {
         MQQueue queue = (MQQueue) this.mqDestination;
         try {
             int currentDepth = queue.getCurrentDepth();
-            if (currentDepth > 500) {
+            if (currentDepth > 1000) {
                 this.instantiationContext.getDestinationReaderPool().increaseIfPossible();
-            } else if (currentDepth < 10) {
+            } else if (currentDepth < 100) {
                 this.instantiationContext.getDestinationReaderPool().decreaseIfPossible();
             }
         } catch (MQException e) {
