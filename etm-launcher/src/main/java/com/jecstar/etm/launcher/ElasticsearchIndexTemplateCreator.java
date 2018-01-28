@@ -27,6 +27,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsAction;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequestBuilder;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsAction;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesAction;
@@ -36,13 +37,14 @@ import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateActio
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.metadata.AliasOrIndex;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeListener {
@@ -820,28 +822,13 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 			reinitializeTemplates();
 		}
 		if (event.isChanged(EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
-			List<String> indices = new ArrayList<>();
-			indices.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
-			indices.add(ElasticsearchLayout.STATE_INDEX_NAME);
-			SortedMap<String, AliasOrIndex> aliases = this.elasticClient.admin().cluster()
-				    .prepareState().execute()
-				    .actionGet().getState()
-				    .getMetaData().getAliasAndIndexLookup();
-			if (aliases.containsKey(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)) {
-				AliasOrIndex aliasOrIndex = aliases.get(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL);
-				aliasOrIndex.getIndices().forEach(c -> indices.add(c.getIndex().getName()));
-			}
-			if (aliases.containsKey(ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL)) {
-				AliasOrIndex aliasOrIndex = aliases.get(ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL);
-				aliasOrIndex.getIndices().forEach(c -> indices.add(c.getIndex().getName()));
-			}
-            if (aliases.containsKey(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL)) {
-                AliasOrIndex aliasOrIndex = aliases.get(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL);
-                aliasOrIndex.getIndices().forEach(c -> indices.add(c.getIndex().getName()));
+            GetIndexResponse response = this.elasticClient.admin().indices().prepareGetIndex().addIndices(ElasticsearchLayout.ETM_INDEX_PREFIX + "*").get();
+            String[] indices = response.getIndices();
+            if (indices != null && indices.length > 0) {
+                new UpdateSettingsRequestBuilder(this.elasticClient, UpdateSettingsAction.INSTANCE, indices)
+                        .setSettings(Settings.builder().put("index.number_of_replicas", this.etmConfiguration.getReplicasPerIndex()))
+                        .get();
             }
-			new UpdateSettingsRequestBuilder(this.elasticClient, UpdateSettingsAction.INSTANCE, indices.toArray(new String[indices.size()]))
-				.setSettings(Settings.builder().put("index.number_of_replicas", this.etmConfiguration.getReplicasPerIndex()))
-				.get();
 		}
 	}
 
