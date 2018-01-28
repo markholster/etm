@@ -835,6 +835,10 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 				AliasOrIndex aliasOrIndex = aliases.get(ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL);
 				aliasOrIndex.getIndices().forEach(c -> indices.add(c.getIndex().getName()));
 			}
+            if (aliases.containsKey(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL)) {
+                AliasOrIndex aliasOrIndex = aliases.get(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL);
+                aliasOrIndex.getIndices().forEach(c -> indices.add(c.getIndex().getName()));
+            }
 			new UpdateSettingsRequestBuilder(this.elasticClient, UpdateSettingsAction.INSTANCE, indices.toArray(new String[indices.size()]))
 				.setSettings(Settings.builder().put("index.number_of_replicas", this.etmConfiguration.getReplicasPerIndex()))
 				.get();
