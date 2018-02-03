@@ -138,6 +138,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			}
 		}
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getEndpointHandlerTransactionIdTag(), endpointHandler.transactionId, buffer, !added) || added;
+        added = this.jsonWriter.addIntegerElementToJsonBuffer(this.tags.getEndpointHandlerSequenceNumberTag(), endpointHandler.sequenceNumber, buffer, !added) || added;
 		Application application = endpointHandler.application;
 		if (application.isSet()) {
 			if (added) {

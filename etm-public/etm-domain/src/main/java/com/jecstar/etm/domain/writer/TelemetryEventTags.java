@@ -39,6 +39,8 @@ public interface TelemetryEventTags {
 	String getEndpointHandlerLatencyTag();
 	String getEndpointHandlerResponseTimeTag();
 	String getEndpointHandlerTransactionIdTag();
+
+    String getEndpointHandlerSequenceNumberTag();
 	String getEndpointHandlerApplicationTag();
 	// Application attributes
 	String getApplicationNameTag();

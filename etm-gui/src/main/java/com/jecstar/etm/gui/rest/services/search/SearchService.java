@@ -611,6 +611,8 @@ public class SearchService extends AbstractIndexMetadataService {
 			Map<String, Object> source = searchHit.getSourceAsMap();
 			event.name = getString(this.eventTags.getNameTag(), source);
 			event.payload = getString(this.eventTags.getPayloadTag(), source);
+			// Make sure the sequence number is always filled because otherwise the compare on sequence will fail.
+			event.sequenceNumber = Integer.MAX_VALUE;
 			List<Map<String, Object>> endpoints =  getArray(this.eventTags.getEndpointsTag(), source);
 			if (endpoints != null) {
 				for (Map<String, Object> endpoint : endpoints) {
@@ -619,6 +621,10 @@ public class SearchService extends AbstractIndexMetadataService {
 						event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
 						event.direction = "outgoing";
 						event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
+						Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
+						if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
+							event.sequenceNumber = sequenceNumber;
+						}
 					} else {
 						List<Map<String, Object>> readingEndpointHandlers = getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
 						if (readingEndpointHandlers != null) {
@@ -627,6 +633,10 @@ public class SearchService extends AbstractIndexMetadataService {
 									event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
 									event.direction = "incoming";
 									event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
+									Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
+									if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
+										event.sequenceNumber = sequenceNumber;
+									}
 								}
 							}
 						}
@@ -642,7 +652,7 @@ public class SearchService extends AbstractIndexMetadataService {
 			}
 			events.add(event);
 		}
-		events.sort(Comparator.comparing(e -> e.handlingTime));
+		events.sort(Comparator.comparing((TransactionEvent e) -> e.handlingTime).thenComparing(e -> e.sequenceNumber));
 		result.append("{");
 		addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID() , result, true);
 		result.append(",\"events\":[");

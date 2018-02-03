@@ -104,6 +104,7 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
 		endpointHandler.latency = getLong(this.tags.getEndpointHandlerLatencyTag(), valueMap);
 		endpointHandler.responseTime = getLong(this.tags.getEndpointHandlerResponseTimeTag(), valueMap);
 		endpointHandler.transactionId = getString(this.tags.getEndpointHandlerTransactionIdTag(), valueMap);
+		endpointHandler.sequenceNumber = getInteger(this.tags.getEndpointHandlerSequenceNumberTag(), valueMap);
 		Map<String, Object> locationValueMap = getObject(this.tags.getEndpointHandlerLocationTag(), valueMap);
 		if (locationValueMap != null) {
 			endpointHandler.location.latitude = getDouble(this.tags.getLatitudeTag(), locationValueMap);

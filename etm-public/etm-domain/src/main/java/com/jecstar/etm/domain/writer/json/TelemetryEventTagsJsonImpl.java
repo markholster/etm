@@ -116,6 +116,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 		return "transaction_id";
 	}
 
+    @Override
+    public String getEndpointHandlerSequenceNumberTag() {
+        return "sequence_number";
+    }
+
 	@Override
 	public String getEndpointHandlerApplicationTag() {
 		return "application";

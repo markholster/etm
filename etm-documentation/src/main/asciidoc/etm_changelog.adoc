@@ -2,6 +2,7 @@
 
 === Version 3.0.0
 * Added a link:https://kafka.apache.org/[Kafka] processor.
+* Sophisticated access control for every single page.
 * Migration to Elasticsearch 6.1.x.
 * Support for Java 9.
 * Parsers can use metadata as source for parsing.
@@ -12,7 +13,7 @@
 
 [source,yaml,subs=attributes+]
 ----
-elasticsearch
+elasticsearch:
   connectAddresses:
   - "127.0.0.1:9300"
 ----

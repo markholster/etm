@@ -303,6 +303,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
 		}
 		builder.setApplication(new ApplicationBuilder().setName(appName).setVersion(appVersion));
 		builder.setTransactionId(event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId());
+        builder.setSequenceNumber(event.getEventPointData().getEventData().getEventSequence().getCounter().intValue());
 		return builder;
 	}
 

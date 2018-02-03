@@ -320,8 +320,10 @@ function buildUserPage() {
     function createGroupRow(groupName) {
     	var groupRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
 			$('<div>').addClass('input-group').append(
-				$groupSelect.clone(true), 
-				$('<span>').addClass('input-group-addon').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeGroupRow($(this));}))
+				$groupSelect.clone(true),
+				$('<div>').addClass('input-group-append').append(
+                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {event.preventDefault(); removeGroupRow($(this));})
+                )
 			)
 		);
     	if (groupName) {

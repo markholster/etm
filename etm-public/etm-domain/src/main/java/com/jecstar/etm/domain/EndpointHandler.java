@@ -25,6 +25,12 @@ public class EndpointHandler {
 	 */
 	public String transactionId;
 
+    /**
+     * The sequenceNumber within this transactionId. When 2 events occur at the exact same <code>handlingTime</code>
+     * the secuenceNumber can be used to determine which one happened first.
+     */
+    public Integer sequenceNumber;
+
 	//READ ONLY FIELDS
 	/**
 	 * The time between the write and read of the event. This value is only
@@ -48,6 +54,7 @@ public class EndpointHandler {
 		this.location.initialize();
 		this.handlingTime = null;
 		this.transactionId = null;
+        this.sequenceNumber = null;
 		// Initialize read only fields.
 		this.latency = null;
 		this.responseTime = null;
@@ -63,6 +70,7 @@ public class EndpointHandler {
 		this.location.initialize(copy.location);
 		this.handlingTime = copy.handlingTime;
 		this.transactionId = copy.transactionId;
+        this.sequenceNumber = copy.sequenceNumber;
 		// Initialize read only fields.
 		this.latency = copy.latency;
 		this.responseTime = copy.responseTime;
@@ -83,6 +91,9 @@ public class EndpointHandler {
 			    hash = hash * 31 + this.transactionId.charAt(i);
 			}
 		}
+        if (this.sequenceNumber != null) {
+            hash = hash * 31 + sequenceNumber;
+        }
 		if (this.application.name != null) {
 			for (int i = 0; i < this.application.name.length(); i++) {
 			    hash = hash * 31 + this.application.name.charAt(i);

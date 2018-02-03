@@ -136,10 +136,10 @@ function buildEndpointPage() {
     
     function createParserRow(parser) {
     	var parserRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
-            $('<div>').addClass('input-group').append(
+            $('<div>').addClass('input-group mb-3').append(
                 $parserSelect.clone(true),
-                $('<span>').addClass('input-group-addon').append(
-                    $('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {event.preventDefault(); removeParserRow($(this));})
+                $('<div>').addClass('input-group-append').append(
+                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {event.preventDefault(); removeParserRow($(this));})
                 )
             )
 		);

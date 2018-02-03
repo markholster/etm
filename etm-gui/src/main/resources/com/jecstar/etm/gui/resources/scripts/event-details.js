@@ -537,7 +537,7 @@ function showEvent(scrollTo, type, id) {
 					  }
 					});
 				cyEndpoints.on('tap', function(event) {
-					  var evtTarget = event.cyTarget;
+					  var evtTarget = event.target;
 					  if( evtTarget !== cyEndpoints ){
 						  if (evtTarget.data('writing_endpoint_handler')) {
 							  displayWritingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', evtTarget.data('writing_endpoint_handler'), evtTarget.data('time_zone'));
@@ -966,7 +966,7 @@ function showEvent(scrollTo, type, id) {
 							this.center();  
 						});
 						cyEventChain.on('tap', function(event) {
-							var evtTarget = event.cyTarget;
+							var evtTarget = event.target;
 							if( evtTarget !== cyEndpoints ) {
 								var eventId = evtTarget.data('event_id');
 								var eventData = eventMap[eventId];
