@@ -261,7 +261,7 @@ class IbmMqDestinationReader implements DestinationReader {
 			setConnectionPropertyWhenNotEmpty(CMQC.USER_ID_PROPERTY, this.queueManager.getUserId(), connectionProperties);
 			setConnectionPropertyWhenNotEmpty(CMQC.PASSWORD_PROPERTY, this.queueManager.getPassword(), connectionProperties);
 			setConnectionPropertyWhenNotEmpty(CMQC.CHANNEL_PROPERTY, this.queueManager.getChannel(), connectionProperties);
-			if (this.queueManager.getSslCipherSuite() != null) {
+			if (queueManager.getSslTruststoreLocation() != null) {
 				try {
 					SSLContext sslContext = new SSLContextBuilder().createSslContext(
 							queueManager.getSslProtocol(),
@@ -271,7 +271,9 @@ class IbmMqDestinationReader implements DestinationReader {
 							queueManager.getSslTruststoreLocation(),
 							queueManager.getSslTruststoreType(),
 							queueManager.getSslTruststorePassword() == null ? null : queueManager.getSslTruststorePassword().toCharArray());
-					connectionProperties.put(CMQC.SSL_CIPHER_SUITE_PROPERTY, this.queueManager.getSslCipherSuite());
+					if (this.queueManager.getSslCipherSuite() != null) {
+						connectionProperties.put(CMQC.SSL_CIPHER_SUITE_PROPERTY, this.queueManager.getSslCipherSuite());
+					}
 					connectionProperties.put(CMQC.SSL_SOCKET_FACTORY_PROPERTY, sslContext.getSocketFactory());
 				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
 					if (log.isErrorLevelEnabled()) {

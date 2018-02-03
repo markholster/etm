@@ -21,7 +21,9 @@ dependencies {
             dep_seleniumJava,
             dep_htmlunitDriver,
             dep_apacheDs,
-            dep_elasticsearchClient
+            dep_elasticsearchClient,
+            dep_kafka,
+            dep_slf4jSimple
 }
 
 eclipse {

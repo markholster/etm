@@ -1,8 +1,9 @@
 ext {
-    version_resteasy = "3.1.4.Final"
-    version_elasticsearch_major = "6.1"
-    version_elasticsearch = version_elasticsearch_major + ".2"
     version_artemis = "2.3.0"
+    version_elasticsearch_major = "6.1"
+    version_elasticsearch = version_elasticsearch_major + ".3"
+    version_slf4j = "1.7.25"
+    version_resteasy = "3.1.4.Final"
 
     dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M24"
     dep_artemisJmsClient = "org.apache.activemq:artemis-jms-client:" + version_artemis
@@ -17,6 +18,7 @@ ext {
     dep_jaxb = "javax.xml.bind:jaxb-api:2.3.0"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
     dep_junit = "org.junit.jupiter:junit-jupiter-api:5.0.2"
+    dep_kafka = "org.apache.kafka:kafka-clients:1.0.0"
     dep_ldaptive = "org.ldaptive:ldaptive:1.2.3"
     dep_log4jToSlf4j = "org.apache.logging.log4j:log4j-to-slf4j:2.9.1"
     dep_metricsCore = "io.dropwizard.metrics:metrics-core:3.2.5"
@@ -26,7 +28,8 @@ ext {
     dep_poiOoxml = "org.apache.poi:poi-ooxml:3.17"
     dep_saxonHE = "net.sf.saxon:Saxon-HE:9.8.0-4"
     dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:3.7.1"
-    dep_slf4jApi = "org.slf4j:slf4j-api:1.7.25"
+    dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
+    dep_slf4jSimple = "org.slf4j:slf4j-simple:" + version_slf4j
     dep_snakeyaml = "org.yaml:snakeyaml:1.18"
     dep_undertowServlet = "io.undertow:undertow-servlet:1.4.21.Final"
 }

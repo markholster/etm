@@ -5,6 +5,7 @@ dependencies {
     		project(":etm-processor-rest"), 
     		project(":etm-processor-ibmmq"),
 			project(":etm-processor-jms"),
+			project(":etm-processor-kafka"),
     		dep_log4jToSlf4j, 
     		dep_resteasyJaxrs, 
     		dep_resteasyJacksonProvider, 

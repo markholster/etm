@@ -32,9 +32,9 @@ public class JmsProcessorImpl implements JmsProcessor {
     private final TelemetryCommandProcessor processor;
     private final MetricRegistry metricRegistry;
     private final Jms config;
+    private final ArrayList<DestinationReaderPool<JmsDestinationReader>> readerPools = new ArrayList<>();
     private ExecutorService executorService;
     private List<Context> contexts = new ArrayList<>();
-    private ArrayList<DestinationReaderPool<JmsDestinationReader>> readerPools = new ArrayList<>();
 
     public JmsProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, Jms config) {
         this.processor = processor;

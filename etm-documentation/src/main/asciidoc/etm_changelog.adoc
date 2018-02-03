@@ -1,12 +1,21 @@
 == Changelog & upgrade
 
 === Version 3.0.0
+* Added a link:https://kafka.apache.org/[Kafka] processor.
 * Migration to Elasticsearch 6.1.x.
 * Support for Java 9.
 * Parsers can use metadata as source for parsing.
 * Added a ''Copy value'' parser.
 * Make the number of update threads to Elasticsearch configurable.
 * Support for bulk events in JMS & MQ processor.
+* Changes configuration elasticsearch.connectAddresses to a list. This needs to be changed in your etm.yml! For example
+
+[source,yaml,subs=attributes+]
+----
+elasticsearch
+  connectAddresses:
+  - "127.0.0.1:9300"
+----
 
 ==== Upgrade from version 2.4.0 to 3.0.0
 . Make sure you have a backup of all Elasticsearch data!

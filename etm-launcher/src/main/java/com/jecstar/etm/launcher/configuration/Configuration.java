@@ -2,6 +2,7 @@ package com.jecstar.etm.launcher.configuration;
 
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.jms.configuration.Jms;
+import com.jecstar.etm.processor.kafka.configuration.Kafka;
 
 public class Configuration {
 
@@ -17,6 +18,7 @@ public class Configuration {
 	
 	public final IbmMq ibmMq = new IbmMq();
 	public final Jms jms = new Jms();
+	public final Kafka kafka = new Kafka();
 
 	public boolean isHttpServerNecessary() {
 		return this.http.restProcessorEnabled || this.http.guiEnabled;

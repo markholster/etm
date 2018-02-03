@@ -127,9 +127,7 @@ public class QueueManager {
 		return this.sslTruststoreLocation;
 	}
 
-	public void setSslTruststoreLocation(File sslTruststoreLocation) {
-		this.sslTruststoreLocation = sslTruststoreLocation;
-	}
+	public void setSslTruststoreLocation(File sslTruststoreLocation) { this.sslTruststoreLocation = sslTruststoreLocation; }
 	
 	public String getSslTruststoreType() {
 		return this.sslTruststoreType;

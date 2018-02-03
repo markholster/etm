@@ -20,6 +20,8 @@ import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 import com.jecstar.etm.processor.jms.JmsProcessor;
 import com.jecstar.etm.processor.jms.JmsProcessorImpl;
+import com.jecstar.etm.processor.kafka.KafkaProcessor;
+import com.jecstar.etm.processor.kafka.KafkaProcessorImpl;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -40,6 +42,7 @@ import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +61,7 @@ class Launcher {
 	private ScheduledReporter metricReporter;
 	private IbmMqProcessor ibmMqProcessor;
 	private JmsProcessor jmsProcessor;
+	private KafkaProcessor kafkaProcessor;
 	private ScheduledExecutorService backgroundScheduler;
 	private InternalBulkProcessorWrapper bulkProcessorWrapper;
 	
@@ -98,6 +102,9 @@ class Launcher {
 			if (configuration.jms.enabled) {
 				initializeJmsProcessor(metricRegistry, configuration);
 			}
+			if (configuration.kafka.enabled) {
+				initializeKafkaProcessor(metricRegistry, configuration);
+			}
 
 			if (!commandLineParameters.isQuiet()) {
 				System.out.println("Enterprise Telemetry Monitor started.");
@@ -128,6 +135,9 @@ class Launcher {
             }
             if (Launcher.this.backgroundScheduler != null) {
                 try { Launcher.this.backgroundScheduler.shutdownNow(); } catch (Throwable t) {}
+            }
+            if (Launcher.this.kafkaProcessor != null) {
+                try { Launcher.this.kafkaProcessor.stop(); } catch (Throwable t) {}
             }
             if (Launcher.this.jmsProcessor != null) {
 				try { Launcher.this.jmsProcessor.stop(); } catch (Throwable t) {}
@@ -218,8 +228,7 @@ class Launcher {
 		} else {
 			transportClient = new PreBuiltTransportClient(settingsBuilder.build());
 		}
-		String[] hosts = configuration.elasticsearch.connectAddresses.split(",");
-		int hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
+		int hostsAdded = addElasticsearchHostsToTransportClient(configuration.elasticsearch.connectAddresses, transportClient);
 		if (configuration.elasticsearch.waitForConnectionOnStartup) {
 			while (hostsAdded == 0) {
 				// Currently this can only happen in docker swarm installations where the elasticsearch service isn't fully started when ETM starts. This will result in a 
@@ -232,14 +241,14 @@ class Launcher {
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
-				hostsAdded = addElasticsearchHostsToTransportClient(hosts, transportClient);
+				hostsAdded = addElasticsearchHostsToTransportClient(configuration.elasticsearch.connectAddresses, transportClient);
 			}
 			waitForActiveConnection(transportClient);
 		}
 		this.elasticClient = transportClient;
 	}
 	
-	private int addElasticsearchHostsToTransportClient(String[] hosts, TransportClient transportClient) {
+	private int addElasticsearchHostsToTransportClient(List<String> hosts, TransportClient transportClient) {
 		int added = 0;
 		for (String host : hosts) {
 			TransportAddress transportAddress = createTransportAddress(host);
@@ -341,6 +350,9 @@ class Launcher {
 		this.metricReporter.start(1, TimeUnit.MINUTES);
 	}
 	
-
+	private void initializeKafkaProcessor(MetricRegistry metricRegistry, Configuration configuration) {
+		this.kafkaProcessor = new KafkaProcessorImpl(this.processor, metricRegistry, configuration.kafka);
+		this.kafkaProcessor.start();
+	}
 
 }

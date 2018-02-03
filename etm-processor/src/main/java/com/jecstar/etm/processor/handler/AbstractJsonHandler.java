@@ -53,14 +53,14 @@ public abstract class AbstractJsonHandler {
                 for (Map<String, Object> event : events) {
                     handleEvent(event, results);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 results.addHandlerResult(HandlerResult.parserFailure(e));
             }
         } else {
             try {
                 Map<String, Object> event = this.objectMapper.readValue(jsonData, HashMap.class);
                 handleEvent(event, results);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 results.addHandlerResult(HandlerResult.parserFailure(e));
             }
         }
@@ -73,7 +73,7 @@ public abstract class AbstractJsonHandler {
         try {
             Map<String, Object> event = this.objectMapper.readValue(inputStream, HashMap.class);
             handleEvent(event, results);
-        } catch (IOException e) {
+        } catch (Exception e) {
             results.addHandlerResult(HandlerResult.parserFailure(e));
         }
         return results;
@@ -87,7 +87,7 @@ public abstract class AbstractJsonHandler {
             for (Map<String, Object> event : events) {
                 handleEvent(event, results);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             results.addHandlerResult(HandlerResult.parserFailure(e));
         }
         return results;

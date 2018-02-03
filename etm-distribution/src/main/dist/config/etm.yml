@@ -12,7 +12,8 @@ elasticsearch:
 # The name of the Elasticsearch cluster to connect to. 
   clusterName: elasticsearch
 # A comma separated list of Elasticsearch nodes to connect to.
-  connectAddresses: 127.0.0.1:9300
+  connectAddresses:
+  - "127.0.0.1:9300"
 # Boolean indicating ETM should wait before any of the nodes configured in the 'connectAddresses' option is available. When setting this option to false starting ETM will fail when no nodes are available.   
   waitForConnectionOnStartup: false
 # To connect to a xpack secured Elasticsearch cluster at a minimum a username and password should be provided.
@@ -77,7 +78,6 @@ ibmMq:
 #    - name: MyDestination1
 #      type: queue
 #      messagesType: auto
-  queueManagers: []
 
 # The JMS configuration options.
 jms:
@@ -103,7 +103,17 @@ jms:
 #    - name: etm.queue.2
 #      type: queue
 #      messagesType: auto
-  connectionFactories: []
+
+kafka:
+# Should the JMS processor be enabled. Set this option to true if you want to process events from a kafka topic.
+  enabled: false
+# The topics to connect read etm events from.
+#  topics:
+#  - name: etm-events
+#    bootstrapServers:
+#    - "server1:9092"
+#    - "server2:9092"
+#    nrOfListeners: 1
 
 # The logging options.
 logging:
