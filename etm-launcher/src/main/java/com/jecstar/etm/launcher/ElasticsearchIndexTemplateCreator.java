@@ -251,6 +251,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 				+ "{\"dynamic_templates\": ["
 				+ "{ \"" + this.eventTags.getEndpointHandlerLocationTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerLocationTag() + "\", \"mapping\": {\"type\": \"geo_point\"}}}"
 				+ ", { \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\": { \"match\": \"" + this.eventTags.getEndpointHandlerHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + ", { \"" + this.eventTags.getApplicationHostAddressTag() + "\": { \"match\": \"" + this.eventTags.getApplicationHostAddressTag() + "\", \"mapping\": {\"type\": \"ip\"}}}"
 				+ ", { \"" + this.eventTags.getExpiryTag() + "\": { \"match\": \"" + this.eventTags.getExpiryTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
 				+ ", { \"" + this.eventTags.getTimestampTag() + "\": { \"match\": \"" + this.eventTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
 				+ "]}"
