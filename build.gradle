@@ -21,6 +21,7 @@ ext {
     dep_kafka = "org.apache.kafka:kafka-clients:1.0.0"
     dep_ldaptive = "org.ldaptive:ldaptive:1.2.3"
     dep_log4jToSlf4j = "org.apache.logging.log4j:log4j-to-slf4j:2.9.1"
+    dep_mailApi = "javax.mail:javax.mail-api:1.6.0"
     dep_metricsCore = "io.dropwizard.metrics:metrics-core:3.2.5"
     dep_resteasyJaxrs = "org.jboss.resteasy:resteasy-jaxrs:" + version_resteasy
     dep_resteasyJacksonProvider = "org.jboss.resteasy:resteasy-jackson2-provider:" + version_resteasy

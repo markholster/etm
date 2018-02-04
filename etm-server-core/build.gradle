@@ -5,7 +5,8 @@ dependencies {
     compile dep_jacksonDatabind,
     		dep_ldaptive,
     		dep_saxonHE, 
-    		dep_slf4jApi
+    		dep_slf4jApi,
+            dep_mailApi
     compile(dep_jsonPath) {
         exclude module: "json-smart"
         exclude module: "gson"
