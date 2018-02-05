@@ -909,6 +909,7 @@ function showEvent(scrollTo, type, id) {
 						  container: document.querySelector('#event-chain'),
 						  zoomingEnabled: true,
 						  panningEnabled: true,
+						  wheelSensitivity: 0.25,
 						  boxSelectionEnabled: false,
 					  	  autounselectify: true, 	
 					  	  style: cytoscape.stylesheet()
