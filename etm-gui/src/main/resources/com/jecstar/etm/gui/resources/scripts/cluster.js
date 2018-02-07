@@ -25,22 +25,6 @@ function buildClusterPage() {
 		saveCluster('Persisting');
 	});
 
-	$('#btn-save-search').click(function(event) {
-		if (!document.getElementById('form-search').checkValidity()) {
-			return;
-		}
-		event.preventDefault();
-		saveCluster('Search');
-	});
-
-	$('#btn-save-visualizations').click(function(event) {
-		if (!document.getElementById('form-visualizations').checkValidity()) {
-			return;
-		}
-		event.preventDefault();
-		saveCluster('Visualizations');
-	});
-
 	$('#btn-save-ldap').click(function(event) {
 		if (!document.getElementById('form-ldap').checkValidity()) {
 			return;
@@ -53,6 +37,14 @@ function buildClusterPage() {
 		event.preventDefault();
 		$('#modal-ldap-remove').modal();
 	});
+
+	$('#btn-save-notifications').click(function(event) {
+        if (!document.getElementById('form-notifications').checkValidity()) {
+            return;
+        }
+        event.preventDefault();
+        saveCluster('Notifications');
+    });
 
 	$('#btn-remove-ldap').click(function(event) {
 		event.preventDefault();
@@ -160,6 +152,11 @@ function buildClusterPage() {
 		var clusterData = {};
 		if ('General' == context) {
 			clusterData.session_timeout = Number($("#input-session-timeout").val());
+			clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
+			clusterData.max_search_template_count = Number($("#input-search-max-templates").val());
+			clusterData.max_search_history_count = Number($("#input-search-max-history-size").val());
+			clusterData.max_graph_count = Number($("#input-visualization-max-graph-count").val());
+			clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
 		} else if ('Elasticsearch' == context) {
 			clusterData.shards_per_index = Number($("#input-shards-per-index").val());
 			clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
@@ -178,13 +175,6 @@ function buildClusterPage() {
 			clusterData.persisting_bulk_size = Number($("#input-persisting-bulk-size").val());
 			clusterData.persisting_bulk_time = Number($("#input-persisting-bulk-time").val());
 			clusterData.persisting_bulk_threads = Number($("#input-persisting-bulk-threads").val());
-		} else if ('Search' == context) {
-			clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
-			clusterData.max_search_template_count = Number($("#input-search-max-templates").val());
-			clusterData.max_search_history_count = Number($("#input-search-max-history-size").val());
-		} else if ('Visualizations' == context) {
-			clusterData.max_graph_count = Number($("#input-visualization-max-graph-count").val());
-			clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
 		}
 		return clusterData;
 	}

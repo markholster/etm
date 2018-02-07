@@ -119,6 +119,11 @@ The cluster page has grouped related configuration items into several tabs:
 |=======================
 |Name|Description
 |Http session timeout|The maximum idle time in milliseconds for an http session before it will be cleaned up. All http sessions are stored in Elasticsearch to provide maximum flexibility in starting and stopping different nodes. An http session will always be available on all nodes to provide High Availablilty out of the box. 
+|Search export max rows|The maximum number of rows that can be exported from the search page. If you set this value to high it might lead to a very high memory consumption of your {etm} Node.
+|Max search templates|The maximum number of search templates a user may store.
+|Max search history size|The maximum number of queries that are kept in the users query history. An individual user may configure a lower number for him/herself.
+|Max graphs|The maximum number of graphs that can be stored by a single user.
+|Max dashboards|The maximum number of dashboards that can be stored by a single user.
 |=======================
 
 ==== Elasticsearch settings 
@@ -148,25 +153,6 @@ The cluster page has grouped related configuration items into several tabs:
 |Persisting bulk count|The maximum number of events that can be buffered before flushed to an Elasticsearch node.
 |Persisting bulk size|The maximum combined size in bytes of events that can be buffered before flushed to an Elasticsearch node.
 |Persisting bulk time|The maximum number of millisecond that events can be buffered before flushed to an Elasticsearch node.
-|=======================
-
-==== Search settings
-.Search settings
-[options="header"]
-|=======================
-|Name|Description
-|Search export max rows|The maximum number of rows that can be exported from the search page. If you set this value to high it might lead to a very high memory consumption of your {etm} Node.
-|Max search templates|The maximum number of search templates a user may store.
-|Max search history size|The maximum number of queries that are kept in the users query history. An individual user may configure a lower number for him/herself.
-|=======================
-
-==== Visualizations settings
-.Visualizations settings
-[options="header"]
-|=======================
-|Name|Description
-|Max graphs|The maximum number of graphs that can be stored by a single user.
-|Max dashboards|The maximum number of dashboards that can be stored by a single user.
 |=======================
 
 ==== Ldap settings
@@ -202,6 +188,14 @@ Thirdly, if a user is already present in the {etm} user administration this pass
 Finally, ldap users can be added to non-ldap groups, but non-ldap users cannot be added to ldap groups. Password management and groups membership of ldap users cannot be managed in {etm}.
 
 TIP: Make sure you have at least one account with admin privileges that is a non-ldap account. This way it is always possible to login to {etm} even when the LDAP server isn't reachable for some reason.
+
+==== Notifications settings
+.Search settings
+[options="header"]
+|=======================
+|Name|Description
+|=======================
+
 
 === Nodes
 To manage node specific settings browse to http://localhost:8080/gui/settings/nodes.html or select the menu option ''Settings -> Nodes''. When you have several {etm} instances running on different kind of hardware the default <<Cluster>> settings might not be optimal for every node. On the nodes configuration page you can fine tune node specific settings. To configure a node, the node name must be the same as the instanceName configured in the <<General configuration in etm.yml>>.
