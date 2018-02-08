@@ -1,15 +1,15 @@
-package com.jecstar.etm.server.core.converter;
-
-import com.jecstar.etm.domain.writer.TelemetryEventTags;
-import com.jecstar.etm.server.core.domain.converter.PayloadDecoder;
-import org.junit.jupiter.api.Test;
-
-import java.util.Base64;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
+package com.jecstar.etm.server.core.domain.converter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+
+import java.util.Base64;
+import java.util.zip.Deflater;
+
+import org.junit.jupiter.api.Test;
+
+import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.server.core.domain.converter.PayloadDecoder;
 
 /**
  * Test class for the <code>PayloadDecoder</code> class.
