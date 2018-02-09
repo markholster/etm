@@ -41,7 +41,6 @@ public class PayloadDecoder {
                     }
                     long uncompressedLength = calculateUncompressedLength(l7Header);
                     byte[] result = new byte[(int) uncompressedLength];
-                    read = 0;
                     int offset = 0;
                     byte[] buffer = new byte[2048];
                     while ((read = iis.read(buffer, 0, buffer.length)) != -1) {
