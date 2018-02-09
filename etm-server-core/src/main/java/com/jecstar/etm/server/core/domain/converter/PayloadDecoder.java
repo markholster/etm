@@ -41,11 +41,12 @@ public class PayloadDecoder {
                     }
                     long uncompressedLength = calculateUncompressedLength(l7Header);
                     byte[] result = new byte[(int) uncompressedLength];
-                    read = iis.read(result);
-                    if (read != uncompressedLength) {
-                        if (log.isWarningLevelEnabled()) {
-                            log.logWarningMessage("Unable to fully decode payload. Message may be truncated.");
-                        }
+                    read = 0;
+                    int offset = 0;
+                    byte[] buffer = new byte[2048];
+                    while ((read = iis.read(buffer, 0, buffer.length)) != -1) {
+                        System.arraycopy(buffer, 0, result, offset, read);
+                        offset += read;
                     }
                     return new String(result, "UTF-8");
                 } catch (IOException e) {

@@ -23,7 +23,6 @@ public class EtmEventHandler extends AbstractMQEventHandler {
 		this.telemetryCommandProcessor = telemetryCommandProcessor;
 	}
 
-	@SuppressWarnings("unchecked")
 	public HandlerResults handleMessage(MQMessage message) {
         HandlerResults results = new HandlerResults();
         try {
