@@ -556,13 +556,23 @@
         }
         var dateValue = $('#query-string-from').val();
         if (dateValue) {
-            tableLayout.start_time = dateValue;
+            var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+            if (momentValue.isValid()) {
+                tableLayout.start_time = Number(momentValue.valueOf());
+            } else {
+                tableLayout.start_time = dateValue;
+            }
         } else {
             tableLayout.start_time = null;
         }
         var dateValue = $('#query-string-till').val();
         if (dateValue) {
-            tableLayout.end_time = dateValue;
+            var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+            if (momentValue.isValid()) {
+                tableLayout.end_time = Number(momentValue.valueOf());
+            } else {
+                tableLayout.end_time = dateValue;
+            }
         } else {
             tableLayout.end_time = null;
         }

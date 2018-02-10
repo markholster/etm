@@ -128,8 +128,8 @@ public class SearchService extends AbstractIndexMetadataService {
 		template.put("results_per_page", getInteger("results_per_page", requestValues, 50));
 		template.put("sort_field", getString("sort_field", requestValues));
 		template.put("sort_order", getString("sort_order", requestValues));
-        template.put("start_time", getLong("start_time", requestValues));
-        template.put("end_time", getLong("end_time", requestValues));
+        template.put("start_time", getString("start_time", requestValues));
+        template.put("end_time", getString("end_time", requestValues));
 		
 		scriptParams.put("template", template);
 		scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());

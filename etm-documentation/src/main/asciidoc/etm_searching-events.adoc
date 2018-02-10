@@ -7,7 +7,10 @@ To search through all events browse to http://localhost:8080/gui/search/ or sele
 image::images/etm-v3/etm-search-overview.png["Search overview",link="./images/etm-v3/etm-search-overview.png"]
 
 === Search widget
-The left part of the search screen shows an input field in which you can enter your search terms. Also you can (un)check the event types you want to be in- or excluded from the search. 
+The left part of the search screen shows an input field in which you can enter your search terms. Optionally you can filter on any of the known event types by
+(un)checking the event types you want to be in- or excluded from the search. To query events in a certain date and time range you may a start- and/or end date.
+To select an specific date you can enter that date and time, or select the appropriate value from the popup calendar. If the time range should be more flexible
+you can also provide an https://www.elastic.co/guide/en/elasticsearch/reference/{elasticsearch-major-version}/common-options.html#date-math[Elasticsearch Date Math] expression.
 
 In the query input field you can enter the terms you are searching for. See the section <<Query syntax>> for the query syntax that can be used. The input field provides a basic form of auto completion by hitting the arrow down button on your keyboard. All available attributes for the selected event types will be show in a drop down box.
 
@@ -16,7 +19,7 @@ On the top right of the search screen you see your search templates. By default 
 
 To use a search template just click on the name in the Search template widget. All setting stored with the search template will be restored to your current search context. 
 
-To delete a search template click on the red cross behind the name and confirm the deletion of the template. If you accidently removed the wrong template just hit the ''Save'' button again and the search template will be available again. Note that if you changed anything in the search context between the removal and the save of the search template that will be saved as well.
+To delete a search template click on the red cross behind the name and confirm the deletion of the template. If you accidentally removed the wrong template just hit the ''Save'' button again and the search template will be available again. Note that if you changed anything in the search context between the removal and the save of the search template that will be saved as well.
 
 Your {etm} administrator may set a limit on the number of templates that you can store. If the limit is reached a message will be shown in the Search template widget.
 
@@ -85,7 +88,7 @@ As we can see the query that selected the shopping card from the database took a
 If you have administrator rights and the audit logs are kept long enough you may see an extra ''Audit Logs'' tab. This tab shows information over who saw this particular event over time. When the column ''Direct'' contains the value ''true'' then the user clicked on this event. When the column contains the value ''false'' the event was retrieved as a correlated event. 
 
 === Query syntax
-The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default all event attributes are matched, but specific attributes can be specified to narrow down the query. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html[Elasticsearch Query DSL].
+The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default all event attributes are matched, but specific attributes can be specified to narrow down the query. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/${elasticsearch-major-version}/query-dsl-query-string-query.html[Elasticsearch Query DSL].
 In large datasets you can improve search performance by always specifying the event attribute you want to query. This allows {etm} to narrow the search down to the given attribute instead of querying them all.  
 
 ==== Event attribute names

@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher.migrations;
 
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
@@ -266,7 +267,24 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
             if (roles != null) {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
                 sourceMap.put(this.principalTags.getDefaultSearchRangeTag(), 86400000L);
-                // TODO migrate default search templates to elasticsearch math dates in startDate and endDate fields.
+                List<Map<String, Object>> templates = (List<Map<String, Object>>) sourceMap.get(this.principalTags.getSearchTemplatesTag());
+                if (templates != null) {
+                    for (Map<String, Object> template : templates) {
+                        if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_LAST_60_MINS.equals(template.get("name"))) {
+                            template.put("query", "*");
+                            template.put("start_time", "now-1h");
+                            template.put("end_time", "now");
+                        } else if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_TODAY.equals(template.get("name"))) {
+                            template.put("query", "*");
+                            template.put("start_time", "now/d");
+                            template.put("end_time", "now/d");
+                        } else if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_YESTERDAY.equals(template.get("name"))) {
+                            template.put("query", "*");
+                            template.put("start_time", "now-1d/d");
+                            template.put("end_time", "now-1d/d");
+                        }
+                    }
+                }
             }
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())

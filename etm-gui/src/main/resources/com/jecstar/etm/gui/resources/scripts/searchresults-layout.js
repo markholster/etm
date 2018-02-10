@@ -23,7 +23,7 @@ var tableLayout = {
         })
     },
     getValueFromSearchResult: function(searchResult, tableColumn, timeZone) {
-        var fieldParts = tableColumn.field.split("\\.");
+        var fieldParts = tableColumn.field.split("\.");
         var values = [];
         var result = '';
         if ('_type' == tableColumn.field) {

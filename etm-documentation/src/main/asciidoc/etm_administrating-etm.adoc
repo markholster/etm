@@ -31,6 +31,8 @@ Each user can have the following attributes:
 |Locale|The locale of the user.
 |Time zone|The time zone the user is in. Time based properties will be converted to the selected time zone.
 |Search history size|The number of queries that need to be remembered.
+|Default search time range|The default time range (in seconds) on the search screen to query. For example, if you set
+this value to 60 the last 60 seconds will be queried by default when entering the search screen.
 |Access control|The roles the user should have. See <<User roles>> for a detailed description.
 |Change password on logon|The user is forced to change the password on the next logon, or in the current session if the user is already logged on.
 |New password|The new password for the user. This field is mandatory when adding a new user.

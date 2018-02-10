@@ -124,12 +124,22 @@ function setValuesFromHistory(query) {
     });
     $('#query-string').val(query.query);
     if (query.start_time) {
-        flatPickrStartDate.setDate(new Date(query.start_time));
+        var momentValue = moment(query.start_time, 'x', true);
+        if (momentValue.isValid()) {
+            flatPickrStartDate.setDate(momentValue.toDate());
+        } else {
+            $('#query-string-from').val(query.start_time);
+        }
     } else {
         flatPickrStartDate.setDate(null);
     }
     if (query.end_time) {
-        flatPickrEndDate.setDate(new Date(query.end_time));
+        var momentValue = moment(query.end_time, 'x', true);
+        if (momentValue.isValid()) {
+            flatPickrEndDate.setDate(momentValue.toDate());
+        } else {
+            $('#query-string-till').val(query.end_time);
+        }
     } else {
         flatPickrEndDate.setDate(null);
     }
@@ -171,11 +181,21 @@ function createTemplate() {
     };
     var dateValue = $('#query-string-from').val();
     if (dateValue) {
-        template.start_time = Number(flatPickrStartDate.selectedDates[0].getTime());
+        var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+        if (momentValue.isValid()) {
+            template.start_time = Number(momentValue.valueOf());
+        } else {
+            template.start_time = dateValue;
+        }
     }
     var dateValue = $('#query-string-till').val();
     if (dateValue) {
-        template.end_time = Number(flatPickrEndDate.selectedDates[0].getTime());
+        var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+        if (momentValue.isValid()) {
+            template.end_time = Number(momentValue.valueOf());
+        } else {
+            template.end_time = dateValue;
+        }
     }
     return template;
 }
