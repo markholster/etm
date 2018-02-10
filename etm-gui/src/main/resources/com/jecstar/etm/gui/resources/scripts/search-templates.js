@@ -109,18 +109,8 @@ function validateMaxTemplates() {
 }
 
 function setValuesFromTemplate(template) {
-    $('[id^=check-type-]').prop('checked', false);
-    $.each(template.types, function(index, type){
-        $('#check-type-' + type).prop('checked', true);    
-    });
-    $('#query-string').val(template.query);
-    $('#template-name').val(template.name);
-    tableLayout.current_ix = 0;
-    tableLayout.fields = template.fields;
-    tableLayout.results_per_page = template.results_per_page;
-    tableLayout.sort_field = template.sort_field;
-    tableLayout.sort_order = template.sort_order;
-    $('#query-string').removeAttr('disabled').trigger('input');
+    // the template and query object are exactly the same.
+    setValuesFromHistory(template);
 }
 
 function setValuesFromHistory(query) {
@@ -129,6 +119,16 @@ function setValuesFromHistory(query) {
         $('#check-type-' + type).prop('checked', true);    
     });
     $('#query-string').val(query.query);
+    if (query.start_time) {
+       $('#query-string-from').val(flatpickr.formatDate(new Date(query.start_time), 'Y-m-dTH:i:S'));
+    } else {
+        $('#query-string-from').val('');
+    }
+    if (query.end_time) {
+       $('#query-string-till').val(flatpickr.formatDate(new Date(query.end_time), 'Y-m-dTH:i:S'));
+    } else {
+        $('#query-string-till').val('');
+    }
     tableLayout.current_ix = 0;
     tableLayout.fields = query.fields;
     tableLayout.results_per_page = query.results_per_page;
@@ -161,8 +161,18 @@ function createTemplate() {
         fields: tableLayout.fields,
         results_per_page: tableLayout.results_per_page,
         sort_field: tableLayout.sort_field,
-        sort_order: tableLayout.sort_order            
+        sort_order: tableLayout.sort_order,
+        start_time: null,
+        end_time: null
     };
+    var dateValue = $('#query-string-from').val();
+    if (dateValue) {
+        template.start_time = flatpickr.parseDate(dateValue, 'Y-m-dTH:i:S').getTime();
+    }
+    var dateValue = $('#query-string-till').val();
+    if (dateValue) {
+        template.end_time = flatpickr.parseDate(dateValue, 'Y-m-dTH:i:S').getTime();
+    }
     return template;
 }
 

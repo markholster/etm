@@ -264,7 +264,11 @@ public class SearchService extends AbstractIndexMetadataService {
 			.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
 		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 		boolQueryBuilder.must(queryStringBuilder);
-		boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
+        RangeQueryBuilder timestampFilter = new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp());
+        if (parameters.getStartTime() != null) {
+            timestampFilter.gte(parameters.getStartTime());
+        }
+        boolQueryBuilder.filter(timestampFilter);
 
         if (parameters.getTypes().size() != 5) {
             if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
@@ -300,7 +304,9 @@ public class SearchService extends AbstractIndexMetadataService {
 		query.put("results_per_page", parameters.getMaxResults());
 		query.put("sort_field", parameters.getSortField());
 		query.put("sort_order", parameters.getSortOrder());
-		
+        query.put("start_time", parameters.getStartTime());
+        query.put("end_time", parameters.getEndTime());
+
 		scriptParams.put("query", query);
 		scriptParams.put("history_size", history_size);
 		SearchService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())

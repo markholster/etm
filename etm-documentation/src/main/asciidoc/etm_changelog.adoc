@@ -1,9 +1,9 @@
 == Changelog & upgrade
 
 === Version 3.0.0
-* Added a link:https://kafka.apache.org/[Kafka] processor.
+* Added the link:https://kafka.apache.org/[Kafka] processor.
 * Sophisticated access control for every single page.
-* Migration to Elasticsearch 6.1.x.
+* Migration to Elasticsearch 6.2.x.
 * Support for Java 9.
 * Parsers can use metadata as source for parsing.
 * Added a ''Copy value'' parser.
@@ -16,11 +16,12 @@
 elasticsearch:
   connectAddresses:
   - "127.0.0.1:9300"
+  - "server-2:9300"
 ----
 
 ==== Upgrade from version 2.4.0 to 3.0.0
-. Make sure you have a backup of all Elasticsearch data!
-. Download and uncompress Elasticsearch 5.6.x to a new directory.
+. Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
+. Download and uncompress Elasticsearch 6.2.x to a new directory.
 . Stop all {etm} nodes.
 . Stop your current Elasticsearch nodes.
 . Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
@@ -28,8 +29,10 @@ elasticsearch:
 . Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
 . Download and uncompress {etm} 3.0.0 to a new directory.
 . Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
-. Copy the file 'config/etm.yml' from your old {etm} installation to the new one. Remove the option 'nrOfListeners' under the ibmMq chapter. This option must be replaced with the 'minNrOfListeners' and 'maxNrOfListeners' options. See the <<IBM MQ section in etm.yml>> for more information.
-. Start a single {etm} node and wait for the data migration to complete.
+. Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
+.. Remove the option 'nrOfListeners' under the ibmMq chapter. This option must be replaced with the 'minNrOfListeners' and 'maxNrOfListeners' options. See the <<IBM MQ section in etm.yml>> for more information.
+.. Change the option elasticsearch.connectAddresses to a list. See <<Version 3.0.0>> for an example.
+. Start a single {etm} node in condole mode and wait for the data migration to complete.
 . Start all other {etm} nodes.
 
 === Version 2.4.0

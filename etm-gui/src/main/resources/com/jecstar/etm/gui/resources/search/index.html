@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../styles/autocomplete.css">
     <link rel="stylesheet" href="../styles/etm-commons.css">
     <link rel="stylesheet" href="../styles/highlightjs-googlecode.css">
+    <link rel="stylesheet" href="../styles/flatpickr.min.css">
     <style type="text/css">
 .headerSortAsc, .headerSortDesc {
     border-bottom-color: #777 !important;
@@ -46,6 +47,7 @@
     <script src="../scripts/jquery-ui.min.js"></script>
     <script src="../scripts/popper.min.js"></script>
     <script src="../scripts/bootstrap.min.js"></script>
+    <script src="../scripts/flatpickr.min.js"></script>
 
 </head>
 <body>
@@ -159,12 +161,29 @@
                                            class="custom-control-input">
                                     <label class="custom-control-label" for="check-type-sql">SQL</label>
                                 </div>
-                                <div class="input-group" style="margin-top: 5px;">
-                                    <input id="query-string" type="text" class="form-control" placeholder="Search for..."
+                                <div class="row form-group" style="margin-top: 5px;">
+                                    <label for="query-string-from" class="col-sm-3 col-form-label">Start date</label>
+                                    <div class="coll-sm">
+                                        <input id="query-string-from" type="text" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <label for="query-string-till" class="col-sm-3 col-form-label">End date</label>
+                                    <div class="coll-sm">
+                                        <input id="query-string-till" type="text" class="form-control"/>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm">
+                                        <input id="query-string" type="text" class="form-control"
+                                               placeholder="Search for..."
                                            autocomplete="off" autofocus="autofocus">
-                                    <span class="input-group-btn">
-                                        <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">Search</button>
-                                    </span>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">
+                                        Search
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -424,6 +443,15 @@
             $('#query-string').removeAttr('disabled');
         }
     });
+    $('#query-string-from, #query-string-till').flatpickr(
+        {
+            dateFormat: "Y-m-dTH:i:S",
+            enableTime: true,
+            enableSeconds: true,
+            time_24hr: true,
+            allowInput: true,
+        }
+    );
     // Disable or enable the search button, template name inputfield and save button if the query field contains data.
     $('#query-string').on('input', enableOrDisableSearchButton)
     .bind('keydown', function( event ) {
@@ -498,7 +526,7 @@
     });
 
     function startNewQuery() {
-    	tableLayout.timestamp = new Date().getTime();
+        tableLayout.timestamp = new Date().getTime();
     	var queryParams = createQuery(false);
     	queryParams.start_ix = 0;
         executeQuery(queryParams);
@@ -529,6 +557,18 @@
         } else if (!tableLayout.current_query) {
         	return null;
         }
+        var dateValue = $('#query-string-from').val();
+        if (dateValue) {
+            tableLayout.start_time = flatpickr.parseDate(dateValue, 'Y-m-dTH:i:S').getTime();
+        } else {
+            tableLayout.start_time = null;
+        }
+        var dateValue = $('#query-string-till').val();
+        if (dateValue) {
+            tableLayout.end_time = flatpickr.parseDate(dateValue, 'Y-m-dTH:i:S').getTime();
+        } else {
+            tableLayout.end_time = null;
+        }
         var query = {
             query: tableLayout.current_query,
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
@@ -538,7 +578,9 @@
             sort_field: tableLayout.sort_field,
             sort_order: tableLayout.sort_order,
             fieldsLayout: tableLayout.fields,
-            timestamp: tableLayout.timestamp
+            timestamp: tableLayout.timestamp,
+            start_time: tableLayout.start_time,
+            end_time: tableLayout.end_time
         };
         return query;
     }
@@ -635,7 +677,9 @@
                         fields: queryParameters.fieldsLayout,
                         results_per_page: queryParameters.max_results,
                         sort_field: queryParameters.sort_field,
-                        sort_order: queryParameters.sort_order
+                        sort_order: queryParameters.sort_order,
+                        start_time: queryParameters.start_time,
+                        end_time: queryParameters.end_time
                     }
                     updateHistory(query, data.history_size);
                 }

@@ -6,6 +6,9 @@ var tableLayout = {
     results_per_page: 50,
     sort_field: 'timestamp',
     sort_order: 'desc',
+    start_time: null,
+    end_time: null,
+    // The timestamp the query is first executed
     timestamp: null,
     current_ix: 0,
     current_query: null,
@@ -20,7 +23,7 @@ var tableLayout = {
         })
     },
     getValueFromSearchResult: function(searchResult, tableColumn, timeZone) {
-        var fieldParts = tableColumn.field.split("\.");
+        var fieldParts = tableColumn.field.split("\\.");
         var values = [];
         var result = '';
         if ('_type' == tableColumn.field) {
@@ -278,8 +281,8 @@ $('#btn-apply-table-settings').click(function () {
     }
     tableLayout.fields = fields;
     if (changed) {
-    	tableLayout.timestamp = new Date().getTime();
-        executeQuery(createQuery(true));    
+        tableLayout.timestamp = new Date().getTime();
+        executeQuery(createQuery(true));
     }
     hideModals($('#modal-table-settings'));
 });

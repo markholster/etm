@@ -29,6 +29,8 @@ class SearchRequestParameters {
 	private Long notAfterTimestamp;
 	private final List<String> types;
 	private List<String> fields;
+    private final Long startTime;
+    private final Long endTime;
 	private final List<Map<String, Object>> fieldsLayout;
 
 	public SearchRequestParameters(String query) {
@@ -62,6 +64,8 @@ class SearchRequestParameters {
 		layout.put("link", false);
 		layout.put("name", "Name");
 		this.fieldsLayout.add(layout);
+        this.endTime = null;
+        this.startTime = null;
 	}
 	
 	
@@ -81,6 +85,11 @@ class SearchRequestParameters {
 			this.notAfterTimestamp = System.currentTimeMillis();
 		}
 		this.fieldsLayout = this.converter.getArray("fieldsLayout", requestValues);
+        this.startTime = this.converter.getLong("start_time", requestValues);
+        this.endTime = this.converter.getLong("end_time", requestValues);
+        if (this.endTime != null && this.endTime < this.notAfterTimestamp) {
+            this.notAfterTimestamp = this.endTime;
+        }
 	}
 	
 	public String toJsonSearchTemplate(String name) {
@@ -94,6 +103,8 @@ class SearchRequestParameters {
 		this.converter.addStringElementToJsonBuffer("sort_field", this.sortField, result, false);
 		this.converter.addStringElementToJsonBuffer("sort_order", this.sortOrder, result, false);
 		this.converter.addIntegerElementToJsonBuffer("start_ix", this.getStartIndex(), result, false);
+        this.converter.addLongElementToJsonBuffer("start_time", this.getStartTime(), result, false);
+        this.converter.addLongElementToJsonBuffer("end_time", this.getEndTime(), result, false);
 		this.converter.addIntegerElementToJsonBuffer("results_per_page", this.getMaxResults(), result, false);
 		this.converter.addStringElementToJsonBuffer("query", this.queryString, result, false);
 		result.append(",\"fields\": [");
@@ -162,6 +173,14 @@ class SearchRequestParameters {
         }
         return fieldLayouts;
 	}
+
+    public Long getStartTime() {
+        return this.startTime;
+    }
+
+    public Long getEndTime() {
+        return this.endTime;
+    }
 	
 	public Long getNotAfterTimestamp() {
 		return this.notAfterTimestamp;
