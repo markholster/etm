@@ -71,9 +71,8 @@ $.ajax({
         });
         validateMaxTemplates();
         if (data.default_search_range) {
-            var date = new Date();
-            flatPickrEndDate.setDate(date);
-            flatPickrStartDate.setDate(new Date(date.getTime() - data.default_search_range));
+            $('#query-string-from').val('now-' + (data.default_search_range / 1000) + 's');
+            $('#query-string-till').val('now')
         }
     }
 });

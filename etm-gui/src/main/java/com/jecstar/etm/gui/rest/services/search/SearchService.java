@@ -268,12 +268,38 @@ public class SearchService extends AbstractIndexMetadataService {
 			.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
 		BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 		boolQueryBuilder.must(queryStringBuilder);
-        RangeQueryBuilder timestampFilter = new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp());
-        if (parameters.getStartTime() != null) {
-            timestampFilter.gte(parameters.getStartTime());
-        }
-        boolQueryBuilder.filter(timestampFilter);
 
+
+        boolean notAfterFilterNecessary = true;
+        if (parameters.getEndTime() != null || parameters.getStartTime() != null) {
+            RangeQueryBuilder timestampFilter = new RangeQueryBuilder("timestamp");
+            if (parameters.getEndTime() != null) {
+                try {
+                    // Check if the endtime is given as an exact timestamp or an elasticsearch date math.
+                    long endTime = Long.valueOf(parameters.getEndTime());
+                    timestampFilter.lte(endTime < parameters.getNotAfterTimestamp() ? endTime : parameters.getNotAfterTimestamp());
+                    notAfterFilterNecessary = false;
+                } catch (NumberFormatException e) {
+                    timestampFilter.lte(parameters.getEndTime());
+                }
+            } else {
+                timestampFilter.lte(parameters.getNotAfterTimestamp());
+            }
+            if (parameters.getStartTime() != null) {
+                try {
+                    // Check if the starttime is given as an exact timestamp or an elasticsearch date math.
+                    long endTime = Long.valueOf(parameters.getStartTime());
+                    timestampFilter.gte(endTime);
+                } catch (NumberFormatException e) {
+                    timestampFilter.gte(parameters.getStartTime());
+                }
+            }
+            boolQueryBuilder.filter(timestampFilter);
+        }
+        if (notAfterFilterNecessary) {
+            // the given parameters.getStartTime() & parameters.getEndTime() were zero or an elasticsearch math date. We have to apply the notAfterTime filter as well.
+            boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
+        }
         if (parameters.getTypes().size() != 5) {
             if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
                 boolQueryBuilder.filter(QueryBuilders.boolQuery()

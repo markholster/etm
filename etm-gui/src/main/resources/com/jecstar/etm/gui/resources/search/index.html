@@ -556,13 +556,13 @@
         }
         var dateValue = $('#query-string-from').val();
         if (dateValue) {
-            tableLayout.start_time = Number(flatPickrStartDate.selectedDates[0].getTime());
+            tableLayout.start_time = dateValue;
         } else {
             tableLayout.start_time = null;
         }
         var dateValue = $('#query-string-till').val();
         if (dateValue) {
-            tableLayout.end_time = Number(flatPickrEndDate.selectedDates[0].getTime());
+            tableLayout.end_time = dateValue;
         } else {
             tableLayout.end_time = null;
         }

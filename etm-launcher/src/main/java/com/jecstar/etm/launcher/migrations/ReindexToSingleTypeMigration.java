@@ -266,6 +266,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
             if (roles != null) {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
                 sourceMap.put(this.principalTags.getDefaultSearchRangeTag(), 86400000L);
+                // TODO migrate default search templates to elasticsearch math dates in startDate and endDate fields.
             }
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
