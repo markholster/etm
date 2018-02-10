@@ -82,15 +82,17 @@ public class SearchService extends AbstractIndexMetadataService {
 	@Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
 	public String getSearchTemplates() {
-		GetResponse getResponse = SearchService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+        EtmPrincipal etmPrincipal = getEtmPrincipal();
+        GetResponse getResponse = SearchService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
 				.setFetchSource("search_templates", null)
 				.get();
 		if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
-			return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + "}";
+            return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + ", \"default_search_range\": " + etmPrincipal.getDefaultSearchRange() + "}";
 		}
 		// Hack the max search history into the result. Dunno how to do this better.
 		StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
 		addIntegerElementToJsonBuffer("max_search_templates", etmConfiguration.getMaxSearchTemplateCount(), result, false);
+        addLongElementToJsonBuffer("default_search_range", etmPrincipal.getDefaultSearchRange(), result, false);
 		result.append("}");
 		return result.toString();
 	}
@@ -126,6 +128,8 @@ public class SearchService extends AbstractIndexMetadataService {
 		template.put("results_per_page", getInteger("results_per_page", requestValues, 50));
 		template.put("sort_field", getString("sort_field", requestValues));
 		template.put("sort_order", getString("sort_order", requestValues));
+        template.put("start_time", getLong("start_time", requestValues));
+        template.put("end_time", getLong("end_time", requestValues));
 		
 		scriptParams.put("template", template);
 		scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());

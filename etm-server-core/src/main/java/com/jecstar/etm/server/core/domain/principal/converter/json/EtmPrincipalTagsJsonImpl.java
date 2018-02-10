@@ -35,6 +35,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
     }
 
     @Override
+    public String getDefaultSearchRangeTag() {
+        return "default_search_range";
+    }
+
+    @Override
     public String getLocaleTag() {
         return "locale";
     }

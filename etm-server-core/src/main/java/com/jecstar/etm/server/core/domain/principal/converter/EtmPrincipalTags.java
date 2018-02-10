@@ -8,6 +8,8 @@ public interface EtmPrincipalTags {
 	String getFilterQueryOccurrenceTag();
 	String getAlwaysShowCorrelatedEventsTag();
 	String getSearchHistorySizeTag();
+
+    String getDefaultSearchRangeTag();
 	String getLocaleTag();
 	String getNameTag();
 	String getPasswordHashTag();

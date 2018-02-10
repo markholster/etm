@@ -88,6 +88,13 @@
                             <input id="input-search-history-size" type="number" class="form-control" min="0" value="5"/>
                         </div>
                     </div>
+                    <div class="form-group row">
+                        <label for="input-default-search-range" class="col-sm-3 col-form-label">Default search time
+                            range</label>
+                        <div class="col-sm-9">
+                            <input id="input-default-search-range" type="number" class="form-control" min="1"/>
+                        </div>
+                    </div>
                     <div class="modal-footer">
                         <input type="submit" id="btn-apply-preferences" class="btn btn-primary" value="Apply"/>
                     </div>
@@ -197,6 +204,7 @@
                 $('#input-time-zone').val(data.time_zone);
                 $('#input-search-history-size').val(data.search_history_size);
                 $('#input-search-history-size').attr('max', data.max_search_history_size);
+                $('#input-default-search-range').val(data.default_search_range ? data.default_search_range / 1000 : null);
                 if (data.ldap_base) {
                 	$('#input-user-name').attr('disabled', 'disabled');
                 	$('#input-user-email').attr('disabled', 'disabled');
@@ -285,7 +293,8 @@
             email: $('#input-user-email').val() ? $('#input-user-email').val() : null,
             locale: $('#input-locale').val(),
             time_zone: $('#input-time-zone').val(),
-            search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0
+            search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,
+            default_search_range: $('#input-default-search-range').val() ? Number($('#input-default-search-range').val()) * 1000 : null
         }
         return userSettings;
     }

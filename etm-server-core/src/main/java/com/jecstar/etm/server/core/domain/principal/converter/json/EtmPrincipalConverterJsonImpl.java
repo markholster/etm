@@ -30,6 +30,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
 		added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
 		added = this.converter.addIntegerElementToJsonBuffer(this.tags.getSearchHistorySizeTag(), etmPrincipal.getHistorySize(), sb, !added) || added;
+        added = this.converter.addLongElementToJsonBuffer(this.tags.getDefaultSearchRangeTag(), etmPrincipal.getDefaultSearchRange(), sb, true, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag(), sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), true, sb, !added) || added;
 		added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
@@ -76,6 +77,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 		principal.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
 		principal.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));
 		principal.setHistorySize(this.converter.getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE));
+        principal.setDefaultSearchRange(this.converter.getLong(this.tags.getDefaultSearchRangeTag(), valueMap));
 		principal.setChangePasswordOnLogon(this.converter.getBoolean(this.tags.getChangePasswordOnLogonTag(), valueMap, Boolean.FALSE));
 		principal.setLdapBase(this.converter.getBoolean(this.tags.getLdapBaseTag(), valueMap, Boolean.FALSE));
 		String value = this.converter.getString(this.tags.getLocaleTag(), valueMap);

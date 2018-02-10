@@ -12,6 +12,7 @@ import java.util.*;
 public class EtmPrincipal implements Principal, Serializable {
 
     public static final int DEFAULT_HISTORY_SIZE = 5;
+
     /**
      * The serialVersionUID for this class.
      */
@@ -20,8 +21,6 @@ public class EtmPrincipal implements Principal, Serializable {
     private final Set<String> roles = new HashSet<>();
     private final Set<EtmGroup> groups = new HashSet<>();
     private Set<String> dashboards = new HashSet<>();
-    // State properties. DO NOT CHANGE!!
-    public boolean forceReload = false;
     private String passwordHash;
     private String name = null;
     private String emailAddress = null;
@@ -31,8 +30,11 @@ public class EtmPrincipal implements Principal, Serializable {
     private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
     private boolean alwaysShowCorrelatedEvents;
     private int historySize = DEFAULT_HISTORY_SIZE;
+    private Long defaultSearchRange;
     private boolean changePasswordOnLogon;
     private boolean ldapBase;
+    // State properties. DO NOT CHANGE!!
+    public boolean forceReload = false;
 
 
     public EtmPrincipal(String id) {
@@ -75,6 +77,14 @@ public class EtmPrincipal implements Principal, Serializable {
 
     public Locale getLocale() {
         return this.locale;
+    }
+
+    public Long getDefaultSearchRange() {
+        return this.defaultSearchRange;
+    }
+
+    public void setDefaultSearchRange(Long defaultSearchRange) {
+        this.defaultSearchRange = defaultSearchRange;
     }
 
     public void setLocale(Locale locale) {

@@ -82,6 +82,7 @@ public class UserService extends AbstractJsonService {
 			newHistorySize = etmConfiguration.getMaxSearchHistoryCount();
 		}
 		updateMap.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
+        updateMap.put(this.tags.getDefaultSearchRangeTag(), valueMap.get(this.tags.getDefaultSearchRangeTag()));
 		
 		UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
 		.setDoc(updateMap)

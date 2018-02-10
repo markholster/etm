@@ -70,6 +70,11 @@ $.ajax({
             );
         });
         validateMaxTemplates();
+        if (data.default_search_range) {
+            var date = new Date();
+            flatPickrEndDate.setDate(date);
+            flatPickrStartDate.setDate(new Date(date.getTime() - data.default_search_range));
+        }
     }
 });
 
@@ -120,14 +125,14 @@ function setValuesFromHistory(query) {
     });
     $('#query-string').val(query.query);
     if (query.start_time) {
-       $('#query-string-from').val(flatpickr.formatDate(new Date(query.start_time), 'Y-m-dTH:i:S'));
+        flatPickrStartDate.setDate(new Date(query.start_time));
     } else {
-        $('#query-string-from').val('');
+        flatPickrStartDate.setDate(null);
     }
     if (query.end_time) {
-       $('#query-string-till').val(flatpickr.formatDate(new Date(query.end_time), 'Y-m-dTH:i:S'));
+        flatPickrEndDate.setDate(new Date(query.end_time));
     } else {
-        $('#query-string-till').val('');
+        flatPickrEndDate.setDate(null);
     }
     tableLayout.current_ix = 0;
     tableLayout.fields = query.fields;
@@ -167,11 +172,11 @@ function createTemplate() {
     };
     var dateValue = $('#query-string-from').val();
     if (dateValue) {
-        template.start_time = flatpickr.parseDate(dateValue, 'Y-m-dTH:i:S').getTime();
+        template.start_time = Number(flatPickrStartDate.selectedDates[0].getTime());
     }
     var dateValue = $('#query-string-till').val();
     if (dateValue) {
-        template.end_time = flatpickr.parseDate(dateValue, 'Y-m-dTH:i:S').getTime();
+        template.end_time = Number(flatPickrEndDate.selectedDates[0].getTime());
     }
     return template;
 }

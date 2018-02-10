@@ -3,7 +3,6 @@ package com.jecstar.etm.launcher.migrations;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
-import com.jecstar.etm.launcher.configuration.Elasticsearch;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -266,6 +265,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
             List<String> roles = (List<String>) sourceMap.get(this.principalTags.getRolesTag());
             if (roles != null) {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
+                sourceMap.put(this.principalTags.getDefaultSearchRangeTag(), 86400000L);
             }
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
