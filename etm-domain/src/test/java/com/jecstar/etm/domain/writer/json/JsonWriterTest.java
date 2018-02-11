@@ -1,8 +1,8 @@
 package com.jecstar.etm.domain.writer.json;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class JsonWriterTest {
 

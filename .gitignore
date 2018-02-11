@@ -1,2 +1,10 @@
+**/.directory
+**/.settings/
+**/out/
+**/bin/
+**/.classpath
+**/.project
+/.gradle/
+/.idea/
 **/*.iml
 **/*.ipr

@@ -10,9 +10,7 @@ import java.util.Map.Entry;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
- * To prevent lots of garbage collections the internal buffer is reused, and
- * hence this class is not thread safe!
- * 
+ *
  * @author mark
  */
 public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEvent<Event>> implements TelemetryEventWriter<String, Event> {
@@ -22,21 +20,13 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 
     @Override
     public String write(Event event) {
-        return write(event, true,false);
+    	return write(event, true);
     }
 
-
-    @Override
-	public String write(Event event, boolean includeId) {
-		return write(event, includeId,false);
-	}	
-	
-	@Override
-	public String write(Event event, boolean includeId, boolean forUpdate) {
+	protected String write(Event event, boolean includeId) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		boolean added = this.jsonWriter.addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), sb, true);
-		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getObjectTypeTag(), getType(), sb, !added) || added;
+		boolean added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getObjectTypeTag(), getType(), sb, true);
 		if (includeId) {
 			added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
 		}
@@ -49,19 +39,10 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			sb.append(this.jsonWriter.escapeToJson(getTags().getEndpointsTag(), true)).append(": [");
 			boolean endpointAdded = false;
 			for (int i = 0; i < event.endpoints.size(); i++) {
-				endpointAdded = addEndpointToJsonBuffer(event.endpoints.get(i), sb, i == 0 || !endpointAdded, getTags(), forUpdate) || endpointAdded;
+				endpointAdded = addEndpointToJsonBuffer(event.endpoints.get(i), sb, i == 0 || !endpointAdded, getTags()) || endpointAdded;
 			}
 			sb.append("]");			
 			added = endpointAdded || added;
-		}
-		if (event.id != null) {
-			if (added) {
-				sb.append(", ");
-			}
-			sb.append(this.jsonWriter.escapeToJson(getTags().getEventHashesTag(), true)).append(": [");
-			sb.append(event.getCalculatedHash());
-			sb.append("]");
-			added = true;
 		}
 		added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, sb, !added) || added;
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, sb, !added) || added;
@@ -102,7 +83,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 		return true;
 	}
 	
-	private boolean addEndpointToJsonBuffer(Endpoint endpoint, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags, boolean forUpdate) {
+	private boolean addEndpointToJsonBuffer(Endpoint endpoint, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags) {
 		boolean readingEndpointHandlerSet = false;
 		for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
 			if (handler.isSet()) {
@@ -125,7 +106,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			buffer.append(this.jsonWriter.escapeToJson(getTags().getReadingEndpointHandlersTag(), true)).append(": [");
 			added = false;
 			for (int i = 0; i < endpoint.readingEndpointHandlers.size(); i++) {
-				added = addEndpointHandlerToJsonBuffer(endpoint.writingEndpointHandler.handlingTime, endpoint.readingEndpointHandlers.get(i), buffer, i == 0 || !added, getTags(), forUpdate) || added;
+				added = addEndpointHandlerToJsonBuffer(endpoint.writingEndpointHandler.handlingTime, endpoint.readingEndpointHandlers.get(i), buffer, i == 0 || !added, getTags()) || added;
 			}
 			buffer.append("]");
 			added = true;
@@ -135,13 +116,13 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 				buffer.append(", ");
 			}
 			buffer.append(this.jsonWriter.escapeToJson(this.tags.getWritingEndpointHandlerTag(), true)).append(": ");
-			added = addEndpointHandlerToJsonBuffer(null, endpoint.writingEndpointHandler, buffer, true, this.tags, forUpdate) || added;
+			added = addEndpointHandlerToJsonBuffer(null, endpoint.writingEndpointHandler, buffer, true, this.tags) || added;
 		}
 		buffer.append("}");
 		return added;
 	}
 
-	private boolean addEndpointHandlerToJsonBuffer(ZonedDateTime latencyStart, EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags, boolean forUpdate) {
+	private boolean addEndpointHandlerToJsonBuffer(ZonedDateTime latencyStart, EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags) {
 		if (!endpointHandler.isSet()) {
 			return false;
 		}
@@ -157,9 +138,6 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 			}
 		}
 		added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getEndpointHandlerTransactionIdTag(), endpointHandler.transactionId, buffer, !added) || added;
-		if (forUpdate) {
-			added = this.jsonWriter.addBooleanElementToJsonBuffer(this.tags.getEndpointHandlerForcedTag(), endpointHandler.forced, buffer, !added) || added;
-		}
 		Application application = endpointHandler.application;
 		if (application.isSet()) {
 			if (added) {

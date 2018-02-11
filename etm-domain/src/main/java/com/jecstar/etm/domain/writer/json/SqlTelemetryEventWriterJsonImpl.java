@@ -1,9 +1,10 @@
 package com.jecstar.etm.domain.writer.json;
 
 import com.jecstar.etm.domain.SqlTelemetryEvent;
+import com.jecstar.etm.domain.writer.SqlTelemetryEventWriter;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 
-public class SqlTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventWriter<SqlTelemetryEvent>{
+public class SqlTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventWriter<SqlTelemetryEvent> implements SqlTelemetryEventWriter<String> {
 
     @Override
     String getType() {
@@ -11,7 +12,7 @@ public class SqlTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventW
     }
 
     @Override
-	boolean doWrite(SqlTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+	protected boolean doWrite(SqlTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
 		boolean added = !firstElement;
 		if (event.sqlEventType != null) {
 			added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getSqlEventTypeTag(), event.sqlEventType.name(), buffer, !added) || added;

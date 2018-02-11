@@ -1,10 +1,10 @@
 package com.jecstar.etm.domain.builder;
 
-import java.time.ZonedDateTime;
-
 import com.jecstar.etm.domain.Application;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.Location;
+
+import java.time.ZonedDateTime;
 
 public class EndpointHandlerBuilder {
 
@@ -47,10 +47,4 @@ public class EndpointHandlerBuilder {
 		this.endpointHandler.location = locationBuilder.build();
 		return this;
 	}
-
-	public EndpointHandlerBuilder setForced(boolean forced) {
-		this.endpointHandler.forced = forced;
-		return this;
-	}
-
 }

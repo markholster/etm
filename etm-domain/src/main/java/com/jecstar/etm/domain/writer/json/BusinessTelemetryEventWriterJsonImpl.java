@@ -1,9 +1,10 @@
 package com.jecstar.etm.domain.writer.json;
 
 import com.jecstar.etm.domain.BusinessTelemetryEvent;
+import com.jecstar.etm.domain.writer.BusinessTelemetryEventWriter;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 
-public class BusinessTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventWriter<BusinessTelemetryEvent>{
+public class BusinessTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventWriter<BusinessTelemetryEvent> implements BusinessTelemetryEventWriter<String> {
 
 	@Override
 	String getType() {
@@ -11,7 +12,7 @@ public class BusinessTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryE
 	}
 
 	@Override
-	boolean doWrite(BusinessTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+	protected boolean doWrite(BusinessTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
 		return firstElement;
 	}
 
