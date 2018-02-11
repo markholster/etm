@@ -11,7 +11,8 @@ import org.openqa.selenium.support.ui.Select;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class UsersTest extends AbstractIntegrationTest {
@@ -37,7 +38,8 @@ public class UsersTest extends AbstractIntegrationTest {
 				waitForHide("modal-user-remove");
 			}
 		}
-		
+
+        waitFor(ExpectedConditions.elementToBeClickable(findById("sel-user")));
 		userSelect.selectByValue("admin");
 
 		// Make sure the admin data is loaded.

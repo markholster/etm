@@ -2,6 +2,7 @@ package com.jecstar.etm.gui.search;
 
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,10 +26,10 @@ public class QueryTest extends AbstractSearchIntegrationTest {
 		getSecurePage(this.httpHost + "/gui/search/index.html", null, 1000);
 
 		// Only search for log events.
-	    findById("check-type-business").click();
-	    findById("check-type-http").click();
-	    findById("check-type-messaging").click();
-	    findById("check-type-sql").click();
+        ((JavascriptExecutor) driver).executeScript("arguments[0].removeAttribute('checked','checked')", findById("check-type-business"));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].removeAttribute('checked','checked')", findById("check-type-http"));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].removeAttribute('checked','checked')", findById("check-type-messaging"));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].removeAttribute('checked','checked')", findById("check-type-sql"));
 
 	    // Search for log event we of this application.
 	    findById("query-string").sendKeys(query);

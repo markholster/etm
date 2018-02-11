@@ -77,10 +77,16 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-	
-	protected void waitForHide(String elementId) {
-		waitFor(ExpectedConditions.invisibilityOfElementLocated(By.id(elementId)));
-	}
+    protected void waitForHide(String elementId) {
+        waitForHide(elementId, true);
+    }
+
+    protected void waitForHide(String elementId, boolean ignoreOpacity) {
+        waitFor(ExpectedConditions.invisibilityOfElementLocated(By.id(elementId)));
+        if (!ignoreOpacity) {
+            waitFor(c -> c.findElement(By.id(elementId)).getCssValue("opacity").equals("0"));
+        }
+    }
 
 	protected WebElement findById(String id) {
 		return this.driver.findElement(By.id(id));

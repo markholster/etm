@@ -70,7 +70,7 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
 		}
 		Map<String, Object> sourceMap = response.mappings().values().iterator().next().values().iterator().next().values().iterator().next().sourceAsMap();
 		String type = getString("type", getObject(propertyName, sourceMap));
-		return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+		return ("text".equals(type) || "keyword".equals(type)) ? propertyName + KEYWORD_SUFFIX : propertyName;
 	}
 
 	@SuppressWarnings("unchecked")

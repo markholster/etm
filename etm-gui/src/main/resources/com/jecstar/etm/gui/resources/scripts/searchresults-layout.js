@@ -112,10 +112,7 @@ $('#table-settings-sort-field').bind('keydown', function( event ) {
 }).autocompleteFieldQuery(
 {
 	queryKeywords: queryKeywords, 
-	mode: 'field',
-	keywordGroupFilter: function(index, group) {
-		return $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get().indexOf(group) == -1;
-    }
+	mode: 'field'
 });
 		
 

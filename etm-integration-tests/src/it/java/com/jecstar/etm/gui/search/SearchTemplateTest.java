@@ -69,8 +69,9 @@ public class SearchTemplateTest extends AbstractSearchIntegrationTest {
 	    // Confirm the overwrite and check the result
         findById("btn-overwrite-template").click();
 	    // The confirmation window should be hidden again.
-	    waitForHide("modal-template-overwrite");
+        waitForHide("modal-template-overwrite", false);
 	    // And if we select the template, the updated query should be used.
+        waitFor(ExpectedConditions.elementToBeClickable(findById("list-template-links").findElement(By.xpath("./li/a[text()='" + templateName + "']"))));
 	    findById("list-template-links").findElement(By.xpath("./li/a[text()='" + templateName + "']")).click();
 	    assertEquals(updatedTemplateQuery, findById("query-string").getAttribute("value"));
 	    
