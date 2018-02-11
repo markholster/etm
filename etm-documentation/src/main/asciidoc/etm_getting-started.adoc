@@ -65,7 +65,7 @@ Then extract the archive with the following command:
 
 [source,bash,subs=attributes+]
 ----
-tar -zxvf etm-{project-version}.tgz
+tar -xvf etm-{project-version}.tgz
 ----
 
 This will extract the archive to the directory etm-{project-version}. We then change to the bin directory of {etm} to fire it up for the first time:

@@ -20,7 +20,7 @@ The .tgz archive for {etm} can be downloaded and installed as follow:
 wget https://www.jecstar.com/downloads/etm/etm-{project-version}.tgz
 wget https://www.jecstar.com/downloads/etm/etm-{project-version}.tgz.sha512
 cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
-tar -zxvf etm-{project-version}.tgz
+tar -xvf etm-{project-version}.tgz
 cd etm-{project-version}/bin
 ./etm ## <2>
 ----
@@ -34,8 +34,8 @@ The .zip archive for {etm} can be downloaded and installed as follow:
 ----
 wget https://www.jecstar.com/downloads/etm/etm-{project-version}.zip
 wget https://www.jecstar.com/downloads/etm/etm-{project-version}.zip.sha512
-cat etm-{project-version}.tgz.sha512 | sha512sum -c ## <1>
-unzip etm-{project-version}.tgz 
+cat etm-{project-version}.zip.sha512 | sha512sum -c ## <1>
+unzip etm-{project-version}.zip
 cd etm-{project-version}/bin
 ./etm ## <2>
 ----
