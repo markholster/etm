@@ -51,25 +51,27 @@ $.ajax({
     contentType: 'application/json',
     url: '../rest/search/templates',
     success: function(data) {
-        if (!data || !data.search_templates) {
+        if (!data) {
             return;
         }
         max_search_templates = data.max_search_templates;
-        $.each(data.search_templates, function(index, template){
-            $('#list-template-links').append(
-                $('<li>').append(
-                    $('<a href="#">').click(function(event) {
-                       event.preventDefault();
-                       setValuesFromTemplate(template)
-                    }).text(template.name),
-                    $('<a href="#" class="fa fa-times pull-right text-danger">').click(function(event) {
-                       event.preventDefault();
-                       askRemoveTemplate(template)
-                    })
-                )
-            );
-        });
-        validateMaxTemplates();
+        if (data.search_templates) {
+            $.each(data.search_templates, function(index, template){
+                $('#list-template-links').append(
+                    $('<li>').append(
+                        $('<a href="#">').click(function(event) {
+                           event.preventDefault();
+                           setValuesFromTemplate(template)
+                        }).text(template.name),
+                        $('<a href="#" class="fa fa-times pull-right text-danger">').click(function(event) {
+                           event.preventDefault();
+                           askRemoveTemplate(template)
+                        })
+                    )
+                );
+            });
+            validateMaxTemplates();
+        }
         if (data.default_search_range) {
             $('#query-string-from').val('now-' + (data.default_search_range / 1000) + 's');
             $('#query-string-till').val('now')
