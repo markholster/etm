@@ -27,6 +27,11 @@ public class EndpointHandlerBuilder {
 		this.endpointHandler.transactionId = transactionId;
 		return this;
 	}
+
+    public EndpointHandlerBuilder setSequenceNumber(Integer sequenceNumber) {
+        this.endpointHandler.sequenceNumber = sequenceNumber;
+        return this;
+    }
 	
 	public EndpointHandlerBuilder setApplication(Application application) {
 		this.endpointHandler.application = application;

@@ -69,6 +69,9 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	}
 
 	@Override
+	public String getPayloadEncoding() { return "payload_encoding"; }
+
+	@Override
 	public String getPayloadFormatTag() {
 		return "payload_format";
 	}
@@ -99,11 +102,6 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	}
 	
 	@Override
-	public String getEndpointHandlerForcedTag() {
-		return "forced";
-	}
-	
-	@Override
 	public String getEndpointHandlerLatencyTag() {
 		return "latency";
 	}
@@ -117,6 +115,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
 	public String getEndpointHandlerTransactionIdTag() {
 		return "transaction_id";
 	}
+
+    @Override
+    public String getEndpointHandlerSequenceNumberTag() {
+        return "sequence_number";
+    }
 
 	@Override
 	public String getEndpointHandlerApplicationTag() {
