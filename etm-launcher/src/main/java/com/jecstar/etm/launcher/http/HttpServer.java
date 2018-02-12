@@ -42,207 +42,206 @@ import java.security.cert.CertificateException;
 
 public class HttpServer {
 
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(HttpServer.class);
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(HttpServer.class);
 
     private final Undertow server;
-	private final GracefulShutdownHandler shutdownHandler;
-	private boolean started;
-	private final SessionManagerFactory sessionManagerFactory;
+    private final GracefulShutdownHandler shutdownHandler;
+    private boolean started;
+    private final SessionManagerFactory sessionManagerFactory;
 
-	public HttpServer(
-	        final IdentityManager identityManager,
+    public HttpServer(
+            final IdentityManager identityManager,
             final Configuration configuration,
             final EtmConfiguration etmConfiguration,
             final TelemetryCommandProcessor processor,
-            final Client client)
-    {
-		this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
-		final PathHandler root = Handlers.path();
-		this.shutdownHandler = Handlers.gracefulShutdown(root);
-		final ServletContainer container = ServletContainer.Factory.newInstance();
-		Builder builder = Undertow.builder()
-			.setIoThreads(configuration.http.ioThreads)
-			.setWorkerThreads(configuration.http.workerThreads);
-		
-		if (configuration.getHttpPort() > 0) {
-			builder.addHttpListener(configuration.getHttpPort(), configuration.bindingAddress);
-			if (log.isInfoLevelEnabled()) {
-				log.logInfoMessage("Binding http listener to '" + configuration.bindingAddress + ":" + configuration.getHttpPort() + "'");
-			}
-		}
-		if (configuration.getHttpsPort() > 0) {
-			if (configuration.http.sslKeystoreLocation == null) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("SSL keystore not provided. Https listener not started.");
-				}
-			} else {
-				try {
-					SSLContext sslContext = new SSLContextBuilder().createSslContext(
-							configuration.http.sslProtocol, 
-							configuration.http.sslKeystoreLocation, 
-							configuration.http.sslKeystoreType, 
-							configuration.http.sslKeystorePassword == null ? null : configuration.http.sslKeystorePassword.toCharArray(), 
-							configuration.http.sslTruststoreLocation, 
-							configuration.http.sslTruststoreType, 
-							configuration.http.sslTruststorePassword == null ? null : configuration.http.sslTruststorePassword.toCharArray());
-					
-					builder.addHttpsListener(configuration.getHttpsPort(), configuration.bindingAddress, sslContext);
-					builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
-					if (log.isInfoLevelEnabled()) {
-						log.logInfoMessage("Binding https listener to '" + configuration.bindingAddress + ":" + configuration.getHttpsPort() + "'");
-					}
-				} catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
-					if (log.isErrorLevelEnabled()) {
-						log.logErrorMessage("Unable to create SSL context. Https listener not started.", e);
-					}
-				}
-			}
-		}
-		this.server = builder.setHandler(root).build();
-		SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
-		
-		if (configuration.http.restProcessorEnabled) {
-			DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration.http.restProcessorLoginRequired ? identityManager : null);
-			di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
-			DeploymentManager manager = container.addDeployment(di);
-			manager.deploy();
-			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
-			try {
-				root.addPrefixPath(
-					di.getContextPath(), 
-					Handlers.requestLimitingHandler(
-						configuration.http.restProcessorMaxConcurrentRequests, 
-						configuration.http.restProcessorMaxQueuedRequests, 
-						new SessionAttachmentHandler(
-							manager.start(), 
-							manager.getDeployment().getSessionManager(), 
-							manager.getDeployment().getServletContext().getSessionConfig()
-						)
-					)
-				);
-				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Bound rest processor to '" + di.getContextPath() + "'.");
-				}
-			} catch (ServletException e) {
-				if (log.isErrorLevelEnabled()) {
-					log.logErrorMessage("Error deploying rest processor", e);
-				}
-			}
-		}
-		if (configuration.http.guiEnabled) {
-			DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
-			di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
-			DeploymentManager manager = container.addDeployment(di);
-			manager.deploy();
-			manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
-			try {
-				EncodingHandler encodigHandler = new EncodingHandler(new ContentEncodingRepository()
-					.addEncodingHandler("gzip", new GzipEncodingProvider(), 100, Predicates.maxContentSize(1024))
-					.addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(1024)))
-					.setNext(manager.start());
-				root.addPrefixPath(
-						di.getContextPath(), 
-						Handlers.requestLimitingHandler(
-							configuration.http.guiMaxConcurrentRequests, 
-							configuration.http.guiMaxQueuedRequests, 
-							new SessionAttachmentHandler(
-								encodigHandler, 
-								manager.getDeployment().getSessionManager(), 
-								manager.getDeployment().getServletContext().getSessionConfig()
-							)
-						)
-					);
-				if (log.isInfoLevelEnabled()) {
-					log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
-				}
-			} catch (ServletException e) {
-				if (log.isErrorLevelEnabled()) {
-					log.logErrorMessage("Error deploying GUI", e);
-				}
-			}
-		}
-	}
+            final Client client) {
+        this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
+        final PathHandler root = Handlers.path();
+        this.shutdownHandler = Handlers.gracefulShutdown(root);
+        final ServletContainer container = ServletContainer.Factory.newInstance();
+        Builder builder = Undertow.builder()
+                .setIoThreads(configuration.http.ioThreads)
+                .setWorkerThreads(configuration.http.workerThreads);
 
-	public void start() {
-		if (!this.started) {
-			this.server.start();
-			this.started = true;
-		}
-	}
+        if (configuration.getHttpPort() > 0) {
+            builder.addHttpListener(configuration.getHttpPort(), configuration.bindingAddress);
+            if (log.isInfoLevelEnabled()) {
+                log.logInfoMessage("Binding http listener to '" + configuration.bindingAddress + ":" + configuration.getHttpPort() + "'");
+            }
+        }
+        if (configuration.getHttpsPort() > 0) {
+            if (configuration.http.sslKeystoreLocation == null) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("SSL keystore not provided. Https listener not started.");
+                }
+            } else {
+                try {
+                    SSLContext sslContext = new SSLContextBuilder().createSslContext(
+                            configuration.http.sslProtocol,
+                            configuration.http.sslKeystoreLocation,
+                            configuration.http.sslKeystoreType,
+                            configuration.http.sslKeystorePassword == null ? null : configuration.http.sslKeystorePassword.toCharArray(),
+                            configuration.http.sslTruststoreLocation,
+                            configuration.http.sslTruststoreType,
+                            configuration.http.sslTruststorePassword == null ? null : configuration.http.sslTruststorePassword.toCharArray());
 
-	public void stop() {
-		if (this.shutdownHandler != null) {
-			this.shutdownHandler.shutdown();
-			try {
-				this.shutdownHandler.awaitShutdown(30000);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
-		if (this.server != null && this.started) {
-			this.server.stop();
-			this.started = false;
-		}
-	}
+                    builder.addHttpsListener(configuration.getHttpsPort(), configuration.bindingAddress, sslContext);
+                    builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
+                    if (log.isInfoLevelEnabled()) {
+                        log.logInfoMessage("Binding https listener to '" + configuration.bindingAddress + ":" + configuration.getHttpsPort() + "'");
+                    }
+                } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
+                    if (log.isErrorLevelEnabled()) {
+                        log.logErrorMessage("Unable to create SSL context. Https listener not started.", e);
+                    }
+                }
+            }
+        }
+        this.server = builder.setHandler(root).build();
+        SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
 
-	private DeploymentInfo createProcessorDeploymentInfo(TelemetryCommandProcessor processor, IdentityManager identityManager) {
-		RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(processor);
-		ResteasyDeployment deployment = new ResteasyDeployment();
-		deployment.setApplication(processorApplication);
-		DeploymentInfo di = undertowRestDeployment(deployment, "/");
-		di.setContextPath("/rest/processor/");
-		di.setSessionManagerFactory(this.sessionManagerFactory);
-		if (identityManager != null) {
-			deployment.setSecurityEnabled(true);
-			di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE)
-					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
-			di.addSecurityRoles(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE);
-			di.setIdentityManager(identityManager);
-			di.setLoginConfig(new LoginConfig("BASIC","Enterprise Telemetry Monitor"));
-		}
-		di.setClassLoader(processorApplication.getClass().getClassLoader());
-		di.setDeploymentName("Rest event processor - " + di.getContextPath());
-		
-		// Add wadl generation support
-		ServletInfo resteasyWadlServlet = Servlets.servlet("ResteasyWadlServlet", ResteasyWadlServlet.class)
-	                .setAsyncSupported(false)
-	                .setLoadOnStartup(1)
-	                .addMapping("/application.wadl");	
-		di.addServlet(resteasyWadlServlet);
+        if (configuration.http.restProcessorEnabled) {
+            DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration.http.restProcessorLoginRequired ? identityManager : null);
+            di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            DeploymentManager manager = container.addDeployment(di);
+            manager.deploy();
+            manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
+            try {
+                root.addPrefixPath(
+                        di.getContextPath(),
+                        Handlers.requestLimitingHandler(
+                                configuration.http.restProcessorMaxConcurrentRequests,
+                                configuration.http.restProcessorMaxQueuedRequests,
+                                new SessionAttachmentHandler(
+                                        manager.start(),
+                                        manager.getDeployment().getSessionManager(),
+                                        manager.getDeployment().getServletContext().getSessionConfig()
+                                )
+                        )
+                );
+                if (log.isInfoLevelEnabled()) {
+                    log.logInfoMessage("Bound rest processor to '" + di.getContextPath() + "'.");
+                }
+            } catch (ServletException e) {
+                if (log.isErrorLevelEnabled()) {
+                    log.logErrorMessage("Error deploying rest processor", e);
+                }
+            }
+        }
+        if (configuration.http.guiEnabled) {
+            DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
+            di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            DeploymentManager manager = container.addDeployment(di);
+            manager.deploy();
+            manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
+            try {
+                EncodingHandler encodigHandler = new EncodingHandler(new ContentEncodingRepository()
+                        .addEncodingHandler("gzip", new GzipEncodingProvider(), 100, Predicates.maxContentSize(1024))
+                        .addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(1024)))
+                        .setNext(manager.start());
+                root.addPrefixPath(
+                        di.getContextPath(),
+                        Handlers.requestLimitingHandler(
+                                configuration.http.guiMaxConcurrentRequests,
+                                configuration.http.guiMaxQueuedRequests,
+                                new SessionAttachmentHandler(
+                                        encodigHandler,
+                                        manager.getDeployment().getSessionManager(),
+                                        manager.getDeployment().getServletContext().getSessionConfig()
+                                )
+                        )
+                );
+                if (log.isInfoLevelEnabled()) {
+                    log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
+                }
+            } catch (ServletException e) {
+                if (log.isErrorLevelEnabled()) {
+                    log.logErrorMessage("Error deploying GUI", e);
+                }
+            }
+        }
+    }
 
-		// Add the logout servlet
-		ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
+    public void start() {
+        if (!this.started) {
+            this.server.start();
+            this.started = true;
+        }
+    }
+
+    public void stop() {
+        if (this.shutdownHandler != null) {
+            this.shutdownHandler.shutdown();
+            try {
+                this.shutdownHandler.awaitShutdown(30000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        if (this.server != null && this.started) {
+            this.server.stop();
+            this.started = false;
+        }
+    }
+
+    private DeploymentInfo createProcessorDeploymentInfo(TelemetryCommandProcessor processor, IdentityManager identityManager) {
+        RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(processor);
+        ResteasyDeployment deployment = new ResteasyDeployment();
+        deployment.setApplication(processorApplication);
+        DeploymentInfo di = undertowRestDeployment(deployment, "/");
+        di.setContextPath("/rest/processor/");
+        di.setSessionManagerFactory(this.sessionManagerFactory);
+        if (identityManager != null) {
+            deployment.setSecurityEnabled(true);
+            di.addSecurityConstraint(new SecurityConstraint()
+                    .addRolesAllowed(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE)
+                    .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
+            di.addSecurityRoles(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE);
+            di.setIdentityManager(identityManager);
+            di.setLoginConfig(new LoginConfig("BASIC", "Enterprise Telemetry Monitor"));
+        }
+        di.setClassLoader(processorApplication.getClass().getClassLoader());
+        di.setDeploymentName("Rest event processor - " + di.getContextPath());
+
+        // Add wadl generation support
+        ServletInfo resteasyWadlServlet = Servlets.servlet("ResteasyWadlServlet", ResteasyWadlServlet.class)
+                .setAsyncSupported(false)
+                .setLoadOnStartup(1)
+                .addMapping("/application.wadl");
+        di.addServlet(resteasyWadlServlet);
+
+        // Add the logout servlet
+        ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
                 .setAsyncSupported(false)
                 .addMapping("/logout");
-		di.addServlet(logoutServlet);
-		return di;
-	}
-	
-	private DeploymentInfo createGuiDeploymentInfo(Client client, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
-		final String contextRoot = "/gui";
-		RestGuiApplication guiApplication = new RestGuiApplication(client, etmConfiguration);
-		ResteasyDeployment deployment = new ResteasyDeployment();
-		deployment.setApplication(guiApplication);
-		deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());
-		DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
-		di.setSessionManagerFactory(this.sessionManagerFactory);
-		di.addInnerHandlerChainWrapper(handler -> new ChangePasswordHandler("/gui/", handler));
-		di.addWelcomePage("index.html");
-		di.setContextPath(contextRoot);
-		deployment.setSecurityEnabled(true);
-		di.addSecurityConstraint(new SecurityConstraint()
-					.addRolesAllowed(SecurityRoles.ALL_ROLES_ARRAY)
-					.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/").addUrlPattern("/index.html").addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
-		di.addSecurityConstraint(new SecurityConstraint()
-				.addRolesAllowed(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)
-				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
-		di.addSecurityConstraint(new SecurityConstraint()
-				.addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
-				.addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/graphs.html").addUrlPattern("/rest/dashboard/*")));
+        di.addServlet(logoutServlet);
+        return di;
+    }
+
+    private DeploymentInfo createGuiDeploymentInfo(Client client, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
+        final String contextRoot = "/gui";
+        RestGuiApplication guiApplication = new RestGuiApplication(client, etmConfiguration);
+        ResteasyDeployment deployment = new ResteasyDeployment();
+        deployment.setApplication(guiApplication);
+        deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());
+        DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
+        di.setSessionManagerFactory(this.sessionManagerFactory);
+        di.addInnerHandlerChainWrapper(handler -> new ChangePasswordHandler("/gui/", handler));
+        di.addWelcomePage("index.html");
+        di.setContextPath(contextRoot);
+        deployment.setSecurityEnabled(true);
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.ALL_ROLES_ARRAY)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/").addUrlPattern("/index.html").addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
+        di.addSecurityConstraint(new SecurityConstraint()
+                .addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/graphs.html").addUrlPattern("/rest/dashboard/*")));
         di.addSecurityConstraint(new SecurityConstraint()
                 .addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/dashboards.html").addUrlPattern("/rest/dashboard/*")));
@@ -279,43 +278,43 @@ public class HttpServer {
         di.addSecurityConstraint(new SecurityConstraint()
                 .addRolesAllowed(SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE)
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/users.html").addUrlPattern("/rest/settings/*")));
-		di.addSecurityRoles(SecurityRoles.ALL_ROLES_ARRAY);
-		di.setIdentityManager(identityManager);
-		di.setLoginConfig(new LoginConfig("FORM","Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
-		di.setClassLoader(guiApplication.getClass().getClassLoader());
-		di.setResourceManager(new MenuAwareClassPathResourceManager(etmConfiguration, guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
-		di.setInvalidateSessionOnLogout(true);
-		di.setDeploymentName("GUI - " + di.getContextPath());
-		// Add the logout servlet.
-		ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
+        di.addSecurityRoles(SecurityRoles.ALL_ROLES_ARRAY);
+        di.setIdentityManager(identityManager);
+        di.setLoginConfig(new LoginConfig("FORM", "Enterprise Telemetry Monitor", "/login/login.html", "/login/login-error.html"));
+        di.setClassLoader(guiApplication.getClass().getClassLoader());
+        di.setResourceManager(new MenuAwareClassPathResourceManager(etmConfiguration, guiApplication.getClass().getClassLoader(), "com/jecstar/etm/gui/resources/"));
+        di.setInvalidateSessionOnLogout(true);
+        di.setDeploymentName("GUI - " + di.getContextPath());
+        // Add the logout servlet.
+        ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
                 .setAsyncSupported(false)
                 .addMapping("/logout");
-		di.addServlet(logoutServlet);
-		return di;
-	}
+        di.addServlet(logoutServlet);
+        return di;
+    }
 
-	private DeploymentInfo undertowRestDeployment(ResteasyDeployment deployment, String mapping) {
-		if (mapping == null) {
-			mapping = "/";
-		}
-		if (!mapping.startsWith("/")) {
-			mapping = "/" + mapping;
-		}
-		if (!mapping.endsWith("/")) {
-			mapping += "/";
-		}
-		mapping = mapping + "*";
-		String prefix = null;
-		if (!mapping.equals("/*")) {
-			prefix = mapping.substring(0, mapping.length() - 2);
-		}
-		ServletInfo resteasyServlet = Servlets.servlet("ResteasyServlet", HttpServletDispatcher.class).setAsyncSupported(true)
-				.setLoadOnStartup(1).addMapping(mapping);
-		if (prefix != null) {
-			resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
-		}
-		resteasyServlet.addInitParam("resteasy.logger.type", "SLF4J");
-		return new DeploymentInfo().addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
-				.addServlet(resteasyServlet);
-	}
+    private DeploymentInfo undertowRestDeployment(ResteasyDeployment deployment, String mapping) {
+        if (mapping == null) {
+            mapping = "/";
+        }
+        if (!mapping.startsWith("/")) {
+            mapping = "/" + mapping;
+        }
+        if (!mapping.endsWith("/")) {
+            mapping += "/";
+        }
+        mapping = mapping + "*";
+        String prefix = null;
+        if (!mapping.equals("/*")) {
+            prefix = mapping.substring(0, mapping.length() - 2);
+        }
+        ServletInfo resteasyServlet = Servlets.servlet("ResteasyServlet", HttpServletDispatcher.class).setAsyncSupported(true)
+                .setLoadOnStartup(1).addMapping(mapping);
+        if (prefix != null) {
+            resteasyServlet.addInitParam("resteasy.servlet.mapping.prefix", prefix);
+        }
+        resteasyServlet.addInitParam("resteasy.logger.type", "SLF4J");
+        return new DeploymentInfo().addServletContextAttribute(ResteasyDeployment.class.getName(), deployment)
+                .addServlet(resteasyServlet);
+    }
 }

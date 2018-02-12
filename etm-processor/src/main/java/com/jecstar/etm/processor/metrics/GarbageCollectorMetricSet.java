@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 import static com.codahale.metrics.MetricRegistry.name;
 
 public class GarbageCollectorMetricSet implements MetricSet {
-	
+
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]+");
 
     private final List<GarbageCollectorMXBean> garbageCollectors;
@@ -27,7 +27,7 @@ public class GarbageCollectorMetricSet implements MetricSet {
     /**
      * Creates a new set of gauges for the given collection of garbage collectors.
      *
-     * @param garbageCollectors    the garbage collectors
+     * @param garbageCollectors the garbage collectors
      */
     private GarbageCollectorMetricSet(Collection<GarbageCollectorMXBean> garbageCollectors) {
         this.garbageCollectors = new ArrayList<>(garbageCollectors);

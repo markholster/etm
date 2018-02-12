@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Logging {
 
-	public String rootLogger = "INFO";
-	public final Map<String, String> loggers = new HashMap<>();
+    public String rootLogger = "INFO";
+    public final Map<String, String> loggers = new HashMap<>();
 
 }

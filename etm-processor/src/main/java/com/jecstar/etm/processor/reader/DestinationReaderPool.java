@@ -36,14 +36,14 @@ public class DestinationReaderPool<T extends DestinationReader> {
 
     /**
      * Constructs a new <code>DestinationReaderPool</code> instance.
-     *
+     * <p>
      * This constructor starts {@link #minReaders } threads by calling the {@link #readerInstantiator} function.
      *
-     * @param processor The <code>TelemetryCommandProcessor</code> used to query for the available ringbuffer space.
-     * @param executorService The <code>ExecutorService</code> used to spawn new threads.
-     * @param destinationName The name of the destination.
-     * @param minReaders The minimum number of <code>DestinationReader</code> instances that should be started.
-     * @param maxReaders The maximum number of <code>DestinationReader</code> instances that is allowed to be started.
+     * @param processor          The <code>TelemetryCommandProcessor</code> used to query for the available ringbuffer space.
+     * @param executorService    The <code>ExecutorService</code> used to spawn new threads.
+     * @param destinationName    The name of the destination.
+     * @param minReaders         The minimum number of <code>DestinationReader</code> instances that should be started.
+     * @param maxReaders         The maximum number of <code>DestinationReader</code> instances that is allowed to be started.
      * @param readerInstantiator The <code>Function</code> that instantiates new <code>DestinationReader</code>.
      */
     public DestinationReaderPool(
@@ -132,7 +132,7 @@ public class DestinationReaderPool<T extends DestinationReader> {
 
     /**
      * Remove the finished <code>Future</code> instances of the currentReaders list.
-     *
+     * <p>
      * A <code>Future</code> should only be finished on program shutdown, but we're better safe tha sorry in this case.
      */
     private void removeFinishedFutures() {

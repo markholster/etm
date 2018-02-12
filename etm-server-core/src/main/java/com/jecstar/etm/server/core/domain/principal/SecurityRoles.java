@@ -49,7 +49,7 @@ public final class SecurityRoles {
     /**
      * All roles defined as String array. The array must be sorted!
      */
-    public static final String[] ALL_ROLES_ARRAY = new String[] {
+    public static final String[] ALL_ROLES_ARRAY = new String[]{
             AUDIT_LOG_READ,
             CLUSTER_SETTINGS_READ,
             CLUSTER_SETTINGS_READ_WRITE,
@@ -115,7 +115,7 @@ public final class SecurityRoles {
      */
     public static final String[] ALL_READ_WRITE_SECURITY_ROLES = Arrays.stream(ALL_ROLES_ARRAY)
             .filter(p -> {
-                if (p.endsWith("_read") && Arrays.stream(ALL_ROLES_ARRAY).anyMatch(t-> t.equals(p +"_write"))) {
+                if (p.endsWith("_read") && Arrays.stream(ALL_ROLES_ARRAY).anyMatch(t -> t.equals(p + "_write"))) {
                     return false;
                 } else if (ETM_EVENT_WRITE.equals(p)) {
                     // Skip etm_event_write because there's also an etm_event_read_write

@@ -8,8 +8,8 @@ public class Counter {
 
     /**
      * Add a value to the total.
-     * @param value The value to add.
      *
+     * @param value The value to add.
      * @return This instance.
      */
     public Counter add(long value) {

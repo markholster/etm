@@ -4,9 +4,9 @@ import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 
 public interface ExpressionParserConverter<T> {
 
-	ExpressionParser read(T content);
-	
-	T write(ExpressionParser expressionParser);
-	
-	ExpressionParserTags getTags();
+    ExpressionParser read(T content);
+
+    T write(ExpressionParser expressionParser);
+
+    ExpressionParserTags getTags();
 }

@@ -7,11 +7,11 @@ import com.jecstar.etm.processor.handler.AbstractJsonHandler;
 import java.io.IOException;
 
 abstract class AbstractMQEventHandler extends AbstractJsonHandler {
-	
-	String getContent(MQMessage message) throws IOException {
-		byte[] byteContent = new byte[message.getMessageLength()];
-		message.setDataOffset(0);
-		message.readFully(byteContent);
-		return Charsets.convert(byteContent, message.characterSet);
-	}
+
+    String getContent(MQMessage message) throws IOException {
+        byte[] byteContent = new byte[message.getMessageLength()];
+        message.setDataOffset(0);
+        message.readFully(byteContent);
+        return Charsets.convert(byteContent, message.characterSet);
+    }
 }

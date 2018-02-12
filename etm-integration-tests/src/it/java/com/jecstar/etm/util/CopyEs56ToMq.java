@@ -53,7 +53,7 @@ public class CopyEs56ToMq {
 
 
         ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
-        int i=0;
+        int i = 0;
         while (searchHits.hasNext()) {
             SearchHit searchHit = searchHits.next();
             Map<String, Object> valueMap = searchHit.getSourceAsMap();

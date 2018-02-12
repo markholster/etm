@@ -2,16 +2,16 @@ package com.jecstar.etm.launcher.http.session;
 
 public interface ElasticsearchSessionTags {
 
-	String getIdTag();
+    String getIdTag();
 
-	String getLastAccessedTag();
+    String getLastAccessedTag();
 
-	String getAttributesTag();
+    String getAttributesTag();
 
-	String getAttributeKeyTag();
+    String getAttributeKeyTag();
 
-	String getAttributeValueTag();
+    String getAttributeValueTag();
 
-	String getAttributeValueTypeTag();
+    String getAttributeValueTypeTag();
 
 }

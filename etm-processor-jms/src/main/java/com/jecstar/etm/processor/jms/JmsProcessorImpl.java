@@ -146,7 +146,7 @@ public class JmsProcessorImpl implements JmsProcessor {
                 }
                 addParameters(object, nativeConnectionFactory.parameters);
                 return (ConnectionFactory) object;
-            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchFieldException | NoSuchMethodException | InvocationTargetException e ) {
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchFieldException | NoSuchMethodException | InvocationTargetException e) {
                 if (log.isErrorLevelEnabled()) {
                     log.logErrorMessage("Unable to instantiate '" + nativeConnectionFactory.className + "'.", e);
                 }
@@ -191,7 +191,7 @@ public class JmsProcessorImpl implements JmsProcessor {
                 field.setAccessible(true);
             }
             if (Boolean.class.equals(field.getType()) || boolean.class.equals(field.getType())) {
-                field.setBoolean(object,Boolean.valueOf(entry.getValue()));
+                field.setBoolean(object, Boolean.valueOf(entry.getValue()));
             } else if (Byte.class.equals(field.getType()) || byte.class.equals(field.getType())) {
                 field.setInt(object, Byte.valueOf(entry.getValue()));
             } else if (Character.class.equals(field.getType()) || char.class.equals(field.getType())) {

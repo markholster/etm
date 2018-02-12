@@ -17,9 +17,9 @@ import java.util.List;
 
 /**
  * <p>Java class for ApplicationData complex type.
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
- * 
+ * <p>
  * <pre>
  * &lt;complexType name="ApplicationData">
  *   &lt;complexContent>
@@ -55,13 +55,11 @@ import java.util.List;
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
- * 
- * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "ApplicationData", propOrder = {
-    "simpleContent",
-    "complexContent"
+        "simpleContent",
+        "complexContent"
 })
 public class ApplicationData {
 
@@ -70,25 +68,23 @@ public class ApplicationData {
 
     /**
      * Gets the value of the simpleContent property.
-     * 
+     * <p>
      * <p>
      * This accessor method returns a reference to the live list,
      * not a snapshot. Therefore any modification you make to the
      * returned list will be present inside the JAXB object.
      * This is why there is not a <CODE>set</CODE> method for the simpleContent property.
-     * 
+     * <p>
      * <p>
      * For example, to add a new item, do as follows:
      * <pre>
      *    getSimpleContent().add(newItem);
      * </pre>
-     * 
-     * 
+     * <p>
+     * <p>
      * <p>
      * Objects of the following type(s) are allowed in the list
      * {@link ApplicationData.SimpleContent }
-     * 
-     * 
      */
     public List<ApplicationData.SimpleContent> getSimpleContent() {
         if (simpleContent == null) {
@@ -99,25 +95,23 @@ public class ApplicationData {
 
     /**
      * Gets the value of the complexContent property.
-     * 
+     * <p>
      * <p>
      * This accessor method returns a reference to the live list,
      * not a snapshot. Therefore any modification you make to the
      * returned list will be present inside the JAXB object.
      * This is why there is not a <CODE>set</CODE> method for the complexContent property.
-     * 
+     * <p>
      * <p>
      * For example, to add a new item, do as follows:
      * <pre>
      *    getComplexContent().add(newItem);
      * </pre>
-     * 
-     * 
+     * <p>
+     * <p>
      * <p>
      * Objects of the following type(s) are allowed in the list
      * {@link ApplicationData.ComplexContent }
-     * 
-     * 
      */
     public List<ApplicationData.ComplexContent> getComplexContent() {
         if (complexContent == null) {
@@ -129,9 +123,9 @@ public class ApplicationData {
 
     /**
      * <p>Java class for anonymous complex type.
-     * 
+     * <p>
      * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
+     * <p>
      * <pre>
      * &lt;complexType>
      *   &lt;complexContent>
@@ -145,12 +139,10 @@ public class ApplicationData {
      *   &lt;/complexContent>
      * &lt;/complexType>
      * </pre>
-     * 
-     * 
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "", propOrder = {
-        "any"
+            "any"
     })
     public static class ComplexContent {
 
@@ -163,11 +155,9 @@ public class ApplicationData {
 
         /**
          * Gets the value of the any property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link Element }
-         *     
+         *
+         * @return possible object is
+         * {@link Element }
          */
         public Element getAny() {
             return any;
@@ -175,11 +165,9 @@ public class ApplicationData {
 
         /**
          * Sets the value of the any property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link Element }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link Element }
          */
         public void setAny(Element value) {
             this.any = value;
@@ -187,11 +175,9 @@ public class ApplicationData {
 
         /**
          * Gets the value of the elementName property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getElementName() {
             return elementName;
@@ -199,11 +185,9 @@ public class ApplicationData {
 
         /**
          * Sets the value of the elementName property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setElementName(String value) {
             this.elementName = value;
@@ -211,11 +195,9 @@ public class ApplicationData {
 
         /**
          * Gets the value of the targetNamespace property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getTargetNamespace() {
             return targetNamespace;
@@ -223,11 +205,9 @@ public class ApplicationData {
 
         /**
          * Sets the value of the targetNamespace property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setTargetNamespace(String value) {
             this.targetNamespace = value;
@@ -238,9 +218,9 @@ public class ApplicationData {
 
     /**
      * <p>Java class for anonymous complex type.
-     * 
+     * <p>
      * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
+     * <p>
      * <pre>
      * &lt;complexType>
      *   &lt;complexContent>
@@ -253,8 +233,6 @@ public class ApplicationData {
      *   &lt;/complexContent>
      * &lt;/complexType>
      * </pre>
-     * 
-     * 
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "")
@@ -272,11 +250,9 @@ public class ApplicationData {
 
         /**
          * Gets the value of the name property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getName() {
             return name;
@@ -284,11 +260,9 @@ public class ApplicationData {
 
         /**
          * Sets the value of the name property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setName(String value) {
             this.name = value;
@@ -296,11 +270,9 @@ public class ApplicationData {
 
         /**
          * Gets the value of the value property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getValue() {
             return value;
@@ -308,11 +280,9 @@ public class ApplicationData {
 
         /**
          * Sets the value of the value property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setValue(String value) {
             this.value = value;
@@ -320,11 +290,9 @@ public class ApplicationData {
 
         /**
          * Gets the value of the targetNamespace property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getTargetNamespace() {
             return targetNamespace;
@@ -332,11 +300,9 @@ public class ApplicationData {
 
         /**
          * Sets the value of the targetNamespace property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setTargetNamespace(String value) {
             this.targetNamespace = value;
@@ -344,11 +310,9 @@ public class ApplicationData {
 
         /**
          * Gets the value of the dataType property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link SimpleContentDataType }
-         *     
+         *
+         * @return possible object is
+         * {@link SimpleContentDataType }
          */
         public SimpleContentDataType getDataType() {
             return dataType;
@@ -356,11 +320,9 @@ public class ApplicationData {
 
         /**
          * Sets the value of the dataType property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link SimpleContentDataType }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link SimpleContentDataType }
          */
         public void setDataType(SimpleContentDataType value) {
             this.dataType = value;

@@ -40,6 +40,7 @@
 .event-selected {
 	font-weight: bold;
 }
+
     </style>
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/tether.min.js"></script>
@@ -89,8 +90,9 @@
                             <p id="no-more-tenplates-allowed" style="display: none;">Maximum number of templates
                                 reached!</p>
                             <div id="template-save-group" class="input-group input-group-sm">
-                                <input id="template-name" type="text" class="form-control" placeholder="Template name..."
-                                       disabled="disabled" />
+                                <input id="template-name" type="text" class="form-control"
+                                       placeholder="Template name..."
+                                       disabled="disabled"/>
                                 <span class="input-group-btn">
                                     <button id="btn-save-template" class="btn btn-primary" type="button"
                                             disabled="disabled">Save</button>
@@ -106,7 +108,8 @@
                         <div class="card-body">
                             <h5 class="card-title">Search history</h5>
                             <div class="card-text">
-                                <ol id="list-search-history-links" style="padding-left: 1em; word-wrap: break-word;"></ol>
+                                <ol id="list-search-history-links"
+                                    style="padding-left: 1em; word-wrap: break-word;"></ol>
                             </div>
                         </div>
                     </div>
@@ -144,7 +147,7 @@
                                 <div class="custom-control custom-checkbox custom-control-inline">
                                     <input type="checkbox" id="check-type-http" value="http" checked="checked"
                                            class="custom-control-input">
-                                    <label class="custom-control-label" for="check-type-http" >Http</label>
+                                    <label class="custom-control-label" for="check-type-http">Http</label>
                                 </div>
                                 <div class="custom-control custom-checkbox custom-control-inline">
                                     <input type="checkbox" id="check-type-log" value="log" checked="checked"
@@ -177,7 +180,7 @@
                                     <div class="col-sm">
                                         <input id="query-string" type="text" class="form-control"
                                                placeholder="Search for..."
-                                           autocomplete="off" autofocus="autofocus">
+                                               autocomplete="off" autofocus="autofocus">
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -228,11 +231,13 @@
                         <div role="tabpanel">
                             <ul role="tablist" id="event-tabs" class="nav nav-tabs">
                                 <li class="nav-item">
-                                    <a id="event-tab-header" data-toggle="tab" href="#event-tab" role="tab" aria-controls="event-tab" aria-selected="true" class="nav-link active">Event</a>
+                                    <a id="event-tab-header" data-toggle="tab" href="#event-tab" role="tab"
+                                       aria-controls="event-tab" aria-selected="true" class="nav-link active">Event</a>
                                 </li>
                             </ul>
                             <div id="tabcontents" class="tab-content">
-                                <div id="event-tab" role="tabpanel" aria-labelledby="event-tab-header" class="tab-pane fade show active in pt-3">
+                                <div id="event-tab" role="tabpanel" aria-labelledby="event-tab-header"
+                                     class="tab-pane fade show active in pt-3">
                                 </div>
                             </div>
                         </div>
@@ -389,16 +394,16 @@
     </div>
 </div>
 
-    <script src="../scripts/moment.min.js"></script>
-    <script src="../scripts/moment-timezone-with-data.min.js"></script>
-    <script src="../scripts/cytoscape.min.js"></script>
-    <script src="../scripts/dagre.min.js"></script>
-    <script src="../scripts/cytoscape-dagre.js"></script>
-    <script src="../scripts/vkbeautify.js"></script>
-    <script src="../scripts/clipboard.min.js"></script>
-    <script src="../scripts/etm-commons.js"></script>
+<script src="../scripts/moment.min.js"></script>
+<script src="../scripts/moment-timezone-with-data.min.js"></script>
+<script src="../scripts/cytoscape.min.js"></script>
+<script src="../scripts/dagre.min.js"></script>
+<script src="../scripts/cytoscape-dagre.js"></script>
+<script src="../scripts/vkbeautify.js"></script>
+<script src="../scripts/clipboard.min.js"></script>
+<script src="../scripts/etm-commons.js"></script>
 
-    <script>
+<script>
     addAjaxHandlers(
         null,
         null,
@@ -434,12 +439,13 @@
         }
     var flatPickrStartDate = $('#query-string-from').flatpickr(flatPickrConfig);
     var flatPickrEndDate = $('#query-string-till').flatpickr(flatPickrConfig);
-    </script>
-    <script src="../scripts/autocomplete_fields.js"></script>
-    <script src="../scripts/searchresults-layout.js"></script>
-    <script src="../scripts/event-details.js"></script>
-    <script src="../scripts/search-templates.js"></script>
-    <script>
+
+</script>
+<script src="../scripts/autocomplete_fields.js"></script>
+<script src="../scripts/searchresults-layout.js"></script>
+<script src="../scripts/event-details.js"></script>
+<script src="../scripts/search-templates.js"></script>
+<script>
     var maxDownloads;
     $('[id^=check-type-]').on('change', function() {
         enableOrDisableSearchButton();
@@ -757,7 +763,8 @@
     if (queryString['id'] && queryString['type']) {
         showEvent(null, queryString['type'], queryString['id']);
     }
-    </script>
+
+</script>
 
 </body>
 </html>

@@ -5,35 +5,35 @@ import com.ibm.broker.config.proxy.MessageFlowProxy.Node;
 
 public class IIBNode {
 
-	private final Node node;
+    private final Node node;
 
-	public IIBNode(MessageFlowProxy.Node node) {
-		this.node = node;
-	}
-	
-	public String getName() {
-		return this.node.getName();
-	}
+    public IIBNode(MessageFlowProxy.Node node) {
+        this.node = node;
+    }
 
-	public String getType() {
-		return this.node.getType();
-	}
+    public String getName() {
+        return this.node.getName();
+    }
 
-	public boolean isSupported() {
-		return
-			this.node.getType().equals("SubFlowNode")
-			|| (this.node.getType().startsWith("ComIbmMQ") && !this.node.getType().equals("ComIbmMQHeaderNode"))
-			|| this.node.getType().equals("ComIbmPublication")
+    public String getType() {
+        return this.node.getType();
+    }
+
+    public boolean isSupported() {
+        return
+                this.node.getType().equals("SubFlowNode")
+                        || (this.node.getType().startsWith("ComIbmMQ") && !this.node.getType().equals("ComIbmMQHeaderNode"))
+                        || this.node.getType().equals("ComIbmPublication")
 //			|| this.node.getType().startsWith("ComIbmREST")
-			|| (this.node.getType().startsWith("ComIbmHTTP") && !this.node.getType().equals("ComIbmHTTPHeader"))
-			|| this.node.getType().startsWith("ComIbmWS")
-			|| (this.node.getType().startsWith("ComIbmSOAP") && !this.node.getType().equals("ComIbmSOAPWrapperNode") && !this.node.getType().equals("ComIbmSOAPExtractNode"))
-		;
-	}
+                        || (this.node.getType().startsWith("ComIbmHTTP") && !this.node.getType().equals("ComIbmHTTPHeader"))
+                        || this.node.getType().startsWith("ComIbmWS")
+                        || (this.node.getType().startsWith("ComIbmSOAP") && !this.node.getType().equals("ComIbmSOAPWrapperNode") && !this.node.getType().equals("ComIbmSOAPExtractNode"))
+                ;
+    }
 
-	public String getProperty(String key) {
-		return this.node.getProperties().getProperty(key);
-	}
-	
+    public String getProperty(String key) {
+        return this.node.getProperties().getProperty(key);
+    }
+
 
 }

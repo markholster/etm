@@ -3,64 +3,64 @@ package com.jecstar.etm.launcher;
 import java.util.concurrent.TimeUnit;
 
 public interface MetricConverterTags {
-	
-	enum RateType {EVENTS, CALLS}
 
-	String getTimestampTag();
+    enum RateType {EVENTS, CALLS}
 
-	String getNodeTag();
-	
-	String getNameTag();
+    String getTimestampTag();
 
-	String getCountTag();
+    String getNodeTag();
 
-	String getMinTag();
+    String getNameTag();
 
-	String getMaxTag();
+    String getCountTag();
 
-	String getMeanTag();
+    String getMinTag();
 
-	String getStandardDeviationTag();
+    String getMaxTag();
 
-	String getMedianTag();
+    String getMeanTag();
 
-	String get75thPercentileTag();
+    String getStandardDeviationTag();
 
-	String get95thPercentileTag();
+    String getMedianTag();
 
-	String get98thPercentileTag();
+    String get75thPercentileTag();
 
-	String get99thPercentileTag();
+    String get95thPercentileTag();
 
-	String get999thPercentileTag();
+    String get98thPercentileTag();
 
-	String getMeanRateTag(RateType rateType, TimeUnit rateUnit);
+    String get99thPercentileTag();
 
-	String getOneMinuteRateTag(RateType rateType, TimeUnit rateUnit);
+    String get999thPercentileTag();
 
-	String getFiveMinuteRateTag(RateType rateType, TimeUnit rateUnit);
+    String getMeanRateTag(RateType rateType, TimeUnit rateUnit);
 
-	String getFifteenMinuteRateTag(RateType rateType, TimeUnit rateUnit);
+    String getOneMinuteRateTag(RateType rateType, TimeUnit rateUnit);
 
-	String getMinDurationTag(TimeUnit durationUnit);
+    String getFiveMinuteRateTag(RateType rateType, TimeUnit rateUnit);
 
-	String getMaxDurationTag(TimeUnit durationUnit);
-	
-	String getMeanDurationTag(TimeUnit durationUnit);
+    String getFifteenMinuteRateTag(RateType rateType, TimeUnit rateUnit);
 
-	String getStandardDeviationDurationTag(TimeUnit durationUnit);
+    String getMinDurationTag(TimeUnit durationUnit);
 
-	String getMedianDurationTag(TimeUnit durationUnit);
+    String getMaxDurationTag(TimeUnit durationUnit);
 
-	String get75thPercentileDurationTag(TimeUnit durationUnit);
+    String getMeanDurationTag(TimeUnit durationUnit);
 
-	String get95thPercentileDurationTag(TimeUnit durationUnit);
+    String getStandardDeviationDurationTag(TimeUnit durationUnit);
 
-	String get98thPercentileDurationTag(TimeUnit durationUnit);
+    String getMedianDurationTag(TimeUnit durationUnit);
 
-	String get99thPercentileDurationTag(TimeUnit durationUnit);
+    String get75thPercentileDurationTag(TimeUnit durationUnit);
 
-	String get999thPercentileDurationTag(TimeUnit durationUnit);
+    String get95thPercentileDurationTag(TimeUnit durationUnit);
+
+    String get98thPercentileDurationTag(TimeUnit durationUnit);
+
+    String get99thPercentileDurationTag(TimeUnit durationUnit);
+
+    String get999thPercentileDurationTag(TimeUnit durationUnit);
 
 
 }

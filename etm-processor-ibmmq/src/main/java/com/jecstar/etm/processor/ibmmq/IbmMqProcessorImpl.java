@@ -18,33 +18,33 @@ import java.util.concurrent.TimeUnit;
 
 public class IbmMqProcessorImpl implements IbmMqProcessor {
 
-	private final TelemetryCommandProcessor processor;
-	private final MetricRegistry metricRegistry;
-	private final String instanceName;
-	private final String clusterName;
-	private final IbmMq config;
-	private ExecutorService executorService;
-	private List<DestinationReaderPool<IbmMqDestinationReader>> readerPools = new ArrayList<>();
+    private final TelemetryCommandProcessor processor;
+    private final MetricRegistry metricRegistry;
+    private final String instanceName;
+    private final String clusterName;
+    private final IbmMq config;
+    private ExecutorService executorService;
+    private List<DestinationReaderPool<IbmMqDestinationReader>> readerPools = new ArrayList<>();
 
-	public IbmMqProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, IbmMq config, String clusterName, String instanceName) {
-		this.processor = processor;
-		this.metricRegistry = metricRegistry;
-		this.config = config;
-		this.clusterName = clusterName;
-		this.instanceName = instanceName;
-	}
+    public IbmMqProcessorImpl(TelemetryCommandProcessor processor, MetricRegistry metricRegistry, IbmMq config, String clusterName, String instanceName) {
+        this.processor = processor;
+        this.metricRegistry = metricRegistry;
+        this.config = config;
+        this.clusterName = clusterName;
+        this.instanceName = instanceName;
+    }
 
-	@Override
-	public void start() {
-		if (this.config.getMinimumNumberOfListeners() <= 0) {
-			return;
-		}
+    @Override
+    public void start() {
+        if (this.config.getMinimumNumberOfListeners() <= 0) {
+            return;
+        }
         this.executorService = new ThreadPoolExecutor(this.config.getMinimumNumberOfListeners(), this.config.getMaximumNumberOfListeners(),
                 0L, TimeUnit.MILLISECONDS,
                 new SynchronousQueue<>(),
                 new NamedThreadFactory("ibm_mq_processor"));
-		for (QueueManager queueManager : this.config.getQueueManagers()) {
-			for (Destination destination : queueManager.getDestinations()) {
+        for (QueueManager queueManager : this.config.getQueueManagers()) {
+            for (Destination destination : queueManager.getDestinations()) {
                 DestinationReaderPool<IbmMqDestinationReader> readerPool = new DestinationReaderPool<>(
                         this.processor,
                         this.executorService,
@@ -64,23 +64,23 @@ public class IbmMqProcessorImpl implements IbmMqProcessor {
                 this.metricRegistry.register("ibmmq-processor.readerpool." + destination.getName().replaceAll("\\.", "_") + ".size", readerPoolGauge);
                 this.readerPools.add(readerPool);
             }
-		}
-	}
+        }
+    }
 
-	@Override
-	public void stop() {
-	    for (DestinationReaderPool<IbmMqDestinationReader> readerPool : this.readerPools) {
-	        readerPool.stop();
+    @Override
+    public void stop() {
+        for (DestinationReaderPool<IbmMqDestinationReader> readerPool : this.readerPools) {
+            readerPool.stop();
         }
         this.readerPools.clear();
-		if (this.executorService != null) {
-			this.executorService.shutdownNow();
-			try {
-				this.executorService.awaitTermination(15, TimeUnit.SECONDS);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-			this.executorService = null;
-		}
-	}
+        if (this.executorService != null) {
+            this.executorService.shutdownNow();
+            try {
+                this.executorService.awaitTermination(15, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            this.executorService = null;
+        }
+    }
 }

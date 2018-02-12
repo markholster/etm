@@ -15,7 +15,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * <p>Java class for simpleContentDataType.
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
  * <p>
  * <pre>
@@ -33,7 +33,6 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;/restriction>
  * &lt;/simpleType>
  * </pre>
- * 
  */
 @XmlType(name = "simpleContentDataType")
 @XmlEnum
@@ -68,7 +67,7 @@ public enum SimpleContentDataType {
     }
 
     public static SimpleContentDataType fromValue(String v) {
-        for (SimpleContentDataType c: SimpleContentDataType.values()) {
+        for (SimpleContentDataType c : SimpleContentDataType.values()) {
             if (c.value.equals(v)) {
                 return c;
             }

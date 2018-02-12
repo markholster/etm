@@ -6,6 +6,6 @@ import java.io.Closeable;
 
 public interface PersistenceEnvironment extends Closeable {
 
-	CommandResources getCommandResources(MetricRegistry metricRegistry);
-	
+    CommandResources getCommandResources(MetricRegistry metricRegistry);
+
 }

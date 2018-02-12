@@ -8,20 +8,20 @@ import java.io.IOException;
 
 public class LogoutServlet extends HttpServlet {
 
-	/**
-	 * The serialVersionID for this class.
-	 */
-	private static final long serialVersionUID = 2736840311198379670L;
+    /**
+     * The serialVersionID for this class.
+     */
+    private static final long serialVersionUID = 2736840311198379670L;
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		HttpSession session = req.getSession(false);
-		if (session != null) {
-			session.invalidate();
-		}
-		String source = req.getParameter("source");
-		if (source != null) {
-			resp.sendRedirect(source);
-		}
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        String source = req.getParameter("source");
+        if (source != null) {
+            resp.sendRedirect(source);
+        }
+    }
 }

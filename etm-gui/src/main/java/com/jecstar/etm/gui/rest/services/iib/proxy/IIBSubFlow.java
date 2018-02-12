@@ -4,7 +4,9 @@ import java.util.List;
 
 public interface IIBSubFlow {
 
-	String getName();
-	List<IIBNode> getNodes();
-	String getVersion();
+    String getName();
+
+    List<IIBNode> getNodes();
+
+    String getVersion();
 }

@@ -28,130 +28,131 @@ import java.util.Map;
 
 public class CommandResourcesElasticImpl implements CommandResources, ConfigurationChangeListener {
 
-	private static final long ENDPOINT_CACHE_VALIDITY = 60_000;
+    private static final long ENDPOINT_CACHE_VALIDITY = 60_000;
 
-	private final Client elasticClient;
-	private final EtmConfiguration etmConfiguration;
-	private final BulkProcessorListener bulkProcessorListener;
-	
-	private final EndpointHandlingTimeComparator endpointComparater = new EndpointHandlingTimeComparator();
-	private final EndpointConfigurationConverterJsonImpl endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
-	
-	
-	@SuppressWarnings("rawtypes")
-	private final Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
-	
-	private BulkProcessor bulkProcessor;
+    private final Client elasticClient;
+    private final EtmConfiguration etmConfiguration;
+    private final BulkProcessorListener bulkProcessorListener;
 
-	private final Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
-	
-	CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
-		this.elasticClient = elasticClient;
-		this.etmConfiguration = etmConfiguration;
-		this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
-		this.bulkProcessor = createBulkProcessor();
-		this.etmConfiguration.addConfigurationChangeListener(this);
-		
-		this.persisters.put(CommandType.BUSINESS_EVENT, new BusinessTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
-		this.persisters.put(CommandType.HTTP_EVENT, new HttpTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
-		this.persisters.put(CommandType.LOG_EVENT, new LogTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
-		this.persisters.put(CommandType.MESSAGING_EVENT, new MessagingTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
-		this.persisters.put(CommandType.SQL_EVENT, new SqlTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
-	}
+    private final EndpointHandlingTimeComparator endpointComparater = new EndpointHandlingTimeComparator();
+    private final EndpointConfigurationConverterJsonImpl endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T> T getPersister(CommandType commandType) {
-		return (T) persisters.get(commandType);
-	}
 
-	@Override
-	public void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration) {
-		endpointConfiguration.initialize();
-		endpoints.sort(this.endpointComparater);
-		for (Endpoint endpoint : endpoints) {
-			if (endpoint.name != null) {
-				mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
-			}
-		}
-		mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT));
-	}
-	
-	private EndpointConfiguration retrieveEndpoint(String endpointName) {
-		EndpointConfiguration cachedItem = endpointCache.get(endpointName);
-		if (cachedItem != null) {
-			if (System.currentTimeMillis() - cachedItem.retrievalTimestamp > ENDPOINT_CACHE_VALIDITY) {
-				this.endpointCache.remove(endpointName);
-			} else {
-				return cachedItem;
-			}
-		}
-		GetResponse getResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-				ElasticsearchLayout.ETM_DEFAULT_TYPE,
-				ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT.equals(endpointName) ? ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT : ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
-			.setFetchSource(true)
-			.get();
-		if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
-			EndpointConfiguration loadedConfig = this.endpointConfigurationConverter.read(getResponse.getSourceAsMap());
-			loadedConfig.retrievalTimestamp = System.currentTimeMillis();
-			this.endpointCache.put(endpointName, loadedConfig);
-			return loadedConfig;
-		} else {
-			NonExsistentEndpointConfiguration endpointConfig = new NonExsistentEndpointConfiguration();
-			endpointConfig.retrievalTimestamp = System.currentTimeMillis();
-			this.endpointCache.put(endpointName, endpointConfig);
-			return endpointConfig;
-		}
-	}
+    @SuppressWarnings("rawtypes")
+    private final Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
 
-	private void mergeEndpointConfigs(EndpointConfiguration endpointConfiguration, EndpointConfiguration endpointToMerge) {
-		if (endpointToMerge instanceof NonExsistentEndpointConfiguration) {
-			return;
-		}
-		if (endpointConfiguration.eventEnhancer == null) {
-			endpointConfiguration.eventEnhancer = endpointToMerge.eventEnhancer;
-			return;
-		}
-		if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer &&
-			endpointToMerge.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
-			((DefaultTelemetryEventEnhancer)endpointConfiguration.eventEnhancer).mergeFieldParsers((DefaultTelemetryEventEnhancer) endpointToMerge.eventEnhancer);
-		}
-	}
+    private BulkProcessor bulkProcessor;
 
-	@Override
-	public void close() {
-		this.etmConfiguration.removeConfigurationChangeListener(this);
-		this.bulkProcessor.close();
-	}
-	
-	private BulkProcessor createBulkProcessor() {
-		return BulkProcessor.builder(this.elasticClient, this.bulkProcessorListener)
-				.setBulkActions(this.etmConfiguration.getPersistingBulkCount() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkCount())
-				.setBulkSize(new ByteSizeValue(this.etmConfiguration.getPersistingBulkSize() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkSize(), ByteSizeUnit.BYTES))
-				.setFlushInterval(this.etmConfiguration.getPersistingBulkTime() <= 0 ? null : TimeValue.timeValueMillis(this.etmConfiguration.getPersistingBulkTime()))
-				.setConcurrentRequests(this.etmConfiguration.getPersistingBulkThreads())
-				.build();
-	}
+    private final Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
 
-	@Override
-	public void configurationChanged(ConfigurationChangedEvent event) {
-		if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_COUNT, 
-				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE, 
-				EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_TIME,
+    CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
+        this.elasticClient = elasticClient;
+        this.etmConfiguration = etmConfiguration;
+        this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
+        this.bulkProcessor = createBulkProcessor();
+        this.etmConfiguration.addConfigurationChangeListener(this);
+
+        this.persisters.put(CommandType.BUSINESS_EVENT, new BusinessTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+        this.persisters.put(CommandType.HTTP_EVENT, new HttpTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+        this.persisters.put(CommandType.LOG_EVENT, new LogTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+        this.persisters.put(CommandType.MESSAGING_EVENT, new MessagingTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+        this.persisters.put(CommandType.SQL_EVENT, new SqlTelemetryEventPersister(this.bulkProcessor, etmConfiguration));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getPersister(CommandType commandType) {
+        return (T) persisters.get(commandType);
+    }
+
+    @Override
+    public void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration) {
+        endpointConfiguration.initialize();
+        endpoints.sort(this.endpointComparater);
+        for (Endpoint endpoint : endpoints) {
+            if (endpoint.name != null) {
+                mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
+            }
+        }
+        mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT));
+    }
+
+    private EndpointConfiguration retrieveEndpoint(String endpointName) {
+        EndpointConfiguration cachedItem = endpointCache.get(endpointName);
+        if (cachedItem != null) {
+            if (System.currentTimeMillis() - cachedItem.retrievalTimestamp > ENDPOINT_CACHE_VALIDITY) {
+                this.endpointCache.remove(endpointName);
+            } else {
+                return cachedItem;
+            }
+        }
+        GetResponse getResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+                ElasticsearchLayout.ETM_DEFAULT_TYPE,
+                ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT.equals(endpointName) ? ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT : ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
+                .setFetchSource(true)
+                .get();
+        if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
+            EndpointConfiguration loadedConfig = this.endpointConfigurationConverter.read(getResponse.getSourceAsMap());
+            loadedConfig.retrievalTimestamp = System.currentTimeMillis();
+            this.endpointCache.put(endpointName, loadedConfig);
+            return loadedConfig;
+        } else {
+            NonExsistentEndpointConfiguration endpointConfig = new NonExsistentEndpointConfiguration();
+            endpointConfig.retrievalTimestamp = System.currentTimeMillis();
+            this.endpointCache.put(endpointName, endpointConfig);
+            return endpointConfig;
+        }
+    }
+
+    private void mergeEndpointConfigs(EndpointConfiguration endpointConfiguration, EndpointConfiguration endpointToMerge) {
+        if (endpointToMerge instanceof NonExsistentEndpointConfiguration) {
+            return;
+        }
+        if (endpointConfiguration.eventEnhancer == null) {
+            endpointConfiguration.eventEnhancer = endpointToMerge.eventEnhancer;
+            return;
+        }
+        if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer &&
+                endpointToMerge.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
+            ((DefaultTelemetryEventEnhancer) endpointConfiguration.eventEnhancer).mergeFieldParsers((DefaultTelemetryEventEnhancer) endpointToMerge.eventEnhancer);
+        }
+    }
+
+    @Override
+    public void close() {
+        this.etmConfiguration.removeConfigurationChangeListener(this);
+        this.bulkProcessor.close();
+    }
+
+    private BulkProcessor createBulkProcessor() {
+        return BulkProcessor.builder(this.elasticClient, this.bulkProcessorListener)
+                .setBulkActions(this.etmConfiguration.getPersistingBulkCount() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkCount())
+                .setBulkSize(new ByteSizeValue(this.etmConfiguration.getPersistingBulkSize() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkSize(), ByteSizeUnit.BYTES))
+                .setFlushInterval(this.etmConfiguration.getPersistingBulkTime() <= 0 ? null : TimeValue.timeValueMillis(this.etmConfiguration.getPersistingBulkTime()))
+                .setConcurrentRequests(this.etmConfiguration.getPersistingBulkThreads())
+                .build();
+    }
+
+    @Override
+    public void configurationChanged(ConfigurationChangedEvent event) {
+        if (event.isAnyChanged(EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_COUNT,
+                EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_SIZE,
+                EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_TIME,
                 EtmConfiguration.CONFIG_KEY_PERSISTING_BULK_THREADS)) {
-			BulkProcessor oldBulkProcessor = this.bulkProcessor;
-			this.bulkProcessor = createBulkProcessor();
-			this.persisters.values().forEach(c -> ((AbstractElasticTelemetryEventPersister)c).setBulkProcessor(this.bulkProcessor));
-			oldBulkProcessor.close();
-		}
-	}
-	
-	/**
-	 * Class to store in de endpoint cache to make sure the 
-	 * 
-	 * @author Mark Holster
-	 */
-	private class NonExsistentEndpointConfiguration extends EndpointConfiguration {}
-	
-	
+            BulkProcessor oldBulkProcessor = this.bulkProcessor;
+            this.bulkProcessor = createBulkProcessor();
+            this.persisters.values().forEach(c -> ((AbstractElasticTelemetryEventPersister) c).setBulkProcessor(this.bulkProcessor));
+            oldBulkProcessor.close();
+        }
+    }
+
+    /**
+     * Class to store in de endpoint cache to make sure the
+     *
+     * @author Mark Holster
+     */
+    private class NonExsistentEndpointConfiguration extends EndpointConfiguration {
+    }
+
+
 }

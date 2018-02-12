@@ -8,13 +8,13 @@ import javax.jms.Message;
 import javax.jms.TextMessage;
 
 abstract class AbstractJMSEventHandler extends AbstractJsonHandler {
-	
-	String getContent(Message message) throws JMSException {
-	    if (message instanceof TextMessage) {
-	        return ((TextMessage)message).getText();
+
+    String getContent(Message message) throws JMSException {
+        if (message instanceof TextMessage) {
+            return ((TextMessage) message).getText();
         } else if (message instanceof BytesMessage) {
-	        return ((BytesMessage)message).readUTF();
+            return ((BytesMessage) message).readUTF();
         }
         return null;
-	}
+    }
 }

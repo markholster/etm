@@ -2,31 +2,31 @@ package com.jecstar.etm.processor.jms.configuration;
 
 public class Destination {
 
-	private String name;
-	private String type = "queue";
-	private int minNrOfListeners = 1;
-	private int maxNrOfListeners = 5;
+    private String name;
+    private String type = "queue";
+    private int minNrOfListeners = 1;
+    private int maxNrOfListeners = 5;
 
-	private String messagesType = "auto"; // etmevent, clone
+    private String messagesType = "auto"; // etmevent, clone
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String getName() {
-		return this.name;
-	}
+    public String getName() {
+        return this.name;
+    }
 
-	public String getType() {
-		return this.type;
-	}
-	
-	public void setType(String type) {
-		if (!"queue".equalsIgnoreCase(type) && !"topic".equalsIgnoreCase(type)) {
-			throw new IllegalArgumentException("'" + type + "' is an invalid destination type.");
-		}
-		this.type = type;
-	}
+    public String getType() {
+        return this.type;
+    }
+
+    public void setType(String type) {
+        if (!"queue".equalsIgnoreCase(type) && !"topic".equalsIgnoreCase(type)) {
+            throw new IllegalArgumentException("'" + type + "' is an invalid destination type.");
+        }
+        this.type = type;
+    }
 
     public int getMinNrOfListeners() {
         if ("topic".equalsIgnoreCase(type)) {

@@ -12,21 +12,21 @@ buildscript {
 apply plugin: 'org.asciidoctor.convert'
 
 asciidoctor {
-  backends 'html5', 'pdf'
-  sourceDir = file('src/main/asciidoc')
-  sources {
-    include 'etm.adoc'
-  }
-  attributes 'author': 'Milo Jacobs &amp; Mark Holster',
-  			 'email': 'info@jecstar.com',
-  			 'toc': 'right',
-    		 'toc-title': 'Table of Contents',
-    		 'source-highlighter': 'coderay',
-       		 'stylesheet': 'github.css',
-    		 'stylesdir': 'stylesheets',
-    		 
-    		 'etm': 'Enterprise Telemetry Monitor',
-    		 'elasticsearch-version': version_elasticsearch,
-             'elasticsearch-major-version': version_elasticsearch_major
+    backends 'html5', 'pdf'
+    sourceDir = file('src/main/asciidoc')
+    sources {
+        include 'etm.adoc'
+    }
+    attributes 'author': 'Milo Jacobs &amp; Mark Holster',
+            'email': 'info@jecstar.com',
+            'toc': 'right',
+            'toc-title': 'Table of Contents',
+            'source-highlighter': 'coderay',
+            'stylesheet': 'github.css',
+            'stylesdir': 'stylesheets',
+
+            'etm': 'Enterprise Telemetry Monitor',
+            'elasticsearch-version': version_elasticsearch,
+            'elasticsearch-major-version': version_elasticsearch_major
 
 }

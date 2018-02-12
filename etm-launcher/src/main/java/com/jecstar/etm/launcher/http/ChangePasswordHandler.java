@@ -10,35 +10,35 @@ import io.undertow.util.StatusCodes;
 
 class ChangePasswordHandler implements HttpHandler {
 
-	private final HttpHandler next;
-	private final String contextRoot;
-	
-	ChangePasswordHandler(final String contextRoot, final HttpHandler next) {
-		this.next = next;
-		this.contextRoot = contextRoot;
-	}
-	
-	@Override
-	public void handleRequest(HttpServerExchange exchange) throws Exception {
-		if (exchange.getSecurityContext() != null 
-				&& Methods.GET.equals(exchange.getRequestMethod()) 
-				&& exchange.getRequestPath().endsWith(".html")
-				&& !exchange.getRequestPath().endsWith("/preferences/change_password.html")) {
-			Account authenticatedAccount = exchange.getSecurityContext().getAuthenticatedAccount();
-			if (authenticatedAccount != null && authenticatedAccount.getPrincipal() != null) {
-				EtmPrincipal etmPrincipal = (EtmPrincipal) authenticatedAccount.getPrincipal();
-				if (etmPrincipal.isChangePasswordOnLogon()) {
-			        int ix = exchange.getRequestPath().indexOf(this.contextRoot);
-			        if (ix != -1) {
-			        	exchange.setStatusCode(StatusCodes.FOUND);
-				        exchange.getResponseHeaders().put(Headers.LOCATION, exchange.getRequestPath().substring(0, ix + this.contextRoot.length()) + "preferences/change_password.html");
-				        exchange.endExchange();	
-			        	return;
-				    }
-			    }
-			}
-		}
-		next.handleRequest(exchange);
-	}
+    private final HttpHandler next;
+    private final String contextRoot;
+
+    ChangePasswordHandler(final String contextRoot, final HttpHandler next) {
+        this.next = next;
+        this.contextRoot = contextRoot;
+    }
+
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        if (exchange.getSecurityContext() != null
+                && Methods.GET.equals(exchange.getRequestMethod())
+                && exchange.getRequestPath().endsWith(".html")
+                && !exchange.getRequestPath().endsWith("/preferences/change_password.html")) {
+            Account authenticatedAccount = exchange.getSecurityContext().getAuthenticatedAccount();
+            if (authenticatedAccount != null && authenticatedAccount.getPrincipal() != null) {
+                EtmPrincipal etmPrincipal = (EtmPrincipal) authenticatedAccount.getPrincipal();
+                if (etmPrincipal.isChangePasswordOnLogon()) {
+                    int ix = exchange.getRequestPath().indexOf(this.contextRoot);
+                    if (ix != -1) {
+                        exchange.setStatusCode(StatusCodes.FOUND);
+                        exchange.getResponseHeaders().put(Headers.LOCATION, exchange.getRequestPath().substring(0, ix + this.contextRoot.length()) + "preferences/change_password.html");
+                        exchange.endExchange();
+                        return;
+                    }
+                }
+            }
+        }
+        next.handleRequest(exchange);
+    }
 
 }

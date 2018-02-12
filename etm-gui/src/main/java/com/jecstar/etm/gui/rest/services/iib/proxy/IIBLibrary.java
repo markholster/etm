@@ -4,12 +4,15 @@ import java.util.List;
 
 public interface IIBLibrary {
 
-	String getName();
-	
-	List<IIBMessageFlow> getMessageFlows();
-	IIBMessageFlow getMessageFlowByName(String flowName);
-	
-	List<IIBSubFlow> getSubFlows();
-	IIBSubFlow getSubFlowByName(String subFlowName);
-	String getVersion();
+    String getName();
+
+    List<IIBMessageFlow> getMessageFlows();
+
+    IIBMessageFlow getMessageFlowByName(String flowName);
+
+    List<IIBSubFlow> getSubFlows();
+
+    IIBSubFlow getSubFlowByName(String subFlowName);
+
+    String getVersion();
 }

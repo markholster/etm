@@ -90,18 +90,42 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
 
         FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
         boolean succeeded = migrateMetrics(this.client, listener);
-        if (succeeded) { succeeded = migrateHttpSessions(this.client, listener); }
-        if (succeeded) { succeeded = migrateAudits(this.client, listener); }
-        if (succeeded) { succeeded = migrateLicense(this.client, listener); }
-        if (succeeded) { succeeded = migrateUsers(this.client, listener); }
-        if (succeeded) { succeeded = migrateGroups(this.client, listener); }
-        if (succeeded) { succeeded = migrateParsers(this.client, listener); }
-        if (succeeded) { succeeded = migrateEndpoints(this.client, listener); }
-        if (succeeded) { succeeded = migrateLdap(this.client, listener); }
-        if (succeeded) { succeeded = migrateNodes(this.client, listener); }
-        if (succeeded) { succeeded = migrateIIBNodes(this.client, listener); }
-        if (succeeded) { succeeded = migrateGraphs(this.client, listener); }
-        if (succeeded) { succeeded = migrateDashboards(this.client, listener); }
+        if (succeeded) {
+            succeeded = migrateHttpSessions(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateAudits(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateLicense(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateUsers(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateGroups(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateParsers(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateEndpoints(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateLdap(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateNodes(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateIIBNodes(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateGraphs(this.client, listener);
+        }
+        if (succeeded) {
+            succeeded = migrateDashboards(this.client, listener);
+        }
         if (!succeeded) {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
@@ -507,6 +531,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
 
     /**
      * Map the old roles to the new ones.
+     *
      * @param oldRoles A list with old roles.
      * @return A list with new roles that correspond to the old ones.
      */

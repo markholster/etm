@@ -11,7 +11,7 @@ public final class StringUtils {
         }
         StringBuilder result = new StringBuilder(value.length());
         for (int i = 0; i < value.length(); i++) {
-        char c = value.charAt(i);
+            char c = value.charAt(i);
             // HTML Special Chars
             if (c == '"')
                 result.append("&quot;");
@@ -26,7 +26,7 @@ public final class StringUtils {
                 result.append("&lt;br/&gt;");
             else {
                 int ci = 0xffff & c;
-                if (ci < 160 )
+                if (ci < 160)
                     // nothing special only 7 Bit
                     result.append(c);
                 else {

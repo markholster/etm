@@ -20,6 +20,7 @@
 .noBorder {
 	border: 0px;
 }
+
     </style>
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/tether.min.js"></script>
@@ -75,7 +76,7 @@
                                     <label for="input-dashboard-name" class="col-sm-3 col-form-label">Name</label>
                                     <div class="col-sm-9">
                                         <input id="input-dashboard-name" type="text" class="form-control"
-                                               required="required" />
+                                               required="required"/>
                                     </div>
                                 </div>
                                 <div id="dashboard-settings-columns" class="form-group">
@@ -107,7 +108,7 @@
             </div>
             <div class="modal-body">
                 <form id="graph_form">
-                    <input id="input-graph-id" type="hidden" />
+                    <input id="input-graph-id" type="hidden"/>
                     <div class="form-group row">
                         <label for="input-graph-title" class="col-sm-3 col-form-label col-form-label-sm">Graph
                             title</label>
@@ -239,6 +240,7 @@
     } else {
         loadDashboardPage(queryString['group'], queryString['name'], 'true' == queryString['readonly']);
     }
+
 </script>
 
 </body>

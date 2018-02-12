@@ -34,308 +34,302 @@ import java.util.List;
 import java.util.Set;
 
 public class EmbeddableLdapServer {
-	
-	public static final String HOST = "127.0.0.1";
-	public static final int PORT = 10389;
-	public static final int SECURE_PORT = 10636;
-	public static final String BIND_DN = "cn=jecstar-admin,ou=system,dc=jecstar,dc=com";
-	public static final String BIND_PASSWORD = "admin-password";
-	public static final String GROUP_BASE_DN = "ou=groups,dc=jecstar,dc=com";
-	public static final String USER_BASE_DN = "ou=people,dc=jecstar,dc=com";
-	private static final String DEPARTMENT_1_USER_BASE_DN = "ou=department1," + USER_BASE_DN;
-	private static final String DEPARTMENT_2_USER_BASE_DN = "ou=department2," + USER_BASE_DN;
-	
-	public static final String USER_ID_ATTRIBUTE = "uid";
-	public static final String USER_NAME_ATTRIBUTE = "cn";
-	public static final String USER_EMAIL_ATTRIBUTE = "mail";
-	
-	public static final String ADMIN_USER_ID = "etm-admin";
-	public static final String ADMIN_GROUP_DN = "cn=etm-admin-group," + GROUP_BASE_DN;
-	
 
-	/** The directory service */
-	private DirectoryService service;
+    public static final String HOST = "127.0.0.1";
+    public static final int PORT = 10389;
+    public static final int SECURE_PORT = 10636;
+    public static final String BIND_DN = "cn=jecstar-admin,ou=system,dc=jecstar,dc=com";
+    public static final String BIND_PASSWORD = "admin-password";
+    public static final String GROUP_BASE_DN = "ou=groups,dc=jecstar,dc=com";
+    public static final String USER_BASE_DN = "ou=people,dc=jecstar,dc=com";
+    private static final String DEPARTMENT_1_USER_BASE_DN = "ou=department1," + USER_BASE_DN;
+    private static final String DEPARTMENT_2_USER_BASE_DN = "ou=department2," + USER_BASE_DN;
 
-	/** The LDAP server */
-	private LdapServer server;
+    public static final String USER_ID_ATTRIBUTE = "uid";
+    public static final String USER_NAME_ATTRIBUTE = "cn";
+    public static final String USER_EMAIL_ATTRIBUTE = "mail";
 
-	/**
-	 * Add a new partition to the server
-	 *
-	 * @param partitionId
-	 *            The partition Id
-	 * @param partitionDn
-	 *            The partition DN
-	 * @param dnFactory
-	 *            the DN factory
-	 * @return The newly added partition
-	 * @throws Exception
-	 *             If the partition can't be added
-	 */
-	private Partition addPartition(String partitionId, String partitionDn, DnFactory dnFactory) throws Exception {
-		// Create a new partition with the given partition id
-		JdbmPartition partition = new JdbmPartition(service.getSchemaManager(), dnFactory);
-		partition.setId(partitionId);
-		partition.setPartitionPath(new File(service.getInstanceLayout().getPartitionsDirectory(), partitionId).toURI());
-		partition.setSuffixDn(new Dn(partitionDn));
-		service.addPartition(partition);
+    public static final String ADMIN_USER_ID = "etm-admin";
+    public static final String ADMIN_GROUP_DN = "cn=etm-admin-group," + GROUP_BASE_DN;
 
-		return partition;
-	}
 
-	/**
-	 * Add a new set of index on the given attributes
-	 *
-	 * @param partition
-	 *            The partition on which we want to add index
-	 * @param attrs
-	 *            The list of attributes to index
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void addIndex(Partition partition, String... attrs) {
-		// Index some attributes on the apache partition
-		Set indexedAttributes = new HashSet();
+    /**
+     * The directory service
+     */
+    private DirectoryService service;
 
-		for (String attribute : attrs) {
-			indexedAttributes.add(new JdbmIndex(attribute, false));
-		}
+    /**
+     * The LDAP server
+     */
+    private LdapServer server;
 
-		((JdbmPartition) partition).setIndexedAttributes(indexedAttributes);
-	}
+    /**
+     * Add a new partition to the server
+     *
+     * @param partitionId The partition Id
+     * @param partitionDn The partition DN
+     * @param dnFactory   the DN factory
+     * @return The newly added partition
+     * @throws Exception If the partition can't be added
+     */
+    private Partition addPartition(String partitionId, String partitionDn, DnFactory dnFactory) throws Exception {
+        // Create a new partition with the given partition id
+        JdbmPartition partition = new JdbmPartition(service.getSchemaManager(), dnFactory);
+        partition.setId(partitionId);
+        partition.setPartitionPath(new File(service.getInstanceLayout().getPartitionsDirectory(), partitionId).toURI());
+        partition.setSuffixDn(new Dn(partitionDn));
+        service.addPartition(partition);
 
-	/**
-	 * initialize the schema manager and add the schema partition to diectory
-	 * service
-	 *
-	 * @throws Exception
-	 *             if the schema LDIF files are not found on the classpath
-	 */
-	private void initSchemaPartition() throws Exception {
-		InstanceLayout instanceLayout = service.getInstanceLayout();
+        return partition;
+    }
 
-		File schemaPartitionDirectory = new File(instanceLayout.getPartitionsDirectory(), "schema");
+    /**
+     * Add a new set of index on the given attributes
+     *
+     * @param partition The partition on which we want to add index
+     * @param attrs     The list of attributes to index
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void addIndex(Partition partition, String... attrs) {
+        // Index some attributes on the apache partition
+        Set indexedAttributes = new HashSet();
 
-		// Extract the schema on disk (a brand new one) and load the registries
-		if (schemaPartitionDirectory.exists()) {
-			System.out.println("schema partition already exists, skipping schema extraction");
-		} else {
-			SchemaLdifExtractor extractor = new DefaultSchemaLdifExtractor(instanceLayout.getPartitionsDirectory());
-			extractor.extractOrCopy();
-		}
+        for (String attribute : attrs) {
+            indexedAttributes.add(new JdbmIndex(attribute, false));
+        }
 
-		SchemaLoader loader = new LdifSchemaLoader(schemaPartitionDirectory);
-		SchemaManager schemaManager = new DefaultSchemaManager(loader);
+        ((JdbmPartition) partition).setIndexedAttributes(indexedAttributes);
+    }
 
-		// We have to load the schema now, otherwise we won't be able
-		// to initialize the Partitions, as we won't be able to parse
-		// and normalize their suffix Dn
-		schemaManager.loadAllEnabled();
+    /**
+     * initialize the schema manager and add the schema partition to diectory
+     * service
+     *
+     * @throws Exception if the schema LDIF files are not found on the classpath
+     */
+    private void initSchemaPartition() throws Exception {
+        InstanceLayout instanceLayout = service.getInstanceLayout();
 
-		List<Throwable> errors = schemaManager.getErrors();
+        File schemaPartitionDirectory = new File(instanceLayout.getPartitionsDirectory(), "schema");
 
-		if (errors.size() != 0) {
-			throw new Exception(I18n.err(I18n.ERR_317, Exceptions.printErrors(errors)));
-		}
+        // Extract the schema on disk (a brand new one) and load the registries
+        if (schemaPartitionDirectory.exists()) {
+            System.out.println("schema partition already exists, skipping schema extraction");
+        } else {
+            SchemaLdifExtractor extractor = new DefaultSchemaLdifExtractor(instanceLayout.getPartitionsDirectory());
+            extractor.extractOrCopy();
+        }
 
-		service.setSchemaManager(schemaManager);
+        SchemaLoader loader = new LdifSchemaLoader(schemaPartitionDirectory);
+        SchemaManager schemaManager = new DefaultSchemaManager(loader);
 
-		// Init the LdifPartition with schema
-		LdifPartition schemaLdifPartition = new LdifPartition(schemaManager, service.getDnFactory());
-		schemaLdifPartition.setPartitionPath(schemaPartitionDirectory.toURI());
+        // We have to load the schema now, otherwise we won't be able
+        // to initialize the Partitions, as we won't be able to parse
+        // and normalize their suffix Dn
+        schemaManager.loadAllEnabled();
 
-		// The schema partition
-		SchemaPartition schemaPartition = new SchemaPartition(schemaManager);
-		schemaPartition.setWrappedPartition(schemaLdifPartition);
-		service.setSchemaPartition(schemaPartition);
-	}
+        List<Throwable> errors = schemaManager.getErrors();
 
-	/**
-	 * Initialize the server. It creates the partition, adds the index, and
-	 * injects the context entries for the created partitions.
-	 *
-	 * @param workDir
-	 *            the directory to be used for storing the data
-	 * @throws Exception
-	 *             if there were some problems while initializing the system
-	 */
-	private void initDirectoryService(File workDir) throws Exception {
-		// Initialize the LDAP service
-		service = new DefaultDirectoryService();
-		service.setInstanceLayout(new InstanceLayout(workDir));
+        if (errors.size() != 0) {
+            throw new Exception(I18n.err(I18n.ERR_317, Exceptions.printErrors(errors)));
+        }
 
-		CacheService cacheService = new CacheService();
-		cacheService.initialize(service.getInstanceLayout());
+        service.setSchemaManager(schemaManager);
 
-		service.setCacheService(cacheService);
+        // Init the LdifPartition with schema
+        LdifPartition schemaLdifPartition = new LdifPartition(schemaManager, service.getDnFactory());
+        schemaLdifPartition.setPartitionPath(schemaPartitionDirectory.toURI());
 
-		// first load the schema
-		initSchemaPartition();
+        // The schema partition
+        SchemaPartition schemaPartition = new SchemaPartition(schemaManager);
+        schemaPartition.setWrappedPartition(schemaLdifPartition);
+        service.setSchemaPartition(schemaPartition);
+    }
 
-		// then the system partition
-		// this is a MANDATORY partition
-		// DO NOT add this via addPartition() method, trunk code complains about
-		// duplicate partition
-		// while initializing
-		JdbmPartition systemPartition = new JdbmPartition(service.getSchemaManager(), service.getDnFactory());
-		systemPartition.setId("system");
-		systemPartition.setPartitionPath(
-				new File(service.getInstanceLayout().getPartitionsDirectory(), systemPartition.getId()).toURI());
-		systemPartition.setSuffixDn(new Dn(ServerDNConstants.SYSTEM_DN));
-		systemPartition.setSchemaManager(service.getSchemaManager());
+    /**
+     * Initialize the server. It creates the partition, adds the index, and
+     * injects the context entries for the created partitions.
+     *
+     * @param workDir the directory to be used for storing the data
+     * @throws Exception if there were some problems while initializing the system
+     */
+    private void initDirectoryService(File workDir) throws Exception {
+        // Initialize the LDAP service
+        service = new DefaultDirectoryService();
+        service.setInstanceLayout(new InstanceLayout(workDir));
 
-		// mandatory to call this method to set the system partition
-		// Note: this system partition might be removed from trunk
-		service.setSystemPartition(systemPartition);
+        CacheService cacheService = new CacheService();
+        cacheService.initialize(service.getInstanceLayout());
 
-		// Disable the ChangeLog system
-		service.getChangeLog().setEnabled(false);
-		service.setDenormalizeOpAttrsEnabled(true);
+        service.setCacheService(cacheService);
 
-		// Now we can create as many partitions as we need
-		Partition jecstarPartition = addPartition("jecstar", "dc=jecstar,dc=com", service.getDnFactory());
+        // first load the schema
+        initSchemaPartition();
 
-		// Index some attributes on the jecstar partition
-		addIndex(jecstarPartition, "objectClass", "ou", "uid");
+        // then the system partition
+        // this is a MANDATORY partition
+        // DO NOT add this via addPartition() method, trunk code complains about
+        // duplicate partition
+        // while initializing
+        JdbmPartition systemPartition = new JdbmPartition(service.getSchemaManager(), service.getDnFactory());
+        systemPartition.setId("system");
+        systemPartition.setPartitionPath(
+                new File(service.getInstanceLayout().getPartitionsDirectory(), systemPartition.getId()).toURI());
+        systemPartition.setSuffixDn(new Dn(ServerDNConstants.SYSTEM_DN));
+        systemPartition.setSchemaManager(service.getSchemaManager());
 
-		// And start the service
-		service.startup();
+        // mandatory to call this method to set the system partition
+        // Note: this system partition might be removed from trunk
+        service.setSystemPartition(systemPartition);
 
-		// Inject the context entry for dc=Jecstar,dc=Com partition
-		if (!service.getAdminSession().exists(jecstarPartition.getSuffixDn())) {
-			Dn dnJecstar = new Dn("dc=jecstar,dc=com");
-			Entry entryJecstar = service.newEntry(dnJecstar);
-			entryJecstar.add("objectClass", "top", "domain", "extensibleObject");
-			entryJecstar.add("dc", "jecstar");
-			service.getAdminSession().add(entryJecstar);
+        // Disable the ChangeLog system
+        service.getChangeLog().setEnabled(false);
+        service.setDenormalizeOpAttrsEnabled(true);
 
-			// Add people context.
-			Dn dnPeople = new Dn(USER_BASE_DN);
-			Entry entryPeople = service.newEntry(dnPeople);
-			entryPeople.add("objectClass", "organizationalUnit", "top");
-			entryPeople.add("ou", "people");
-			service.getAdminSession().add(entryPeople);
-			
-			// Add dep 1 context
-			Dn dnDep1 = new Dn(DEPARTMENT_1_USER_BASE_DN);
-			Entry entryDep1 = service.newEntry(dnDep1);
-			entryDep1.add("objectClass", "organizationalUnit", "top");
-			entryDep1.add("ou", "people");
-			service.getAdminSession().add(entryDep1);
+        // Now we can create as many partitions as we need
+        Partition jecstarPartition = addPartition("jecstar", "dc=jecstar,dc=com", service.getDnFactory());
 
-			// Add dep 1 context
-			Dn dnDep2 = new Dn(DEPARTMENT_2_USER_BASE_DN);
-			Entry entryDep2 = service.newEntry(dnDep2);
-			entryDep2.add("objectClass", "organizationalUnit", "top");
-			entryDep2.add("ou", "people");
-			service.getAdminSession().add(entryDep2);
-			
-			// Add system context.
-			Dn dnSystem = new Dn("ou=system,dc=jecstar,dc=com");
-			Entry entrySystem = service.newEntry(dnSystem);
-			entrySystem.add("objectClass", "organizationalUnit", "top");
-			entrySystem.add("ou", "system");
-			service.getAdminSession().add(entrySystem);
-			
-			// Add group context.
-			Dn dnGroups = new Dn(GROUP_BASE_DN);
-			Entry entryGroups = service.newEntry(dnGroups);
-			entryGroups.add("objectClass", "organizationalUnit", "top");
-			entryGroups.add("ou", "groups");
-			service.getAdminSession().add(entryGroups);
+        // Index some attributes on the jecstar partition
+        addIndex(jecstarPartition, "objectClass", "ou", "uid");
 
-			// Add the bind user
-			Dn dnUser = new Dn(BIND_DN);
-			Entry entryUser = service.newEntry(dnUser);
-			entryUser.add("objectClass", "inetOrgPerson", "organizationalPerson", "person", "top");
-			entryUser.add("cn", "Jecstar administrator");
-			entryUser.add("sn", "jecstar-admin");
-			entryUser.add("userPassword", BIND_PASSWORD);
-			service.getAdminSession().add(entryUser);
+        // And start the service
+        service.startup();
 
-			addUser(service, ADMIN_USER_ID, "ETM Administrator", USER_BASE_DN);
-			addUser(service, "etm-searcher", "ETM Searcher", USER_BASE_DN);
-			addUser(service, "test-user-1", "Test user 1", USER_BASE_DN);
-			addUser(service, "test-user-2", "Test user 2", DEPARTMENT_1_USER_BASE_DN);
-			addUser(service, "test-user-3", "Test user 3", DEPARTMENT_2_USER_BASE_DN);
-			
-			// Add some groups
-			Dn dnGroup = new Dn(ADMIN_GROUP_DN);
-			Entry entryGroup = service.newEntry(dnGroup);
-			entryGroup.add("objectClass", "groupOfNames", "top");
-			entryGroup.add("cn", "Etm admin group");
-			entryGroup.add("member", "cn=" + ADMIN_USER_ID + ",ou=people,dc=jecstar,dc=com");
-			service.getAdminSession().add(entryGroup);
+        // Inject the context entry for dc=Jecstar,dc=Com partition
+        if (!service.getAdminSession().exists(jecstarPartition.getSuffixDn())) {
+            Dn dnJecstar = new Dn("dc=jecstar,dc=com");
+            Entry entryJecstar = service.newEntry(dnJecstar);
+            entryJecstar.add("objectClass", "top", "domain", "extensibleObject");
+            entryJecstar.add("dc", "jecstar");
+            service.getAdminSession().add(entryJecstar);
 
-			dnGroup = new Dn("cn=etm-searchers-group,ou=groups,dc=jecstar,dc=com");
-			entryGroup = service.newEntry(dnGroup);
-			entryGroup.add("objectClass", "groupOfNames", "top");
-			entryGroup.add("cn", "Etm searchers group");
-			entryGroup.add("member", "cn=etm-searcher,ou=people,dc=jecstar,dc=com");
-			entryGroup.add("member", "cn=" + ADMIN_USER_ID + ",ou=people,dc=jecstar,dc=com");
-			service.getAdminSession().add(entryGroup);
-		}
+            // Add people context.
+            Dn dnPeople = new Dn(USER_BASE_DN);
+            Entry entryPeople = service.newEntry(dnPeople);
+            entryPeople.add("objectClass", "organizationalUnit", "top");
+            entryPeople.add("ou", "people");
+            service.getAdminSession().add(entryPeople);
 
-		// We are all done !
-	}
-	
-	private void addUser(DirectoryService service, String userId, String userName, String baseDN) throws LdapException {
-		Dn dnUser = new Dn("cn=" + userId + "," + baseDN);
-		Entry entryUser = service.newEntry(dnUser);
-		entryUser.add("objectClass", "inetOrgPerson", "organizationalPerson", "person", "top");
-		entryUser.add(USER_NAME_ATTRIBUTE, userName);
-		entryUser.add("sn", userId);
-		entryUser.add(USER_ID_ATTRIBUTE, userId);
-		entryUser.add(USER_EMAIL_ATTRIBUTE, userId + "@localhost");
-		entryUser.add("userPassword", "password");
-		service.getAdminSession().add(entryUser);
-		
-	}
+            // Add dep 1 context
+            Dn dnDep1 = new Dn(DEPARTMENT_1_USER_BASE_DN);
+            Entry entryDep1 = service.newEntry(dnDep1);
+            entryDep1.add("objectClass", "organizationalUnit", "top");
+            entryDep1.add("ou", "people");
+            service.getAdminSession().add(entryDep1);
 
-	/**
-	 * Creates a new instance of EmbeddedADS. It initializes the directory
-	 * service.
-	 *
-	 * @throws Exception
-	 *             If something went wrong
-	 */
-	public EmbeddableLdapServer() {
-		try {
-			File workDir = new File(System.getProperty("java.io.tmpdir") + "/server-work");
-			if (workDir.exists()) {
-				Files.walk(workDir.toPath())
-			    .sorted(Comparator.reverseOrder())
-			    .map(Path::toFile)
-			    .forEach(File::delete);
+            // Add dep 1 context
+            Dn dnDep2 = new Dn(DEPARTMENT_2_USER_BASE_DN);
+            Entry entryDep2 = service.newEntry(dnDep2);
+            entryDep2.add("objectClass", "organizationalUnit", "top");
+            entryDep2.add("ou", "people");
+            service.getAdminSession().add(entryDep2);
 
-			}
-			initDirectoryService(workDir);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+            // Add system context.
+            Dn dnSystem = new Dn("ou=system,dc=jecstar,dc=com");
+            Entry entrySystem = service.newEntry(dnSystem);
+            entrySystem.add("objectClass", "organizationalUnit", "top");
+            entrySystem.add("ou", "system");
+            service.getAdminSession().add(entrySystem);
 
-	/**
-	 * starts the LdapServer
-	 *
-	 * @throws Exception
-	 */
-	public void startServer() {
-		this.server = new LdapServer();
-		this.server.setTransports(new TcpTransport(HOST, PORT));
-		this.server.setDirectoryService(service);
-		try {
-			this.server.start();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	public void stopServer() {
-		this.server.stop();
-	}
-	
-	public static void main(String[] args) {
-		new EmbeddableLdapServer().startServer();
-	}
+            // Add group context.
+            Dn dnGroups = new Dn(GROUP_BASE_DN);
+            Entry entryGroups = service.newEntry(dnGroups);
+            entryGroups.add("objectClass", "organizationalUnit", "top");
+            entryGroups.add("ou", "groups");
+            service.getAdminSession().add(entryGroups);
+
+            // Add the bind user
+            Dn dnUser = new Dn(BIND_DN);
+            Entry entryUser = service.newEntry(dnUser);
+            entryUser.add("objectClass", "inetOrgPerson", "organizationalPerson", "person", "top");
+            entryUser.add("cn", "Jecstar administrator");
+            entryUser.add("sn", "jecstar-admin");
+            entryUser.add("userPassword", BIND_PASSWORD);
+            service.getAdminSession().add(entryUser);
+
+            addUser(service, ADMIN_USER_ID, "ETM Administrator", USER_BASE_DN);
+            addUser(service, "etm-searcher", "ETM Searcher", USER_BASE_DN);
+            addUser(service, "test-user-1", "Test user 1", USER_BASE_DN);
+            addUser(service, "test-user-2", "Test user 2", DEPARTMENT_1_USER_BASE_DN);
+            addUser(service, "test-user-3", "Test user 3", DEPARTMENT_2_USER_BASE_DN);
+
+            // Add some groups
+            Dn dnGroup = new Dn(ADMIN_GROUP_DN);
+            Entry entryGroup = service.newEntry(dnGroup);
+            entryGroup.add("objectClass", "groupOfNames", "top");
+            entryGroup.add("cn", "Etm admin group");
+            entryGroup.add("member", "cn=" + ADMIN_USER_ID + ",ou=people,dc=jecstar,dc=com");
+            service.getAdminSession().add(entryGroup);
+
+            dnGroup = new Dn("cn=etm-searchers-group,ou=groups,dc=jecstar,dc=com");
+            entryGroup = service.newEntry(dnGroup);
+            entryGroup.add("objectClass", "groupOfNames", "top");
+            entryGroup.add("cn", "Etm searchers group");
+            entryGroup.add("member", "cn=etm-searcher,ou=people,dc=jecstar,dc=com");
+            entryGroup.add("member", "cn=" + ADMIN_USER_ID + ",ou=people,dc=jecstar,dc=com");
+            service.getAdminSession().add(entryGroup);
+        }
+
+        // We are all done !
+    }
+
+    private void addUser(DirectoryService service, String userId, String userName, String baseDN) throws LdapException {
+        Dn dnUser = new Dn("cn=" + userId + "," + baseDN);
+        Entry entryUser = service.newEntry(dnUser);
+        entryUser.add("objectClass", "inetOrgPerson", "organizationalPerson", "person", "top");
+        entryUser.add(USER_NAME_ATTRIBUTE, userName);
+        entryUser.add("sn", userId);
+        entryUser.add(USER_ID_ATTRIBUTE, userId);
+        entryUser.add(USER_EMAIL_ATTRIBUTE, userId + "@localhost");
+        entryUser.add("userPassword", "password");
+        service.getAdminSession().add(entryUser);
+
+    }
+
+    /**
+     * Creates a new instance of EmbeddedADS. It initializes the directory
+     * service.
+     *
+     * @throws Exception If something went wrong
+     */
+    public EmbeddableLdapServer() {
+        try {
+            File workDir = new File(System.getProperty("java.io.tmpdir") + "/server-work");
+            if (workDir.exists()) {
+                Files.walk(workDir.toPath())
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+
+            }
+            initDirectoryService(workDir);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * starts the LdapServer
+     *
+     * @throws Exception
+     */
+    public void startServer() {
+        this.server = new LdapServer();
+        this.server.setTransports(new TcpTransport(HOST, PORT));
+        this.server.setDirectoryService(service);
+        try {
+            this.server.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void stopServer() {
+        this.server.stop();
+    }
+
+    public static void main(String[] args) {
+        new EmbeddableLdapServer().startServer();
+    }
 
 }

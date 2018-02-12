@@ -50,7 +50,7 @@ public class CopyEs56ToKafka {
 
 
         ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
-        int i=1;
+        int i = 1;
         while (searchHits.hasNext()) {
             SearchHit searchHit = searchHits.next();
             kafkaProducer.send(new ProducerRecord<>("etm-events", searchHit.getId(), "{ \"type\": \"messaging\", \"data\": " + searchHit.getSourceAsString() + "}"));

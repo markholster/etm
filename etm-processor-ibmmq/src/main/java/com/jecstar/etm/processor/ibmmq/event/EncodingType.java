@@ -15,7 +15,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * <p>Java class for encodingType.
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
  * <p>
  * <pre>
@@ -28,7 +28,6 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;/restriction>
  * &lt;/simpleType>
  * </pre>
- * 
  */
 @XmlType(name = "encodingType")
 @XmlEnum
@@ -52,7 +51,7 @@ public enum EncodingType {
     }
 
     public static EncodingType fromValue(String v) {
-        for (EncodingType c: EncodingType.values()) {
+        for (EncodingType c : EncodingType.values()) {
             if (c.value.equals(v)) {
                 return c;
             }

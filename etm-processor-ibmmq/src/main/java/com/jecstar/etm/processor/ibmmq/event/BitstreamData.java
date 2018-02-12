@@ -13,9 +13,9 @@ import javax.xml.bind.annotation.*;
 
 /**
  * <p>Java class for BitstreamData complex type.
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
- * 
+ * <p>
  * <pre>
  * &lt;complexType name="BitstreamData">
  *   &lt;complexContent>
@@ -35,12 +35,10 @@ import javax.xml.bind.annotation.*;
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
- * 
- * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "BitstreamData", propOrder = {
-    "bitstream"
+        "bitstream"
 })
 public class BitstreamData {
 
@@ -49,11 +47,9 @@ public class BitstreamData {
 
     /**
      * Gets the value of the bitstream property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link BitstreamData.Bitstream }
-     *     
+     *
+     * @return possible object is
+     * {@link BitstreamData.Bitstream }
      */
     public BitstreamData.Bitstream getBitstream() {
         return bitstream;
@@ -61,11 +57,9 @@ public class BitstreamData {
 
     /**
      * Sets the value of the bitstream property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link BitstreamData.Bitstream }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link BitstreamData.Bitstream }
      */
     public void setBitstream(BitstreamData.Bitstream value) {
         this.bitstream = value;
@@ -74,9 +68,9 @@ public class BitstreamData {
 
     /**
      * <p>Java class for anonymous complex type.
-     * 
+     * <p>
      * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
+     * <p>
      * <pre>
      * &lt;complexType>
      *   &lt;simpleContent>
@@ -86,12 +80,10 @@ public class BitstreamData {
      *   &lt;/simpleContent>
      * &lt;/complexType>
      * </pre>
-     * 
-     * 
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "", propOrder = {
-        "value"
+            "value"
     })
     public static class Bitstream {
 
@@ -102,11 +94,9 @@ public class BitstreamData {
 
         /**
          * Gets the value of the value property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getValue() {
             return value;
@@ -114,11 +104,9 @@ public class BitstreamData {
 
         /**
          * Sets the value of the value property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setValue(String value) {
             this.value = value;
@@ -126,11 +114,9 @@ public class BitstreamData {
 
         /**
          * Gets the value of the encoding property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EncodingType }
-         *     
+         *
+         * @return possible object is
+         * {@link EncodingType }
          */
         public EncodingType getEncoding() {
             return encoding;
@@ -138,11 +124,9 @@ public class BitstreamData {
 
         /**
          * Sets the value of the encoding property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EncodingType }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EncodingType }
          */
         public void setEncoding(EncodingType value) {
             this.encoding = value;

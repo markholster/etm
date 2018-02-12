@@ -4,6 +4,6 @@ import com.jecstar.etm.domain.LogTelemetryEvent;
 
 interface EtmLogForwarder {
 
-	void forwardLog(LogTelemetryEvent event);
-	
+    void forwardLog(LogTelemetryEvent event);
+
 }

@@ -70,6 +70,7 @@ public class JmsProcessorImplTest {
 
     /**
      * Test the consumption of messages.
+     *
      * @throws JMSException
      */
     @Test
@@ -87,12 +88,13 @@ public class JmsProcessorImplTest {
 
     /**
      * Test the consumption of messages after the server is restarted.
+     *
      * @throws Exception
      */
     @Test
     public void testConnectionReset() throws Exception {
         DummyCommandProcessor commandProcessor = new DummyCommandProcessor();
-        JmsProcessor jmsProcessor = createJmsProcessor(commandProcessor,"etm.queue.1");
+        JmsProcessor jmsProcessor = createJmsProcessor(commandProcessor, "etm.queue.1");
         jmsProcessor.start();
         // Add 10 messages.
         final int nrOfMessages = 10;

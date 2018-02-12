@@ -15,9 +15,9 @@ import java.math.BigInteger;
 
 /**
  * <p>Java class for EventPointData complex type.
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
- * 
+ * <p>
  * <pre>
  * &lt;complexType name="EventPointData">
  *   &lt;complexContent>
@@ -132,13 +132,11 @@ import java.math.BigInteger;
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
- * 
- * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "EventPointData", propOrder = {
-    "eventData",
-    "messageFlowData"
+        "eventData",
+        "messageFlowData"
 })
 public class EventPointData {
 
@@ -149,11 +147,9 @@ public class EventPointData {
 
     /**
      * Gets the value of the eventData property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link EventPointData.EventData }
-     *     
+     *
+     * @return possible object is
+     * {@link EventPointData.EventData }
      */
     public EventPointData.EventData getEventData() {
         return eventData;
@@ -161,11 +157,9 @@ public class EventPointData {
 
     /**
      * Sets the value of the eventData property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link EventPointData.EventData }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link EventPointData.EventData }
      */
     public void setEventData(EventPointData.EventData value) {
         this.eventData = value;
@@ -173,11 +167,9 @@ public class EventPointData {
 
     /**
      * Gets the value of the messageFlowData property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link EventPointData.MessageFlowData }
-     *     
+     *
+     * @return possible object is
+     * {@link EventPointData.MessageFlowData }
      */
     public EventPointData.MessageFlowData getMessageFlowData() {
         return messageFlowData;
@@ -185,11 +177,9 @@ public class EventPointData {
 
     /**
      * Sets the value of the messageFlowData property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link EventPointData.MessageFlowData }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link EventPointData.MessageFlowData }
      */
     public void setMessageFlowData(EventPointData.MessageFlowData value) {
         this.messageFlowData = value;
@@ -198,9 +188,9 @@ public class EventPointData {
 
     /**
      * <p>Java class for anonymous complex type.
-     * 
+     * <p>
      * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
+     * <p>
      * <pre>
      * &lt;complexType>
      *   &lt;complexContent>
@@ -250,14 +240,12 @@ public class EventPointData {
      *   &lt;/complexContent>
      * &lt;/complexType>
      * </pre>
-     * 
-     * 
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "", propOrder = {
-        "eventIdentity",
-        "eventSequence",
-        "eventCorrelation"
+            "eventIdentity",
+            "eventSequence",
+            "eventCorrelation"
     })
     public static class EventData {
 
@@ -276,11 +264,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the eventIdentity property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EventPointData.EventData.EventIdentity }
-         *     
+         *
+         * @return possible object is
+         * {@link EventPointData.EventData.EventIdentity }
          */
         public EventPointData.EventData.EventIdentity getEventIdentity() {
             return eventIdentity;
@@ -288,11 +274,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the eventIdentity property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EventPointData.EventData.EventIdentity }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EventPointData.EventData.EventIdentity }
          */
         public void setEventIdentity(EventPointData.EventData.EventIdentity value) {
             this.eventIdentity = value;
@@ -300,11 +284,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the eventSequence property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EventPointData.EventData.EventSequence }
-         *     
+         *
+         * @return possible object is
+         * {@link EventPointData.EventData.EventSequence }
          */
         public EventPointData.EventData.EventSequence getEventSequence() {
             return eventSequence;
@@ -312,11 +294,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the eventSequence property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EventPointData.EventData.EventSequence }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EventPointData.EventData.EventSequence }
          */
         public void setEventSequence(EventPointData.EventData.EventSequence value) {
             this.eventSequence = value;
@@ -324,11 +304,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the eventCorrelation property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EventPointData.EventData.EventCorrelation }
-         *     
+         *
+         * @return possible object is
+         * {@link EventPointData.EventData.EventCorrelation }
          */
         public EventPointData.EventData.EventCorrelation getEventCorrelation() {
             return eventCorrelation;
@@ -336,11 +314,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the eventCorrelation property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EventPointData.EventData.EventCorrelation }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EventPointData.EventData.EventCorrelation }
          */
         public void setEventCorrelation(EventPointData.EventData.EventCorrelation value) {
             this.eventCorrelation = value;
@@ -348,11 +324,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the productVersion property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getProductVersion() {
             return productVersion;
@@ -360,11 +334,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the productVersion property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setProductVersion(String value) {
             this.productVersion = value;
@@ -372,11 +344,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the eventSchemaVersion property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getEventSchemaVersion() {
             return eventSchemaVersion;
@@ -384,11 +354,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the eventSchemaVersion property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setEventSchemaVersion(String value) {
             this.eventSchemaVersion = value;
@@ -396,11 +364,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the eventSourceAddress property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link String }
-         *     
+         *
+         * @return possible object is
+         * {@link String }
          */
         public String getEventSourceAddress() {
             return eventSourceAddress;
@@ -408,11 +374,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the eventSourceAddress property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link String }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link String }
          */
         public void setEventSourceAddress(String value) {
             this.eventSourceAddress = value;
@@ -421,9 +385,9 @@ public class EventPointData {
 
         /**
          * <p>Java class for anonymous complex type.
-         * 
+         * <p>
          * <p>The following schema fragment specifies the expected content contained within this class.
-         * 
+         * <p>
          * <pre>
          * &lt;complexType>
          *   &lt;complexContent>
@@ -435,8 +399,6 @@ public class EventPointData {
          *   &lt;/complexContent>
          * &lt;/complexType>
          * </pre>
-         * 
-         * 
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "")
@@ -451,11 +413,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the localTransactionId property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getLocalTransactionId() {
                 return localTransactionId;
@@ -463,11 +423,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the localTransactionId property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setLocalTransactionId(String value) {
                 this.localTransactionId = value;
@@ -475,11 +433,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the parentTransactionId property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getParentTransactionId() {
                 return parentTransactionId;
@@ -487,11 +443,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the parentTransactionId property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setParentTransactionId(String value) {
                 this.parentTransactionId = value;
@@ -499,11 +453,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the globalTransactionId property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getGlobalTransactionId() {
                 return globalTransactionId;
@@ -511,11 +463,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the globalTransactionId property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setGlobalTransactionId(String value) {
                 this.globalTransactionId = value;
@@ -526,9 +476,9 @@ public class EventPointData {
 
         /**
          * <p>Java class for anonymous complex type.
-         * 
+         * <p>
          * <p>The following schema fragment specifies the expected content contained within this class.
-         * 
+         * <p>
          * <pre>
          * &lt;complexType>
          *   &lt;complexContent>
@@ -541,8 +491,6 @@ public class EventPointData {
          *   &lt;/complexContent>
          * &lt;/complexType>
          * </pre>
-         * 
-         * 
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "")
@@ -559,11 +507,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the eventName property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getEventName() {
                 return eventName;
@@ -571,11 +517,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the eventName property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setEventName(String value) {
                 this.eventName = value;
@@ -583,11 +527,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the severity property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getSeverity() {
                 return severity;
@@ -595,11 +537,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the severity property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setSeverity(String value) {
                 this.severity = value;
@@ -607,11 +547,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the priority property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getPriority() {
                 return priority;
@@ -619,11 +557,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the priority property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setPriority(String value) {
                 this.priority = value;
@@ -631,11 +567,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the successDisposition property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getSuccessDisposition() {
                 return successDisposition;
@@ -643,11 +577,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the successDisposition property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setSuccessDisposition(String value) {
                 this.successDisposition = value;
@@ -658,9 +590,9 @@ public class EventPointData {
 
         /**
          * <p>Java class for anonymous complex type.
-         * 
+         * <p>
          * <p>The following schema fragment specifies the expected content contained within this class.
-         * 
+         * <p>
          * <pre>
          * &lt;complexType>
          *   &lt;complexContent>
@@ -674,8 +606,6 @@ public class EventPointData {
          *   &lt;/complexContent>
          * &lt;/complexType>
          * </pre>
-         * 
-         * 
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "")
@@ -696,11 +626,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the creationTime property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link XMLGregorianCalendar }
-             *     
+             *
+             * @return possible object is
+             * {@link XMLGregorianCalendar }
              */
             public XMLGregorianCalendar getCreationTime() {
                 return creationTime;
@@ -708,11 +636,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the creationTime property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link XMLGregorianCalendar }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link XMLGregorianCalendar }
              */
             public void setCreationTime(XMLGregorianCalendar value) {
                 this.creationTime = value;
@@ -720,11 +646,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the counter property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link BigInteger }
-             *     
+             *
+             * @return possible object is
+             * {@link BigInteger }
              */
             public BigInteger getCounter() {
                 return counter;
@@ -732,11 +656,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the counter property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link BigInteger }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link BigInteger }
              */
             public void setCounter(BigInteger value) {
                 this.counter = value;
@@ -744,11 +666,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the value property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getValue() {
                 return value;
@@ -756,11 +676,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the value property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setValue(String value) {
                 this.value = value;
@@ -768,11 +686,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the name property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getName() {
                 return name;
@@ -780,11 +696,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the name property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setName(String value) {
                 this.name = value;
@@ -792,11 +706,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the dataType property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link SequenceDataType }
-             *     
+             *
+             * @return possible object is
+             * {@link SequenceDataType }
              */
             public SequenceDataType getDataType() {
                 return dataType;
@@ -804,11 +716,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the dataType property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link SequenceDataType }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link SequenceDataType }
              */
             public void setDataType(SequenceDataType value) {
                 this.dataType = value;
@@ -821,9 +731,9 @@ public class EventPointData {
 
     /**
      * <p>Java class for anonymous complex type.
-     * 
+     * <p>
      * <p>The following schema fragment specifies the expected content contained within this class.
-     * 
+     * <p>
      * <pre>
      * &lt;complexType>
      *   &lt;complexContent>
@@ -879,15 +789,13 @@ public class EventPointData {
      *   &lt;/complexContent>
      * &lt;/complexType>
      * </pre>
-     * 
-     * 
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "", propOrder = {
-        "broker",
-        "executionGroup",
-        "messageFlow",
-        "node"
+            "broker",
+            "executionGroup",
+            "messageFlow",
+            "node"
     })
     public static class MessageFlowData {
 
@@ -902,11 +810,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the broker property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EventPointData.MessageFlowData.Broker }
-         *     
+         *
+         * @return possible object is
+         * {@link EventPointData.MessageFlowData.Broker }
          */
         public EventPointData.MessageFlowData.Broker getBroker() {
             return broker;
@@ -914,11 +820,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the broker property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EventPointData.MessageFlowData.Broker }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EventPointData.MessageFlowData.Broker }
          */
         public void setBroker(EventPointData.MessageFlowData.Broker value) {
             this.broker = value;
@@ -926,11 +830,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the executionGroup property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EventPointData.MessageFlowData.ExecutionGroup }
-         *     
+         *
+         * @return possible object is
+         * {@link EventPointData.MessageFlowData.ExecutionGroup }
          */
         public EventPointData.MessageFlowData.ExecutionGroup getExecutionGroup() {
             return executionGroup;
@@ -938,11 +840,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the executionGroup property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EventPointData.MessageFlowData.ExecutionGroup }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EventPointData.MessageFlowData.ExecutionGroup }
          */
         public void setExecutionGroup(EventPointData.MessageFlowData.ExecutionGroup value) {
             this.executionGroup = value;
@@ -950,11 +850,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the messageFlow property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EventPointData.MessageFlowData.MessageFlow }
-         *     
+         *
+         * @return possible object is
+         * {@link EventPointData.MessageFlowData.MessageFlow }
          */
         public EventPointData.MessageFlowData.MessageFlow getMessageFlow() {
             return messageFlow;
@@ -962,11 +860,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the messageFlow property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EventPointData.MessageFlowData.MessageFlow }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EventPointData.MessageFlowData.MessageFlow }
          */
         public void setMessageFlow(EventPointData.MessageFlowData.MessageFlow value) {
             this.messageFlow = value;
@@ -974,11 +870,9 @@ public class EventPointData {
 
         /**
          * Gets the value of the node property.
-         * 
-         * @return
-         *     possible object is
-         *     {@link EventPointData.MessageFlowData.Node }
-         *     
+         *
+         * @return possible object is
+         * {@link EventPointData.MessageFlowData.Node }
          */
         public EventPointData.MessageFlowData.Node getNode() {
             return node;
@@ -986,11 +880,9 @@ public class EventPointData {
 
         /**
          * Sets the value of the node property.
-         * 
-         * @param value
-         *     allowed object is
-         *     {@link EventPointData.MessageFlowData.Node }
-         *     
+         *
+         * @param value allowed object is
+         *              {@link EventPointData.MessageFlowData.Node }
          */
         public void setNode(EventPointData.MessageFlowData.Node value) {
             this.node = value;
@@ -999,9 +891,9 @@ public class EventPointData {
 
         /**
          * <p>Java class for anonymous complex type.
-         * 
+         * <p>
          * <p>The following schema fragment specifies the expected content contained within this class.
-         * 
+         * <p>
          * <pre>
          * &lt;complexType>
          *   &lt;complexContent>
@@ -1013,8 +905,6 @@ public class EventPointData {
          *   &lt;/complexContent>
          * &lt;/complexType>
          * </pre>
-         * 
-         * 
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "")
@@ -1029,11 +919,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the name property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getName() {
                 return name;
@@ -1041,11 +929,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the name property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setName(String value) {
                 this.name = value;
@@ -1053,11 +939,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the uuid property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getUUID() {
                 return uuid;
@@ -1065,11 +949,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the uuid property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setUUID(String value) {
                 this.uuid = value;
@@ -1077,11 +959,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the hostName property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getHostName() {
                 return hostName;
@@ -1089,11 +969,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the hostName property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setHostName(String value) {
                 this.hostName = value;
@@ -1104,9 +982,9 @@ public class EventPointData {
 
         /**
          * <p>Java class for anonymous complex type.
-         * 
+         * <p>
          * <p>The following schema fragment specifies the expected content contained within this class.
-         * 
+         * <p>
          * <pre>
          * &lt;complexType>
          *   &lt;complexContent>
@@ -1117,8 +995,6 @@ public class EventPointData {
          *   &lt;/complexContent>
          * &lt;/complexType>
          * </pre>
-         * 
-         * 
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "")
@@ -1131,11 +1007,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the name property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getName() {
                 return name;
@@ -1143,11 +1017,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the name property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setName(String value) {
                 this.name = value;
@@ -1155,11 +1027,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the uuid property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getUUID() {
                 return uuid;
@@ -1167,11 +1037,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the uuid property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setUUID(String value) {
                 this.uuid = value;
@@ -1182,9 +1050,9 @@ public class EventPointData {
 
         /**
          * <p>Java class for anonymous complex type.
-         * 
+         * <p>
          * <p>The following schema fragment specifies the expected content contained within this class.
-         * 
+         * <p>
          * <pre>
          * &lt;complexType>
          *   &lt;complexContent>
@@ -1197,8 +1065,6 @@ public class EventPointData {
          *   &lt;/complexContent>
          * &lt;/complexType>
          * </pre>
-         * 
-         * 
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "")
@@ -1215,11 +1081,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the name property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getName() {
                 return name;
@@ -1227,11 +1091,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the name property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setName(String value) {
                 this.name = value;
@@ -1239,11 +1101,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the uuid property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getUUID() {
                 return uuid;
@@ -1251,11 +1111,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the uuid property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setUUID(String value) {
                 this.uuid = value;
@@ -1263,11 +1121,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the threadId property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getThreadId() {
                 return threadId;
@@ -1275,11 +1131,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the threadId property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setThreadId(String value) {
                 this.threadId = value;
@@ -1287,11 +1141,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the uniqueFlowName property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getUniqueFlowName() {
                 return uniqueFlowName;
@@ -1299,11 +1151,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the uniqueFlowName property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setUniqueFlowName(String value) {
                 this.uniqueFlowName = value;
@@ -1314,9 +1164,9 @@ public class EventPointData {
 
         /**
          * <p>Java class for anonymous complex type.
-         * 
+         * <p>
          * <p>The following schema fragment specifies the expected content contained within this class.
-         * 
+         * <p>
          * <pre>
          * &lt;complexType>
          *   &lt;complexContent>
@@ -1329,8 +1179,6 @@ public class EventPointData {
          *   &lt;/complexContent>
          * &lt;/complexType>
          * </pre>
-         * 
-         * 
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "")
@@ -1347,11 +1195,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the nodeLabel property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getNodeLabel() {
                 return nodeLabel;
@@ -1359,11 +1205,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the nodeLabel property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setNodeLabel(String value) {
                 this.nodeLabel = value;
@@ -1371,11 +1215,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the nodeType property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getNodeType() {
                 return nodeType;
@@ -1383,11 +1225,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the nodeType property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setNodeType(String value) {
                 this.nodeType = value;
@@ -1395,11 +1235,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the terminal property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getTerminal() {
                 return terminal;
@@ -1407,11 +1245,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the terminal property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setTerminal(String value) {
                 this.terminal = value;
@@ -1419,11 +1255,9 @@ public class EventPointData {
 
             /**
              * Gets the value of the detail property.
-             * 
-             * @return
-             *     possible object is
-             *     {@link String }
-             *     
+             *
+             * @return possible object is
+             * {@link String }
              */
             public String getDetail() {
                 return detail;
@@ -1431,11 +1265,9 @@ public class EventPointData {
 
             /**
              * Sets the value of the detail property.
-             * 
-             * @param value
-             *     allowed object is
-             *     {@link String }
-             *     
+             *
+             * @param value allowed object is
+             *              {@link String }
              */
             public void setDetail(String value) {
                 this.detail = value;

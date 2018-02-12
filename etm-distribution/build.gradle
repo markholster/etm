@@ -10,7 +10,7 @@ applicationName = 'etm'
 
 distributions {
     main {
-    	baseName 'etm'
+        baseName 'etm'
         contents {
             exclude '**/com.ibm.mq.allclient.jar'
             exclude '**/config-manager-proxy-S900-FP03.jar'
@@ -37,12 +37,12 @@ tasks.withType(Zip) { task ->
 startScripts {
     doLast {
         unixScript.text = file('src/main/scripts/etm.sh').text
-            .replace('${applicationName}', applicationName)
-            .replace('${applicationVersion}', version)
-            .replace('${mainClassName}', mainClassName)
+                .replace('${applicationName}', applicationName)
+                .replace('${applicationVersion}', version)
+                .replace('${mainClassName}', mainClassName)
         windowsScript.text = file('src/main/scripts/etm.bat').text
-            .replace('${applicationName}', applicationName)
-            .replace('${applicationVersion}', version)
-            .replace('${mainClassName}', mainClassName)
+                .replace('${applicationName}', applicationName)
+                .replace('${applicationVersion}', version)
+                .replace('${mainClassName}', mainClassName)
     }
 }

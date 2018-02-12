@@ -13,106 +13,106 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class IIBNodeConnectionV10Impl implements IIBNodeConnection {
-	
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(IIBNodeConnectionV10Impl.class);
+
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(IIBNodeConnectionV10Impl.class);
 
 
-	private BrokerProxy brokerProxy;
-	private final Node node;
-	
-	private IIBNodeConnectionV10Impl(Node node) {
-		this.node = node;
-	}
-	
-	public Node getNode() {
-		return node;
-	}
+    private BrokerProxy brokerProxy;
+    private final Node node;
 
-	public void connect() {
-		IntegrationNodeConnectionParameters incp = new IntegrationNodeConnectionParameters(this.node.getHost(), this.node.getPort());
-		if (this.node.getUsername() != null) {
-			incp.setUserID(this.node.getUsername());
-		}
-		if (this.node.getPassword() != null) {
-			incp.setPassword(this.node.getPassword());
-		}
-		// TODO support for ssl.
-		try {
-			if (log.isDebugLevelEnabled()) {
-				log.logDebugMessage("Connecting to the integration node running at " + this.node.getHost() + ":" + this.node.getPort() + ".");
-			}
-			this.brokerProxy = BrokerProxy.getInstance(incp);
-			if (!this.brokerProxy.hasBeenPopulatedByBroker(true)) {
-				if (log.isWarningLevelEnabled()) { 
-					log.logWarningMessage("Integration node '" + this.node.getHost() + ":" + this.node.getPort() + "' is not responding.");
-				}
-				throw new EtmException(EtmException.IIB_CONNECTION_ERROR);
-			}
-		} catch (ConfigManagerProxyException e) {
-			if (log.isErrorLevelEnabled()) { 
-				log.logErrorMessage("Unable to connect to integration node '" + this.node.getHost() + ":" + this.node.getPort() + "'.", e);
-			}
-			throw new EtmException(EtmException.IIB_CONNECTION_ERROR, e);
-		}
-	}
-	
-	public IIBIntegrationServer getServerByName(String serverName) {
-		try {
-			return new IIBIntegrationServerV10Impl(this.brokerProxy.getExecutionGroupByName(serverName));
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
-	
-	public List<IIBIntegrationServer> getServers() {
-		try {
-			List<IIBIntegrationServer> servers = new ArrayList<>();
-			Enumeration<ExecutionGroupProxy> executionGroups = this.brokerProxy.getExecutionGroups(null);
-			while (executionGroups.hasMoreElements()) {
-				servers.add(new IIBIntegrationServerV10Impl(executionGroups.nextElement()));
-			}
-			return servers;
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
+    private IIBNodeConnectionV10Impl(Node node) {
+        this.node = node;
+    }
 
-	public void setSynchronous(int timeout) {
-		this.brokerProxy.setSynchronous(timeout);
-	}
+    public Node getNode() {
+        return node;
+    }
 
-	public ConfigurableService getConfigurableService(String type, String name) {
-		try {
-			return this.brokerProxy.getConfigurableService(type, name);
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
+    public void connect() {
+        IntegrationNodeConnectionParameters incp = new IntegrationNodeConnectionParameters(this.node.getHost(), this.node.getPort());
+        if (this.node.getUsername() != null) {
+            incp.setUserID(this.node.getUsername());
+        }
+        if (this.node.getPassword() != null) {
+            incp.setPassword(this.node.getPassword());
+        }
+        // TODO support for ssl.
+        try {
+            if (log.isDebugLevelEnabled()) {
+                log.logDebugMessage("Connecting to the integration node running at " + this.node.getHost() + ":" + this.node.getPort() + ".");
+            }
+            this.brokerProxy = BrokerProxy.getInstance(incp);
+            if (!this.brokerProxy.hasBeenPopulatedByBroker(true)) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("Integration node '" + this.node.getHost() + ":" + this.node.getPort() + "' is not responding.");
+                }
+                throw new EtmException(EtmException.IIB_CONNECTION_ERROR);
+            }
+        } catch (ConfigManagerProxyException e) {
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage("Unable to connect to integration node '" + this.node.getHost() + ":" + this.node.getPort() + "'.", e);
+            }
+            throw new EtmException(EtmException.IIB_CONNECTION_ERROR, e);
+        }
+    }
 
-	public void createConfigurableService(String type, String name) {
-		try {
-			this.brokerProxy.createConfigurableService(type, name);
-		} catch (ConfigManagerProxyLoggedException | IllegalArgumentException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
-	
-	public void deleteConfigurableService(String type, String name) {
-		try {
-			this.brokerProxy.deleteConfigurableService(type, name);
-		} catch (ConfigManagerProxyLoggedException | IllegalArgumentException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
+    public IIBIntegrationServer getServerByName(String serverName) {
+        try {
+            return new IIBIntegrationServerV10Impl(this.brokerProxy.getExecutionGroupByName(serverName));
+        } catch (ConfigManagerProxyPropertyNotInitializedException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
 
-	@Override
-	public void close() {
-		if (this.brokerProxy != null) {
-			this.brokerProxy.disconnect();
-		}
-	}
+    public List<IIBIntegrationServer> getServers() {
+        try {
+            List<IIBIntegrationServer> servers = new ArrayList<>();
+            Enumeration<ExecutionGroupProxy> executionGroups = this.brokerProxy.getExecutionGroups(null);
+            while (executionGroups.hasMoreElements()) {
+                servers.add(new IIBIntegrationServerV10Impl(executionGroups.nextElement()));
+            }
+            return servers;
+        } catch (ConfigManagerProxyPropertyNotInitializedException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    public void setSynchronous(int timeout) {
+        this.brokerProxy.setSynchronous(timeout);
+    }
+
+    public ConfigurableService getConfigurableService(String type, String name) {
+        try {
+            return this.brokerProxy.getConfigurableService(type, name);
+        } catch (ConfigManagerProxyPropertyNotInitializedException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    public void createConfigurableService(String type, String name) {
+        try {
+            this.brokerProxy.createConfigurableService(type, name);
+        } catch (ConfigManagerProxyLoggedException | IllegalArgumentException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    public void deleteConfigurableService(String type, String name) {
+        try {
+            this.brokerProxy.deleteConfigurableService(type, name);
+        } catch (ConfigManagerProxyLoggedException | IllegalArgumentException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    @Override
+    public void close() {
+        if (this.brokerProxy != null) {
+            this.brokerProxy.disconnect();
+        }
+    }
 
 }

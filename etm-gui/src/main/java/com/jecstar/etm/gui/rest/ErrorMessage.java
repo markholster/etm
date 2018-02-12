@@ -7,25 +7,25 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 class ErrorMessage {
 
-	@XmlElement(name = "code")
-	private int code;
-	
-	@XmlElement(name = "message")
-	private String message;
+    @XmlElement(name = "code")
+    private int code;
 
-	public int getCode() {
-		return code;
-	}
+    @XmlElement(name = "message")
+    private String message;
 
-	public void setCode(int code) {
-		this.code = code;
-	}
+    public int getCode() {
+        return code;
+    }
 
-	public String getMessage() {
-		return message;
-	}
+    public void setCode(int code) {
+        this.code = code;
+    }
 
-	public void setMessage(String message) {
-		this.message = message;
-	}
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 }

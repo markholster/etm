@@ -9,16 +9,16 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 
 public class BusinessTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
-		implements TelemetryEventPersister<BusinessTelemetryEvent, BusinessTelemetryEventConverterJsonImpl> {
+        implements TelemetryEventPersister<BusinessTelemetryEvent, BusinessTelemetryEventConverterJsonImpl> {
 
-	public BusinessTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
-		super(bulkProcessor, etmConfiguration);
-	}
+    public BusinessTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
+        super(bulkProcessor, etmConfiguration);
+    }
 
-	@Override
-	public void persist(BusinessTelemetryEvent event, BusinessTelemetryEventConverterJsonImpl converter) {
-		IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false), XContentType.JSON);
-		bulkProcessor.add(indexRequest);
-		setCorrelationOnParent(event);
-	}
+    @Override
+    public void persist(BusinessTelemetryEvent event, BusinessTelemetryEventConverterJsonImpl converter) {
+        IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false, false), XContentType.JSON);
+        bulkProcessor.add(indexRequest);
+        setCorrelationOnParent(event);
+    }
 }

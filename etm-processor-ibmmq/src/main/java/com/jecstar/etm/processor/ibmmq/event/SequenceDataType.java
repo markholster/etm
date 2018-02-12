@@ -15,7 +15,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * <p>Java class for sequenceDataType.
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
  * <p>
  * <pre>
@@ -27,7 +27,6 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;/restriction>
  * &lt;/simpleType>
  * </pre>
- * 
  */
 @XmlType(name = "sequenceDataType")
 @XmlEnum
@@ -50,7 +49,7 @@ public enum SequenceDataType {
     }
 
     public static SequenceDataType fromValue(String v) {
-        for (SequenceDataType c: SequenceDataType.values()) {
+        for (SequenceDataType c : SequenceDataType.values()) {
             if (c.value.equals(v)) {
                 return c;
             }

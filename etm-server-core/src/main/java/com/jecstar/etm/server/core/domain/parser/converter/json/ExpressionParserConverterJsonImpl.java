@@ -13,105 +13,105 @@ import java.util.Map;
 
 public class ExpressionParserConverterJsonImpl implements ExpressionParserConverter<String> {
 
-	/**
-	 * The <code>LogWrapper</code> for this class.
-	 */
-	private static final LogWrapper log = LogFactory.getLogger(ExpressionParserConverterJsonImpl.class);
-	
-	private final ExpressionParserTags tags = new ExpressionParserTagsJsonImpl();
-	private final JsonConverter converter = new JsonConverter();
-	
-	@Override
-	public ExpressionParser read(String content) {
-		return read(this.converter.toMap(content));
-	}
-	
-	public ExpressionParser read(Map<String, Object> valueMap) {
-		String name = this.converter.getString(this.tags.getNameTag(), valueMap);
-		String type = this.converter.getString(this.tags.getTypeTag(), valueMap);
-		if ("fixed_position".equals(type)) {
-			int line = this.converter.getInteger(this.tags.getLineTag(), valueMap, 0);
-			int startIx = this.converter.getInteger(this.tags.getStartIndexTag(), valueMap, 0);
-			int endIx = this.converter.getInteger(this.tags.getEndIndexTag(), valueMap, 1);
-			if (line < 0) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("ExpressionParser '" + name + "' has a line number of " + line + ". Setting it to 0.");
-				}
-				line = 0;
-			}
-			if (startIx < 0) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("ExpressionParser '" + name + "' has a start index of " + startIx + ". Setting it to 0.");
-				}				
-				startIx = 0;
-			}
-			if (endIx <= startIx) {
-				if (log.isWarningLevelEnabled()) {
-					log.logWarningMessage("ExpressionParser '" + name + "' has an end index of " + endIx + " which is smaller than the start index " + startIx + ". Setting it to " + (startIx + 1) + ".");
-				}				
-				endIx = startIx + 1;
-			}
-			return new FixedPositionExpressionParser(name, line, startIx, endIx);
-		} else if ("fixed_value".equals(type)) {
-			return new FixedValueExpressionParser(name, this.converter.getString(this.tags.getValueTag(), valueMap));
-		} else if ("jsonpath".equals(type)) {
-			return new JsonPathExpressionParser(name, this.converter.getString(this.tags.getExpressionTag(), valueMap));
-		} else if ("xpath".equals(type)) {
-			return new XPathExpressionParser(name, this.converter.getString(this.tags.getExpressionTag(), valueMap));
-		} else if ("xslt".equals(type)) {
-			return new XsltExpressionParser(name, this.converter.getString(this.tags.getTemplateTag(), valueMap));
-		} else if ("copy_value".equals(type)) {
-			return new CopyValueExpressionParser(name);
-		}
-		if (log.isErrorLevelEnabled()) {
-			log.logErrorMessage("Unknown expression parser type: '" + type + "'.");
-		}
-		throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);		
-	}
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(ExpressionParserConverterJsonImpl.class);
 
-	@Override
-	public String write(ExpressionParser expressionParser) {
-		StringBuilder result = new StringBuilder();
-		result.append("{");
-		boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), expressionParser.getName(), result, true);
+    private final ExpressionParserTags tags = new ExpressionParserTagsJsonImpl();
+    private final JsonConverter converter = new JsonConverter();
+
+    @Override
+    public ExpressionParser read(String content) {
+        return read(this.converter.toMap(content));
+    }
+
+    public ExpressionParser read(Map<String, Object> valueMap) {
+        String name = this.converter.getString(this.tags.getNameTag(), valueMap);
+        String type = this.converter.getString(this.tags.getTypeTag(), valueMap);
+        if ("fixed_position".equals(type)) {
+            int line = this.converter.getInteger(this.tags.getLineTag(), valueMap, 0);
+            int startIx = this.converter.getInteger(this.tags.getStartIndexTag(), valueMap, 0);
+            int endIx = this.converter.getInteger(this.tags.getEndIndexTag(), valueMap, 1);
+            if (line < 0) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("ExpressionParser '" + name + "' has a line number of " + line + ". Setting it to 0.");
+                }
+                line = 0;
+            }
+            if (startIx < 0) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("ExpressionParser '" + name + "' has a start index of " + startIx + ". Setting it to 0.");
+                }
+                startIx = 0;
+            }
+            if (endIx <= startIx) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("ExpressionParser '" + name + "' has an end index of " + endIx + " which is smaller than the start index " + startIx + ". Setting it to " + (startIx + 1) + ".");
+                }
+                endIx = startIx + 1;
+            }
+            return new FixedPositionExpressionParser(name, line, startIx, endIx);
+        } else if ("fixed_value".equals(type)) {
+            return new FixedValueExpressionParser(name, this.converter.getString(this.tags.getValueTag(), valueMap));
+        } else if ("jsonpath".equals(type)) {
+            return new JsonPathExpressionParser(name, this.converter.getString(this.tags.getExpressionTag(), valueMap));
+        } else if ("xpath".equals(type)) {
+            return new XPathExpressionParser(name, this.converter.getString(this.tags.getExpressionTag(), valueMap));
+        } else if ("xslt".equals(type)) {
+            return new XsltExpressionParser(name, this.converter.getString(this.tags.getTemplateTag(), valueMap));
+        } else if ("copy_value".equals(type)) {
+            return new CopyValueExpressionParser(name);
+        }
+        if (log.isErrorLevelEnabled()) {
+            log.logErrorMessage("Unknown expression parser type: '" + type + "'.");
+        }
+        throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
+    }
+
+    @Override
+    public String write(ExpressionParser expressionParser) {
+        StringBuilder result = new StringBuilder();
+        result.append("{");
+        boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), expressionParser.getName(), result, true);
         added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, result, !added) || added;
-		if (expressionParser instanceof FixedPositionExpressionParser) {
-			FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_position", result, !added) || added;
-			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getLineTag(), parser.getLine(), result, !added) || added;
-			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getStartIndexTag(), parser.getStartIx(), result, !added) || added;
-			added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEndIndexTag(), parser.getEndIx(), result, !added) || added;
-		} else if (expressionParser instanceof FixedValueExpressionParser) {
-			FixedValueExpressionParser parser = (FixedValueExpressionParser) expressionParser;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_value", result, !added) || added;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getValueTag(), parser.getValue(), result, !added) || added;
-		} else if (expressionParser instanceof JsonPathExpressionParser) {
-			JsonPathExpressionParser parser = (JsonPathExpressionParser) expressionParser;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "jsonpath", result, !added) || added;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;			
-		} else if (expressionParser instanceof XPathExpressionParser) {
-			XPathExpressionParser parser = (XPathExpressionParser) expressionParser;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "xpath", result, !added) || added;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;						
-		} else if (expressionParser instanceof XsltExpressionParser) {
-			XsltExpressionParser parser = (XsltExpressionParser) expressionParser;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "xslt", result, !added) || added;
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTemplateTag(), parser.getTemplate(), result, !added) || added;
-		} else if (expressionParser instanceof CopyValueExpressionParser) {
-			added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "copy_value", result, !added) || added;
-		} else {
-			if (log.isErrorLevelEnabled()) {
-				log.logErrorMessage("Unknown expression parser type: '" + expressionParser.getClass().getName() + "'.");
-			}
-			throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
-		}
-		result.append("}");
-		return result.toString();
-	}
+        if (expressionParser instanceof FixedPositionExpressionParser) {
+            FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_position", result, !added) || added;
+            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getLineTag(), parser.getLine(), result, !added) || added;
+            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getStartIndexTag(), parser.getStartIx(), result, !added) || added;
+            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEndIndexTag(), parser.getEndIx(), result, !added) || added;
+        } else if (expressionParser instanceof FixedValueExpressionParser) {
+            FixedValueExpressionParser parser = (FixedValueExpressionParser) expressionParser;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_value", result, !added) || added;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getValueTag(), parser.getValue(), result, !added) || added;
+        } else if (expressionParser instanceof JsonPathExpressionParser) {
+            JsonPathExpressionParser parser = (JsonPathExpressionParser) expressionParser;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "jsonpath", result, !added) || added;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;
+        } else if (expressionParser instanceof XPathExpressionParser) {
+            XPathExpressionParser parser = (XPathExpressionParser) expressionParser;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "xpath", result, !added) || added;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;
+        } else if (expressionParser instanceof XsltExpressionParser) {
+            XsltExpressionParser parser = (XsltExpressionParser) expressionParser;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "xslt", result, !added) || added;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTemplateTag(), parser.getTemplate(), result, !added) || added;
+        } else if (expressionParser instanceof CopyValueExpressionParser) {
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "copy_value", result, !added) || added;
+        } else {
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage("Unknown expression parser type: '" + expressionParser.getClass().getName() + "'.");
+            }
+            throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
+        }
+        result.append("}");
+        return result.toString();
+    }
 
-	@Override
-	public ExpressionParserTags getTags() {
-		return this.tags;
-	}
+    @Override
+    public ExpressionParserTags getTags() {
+        return this.tags;
+    }
 
 }

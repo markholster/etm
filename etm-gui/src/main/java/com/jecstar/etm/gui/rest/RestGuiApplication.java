@@ -14,29 +14,29 @@ import java.util.Set;
 
 public class RestGuiApplication extends Application {
 
-	public RestGuiApplication(Client client, EtmConfiguration etmConfiguration) {
-		SearchService.initialize(client, etmConfiguration);
-		UserService.initialize(client, etmConfiguration);
-		SettingsService.initialize(client, etmConfiguration);
-		AuditService.initialize(client, etmConfiguration);
-		DashboardService.initialize(client, etmConfiguration);
-		if (IIBApi.IIB_PROXY_ON_CLASSPATH) {
-			com.jecstar.etm.gui.rest.services.iib.IIBService.initialize(client, etmConfiguration);
-		}
-	}
+    public RestGuiApplication(Client client, EtmConfiguration etmConfiguration) {
+        SearchService.initialize(client, etmConfiguration);
+        UserService.initialize(client, etmConfiguration);
+        SettingsService.initialize(client, etmConfiguration);
+        AuditService.initialize(client, etmConfiguration);
+        DashboardService.initialize(client, etmConfiguration);
+        if (IIBApi.IIB_PROXY_ON_CLASSPATH) {
+            com.jecstar.etm.gui.rest.services.iib.IIBService.initialize(client, etmConfiguration);
+        }
+    }
 
 
-	@Override
-	public Set<Class<?>> getClasses() {
-		HashSet<Class<?>> classes = new HashSet<>();
-		classes.add(SearchService.class);
-		classes.add(UserService.class);
-		classes.add(SettingsService.class);
-		classes.add(AuditService.class);
-		classes.add(DashboardService.class);
-		if (IIBApi.IIB_PROXY_ON_CLASSPATH) {
-			classes.add(com.jecstar.etm.gui.rest.services.iib.IIBService.class);
-		}
-		return classes;
-	}
+    @Override
+    public Set<Class<?>> getClasses() {
+        HashSet<Class<?>> classes = new HashSet<>();
+        classes.add(SearchService.class);
+        classes.add(UserService.class);
+        classes.add(SettingsService.class);
+        classes.add(AuditService.class);
+        classes.add(DashboardService.class);
+        if (IIBApi.IIB_PROXY_ON_CLASSPATH) {
+            classes.add(com.jecstar.etm.gui.rest.services.iib.IIBService.class);
+        }
+        return classes;
+    }
 }

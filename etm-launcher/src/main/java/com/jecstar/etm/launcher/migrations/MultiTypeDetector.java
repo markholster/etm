@@ -12,7 +12,7 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 
 /**
  * Class that detects the presence of multi mappings in a single event index.
- *
+ * <p>
  * Detection of this fact makes executing queries more sophisticated because there's no need to query on the _type
  * attributes anymore.
  */

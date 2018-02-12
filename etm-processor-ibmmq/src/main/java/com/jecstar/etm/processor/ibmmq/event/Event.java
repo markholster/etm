@@ -16,9 +16,9 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * <p>Java class for Event complex type.
- * 
+ * <p>
  * <p>The following schema fragment specifies the expected content contained within this class.
- * 
+ * <p>
  * <pre>
  * &lt;complexType name="Event">
  *   &lt;complexContent>
@@ -32,14 +32,12 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
- * 
- * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Event", propOrder = {
-    "eventPointData",
-    "applicationData",
-    "bitstreamData"
+        "eventPointData",
+        "applicationData",
+        "bitstreamData"
 })
 public class Event {
 
@@ -50,11 +48,9 @@ public class Event {
 
     /**
      * Gets the value of the eventPointData property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link EventPointData }
-     *     
+     *
+     * @return possible object is
+     * {@link EventPointData }
      */
     public EventPointData getEventPointData() {
         return eventPointData;
@@ -62,11 +58,9 @@ public class Event {
 
     /**
      * Sets the value of the eventPointData property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link EventPointData }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link EventPointData }
      */
     public void setEventPointData(EventPointData value) {
         this.eventPointData = value;
@@ -74,11 +68,9 @@ public class Event {
 
     /**
      * Gets the value of the applicationData property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link ApplicationData }
-     *     
+     *
+     * @return possible object is
+     * {@link ApplicationData }
      */
     public ApplicationData getApplicationData() {
         return applicationData;
@@ -86,11 +78,9 @@ public class Event {
 
     /**
      * Sets the value of the applicationData property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link ApplicationData }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link ApplicationData }
      */
     public void setApplicationData(ApplicationData value) {
         this.applicationData = value;
@@ -98,11 +88,9 @@ public class Event {
 
     /**
      * Gets the value of the bitstreamData property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link BitstreamData }
-     *     
+     *
+     * @return possible object is
+     * {@link BitstreamData }
      */
     public BitstreamData getBitstreamData() {
         return bitstreamData;
@@ -110,11 +98,9 @@ public class Event {
 
     /**
      * Sets the value of the bitstreamData property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link BitstreamData }
-     *     
+     *
+     * @param value allowed object is
+     *              {@link BitstreamData }
      */
     public void setBitstreamData(BitstreamData value) {
         this.bitstreamData = value;

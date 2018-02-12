@@ -53,7 +53,7 @@ public class QueryExporter {
                 first = false;
             }
 
-            for (int i=0; i < maxResults && scrollableSearch.hasNext(); i++) {
+            for (int i = 0; i < maxResults && scrollableSearch.hasNext(); i++) {
                 SearchHit searchHit = scrollableSearch.next();
                 Map<String, Object> sourceValues = searchHit.getSourceAsMap();
                 writer.newLine();
@@ -84,7 +84,7 @@ public class QueryExporter {
     private void createXlsx(ScrollableSearch scrollableSearch, int maxResults, File outputFile, EtmPrincipal etmPrincipal, FieldLayout... fields) throws IOException {
         final int charsPerCell = 30000;
         // First make sure the payload field is at the end of the field list because it can be splitted into several cells.
-        for (int i = fields.length - 2; i >= 0; i-- ) {
+        for (int i = fields.length - 2; i >= 0; i--) {
             // Start at the one but last value and move it to the end of the array
             // if the field is a payload field. We can skip the last field,
             // because if it is a payload field its already at the end of the
@@ -104,19 +104,19 @@ public class QueryExporter {
         }
         int rowIx = 0;
         int cellIx = 0;
-        try (XSSFWorkbook wb = new XSSFWorkbook(); FileOutputStream os = new FileOutputStream(outputFile)){
+        try (XSSFWorkbook wb = new XSSFWorkbook(); FileOutputStream os = new FileOutputStream(outputFile)) {
             XSSFSheet sheet = wb.createSheet("etm-export");
             XSSFRow row = sheet.createRow(rowIx++);
             for (FieldLayout field : fields) {
                 XSSFCell cell = row.createCell(cellIx++);
                 cell.setCellValue(field.getName());
             }
-            for (int i=0; i < maxResults && scrollableSearch.hasNext(); i++) {
+            for (int i = 0; i < maxResults && scrollableSearch.hasNext(); i++) {
                 SearchHit searchHit = scrollableSearch.next();
                 Map<String, Object> sourceValues = searchHit.getSourceAsMap();
                 row = sheet.createRow(rowIx++);
                 cellIx = 0;
-                for (FieldLayout field: fields) {
+                for (FieldLayout field : fields) {
                     String dbFieldName = field.getField();
                     if (Keyword.TYPE.getName().equals(dbFieldName)) {
                         XSSFCell cell = row.createCell(cellIx++);
@@ -133,7 +133,7 @@ public class QueryExporter {
 
                     if (this.eventTags.getPayloadTag().equals(dbFieldName)) {
                         String payload = value.toString();
-                        for (int k=0; k < payload.length(); k += charsPerCell) {
+                        for (int k = 0; k < payload.length(); k += charsPerCell) {
                             XSSFCell cell = row.createCell(cellIx++);
                             if (k + charsPerCell > payload.length()) {
                                 cell.setCellValue(payload.substring(k));
@@ -143,8 +143,8 @@ public class QueryExporter {
                         }
                     } else {
                         XSSFCell cell = row.createCell(cellIx++);
-                         if (value instanceof Number && FieldType.PLAIN.equals(field.getType())){
-                            cell.setCellValue(((Number)value).doubleValue());
+                        if (value instanceof Number && FieldType.PLAIN.equals(field.getType())) {
+                            cell.setCellValue(((Number) value).doubleValue());
                         } else {
                             cell.setCellValue(formattedValue);
                         }

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" 
-     targetNamespace="http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event" 
-     xmlns="http://www.w3.org/2001/XMLSchema" 
-     xmlns:wmb="http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event" 
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified"
+            targetNamespace="http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event"
+            xmlns="http://www.w3.org/2001/XMLSchema"
+            xmlns:wmb="http://www.ibm.com/xmlns/prod/websphere/messagebroker/6.1.0/monitoring/event"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
     <!-- The monitoring event -->
     <xsd:element name="event" type="wmb:Event">
     </xsd:element>
-    
+
     <!-- Complex type for event element -->
     <xsd:complexType name="Event">
         <xsd:sequence>
@@ -49,7 +49,7 @@
 
                                 <!-- Incrementing sequence number -->
                                 <!-- Starts at 1 for the first event from an invocation of a message flow -->
-                                <!-- Incremented for each subsequent event from the same invocation of the flow --> 
+                                <!-- Incremented for each subsequent event from the same invocation of the flow -->
                                 <xsd:attribute name="counter" type="integer" use="optional"/>
 
                                 <!-- These three attributes exists for compatibility with 6.1.0.2 only, not used in 6.1.0.3 onwards -->
@@ -58,7 +58,7 @@
                                 <xsd:attribute name="dataType" type="wmb:sequenceDataType" use="optional"/>
                             </xsd:complexType>
                         </xsd:element>
-                        
+
                         <xsd:element maxOccurs="1" minOccurs="1" name="eventCorrelation">
                             <xsd:complexType>
                                 <!-- The correlator of the local transaction (i.e. message flow) -->
@@ -67,7 +67,7 @@
                                 <!-- The correlator of any parent transaction in which this local transaction participates -->
                                 <!-- Monitoring profile override : eventPointDataQuery/eventCorrelation/parentTransactionId -->
                                 <xsd:attribute name="parentTransactionId" type="string" use="optional"/>
-                                <!-- The correlator of any global transaction in which this local transaction participates --> 
+                                <!-- The correlator of any global transaction in which this local transaction participates -->
                                 <!-- Monitoring profile override : eventPointDataQuery/eventCorrelation/globalTransactionId -->
                                 <xsd:attribute name="globalTransactionId" type="string" use="optional"/>
                             </xsd:complexType>
@@ -122,7 +122,7 @@
                                 <!-- Terminal event only: The identifier of the terminal which emitted the event. -->
                                 <xsd:attribute name="terminal" type="string" use="optional"/>
                                 <!-- Any other detail about the node that might be useful -->
-                                <!-- 6.1.0.3: Only set for MQInput node, where it contains queue name --> 
+                                <!-- 6.1.0.3: Only set for MQInput node, where it contains queue name -->
                                 <xsd:attribute name="detail" type="string" use="optional"/>
                             </xsd:complexType>
                         </xsd:element>
@@ -168,10 +168,10 @@
             <xsd:element minOccurs="1" name="bitstream">
                 <xsd:complexType>
                     <xsd:simpleContent>
-                        <xsd:extension base="string"> 
+                        <xsd:extension base="string">
                             <!-- Monitoring profile override : bitstreamDataQuery/@encoding -->
                             <xsd:attribute name="encoding" type="wmb:encodingType"/>
-                            </xsd:extension>
+                        </xsd:extension>
                     </xsd:simpleContent>
                 </xsd:complexType>
             </xsd:element>

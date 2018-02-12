@@ -4,14 +4,18 @@ import java.util.List;
 
 public interface IIBIntegrationServer {
 
-	String getName();
-	List<IIBApplication> getApplications();
-	IIBApplication getApplicationByName(String applicationName);
+    String getName();
 
-	List<IIBLibrary> getSharedLibraries();
-	IIBLibrary getSharedLibraryByName(String libraryName);
-	
-	List<IIBMessageFlow> getMessageFlows();
-	IIBMessageFlow getMessageFlowByName(String flowName);
+    List<IIBApplication> getApplications();
+
+    IIBApplication getApplicationByName(String applicationName);
+
+    List<IIBLibrary> getSharedLibraries();
+
+    IIBLibrary getSharedLibraryByName(String libraryName);
+
+    List<IIBMessageFlow> getMessageFlows();
+
+    IIBMessageFlow getMessageFlowByName(String flowName);
 
 }

@@ -1,6 +1,6 @@
 package com.jecstar.etm.server.core.domain.converter;
 
-import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.PayloadEncoding;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -17,17 +17,18 @@ public class PayloadDecoder {
     private static final LogWrapper log = LogFactory.getLogger(PayloadDecoder.class);
 
 
-    public String decode(String encodedData, String encoding) {
+    public String decode(String encodedData, PayloadEncoding encoding) {
         if (encodedData == null) {
             return null;
         }
         if (encoding == null) {
             return encodedData;
         }
+
         try {
-            if (TelemetryEventTags.PAYLOAD_ENCODING_BASE64.equalsIgnoreCase(encoding)) {
+            if (PayloadEncoding.BASE64.equals(encoding)) {
                 return new String(Base64.getDecoder().decode(encodedData));
-            } else if (TelemetryEventTags.PAYLOAD_ENCODING_BASE64_CA_API_GATEWAY.equalsIgnoreCase(encoding)) {
+            } else if (PayloadEncoding.BASE64_CA_API_GATEWAY.equals(encoding)) {
                 final int l7HeaderLength = 4;
                 byte[] base64DecodedData = Base64.getDecoder().decode(encodedData);
                 byte[] l7Header = new byte[l7HeaderLength];

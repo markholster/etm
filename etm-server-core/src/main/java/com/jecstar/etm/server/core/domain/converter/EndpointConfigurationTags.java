@@ -2,22 +2,22 @@ package com.jecstar.etm.server.core.domain.converter;
 
 public interface EndpointConfigurationTags {
 
-	String getEnhancerTag();
+    String getEnhancerTag();
 
-	String getNameTag();
+    String getNameTag();
 
-	String getEnhancerTypeTag();
+    String getEnhancerTypeTag();
 
-	String getEnhancePayloadFormatTag();
+    String getEnhancePayloadFormatTag();
 
-	String getFieldsTag();
+    String getFieldsTag();
 
-	String getFieldTag();
-	
-	String getWritePolicyTag();
+    String getFieldTag();
 
-	String getParsersSourceTag();
-	
-	String getParsersTag();
+    String getWritePolicyTag();
+
+    String getParsersSourceTag();
+
+    String getParsersTag();
 
 }

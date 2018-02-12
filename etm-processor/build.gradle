@@ -21,7 +21,7 @@ dependencies {
 
 eclipse {
     classpath {
-        plusConfigurations += [ configurations.integrationTestCompile, configurations.integrationTestRuntime ]
+        plusConfigurations += [configurations.integrationTestCompile, configurations.integrationTestRuntime]
     }
 }
 

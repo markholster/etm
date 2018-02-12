@@ -4,15 +4,19 @@ import java.util.List;
 
 public interface IIBApplication {
 
-	String getName();
+    String getName();
 
-	List<IIBLibrary> getLibraries();
-	IIBLibrary getLibraryByName(String libraryName);
-	
-	List<IIBMessageFlow> getMessageFlows();
-	IIBMessageFlow getMessageFlowByName(String flowName);
-	
-	List<IIBSubFlow> getSubFlows();
-	IIBSubFlow getSubFlowByName(String subFlowName);
-	String getVersion();
+    List<IIBLibrary> getLibraries();
+
+    IIBLibrary getLibraryByName(String libraryName);
+
+    List<IIBMessageFlow> getMessageFlows();
+
+    IIBMessageFlow getMessageFlowByName(String flowName);
+
+    List<IIBSubFlow> getSubFlows();
+
+    IIBSubFlow getSubFlowByName(String subFlowName);
+
+    String getVersion();
 }

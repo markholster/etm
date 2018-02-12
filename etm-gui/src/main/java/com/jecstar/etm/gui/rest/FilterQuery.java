@@ -5,21 +5,21 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 class FilterQuery {
 
-	private final QueryOccurrence queryOccurrence;
-	
-	private final QueryBuilder query;
-	
-	FilterQuery(QueryOccurrence queryOccurrence, QueryBuilder query) {
-		this.queryOccurrence = queryOccurrence;
-		this.query = query;
-	}
-	
-	public QueryOccurrence getQueryOccurrence() {
-		return this.queryOccurrence;
-	}
-	
-	public QueryBuilder getQuery() {
-		return this.query;
-	}
-	
+    private final QueryOccurrence queryOccurrence;
+
+    private final QueryBuilder query;
+
+    FilterQuery(QueryOccurrence queryOccurrence, QueryBuilder query) {
+        this.queryOccurrence = queryOccurrence;
+        this.query = query;
+    }
+
+    public QueryOccurrence getQueryOccurrence() {
+        return this.queryOccurrence;
+    }
+
+    public QueryBuilder getQuery() {
+        return this.query;
+    }
+
 }

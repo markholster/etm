@@ -9,16 +9,16 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 
 public class LogTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
-		implements TelemetryEventPersister<LogTelemetryEvent, LogTelemetryEventConverterJsonImpl> {
+        implements TelemetryEventPersister<LogTelemetryEvent, LogTelemetryEventConverterJsonImpl> {
 
-	public LogTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
-		super(bulkProcessor, etmConfiguration);
-	}
+    public LogTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
+        super(bulkProcessor, etmConfiguration);
+    }
 
-	@Override
-	public void persist(LogTelemetryEvent event, LogTelemetryEventConverterJsonImpl converter) {
-		IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false), XContentType.JSON);
-		bulkProcessor.add(indexRequest);
-		setCorrelationOnParent(event);
-	}
+    @Override
+    public void persist(LogTelemetryEvent event, LogTelemetryEventConverterJsonImpl converter) {
+        IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false, false), XContentType.JSON);
+        bulkProcessor.add(indexRequest);
+        setCorrelationOnParent(event);
+    }
 }

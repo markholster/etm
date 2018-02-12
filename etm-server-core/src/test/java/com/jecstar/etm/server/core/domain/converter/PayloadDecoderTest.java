@@ -1,15 +1,13 @@
 package com.jecstar.etm.server.core.domain.converter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import com.jecstar.etm.domain.PayloadEncoding;
+import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
 import java.util.zip.Deflater;
 
-import org.junit.jupiter.api.Test;
-
-import com.jecstar.etm.domain.writer.TelemetryEventTags;
-import com.jecstar.etm.server.core.domain.converter.PayloadDecoder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Test class for the <code>PayloadDecoder</code> class.
@@ -19,7 +17,7 @@ public class PayloadDecoderTest {
     @Test
     public void testNullValues() {
         PayloadDecoder decoder = new PayloadDecoder();
-        assertNull(decoder.decode(null, TelemetryEventTags.PAYLOAD_ENCODING_BASE64));
+        assertNull(decoder.decode(null, PayloadEncoding.BASE64));
         assertEquals("Data", decoder.decode("Data", null));
     }
 
@@ -27,7 +25,7 @@ public class PayloadDecoderTest {
     public void testBase64Decoding() {
         PayloadDecoder decoder = new PayloadDecoder();
         String data = "This is a test";
-        assertEquals(data, decoder.decode(Base64.getEncoder().encodeToString(data.getBytes()), TelemetryEventTags.PAYLOAD_ENCODING_BASE64));
+        assertEquals(data, decoder.decode(Base64.getEncoder().encodeToString(data.getBytes()), PayloadEncoding.BASE64_CA_API_GATEWAY));
     }
 
     @Test
@@ -51,7 +49,7 @@ public class PayloadDecoderTest {
         System.arraycopy(compressBuffer, 0, l7Message, l7Header.length, newSize);
 
         // Validate the data.
-        assertEquals(data, decoder.decode(Base64.getEncoder().encodeToString(l7Message), TelemetryEventTags.PAYLOAD_ENCODING_BASE64_CA_API_GATEWAY));
+        assertEquals(data, decoder.decode(Base64.getEncoder().encodeToString(l7Message), PayloadEncoding.BASE64_CA_API_GATEWAY));
     }
 
     private static byte[] createL7Header(byte[] data) {

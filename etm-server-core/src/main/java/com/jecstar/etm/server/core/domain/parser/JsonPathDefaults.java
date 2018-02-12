@@ -12,21 +12,21 @@ import java.util.Set;
 
 class JsonPathDefaults implements Defaults {
 
-	private final JacksonMappingProvider mappingProvider = new JacksonMappingProvider();
-	
-	@Override
+    private final JacksonMappingProvider mappingProvider = new JacksonMappingProvider();
+
+    @Override
     public JsonProvider jsonProvider() {
-	    return new JacksonJsonProvider();
+        return new JacksonJsonProvider();
     }
 
-	@Override
+    @Override
     public Set<Option> options() {
-		return EnumSet.noneOf(Option.class);
+        return EnumSet.noneOf(Option.class);
     }
 
-	@Override
+    @Override
     public MappingProvider mappingProvider() {
-	    return this.mappingProvider;
+        return this.mappingProvider;
     }
 
 }

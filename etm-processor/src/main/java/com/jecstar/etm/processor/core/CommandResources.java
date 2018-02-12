@@ -9,8 +9,8 @@ import java.util.List;
 
 public interface CommandResources extends Closeable {
 
-	<T> T getPersister(CommandType commandType);
-	
-	void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration);
-	
+    <T> T getPersister(CommandType commandType);
+
+    void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration);
+
 }

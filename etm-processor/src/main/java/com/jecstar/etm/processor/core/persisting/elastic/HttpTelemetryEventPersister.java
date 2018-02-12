@@ -17,22 +17,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
-		implements TelemetryEventPersister<HttpTelemetryEvent, HttpTelemetryEventConverterJsonImpl> {
+        implements TelemetryEventPersister<HttpTelemetryEvent, HttpTelemetryEventConverterJsonImpl> {
 
-	public HttpTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
-		super(bulkProcessor, etmConfiguration);
-	}
+    public HttpTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
+        super(bulkProcessor, etmConfiguration);
+    }
 
-	@Override
-	public void persist(HttpTelemetryEvent event, HttpTelemetryEventConverterJsonImpl converter) {
-		IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false), XContentType.JSON);
+    @Override
+    public void persist(HttpTelemetryEvent event, HttpTelemetryEventConverterJsonImpl converter) {
+        IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false, false), XContentType.JSON);
 
-		if (event.id == null) {
-		    // An event without an id can never be an update.
+        if (event.id == null) {
+            // An event without an id can never be an update.
             bulkProcessor.add(indexRequest);
         } else {
-            Map<String, Object> parameters =  new HashMap<>();
-            parameters.put("source", XContentHelper.convertToMap(new BytesArray(converter.write(event, true)), false, XContentType.JSON).v2());
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("source", XContentHelper.convertToMap(new BytesArray(converter.write(event, true, false)), false, XContentType.JSON).v2());
             parameters.put("event_id", event.id);
             bulkProcessor.add(createUpdateRequest(event.id)
                     .script(new Script(ScriptType.STORED, null, "etm_update-event", parameters))
@@ -48,5 +48,5 @@ public class HttpTelemetryEventPersister extends AbstractElasticTelemetryEventPe
                 setCorrelationOnParent(event);
             }
         }
-	}
+    }
 }

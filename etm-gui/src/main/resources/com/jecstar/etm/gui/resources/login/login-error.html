@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>Enterprise Telemetry Monitor - Login</title>
-  </head>
-  <body>
-  <script type="text/javascript">
+</head>
+<body>
+<script type="text/javascript">
   (function(){
 	var contextRoot = '/gui/';  
 	var ix = window.location.pathname.indexOf(contextRoot);
@@ -27,34 +27,38 @@
   	styles.href =  path + 'styles/bootstrap.min.css';
   	document.getElementsByTagName('head')[0].appendChild(styles);
   })();
-  </script>
-    <div class="container" style="margin-top:0.5em;">
-        <div class="jumbotron">
-            <h4>ETM requires you to login. Please fill in your username and password below.</h4>
-            <div id="errorBox" class="alert alert-danger" role="alert">
-                Unknown username or invalid password.
-            </div>
-            <form id="loginForm" method="post" action="j_security_check">            
-                <fieldset class="form-group">
-                   <label for="j_username" class="control-label">Username</label>
-                   <input type="text" id="j_username" name="j_username" class="form-control" required="required" autocomplete="off" autofocus="autofocus"/> 
-                </fieldset>            
-                <fieldset class="form-group">
-                   <label for="j_password" class="control-label">Password</label>
-                   <input type="password" id="j_password" name="j_password" class="form-control" required="required" autocomplete="off" /> 
-                </fieldset>
-                <fieldset class="form-group">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" id="check-show-password" class="custom-control-input" onclick="toggelPasswordVisibility()">
-                        <label class="custom-control-label" for="check-show-password">Show password</label>
-                    </div>
-                </fieldset>
-                <input type="submit" class="btn btn-primary" value="Login" />
-            </form>
+
+</script>
+<div class="container" style="margin-top:0.5em;">
+    <div class="jumbotron">
+        <h4>ETM requires you to login. Please fill in your username and password below.</h4>
+        <div id="errorBox" class="alert alert-danger" role="alert">
+            Unknown username or invalid password.
         </div>
+        <form id="loginForm" method="post" action="j_security_check">
+            <fieldset class="form-group">
+                <label for="j_username" class="control-label">Username</label>
+                <input type="text" id="j_username" name="j_username" class="form-control" required="required"
+                       autocomplete="off" autofocus="autofocus"/>
+            </fieldset>
+            <fieldset class="form-group">
+                <label for="j_password" class="control-label">Password</label>
+                <input type="password" id="j_password" name="j_password" class="form-control" required="required"
+                       autocomplete="off"/>
+            </fieldset>
+            <fieldset class="form-group">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" id="check-show-password" class="custom-control-input"
+                           onclick="toggelPasswordVisibility()">
+                    <label class="custom-control-label" for="check-show-password">Show password</label>
+                </div>
+            </fieldset>
+            <input type="submit" class="btn btn-primary" value="Login"/>
+        </form>
     </div>
-  </body>
-  <script type="text/javascript">
+</div>
+</body>
+<script type="text/javascript">
   function toggelPasswordVisibility() {
   if (document.querySelector('#check-show-password').checked) {
     document.querySelector('#j_password').setAttribute("type", "text");
@@ -62,6 +66,7 @@
     document.querySelector('#j_password').setAttribute("type", "password");
   }
   }  
-  </script>
-  
+
+</script>
+
 </html>

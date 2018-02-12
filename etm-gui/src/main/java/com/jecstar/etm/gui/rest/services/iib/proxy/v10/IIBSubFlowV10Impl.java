@@ -13,38 +13,38 @@ import java.util.List;
 
 public class IIBSubFlowV10Impl implements IIBSubFlow {
 
-	private final SubFlowProxy subFlow;
+    private final SubFlowProxy subFlow;
 
-	IIBSubFlowV10Impl(SubFlowProxy subFlowProxy) {
-		this.subFlow = subFlowProxy;
-	}
-	
-	public String getName() {
-		try {
-			return this.subFlow.getName();
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
-	
-	public List<IIBNode> getNodes() {
-		try {
-			List<IIBNode> nodes = new ArrayList<>();
-			Enumeration<Node> nodeProxy = this.subFlow.getNodes();
-			while (nodeProxy.hasMoreElements()) {
-				nodes.add(new IIBNode(nodeProxy.nextElement()));
-			}
-			return nodes;
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}		
-	}
+    IIBSubFlowV10Impl(SubFlowProxy subFlowProxy) {
+        this.subFlow = subFlowProxy;
+    }
 
-	public String getVersion() {
-		try {
-			return this.subFlow.getVersion();
-		} catch (ConfigManagerProxyPropertyNotInitializedException e) {
-			throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-		}
-	}
+    public String getName() {
+        try {
+            return this.subFlow.getName();
+        } catch (ConfigManagerProxyPropertyNotInitializedException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    public List<IIBNode> getNodes() {
+        try {
+            List<IIBNode> nodes = new ArrayList<>();
+            Enumeration<Node> nodeProxy = this.subFlow.getNodes();
+            while (nodeProxy.hasMoreElements()) {
+                nodes.add(new IIBNode(nodeProxy.nextElement()));
+            }
+            return nodes;
+        } catch (ConfigManagerProxyPropertyNotInitializedException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    public String getVersion() {
+        try {
+            return this.subFlow.getVersion();
+        } catch (ConfigManagerProxyPropertyNotInitializedException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
 }

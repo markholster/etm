@@ -6,18 +6,18 @@ apply plugin: 'java'
 apply plugin: 'com.github.jacobono.jaxb'
 
 dependencies {
-	jaxb 'com.sun.xml.bind:jaxb-xjc:2.2.7-b41'
-	jaxb 'com.sun.xml.bind:jaxb-impl:2.2.7-b41'
-	jaxb 'javax.xml.bind:jaxb-api:2.2.7'
+    jaxb 'com.sun.xml.bind:jaxb-xjc:2.2.7-b41'
+    jaxb 'com.sun.xml.bind:jaxb-impl:2.2.7-b41'
+    jaxb 'javax.xml.bind:jaxb-api:2.2.7'
 
     compile project(":etm-processor"), dep_resteasyJaxrs
     compile files('../lib/com.ibm.mq.allclient.jar')
 }
 
 jaxb {
-   xjc {
-     xsdDir = "$name/src/main/xsd"
-     generatePackage = "com.jecstar.etm.processor.ibmmq.event" 
-   }
+    xjc {
+        xsdDir = "$name/src/main/xsd"
+        generatePackage = "com.jecstar.etm.processor.ibmmq.event"
+    }
 }
 

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import static com.codahale.metrics.MetricRegistry.name;
 
 public class MemoryUsageMetricSet implements MetricSet {
-	
+
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]+");
 
     private final MemoryMXBean mxBean;
@@ -23,7 +23,7 @@ public class MemoryUsageMetricSet implements MetricSet {
 
     public MemoryUsageMetricSet() {
         this(ManagementFactory.getMemoryMXBean(),
-             ManagementFactory.getMemoryPoolMXBeans());
+                ManagementFactory.getMemoryPoolMXBeans());
     }
 
     private MemoryUsageMetricSet(MemoryMXBean mxBean,
@@ -86,12 +86,12 @@ public class MemoryUsageMetricSet implements MetricSet {
 
             gauges.put(name("mem", poolName, "usage"),
                     new RatioGauge() {
-                           @Override
-                           protected Ratio getRatio() {
-                               MemoryUsage usage = pool.getUsage();
-                               return Ratio.of(usage.getUsed(),
-                                       usage.getMax() == -1 ? usage.getCommitted() : usage.getMax());
-                           }
+                        @Override
+                        protected Ratio getRatio() {
+                            MemoryUsage usage = pool.getUsage();
+                            return Ratio.of(usage.getUsed(),
+                                    usage.getMax() == -1 ? usage.getCommitted() : usage.getMax());
+                        }
                     });
 
             gauges.put(name("mem", poolName, "max"), (Gauge<Long>) () -> pool.getUsage().getMax());

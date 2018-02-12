@@ -1,5 +1,5 @@
 plugins {
-	id 'base'
+    id 'base'
 }
 
 task copyDockerResources(type: Copy) {
@@ -9,10 +9,10 @@ task copyDockerResources(type: Copy) {
 }
 
 build {
-	doLast {
-		File dockerFile = file(buildDir.getName() +  '/docker/Dockerfile')
-		dockerFile.text = file('src/main/docker/Dockerfile.template').text.replace('${etm-version}', project.version)
-	}
+    doLast {
+        File dockerFile = file(buildDir.getName() + '/docker/Dockerfile')
+        dockerFile.text = file('src/main/docker/Dockerfile.template').text.replace('${etm-version}', project.version)
+    }
 }
 
 build.dependsOn copyDockerResources

@@ -140,9 +140,10 @@ public class DashboardService extends AbstractIndexMetadataService {
 
     /**
      * Add a graph to an entity.
+     *
      * @param groupName The name of the group to add the graph to. When <code>null</code> the graph will be stored on the user.
      * @param graphName The name of the graph.
-     * @param json The graph data.
+     * @param json      The graph data.
      * @return The json result of the addition.
      */
     private String addGraph(String groupName, String graphName, String json) {
@@ -196,6 +197,7 @@ public class DashboardService extends AbstractIndexMetadataService {
 
     /**
      * Deletes a graph.
+     *
      * @param groupName The name of the group to delete the graph from. When <code>null</code> the graph will be deleted from the user.
      * @param graphName The name of the graph to delete.
      * @return The json result of the delete.
@@ -323,7 +325,7 @@ public class DashboardService extends AbstractIndexMetadataService {
     /**
      * Returns a dashboard of a user or group.
      *
-     * @param groupName The name of the group to query for dashboards. When <code>null</code> the user dashboard is returned.
+     * @param groupName     The name of the group to query for dashboards. When <code>null</code> the user dashboard is returned.
      * @param dashboardName The name of the dashboard to return.
      * @return The dashboard of a user or group.
      */
@@ -366,9 +368,10 @@ public class DashboardService extends AbstractIndexMetadataService {
 
     /**
      * Add a dashboard to an entity.
-     * @param groupName The name of the group to add the dashboard to. When <code>null</code> the dashboard will be stored on the user.
+     *
+     * @param groupName     The name of the group to add the dashboard to. When <code>null</code> the dashboard will be stored on the user.
      * @param dashboardName The name of the dashboard.
-     * @param json The dashboard data.
+     * @param json          The dashboard data.
      * @return The json result of the addition.
      */
     private String addDashboard(String groupName, String dashboardName, String json) {
@@ -424,7 +427,8 @@ public class DashboardService extends AbstractIndexMetadataService {
 
     /**
      * Deletes a dashboard.
-     * @param groupName The name of the group to delete the dashboard from. When <code>null</code> the dashboard will be deleted from the user.
+     *
+     * @param groupName     The name of the group to delete the dashboard from. When <code>null</code> the dashboard will be deleted from the user.
      * @param dashboardName The name of the dashboard to delete.
      * @return The json result of the delete.
      */
@@ -474,9 +478,10 @@ public class DashboardService extends AbstractIndexMetadataService {
 
     /**
      * Returns the live data of a graph.
-     * @param groupName The name of the group to that holds the dashboard. When <code>null</code> the dashboard will be retrieved from the user.
+     *
+     * @param groupName     The name of the group to that holds the dashboard. When <code>null</code> the dashboard will be retrieved from the user.
      * @param dashboardName The name of the dashboard to get the data from.
-     * @param graphId The id of the graph.
+     * @param graphId       The id of the graph.
      * @return The live graph data.
      */
     private String getGraphData(String groupName, String dashboardName, String graphId) {
@@ -533,7 +538,7 @@ public class DashboardService extends AbstractIndexMetadataService {
     /**
      * Loads the "graphs" attribute from an entity.
      *
-     * @param groupName The name of the group to load the graphs from. If <code>null</code> the graphs of the current user will be loaded.
+     * @param groupName  The name of the group to load the graphs from. If <code>null</code> the graphs of the current user will be loaded.
      * @param attributes The attributes to return.
      * @return The entity with the "graphs" attribute.
      */

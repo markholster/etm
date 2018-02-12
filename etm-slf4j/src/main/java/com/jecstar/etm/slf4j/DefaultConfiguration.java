@@ -7,65 +7,65 @@ import java.util.TreeMap;
 
 public class DefaultConfiguration implements Configuration {
 
-	private final List<String> endpointUrls = new ArrayList<>();
-	private final TreeMap<String, String> loggers = new TreeMap<>();
-	
-	public DefaultConfiguration() {
-	}
-	
-	@Override
-	public List<String> getEndpointUrls() {
-		return this.endpointUrls;
-	}
+    private final List<String> endpointUrls = new ArrayList<>();
+    private final TreeMap<String, String> loggers = new TreeMap<>();
 
-	@Override
-	public long getPushInterval() {
-		return 5000;
-	}
+    public DefaultConfiguration() {
+    }
 
-	@Override
-	public int getMaxRequestsPerBatch() {
-		return 1000;
-	}
+    @Override
+    public List<String> getEndpointUrls() {
+        return this.endpointUrls;
+    }
 
-	@Override
-	public int getNumberOfWorkers() {
-		return 1;
-	}
+    @Override
+    public long getPushInterval() {
+        return 5000;
+    }
 
-	@Override
-	public String getRootLogLevel() {
-		return "INFO";
-	}
+    @Override
+    public int getMaxRequestsPerBatch() {
+        return 1000;
+    }
 
-	@Override
-	public TreeMap<String, String> getLoggers() {
-		return this.loggers;
-	}
+    @Override
+    public int getNumberOfWorkers() {
+        return 1;
+    }
 
-	@Override
-	public String getApplicationName() {
-		return null;
-	}
+    @Override
+    public String getRootLogLevel() {
+        return "INFO";
+    }
 
-	@Override
-	public String getApplicationVersion() {
-		return null;
-	}
+    @Override
+    public TreeMap<String, String> getLoggers() {
+        return this.loggers;
+    }
 
-	@Override
-	public String getApplicationInstance() {
-		return null;
-	}
+    @Override
+    public String getApplicationName() {
+        return null;
+    }
 
-	@Override
-	public String getPrincipalName() {
-		return null;
-	}
+    @Override
+    public String getApplicationVersion() {
+        return null;
+    }
 
-	@Override
-	public InetAddress getHostAddress() {
-		return null;
-	}
+    @Override
+    public String getApplicationInstance() {
+        return null;
+    }
+
+    @Override
+    public String getPrincipalName() {
+        return null;
+    }
+
+    @Override
+    public InetAddress getHostAddress() {
+        return null;
+    }
 
 }

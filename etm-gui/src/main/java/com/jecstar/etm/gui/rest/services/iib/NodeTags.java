@@ -2,18 +2,18 @@ package com.jecstar.etm.gui.rest.services.iib;
 
 public interface NodeTags {
 
-	String getNameTag();
+    String getNameTag();
 
-	String getHostTag();
+    String getHostTag();
 
-	String getPortTag();
+    String getPortTag();
 
-	String getUsernameTag();
+    String getUsernameTag();
 
-	String getPasswordTag();
+    String getPasswordTag();
 
-	String getQueueManagerTag();
+    String getQueueManagerTag();
 
-	String getChannelTag();
+    String getChannelTag();
 
 }

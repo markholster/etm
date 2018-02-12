@@ -1,17 +1,17 @@
 apply plugin: "java"
 
 dependencies {
-    compile project(":etm-gui"), 
-    		project(":etm-processor-rest"), 
-    		project(":etm-processor-ibmmq"),
-			project(":etm-processor-jms"),
-			project(":etm-processor-kafka"),
-    		dep_log4jToSlf4j, 
-    		dep_resteasyJaxrs, 
-    		dep_resteasyJacksonProvider, 
-    		dep_resteasyWadl,
-    		dep_snakeyaml, 
-    		dep_undertowServlet,
-    		dep_xpackTransportCclient
+    compile project(":etm-gui"),
+            project(":etm-processor-rest"),
+            project(":etm-processor-ibmmq"),
+            project(":etm-processor-jms"),
+            project(":etm-processor-kafka"),
+            dep_log4jToSlf4j,
+            dep_resteasyJaxrs,
+            dep_resteasyJacksonProvider,
+            dep_resteasyWadl,
+            dep_snakeyaml,
+            dep_undertowServlet,
+            dep_xpackTransportCclient
     testCompile dep_junit
 }

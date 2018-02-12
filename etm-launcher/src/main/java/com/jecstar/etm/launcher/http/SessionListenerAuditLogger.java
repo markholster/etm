@@ -23,82 +23,82 @@ import java.time.format.DateTimeFormatter;
 
 class SessionListenerAuditLogger implements SessionListener {
 
-	private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
+    private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 
-	private final Client client;
-	private final EtmConfiguration etmConfiguration;
-	private final AuditLogConverter<String, LogoutAuditLog> auditLogConverter = new LogoutAuditLogConverterJsonImpl();
+    private final Client client;
+    private final EtmConfiguration etmConfiguration;
+    private final AuditLogConverter<String, LogoutAuditLog> auditLogConverter = new LogoutAuditLogConverterJsonImpl();
 
-	public SessionListenerAuditLogger(Client client, EtmConfiguration etmConfiguration) {
-		this.client = client;
-		this.etmConfiguration = etmConfiguration;
-	}
+    public SessionListenerAuditLogger(Client client, EtmConfiguration etmConfiguration) {
+        this.client = client;
+        this.etmConfiguration = etmConfiguration;
+    }
 
-	private void logLogout(String id, boolean expired) {
-		ZonedDateTime now = ZonedDateTime.now();
-		LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
-				.setPrincipalId(id).setExpired(expired);
-		client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
-				ElasticsearchLayout.ETM_DEFAULT_TYPE)
-				.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-				.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-				.setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON).execute();
-	}
+    private void logLogout(String id, boolean expired) {
+        ZonedDateTime now = ZonedDateTime.now();
+        LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
+                .setPrincipalId(id).setExpired(expired);
+        client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
+                ElasticsearchLayout.ETM_DEFAULT_TYPE)
+                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+                .setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON).execute();
+    }
 
-	private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
-		if (-1 == etmConfiguration.getWaitForActiveShards()) {
-			return ActiveShardCount.ALL;
-		} else if (0 == etmConfiguration.getWaitForActiveShards()) {
-			return ActiveShardCount.NONE;
-		}
-		return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
-	}
+    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
+        if (-1 == etmConfiguration.getWaitForActiveShards()) {
+            return ActiveShardCount.ALL;
+        } else if (0 == etmConfiguration.getWaitForActiveShards()) {
+            return ActiveShardCount.NONE;
+        }
+        return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
+    }
 
-	@Override
-	public void sessionCreated(Session session, HttpServerExchange exchange) {
-	}
+    @Override
+    public void sessionCreated(Session session, HttpServerExchange exchange) {
+    }
 
-	@Override
-	public void sessionDestroyed(Session session, HttpServerExchange exchange, SessionDestroyedReason reason) {
-		String id = null;
-		if (exchange != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
-			id = ((EtmPrincipal)exchange.getSecurityContext().getAuthenticatedAccount().getPrincipal()).getId();
-		} else {
-			AuthenticatedSession authenticatedSession = (AuthenticatedSession) session.getAttribute(CachedAuthenticatedSessionHandler.ATTRIBUTE_NAME);
-			if (authenticatedSession != null) {
-				id = ((EtmPrincipal)authenticatedSession.getAccount().getPrincipal()).getId();
-			}
-		}
-		if (id == null) {
-			return;
-		}
-		switch (reason) {
-		case INVALIDATED:
-			logLogout(id, false);
-			break;
-		case TIMEOUT:
-			logLogout(id, true);
-			break;
-		case UNDEPLOY:
-			logLogout(id, false);
-			break;
-		}
-	}
+    @Override
+    public void sessionDestroyed(Session session, HttpServerExchange exchange, SessionDestroyedReason reason) {
+        String id = null;
+        if (exchange != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
+            id = ((EtmPrincipal) exchange.getSecurityContext().getAuthenticatedAccount().getPrincipal()).getId();
+        } else {
+            AuthenticatedSession authenticatedSession = (AuthenticatedSession) session.getAttribute(CachedAuthenticatedSessionHandler.ATTRIBUTE_NAME);
+            if (authenticatedSession != null) {
+                id = ((EtmPrincipal) authenticatedSession.getAccount().getPrincipal()).getId();
+            }
+        }
+        if (id == null) {
+            return;
+        }
+        switch (reason) {
+            case INVALIDATED:
+                logLogout(id, false);
+                break;
+            case TIMEOUT:
+                logLogout(id, true);
+                break;
+            case UNDEPLOY:
+                logLogout(id, false);
+                break;
+        }
+    }
 
-	@Override
-	public void attributeAdded(Session session, String name, Object value) {
-	}
+    @Override
+    public void attributeAdded(Session session, String name, Object value) {
+    }
 
-	@Override
-	public void attributeUpdated(Session session, String name, Object newValue, Object oldValue) {
-	}
+    @Override
+    public void attributeUpdated(Session session, String name, Object newValue, Object oldValue) {
+    }
 
-	@Override
-	public void attributeRemoved(Session session, String name, Object oldValue) {
-	}
+    @Override
+    public void attributeRemoved(Session session, String name, Object oldValue) {
+    }
 
-	@Override
-	public void sessionIdChanged(Session session, String oldSessionId) {
-	}
+    @Override
+    public void sessionIdChanged(Session session, String oldSessionId) {
+    }
 
 }

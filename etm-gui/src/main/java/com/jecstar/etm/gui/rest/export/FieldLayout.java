@@ -21,7 +21,9 @@ public class FieldLayout {
         return this.name;
     }
 
-    public String getField() { return this.field; }
+    public String getField() {
+        return this.field;
+    }
 
     public FieldType getType() {
         return this.type;

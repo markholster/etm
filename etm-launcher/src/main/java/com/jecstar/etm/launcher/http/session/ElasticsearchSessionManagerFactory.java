@@ -7,18 +7,18 @@ import io.undertow.servlet.api.SessionManagerFactory;
 import org.elasticsearch.client.Client;
 
 public class ElasticsearchSessionManagerFactory implements SessionManagerFactory {
-	
-	private final Client client;
-	private final EtmConfiguration etmConfiguration;
 
-	public ElasticsearchSessionManagerFactory(Client client, EtmConfiguration etmConfiguration) {
-		this.client = client;
-		this.etmConfiguration = etmConfiguration;
-	}
+    private final Client client;
+    private final EtmConfiguration etmConfiguration;
 
-	@Override
-	public SessionManager createSessionManager(Deployment deployment) {
-		return new ElasticsearchSessionManager(this.client, deployment.getDeploymentInfo().getSessionIdGenerator(), deployment.getDeploymentInfo().getDeploymentName(), this.etmConfiguration);
-	}
+    public ElasticsearchSessionManagerFactory(Client client, EtmConfiguration etmConfiguration) {
+        this.client = client;
+        this.etmConfiguration = etmConfiguration;
+    }
+
+    @Override
+    public SessionManager createSessionManager(Deployment deployment) {
+        return new ElasticsearchSessionManager(this.client, deployment.getDeploymentInfo().getSessionIdGenerator(), deployment.getDeploymentInfo().getDeploymentName(), this.etmConfiguration);
+    }
 
 }
