@@ -124,4 +124,53 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
         return "max_dashboard_count";
     }
 
+    @Override
+    public String getSearchHistoryTag() {
+        return "search_history";
+    }
+
+    @Override
+    public String getTimestampTag() {
+        return "timestamp";
+    }
+
+    @Override
+    public String getQueryTag() {
+        return "query";
+    }
+
+    @Override
+    public String getTypesTag() {
+        return "types";
+    }
+
+    @Override
+    public String getFieldsTag() {
+        return "fields";
+    }
+
+    @Override
+    public String getResultsPerPageTag() {
+        return "results_per_page";
+    }
+
+    @Override
+    public String getSortFieldTag() {
+        return "sort_field";
+    }
+
+    @Override
+    public String getSortOrderTag() {
+        return "sort_order";
+    }
+
+    @Override
+    public String getStartTimeTag() {
+        return "start_time";
+    }
+
+    @Override
+    public String getEndTimeTag() {
+        return "end_time";
+    }
 }

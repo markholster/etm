@@ -50,5 +50,24 @@ public interface EtmConfigurationTags {
 
     String getMaxDashboardCountTag();
 
+    // Search history tags
+    String getSearchHistoryTag();
 
+    String getTimestampTag();
+
+    String getQueryTag();
+
+    String getTypesTag();
+
+    String getFieldsTag();
+
+    String getResultsPerPageTag();
+
+    String getSortFieldTag();
+
+    String getSortOrderTag();
+
+    String getStartTimeTag();
+
+    String getEndTimeTag();
 }

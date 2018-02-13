@@ -11,7 +11,9 @@ import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEven
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
+import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationTags;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
@@ -56,6 +58,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
     private final MetricConverterTags metricTags = new MetricConverterTagsJsonImpl();
+    private final EtmConfigurationTags configurationTags = new EtmConfigurationTagsJsonImpl();
     private final AuditLogTags auditTags = new AuditLogTagsJsonImpl();
     private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
@@ -232,7 +235,8 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 .setPatterns(Collections.singletonList(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setSettings(Settings.builder()
                         .put("number_of_shards", 1)
-                        .put("number_of_replicas", 0))
+                        .put("number_of_replicas", replicasPerIndex))
+                .addMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEtmConfigurationMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
                 .get();
         if (create) {
             insertDefaultEtmConfiguration(this.elasticClient);
@@ -246,7 +250,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 .setPatterns(Collections.singletonList(ElasticsearchLayout.STATE_INDEX_NAME))
                 .setSettings(Settings.builder()
                         .put("number_of_shards", 1)
-                        .put("number_of_replicas", 0))
+                        .put("number_of_replicas", replicasPerIndex))
                 .addMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEtmStateMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
                 .get();
     }
@@ -280,15 +284,24 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + "}";
     }
 
-
-    private String createEtmStateMapping(String name) {
+    private String createEtmConfigurationMapping(String name) {
         return "{ \"" + name + "\": "
                 + "{\"dynamic_templates\": ["
-                + "{ \"" + this.sessionTags.getLastAccessedTag() + "\": { \"match\": \"" + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"path_match\": \"" + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"string_as_keyword\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + "]}"
                 + "}";
     }
 
+    private String createEtmStateMapping(String name) {
+
+        return "{ \"" + name + "\": "
+                + "{\"dynamic_templates\": ["
+                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"match\": \"" + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + "]}"
+                + "}";
+    }
 
     private void insertDefaultEtmConfiguration(Client elasticClient) {
         elasticClient.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)

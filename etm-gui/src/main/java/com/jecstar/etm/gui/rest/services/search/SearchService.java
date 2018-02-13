@@ -20,6 +20,8 @@ import com.jecstar.etm.server.core.domain.audit.converter.json.GetEventAuditLogC
 import com.jecstar.etm.server.core.domain.audit.converter.json.QueryAuditLogConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationTags;
+import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
@@ -68,6 +70,7 @@ public class SearchService extends AbstractIndexMetadataService {
 
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
     private final AuditLogTags auditLogTags = new AuditLogTagsJsonImpl();
+    private final EtmConfigurationTags configurationTags = new EtmConfigurationTagsJsonImpl();
     private final AuditLogConverter<String, QueryAuditLog> queryAuditLogConverter = new QueryAuditLogConverterJsonImpl();
     private final AuditLogConverter<String, GetEventAuditLog> getEventAuditLogConverter = new GetEventAuditLogConverterJsonImpl();
 
@@ -327,15 +330,15 @@ public class SearchService extends AbstractIndexMetadataService {
     private void writeQueryHistory(long timestamp, SearchRequestParameters parameters, EtmPrincipal etmPrincipal, int history_size) {
         Map<String, Object> scriptParams = new HashMap<>();
         Map<String, Object> query = new HashMap<>();
-        query.put("timestamp", timestamp);
-        query.put("query", parameters.getQueryString());
-        query.put("types", parameters.getTypes());
-        query.put("fields", parameters.getFieldsLayout());
-        query.put("results_per_page", parameters.getMaxResults());
-        query.put("sort_field", parameters.getSortField());
-        query.put("sort_order", parameters.getSortOrder());
-        query.put("start_time", parameters.getStartTime());
-        query.put("end_time", parameters.getEndTime());
+        query.put(this.configurationTags.getTimestampTag(), timestamp);
+        query.put(this.configurationTags.getQueryTag(), parameters.getQueryString());
+        query.put(this.configurationTags.getTypesTag(), parameters.getTypes());
+        query.put(this.configurationTags.getFieldsTag(), parameters.getFieldsLayout());
+        query.put(this.configurationTags.getResultsPerPageTag(), parameters.getMaxResults());
+        query.put(this.configurationTags.getSortFieldTag(), parameters.getSortField());
+        query.put(this.configurationTags.getSortOrderTag(), parameters.getSortOrder());
+        query.put(this.configurationTags.getStartTimeTag(), parameters.getStartTime());
+        query.put(this.configurationTags.getEndTimeTag(), parameters.getEndTime());
 
         scriptParams.put("query", query);
         scriptParams.put("history_size", history_size);
