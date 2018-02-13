@@ -1,4 +1,4 @@
-package com.jecstar.etm.launcher.migrations;
+package com.jecstar.etm.launcher.migrations.v3;
 
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
@@ -6,6 +6,7 @@ import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
+import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
@@ -40,6 +41,8 @@ import java.util.function.Function;
  * <p>
  * In Elasticsearch 7.0 and later the _type field will be removed. This class migrates all used _types to the default one to be prepared for Elasticsearch 7.0.
  * Also the users and groups are migrated to the new roles.
+ *
+ * @since 3.0.0
  */
 public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
 

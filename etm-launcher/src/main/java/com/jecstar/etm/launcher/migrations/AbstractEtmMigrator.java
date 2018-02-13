@@ -28,7 +28,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
      * @param total     The total number of tasks to be executed.
      * @return The last print percentage.
      */
-    long printPercentageWhenChanged(long lastPrint, long current, long total) {
+    protected long printPercentageWhenChanged(long lastPrint, long current, long total) {
         long percentage = Math.round(current * 100.0 / total);
         if (percentage > lastPrint) {
             if (percentage == 100) {
@@ -104,15 +104,15 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         System.out.println("Done moving temporary indices to permanent indices.");
     }
 
-    protected class FailureDetectingBulkProcessorListener implements BulkProcessor.Listener {
+    public class FailureDetectingBulkProcessorListener implements BulkProcessor.Listener {
 
         private boolean hasFailures = false;
 
-        void reset() {
+        public void reset() {
             this.hasFailures = false;
         }
 
-        boolean hasFailures() {
+        public boolean hasFailures() {
             return this.hasFailures;
         }
 

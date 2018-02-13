@@ -1,9 +1,10 @@
-package com.jecstar.etm.launcher.migrations;
+package com.jecstar.etm.launcher.migrations.v3;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
+import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import org.elasticsearch.action.DocWriteRequest;
@@ -25,6 +26,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+/**
+ * Class that migrates the etm_configuration to a new mapping.
+ *
+ * @since 3.0.1
+ */
 public class EtmConfigurationTemplateMigrator extends AbstractEtmMigrator {
 
     private final JsonConverter jsonConverter = new JsonConverter();
