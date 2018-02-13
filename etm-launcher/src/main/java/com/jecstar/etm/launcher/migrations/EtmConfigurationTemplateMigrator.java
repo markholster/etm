@@ -108,8 +108,8 @@ public class EtmConfigurationTemplateMigrator extends AbstractEtmMigrator {
         indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, client, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
         indexTemplateCreator.reinitialize();
 
-        reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
         deleteIndices(this.client, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
         deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
     }
 
