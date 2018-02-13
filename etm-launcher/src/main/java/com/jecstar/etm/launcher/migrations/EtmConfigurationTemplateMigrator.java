@@ -2,6 +2,8 @@ package com.jecstar.etm.launcher.migrations;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
+import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import org.elasticsearch.action.DocWriteRequest;
@@ -101,8 +103,13 @@ public class EtmConfigurationTemplateMigrator extends AbstractEtmMigrator {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
         }
-        deleteIndices(this.client, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        // Reinitialize template
+        ElasticsearchIndexTemplateCreator indexTemplateCreator = new ElasticsearchIndexTemplateCreator(client);
+        indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, client, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
+        indexTemplateCreator.reinitialize();
+
         reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
+        deleteIndices(this.client, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
         deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
     }
 

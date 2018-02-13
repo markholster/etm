@@ -234,7 +234,6 @@ class Launcher {
         etmMigrator = new EtmConfigurationTemplateMigrator(client);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
-            reinitialze = true;
         }
         return reinitialze;
     }
