@@ -14,8 +14,6 @@ import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
@@ -130,84 +128,17 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
         }
-        deleteOldIndices(this.client);
-        reindexTemporaryIndicesToNew(this.client, listener);
-        deleteTemporaryIndices(this.client);
-    }
-
-    private void deleteOldIndices(Client client) {
-        System.out.println("Start removing old indices.");
-
+        // Reinitialize template
         ElasticsearchIndexTemplateCreator indexTemplateCreator = new ElasticsearchIndexTemplateCreator(client);
         indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, client, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
         indexTemplateCreator.reinitialize();
 
-        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(
-                ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
+        deleteIndices(this.client, "old indices", ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
                 ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL,
-                ElasticsearchLayout.CONFIGURATION_INDEX_NAME
-        ).get();
-        long lastPrint = 0, current = 0;
-        long total = indexResponse.getIndices().length;
-        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
-            for (String index : indexResponse.getIndices()) {
-                client.admin().indices().prepareDelete(index).get();
-                lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
-            }
-            printPercentageWhenChanged(lastPrint, ++current, total);
-        }
-        System.out.println("Done removing old indices.");
-    }
-
-    private void reindexTemporaryIndicesToNew(Client client, FailureDetectingBulkProcessorListener listener) {
-        System.out.println("Start moving temporary indices to permanent indices.");
-        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(this.migrationIndexPrefix + "*").get();
-        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
-            for (String index : indexResponse.getIndices()) {
-                System.out.println("Migrating index '" + index + "'.");
-                final BulkProcessor bulkProcessor = createBulkProcessor(listener);
-                SearchRequestBuilder searchRequestBuilder = client.prepareSearch(index)
-                        .setQuery(QueryBuilders.matchAllQuery())
-                        .setTimeout(TimeValue.timeValueSeconds(30))
-                        .setFetchSource(true);
-                ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
-                long total = searchHits.getNumberOfHits();
-                long current = 0, lastPrint = 0;
-                for (SearchHit searchHit : searchHits) {
-                    bulkProcessor.add(new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                            .setIndex(searchHit.getIndex().substring(this.migrationIndexPrefix.length()))
-                            .setType(searchHit.getType())
-                            .setId(searchHit.getId())
-                            .setSource(searchHit.getSourceAsMap())
-                            .request());
-                    lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
-                }
-                bulkProcessor.flush();
-                try {
-                    bulkProcessor.awaitClose(10, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                printPercentageWhenChanged(lastPrint, current, total);
-            }
-        }
-        System.out.println("Done moving temporary indices to permanent indices.");
-    }
-
-    private void deleteTemporaryIndices(Client client) {
-        System.out.println("Start removing temporary indices.");
-        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(this.migrationIndexPrefix + "*").get();
-        long lastPrint = 0, current = 0;
-        long total = indexResponse.getIndices().length;
-        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
-            for (String index : indexResponse.getIndices()) {
-                client.admin().indices().prepareDelete(index).get();
-                lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
-            }
-            printPercentageWhenChanged(lastPrint, ++current, total);
-        }
-        System.out.println("Done removing temporary indices.");
+                ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
+        deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
     }
 
     private boolean migrateMetrics(Client client, FailureDetectingBulkProcessorListener listener) {
@@ -215,7 +146,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
                 null,
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 new DefaultIndexRequestCreator(client, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE, null)
         );
@@ -239,7 +170,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.STATE_INDEX_NAME,
                 null,
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 requestBuilder
         );
@@ -261,7 +192,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL,
                 null,
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 requestBuilder
         );
@@ -272,7 +203,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "license",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -322,7 +253,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "user",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 requestBuilder
         );
@@ -348,7 +279,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "group",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 requestBuilder
         );
@@ -359,7 +290,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "parser",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -374,7 +305,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "endpoint",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -389,7 +320,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "ldap",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -404,7 +335,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "node",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -419,7 +350,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "iib-node",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 new DefaultIndexRequestCreator(
                         client,
@@ -453,7 +384,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "graph",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 requestBuilder
         );
@@ -492,7 +423,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "dashboard",
                 client,
-                createBulkProcessor(listener),
+                createBulkProcessor(client, listener),
                 listener,
                 requestBuilder
         );
@@ -564,11 +495,6 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         }
     }
 
-    private BulkProcessor createBulkProcessor(BulkProcessor.Listener listener) {
-        return BulkProcessor.builder(this.client, listener).setBulkActions(20).build();
-    }
-
-
     private class DefaultIndexRequestCreator implements Function<SearchHit, DocWriteRequest> {
 
         private final Client client;
@@ -597,38 +523,6 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 builder.setId(searchHit.getId());
             }
             return builder.request();
-        }
-    }
-
-    private class FailureDetectingBulkProcessorListener implements BulkProcessor.Listener {
-
-        private boolean hasFailures = false;
-
-        void reset() {
-            this.hasFailures = false;
-        }
-
-        boolean hasFailures() {
-            return this.hasFailures;
-        }
-
-        @Override
-        public void beforeBulk(long executionId, BulkRequest request) {
-
-        }
-
-        @Override
-        public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-            if (response.hasFailures()) {
-                this.hasFailures = true;
-                System.out.println(response.buildFailureMessage());
-            }
-        }
-
-        @Override
-        public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-            this.hasFailures = true;
-            failure.printStackTrace();
         }
     }
 }

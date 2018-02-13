@@ -8,6 +8,7 @@ import com.jecstar.etm.launcher.background.LicenseUpdater;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
+import com.jecstar.etm.launcher.migrations.EtmConfigurationTemplateMigrator;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
 import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
 import com.jecstar.etm.launcher.migrations.ReindexToSingleTypeMigration;
@@ -224,12 +225,18 @@ class Launcher {
      * @return <code>true</code> when the index templates need to be reinitialized, <code>false</code> otherwise.
      */
     private boolean executeDatabaseMigrations(Client client) {
+        boolean reinitialze = false;
         EtmMigrator etmMigrator = new ReindexToSingleTypeMigration(client);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
-            return true;
+            reinitialze = true;
         }
-        return false;
+        etmMigrator = new EtmConfigurationTemplateMigrator(client);
+        if (etmMigrator.shouldBeExecuted()) {
+            etmMigrator.migrate();
+            reinitialze = true;
+        }
+        return reinitialze;
     }
 
     private void initializeElasticsearchClient(Configuration configuration) {
