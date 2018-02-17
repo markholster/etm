@@ -40,7 +40,7 @@ public class License {
             String license = new String(decryptedBytes);
             String[] split = license.split("_:_");
             if (split.length != 4) {
-                throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
+                throw new EtmException(EtmException.INVALID_LICENSE_KEY);
             }
             this.owner = split[0];
             this.expiryDate = Instant.ofEpochMilli(Long.valueOf(split[1]));
@@ -48,7 +48,7 @@ public class License {
             this.maxSizePerDay = Long.valueOf(split[3]);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException
                 | IllegalBlockSizeException | BadPaddingException | IllegalArgumentException e) {
-            throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION, e);
+            throw new EtmException(EtmException.INVALID_LICENSE_KEY, e);
         }
     }
 

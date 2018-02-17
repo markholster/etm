@@ -50,6 +50,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
     }
 
     @Override
+    public String getDisplayNameTag() {
+        return "display_name";
+    }
+
+    @Override
     public String getPasswordHashTag() {
         return "password_hash";
     }

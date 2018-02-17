@@ -20,6 +20,8 @@ public interface EtmPrincipalTags {
 
     String getNameTag();
 
+    String getDisplayNameTag();
+
     String getPasswordHashTag();
 
     String getChangePasswordOnLogonTag();

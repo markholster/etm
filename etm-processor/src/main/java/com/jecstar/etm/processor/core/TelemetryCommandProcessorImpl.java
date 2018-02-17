@@ -278,7 +278,7 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
                 BusinessEventLogger.logLicenseExpired();
                 this.licenseExpiredLogged = true;
             }
-            throw new EtmException(EtmException.LICENSE_EXPIRED_EXCEPTION);
+            throw new EtmException(EtmException.LICENSE_EXPIRED);
         } else {
             this.licenseExpiredLogged = false;
         }

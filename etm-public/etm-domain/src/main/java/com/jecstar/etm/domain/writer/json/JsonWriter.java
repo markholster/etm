@@ -46,8 +46,8 @@ public class JsonWriter {
         return addLongElementToJsonBuffer(elementName, elementValue, buffer, false, firstElement);
     }
 
-    public boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean writeNull, boolean firstElement) {
-        if (elementValue == null && !writeNull) {
+    public boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean writeWhenNull, boolean firstElement) {
+        if (elementValue == null && !writeWhenNull) {
             return false;
         }
         if (!firstElement) {

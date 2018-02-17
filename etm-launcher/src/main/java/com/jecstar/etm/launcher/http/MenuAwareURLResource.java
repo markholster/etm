@@ -190,7 +190,7 @@ public class MenuAwareURLResource extends URLResource {
                 }
 
                 boolean hasDashboardsToShow = true;
-                List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getName)).collect(Collectors.toList());
+                List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getMostSpecificName)).collect(Collectors.toList());
                 if (principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ) && !principal.isInRole(SecurityRoles.USER_DASHBOARD_READ_WRITE) && !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
                     // User has only read only access to group dashboards. Check if they are present, otherwise we can skip this menu option.
                     hasDashboardsToShow = groups.stream().anyMatch(g -> g.getDashboards().size() > 0);
@@ -211,7 +211,7 @@ public class MenuAwareURLResource extends URLResource {
                                 // Skip a group when it has no dashboards and the user has read only access.
                                 continue;
                             }
-                            html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\"><span class=\"fa fa-users hidden-md-down\">&nbsp;</span>" + StringUtils.escapeToHtml(group.getName()) + "</a>");
+                            html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\"><span class=\"fa fa-users hidden-md-down\">&nbsp;</span>" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</a>");
                             html.append("<ul class=\"dropdown-menu\">");
                             for (String dashboard : group.getDashboards()) {
                                 appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
@@ -248,47 +248,6 @@ public class MenuAwareURLResource extends URLResource {
                         html.append("</li>");
                     }
                     html.append("</ul></li>");
-
-
-//                    if (principal.isInRole(SecurityRoles.USER_DASHBOARD_READ_WRITE)) {
-//                        appendMenuOption(html, "Graphs", "dashboard/graphs.html", false);
-//                    }
-//                    html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\">Dashboards</a>");
-//                    html.append("<ul class=\"dropdown-menu\">");
-//
-//                    // TODO als group read & write -> Altijd optie tot nieuw dashboard in group
-//                    // als group read & group heeft geen dashboards -> group overslaan
-//                    // Als user read_write dan zelfde menu structuur, maar met username i.p.v. groupname.
-//
-//
-//                    List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getName)).collect(Collectors.toList());
-//                    for (EtmGroup group : groups) {
-//                        if (group.getDashboards().size() != 0 || principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
-//                            html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\"><span class=\"fa fa-users hidden-md-down\">&nbsp;</span>" + StringUtils.escapeToHtml(group.getName())+ "</a>");
-//                            html.append("<ul class=\"dropdown-menu\">");
-//                            for (String dashboard : group.getDashboards()) {
-//                                appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
-//                            }
-//                            if (principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
-//                                if (group.getDashboards().size() != 0) {
-//                                    html.append(divider);
-//                                }
-//                                appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new&group=" + StringUtils.urlEncode(group.getName()), false);
-//                            }
-//                            html.append("</ul></li>");
-//                        }
-//                    }
-//                    if (principal.getDashboards().size() != 0) {
-//                        for (String dashboard : principal.getDashboards()) {
-//                            appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard), !principal.isInRole(SecurityRoles.DASHBOARD_READ_WRITE));
-//                        }
-//                        if (principal.isInRole(SecurityRoles.DASHBOARD_READ_WRITE)) {
-//                            html.append(divider);
-//                            appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new", false);
-//                        }
-//                    }
-//                    html.append("</ul></li>");
-//                    html.append("</ul></li>");
                 }
                 if (principal.isInAnyRole(SecurityRoles.ALL_ROLES_ARRAY)) {
                     if (MenuContext.PREFERENCES.equals(menuContext)) {

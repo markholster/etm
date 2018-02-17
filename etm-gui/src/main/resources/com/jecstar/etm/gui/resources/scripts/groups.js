@@ -24,6 +24,7 @@ function buildGroupPage() {
 			return;
 		}
 		$('#input-group-name').val(groupData.name);
+		$('#input-group-display-name').val(groupData.display_name);
 		$('#input-filter-query').val(groupData.filter_query);
 		$('#sel-filter-query-occurrence').val(groupData.filter_query_occurrence);
 		$('#sel-always-show-correlated-events').val(groupData.always_show_correlated_events ? 'true' : 'false');
@@ -216,6 +217,7 @@ function buildGroupPage() {
 	function createGroupData() {
 		var groupData = {
 			name: $('#input-group-name').val(),
+			display_name: $('#input-group-display-name').val() ? $('#input-group-display-name').val() : null,
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
 			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),		
 			always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,
@@ -230,11 +232,7 @@ function buildGroupPage() {
 	}
 
 	function resetValues() {
-		$('#input-group-name').val('');
-		$('#input-filter-query').val('');
-		$('#sel-filter-query-occurrence').val('MUST');
-		$('#sel-always-show-correlated-event').val('false');
-		$('#card-acl').find('select').val('none');
+	    document.getElementById('group_form').reset();
 		enableOrDisableButtons();
 	}
 }

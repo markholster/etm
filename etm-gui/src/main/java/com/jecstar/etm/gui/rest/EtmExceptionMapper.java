@@ -30,10 +30,13 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                 case EtmException.WRAPPED_EXCEPTION:
                     errorMessage.setMessage(getRootCauseMessage(ex));
                     break;
-                case EtmException.INVALID_LICENSE_KEY_EXCEPTION:
+                case EtmException.UNAUTHORIZED:
+                    errorMessage.setMessage("You are not authorized for this action");
+                    break;
+                case EtmException.INVALID_LICENSE_KEY:
                     errorMessage.setMessage("Invalid license key");
                     break;
-                case EtmException.LICENSE_EXPIRED_EXCEPTION:
+                case EtmException.LICENSE_EXPIRED:
                     errorMessage.setMessage("License expired");
                     break;
                 case EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED:

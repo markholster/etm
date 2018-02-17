@@ -161,6 +161,17 @@ public class AbstractJsonService extends JsonConverter {
     }
 
     /**
+     * Converts a namespaced object <code>Map</code> to a <code>Map</code> string without the namespace.
+     *
+     * @param namespacedObjectMap The <code>Map</code> that holds the values in a namespace.
+     * @param namespace           The namespace to use.
+     * @return A <code>Map</code> containing the values without a namespace.
+     */
+    protected Map<String, Object> toMapWithoutNamespace(Map<String, Object> namespacedObjectMap, String namespace) {
+        return getObject(namespace, namespacedObjectMap);
+    }
+
+    /**
      * Converts a namespaced json string to a json string without the namespace.
      * This method will mainly be used for converting json received from the backend that needs to be returned to the front end.
      *

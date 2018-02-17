@@ -190,7 +190,9 @@ public class ElasticsearchIdentityManager implements IdentityManager {
             return null;
         }
         EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
-        Collection<String> groups = this.jsonConverter.getArray(this.etmPrincipalTags.getGroupsTag(), getResponse.getSource());
+        Map<String, Object> objectMap = getResponse.getSourceAsMap();
+        Map<String, Object> userMap = (Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        Collection<String> groups = this.jsonConverter.getArray(this.etmPrincipalTags.getGroupsTag(), userMap);
         if (groups != null && !groups.isEmpty()) {
             MultiGetRequestBuilder multiGetBuilder = this.client.prepareMultiGet();
             for (String group : groups) {

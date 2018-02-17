@@ -96,7 +96,7 @@ public class EtmConfiguration {
 
     public void setLicenseKey(String licenseKey) {
         if (licenseKey == null || licenseKey.trim().length() == 0) {
-            throw new EtmException(EtmException.INVALID_LICENSE_KEY_EXCEPTION);
+            throw new EtmException(EtmException.INVALID_LICENSE_KEY);
         }
         this.license = new License(licenseKey);
     }

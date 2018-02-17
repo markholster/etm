@@ -34,6 +34,7 @@ import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.text.Format;
 import java.util.*;
 import java.util.Map.Entry;
@@ -98,8 +99,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/graphs/")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
-    public String getGroupGraphs(@PathParam("groupName") String groupName) {
-        return getGraphs(groupName);
+    public Response getGroupGraphs(@PathParam("groupName") String groupName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getGraphs(groupName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     /**
@@ -110,7 +118,6 @@ public class DashboardService extends AbstractIndexMetadataService {
      */
     private String getGraphs(String groupName) {
         Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getGraphsTag());
-
         if (objectMap == null || objectMap.isEmpty()) {
             return "{\"max_graphs\": " + etmConfiguration.getMaxGraphCount() + "}";
         }
@@ -130,8 +137,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/graph/{graphName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
-    public String addGroupGraph(@PathParam("groupName") String groupName, @PathParam("graphName") String graphName, String json) {
-        return addGraph(groupName, graphName, json);
+    public Response addGroupGraph(@PathParam("groupName") String groupName, @PathParam("graphName") String graphName, String json) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = addGraph(groupName, graphName, json);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     /**
@@ -187,8 +201,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/graph/{graphName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
-    public String deleteGroupGraph(@PathParam("groupName") String groupName, @PathParam("graphName") String graphName) {
-        return deleteGraph(groupName, graphName);
+    public Response deleteGroupGraph(@PathParam("groupName") String groupName, @PathParam("graphName") String graphName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = deleteGraph(groupName, graphName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     /**
@@ -269,8 +290,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/dashboards")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.GROUP_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ})
-    public String getGroupDashboards(@PathParam("groupName") String groupName) {
-        return getDashboards(groupName);
+    public Response getGroupDashboards(@PathParam("groupName") String groupName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getDashboards(groupName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     /**
@@ -312,8 +340,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/dashboard/{dashboardName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.GROUP_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ})
-    public String getGroupDashboard(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName) {
-        return getDashboard(groupName, dashboardName);
+    public Response getGroupDashboard(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getDashboard(groupName, dashboardName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     /**
@@ -355,8 +390,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/dashboard/{dashboardName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
-    public String addGroupDashboard(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName, String json) {
-        return addDashboard(groupName, dashboardName, json);
+    public Response addGroupDashboard(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName, String json) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = addDashboard(groupName, dashboardName, json);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     /**
@@ -414,8 +456,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/dashboard/{dashboardName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
-    public String deleteGroupDashboard(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName) {
-        return deleteDashboard(groupName, dashboardName);
+    public Response deleteGroupDashboard(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = deleteDashboard(groupName, dashboardName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     /**
@@ -457,8 +506,15 @@ public class DashboardService extends AbstractIndexMetadataService {
     @Path("/{groupName}/graphdata/{dashboardName}/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
-    public String getGroupGraphData(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName, @PathParam("id") String graphId) {
-        return getGraphData(groupName, dashboardName, graphId);
+    public Response getGroupGraphData(@PathParam("groupName") String groupName, @PathParam("dashboardName") String dashboardName, @PathParam("id") String graphId) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getGraphData(groupName, dashboardName, graphId);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
     @POST
@@ -539,6 +595,9 @@ public class DashboardService extends AbstractIndexMetadataService {
         String[] prefixedAttributes = new String[attributes.length];
         GetRequestBuilder builder;
         if (groupName != null) {
+            if (!getEtmPrincipal().isInGroup(groupName)) {
+                throw new EtmException(EtmException.UNAUTHORIZED);
+            }
             builder = client.prepareGet(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
@@ -571,6 +630,9 @@ public class DashboardService extends AbstractIndexMetadataService {
         Map<String, Object> objectMap = new HashMap<>();
         UpdateRequestBuilder builder;
         if (groupName != null) {
+            if (!getEtmPrincipal().isInGroup(groupName)) {
+                throw new EtmException(EtmException.UNAUTHORIZED);
+            }
             builder = client.prepareUpdate(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,

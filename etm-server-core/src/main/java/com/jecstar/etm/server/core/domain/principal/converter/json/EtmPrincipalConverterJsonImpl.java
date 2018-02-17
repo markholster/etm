@@ -56,6 +56,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true, sb, true);
         sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true) + ": {");
         boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmGroup.getName(), true, sb, true);
+        added = this.converter.addStringElementToJsonBuffer(this.tags.getDisplayNameTag(), etmGroup.getDisplayName(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
@@ -108,6 +109,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
     public EtmGroup readGroup(Map<String, Object> valueMap) {
         valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, valueMap);
         EtmGroup group = new EtmGroup(this.converter.getString(this.tags.getNameTag(), valueMap));
+        group.setDisplayName(this.converter.getString(this.tags.getDisplayNameTag(), valueMap));
         group.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
         group.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
         group.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));

@@ -867,7 +867,7 @@ public class SettingsService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(this.etmPrincipalConverter.writeGroup(etmGroup));
+            result.append(toStringWithoutNamespace(this.etmPrincipalConverter.writeGroup(etmGroup), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP));
             first = false;
         }
         result.append("]}");
@@ -1039,11 +1039,12 @@ public class SettingsService extends AbstractJsonService {
      * Converts a map with json key/value pairs to an <code>EtmPrincipal</code>
      * and reads the corresponding groups from the database.
      *
-     * @param principalValues The map with json key/value pairs.
+     * @param principalObject The namespaced <code>Map</code> with json key/value pairs.
      * @return A fully loaded <code>EtmPrincipal</code>
      */
-    private EtmPrincipal loadPrincipal(Map<String, Object> principalValues) {
-        EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(principalValues);
+    private EtmPrincipal loadPrincipal(Map<String, Object> principalObject) {
+        EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(principalObject);
+        Map<String, Object> principalValues = toMapWithoutNamespace(principalObject, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
         Collection<String> groups = getArray(this.etmPrincipalTags.getGroupsTag(), principalValues);
         if (groups != null && !groups.isEmpty()) {
             MultiGetRequestBuilder multiGetBuilder = client.prepareMultiGet();

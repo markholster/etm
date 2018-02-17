@@ -16,6 +16,7 @@ public class EtmGroup implements Serializable {
     private static final long serialVersionUID = 7152085459917438053L;
 
     private final String name;
+    private String displayName;
     private final Set<String> roles = new HashSet<>();
     private String filterQuery = null;
     private QueryOccurrence filterQueryOccurrence = QueryOccurrence.MUST;
@@ -29,6 +30,18 @@ public class EtmGroup implements Serializable {
 
     public String getName() {
         return this.name;
+    }
+
+    public String getDisplayName() {
+        return this.displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getMostSpecificName() {
+        return getDisplayName() == null ? getName() : getDisplayName();
     }
 
     public String getFilterQuery() {
