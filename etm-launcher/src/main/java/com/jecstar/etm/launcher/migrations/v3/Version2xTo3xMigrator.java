@@ -44,14 +44,14 @@ import java.util.function.Function;
  *
  * @since 3.0.0
  */
-public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
+public class Version2xTo3xMigrator extends AbstractEtmMigrator {
 
     private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
     private final Client client;
     private final String migrationIndexPrefix = "migetm_";
 
-    public ReindexToSingleTypeMigration(Client client) {
+    public Version2xTo3xMigrator(Client client) {
         this.client = client;
     }
 
@@ -151,21 +151,23 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 client,
                 createBulkProcessor(client, listener),
                 listener,
-                new DefaultIndexRequestCreator(client, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE, null)
+                new DefaultIndexRequestCreator(client, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE, null, false)
         );
     }
 
     private boolean migrateHttpSessions(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
+            Map<String, Object> valueMap = new HashMap<>();
+            valueMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION);
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-            sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION);
             // Add the id attribute, because the original id is replaced with an prefix.
             sourceMap.put(sessionTags.getIdTag(), searchHit.getId());
+            valueMap.put(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, sourceMap);
             return new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + searchHit.getId())
-                    .setSource(sourceMap)
+                    .setSource(valueMap)
                     .request();
         };
 
@@ -211,7 +213,8 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 new DefaultIndexRequestCreator(
                         client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE,
-                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE + "_"
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE + "_",
+                        true
                 )
         );
     }
@@ -219,8 +222,9 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
     @SuppressWarnings("unchecked")
     private boolean migrateUsers(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
+            Map<String, Object> valueMap = new HashMap<>();
+            valueMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-            sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
             List<String> roles = (List<String>) sourceMap.get(this.principalTags.getRolesTag());
             if (roles != null) {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
@@ -244,10 +248,11 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                     }
                 }
             }
+            valueMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, sourceMap);
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
-                    .setSource(sourceMap);
+                    .setSource(valueMap);
             builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId());
             return builder.request();
         };
@@ -265,16 +270,18 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
     @SuppressWarnings("unchecked")
     private boolean migrateGroups(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
+            Map<String, Object> valueMap = new HashMap<>();
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-            sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
+            valueMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
             List<String> roles = (List<String>) sourceMap.get(this.principalTags.getRolesTag());
             if (roles != null) {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
             }
+            valueMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, sourceMap);
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
-                    .setSource(sourceMap);
+                    .setSource(valueMap);
             builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + searchHit.getId());
             return builder.request();
         };
@@ -298,7 +305,8 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 new DefaultIndexRequestCreator(
                         client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER,
-                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX,
+                        true
                 )
         );
     }
@@ -313,7 +321,8 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 new DefaultIndexRequestCreator(
                         client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT,
-                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX,
+                        true
                 )
         );
     }
@@ -329,6 +338,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                         client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP_ID_PREFIX
+                        , true
                 )
         );
     }
@@ -343,7 +353,8 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 new DefaultIndexRequestCreator(
                         client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE,
-                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX,
+                        true
                 )
         );
     }
@@ -358,7 +369,8 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                 new DefaultIndexRequestCreator(
                         client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE,
-                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX,
+                        true
                 )
         );
     }
@@ -372,12 +384,12 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId())
                     .setScript(new Script(ScriptType.INLINE, "painless",
-                            "if (ctx._source.get(\"graphs\") == null) {\n" +
-                                    "    ctx._source.put(\"graphs\", new ArrayList());\n" +
+                            "if (ctx._source.user.get(\"graphs\") == null) {\n" +
+                                    "    ctx._source.user.put(\"graphs\", new ArrayList());\n" +
                                     "}\n" +
                                     "for (Map graph : ((List)params.graphs)) {\n" +
-                                    "    if (! ((List)ctx._source.get(\"graphs\")).stream().anyMatch(p -> ((Map)p).get(\"name\").equals(graph.get(\"name\")))) {\n" +
-                                    "        ctx._source.graphs.add(graph);\n" +
+                                    "    if (! ((List)ctx._source.user.get(\"graphs\")).stream().anyMatch(p -> ((Map)p).get(\"name\").equals(graph.get(\"name\")))) {\n" +
+                                    "        ctx._source.user.graphs.add(graph);\n" +
                                     "    }\n" +
                                     "}", params))
                     .request();
@@ -402,11 +414,11 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId())
                     .setScript(new Script(ScriptType.INLINE, "painless",
-                            "if (ctx._source.get(\"dashboards\") == null) {\n" +
-                                    "    ctx._source.put(\"dashboards\", new ArrayList());\n" +
+                            "if (ctx._source.user.get(\"dashboards\") == null) {\n" +
+                                    "    ctx._source.user.put(\"dashboards\", new ArrayList());\n" +
                                     "}\n" +
                                     "for (Map dashboard : ((List)params.dashboards)) {\n" +
-                                    "    if (! ((List)ctx._source.get(\"dashboards\")).stream().anyMatch(p -> ((Map)p).get(\"name\").equals(dashboard.get(\"name\")))) {\n" +
+                                    "    if (! ((List)ctx._source.user.get(\"dashboards\")).stream().anyMatch(p -> ((Map)p).get(\"name\").equals(dashboard.get(\"name\")))) {\n" +
                                     "        for (Map row : ((List)dashboard.get(\"rows\"))) {" +
                                     "            for (Map col : ((List)row.get(\"cols\"))) {" +
                                     "                col.put(\"name\", col.remove(\"graph\"));" +
@@ -415,7 +427,7 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
                                     "                row.put(\"height\", Integer.parseInt(row.get(\"height\")));" +
                                     "            }\n" +
                                     "        }" +
-                                    "        ctx._source.dashboards.add(dashboard);\n" +
+                                    "        ctx._source.user.dashboards.add(dashboard);\n" +
                                     "    }\n" +
                                     "}", params))
                     .setScriptedUpsert(true)
@@ -503,21 +515,28 @@ public class ReindexToSingleTypeMigration extends AbstractEtmMigrator {
         private final Client client;
         private final String etmTypeAttributeName;
         private final String idPrefix;
+        private final boolean ownNamespace;
 
-        private DefaultIndexRequestCreator(Client client, String etmTypeAttributeName, String idPrefix) {
+        private DefaultIndexRequestCreator(Client client, String etmTypeAttributeName, String idPrefix, boolean ownNamespace) {
             this.client = client;
             this.etmTypeAttributeName = etmTypeAttributeName;
             this.idPrefix = idPrefix;
+            this.ownNamespace = ownNamespace;
         }
 
         @Override
         public IndexRequest apply(SearchHit searchHit) {
-            Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+            Map<String, Object> sourceMap = new HashMap<>();
+            if (this.ownNamespace) {
+                sourceMap.put(this.etmTypeAttributeName, searchHit.getSourceAsMap());
+            } else {
+                sourceMap.putAll(searchHit.getSourceAsMap());
+            }
             if (this.etmTypeAttributeName != null) {
                 sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, this.etmTypeAttributeName);
             }
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(ReindexToSingleTypeMigration.this.migrationIndexPrefix + searchHit.getIndex())
+                    .setIndex(Version2xTo3xMigrator.this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(sourceMap);
             if (this.idPrefix != null) {

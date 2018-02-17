@@ -16,10 +16,7 @@ import javax.ws.rs.core.SecurityContext;
 import java.text.DateFormatSymbols;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AbstractJsonService extends JsonConverter {
@@ -117,6 +114,62 @@ public class AbstractJsonService extends JsonConverter {
         result.append(",\"shortMonths\": [\"").append(Arrays.stream(dateFormatSymbols.getShortMonths()).collect(Collectors.joining("\",\""))).append("\"]");
         result.append("}");
         return result.toString();
+    }
+
+    /**
+     * Converts a json string to a <code>Map</code> containing the values of the json string
+     * in the given namespace. The namespace will be the single key in the returned <code>Map</code>. This method is
+     * the reverse of {@link #toStringWithoutNamespace(Map, String)}
+     * This method will mainly be used for converting json received from the front end.
+     *
+     * @param json      The json string.
+     * @param namespace The namespace to use.
+     * @return A <code>Map</code> containing the json values in the given namespace.
+     */
+    protected Map<String, Object> toMapWithNamespace(String json, String namespace) {
+        Map<String, Object> objectMap = new HashMap<>();
+        objectMap.put(namespace, toMap(json));
+        return objectMap;
+    }
+
+    /**
+     * Converts a json string to a namspaced json string containing the values of the original json string
+     * in the given namespace.
+     * This method will mainly be used for converting json received from the front end.
+     *
+     * @param json      The json string.
+     * @param namespace The namespace to use.
+     * @return A string containing the json values in the given namespace.
+     */
+    protected String toStringWithNamespace(String json, String namespace) {
+        Map<String, Object> objectMap = toMapWithNamespace(json, namespace);
+        return toString(objectMap);
+    }
+
+    /**
+     * Converts a namespaced object <code>Map</code> to a json string without the namespace. This method is the reverse
+     * of {@link #toMapWithNamespace(String, String)}
+     * This method will mainly be used for converting json received from the backend that needs to be returned to the front end.
+     *
+     * @param namespacedObjectMap The <code>Map</code> that holds the values in a namespace.
+     * @param namespace           The namespace to use.
+     * @return A json string containing the values without a namespace.
+     */
+    protected String toStringWithoutNamespace(Map<String, Object> namespacedObjectMap, String namespace) {
+        Map<String, Object> objectMap = getObject(namespace, namespacedObjectMap);
+        return toString(objectMap);
+    }
+
+    /**
+     * Converts a namespaced json string to a json string without the namespace.
+     * This method will mainly be used for converting json received from the backend that needs to be returned to the front end.
+     *
+     * @param namespacedJsonString The json string that holds the values in a namespace.
+     * @param namespace            The namespace to use.
+     * @return A json string containing the values without a namespace.
+     */
+    protected String toStringWithoutNamespace(String namespacedJsonString, String namespace) {
+        return toStringWithoutNamespace(toMap(namespacedJsonString), namespace);
     }
 
 }

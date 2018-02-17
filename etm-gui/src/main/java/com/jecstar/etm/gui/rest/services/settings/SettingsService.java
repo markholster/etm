@@ -66,16 +66,16 @@ public class SettingsService extends AbstractJsonService {
     private final EtmPrincipalTags etmPrincipalTags = this.etmPrincipalConverter.getTags();
 
     private final FieldLayout[] exportPrincipalFields = new FieldLayout[]{
-            new FieldLayout("Account ID", this.etmPrincipalTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST),
-            new FieldLayout("Name", this.etmPrincipalTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST),
-            new FieldLayout("E-mail", this.etmPrincipalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
+            new FieldLayout("Account ID", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST),
+            new FieldLayout("Name", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST),
+            new FieldLayout("E-mail", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
     };
 
-    private final String parserInEnpointTag = this.endpointConfigurationConverter.getTags().getEnhancerTag() +
+    private final String parserInEnpointTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
+            "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
             "." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
             "." + this.endpointConfigurationConverter.getTags().getParsersTag() +
-            "." + this.endpointConfigurationConverter.getTags().getNameTag() +
-            ".keyword";
+            "." + this.endpointConfigurationConverter.getTags().getNameTag();
 
     private static Client client;
     private static EtmConfiguration etmConfiguration;
@@ -117,10 +117,12 @@ public class SettingsService extends AbstractJsonService {
         Map<String, Object> requestValues = toMap(json);
         String licenseKey = getString("key", requestValues);
         etmConfiguration.setLicenseKey(licenseKey);
+        Map<String, Object> licenseObject = new HashMap<>();
         Map<String, Object> values = new HashMap<>();
         values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
+        licenseObject.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, values);
         client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT)
-                .setDoc(values)
+                .setDoc(licenseObject)
                 .setDocAsUpsert(true)
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -155,7 +157,7 @@ public class SettingsService extends AbstractJsonService {
                 .setFetchSource(true)
                 .get();
         EtmConfiguration config = this.etmConfigurationConverter.read(null, getResponse.getSourceAsString(), null);
-        return this.etmConfigurationConverter.write(null, config);
+        return toStringWithoutNamespace(this.etmConfigurationConverter.write(null, config), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE);
     }
 
     @PUT
@@ -166,10 +168,11 @@ public class SettingsService extends AbstractJsonService {
         GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
                 .setFetchSource(true)
                 .get();
-        Map<String, Object> currentValues = getResponse.getSourceAsMap();
+        Map<String, Object> currentNodeObject = getResponse.getSourceAsMap();
+        Map<String, Object> currentValues = (Map<String, Object>) currentNodeObject.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE);
         // Overwrite the values with the new values.
         currentValues.putAll(toMap(json));
-        EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentValues, null);
+        EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentNodeObject, null);
 
         client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
                 .setDoc(this.etmConfigurationConverter.write(null, defaultConfig), XContentType.JSON)
@@ -194,7 +197,7 @@ public class SettingsService extends AbstractJsonService {
             return null;
         }
         LdapConfiguration config = this.ldapConfigurationConverter.read(getResponse.getSourceAsString());
-        return this.ldapConfigurationConverter.write(config);
+        return toStringWithoutNamespace(this.ldapConfigurationConverter.write(config), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP);
     }
 
     @PUT
@@ -202,7 +205,7 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String setLdapConfiguration(String json) {
-        LdapConfiguration config = this.ldapConfigurationConverter.read(json);
+        LdapConfiguration config = this.ldapConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP));
         testLdapConnection(config);
         client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
                 .setSource(this.ldapConfigurationConverter.write(config), XContentType.JSON)
@@ -223,7 +226,7 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String testLdapConfiguration(String json) {
-        LdapConfiguration config = this.ldapConfigurationConverter.read(json);
+        LdapConfiguration config = this.ldapConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP));
         testLdapConnection(config);
         return "{\"status\":\"success\"}";
     }
@@ -276,7 +279,7 @@ public class SettingsService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(searchHit.getSourceAsString());
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE));
             first = false;
         }
         result.append("]}");
@@ -293,7 +296,7 @@ public class SettingsService extends AbstractJsonService {
                 .setFetchSource(true)
                 .get();
         EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, defaultSettingsResponse.getSourceAsString(), null);
-        EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(json, defaultSettingsResponse.getSourceAsString(), nodeName);
+        EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE), defaultSettingsResponse.getSourceAsString(), nodeName);
 
         client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
                 .setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig), XContentType.JSON)
@@ -396,7 +399,7 @@ public class SettingsService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(searchHit.getSourceAsString());
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
             first = false;
         }
         result.append("]}");
@@ -480,7 +483,8 @@ public class SettingsService extends AbstractJsonService {
         BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration));
         // Do a read and write of the parser to make sure it's valid.
-        ExpressionParser expressionParser = this.expressionParserConverter.read(json);
+        ExpressionParser expressionParser = this.expressionParserConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
+
         bulkRequestBuilder.add(client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
@@ -547,7 +551,7 @@ public class SettingsService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(searchHit.getSourceAsString());
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
             if (ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT.equals(searchHit.getId())) {
                 defaultFound = true;
             }
@@ -588,7 +592,7 @@ public class SettingsService extends AbstractJsonService {
     @RolesAllowed(SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)
     public String addEndpoint(@PathParam("endpointName") String endpointName, String json) {
         // Do a read and write of the endpoint to make sure it's valid.
-        EndpointConfiguration endpointConfiguration = this.endpointConfigurationConverter.read(json);
+        EndpointConfiguration endpointConfiguration = this.endpointConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
         createEndpointUpdateRequest(endpointConfiguration).get();
         return "{ \"status\": \"success\" }";
     }
@@ -626,7 +630,7 @@ public class SettingsService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(searchHit.getSourceAsString());
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
             first = false;
         }
         result.append("], \"has_ldap\": ").append(etmConfiguration.getDirectory() != null).append("}");
@@ -679,7 +683,7 @@ public class SettingsService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(this.etmPrincipalConverter.writeGroup(etmGroup));
+            result.append(toStringWithoutNamespace(this.etmPrincipalConverter.writeGroup(etmGroup), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP));
             first = false;
         }
         result.append("]}");
@@ -780,7 +784,7 @@ public class SettingsService extends AbstractJsonService {
         // TODO pagina geeft geen error als een nieuwe gebruiker wordt opgevoerd en geen wachtwoorden worden in gegeven.
         // Do a read and write of the user to make sure it's valid.
         Map<String, Object> valueMap = toMap(json);
-        EtmPrincipal newPrincipal = loadPrincipal(valueMap);
+        EtmPrincipal newPrincipal = loadPrincipal(toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         String newPassword = getString("new_password", valueMap);
         if (newPassword != null) {
             newPrincipal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
@@ -838,7 +842,7 @@ public class SettingsService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(searchHit.getSourceAsString());
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP));
             first = false;
         }
         result.append("], \"has_ldap\": ").append(etmConfiguration.getDirectory() != null).append("}");
@@ -919,8 +923,8 @@ public class SettingsService extends AbstractJsonService {
     @RolesAllowed(SecurityRoles.GROUP_SETTINGS_READ_WRITE)
     public String addGroup(@PathParam("groupName") String groupName, String json) {
         // Do a read and write of the group to make sure it's valid.
-        Map<String, Object> valueMap = toMap(json);
-        EtmGroup newGroup = this.etmPrincipalConverter.readGroup(valueMap);
+        Map<String, Object> objectMap = toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
+        EtmGroup newGroup = this.etmPrincipalConverter.readGroup(objectMap);
 
         EtmGroup currentGroup = loadGroup(groupName);
         if (currentGroup != null && currentGroup.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE) && !newGroup.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE)) {

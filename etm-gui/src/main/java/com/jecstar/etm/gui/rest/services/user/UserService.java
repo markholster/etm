@@ -50,16 +50,18 @@ public class UserService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     public String getUserSettings() {
         GetResponse getResponse = UserService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
-                .setFetchSource(null, new String[]{"searchtemplates", "password_hash"})
+                .setFetchSource(null, new String[]{
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".searchtemplates",
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".password_hash"}
+                )
                 .get();
         if (getResponse.isSourceEmpty()) {
             return "{}";
         }
+        Map<String, Object> userObject = (Map<String, Object>) getResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
         // Hack the max search history into the result. Dunno how to do this better.
-        StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
-        addIntegerElementToJsonBuffer("max_" + this.tags.getSearchHistorySizeTag(), etmConfiguration.getMaxSearchHistoryCount(), result, false);
-        result.append("}");
-        return result.toString();
+        userObject.put("max_" + this.tags.getSearchHistorySizeTag(), etmConfiguration.getMaxSearchHistoryCount());
+        return toString(userObject);
     }
 
     @PUT
@@ -71,19 +73,22 @@ public class UserService extends AbstractJsonService {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
 
         Map<String, Object> updateMap = new HashMap<>();
+        Map<String, Object> userObject = new HashMap<>();
+
         if (etmPrincipal.isLdapBase()) {
-            updateMap.put(this.tags.getNameTag(), valueMap.get(this.tags.getNameTag()));
-            updateMap.put(this.tags.getEmailTag(), valueMap.get(this.tags.getEmailTag()));
+            userObject.put(this.tags.getNameTag(), valueMap.get(this.tags.getNameTag()));
+            userObject.put(this.tags.getEmailTag(), valueMap.get(this.tags.getEmailTag()));
         }
-        updateMap.put(this.tags.getTimeZoneTag(), valueMap.get(this.tags.getTimeZoneTag()));
-        updateMap.put(this.tags.getLocaleTag(), valueMap.get(this.tags.getLocaleTag()));
+        userObject.put(this.tags.getTimeZoneTag(), valueMap.get(this.tags.getTimeZoneTag()));
+        userObject.put(this.tags.getLocaleTag(), valueMap.get(this.tags.getLocaleTag()));
         Integer newHistorySize = getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE);
         if (newHistorySize > etmConfiguration.getMaxSearchHistoryCount()) {
             newHistorySize = etmConfiguration.getMaxSearchHistoryCount();
         }
-        updateMap.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
-        updateMap.put(this.tags.getDefaultSearchRangeTag(), valueMap.get(this.tags.getDefaultSearchRangeTag()));
+        userObject.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
+        userObject.put(this.tags.getDefaultSearchRangeTag(), valueMap.get(this.tags.getDefaultSearchRangeTag()));
 
+        updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
         UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
                 .setDoc(updateMap)
                 .setDetectNoop(true)
@@ -130,9 +135,11 @@ public class UserService extends AbstractJsonService {
         }
         String newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt());
         Map<String, Object> updateMap = new HashMap<>();
-        updateMap.put(this.tags.getPasswordHashTag(), newHash);
-        updateMap.put(this.tags.getChangePasswordOnLogonTag(), false);
+        Map<String, Object> userObject = new HashMap<>();
+        userObject.put(this.tags.getPasswordHashTag(), newHash);
+        userObject.put(this.tags.getChangePasswordOnLogonTag(), false);
 
+        updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
         UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
                 .setDoc(updateMap)
                 .setDetectNoop(true)

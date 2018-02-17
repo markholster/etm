@@ -23,8 +23,9 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
     public String writePrincipal(EtmPrincipal etmPrincipal) {
         final StringBuilder sb = new StringBuilder();
         sb.append("{");
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, true, sb, true);
+        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, true) + ": {");
         boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, true);
-        added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
@@ -39,7 +40,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles(), true, sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
-        sb.append("}");
+        sb.append("}}");
         return sb.toString();
     }
 
@@ -52,14 +53,15 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
     public String writeGroup(EtmGroup etmGroup) {
         final StringBuilder sb = new StringBuilder();
         sb.append("{");
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true, sb, true);
+        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true) + ": {");
         boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmGroup.getName(), true, sb, true);
-        added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmGroup.isLdapBase(), sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles(), true, sb, !added) || added;
-        sb.append("}");
+        sb.append("}}");
         return sb.toString();
     }
 
@@ -69,6 +71,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
     }
 
     public EtmPrincipal readPrincipal(Map<String, Object> valueMap) {
+        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, valueMap);
         EtmPrincipal principal = new EtmPrincipal(this.converter.getString(this.tags.getIdTag(), valueMap));
         principal.setPasswordHash(this.converter.getString(this.tags.getPasswordHashTag(), valueMap));
         principal.setName(this.converter.getString(this.tags.getNameTag(), valueMap));
@@ -103,6 +106,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
     }
 
     public EtmGroup readGroup(Map<String, Object> valueMap) {
+        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, valueMap);
         EtmGroup group = new EtmGroup(this.converter.getString(this.tags.getNameTag(), valueMap));
         group.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
         group.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));

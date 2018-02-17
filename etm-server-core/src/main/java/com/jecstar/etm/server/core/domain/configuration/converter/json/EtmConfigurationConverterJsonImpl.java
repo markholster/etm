@@ -23,10 +23,11 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
     public String write(EtmConfiguration nodeConfiguration, EtmConfiguration defaultConfiguration) {
         final StringBuilder sb = new StringBuilder();
         sb.append("{");
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, sb, true);
+        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, true) + ": {");
         if (nodeConfiguration == null) {
             // only add the defaults.
             boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT, sb, true);
-            added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, sb, !added);
             added = this.converter.addLongElementToJsonBuffer(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -51,7 +52,6 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
         } else {
             boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, true);
-            added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, sb, !added);
             added = addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
@@ -75,7 +75,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
             added = addLongWhenNotDefault(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), nodeConfiguration.getQueryTimeout(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), nodeConfiguration.getRetryOnConflictCount(), sb, !added) || added;
         }
-        sb.append("}");
+        sb.append("}}");
         return sb.toString();
     }
 
@@ -87,6 +87,8 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
     }
 
     public EtmConfiguration read(Map<String, Object> nodeMap, Map<String, Object> defaultMap, String nodeName) {
+        nodeMap = nodeMap != null ? this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, nodeMap) : null;
+        defaultMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, defaultMap);
         EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName);
         etmConfiguration.setSessionTimeout(getLongValue(this.tags.getSessionTimeoutTag(), defaultMap, nodeMap));
         etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));

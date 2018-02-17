@@ -27,6 +27,7 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
     }
 
     public ExpressionParser read(Map<String, Object> valueMap) {
+        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, valueMap);
         String name = this.converter.getString(this.tags.getNameTag(), valueMap);
         String type = this.converter.getString(this.tags.getTypeTag(), valueMap);
         if ("fixed_position".equals(type)) {
@@ -73,8 +74,9 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
     public String write(ExpressionParser expressionParser) {
         StringBuilder result = new StringBuilder();
         result.append("{");
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, result, true);
+        result.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, true) + ": {");
         boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), expressionParser.getName(), result, true);
-        added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, result, !added) || added;
         if (expressionParser instanceof FixedPositionExpressionParser) {
             FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_position", result, !added) || added;
@@ -105,7 +107,7 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
             }
             throw new EtmException(EtmException.INVALID_EXPRESSION_PARSER_TYPE);
         }
-        result.append("}");
+        result.append("}}");
         return result.toString();
     }
 

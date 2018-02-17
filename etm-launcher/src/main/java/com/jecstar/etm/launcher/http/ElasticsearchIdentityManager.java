@@ -132,8 +132,10 @@ public class ElasticsearchIdentityManager implements IdentityManager {
         }
         if (changed) {
             Map<String, Object> updateMap = new HashMap<>();
-            updateMap.put(this.etmPrincipalTags.getNameTag(), storedPrincipal.getName());
-            updateMap.put(this.etmPrincipalTags.getEmailTag(), storedPrincipal.getEmailAddress());
+            Map<String, Object> userObject = new HashMap<>();
+            userObject.put(this.etmPrincipalTags.getNameTag(), storedPrincipal.getName());
+            userObject.put(this.etmPrincipalTags.getEmailTag(), storedPrincipal.getEmailAddress());
+            updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
             client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + storedPrincipal.getId())
                     .setDoc(updateMap)
                     .setDetectNoop(true)
@@ -223,17 +225,20 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     private String getPasswordHash(String userId) {
         GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
-                .setFetchSource(new String[]{this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getLdapBaseTag()}, null)
+                .setFetchSource(new String[]{
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getPasswordHashTag(),
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getLdapBaseTag()}, null)
                 .get();
         if (!getResponse.isExists()) {
             return null;
         }
         Map<String, Object> source = getResponse.getSource();
-        boolean ldapBase = this.jsonConverter.getBoolean(this.etmPrincipalTags.getLdapBaseTag(), source, Boolean.FALSE);
+        Map<String, Object> userObject = (Map<String, Object>) source.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        boolean ldapBase = this.jsonConverter.getBoolean(this.etmPrincipalTags.getLdapBaseTag(), userObject, Boolean.FALSE);
         if (ldapBase) {
             return null;
         }
-        return this.jsonConverter.getString(this.etmPrincipalTags.getPasswordHashTag(), source);
+        return this.jsonConverter.getString(this.etmPrincipalTags.getPasswordHashTag(), userObject);
     }
 
     private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {

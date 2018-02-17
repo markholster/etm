@@ -263,6 +263,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + ", { \"" + this.eventTags.getApplicationHostAddressTag() + "\": { \"match\": \"" + this.eventTags.getApplicationHostAddressTag() + "\", \"mapping\": {\"type\": \"ip\"}}}"
                 + ", { \"" + this.eventTags.getExpiryTag() + "\": { \"match\": \"" + this.eventTags.getExpiryTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + this.eventTags.getTimestampTag() + "\": { \"match\": \"" + this.eventTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + ", { \"string_as_text\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"text\"}}}"
                 + "]}"
                 + "}";
     }
@@ -287,8 +288,8 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     private String createEtmConfigurationMapping(String name) {
         return "{ \"" + name + "\": "
                 + "{\"dynamic_templates\": ["
-                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
-                + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"path_match\": \"" + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + ", { \"string_as_keyword\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + "]}"
                 + "}";
@@ -298,7 +299,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
         return "{ \"" + name + "\": "
                 + "{\"dynamic_templates\": ["
-                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"match\": \"" + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION + "." + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + "]}"
                 + "}";
     }
@@ -323,28 +324,28 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private String createUpdateSearchTemplateScript() {
         return "if (params.template != null) {\n" +
-                "    if (params.ctx._source.search_templates != null) {\n" +
+                "    if (params.ctx._source.user.search_templates != null) {\n" +
                 "        boolean found = false;\n" +
-                "        for (int i=0; i < params.ctx._source.search_templates.size(); i++) {\n" +
-                "            if (params.ctx._source.search_templates[i].name.equals(params.template.name)) {\n" +
-                "                params.ctx._source.search_templates[i] = params.template;\n" +
+                "        for (int i=0; i < params.ctx._source.user.search_templates.size(); i++) {\n" +
+                "            if (params.ctx._source.user.search_templates[i].name.equals(params.template.name)) {\n" +
+                "                params.ctx._source.user.search_templates[i] = params.template;\n" +
                 "                found = true;\n" +
                 "             }\n" +
                 "        }\n" +
-                "        if (!found && params.ctx._source.search_templates.size() < params.max_templates) {\n" +
-                "            params.ctx._source.search_templates.add(params.template);\n" +
+                "        if (!found && params.ctx._source.user.search_templates.size() < params.max_templates) {\n" +
+                "            params.ctx._source.user.search_templates.add(params.template);\n" +
                 "        }\n" +
                 "    } else if (params.max_templates > 0) {\n" +
-                "        params.ctx._source.search_templates = new ArrayList();\n" +
-                "        params.ctx._source.search_templates.add(params.template);\n" +
+                "        params.ctx._source.user.search_templates = new ArrayList();\n" +
+                "        params.ctx._source.user.search_templates.add(params.template);\n" +
                 "    }\n" +
                 "}\n";
     }
 
     private String createRemoveSearchTemplateScript() {
         return "if (params.name != null) {\n" +
-                "    if (params.ctx._source.search_templates != null) {\n" +
-                "		 Iterator it = params.ctx._source.search_templates.iterator();\n" +
+                "    if (params.ctx._source.user.search_templates != null) {\n" +
+                "		 Iterator it = params.ctx._source.user.search_templates.iterator();\n" +
                 "        while (it.hasNext()) {\n" +
                 "            def item = it.next()\n;" +
                 "            if (item.name.equals(params.name)) {\n" +
@@ -357,22 +358,22 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private String createUpdateSearchHistoryScript() {
         return "if (params.query != null) {\n" +
-                "    if (params.ctx._source.search_history != null) {\n" +
-                "        for (int i=0; i < params.ctx._source.search_history.size(); i++) {\n" +
-                "            if (params.ctx._source.search_history[i].query.equals(params.query.query)) {\n" +
-                "                params.ctx._source.search_history.remove(i);\n" +
+                "    if (params.ctx._source.user.search_history != null) {\n" +
+                "        for (int i=0; i < params.ctx._source.user.search_history.size(); i++) {\n" +
+                "            if (params.ctx._source.user.search_history[i].query.equals(params.query.query)) {\n" +
+                "                params.ctx._source.user.search_history.remove(i);\n" +
                 "            }\n" +
                 "        }\n" +
-                "        params.ctx._source.search_history.add(params.query);\n" +
+                "        params.ctx._source.user.search_history.add(params.query);\n" +
                 "    } else {\n" +
-                "        params.ctx._source.search_history = new ArrayList();\n" +
-                "        params.ctx._source.search_history.add(params.query);\n" +
+                "        params.ctx._source.user.search_history = new ArrayList();\n" +
+                "        params.ctx._source.user.search_history.add(params.query);\n" +
                 "    }\n" +
                 "}\n" +
-                "if (params.ctx._source.search_history != null && params.history_size != null) {\n" +
-                "    int removeCount = params.ctx._source.search_history.size() - params.history_size;\n" +
+                "if (params.ctx._source.user.search_history != null && params.history_size != null) {\n" +
+                "    int removeCount = params.ctx._source.user.search_history.size() - params.history_size;\n" +
                 "    for (int i=0; i < removeCount; i++) {\n" +
-                "        params.ctx._source.search_history.remove(0);\n" +
+                "        params.ctx._source.user.search_history.remove(0);\n" +
                 "    }\n" +
                 "}\n";
     }

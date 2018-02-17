@@ -2,6 +2,7 @@ package com.jecstar.etm.gui.rest.services;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import org.elasticsearch.action.admin.indices.mapping.get.*;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
@@ -70,7 +71,11 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
         }
         Map<String, Object> sourceMap = response.mappings().values().iterator().next().values().iterator().next().values().iterator().next().sourceAsMap();
         String type = getString("type", getObject(propertyName, sourceMap));
-        return ("text".equals(type) || "keyword".equals(type)) ? propertyName + KEYWORD_SUFFIX : propertyName;
+        if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
+            return ("text".equals(type) || "keyword".equals(type)) ? propertyName + KEYWORD_SUFFIX : propertyName;
+        } else {
+            return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+        }
     }
 
     @SuppressWarnings("unchecked")

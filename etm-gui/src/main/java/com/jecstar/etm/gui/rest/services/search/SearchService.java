@@ -87,17 +87,15 @@ public class SearchService extends AbstractIndexMetadataService {
     public String getSearchTemplates() {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         GetResponse getResponse = SearchService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-                .setFetchSource("search_templates", null)
+                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates", null)
                 .get();
-        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
             return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + ", \"default_search_range\": " + etmPrincipal.getDefaultSearchRange() + "}";
         }
-        // Hack the max search history into the result. Dunno how to do this better.
-        StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
-        addIntegerElementToJsonBuffer("max_search_templates", etmConfiguration.getMaxSearchTemplateCount(), result, false);
-        addLongElementToJsonBuffer("default_search_range", etmPrincipal.getDefaultSearchRange(), result, false);
-        result.append("}");
-        return result.toString();
+        Map<String, Object> valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap());
+        valueMap.put("max_search_templates", etmConfiguration.getMaxSearchTemplateCount());
+        valueMap.put("default_search_range", etmPrincipal.getDefaultSearchRange());
+        return toString(valueMap);
     }
 
     @GET
@@ -107,12 +105,13 @@ public class SearchService extends AbstractIndexMetadataService {
     public String getRecentQueries() {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         GetResponse getResponse = SearchService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-                .setFetchSource("search_history", null)
+                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag(), null)
                 .get();
-        if (getResponse.isSourceEmpty()) {
+        if (getResponse.isSourceEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
             return "{}";
         }
-        return getResponse.getSourceAsString();
+        Map<String, Object> valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap());
+        return toString(valueMap);
     }
 
     @PUT

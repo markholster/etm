@@ -23,7 +23,7 @@ public class IIBNodeConnectionV10Impl implements IIBNodeConnection {
     private BrokerProxy brokerProxy;
     private final Node node;
 
-    private IIBNodeConnectionV10Impl(Node node) {
+    public IIBNodeConnectionV10Impl(Node node) {
         this.node = node;
     }
 

@@ -70,7 +70,7 @@ public class IIBService extends AbstractJsonService {
             if (!first) {
                 result.append(",");
             }
-            result.append(searchHit.getSourceAsString());
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
             first = false;
         }
         result.append("]}");
@@ -94,14 +94,16 @@ public class IIBService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
     public String addNode(@PathParam("nodeName") String nodeName, String json) {
-        Node node = this.nodeConverter.read(json);
+        Node node = this.nodeConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
         try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
             nodeConnection.connect();
         }
         client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
                 .setDoc(this.nodeConverter.write(node), XContentType.JSON)
-                .setDocAsUpsert(true).setDetectNoop(true).setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+                .setDocAsUpsert(true)
+                .setDetectNoop(true)
+                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount()).get();
         return "{ \"status\": \"success\" }";

@@ -16,6 +16,7 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +40,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
     }
 
     public EndpointConfiguration read(Map<String, Object> valueMap) {
+        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, valueMap);
         EndpointConfiguration endpointConfiguration = new EndpointConfiguration();
         endpointConfiguration.name = this.converter.getString(this.tags.getNameTag(), valueMap);
         Map<String, Object> enhancerValues = this.converter.getObject(this.tags.getEnhancerTag(), valueMap);
@@ -73,7 +75,9 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
                 List<Map<String, Object>> parsers = this.converter.getArray(this.tags.getParsersTag(), fieldValues);
                 if (parsers != null) {
                     for (Map<String, Object> parserValues : parsers) {
-                        expressionParsers.add(this.expressionParserConverter.read(parserValues));
+                        Map<String, Object> objectMap = new HashMap<>();
+                        objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, parserValues);
+                        expressionParsers.add(this.expressionParserConverter.read(objectMap));
                     }
                 }
                 field.addParsers(expressionParsers);
@@ -89,8 +93,9 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
     public String write(EndpointConfiguration endpointConfiguration) {
         StringBuilder result = new StringBuilder();
         result.append("{");
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, result, true);
+        result.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, true) + ": {");
         this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), endpointConfiguration.name, result, true);
-        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, result, false);
         if (endpointConfiguration.eventEnhancer != null) {
             result.append(",\"").append(this.tags.getEnhancerTag()).append("\": {");
             if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
@@ -114,7 +119,8 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
                         if (!firstParser) {
                             result.append(",");
                         }
-                        result.append(this.expressionParserConverter.write(expressionParser));
+                        Map<String, Object> objectMap = this.converter.toMap(this.expressionParserConverter.write(expressionParser));
+                        result.append(this.converter.toString((Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER)));
                         firstParser = false;
                     }
                     result.append("]}");
@@ -126,7 +132,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
             }
             result.append("}");
         }
-        result.append("}");
+        result.append("}}");
         return result.toString();
     }
 

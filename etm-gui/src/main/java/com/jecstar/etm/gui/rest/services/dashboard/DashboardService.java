@@ -109,18 +109,14 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The graphs of a user or group.
      */
     private String getGraphs(String groupName) {
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getGraphsTag());
 
-        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+        if (objectMap == null || objectMap.isEmpty()) {
             return "{\"max_graphs\": " + etmConfiguration.getMaxGraphCount() + "}";
         }
-        // Hack the max graphs into the result. Dunno how to do this better.
-        StringBuilder result = new StringBuilder(getResponse.getSourceAsString().substring(0, getResponse.getSourceAsString().lastIndexOf("}")));
-        addIntegerElementToJsonBuffer("max_graphs", etmConfiguration.getMaxGraphCount(), result, false);
-        result.append("}");
-        return result.toString();
+        objectMap.put("max_graphs", etmConfiguration.getMaxGraphCount());
+        return toString(objectMap);
     }
-
 
     @PUT
     @Path("/graph/{graphName}")
@@ -150,12 +146,12 @@ public class DashboardService extends AbstractIndexMetadataService {
         // Execute a dry run on all data.
         getGraphData(json, true);
         // Data seems ok, now store the graph.
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getGraphsTag());
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
         Map<String, Object> graphData = toMap(json);
         graphData.put("name", graphName);
-        if (!getResponse.isSourceEmpty() && !getResponse.getSourceAsMap().isEmpty()) {
-            currentGraphs = getArray(this.principalTags.getGraphsTag(), getResponse.getSourceAsMap());
+        if (objectMap != null && !objectMap.isEmpty()) {
+            currentGraphs = getArray(this.principalTags.getGraphsTag(), objectMap);
         }
         ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();
         boolean updated = false;
@@ -203,15 +199,14 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The json result of the delete.
      */
     private String deleteGraph(String groupName, String graphName) {
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
 
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
-        Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-        if (sourceAsMap == null || sourceAsMap.isEmpty()) {
+        if (objectMap == null || objectMap.isEmpty()) {
             return "{\"status\":\"success\"}";
         }
-        if (sourceAsMap.containsKey(this.principalTags.getGraphsTag())) {
-            currentGraphs = getArray(this.principalTags.getGraphsTag(), getResponse.getSourceAsMap());
+        if (objectMap.containsKey(this.principalTags.getGraphsTag())) {
+            currentGraphs = getArray(this.principalTags.getGraphsTag(), objectMap);
         }
         ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();
         while (iterator.hasNext()) {
@@ -227,9 +222,9 @@ public class DashboardService extends AbstractIndexMetadataService {
         source.put(this.principalTags.getGraphsTag(), currentGraphs);
 
         // Now remove the graph from all dashboards.
-        if (sourceAsMap.containsKey(this.principalTags.getDashboardsTag())) {
+        if (objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             boolean dashboardsUpdated = false;
-            List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), sourceAsMap);
+            List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), objectMap);
             if (dashboardsData != null) {
                 for (Map<String, Object> dashboardData : dashboardsData) {
                     List<Map<String, Object>> rowsValues = getArray("rows", dashboardData);
@@ -285,15 +280,14 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The dashboards of a user or group.
      */
     private String getDashboards(String groupName) {
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getDashboardsTag());
-        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
+        if (objectMap == null || objectMap.isEmpty()) {
             return null;
         }
-        Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-        if (!sourceAsMap.containsKey(this.principalTags.getDashboardsTag())) {
+        if (!objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             return null;
         }
-        List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), sourceAsMap);
+        List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), objectMap);
         if (dashboardsData == null) {
             return null;
         }
@@ -330,15 +324,14 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The dashboard of a user or group.
      */
     private String getDashboard(String groupName, String dashboardName) {
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getDashboardsTag());
-        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
+        if (objectMap == null || objectMap.isEmpty()) {
             return null;
         }
-        Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
-        if (!sourceAsMap.containsKey(this.principalTags.getDashboardsTag())) {
+        if (!objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             return null;
         }
-        List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), sourceAsMap);
+        List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), objectMap);
         if (dashboardsData == null) {
             return null;
         }
@@ -379,13 +372,13 @@ public class DashboardService extends AbstractIndexMetadataService {
         // TODO validate all data
 //		getGraphData(json, true);
         // Data seems ok, now store the graph.
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
 
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
         Map<String, Object> valueMap = toMap(json);
         valueMap.put("name", dashboardName);
-        if (!getResponse.isSourceEmpty() && getResponse.getSourceAsMap().containsKey(this.principalTags.getDashboardsTag())) {
-            currentDashboards = getArray(this.principalTags.getDashboardsTag(), getResponse.getSourceAsMap());
+        if (objectMap != null && objectMap.containsKey(this.principalTags.getDashboardsTag())) {
+            currentDashboards = getArray(this.principalTags.getDashboardsTag(), objectMap);
         }
         ListIterator<Map<String, Object>> iterator = currentDashboards.listIterator();
         boolean updated = false;
@@ -433,10 +426,10 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The json result of the delete.
      */
     private String deleteDashboard(String groupName, String dashboardName) {
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
-        if (!getResponse.isSourceEmpty() && getResponse.getSourceAsMap().containsKey(this.principalTags.getDashboardsTag())) {
-            currentDashboards = getArray(this.principalTags.getDashboardsTag(), getResponse.getSourceAsMap());
+        if (objectMap != null && objectMap.containsKey(this.principalTags.getDashboardsTag())) {
+            currentDashboards = getArray(this.principalTags.getDashboardsTag(), objectMap);
         }
         ListIterator<Map<String, Object>> iterator = currentDashboards.listIterator();
         while (iterator.hasNext()) {
@@ -485,19 +478,19 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The live graph data.
      */
     private String getGraphData(String groupName, String dashboardName, String graphId) {
-        GetResponse getResponse = getEntity(groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
-        if (getResponse.isSourceEmpty() || !getResponse.getSourceAsMap().containsKey(this.principalTags.getDashboardsTag())) {
+        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
+        if (objectMap == null || !objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             return null;
         }
-        if (!getResponse.getSourceAsMap().containsKey(this.principalTags.getGraphsTag())) {
+        if (!objectMap.containsKey(this.principalTags.getGraphsTag())) {
             return null;
         }
-        List<Map<String, Object>> graphsData = getArray(this.principalTags.getGraphsTag(), getResponse.getSourceAsMap());
+        List<Map<String, Object>> graphsData = getArray(this.principalTags.getGraphsTag(), objectMap);
         if (graphsData == null) {
             return null;
         }
         // First find the dashboard
-        List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), getResponse.getSourceAsMap());
+        List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), objectMap);
         if (dashboardsData == null) {
             return null;
         }
@@ -536,13 +529,14 @@ public class DashboardService extends AbstractIndexMetadataService {
     }
 
     /**
-     * Loads the "graphs" attribute from an entity.
+     * Loads the given attributes from an entity.
      *
      * @param groupName  The name of the group to load the graphs from. If <code>null</code> the graphs of the current user will be loaded.
      * @param attributes The attributes to return.
-     * @return The entity with the "graphs" attribute.
+     * @return A <code>Map</code> with attributes from the given entity.
      */
-    private GetResponse getEntity(String groupName, String... attributes) {
+    private Map<String, Object> getEntity(String groupName, String... attributes) {
+        String[] prefixedAttributes = new String[attributes.length];
         GetRequestBuilder builder;
         if (groupName != null) {
             builder = client.prepareGet(
@@ -550,17 +544,31 @@ public class DashboardService extends AbstractIndexMetadataService {
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
             );
+            for (int i = 0; i < attributes.length; i++) {
+                prefixedAttributes[i] = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + attributes[i];
+            }
         } else {
             builder = client.prepareGet(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
             );
+            for (int i = 0; i < attributes.length; i++) {
+                prefixedAttributes[i] = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + attributes[i];
+            }
         }
-        return builder.setFetchSource(attributes, null).get();
+        GetResponse getResponse = builder.setFetchSource(prefixedAttributes, null).get();
+        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+            return new HashMap<>();
+        }
+        if (groupName != null) {
+            return (Map<String, Object>) getResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
+        }
+        return (Map<String, Object>) getResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
     }
 
     private void updateEntity(String groupName, Map<String, Object> source) {
+        Map<String, Object> objectMap = new HashMap<>();
         UpdateRequestBuilder builder;
         if (groupName != null) {
             builder = client.prepareUpdate(
@@ -568,17 +576,19 @@ public class DashboardService extends AbstractIndexMetadataService {
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
             );
+            objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, source);
         } else {
             builder = client.prepareUpdate(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
             );
+            objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, source);
         }
         builder.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
-                .setDoc(source)
+                .setDoc(objectMap)
                 .setDocAsUpsert(true)
                 .get();
     }

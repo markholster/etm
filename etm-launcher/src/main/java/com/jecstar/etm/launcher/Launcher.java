@@ -10,8 +10,8 @@ import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
 import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
-import com.jecstar.etm.launcher.migrations.v3.EtmConfigurationTemplateMigrator;
-import com.jecstar.etm.launcher.migrations.v3.ReindexToSingleTypeMigration;
+import com.jecstar.etm.launcher.migrations.v3.Version2xTo3xMigrator;
+import com.jecstar.etm.launcher.migrations.v3.Version300To301Migrator;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
@@ -226,14 +226,15 @@ class Launcher {
      */
     private boolean executeDatabaseMigrations(Client client) {
         boolean reinitialze = false;
-        EtmMigrator etmMigrator = new ReindexToSingleTypeMigration(client);
+        EtmMigrator etmMigrator = new Version2xTo3xMigrator(client);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
             reinitialze = true;
         }
-        etmMigrator = new EtmConfigurationTemplateMigrator(client);
+        etmMigrator = new Version300To301Migrator(client);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
+            reinitialze = true;
         }
         return reinitialze;
     }

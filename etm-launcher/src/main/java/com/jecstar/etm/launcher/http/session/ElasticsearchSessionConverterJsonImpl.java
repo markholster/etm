@@ -17,6 +17,7 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
     @Override
     public void read(String content, ElasticsearchSession session) {
         Map<String, Object> valueMap = toMap(content);
+        valueMap = getObject(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, valueMap);
         session.setLastAccessedTime(getLong(this.tags.getLastAccessedTag(), valueMap));
         List<Map<String, Object>> attributes = getArray(this.tags.getAttributesTag(), valueMap);
         if (attributes != null) {
@@ -40,9 +41,10 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
     public String write(ElasticsearchSession session) {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
+        addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, sb, true);
+        sb.append(", " + escapeToJson(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, true) + ": {");
         addLongElementToJsonBuffer(this.tags.getLastAccessedTag(), session.getLastAccessedTime(), sb, true);
         addStringElementToJsonBuffer(this.getTags().getIdTag(), session.getId(), sb, false);
-        addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, sb, false);
         sb.append(", ").append(escapeToJson(this.tags.getAttributesTag(), true)).append(": [");
         Set<String> attributeNames = session.getAttributeNames();
         boolean first = true;
@@ -66,7 +68,7 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
             }
             sb.append("}");
         }
-        sb.append("]}");
+        sb.append("]}}");
         return sb.toString();
     }
 

@@ -20,6 +20,7 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
     }
 
     private LdapConfiguration read(Map<String, Object> valueMap) {
+        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP, valueMap);
         LdapConfiguration ldapConfiguration = new LdapConfiguration();
         ldapConfiguration.setHost(this.converter.getString(this.tags.getHostTag(), valueMap));
         ldapConfiguration.setPort(this.converter.getInteger(this.tags.getPortTag(), valueMap));
@@ -52,8 +53,9 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
     public String write(LdapConfiguration ldapConfiguration) {
         final StringBuilder sb = new StringBuilder();
         sb.append("{");
-        boolean added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP, sb, true);
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), ldapConfiguration.getHost(), sb, !added) || added;
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP, sb, true);
+        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP, true) + ": {");
+        boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), ldapConfiguration.getHost(), sb, true);
         added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), ldapConfiguration.getPort(), sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getConnectionSecurityTag(), ldapConfiguration.getConnectionSecurity() != null ? ldapConfiguration.getConnectionSecurity().name() : null, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getBindDnTag(), ldapConfiguration.getBindDn(), sb, !added) || added;
@@ -77,7 +79,7 @@ public class LdapConfigurationConverterJsonImpl implements LdapConfigurationConv
         added = this.converter.addStringElementToJsonBuffer(this.tags.getGroupBaseDnTag(), ldapConfiguration.getGroupBaseDn(), sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getGroupSearchFilterTag(), ldapConfiguration.getGroupSearchFilter(), sb, !added) || added;
 
-        sb.append("}");
+        sb.append("}}");
         return sb.toString();
     }
 

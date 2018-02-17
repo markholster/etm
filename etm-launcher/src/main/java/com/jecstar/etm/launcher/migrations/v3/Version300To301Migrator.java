@@ -8,6 +8,7 @@ import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import org.elasticsearch.action.DocWriteRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -22,27 +23,33 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
- * Class that migrates the etm_configuration to a new mapping.
+ * Class that migrates the etm_configuration and etm_state to a new mapping.
  *
  * @since 3.0.1
  */
-public class EtmConfigurationTemplateMigrator extends AbstractEtmMigrator {
+public class Version300To301Migrator extends AbstractEtmMigrator {
 
     private final JsonConverter jsonConverter = new JsonConverter();
     private final Client client;
     private final String migrationIndexPrefix = "migetm_";
 
-    public EtmConfigurationTemplateMigrator(Client client) {
+    public Version300To301Migrator(Client client) {
         this.client = client;
     }
 
     @Override
     public boolean shouldBeExecuted() {
+        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.STATE_INDEX_NAME,
+                ElasticsearchLayout.CONFIGURATION_INDEX_NAME).get();
+        if (!indicesExistsResponse.isExists()) {
+            return false;
+        }
         GetMappingsResponse mappingsResponse = this.client.admin().indices().prepareGetMappings(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .addTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .get();
@@ -96,15 +103,10 @@ public class EtmConfigurationTemplateMigrator extends AbstractEtmMigrator {
         }
 
         FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
-
-        boolean succeeded = migrateEntity("etm_configuration",
-                ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                null,
-                this.client,
-                createBulkProcessor(this.client, listener),
-                listener,
-                new DefaultIndexRequestCreator(client));
-
+        boolean succeeded = migrateEtmConfiguration(this.client, listener);
+        if (succeeded) {
+            succeeded = migrateEtmState(this.client, listener);
+        }
         if (!succeeded) {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
@@ -114,9 +116,29 @@ public class EtmConfigurationTemplateMigrator extends AbstractEtmMigrator {
         indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, client, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
         indexTemplateCreator.reinitialize();
 
-        deleteIndices(this.client, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        deleteIndices(this.client, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_NAME);
         reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
         deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
+    }
+
+    private boolean migrateEtmConfiguration(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("etm_configuration",
+                ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+                null,
+                this.client,
+                createBulkProcessor(this.client, listener),
+                listener,
+                new DefaultIndexRequestCreator(client));
+    }
+
+    private boolean migrateEtmState(Client client, FailureDetectingBulkProcessorListener listener) {
+        return migrateEntity("etm_state",
+                ElasticsearchLayout.STATE_INDEX_NAME,
+                null,
+                this.client,
+                createBulkProcessor(this.client, listener),
+                listener,
+                new DefaultIndexRequestCreator(client));
     }
 
     private boolean migrateEntity(String entityName, String index, String type, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
@@ -157,11 +179,15 @@ public class EtmConfigurationTemplateMigrator extends AbstractEtmMigrator {
 
         @Override
         public IndexRequest apply(SearchHit searchHit) {
+            Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+            Map<String, Object> valueMap = new HashMap<>();
+            valueMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, sourceMap.remove(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME));
+            valueMap.put((String) valueMap.get(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME), sourceMap);
             IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(EtmConfigurationTemplateMigrator.this.migrationIndexPrefix + searchHit.getIndex())
+                    .setIndex(Version300To301Migrator.this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(searchHit.getType())
                     .setId(searchHit.getId())
-                    .setSource(searchHit.getSourceAsMap());
+                    .setSource(valueMap);
             return builder.request();
         }
     }

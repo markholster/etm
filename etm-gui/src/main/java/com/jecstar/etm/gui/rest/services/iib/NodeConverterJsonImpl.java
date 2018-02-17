@@ -14,6 +14,7 @@ public class NodeConverterJsonImpl implements NodeConverter<String> {
     @Override
     public Node read(String content) {
         Map<String, Object> valueMap = this.converter.toMap(content);
+        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE, valueMap);
         String name = this.converter.getString(this.tags.getNameTag(), valueMap);
         String host = this.converter.getString(this.tags.getHostTag(), valueMap);
         int port = this.converter.getInteger(this.tags.getPortTag(), valueMap);
@@ -29,16 +30,16 @@ public class NodeConverterJsonImpl implements NodeConverter<String> {
     public String write(Node node) {
         final StringBuilder sb = new StringBuilder();
         sb.append("{");
-        boolean added = this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE, sb, true);
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, !added) || added;
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE, sb, true);
+        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE, true) + ": {");
+        boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, true);
         added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), node.getHost(), sb, !added) || added;
         added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), node.getPort(), sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getUsernameTag(), node.getUsername(), sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordTag(), this.converter.encodeBase64(node.getPassword(), 7), sb, !added) || added;
-        added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), node.getPort(), sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getQueueManagerTag(), node.getQueueManager(), sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getChannelTag(), node.getChannel(), sb, !added) || added;
-        sb.append("}");
+        sb.append("}}");
         return sb.toString();
     }
 

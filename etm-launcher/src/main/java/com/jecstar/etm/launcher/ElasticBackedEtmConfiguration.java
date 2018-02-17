@@ -18,6 +18,7 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
@@ -279,8 +280,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
         }
         EtmConfiguration etmConfiguration = this.etmConfigurationConverter.read(nodeContent, defaultContent, "temp-for-reload-merge");
         GetResponse licenseResponse = licenseExecute.actionGet();
-        if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty()) {
-            Object license = licenseResponse.getSourceAsMap().get(this.etmConfigurationConverter.getTags().getLicenseTag());
+        if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty() && licenseResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE)) {
+            Map<String, Object> licenseObject = (Map<String, Object>) licenseResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE);
+            Object license = licenseObject.get(this.etmConfigurationConverter.getTags().getLicenseTag());
             if (license != null && isValidLicenseKey(license.toString())) {
                 etmConfiguration.setLicenseKey(license.toString());
             }
