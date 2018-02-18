@@ -63,6 +63,26 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
             return new XsltExpressionParser(name, this.converter.getString(this.tags.getTemplateTag(), valueMap));
         } else if ("copy_value".equals(type)) {
             return new CopyValueExpressionParser(name);
+        } else if ("regex".equals(type)) {
+            String expression = this.converter.getString(this.tags.getExpressionTag(), valueMap);
+            int group = this.converter.getInteger(this.tags.getGroupTag(), valueMap, 1);
+            boolean canonicalEquivalence = this.converter.getBoolean(this.tags.getCanonicalEquivalenceTag(), valueMap, false);
+            boolean caseInsensitive = this.converter.getBoolean(this.tags.getCaseInsensitiveTag(), valueMap, false);
+            boolean dotAll = this.converter.getBoolean(this.tags.getDotallTag(), valueMap, false);
+            boolean literal = this.converter.getBoolean(this.tags.getLiteralTag(), valueMap, false);
+            boolean multiLine = this.converter.getBoolean(this.tags.getMultilineTag(), valueMap, false);
+            boolean unicodeCase = this.converter.getBoolean(this.tags.getUnicodeCaseTag(), valueMap, false);
+            boolean unicodeCharacterClass = this.converter.getBoolean(this.tags.getUnicodeCharacterClassTag(), valueMap, false);
+            boolean unixLines = this.converter.getBoolean(this.tags.getUnixLinesTag(), valueMap, false);
+            return new RegexExpressionParser(name, expression, group,
+                    canonicalEquivalence,
+                    caseInsensitive,
+                    dotAll,
+                    literal,
+                    multiLine,
+                    unicodeCase,
+                    unicodeCharacterClass,
+                    unixLines);
         }
         if (log.isErrorLevelEnabled()) {
             log.logErrorMessage("Unknown expression parser type: '" + type + "'.");
@@ -101,6 +121,19 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTemplateTag(), parser.getTemplate(), result, !added) || added;
         } else if (expressionParser instanceof CopyValueExpressionParser) {
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "copy_value", result, !added) || added;
+        } else if (expressionParser instanceof RegexExpressionParser) {
+            RegexExpressionParser parser = (RegexExpressionParser) expressionParser;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "regex", result, !added) || added;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;
+            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getGroupTag(), parser.getGroup(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getCanonicalEquivalenceTag(), parser.isCanonicalEquivalence(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getCaseInsensitiveTag(), parser.isCaseInsensitive(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getDotallTag(), parser.isDotall(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLiteralTag(), parser.isLiteral(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getMultilineTag(), parser.isMultiline(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getUnicodeCaseTag(), parser.isUnicodeCase(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getUnicodeCharacterClassTag(), parser.isUnicodeCharacterClass(), result, !added) || added;
+            added = this.converter.addBooleanElementToJsonBuffer(this.tags.getUnixLinesTag(), parser.isUnixLines(), result, !added) || added;
         } else {
             if (log.isErrorLevelEnabled()) {
                 log.logErrorMessage("Unknown expression parser type: '" + expressionParser.getClass().getName() + "'.");

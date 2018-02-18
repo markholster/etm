@@ -12,4 +12,14 @@ abstract class AbstractExpressionParser implements ExpressionParser {
     public String getName() {
         return this.name;
     }
+
+    @Override
+    public boolean isCapableOfReplacing() {
+        return false;
+    }
+
+    @Override
+    public String replace(String content, String replacement, boolean allValues) {
+        throw new UnsupportedOperationException();
+    }
 }

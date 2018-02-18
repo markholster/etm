@@ -1,10 +1,11 @@
 function buildParserPage() {
 	var parserMap = {};
 	$('#input-parser-type').change(function() {
-		$('#grp-copy_value, #grp-fixed_position, #grp-fixed_value, #grp-jsonpath, #grp-xpath, #grp-xslt').hide();
+		$('#grp-copy_value, #grp-fixed_position, #grp-fixed_value, #grp-jsonpath, #grp-regex, #grp-xpath, #grp-xslt').hide();
 		// Disable all input fields otherwise form validation will fail.
-		$('#grp-fixed_position input, #grp-fixed_value input, #grp-jsonpath input, #grp-xpath input ,#grp-xslt textarea').attr('disabled', 'disabled');
-		$('#grp-' +$(this).val() + ' input').removeAttr('disabled'); 
+		$('#grp-fixed_position input, #grp-fixed_value input, #grp-jsonpath input, #grp-regex input, #grp-regex select, #grp-xpath input ,#grp-xslt textarea').attr('disabled', 'disabled');
+		$('#grp-' +$(this).val() + ' input').removeAttr('disabled');
+		$('#grp-' +$(this).val() + ' select').removeAttr('disabled');
 		$('#grp-' +$(this).val() + ' textarea').removeAttr('disabled');
 		$('#grp-' +$(this).val()).show(); 
 	});
@@ -27,6 +28,17 @@ function buildParserPage() {
 			$('#input-fixed-value').val(parserData.value);
 		} else if ('jsonpath' == parserData.type) {
 			$('#input-jsonpath-expression').val(parserData.expression);
+		} else if ('regex' == parserData.type) {
+			$('#input-regex-expression').val(parserData.expression);
+			$('#input-regex-group').val(parserData.group);
+			$('#sel-regex-canonical-equivalence').val(parserData.canonical_equivalence ? 'true' : 'false');
+			$('#sel-regex-case-insensitive').val(parserData.case_insensitive ? 'true' : 'false');
+			$('#sel-regex-dotall').val(parserData.dotall ? 'true' : 'false');
+			$('#sel-regex-literal').val(parserData.literal ? 'true' : 'false');
+			$('#sel-regex-multiline').val(parserData.multiline ? 'true' : 'false');
+			$('#sel-regex-unicode-case').val(parserData.unicode_case ? 'true' : 'false');
+			$('#sel-regex-unicode-character-class').val(parserData.unicode_character_class ? 'true' : 'false');
+			$('#sel-regex-unix-lines').val(parserData.unix_lines ? 'true' : 'false');
 		} else if ('xpath' == parserData.type) {
 			$('#input-xpath-expression').val(parserData.expression);
 		} else if ('xslt' == parserData.type) {
@@ -170,6 +182,17 @@ function buildParserPage() {
 			parserData['value'] = $('#input-fixed-value').val();
 		} else if ('jsonpath' == parserData.type) {
 			parserData['expression'] = $('#input-jsonpath-expression').val();
+		} else if ('regex' == parserData.type) {
+			parserData['expression'] = $('#input-regex-expression').val();
+			parserData['group'] = Number($('#input-regex-group').val());
+			parserData['canonical_equivalence'] = $('#sel-regex-canonical-equivalence').val() == 'true' ? true : false;
+			parserData['case_insensitive'] = $('#sel-regex-case-insensitive').val() == 'true' ? true : false;
+			parserData['dotall'] = $('#sel-regex-dotall').val() == 'true' ? true : false;
+			parserData['literal'] = $('#sel-regex-literal').val() == 'true' ? true : false;
+			parserData['multiline'] = $('#sel-regex-multiline').val() == 'true' ? true : false;
+			parserData['unicode_case'] = $('#sel-regex-unicode-case').val() == 'true' ? true : false;
+			parserData['unicode_character_class'] = $('#sel-regex-unicode-character-class').val() == 'true' ? true : false;
+			parserData['unix_lines'] = $('#sel-regex-unix-lines').val() == 'true' ? true : false;
 		} else if ('xpath' == parserData.type) {
 			parserData['expression'] = $('#input-xpath-expression').val();
 		} else if ('xslt' == parserData.type) {
@@ -179,7 +202,7 @@ function buildParserPage() {
 	}
 
 	function resetValues() {
-		$('#input-parser-name').val('');
+	    document.getElementById('parser_form').reset();
 		$('#input-parser-type').val('copy_value').change();
 		enableOrDisableButtons();
 	}

@@ -16,14 +16,17 @@ public class EtmException extends RuntimeException {
 
     // 201_* reserved for configuration errors.
     public static final int CONFIGURATION_LOAD_EXCEPTION = 201_000;
-    public static final int UNMARSHALLER_CREATE_EXCEPTION = 201_001;
-    public static final int INVALID_XPATH_EXPRESSION = 201_002;
-    public static final int INVALID_XSLT_TEMPLATE = 201_003;
-    public static final int INVALID_JSON_EXPRESSION = 201_004;
-    public static final int INVALID_EXPRESSION_PARSER_TYPE = 201_005;
-    public static final int NO_MORE_USER_ADMINS_LEFT = 201_006;
-    public static final int INVALID_LDAP_USER = 201_007;
-    public static final int INVALID_LDAP_GROUP = 201_008;
+    // 201_010 till 201_029 reserver for expression parsers
+    public static final int UNMARSHALLER_CREATE_EXCEPTION = 201_010;
+    public static final int INVALID_XPATH_EXPRESSION = 201_011;
+    public static final int INVALID_XSLT_TEMPLATE = 201_012;
+    public static final int INVALID_JSON_EXPRESSION = 201_013;
+    public static final int INVALID_REGULAR_EXPRESSION = 201_014;
+    public static final int INVALID_EXPRESSION_PARSER_TYPE = 201_029;
+    // 201_030 till ... reserved for users & groups
+    public static final int NO_MORE_USER_ADMINS_LEFT = 201_030;
+    public static final int INVALID_LDAP_USER = 201_031;
+    public static final int INVALID_LDAP_GROUP = 201_032;
 
     // 202_* reserved for login errors
     public static final int INVALID_PASSWORD = 202_001;

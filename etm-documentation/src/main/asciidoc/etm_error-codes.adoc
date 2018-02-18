@@ -12,14 +12,15 @@ During execution {etm} can run into an error. These may be shown to the end user
 |200002|License exceeded.|The maximum number of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
 |200003|License exceeded.|The maximum size of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
 |201000|Configuration load error.|Please check the connection to your Elasticsearch cluster.
-|201001|Error creating XML unmarshaller.|
-|201002|Invalid xpath expression. The provided input is an invalid XPath expression.|Change your input to a valid XPath expression.
-|201003|Invalid xslt template. The provided input is an invalid XSLT template.|Change your input to a valid XSLT template.
-|201004|Invalid json path expression. The provided input is an invalid JSON path expression or is not definite.|Change your input to a valid definite JSON path expression.
-|201005|Invalid expression parser type.|
-|201006|No user admins left. You are trying to change a user that will result in a system without any users with Read & write access to the User settings.|Make sure you will have an user with Read & write access to the User settings left when the change is applied.
-|201007|Invalid or unknown LDAP user.|Check your LDAP connection or the state of your LDAP server.
-|201008|Invalid or unknown LDAP group.|Check your LDAP connection or the state of your LDAP server.
+|201010|Error creating XML unmarshaller.|
+|201011|Invalid xpath expression. The provided input is an invalid XPath expression.|Change your input to a valid XPath expression.
+|201012|Invalid xslt template. The provided input is an invalid XSLT template.|Change your input to a valid XSLT template.
+|201013|Invalid json path expression. The provided input is an invalid JSON path expression or is not definite.|Change your input to a valid definite JSON path expression.
+|201014|Invalid regular expression. The provided input is an invalid regular expression or is not definite.|Change your input to a valid regular expression.
+|201029|Invalid expression parser type.|
+|201030|No user admins left. You are trying to change a user that will result in a system without any users with Read & write access to the User settings.|Make sure you will have an user with Read & write access to the User settings left when the change is applied.
+|201031|Invalid or unknown LDAP user.|Check your LDAP connection or the state of your LDAP server.
+|201032|Invalid or unknown LDAP group.|Check your LDAP connection or the state of your LDAP server.
 |202001|Invalid password.|Retype your password and try again.
 |202002|The new password may not be the same as the old password.|Choose a new password that is not the same as the current password.
 |300000|Unable to connect to IIB node.|Check your connection parameters and make sure the IIB Node is running.

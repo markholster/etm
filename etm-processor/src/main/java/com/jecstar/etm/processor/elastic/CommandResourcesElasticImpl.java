@@ -114,7 +114,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
         }
         if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer &&
                 endpointToMerge.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
-            ((DefaultTelemetryEventEnhancer) endpointConfiguration.eventEnhancer).mergeFieldParsers((DefaultTelemetryEventEnhancer) endpointToMerge.eventEnhancer);
+            ((DefaultTelemetryEventEnhancer) endpointConfiguration.eventEnhancer).mergeExpressionParsers((DefaultTelemetryEventEnhancer) endpointToMerge.eventEnhancer);
         }
     }
 

@@ -18,5 +18,21 @@ public interface ExpressionParserTags {
 
     String getTemplateTag();
 
+    String getGroupTag();
 
+    String getCanonicalEquivalenceTag();
+
+    String getCaseInsensitiveTag();
+
+    String getDotallTag();
+
+    String getLiteralTag();
+
+    String getMultilineTag();
+
+    String getUnicodeCaseTag();
+
+    String getUnicodeCharacterClassTag();
+
+    String getUnixLinesTag();
 }

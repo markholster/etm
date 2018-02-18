@@ -48,4 +48,24 @@ public class EndpointConfigurationTagsJsonImpl implements EndpointConfigurationT
     public String getParsersTag() {
         return "parsers";
     }
+
+    @Override
+    public String getParserTag() {
+        return "parser";
+    }
+
+    @Override
+    public String getReplaceAllTag() {
+        return "replace_all";
+    }
+
+    @Override
+    public String getReplacementTag() {
+        return "replacement";
+    }
+
+    @Override
+    public String getTransformationsTag() {
+        return "transformations";
+    }
 }

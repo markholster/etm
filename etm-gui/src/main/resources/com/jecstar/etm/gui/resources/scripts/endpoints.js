@@ -2,7 +2,8 @@ function buildEndpointPage() {
 	var parserMap = {};
 	var endpointMap = {};
 	var keywords;
-	$parserSelect = $('<select>').addClass('form-control custom-select etm-expression-parser');
+	$parserExtractionSelect = $('<select>').addClass('form-control custom-select etm-expression-parser');
+	$parserTransformationSelect = $('<select>').addClass('form-control custom-select etm-expression-parser');
 	$parserFieldSelect = $('<select>').addClass('form-control custom-select etm-parser-field');
 	
 	$('#sel-endpoint').change(function(event) {
@@ -57,10 +58,13 @@ function buildEndpointPage() {
 		            return;
 		        }
 		        $.each(data.parsers, function(index, parser) {
-		        	$parserSelect.append($('<option>').attr('value', parser.name).text(parser.name));
+		        	$parserExtractionSelect.append($('<option>').attr('value', parser.name).text(parser.name));
+		        	if (parser.capable_of_replacing) {
+		        	    $parserTransformationSelect.append($('<option>').attr('value', parser.name).text(parser.name));
+		        	}
 		        	parserMap[parser.name] = parser;
 		        });
-		        sortSelectOptions($parserSelect);
+		        sortSelectOptions($parserExtractionSelect);
 		    }
 		}),
 		$.ajax({
@@ -89,11 +93,15 @@ function buildEndpointPage() {
             }
         })
 	).done(function () {
-		$('#link-add-field').click(function(event) {
+		$('#link-add-extraction-field').click(function(event) {
 			event.preventDefault();
-			$('#field-columns').append(createFieldExtractionRow());
+			$('#field-extraction-columns').append(createFieldExtractionRow());
 		});
-		
+        $('#link-add-transformation-field').click(function(event) {
+            event.preventDefault();
+            $('#field-transformation-columns').append(createTransformationRow());
+        });
+
 		$.ajax({
 		    type: 'GET',
 		    contentType: 'application/json',
@@ -137,7 +145,7 @@ function buildEndpointPage() {
     function createParserRow(parser) {
     	var parserRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
             $('<div>').addClass('input-group mb-3').append(
-                $parserSelect.clone(true),
+                $parserExtractionSelect.clone(true),
                 $('<div>').addClass('input-group-append').append(
                     $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {event.preventDefault(); removeParserRow($(this));})
                 )
@@ -148,7 +156,45 @@ function buildEndpointPage() {
     	}
     	return parserRow;
     }
-    
+
+    function createTransformationRow(rowData) {
+        var card = $('<div>').addClass('card card-block etm-transformation-card form-group');
+        var localExtractionSelect = $parserTransformationSelect.clone(true);
+        var replacementInput = $('<input>').addClass("form-control etm-replacement").attr('type', 'text');
+        var replaceAllSelect = $('<select>').addClass('form-control custom-select etm-replace-all').append(
+            $('<option>').attr('value', 'true').text('Yes'),
+            $('<option>').attr('value', 'false').attr('selected', 'selected').text('No')
+        );
+        if (rowData) {
+            localExtractionSelect.val(rowData.parser.name);
+            replacementInput.val(rowData.replacement);
+            replaceAllSelect.val(rowData.replace_all ? 'true' : 'false');
+        }
+
+		card.append(
+		    $('<div>').addClass('card-body').append(
+				$('<div>').addClass('form-group row').append(
+					$('<div>').addClass('col-sm-12').append(
+						$('<a href="#">').addClass('pull-right').text('Remove this transformation').click(function (event) {event.preventDefault(); removeField($(this))})
+					)
+				),
+				$('<div>').addClass('form-group row').append(
+					$('<label>').addClass('col-sm-3 col-form-label').text('Parser'),
+					$('<div>').addClass('col-sm-9').append(localExtractionSelect)
+				),
+				$('<div>').addClass('form-group row').append(
+					$('<label>').addClass('col-sm-3 col-form-label').text('Replacement'),
+					$('<div>').addClass('col-sm-9').append(replacementInput)
+				),
+				$('<div>').addClass('form-group row').append(
+				    $('<label>').addClass('col-sm-3 col-form-label').text('Replace all occurrences'),
+				    $('<div>').addClass('col-sm-9').append(replaceAllSelect)
+    			)
+			)
+		)
+		return card;
+    }
+
 	function createFieldExtractionRow(fieldData) {
 		var inputKey = $('<input>').attr('type', 'text').attr('required', 'required').addClass('form-control etm-collection-key');
 		var localParserFieldSelect =  $parserFieldSelect.clone(true).change(function (event) {
@@ -201,7 +247,7 @@ function buildEndpointPage() {
 		} else {
 			parserRow.append(createParserRow())
 		}
-		var card = $('<div>').addClass('card card-block etm-field-card');
+		var card = $('<div>').addClass('card card-block etm-extraction-card form-group');
 		card.append(
 		    $('<div>').addClass('card-body').append(
 				$('<div>').addClass('form-group row').append(
@@ -336,10 +382,11 @@ function buildEndpointPage() {
 			enhancer: {
 				type: 'DEFAULT',
 				enhance_payload_format: $('#sel-detect-payload-format').val() == 'true' ? true : false,
-				fields: []		
+				fields: [],
+				transformations: []
 			}
 		}
-		$('.etm-field-card').each(function (index, block) {
+		$('.etm-extraction-card').each(function (index, block) {
 			var field = {
 			    field: endsWith($(block).find('.etm-parser-field').val(), '.') ? $(block).find('.etm-parser-field').val() + $(block).find('.etm-collection-key').val() : $(block).find('.etm-parser-field').val(),
 			    write_policy: $(block).find('.etm-writy-policy').val(),
@@ -350,12 +397,21 @@ function buildEndpointPage() {
 				field.parsers.push(parserMap[$(parser).val()])
 			});
 			endpointData.enhancer.fields.push(field);
-		}); 
+		});
+		$('.etm-transformation-card').each(function (index, block) {
+            var transformation = {
+                parser: parserMap[$(block).find('.etm-expression-parser').val()],
+                replacement: $(block).find('.etm-replacement').val() ? $(block).find('.etm-replacement').val() : null,
+                replace_all: $(block).find('.etm-replace-all').val() == 'true' ? true : false
+            }
+            endpointData.enhancer.transformations.push(transformation);
+        });
 		return endpointData;
 	}
 	
 	function setValuesFromData(endpointData) {
-		$('#field-columns').empty();
+	    $('#field-transformation-columns').empty();
+		$('#field-extraction-columns').empty();
 		$('#input-endpoint-name').val(getEndpointNameById(endpointData.name));
 		if (endpointData.enhancer.enhance_payload_format) {
 			$('#sel-detect-payload-format').val('true');
@@ -363,14 +419,18 @@ function buildEndpointPage() {
 			$('#sel-detect-payload-format').val('false');
 		}
 		$.each(endpointData.enhancer.fields, function (index, field) {
-			$('#field-columns').append(createFieldExtractionRow(field));
+			$('#field-extraction-columns').append(createFieldExtractionRow(field));
 		});
+        $.each(endpointData.enhancer.transformations, function (index, transformation) {
+            $('#field-transformation-columns').append(createTransformationRow(transformation));
+        });
 	}
 
 	function resetValues() {
 		$('#input-endpoint-name').val('');
 		$('#sel-detect-payload-format').val('false');
-		$('#field-columns').empty();
+		$('#field-transformation-columns').empty();
+		$('#field-extraction-columns').empty();
 		enableOrDisableButtons();
 	}
 	

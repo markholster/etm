@@ -25,6 +25,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
+import com.jecstar.etm.server.core.enhancers.DefaultTransformation;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.util.BCrypt;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
@@ -396,10 +397,13 @@ public class SettingsService extends AbstractJsonService {
         result.append("{\"parsers\": [");
         boolean first = true;
         for (SearchHit searchHit : scrollableSearch) {
+            ExpressionParser expressionParser = expressionParserConverter.read(searchHit.getSourceAsString());
+            Map<String, Object> parserMap = toMapWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER);
+            parserMap.put("capable_of_replacing", expressionParser.isCapableOfReplacing());
             if (!first) {
                 result.append(",");
             }
-            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
+            result.append(toString(parserMap));
             first = false;
         }
         result.append("]}");
@@ -468,6 +472,14 @@ public class SettingsService extends AbstractJsonService {
                         }
                     }
                 }
+                Iterator<DefaultTransformation> transformationIt = enhancer.getTransformations().iterator();
+                while (transformationIt.hasNext()) {
+                    DefaultTransformation transformation = transformationIt.next();
+                    if (transformation.getExpressionParser().getName().equals(parserName)) {
+                        transformationIt.remove();
+                        updated = true;
+                    }
+                }
             }
             if (updated) {
                 bulkRequestBuilder.add(createEndpointUpdateRequest(endpointConfig));
@@ -523,6 +535,14 @@ public class SettingsService extends AbstractJsonService {
                             it.set(expressionParser);
                             updated = true;
                         }
+                    }
+                }
+                Iterator<DefaultTransformation> transformationIt = enhancer.getTransformations().iterator();
+                while (transformationIt.hasNext()) {
+                    DefaultTransformation transformation = transformationIt.next();
+                    if (transformation.getExpressionParser().getName().equals(expressionParser.getName())) {
+                        transformation.setExpressionParser(expressionParser);
+                        updated = true;
                     }
                 }
             }

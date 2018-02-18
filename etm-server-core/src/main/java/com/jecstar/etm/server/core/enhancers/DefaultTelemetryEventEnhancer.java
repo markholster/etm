@@ -22,10 +22,12 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
     private boolean enhancePayloadFormat = true;
     private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 
+    private final List<DefaultTransformation> transformations = new ArrayList<>();
     private final List<DefaultField> fields = new ArrayList<>();
 
     @Override
     public void enhance(TelemetryEvent<?> event, ZonedDateTime enhanceTime) {
+        transform(event);
         enchancePayloadFormat(event);
         enhanceFields(event);
     }
@@ -42,6 +44,10 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
         return this.fields;
     }
 
+    public List<DefaultTransformation> getTransformations() {
+        return this.transformations;
+    }
+
     public void addField(DefaultField field) {
         Optional<DefaultField> optional = this.fields.stream().filter(f -> f.getName().equals(field.getName())).findFirst();
         if (optional.isPresent()) {
@@ -52,28 +58,36 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
         }
     }
 
+    public void addTransformation(DefaultTransformation transformation) {
+        boolean expressionParserPresent = this.transformations.stream().anyMatch(p -> p.getExpressionParser().getName().equals(transformation.getExpressionParser().getName()));
+        if (!expressionParserPresent) {
+            this.transformations.add(transformation);
+        }
+    }
+
     /**
-     * Merge the field <code>ExpressionParsers</code> of another <code>DefaultTelemetryEventEnhancer</code> to this one.
+     * Merge the field & transformation <code>ExpressionParsers</code> of another <code>DefaultTelemetryEventEnhancer</code> to this one.
      *
      * @param other The other <code>DefaultTelemetryEventEnhancer</code> to merge into this one.
      */
-    public void mergeFieldParsers(DefaultTelemetryEventEnhancer other) {
-        if (other.fields.isEmpty()) {
-            // Nothing to merge.
-            return;
-        }
-        if (this.fields.isEmpty()) {
+    public void mergeExpressionParsers(DefaultTelemetryEventEnhancer other) {
+        if (!other.fields.isEmpty() && !this.fields.isEmpty()) {
+            for (DefaultField field : other.getFields()) {
+                Optional<DefaultField> optional = this.fields.stream().filter(p -> p.getName().equals(field.getName())).findFirst();
+                if (optional.isPresent()) {
+                    // Both enhancers contain the same key. Append the "other" parsers to the current ones.
+                    optional.get().addParsers(field.getParsers());
+                } else {
+                    this.fields.add(field);
+                }
+            }
+        } else if (!other.fields.isEmpty() && this.fields.isEmpty()) {
             // Current parsers is empty, just overwrite with other.
             this.fields.addAll(other.fields);
-            return;
         }
-        for (DefaultField field : other.getFields()) {
-            Optional<DefaultField> optional = this.fields.stream().filter(p -> p.getName().equals(field.getName())).findFirst();
-            if (optional.isPresent()) {
-                // Both enhancers contain the same key. Append the "other" parsers to the current ones.
-                optional.get().addParsers(field.getParsers());
-            } else {
-                this.fields.add(field);
+        if (other.transformations.isEmpty()) {
+            for (DefaultTransformation transformation : other.transformations) {
+                addTransformation(transformation);
             }
         }
     }
@@ -118,6 +132,17 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
         return null;
     }
 
+    private void transform(TelemetryEvent<?> event) {
+        if (this.transformations.size() == 0) {
+            return;
+        }
+        for (DefaultTransformation transformation : this.transformations) {
+            if (!transformation.getExpressionParser().isCapableOfReplacing()) {
+                continue;
+            }
+            event.payload = transformation.getExpressionParser().replace(event.payload, transformation.getReplacement(), transformation.isReplaceAll());
+        }
+    }
 
     private void enhanceFields(TelemetryEvent<?> event) {
         if (this.fields.size() == 0) {

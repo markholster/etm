@@ -20,4 +20,12 @@ public interface EndpointConfigurationTags {
 
     String getParsersTag();
 
+    String getTransformationsTag();
+
+    String getReplacementTag();
+
+    String getReplaceAllTag();
+
+    String getParserTag();
+
 }

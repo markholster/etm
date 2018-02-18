@@ -11,6 +11,7 @@ import com.jecstar.etm.server.core.domain.parser.converter.json.ExpressionParser
 import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
+import com.jecstar.etm.server.core.enhancers.DefaultTransformation;
 import com.jecstar.etm.server.core.enhancers.TelemetryEventEnhancer;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -86,6 +87,21 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
                 enhancer.addField(field);
             }
         }
+        List<Map<String, Object>> transformations = this.converter.getArray(this.tags.getTransformationsTag(), enhancerValues);
+        if (transformations != null) {
+            for (Map<String, Object> transformationValues : transformations) {
+                DefaultTransformation transformation = new DefaultTransformation();
+
+                Map<String, Object> parserValues = this.converter.getObject(this.tags.getParserTag(), transformationValues);
+                Map<String, Object> objectMap = new HashMap<>();
+                objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, parserValues);
+                transformation.setExpressionParser(this.expressionParserConverter.read(objectMap));
+
+                transformation.setReplacement(this.converter.getString(this.tags.getReplacementTag(), transformationValues));
+                transformation.setReplaceAll(this.converter.getBoolean(this.tags.getReplaceAllTag(), transformationValues));
+                enhancer.addTransformation(transformation);
+            }
+        }
         return enhancer;
     }
 
@@ -124,6 +140,22 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
                         firstParser = false;
                     }
                     result.append("]}");
+                    first = false;
+                }
+                result.append("],");
+                result.append(this.converter.escapeToJson(this.tags.getTransformationsTag(), true)).append(": [");
+                first = true;
+                for (DefaultTransformation transformation : enhancer.getTransformations()) {
+                    if (!first) {
+                        result.append(",");
+                    }
+                    result.append("{");
+                    this.converter.addStringElementToJsonBuffer(this.tags.getReplacementTag(), transformation.getReplacement(), true, result, true);
+                    this.converter.addBooleanElementToJsonBuffer(this.tags.getReplaceAllTag(), transformation.isReplaceAll(), result, false);
+                    result.append(", " + this.converter.escapeToJson(this.tags.getParserTag(), true) + ": ");
+                    Map<String, Object> objectMap = this.converter.toMap(this.expressionParserConverter.write(transformation.getExpressionParser()));
+                    result.append(this.converter.toString((Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER)));
+                    result.append("}");
                     first = false;
                 }
                 result.append("]");
