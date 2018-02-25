@@ -38,13 +38,25 @@ ext {
 allprojects {
     apply plugin: "eclipse"
     apply plugin: "idea"
-    version "3.1.0-SNAPSHOT"
+    version "3.0.1"
     group "com.jecstar.etm"
 
     repositories {
         mavenCentral()
         maven {
             url "https://artifacts.elastic.co/maven"
+        }
+    }
+
+    plugins.withType(JavaPlugin).whenPluginAdded {
+        compileJava {
+            options.encoding = 'UTF-8'
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+
+        compileTestJava {
+            options.encoding = 'UTF-8'
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
         }
     }
 }

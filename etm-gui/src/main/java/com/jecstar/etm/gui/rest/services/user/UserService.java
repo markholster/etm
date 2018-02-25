@@ -45,6 +45,7 @@ public class UserService extends AbstractJsonService {
         this.timezoneResponse = "{\"time_zones\": [" + Arrays.stream(TimeZone.getAvailableIDs()).map(tz -> escapeToJson(tz, true)).collect(Collectors.joining(",")) + "], " + escapeObjectToJsonNameValuePair("default_time_zone", TimeZone.getDefault().getID()) + "}";
     }
 
+    @SuppressWarnings("unchecked")
     @GET
     @Path("/settings")
     @Produces(MediaType.APPLICATION_JSON)

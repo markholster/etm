@@ -591,6 +591,7 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @param attributes The attributes to return.
      * @return A <code>Map</code> with attributes from the given entity.
      */
+    @SuppressWarnings("unchecked")
     private Map<String, Object> getEntity(String groupName, String... attributes) {
         String[] prefixedAttributes = new String[attributes.length];
         GetRequestBuilder builder;

@@ -105,6 +105,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
         return enhancer;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public String write(EndpointConfiguration endpointConfiguration) {
         StringBuilder result = new StringBuilder();

@@ -235,6 +235,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
         return super.getDirectory();
     }
 
+    @SuppressWarnings("unchecked")
     private boolean reloadConfigurationWhenNecessary() {
         long updateCheckInterval = 60 * 1000;
         if (System.currentTimeMillis() - this.lastCheckedForUpdates <= updateCheckInterval) {

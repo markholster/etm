@@ -184,6 +184,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     private EtmPrincipal loadPrincipal(String userId) {
         GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId).get();
         if (!getResponse.isExists()) {
@@ -225,6 +226,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private String getPasswordHash(String userId) {
         GetResponse getResponse = this.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
                 .setFetchSource(new String[]{

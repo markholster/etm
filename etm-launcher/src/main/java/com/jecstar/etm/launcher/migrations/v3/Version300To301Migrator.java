@@ -67,6 +67,7 @@ public class Version300To301Migrator extends AbstractEtmMigrator {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     private boolean findFieldWithTextType(Map<String, Object> valueMap) {
         valueMap = this.jsonConverter.getObject("properties", valueMap);
         if (valueMap == null) {

@@ -161,6 +161,7 @@ public class SettingsService extends AbstractJsonService {
         return toStringWithoutNamespace(this.etmConfigurationConverter.write(null, config), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE);
     }
 
+    @SuppressWarnings("unchecked")
     @PUT
     @Path("/cluster")
     @Produces(MediaType.APPLICATION_JSON)
