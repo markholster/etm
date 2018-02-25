@@ -1,4 +1,8 @@
-== Changelog & upgrade
+== Changelog
+
+=== Version 3.0.1
+* Added a Regular expression parser
+* Option to change payload before it is store in Elasticsearch
 
 === Version 3.0.0
 * Added the link:https://kafka.apache.org/[Kafka] processor.
@@ -9,31 +13,6 @@
 * Added a ''Copy value'' parser.
 * Make the number of update threads to Elasticsearch configurable.
 * Support for bulk events in JMS & MQ processor.
-* Changes configuration elasticsearch.connectAddresses to a list. This needs to be changed in your etm.yml! For example
-
-[source,yaml,subs=attributes+]
-----
-elasticsearch:
-  connectAddresses:
-  - "127.0.0.1:9300"
-  - "server-2:9300"
-----
-
-==== Upgrade from version 2.4.0 to 3.0.0
-. Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
-. Download and uncompress Elasticsearch 6.2.x to a new directory.
-. Stop all {etm} nodes.
-. Stop your current Elasticsearch nodes.
-. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
-. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
-. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
-. Download and uncompress {etm} 3.0.0 to a new directory.
-. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
-. Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
-.. Remove the option 'nrOfListeners' under the ibmMq chapter. This option must be replaced with the 'minNrOfListeners' and 'maxNrOfListeners' options. See the <<IBM MQ section in etm.yml>> for more information.
-.. Change the option elasticsearch.connectAddresses to a list. See <<Version 3.0.0>> for an example.
-. Start a single {etm} node in condole mode and wait for the data migration to complete.
-. Start all other {etm} nodes.
 
 === Version 2.4.0
 * Fixed Terms and Significant Terms autocompletion fields in Graphs page.
@@ -43,38 +22,12 @@ elasticsearch:
 * Fixed LDAP Authentication bug.
 * Option to download all users to a csv or excel sheet.
 
-==== Upgrade from version 2.x to 2.4.0
-. Make sure you have a backup of all Elasticsearch data!
-. Download and uncompress Elasticsearch 5.6.x to a new directory.
-. Stop all {etm} nodes.
-. Stop your current Elasticsearch nodes.
-. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
-. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
-. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
-. Dowload and uncompress {etm} 2.4.0 to a new directory.
-. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
-. Copy the file 'config/etm.yml' from your old {etm} installation to the new one. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' under the http chapter. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
-. Start your {etm} nodes.
-
 === Version 2.3.0
 * Support for x-pack secured Elasticsearch clusters.
 * Upgrade to Elasticsearch 5.5.x.
 * Separate rate limiting on GUI and REST processor. 
 
-==== Upgrade from version 2.x to 2.3.0
-. Make sure you have a backup of all Elasticsearch data!
-. Download and uncompress Elasticsearch 5.5.x to a new directory. 
-. Stop all {etm} nodes.
-. Stop your current Elasticsearch nodes.
-. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
-. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
-. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
-. Dowload and uncompress {etm} 2.3.0 to a new directory.
-. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
-. Copy the file 'config/etm.yml' from your old {etm} installation to the new one. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' under the http chapter. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
-. Start your {etm} nodes.
-
-=== Version 2.2.0 
+=== Version 2.2.0
 * Upgrade to Elasicsearch 5.4.x.
 * Support for basic authentication on rest processor.
 * Added audit logs to audit the usage of {etm}.
@@ -84,3 +37,52 @@ elasticsearch:
 * Automatic installation of free license.
 * Allow subtree scope in LDAP user authentication.
 * Add a write policy to endpoint configurations alowing fields to be overwritten.
+
+== Upgrades
+{etm} is maintaining a semantic versioning strategy. Given a version number MAJOR.MINOR.PATCH, increment the:
+
+* MAJOR version when {etm} contains incompatible API changes,
+* MINOR version when {etm} adds functionality in a backwards-compatible manner, and
+* PATCH version when {etm} makes backwards-compatible bug fixes.
+
+Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
+
+=== Upgrades within the same MAJOR version.
+
+. Make sure you have a backup of all Elasticsearch data!
+. Download and uncompress the required Elasticsearch version to a new directory.
+. Stop all {etm} nodes.
+. Stop your current Elasticsearch nodes.
+. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
+. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
+. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
+. Dowload and uncompress {etm} to a new directory.
+. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
+. Copy the file 'config/etm.yml' from your old {etm} installation to the new one. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' under the http chapter. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
+. Start your {etm} nodes.
+
+=== Upgrade from version 2.4.0 to 3.0.x
+. Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
+. Download and uncompress Elasticsearch 6.2.x to a new directory.
+. Stop all {etm} nodes.
+. Stop your current Elasticsearch nodes.
+. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
+. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
+. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
+. Download and uncompress {etm} 3.0.x to a new directory.
+. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
+. Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
+.. Remove the option 'nrOfListeners' under the ibmMq chapter. This option must be replaced with the 'minNrOfListeners' and 'maxNrOfListeners' options. See the <<IBM MQ section in etm.yml>> for more information.
+.. Changes configuration elasticsearch.connectAddresses to a list. For example
+[source,yaml,subs=attributes+]
+    ----
+    elasticsearch:
+      connectAddresses:
+      - "127.0.0.1:9300"
+      - "server-2:9300"
+    ----
+.. If you want to play save, disable all processors. This will prevent events to be processed in the case your migrated somehow failed.
+. Start a single {etm} node in console mode and wait for the data migration to complete. Login to {etm} and validate the migration.
+. Enable all required processors when disabled in a previous step and start the node.
+. Start all other {etm} nodes.
+
