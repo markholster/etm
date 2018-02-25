@@ -681,7 +681,7 @@ function showEvent(scrollTo, type, id) {
 		if ('business' == event.type || 'business' == event.object_type) {
 			return event.name ? event.name : '?';
 		} else if ('http' == event.type || 'http' == event.object_type) {
-			return ('incoming' == event.direction ? 'Received ' : 'Send ') + ("RESPONSE" == event.sub_type ? 'http response ' : 'http ') + (event.name ? event.name : '?')
+			return ('incoming' == event.direction ? 'Received ' : 'Sent ') + ("RESPONSE" == event.sub_type ? 'http response ' : 'http ') + (event.name ? event.name : '?')
 		} else if ('log' == event.type || 'log' == event.object_type) {
 			return event.payload;
 		} else if ('messaging' == event.type || 'messaging' == event.object_type) {
@@ -689,26 +689,26 @@ function showEvent(scrollTo, type, id) {
 				if ('incoming' == event.direction) {
 					return 'Received request message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
-					return 'Send request message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
+					return 'Sent request message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			} else if ('RESPONSE' == event.sub_type) {
 				if ('incoming' == event.direction) {
 					return 'Received response message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
-					return 'Send response message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
+					return 'Sent response message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			} else {
 				if ('incoming' == event.direction) {
 					return 'Received fire-forget message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
 				} else {
-					return 'Send fire-forget message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
+					return 'Sent fire-forget message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			}
 		} else if ('sql' == event.type || 'sql' == event.object_type) {
 			if ('incoming' == event.direction) {
 				return 'Received ' + ("RESULTSET" == event.sub_type ? 'sql resultset' : event.payload);
 			} else {
-				return 'Send ' + ("RESULTSET" == event.sub_type ? 'sql resultset' : event.payload);
+				return 'Sent ' + ("RESULTSET" == event.sub_type ? 'sql resultset' : event.payload);
 			}
 		}
 	}
