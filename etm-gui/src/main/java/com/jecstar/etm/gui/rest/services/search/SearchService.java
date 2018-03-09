@@ -282,7 +282,14 @@ public class SearchService extends AbstractIndexMetadataService {
                     timestampFilter.lte(endTime < parameters.getNotAfterTimestamp() ? endTime : parameters.getNotAfterTimestamp());
                     notAfterFilterNecessary = false;
                 } catch (NumberFormatException e) {
-                    timestampFilter.lte(parameters.getEndTime());
+                    // Endtime was an elasticsearch date math. Check if it is the exact value of "now"
+                    if ("now" .equalsIgnoreCase(parameters.getEndTime())) {
+                        // Replace "now" with the notAfter timestamp which is in essence the same
+                        timestampFilter.lte(parameters.getNotAfterTimestamp());
+                        notAfterFilterNecessary = false;
+                    } else {
+                        timestampFilter.lte(parameters.getEndTime());
+                    }
                 }
             } else {
                 timestampFilter.lte(parameters.getNotAfterTimestamp());

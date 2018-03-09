@@ -121,14 +121,14 @@ class MetricReporterElasticImpl extends ScheduledReporter {
             valueMap.put(this.tags.getCountTag(), entry.getValue().getCount());
             valueMap.put(this.tags.getMinTag(), snapshot.getMin());
             valueMap.put(this.tags.getMaxTag(), snapshot.getMax());
-            valueMap.put(this.tags.getMeanTag(), snapshot.getMean());
-            valueMap.put(this.tags.getStandardDeviationTag(), snapshot.getStdDev());
-            valueMap.put(this.tags.getMedianTag(), snapshot.getMedian());
-            valueMap.put(this.tags.get75thPercentileTag(), snapshot.get75thPercentile());
-            valueMap.put(this.tags.get95thPercentileTag(), snapshot.get95thPercentile());
-            valueMap.put(this.tags.get98thPercentileTag(), snapshot.get98thPercentile());
-            valueMap.put(this.tags.get99thPercentileTag(), snapshot.get99thPercentile());
-            valueMap.put(this.tags.get999thPercentileTag(), snapshot.get999thPercentile());
+            addWhenValidNumber(this.tags.getMeanTag(), snapshot.getMean(), valueMap);
+            addWhenValidNumber(this.tags.getStandardDeviationTag(), snapshot.getStdDev(), valueMap);
+            addWhenValidNumber(this.tags.getMedianTag(), snapshot.getMedian(), valueMap);
+            addWhenValidNumber(this.tags.get75thPercentileTag(), snapshot.get75thPercentile(), valueMap);
+            addWhenValidNumber(this.tags.get95thPercentileTag(), snapshot.get95thPercentile(), valueMap);
+            addWhenValidNumber(this.tags.get98thPercentileTag(), snapshot.get98thPercentile(), valueMap);
+            addWhenValidNumber(this.tags.get99thPercentileTag(), snapshot.get99thPercentile(), valueMap);
+            addWhenValidNumber(this.tags.get999thPercentileTag(), snapshot.get999thPercentile(), valueMap);
         }
     }
 
@@ -145,10 +145,10 @@ class MetricReporterElasticImpl extends ScheduledReporter {
                 valueMap = map;
             }
             valueMap.put(this.tags.getCountTag(), entry.getValue().getCount());
-            valueMap.put(this.tags.getMeanRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getMeanRate(), rateUnit));
-            valueMap.put(this.tags.getOneMinuteRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getOneMinuteRate(), rateUnit));
-            valueMap.put(this.tags.getFiveMinuteRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getFiveMinuteRate(), rateUnit));
-            valueMap.put(this.tags.getFifteenMinuteRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getFifteenMinuteRate(), rateUnit));
+            addWhenValidNumber(this.tags.getMeanRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getMeanRate(), rateUnit), valueMap);
+            addWhenValidNumber(this.tags.getOneMinuteRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getOneMinuteRate(), rateUnit), valueMap);
+            addWhenValidNumber(this.tags.getFiveMinuteRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getFiveMinuteRate(), rateUnit), valueMap);
+            addWhenValidNumber(this.tags.getFifteenMinuteRateTag(RateType.EVENTS, rateUnit), convertRate(entry.getValue().getFifteenMinuteRate(), rateUnit), valueMap);
         }
     }
 
@@ -165,22 +165,23 @@ class MetricReporterElasticImpl extends ScheduledReporter {
                 valueMap = map;
             }
             Snapshot snapshot = entry.getValue().getSnapshot();
+
             valueMap.put(this.tags.getCountTag(), entry.getValue().getCount());
-            valueMap.put(this.tags.getMeanRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getMeanRate(), rateUnit));
-            valueMap.put(this.tags.getOneMinuteRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getOneMinuteRate(), rateUnit));
-            valueMap.put(this.tags.getFiveMinuteRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getFiveMinuteRate(), rateUnit));
-            valueMap.put(this.tags.getFifteenMinuteRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getFifteenMinuteRate(), rateUnit));
+            addWhenValidNumber(this.tags.getMeanRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getMeanRate(), rateUnit), valueMap);
+            addWhenValidNumber(this.tags.getOneMinuteRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getOneMinuteRate(), rateUnit), valueMap);
+            addWhenValidNumber(this.tags.getFiveMinuteRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getFiveMinuteRate(), rateUnit), valueMap);
+            addWhenValidNumber(this.tags.getFifteenMinuteRateTag(RateType.CALLS, rateUnit), convertRate(entry.getValue().getFifteenMinuteRate(), rateUnit), valueMap);
 
             valueMap.put(this.tags.getMinDurationTag(durationUnit), convertDuration(snapshot.getMin(), durationUnit));
             valueMap.put(this.tags.getMaxDurationTag(durationUnit), convertDuration(snapshot.getMax(), durationUnit));
-            valueMap.put(this.tags.getMeanDurationTag(durationUnit), convertDuration(snapshot.getMean(), durationUnit));
-            valueMap.put(this.tags.getStandardDeviationDurationTag(durationUnit), convertDuration(snapshot.getStdDev(), durationUnit));
-            valueMap.put(this.tags.getMedianDurationTag(durationUnit), convertDuration(snapshot.getMedian(), durationUnit));
-            valueMap.put(this.tags.get75thPercentileDurationTag(durationUnit), convertDuration(snapshot.get75thPercentile(), durationUnit));
-            valueMap.put(this.tags.get95thPercentileDurationTag(durationUnit), convertDuration(snapshot.get95thPercentile(), durationUnit));
-            valueMap.put(this.tags.get98thPercentileDurationTag(durationUnit), convertDuration(snapshot.get98thPercentile(), durationUnit));
-            valueMap.put(this.tags.get99thPercentileDurationTag(durationUnit), convertDuration(snapshot.get99thPercentile(), durationUnit));
-            valueMap.put(this.tags.get999thPercentileDurationTag(durationUnit), convertDuration(snapshot.get999thPercentile(), durationUnit));
+            addWhenValidNumber(this.tags.getMeanDurationTag(durationUnit), convertDuration(snapshot.getMean(), durationUnit), valueMap);
+            addWhenValidNumber(this.tags.getStandardDeviationDurationTag(durationUnit), convertDuration(snapshot.getStdDev(), durationUnit), valueMap);
+            addWhenValidNumber(this.tags.getMedianDurationTag(durationUnit), convertDuration(snapshot.getMedian(), durationUnit), valueMap);
+            addWhenValidNumber(this.tags.get75thPercentileDurationTag(durationUnit), convertDuration(snapshot.get75thPercentile(), durationUnit), valueMap);
+            addWhenValidNumber(this.tags.get95thPercentileDurationTag(durationUnit), convertDuration(snapshot.get95thPercentile(), durationUnit), valueMap);
+            addWhenValidNumber(this.tags.get98thPercentileDurationTag(durationUnit), convertDuration(snapshot.get98thPercentile(), durationUnit), valueMap);
+            addWhenValidNumber(this.tags.get99thPercentileDurationTag(durationUnit), convertDuration(snapshot.get99thPercentile(), durationUnit), valueMap);
+            addWhenValidNumber(this.tags.get999thPercentileDurationTag(durationUnit), convertDuration(snapshot.get999thPercentile(), durationUnit), valueMap);
         }
     }
 
@@ -215,6 +216,12 @@ class MetricReporterElasticImpl extends ScheduledReporter {
         return rate * rateUnit.toSeconds(1);
     }
 
+    private void addWhenValidNumber(String tag, double value, Map<String, Object> valueMap) {
+        if (Double.isNaN(value)) {
+            return;
+        }
+        valueMap.put(tag, value);
+    }
 
     private void appendNodeInfo(Map<String, Object> root) {
         Map<String, Object> nodeMap = new LinkedHashMap<>();

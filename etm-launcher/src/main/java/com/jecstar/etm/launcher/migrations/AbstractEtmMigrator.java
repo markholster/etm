@@ -2,6 +2,13 @@ package com.jecstar.etm.launcher.migrations;
 
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateAction;
+import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateRequestBuilder;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesAction;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequestBuilder;
+import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
+import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
+import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -9,10 +16,12 @@ import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -102,6 +111,25 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
             }
         }
         System.out.println("Done moving temporary indices to permanent indices.");
+    }
+
+    protected void createTemporaryIndexTemplate(Client client, String indexPrefix, int shardsPerIndex) {
+        deleteTemporaryIndexTemplate(client, indexPrefix);
+        new PutIndexTemplateRequestBuilder(client, PutIndexTemplateAction.INSTANCE, indexPrefix)
+                .setCreate(true)
+                .setPatterns(Collections.singletonList(indexPrefix + "*"))
+                .setSettings(Settings.builder()
+                        .put("index.number_of_shards", shardsPerIndex)
+                        .put("index.number_of_replicas", 0)
+                )
+                .get();
+    }
+
+    protected void deleteTemporaryIndexTemplate(Client client, String indexPrefix) {
+        GetIndexTemplatesResponse getResponse = new GetIndexTemplatesRequestBuilder(client, GetIndexTemplatesAction.INSTANCE, indexPrefix).get();
+        if (getResponse.getIndexTemplates().size() > 0) {
+            new DeleteIndexTemplateRequestBuilder(client, DeleteIndexTemplateAction.INSTANCE, indexPrefix).get();
+        }
     }
 
     public class FailureDetectingBulkProcessorListener implements BulkProcessor.Listener {

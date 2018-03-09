@@ -29,10 +29,7 @@ import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -87,7 +84,9 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                 this.client.admin().indices().prepareDelete(index).get();
                 System.out.println("Removed migration index '" + index + "'.");
             }
+            deleteTemporaryIndexTemplate(this.client, this.migrationIndexPrefix);
         }
+        createTemporaryIndexTemplate(this.client, this.migrationIndexPrefix, 1);
 
         FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
         boolean succeeded = migrateMetrics(this.client, listener);
@@ -142,17 +141,46 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
         reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
         deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
+        deleteTemporaryIndexTemplate(this.client, this.migrationIndexPrefix);
     }
 
     private boolean migrateMetrics(Client client, FailureDetectingBulkProcessorListener listener) {
+        Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
+            Map<String, Object> sourceMap = new HashMap<>(searchHit.getSourceAsMap());
+            sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE);
+            removeNanValues(sourceMap);
+            IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
+                    .setIndex(Version2xTo3xMigrator.this.migrationIndexPrefix + searchHit.getIndex())
+                    .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+                    .setSource(sourceMap);
+            return builder.request();
+        };
+
         return migrateEntity("metrics",
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
                 null,
                 client,
                 createBulkProcessor(client, listener),
                 listener,
-                new DefaultIndexRequestCreator(client, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE, null, false)
+                requestBuilder
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private void removeNanValues(Map<String, Object> sourceMap) {
+        Iterator<Map.Entry<String, Object>> iterator = sourceMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Object> entry = iterator.next();
+            if (entry.getValue() instanceof Double && Double.isNaN((Double) entry.getValue())) {
+                iterator.remove();
+            } else if (entry.getValue() instanceof Float && Float.isNaN((Float) entry.getValue())) {
+                iterator.remove();
+            } else if (entry.getValue() instanceof String && "NaN" .equals(entry.getValue())) {
+                iterator.remove();
+            } else if (entry.getValue() instanceof Map) {
+                removeNanValues((Map<String, Object>) entry.getValue());
+            }
+        }
     }
 
     private boolean migrateHttpSessions(Client client, FailureDetectingBulkProcessorListener listener) {

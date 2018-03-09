@@ -263,7 +263,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + ", { \"" + this.eventTags.getApplicationHostAddressTag() + "\": { \"match\": \"" + this.eventTags.getApplicationHostAddressTag() + "\", \"mapping\": {\"type\": \"ip\"}}}"
                 + ", { \"" + this.eventTags.getExpiryTag() + "\": { \"match\": \"" + this.eventTags.getExpiryTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + this.eventTags.getTimestampTag() + "\": { \"match\": \"" + this.eventTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
-                + ", { \"string_as_text\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"text\"}}}"
+                + ", { \"string_as_text\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"text\", \"fields\":{\"keyword\":{\"type\":\"keyword\",\"ignore_above\":256}}}}}"
                 + "]}"
                 + "}";
     }

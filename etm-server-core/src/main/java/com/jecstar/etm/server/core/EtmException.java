@@ -16,7 +16,7 @@ public class EtmException extends RuntimeException {
 
     // 201_* reserved for configuration errors.
     public static final int CONFIGURATION_LOAD_EXCEPTION = 201_000;
-    // 201_010 till 201_029 reserver for expression parsers
+    // 201_010 till 201_029 reserved for expression parsers
     public static final int UNMARSHALLER_CREATE_EXCEPTION = 201_010;
     public static final int INVALID_XPATH_EXPRESSION = 201_011;
     public static final int INVALID_XSLT_TEMPLATE = 201_012;

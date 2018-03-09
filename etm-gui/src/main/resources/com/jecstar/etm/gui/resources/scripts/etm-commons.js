@@ -38,12 +38,14 @@ function addAjaxHandlers(startFunction, stopFunction, errorFunction, completeFun
             startFunction();
         }
         $('.errorBox').hide('fast');
-        $('#spinner').show('fast');
+        $('.navbar-brand').addClass('pulse');
     }).ajaxStop(function () {
         if (stopFunction) {
             stopFunction();
         }
-        $('#spinner').hide('fast');
+        if (jQuery.active == 0) {
+            $('.navbar-brand').removeClass('pulse');
+        }
     }).ajaxError(errorFunction)
     .ajaxComplete(function(event, jqXHR, settings) {
         var contentType = jqXHR.getResponseHeader("Content-Type");

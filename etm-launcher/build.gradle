@@ -12,6 +12,6 @@ dependencies {
             dep_resteasyWadl,
             dep_snakeyaml,
             dep_undertowServlet,
-            dep_xpackTransportCclient
+            dep_elasticsearchXpackTransportClient
     testCompile dep_junit
 }
