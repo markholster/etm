@@ -38,5 +38,5 @@ if [ $? -ne 0 ]; then
     echo "Generating docker image failed"
     exit 1
 fi
-#docker push www.jecstar.com/etm:3.0.0
+#docker push www.jecstar.com/etm:$VERSION
 

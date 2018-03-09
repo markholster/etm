@@ -1,1 +1,0 @@
-- Do a ./gradlew clean build on the root. Fix all lint errors
