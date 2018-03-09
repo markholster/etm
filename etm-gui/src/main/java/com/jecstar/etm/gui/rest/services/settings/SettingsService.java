@@ -1108,7 +1108,8 @@ public class SettingsService extends AbstractJsonService {
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
-                        .must(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), roles)))
+                        .must(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getRolesTag(), roles))
+                )
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         List<String> groups = new ArrayList<>();
@@ -1145,10 +1146,10 @@ public class SettingsService extends AbstractJsonService {
     private long getNumberOfUsersWithUserAdminRole(Collection<String> adminGroups) {
         BoolQueryBuilder query = QueryBuilders.boolQuery().must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         if (adminGroups == null || adminGroups.isEmpty()) {
-            query.must(QueryBuilders.termQuery(this.etmPrincipalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE));
+            query.must(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE));
         } else {
-            query.should(QueryBuilders.termsQuery(this.etmPrincipalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE))
-                    .should(QueryBuilders.termsQuery(this.etmPrincipalTags.getGroupsTag(), adminGroups))
+            query.should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE))
+                    .should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getGroupsTag(), adminGroups))
                     .minimumShouldMatch(1);
         }
         SearchResponse response = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
