@@ -1,18 +1,7 @@
 Feature: Search
 
-  Scenario Outline: Login to search page
-    Given User logs in to ETM as it-tester with password Welcome123 using <browser>
-    And The user browses to /gui/search/index.html
-    Then The search page should be visible
-
-    Examples:
-      | browser |
-      | chrome  |
-      | firefox |
-      | ie      |
-
   Scenario Outline: Search for etm events
-    Given User logs in to ETM as it-tester with password Welcome123 using <browser>
+    Given The user logs in to ETM as it-tester with password Welcome123 using <browser>
     And The user browses to /gui/search/index.html
     Then The search page should be visible
   # Test the presence of the search result table and the query in the query history

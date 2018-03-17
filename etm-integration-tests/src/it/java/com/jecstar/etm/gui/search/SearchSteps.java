@@ -33,7 +33,6 @@ public class SearchSteps extends AbstractSteps {
     private final TelemetryEventWriter<String, SqlTelemetryEvent> sqlEventWriter = new SqlTelemetryEventWriterJsonImpl();
 
     public SearchSteps() {
-        super();
         // Execute a query with a certain type.
         When("The user searches for (.*) of types (.*)", (String query, String types) -> {
             selectQueryTypes(types);
@@ -81,15 +80,15 @@ public class SearchSteps extends AbstractSteps {
         When("The result table edit link is clicked", () -> findById("link-edit-table").click());
 
         When("The user adds a row with the name \"(.*)\" on the field \"(.*)\"", (String columnName, String columnField) -> {
-            findById("link-add-result-row").click();
+            clickOnElement("link-add-result-row");
             // Select the fourth child. first child is the header, second is the timestamp column, third is the name column and the fourth is our new column.
             WebElement newRowElement = findById("table-settings-columns").findElement(By.xpath("./*[4]"));
             // Set the column name and field
             newRowElement.findElement(By.xpath("./*[1]/*[1]")).sendKeys(columnName);
             newRowElement.findElement(By.xpath("./*[2]/*[1]")).sendKeys(columnField);
             // Save the new layout.
-            findById("btn-apply-table-settings").click();
-            waitForHide("modal-table-settings");
+            clickOnElement("btn-apply-table-settings");
+            waitForModalToHide("Table settings");
         });
 
         When("The user enters the text \"(.*)\" in the query field", (String query) -> setTextToElement(findById("query-string"), query));
@@ -159,13 +158,12 @@ public class SearchSteps extends AbstractSteps {
         Then("The transaction details should be visible", () -> {
             waitForShow("transaction-detail-table");
             // Make sure 6 events are in the transaction (and 1 for the table header).
-            List<WebElement> tableRows = findById("transaction-detail-table").findElements(By.tagName("tr"));
-            assertEquals(7 + 1, tableRows.size());
+            waitFor(c -> 8 == findById("transaction-detail-table").findElements(By.tagName("tr")).size());
         });
-        Then("The event chain should be visible", () -> waitForShow("event-chain"));
-        And("The event chain should contain (\\d+) canvas items", (Integer canvasCount) ->
-                assertEquals(canvasCount.intValue(), findById("event-chain").findElements(By.tagName("canvas")).size())
-        );
+        Then("The event chain should be visible", () -> waitForShow("event-chain", false));
+        And("The event chain should contain (\\d+) canvas items", (Integer canvasCount) -> {
+            waitFor(c -> findById("event-chain").findElements(By.tagName("canvas")).size() == canvasCount);
+        });
     }
 
     private void addTransactionsToEtm(String eventId) throws IOException {
@@ -179,6 +177,7 @@ public class SearchSteps extends AbstractSteps {
                 .setTransactionId(UUID.randomUUID().toString())
                 .setApplication(new ApplicationBuilder()
                         .setName("My Backend")
+                        .setInstance("Instance 3")
                         .setVersion("2.1.0_beta3")
                 );
 

@@ -1,7 +1,7 @@
 Feature: Search templates
 
   Scenario Outline: Create a template
-    Given User logs in to ETM as it-tester with password Welcome123 using <browser>
+    Given The user logs in to ETM as it-tester with password Welcome123 using <browser>
     And The user browses to /gui/search/index.html
     And All templates are removed
     Then The search page should be visible
@@ -27,7 +27,7 @@ Feature: Search templates
     And The user enters the text "Integration-test" in the template name field
     And The user saves the template
     Then The "Template already exists" modal should be shown
-    When The user confirms the modal with "Yes".
+    When The user confirms the modal with "Yes"
     Then A template with the name "Integration-test" should be present
     # Now test if the updated template works
     When The user enters the text "This value should be changed with the value of the template" in the query field

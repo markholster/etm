@@ -25,6 +25,8 @@ public abstract class AbstractSteps implements En {
 
     protected WebDriver driver;
 
+    protected String username;
+
     protected AbstractSteps() {
         java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit.DefaultCssErrorHandler").setLevel(Level.OFF);
         java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit.javascript.StrictErrorReporter").setLevel(Level.OFF);
@@ -33,19 +35,20 @@ public abstract class AbstractSteps implements En {
         After(() -> {
             waitForAjaxToComplete();
             this.driver.navigate().to(host + "/gui/logout?source=./");
-            this.driver.close();
+            this.driver.quit();
         });
 
         //Login to ETM. This should always be the first step of a testcase.
-        Given("User logs in to ETM as (.*) with password (.*) using (.*)", (String username, String password, String browser) -> {
-            if ("firefox" .equalsIgnoreCase(browser)) {
+        Given("The user logs in to ETM as (.*) with password (.*) using (.*)", (String username, String password, String browser) -> {
+            this.username = username;
+            if ("firefox".equalsIgnoreCase(browser)) {
                 System.setProperty("webdriver.gecko.driver", new File("./drivers/geckodriver").getAbsolutePath());
                 this.driver = new FirefoxDriver();
-            } else if ("edge" .equalsIgnoreCase(browser)) {
+            } else if ("edge".equalsIgnoreCase(browser)) {
                 this.driver = new HtmlUnitDriver(BrowserVersion.EDGE, true);
-            } else if ("ie" .equalsIgnoreCase(browser)) {
+            } else if ("ie".equalsIgnoreCase(browser)) {
                 this.driver = new HtmlUnitDriver(BrowserVersion.INTERNET_EXPLORER, true);
-            } else if ("chrome" .equalsIgnoreCase(browser)) {
+            } else if ("chrome".equalsIgnoreCase(browser)) {
                 System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
                 this.driver = new ChromeDriver();
 //                this.driver = new HtmlUnitDriver(BrowserVersion.CHROME, true);
@@ -66,34 +69,21 @@ public abstract class AbstractSteps implements En {
         // Browse to a page.
         And("The user browses to (.*)", (String page) -> {
             this.driver.navigate().to(host + page);
+            waitForAjaxToComplete();
         });
 
         // Wait for a modal to be visible.
-        Then("The \"(.*)\" modal should be shown", (String modalTitle) -> {
-            WebElement titleElement = find(By.xpath("//*[@class='modal-title' and text()='" + modalTitle + "']"));
-            assertNotNull(titleElement);
-            WebElement modalElement = titleElement.findElement(By.xpath("ancestor::*[contains(@class, 'modal-dialog')]"));
-            waitFor(ExpectedConditions.visibilityOf(modalElement));
-        });
+        Then("The \"(.*)\" modal should be shown", this::waitForModalToShow);
 
-        When("The user confirms the modal with \"(.*)\"", (String buttonName) -> {
-            List<WebElement> buttons = this.driver.findElements(By.xpath("//div[@class='modal-footer']/button[text()='" + buttonName + "']"));
-            for (WebElement button : buttons) {
-                if (button.isEnabled() && button.isDisplayed()) {
-                    button.click();
-                    if (this.driver instanceof FirefoxDriver) {
-                        // Hack to make the buttons of a modal work in firefox
-                        button.click();
-                    }
-                    WebElement modalElement = button.findElement(By.xpath("ancestor::*[contains(@class, 'modal-dialog')]"));
-                    waitFor(ExpectedConditions.invisibilityOf(modalElement));
-                    break;
-                }
-            }
-        });
+        When("The user confirms the modal with \"(.*)\"", this::confirmModalWith);
 
         Then("The element with id \"(.*)\" is enabled", (String elementId) -> assertTrue(findById(elementId).isEnabled()));
         Then("The element with id \"(.*)\" is disabled", (String elementId) -> assertFalse(findById(elementId).isEnabled()));
+
+        Then("The user logs out", () -> {
+            this.driver.navigate().to(host + "/gui/logout?source=./");
+            this.driver.close();
+        });
     }
 
     protected WebElement findById(String id) {
@@ -142,6 +132,70 @@ public abstract class AbstractSteps implements En {
 
     protected void waitForAjaxToComplete() {
         waitFor(c -> ((JavascriptExecutor) this.driver).executeScript("return jQuery.active == 0"));
+    }
+
+    protected void waitForModalToShow(String modalTitle) {
+        WebElement titleElement = find(By.xpath("//*[@class='modal-title' and text()='" + modalTitle + "']"));
+        assertNotNull(titleElement);
+        WebElement modalElement = titleElement.findElement(By.xpath("ancestor::*[contains(@class, 'modal-dialog')]"));
+        waitFor(ExpectedConditions.visibilityOf(modalElement));
+    }
+
+    protected void waitForModalToHide(String modalTitle) {
+        WebElement titleElement = find(By.xpath("//*[@class='modal-title' and text()='" + modalTitle + "']"));
+        assertNotNull(titleElement);
+        WebElement modalElement = titleElement.findElement(By.xpath("ancestor::*[contains(@class, 'modal-dialog')]"));
+        waitFor(ExpectedConditions.invisibilityOf(modalElement));
+        try {
+            waitFor(ExpectedConditions.invisibilityOf(find(By.xpath("//*[contains(@class, 'modal-backdrop')]"))));
+        } catch (NoSuchElementException e) {
+        }
+    }
+
+    protected void clickOnElement(WebElement element) {
+        waitFor(c -> element.isEnabled() && element.isDisplayed());
+        waitFor(ExpectedConditions.elementToBeClickable(element));
+        element.click();
+    }
+
+    protected void clickOnElement(String elementId) {
+        clickOnElement(findById(elementId));
+    }
+
+    protected void confirmModalWith(String buttonName) {
+        List<WebElement> buttons = this.driver.findElements(By.xpath("//div[@class='modal-footer']/button[text()='" + buttonName + "']"));
+        for (WebElement button : buttons) {
+            if (button.isEnabled() && button.isDisplayed()) {
+                button.click();
+                if (this.driver instanceof FirefoxDriver) {
+                    // Hack to make the buttons of a modal work in firefox
+                    button.click();
+                }
+                WebElement modalElement = button.findElement(By.xpath("ancestor::*[contains(@class, 'modal-dialog')]"));
+                waitFor(ExpectedConditions.invisibilityOf(modalElement));
+                break;
+            }
+        }
+    }
+
+    protected void sleepWhenChrome(long milliseconds) {
+        if (this.driver instanceof ChromeDriver) {
+            try {
+                Thread.sleep(milliseconds);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    protected void sleepWhenFirefox(long milliseconds) {
+        if (this.driver instanceof FirefoxDriver) {
+            try {
+                Thread.sleep(milliseconds);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     protected boolean sendEventToEtm(String type, String data) throws IOException {

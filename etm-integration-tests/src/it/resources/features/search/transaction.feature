@@ -2,7 +2,7 @@ Feature: Transaction overview
 
   Scenario Outline: Show transaction overview
     Given The system contains events that form chain
-    And User logs in to ETM as it-tester with password Welcome123 using <browser>
+    And The user logs in to ETM as it-tester with password Welcome123 using <browser>
     And The user browses to /gui/search/index.html
     Then The search page should be visible
   # Search for the given event

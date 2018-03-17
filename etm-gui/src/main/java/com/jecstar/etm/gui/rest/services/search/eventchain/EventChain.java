@@ -1,38 +1,57 @@
-package com.jecstar.etm.gui.rest.services.search;
+package com.jecstar.etm.gui.rest.services.search.eventchain;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-class EventChain {
+public class EventChain {
 
 
-    final Map<String, EventChainTransaction> transactions = new HashMap<>();
-    final Map<String, EventChainEvent> events = new HashMap<>();
+    private final Map<String, EventChainTransaction> transactions = new HashMap<>();
+    private final Map<String, EventChainEvent> events = new HashMap<>();
 
     public boolean containsTransaction(String transactionId) {
         return this.transactions.containsKey(transactionId);
     }
 
-    public void addWriter(String eventId, String transactionId, String eventName, String eventType, String correlationId, String subType, String endpointName, String applicationName, long handlingTime, Long responseTime, Long expiry) {
+    public void addWriter(String eventId,
+                          String transactionId,
+                          String eventName,
+                          String eventType,
+                          String correlationId,
+                          String subType,
+                          String endpointName,
+                          String applicationName,
+                          String applicationInstance,
+                          long handlingTime,
+                          Long responseTime,
+                          Long expiry) {
         EventChainItem item = new EventChainItem(transactionId, eventId, handlingTime);
         item.setCorrelationId(correlationId)
                 .setSubType(subType)
                 .setName(eventName)
-                .setApplicationName(applicationName)
+                .setApplication(applicationName, applicationInstance)
                 .setEventType(eventType)
                 .setResponseTime(responseTime)
                 .setExpiry(expiry);
         addItem(item, endpointName, true);
     }
 
-    public void addReader(String eventId, String transactionId, String eventName, String eventType, String correlationId, String subType, String endpointName, String applicationName, long handlingTime, Long responseTime, Long expiry) {
+    public void addReader(String eventId,
+                          String transactionId,
+                          String eventName,
+                          String eventType,
+                          String correlationId,
+                          String subType,
+                          String endpointName,
+                          String applicationName,
+                          String applicationInstance,
+                          long handlingTime,
+                          Long responseTime,
+                          Long expiry) {
         EventChainItem item = new EventChainItem(transactionId, eventId, handlingTime);
         item.setCorrelationId(correlationId)
                 .setSubType(subType)
                 .setName(eventName)
-                .setApplicationName(applicationName)
+                .setApplication(applicationName, applicationInstance)
                 .setEventType(eventType)
                 .setResponseTime(responseTime)
                 .setExpiry(expiry);
@@ -64,23 +83,31 @@ class EventChain {
         }
     }
 
-    public List<String> getApplications() {
-        List<String> result = new ArrayList<>();
+    public List<EventChainApplication> getApplications() {
+        List<EventChainApplication> result = new ArrayList<>();
         for (EventChainEvent event : this.events.values()) {
             for (EventChainEndpoint endpoint : event.getEndpoints()) {
                 if (endpoint.getWriter() != null
-                        && endpoint.getWriter().getApplicationName() != null
-                        && !result.contains(endpoint.getWriter().getApplicationName())) {
-                    result.add(endpoint.getWriter().getApplicationName());
+                        && endpoint.getWriter().getApplication() != null
+                        && !result.contains(endpoint.getWriter().getApplication())) {
+                    result.add(endpoint.getWriter().getApplication());
                 }
                 for (EventChainItem item : endpoint.getReaders()) {
-                    if (item.getApplicationName() != null && !result.contains(item.getApplicationName())) {
-                        result.add(item.getApplicationName());
+                    if (item.getApplication() != null && !result.contains(item.getApplication())) {
+                        result.add(item.getApplication());
                     }
                 }
             }
         }
         return result;
+    }
+
+    public Map<String, EventChainEvent> getEvents() {
+        return this.events;
+    }
+
+    public Map<String, EventChainTransaction> getTransactions() {
+        return this.transactions;
     }
 
     public void done() {
@@ -91,7 +118,7 @@ class EventChain {
             event.sort();
         }
         List<EventChainEvent> values = new ArrayList<>(this.events.values());
-        values.sort((o1, o2) -> Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime()));
+        values.sort(Comparator.comparingLong(o -> o.getFirstEventChainItem().getHandlingTime()));
         if (values.isEmpty()) {
             return;
         }
@@ -123,16 +150,16 @@ class EventChain {
 //		}
     }
 
-    public boolean isApplicationMissing(String application) {
+    public boolean isApplicationMissing(EventChainApplication application) {
         for (EventChainEvent event : this.events.values()) {
             for (EventChainEndpoint endpoint : event.getEndpoints()) {
                 if (endpoint.getWriter() != null) {
-                    if (application.equals(endpoint.getWriter().getApplicationName()) && !endpoint.getWriter().isMissing()) {
+                    if (application.equals(endpoint.getWriter().getApplication()) && !endpoint.getWriter().isMissing()) {
                         return false;
                     }
                 }
                 for (EventChainItem item : endpoint.getReaders()) {
-                    if (application.equals(item.getApplicationName()) && !item.isMissing()) {
+                    if (application.equals(item.getApplication()) && !item.isMissing()) {
                         return false;
                     }
                 }

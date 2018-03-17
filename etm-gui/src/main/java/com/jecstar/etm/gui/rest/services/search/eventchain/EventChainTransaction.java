@@ -1,10 +1,10 @@
-package com.jecstar.etm.gui.rest.services.search;
+package com.jecstar.etm.gui.rest.services.search.eventchain;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-class EventChainTransaction {
+public class EventChainTransaction {
 
     private final String transactionId;
 

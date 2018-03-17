@@ -1,16 +1,16 @@
-package com.jecstar.etm.gui.rest.services.search;
+package com.jecstar.etm.gui.rest.services.search.eventchain;
 
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 
-class EventChainItem {
+public class EventChainItem {
 
     private final String eventId;
     private final String transactionId;
     private final long handlingTime;
     private String correlationId;
     private String name;
-    private String applicationName;
+    private EventChainApplication application;
     private String eventType;
     private Long responseTime;
     private Long expiry;
@@ -96,13 +96,17 @@ class EventChainItem {
         return this.name;
     }
 
-    public EventChainItem setApplicationName(String applicationName) {
-        this.applicationName = applicationName;
+    public EventChainItem setApplication(String applicationName, String applicationInstance) {
+        if (applicationName == null) {
+            this.application = null;
+            return this;
+        }
+        this.application = new EventChainApplication(applicationName, applicationInstance);
         return this;
     }
 
-    public String getApplicationName() {
-        return this.applicationName;
+    public EventChainApplication getApplication() {
+        return this.application;
     }
 
     public EventChainItem setEventType(String eventType) {

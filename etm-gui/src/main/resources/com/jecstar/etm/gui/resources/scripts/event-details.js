@@ -115,9 +115,10 @@ function showEvent(scrollTo, type, id) {
 	function writeEventDataToTab(tab, tabHeader, data, timeZone) {
 		var $eventTab = $(tab);
 		var $tabHeader = $(tabHeader);
-		var dataLink = $('<a href="#">')
+		var dataLink = $('<a>')
 			.text(data.id)
 			.addClass('form-control-static')
+			.attr('href', '?id=' + encodeURIComponent(data.id) + '&type=' + encodeURIComponent(data.type))
 			.attr('style', 'display: inline-block;')
 			.attr('data-link-type', 'show-event')
 			.attr('data-scroll-to', scrollTo)
@@ -126,9 +127,10 @@ function showEvent(scrollTo, type, id) {
 		appendElementToContainerInRow($eventTab, 'Id', dataLink);
 		appendToContainerInRow($eventTab, 'Name', data.source.name);
 		if (data.source.correlation_id) {
-			var dataLink = $('<a href="#">')
+			var dataLink = $('<a>')
 				.text(data.source.correlation_id)
 				.addClass('form-control-static')
+			    .attr('href', '?id=' + encodeURIComponent(data.source.correlation_id) + '&type=' + encodeURIComponent(data.type))
 				.attr('style', 'display: inline-block;')
 				.attr('data-link-type', 'show-event')
 				.attr('data-scroll-to', scrollTo)
@@ -148,6 +150,7 @@ function showEvent(scrollTo, type, id) {
 			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 		}
 		if ('log' === data.type || 'log' === data.source.object_type) {
+		    $tabHeader.text('Log');
 			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
 		} else if ('http' === data.type || 'http' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
@@ -190,9 +193,9 @@ function showEvent(scrollTo, type, id) {
 			if (data.source.messaging_type) {
 				// messaging type known, determine request or response.
 				if ('RESPONSE' === data.source.messaging_type) {
-					$tabHeader.text('Response message');
+					$tabHeader.text('Messaging response');
 				} else if ('REQUEST' === data.source.messaging_type) {
-					$tabHeader.text('Request message');
+					$tabHeader.text('Messaging request');
 					if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
 						var response_times = $endpoints.map(function () {
 							if (this.writing_endpoint_handler) {
@@ -214,7 +217,7 @@ function showEvent(scrollTo, type, id) {
 						}
 					}
 				} else {
-					$tabHeader.text('Fire-forget message');
+					$tabHeader.text('Messaging fire-forget');
 				}
 			}
 		} else if ('sql' === data.type || 'sql' === data.source.object_type) {
@@ -653,7 +656,8 @@ function showEvent(scrollTo, type, id) {
 			        ).append(function () {
 			        	var $tbody = $('<tbody>');
 			        	$.each(transaction_data.events, function(index, event) {
-			        		var $link = $('<a href="#">')
+			        		var $link = $('<a>')
+			        		    .attr('href', '?id=' + encodeURIComponent(event.id) + '&type=' + encodeURIComponent(event.type))
 								.text(event.id)
 								.attr('data-link-type', 'show-event')
 								.attr('data-scroll-to', scrollTo)

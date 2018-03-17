@@ -1,10 +1,10 @@
-package com.jecstar.etm.gui.rest.services.search;
+package com.jecstar.etm.gui.rest.services.search.eventchain;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-class EventChainEvent {
+public class EventChainEvent {
 
     private final String eventId;
     private final String eventType;
@@ -12,7 +12,7 @@ class EventChainEvent {
 
     private final List<EventChainEndpoint> endpoints = new ArrayList<>();
 
-    private final Comparator<EventChainEndpoint> handlingTimeComparator = (o1, o2) -> Long.compare(o1.getFirstEventChainItem().getHandlingTime(), o2.getFirstEventChainItem().getHandlingTime());
+    private final Comparator<EventChainEndpoint> handlingTimeComparator = Comparator.comparingLong(o -> o.getFirstEventChainItem().getHandlingTime());
 
     EventChainEvent(String eventId, String eventType) {
         this.eventId = eventId;

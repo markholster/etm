@@ -424,15 +424,26 @@
             queryKeywords = data.keywords;
         }
     });
-    var flatPickrConfig = {
+    var flatPickrStartDate = $('#query-string-from')
+        .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
             enableSeconds: true,
             time_24hr: true,
             allowInput: true,
-        }
-    var flatPickrStartDate = $('#query-string-from').flatpickr(flatPickrConfig);
-    var flatPickrEndDate = $('#query-string-till').flatpickr(flatPickrConfig);
+            defaultHour: 0,
+            defaultMinute: 0
+        });
+    var flatPickrEndDate = $('#query-string-till')
+        .flatpickr({
+            dateFormat: "Y-m-dTH:i:S",
+            enableTime: true,
+            enableSeconds: true,
+            time_24hr: true,
+            allowInput: true,
+            defaultHour: 23,
+            defaultMinute: 59
+        });
 
 </script>
 <script src="../scripts/autocomplete_fields.js"></script>
@@ -514,6 +525,7 @@
     });
 
     $('#event-container').on('click', "a[data-link-type='show-event']", function(event) {
+        event.preventDefault();
     	showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-type'), $(this).attr('data-event-id'))
     });
 

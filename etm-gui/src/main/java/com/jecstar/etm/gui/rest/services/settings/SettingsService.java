@@ -771,7 +771,7 @@ public class SettingsService extends AbstractJsonService {
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
-        return this.etmPrincipalConverter.writePrincipal(principal);
+        return toStringWithoutNamespace(this.etmPrincipalConverter.writePrincipal(principal), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
     }
 
     @DELETE
@@ -934,7 +934,7 @@ public class SettingsService extends AbstractJsonService {
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
-        return this.etmPrincipalConverter.writeGroup(group);
+        return toStringWithoutNamespace(this.etmPrincipalConverter.writeGroup(group), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
     }
 
 

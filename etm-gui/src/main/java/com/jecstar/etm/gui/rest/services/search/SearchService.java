@@ -9,6 +9,7 @@ import com.jecstar.etm.gui.rest.export.QueryExporter;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.gui.rest.services.search.eventchain.*;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
@@ -266,7 +267,7 @@ public class SearchService extends AbstractIndexMetadataService {
         QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString())
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)
-                .defaultField("_all")
+                .defaultField("*")
                 .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
@@ -789,14 +790,21 @@ public class SearchService extends AbstractIndexMetadataService {
         result.append("\"nodes\" : [");
         boolean first = true;
         // Add all applications as item.
-        for (String application : eventChain.getApplications()) {
+        for (EventChainApplication application : eventChain.getApplications()) {
             if (!first) {
                 result.append(",");
             }
-            result.append("{\"id\": ").append(escapeToJson(application, true)).append(", \"label\": ").append(escapeToJson(application, true)).append(", \"node_type\": \"application\"").append(", \"missing\": ").append(eventChain.isApplicationMissing(application)).append("}");
+            result.append("{\"id\": ")
+                    .append(escapeToJson(application.getId(), true))
+                    .append(", \"label\": ")
+                    .append(escapeToJson(application.getDisplayName(), true))
+                    .append(", \"node_type\": \"application\"")
+                    .append(", \"missing\": ")
+                    .append(eventChain.isApplicationMissing(application))
+                    .append("}");
             first = false;
         }
-        for (EventChainEvent event : eventChain.events.values()) {
+        for (EventChainEvent event : eventChain.getEvents().values()) {
             for (EventChainEndpoint endpoint : event.getEndpoints()) {
                 // Add all endpoints as item.
                 if (endpoint.getName() != null) {
@@ -812,8 +820,8 @@ public class SearchService extends AbstractIndexMetadataService {
                         result.append(",");
                     }
                     result.append("{\"id\": ").append(escapeToJson(endpoint.getWriter().getKey(), true)).append(", \"label\": ").append(escapeToJson(endpoint.getWriter().getName(), true)).append(", \"event_id\": ").append(escapeToJson(event.getEventId(), true)).append(", \"event_type\": ").append(escapeToJson(event.getEventType(), true)).append(", \"endpoint\": ").append(escapeToJson(endpoint.getName(), true)).append(", \"transaction_id\": ").append(escapeToJson(endpoint.getWriter().getTransactionId(), true)).append(", \"node_type\": \"event\"").append(", \"missing\": ").append(endpoint.getWriter().isMissing());
-                    if (endpoint.getWriter().getApplicationName() != null) {
-                        result.append(", \"parent\": ").append(escapeToJson(endpoint.getWriter().getApplicationName(), true));
+                    if (endpoint.getWriter().getApplication() != null) {
+                        result.append(", \"parent\": ").append(escapeToJson(endpoint.getWriter().getApplication().getId(), true));
                     }
                     result.append("}");
                     first = false;
@@ -824,8 +832,8 @@ public class SearchService extends AbstractIndexMetadataService {
                         result.append(",");
                     }
                     result.append("{\"id\": ").append(escapeToJson(item.getKey(), true)).append(", \"label\": ").append(escapeToJson(item.getName(), true)).append(", \"event_id\": ").append(escapeToJson(event.getEventId(), true)).append(", \"event_type\": ").append(escapeToJson(event.getEventType(), true)).append(", \"endpoint\": ").append(escapeToJson(endpoint.getName(), true)).append(", \"transaction_id\": ").append(escapeToJson(item.getTransactionId(), true)).append(", \"node_type\": \"event\"").append(", \"missing\": ").append(item.isMissing());
-                    if (item.getApplicationName() != null) {
-                        result.append(", \"parent\": ").append(escapeToJson(item.getApplicationName(), true));
+                    if (item.getApplication() != null) {
+                        result.append(", \"parent\": ").append(escapeToJson(item.getApplication().getId(), true));
                     }
                     result.append("}");
                     first = false;
@@ -834,7 +842,7 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         result.append("], \"edges\": [");
         first = true;
-        for (EventChainEvent event : eventChain.events.values()) {
+        for (EventChainEvent event : eventChain.getEvents().values()) {
             for (EventChainEndpoint endpoint : event.getEndpoints()) {
                 if (endpoint.getName() != null) {
                     if (endpoint.getWriter() != null) {
@@ -908,7 +916,7 @@ public class SearchService extends AbstractIndexMetadataService {
             }
             // TODO, achmea maatwerk om de dispatchers te koppelen aan de flows daarna.
         }
-        for (EventChainTransaction transaction : eventChain.transactions.values()) {
+        for (EventChainTransaction transaction : eventChain.getTransactions().values()) {
             // Add connections between the events within a transaction
             int writerIx = 0;
             for (int i = 0; i < transaction.getReaders().size(); i++) {
@@ -1041,16 +1049,18 @@ public class SearchService extends AbstractIndexMetadataService {
             String handlerTransactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), endpointHandler);
             long handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), endpointHandler);
             String applicationName = null;
+            String applicationInstance = null;
             if (endpointHandler.containsKey(this.eventTags.getEndpointHandlerApplicationTag())) {
                 Map<String, Object> application = (Map<String, Object>) endpointHandler.get(this.eventTags.getEndpointHandlerApplicationTag());
                 applicationName = getString(this.eventTags.getApplicationNameTag(), application);
+                applicationInstance = getString(this.eventTags.getApplicationInstanceTag(), application);
             }
             Long responseTime = getLong(this.eventTags.getEndpointHandlerResponseTimeTag(), endpointHandler);
             if (transactionId.equals(handlerTransactionId)) {
                 if (writer) {
-                    eventChain.addWriter(eventId, transactionId, eventName, eventType, correlationId, subType, endpointName, applicationName, handlingTime, responseTime, eventExpiry);
+                    eventChain.addWriter(eventId, transactionId, eventName, eventType, correlationId, subType, endpointName, applicationName, applicationInstance, handlingTime, responseTime, eventExpiry);
                 } else {
-                    eventChain.addReader(eventId, transactionId, eventName, eventType, correlationId, subType, endpointName, applicationName, handlingTime, responseTime, eventExpiry);
+                    eventChain.addReader(eventId, transactionId, eventName, eventType, correlationId, subType, endpointName, applicationName, applicationInstance, handlingTime, responseTime, eventExpiry);
                 }
             } else if (!eventChain.containsTransaction(handlerTransactionId)) {
                 addTransactionToEventChain(eventChain, handlerTransactionId);

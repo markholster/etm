@@ -210,7 +210,7 @@ function buildGroupPage() {
         		$('#groups_infoBox').text('Group \'' + groupName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals(('#modal-group-remove'));
+            hideModals($('#modal-group-remove'));
         });
 	}
 	
