@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher.migrations;
 
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateAction;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateRequestBuilder;
@@ -161,6 +162,15 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
             this.hasFailures = true;
             failure.printStackTrace();
+        }
+    }
+
+    protected void checkAndCreateIndexExistence(Client client, String... indices) {
+        for (String index : indices) {
+            IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(index).get();
+            if (!indicesExistsResponse.isExists()) {
+                client.admin().indices().prepareCreate(index).get();
+            }
         }
     }
 }

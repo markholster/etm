@@ -142,7 +142,14 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
         deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
         deleteTemporaryIndexTemplate(this.client, this.migrationIndexPrefix);
+        checkAndCreateIndexExistence(client,
+                ElasticsearchLayout.STATE_INDEX_NAME,
+                ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+                ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
+                ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL
+        );
     }
+
 
     private boolean migrateMetrics(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {

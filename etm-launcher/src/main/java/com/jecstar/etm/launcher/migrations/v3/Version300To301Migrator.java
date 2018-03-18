@@ -120,6 +120,10 @@ public class Version300To301Migrator extends AbstractEtmMigrator {
         deleteIndices(this.client, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.STATE_INDEX_NAME);
         reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
         deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
+        checkAndCreateIndexExistence(client,
+                ElasticsearchLayout.STATE_INDEX_NAME,
+                ElasticsearchLayout.CONFIGURATION_INDEX_NAME
+        );
     }
 
     private boolean migrateEtmConfiguration(Client client, FailureDetectingBulkProcessorListener listener) {
