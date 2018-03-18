@@ -15,7 +15,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -55,10 +54,9 @@ public class IIBService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IIB_NODE_READ, SecurityRoles.IIB_NODE_READ_WRITE})
     public String getNodes() {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE).setFetchSource(true)
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
@@ -82,10 +80,10 @@ public class IIBService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
     public String deleteNode(@PathParam("nodeName") String nodeName) {
-        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())).get();
+        enhanceRequest(
+                client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
+                etmConfiguration
+        ).get();
         return "{\"status\":\"success\"}";
     }
 
@@ -98,14 +96,14 @@ public class IIBService extends AbstractJsonService {
         try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
             nodeConnection.connect();
         }
-        client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+        enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
+                etmConfiguration
+        )
                 .setDoc(this.nodeConverter.write(node), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount()).get();
+                .get();
         return "{ \"status\": \"success\" }";
     }
 

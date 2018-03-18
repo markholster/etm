@@ -1,15 +1,13 @@
 package com.jecstar.etm.launcher.background;
 
+import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.License;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,7 +18,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LicenseUpdater implements Runnable {
+public class LicenseUpdater extends AbstractJsonService implements Runnable {
 
     /**
      * The <code>LogWrapper</code> for this class.
@@ -30,7 +28,6 @@ public class LicenseUpdater implements Runnable {
 
     private final EtmConfiguration etmConfiguration;
     private final Client client;
-    private final JsonConverter converter = new JsonConverter();
     private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 
     public LicenseUpdater(final EtmConfiguration etmConfiguration, final Client client) {
@@ -51,12 +48,12 @@ public class LicenseUpdater implements Runnable {
                     Map<String, Object> licenseObject = new HashMap<>();
                     licenseObject.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
                     values.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, licenseObject);
-                    client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT)
+                    enhanceRequest(
+                            client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
+                            etmConfiguration
+                    )
                             .setDoc(values)
                             .setDocAsUpsert(true)
-                            .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                            .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                            .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                             .get();
                     // Because the access to the etmConfiguration in the above statement could cause a reload of the configuration
                     // the old license may still be applied. To prevent this, we set the license again at this place.
@@ -81,8 +78,8 @@ public class LicenseUpdater implements Runnable {
             while ((inputLine = in.readLine()) != null) {
                 result.append(inputLine);
             }
-            Map<String, Object> valueMap = this.converter.toMap(result.toString());
-            return this.converter.getString("key", valueMap);
+            Map<String, Object> valueMap = toMap(result.toString());
+            return getString("key", valueMap);
         } catch (IOException e) {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Unable to retrieve free license.", e);
@@ -92,20 +89,12 @@ public class LicenseUpdater implements Runnable {
                 try {
                     in.close();
                 } catch (IOException e) {
+                    if (log.isDebugLevelEnabled()) {
+                        log.logDebugMessage("Unable to close input stream.", e);
+                    }
                 }
             }
         }
         return null;
     }
-
-    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
-        if (-1 == etmConfiguration.getWaitForActiveShards()) {
-            return ActiveShardCount.ALL;
-        } else if (0 == etmConfiguration.getWaitForActiveShards()) {
-            return ActiveShardCount.NONE;
-        }
-        return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
-    }
-
-
 }

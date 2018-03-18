@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.jecstar.etm.launcher.background.HttpSessionCleaner;
 import com.jecstar.etm.launcher.background.IndexCleaner;
+import com.jecstar.etm.launcher.background.LdapSynchronizer;
 import com.jecstar.etm.launcher.background.LicenseUpdater;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
@@ -67,7 +68,6 @@ class Launcher {
     private InternalBulkProcessorWrapper bulkProcessorWrapper;
 
     public void launch(CommandLineParameters commandLineParameters, Configuration configuration, InternalBulkProcessorWrapper bulkProcessorWrapper) {
-        // TODO maak een thread die periodiek door de LDAP entries heen loopt om te kijken of er gebruikers weggegooid moeten worden.
         this.bulkProcessorWrapper = bulkProcessorWrapper;
         addShutdownHooks(configuration);
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
@@ -200,12 +200,13 @@ class Launcher {
     private void initializeBackgroundProcesses(final Configuration configuration, final EtmConfiguration etmConfiguration, final Client client) {
         int threadPoolSize = 2;
         if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
-            threadPoolSize++;
+            threadPoolSize += 2;
         }
         this.backgroundScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_background_scheduler"));
         this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, client), 0, 6, TimeUnit.HOURS);
         this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 1, 15, TimeUnit.MINUTES);
-        if (configuration.http.guiEnabled) {
+        if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
+            this.backgroundScheduler.scheduleAtFixedRate(new LdapSynchronizer(etmConfiguration, client), 1, 3, TimeUnit.HOURS);
             this.backgroundScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, client), 2, 15, TimeUnit.MINUTES);
         }
 

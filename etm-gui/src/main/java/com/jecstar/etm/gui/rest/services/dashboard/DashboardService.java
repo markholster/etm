@@ -16,7 +16,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
@@ -59,7 +58,7 @@ public class DashboardService extends AbstractIndexMetadataService {
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getKeywords(@PathParam("indexName") String indexName) {
         StringBuilder result = new StringBuilder();
-        Map<String, List<Keyword>> names = getIndexFields(DashboardService.client, indexName);
+        Map<String, List<Keyword>> names = getIndexFields(client, indexName);
         result.append("{ \"keywords\":[");
         Set<Entry<String, List<Keyword>>> entries = names.entrySet();
         boolean first = true;
@@ -648,9 +647,7 @@ public class DashboardService extends AbstractIndexMetadataService {
             );
             objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, source);
         }
-        builder.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
+        enhanceRequest(builder, etmConfiguration)
                 .setDoc(objectMap)
                 .setDocAsUpsert(true)
                 .get();
@@ -785,10 +782,9 @@ public class DashboardService extends AbstractIndexMetadataService {
     }
 
     private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, String index, String query) {
-        SearchRequestBuilder searchRequest = client.prepareSearch(index)
+        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(index), etmConfiguration)
                 .setFetchSource(false)
-                .setSize(0)
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setSize(0);
         QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(query)
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)

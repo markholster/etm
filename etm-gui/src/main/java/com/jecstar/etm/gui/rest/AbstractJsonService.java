@@ -5,7 +5,13 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.delete.DeleteRequestBuilder;
+import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.support.ActiveShardCount;
+import org.elasticsearch.action.update.UpdateRequestBuilder;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -83,7 +89,7 @@ public class AbstractJsonService extends JsonConverter {
         return queryBuilder;
     }
 
-    protected ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
+    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
         if (-1 == etmConfiguration.getWaitForActiveShards()) {
             return ActiveShardCount.ALL;
         } else if (0 == etmConfiguration.getWaitForActiveShards()) {
@@ -181,6 +187,65 @@ public class AbstractJsonService extends JsonConverter {
      */
     protected String toStringWithoutNamespace(String namespacedJsonString, String namespace) {
         return toStringWithoutNamespace(toMap(namespacedJsonString), namespace);
+    }
+
+    /**
+     * Enhances a <code>DeleteRequestBuilder</code> with the defaults from the <code>EtmConfiguration</code>.
+     *
+     * @param builder          The <code>DeleteRequestBuilder</code> that needs to be enhanced.
+     * @param etmConfiguration The <code>EtmConfiguration</code>.
+     * @return The enhanced <code>EtmConfiguration</code>.
+     */
+    protected DeleteRequestBuilder enhanceRequest(DeleteRequestBuilder builder, EtmConfiguration etmConfiguration) {
+        return builder.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+    }
+
+    /**
+     * Enhances an <code>UpdateRequestBuilder</code> with the defaults from the <code>EtmConfiguration</code>.
+     *
+     * @param builder          The <code>UpdateRequestBuilder</code> that needs to be enhanced.
+     * @param etmConfiguration The <code>EtmConfiguration</code>.
+     * @return The enhanced <code>EtmConfiguration</code>.
+     */
+    protected UpdateRequestBuilder enhanceRequest(UpdateRequestBuilder builder, EtmConfiguration etmConfiguration) {
+        return builder.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());
+    }
+
+    /**
+     * Enhances an <code>IndexRequestBuilder</code> with the defaults from the <code>EtmConfiguration</code>.
+     *
+     * @param builder          The <code>IndexRequestBuilder</code> that needs to be enhanced.
+     * @param etmConfiguration The <code>EtmConfiguration</code>.
+     * @return The enhanced <code>EtmConfiguration</code>.
+     */
+    protected IndexRequestBuilder enhanceRequest(IndexRequestBuilder builder, EtmConfiguration etmConfiguration) {
+        return builder.setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+    }
+
+    /**
+     * Enhances an <code>SearchRequestBuilder</code> with the defaults from the <code>EtmConfiguration</code>.
+     *
+     * @param builder          The <code>SearchRequestBuilder</code> that needs to be enhanced.
+     * @param etmConfiguration The <code>EtmConfiguration</code>.
+     * @return The enhanced <code>EtmConfiguration</code>.
+     */
+    protected SearchRequestBuilder enhanceRequest(SearchRequestBuilder builder, EtmConfiguration etmConfiguration) {
+        return builder.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+    }
+
+    /**
+     * Enhances an <code>BulkRequestBuilder</code> with the defaults from the <code>EtmConfiguration</code>.
+     *
+     * @param builder          The <code>BulkRequestBuilder</code> that needs to be enhanced.
+     * @param etmConfiguration The <code>EtmConfiguration</code>.
+     * @return The enhanced <code>EtmConfiguration</code>.
+     */
+    protected BulkRequestBuilder enhanceRequest(BulkRequestBuilder builder, EtmConfiguration etmConfiguration) {
+        return builder.setWaitForActiveShards(getActiveShardCount(etmConfiguration));
     }
 
 }

@@ -12,7 +12,6 @@ import com.jecstar.etm.server.core.util.BCrypt;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -50,7 +49,7 @@ public class UserService extends AbstractJsonService {
     @Path("/settings")
     @Produces(MediaType.APPLICATION_JSON)
     public String getUserSettings() {
-        GetResponse getResponse = UserService.client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+        GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
                 .setFetchSource(null, new String[]{
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".searchtemplates",
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".password_hash"}
@@ -90,23 +89,23 @@ public class UserService extends AbstractJsonService {
         userObject.put(this.tags.getDefaultSearchRangeTag(), valueMap.get(this.tags.getDefaultSearchRangeTag()));
 
         updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
-        UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
+        enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
+                etmConfiguration
+        )
                 .setDoc(updateMap)
                 .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                 .get();
 
         if (newHistorySize < etmPrincipal.getHistorySize()) {
             // History size is smaller. Make sure the stored queries are sliced to the new size.
             Map<String, Object> scriptParams = new HashMap<>();
             scriptParams.put("history_size", newHistorySize);
-            UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+            enhanceRequest(
+                    client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+                    etmConfiguration
+            )
                     .setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams))
-                    .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                    .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                    .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                     .execute();
         }
         etmPrincipal.forceReload = true;
@@ -141,12 +140,12 @@ public class UserService extends AbstractJsonService {
         userObject.put(this.tags.getChangePasswordOnLogonTag(), false);
 
         updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
-        UserService.client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+        enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+                etmConfiguration
+        )
                 .setDoc(updateMap)
                 .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                 .get();
         return "{ \"status\": \"success\" }";
     }
@@ -163,7 +162,7 @@ public class UserService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     public String getLocales() {
         Locale requestedLocale = getEtmPrincipal().getLocale();
-        return "{\"locales\": [" + Arrays.stream(Locale.getAvailableLocales()).filter(p -> p.getCountry().length() > 0).sorted((o1, o2) -> o1.getDisplayName(requestedLocale).compareTo(o2.getDisplayName(requestedLocale))).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
+        return "{\"locales\": [" + Arrays.stream(Locale.getAvailableLocales()).filter(p -> p.getCountry().length() > 0).sorted(Comparator.comparing(o -> o.getDisplayName(requestedLocale))).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
                 .collect(Collectors.joining(","))
                 + "], \"default_locale\": {" + escapeObjectToJsonNameValuePair("name", Locale.getDefault().getDisplayName(requestedLocale))
                 + ", " + escapeObjectToJsonNameValuePair("value", Locale.getDefault().toLanguageTag()) + "}}";
@@ -175,9 +174,8 @@ public class UserService extends AbstractJsonService {
     public String getEvents() {
         StringBuilder result = new StringBuilder();
         NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
-        SearchResponse searchResponse = client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
+        SearchResponse searchResponse = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setSize(0).setQuery(QueryBuilders.matchAllQuery())
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
         result.append("{");
         addLongElementToJsonBuffer("event_count", searchResponse.getHits().getTotalHits(), result, true);
@@ -186,5 +184,4 @@ public class UserService extends AbstractJsonService {
         result.append("}");
         return result.toString();
     }
-
 }

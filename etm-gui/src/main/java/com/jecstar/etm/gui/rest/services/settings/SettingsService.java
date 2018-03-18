@@ -122,13 +122,14 @@ public class SettingsService extends AbstractJsonService {
         Map<String, Object> values = new HashMap<>();
         values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
         licenseObject.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, values);
-        client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT)
+        enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
+                etmConfiguration
+        )
                 .setDoc(licenseObject)
                 .setDocAsUpsert(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                 .get();
+
         // Because the access to the etmConfiguration in the above statement could cause a reload of the configuration
         // the old license may still be applied. To prevent this, we set the license again at this place.
         etmConfiguration.setLicenseKey(licenseKey);
@@ -176,13 +177,13 @@ public class SettingsService extends AbstractJsonService {
         currentValues.putAll(toMap(json));
         EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentNodeObject, null);
 
-        client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
+        enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT),
+                etmConfiguration
+        )
                 .setDoc(this.etmConfigurationConverter.write(null, defaultConfig), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                 .get();
         return "{\"status\":\"success\"}";
     }
@@ -209,10 +210,11 @@ public class SettingsService extends AbstractJsonService {
     public String setLdapConfiguration(String json) {
         LdapConfiguration config = this.ldapConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP));
         testLdapConnection(config);
-        client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
+        enhanceRequest(
+                client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT),
+                etmConfiguration
+        )
                 .setSource(this.ldapConfigurationConverter.write(config), XContentType.JSON)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
         if (etmConfiguration.getDirectory() != null) {
             etmConfiguration.getDirectory().merge(config);
@@ -238,10 +240,10 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String deleteLdapConfiguration() {
-        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .get();
+        enhanceRequest(
+                client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT),
+                etmConfiguration
+        ).get();
         etmConfiguration.setDirectory(null);
         return "{\"status\":\"success\"}";
     }
@@ -262,11 +264,10 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.NODE_SETTINGS_READ, SecurityRoles.NODE_SETTINGS_READ_WRITE})
     public String getNodes() {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
@@ -299,11 +300,11 @@ public class SettingsService extends AbstractJsonService {
                 .get();
         EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, defaultSettingsResponse.getSourceAsString(), null);
         EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE), defaultSettingsResponse.getSourceAsString(), nodeName);
-
-        client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
+        enhanceRequest(
+                client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName),
+                etmConfiguration
+        )
                 .setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig), XContentType.JSON)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
         return "{ \"status\": \"success\" }";
     }
@@ -316,10 +317,10 @@ public class SettingsService extends AbstractJsonService {
         if (ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT.equalsIgnoreCase(nodeName)) {
             return "{\"status\":\"failed\"}";
         }
-        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .get();
+        enhanceRequest(
+                client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName),
+                etmConfiguration
+        ).get();
         return "{\"status\":\"success\"}";
     }
 
@@ -385,11 +386,10 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE})
     public String getParsers() {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
@@ -438,11 +438,12 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.PARSER_SETTINGS_READ_WRITE)
     public String deleteParser(@PathParam("parserName") String parserName) {
-        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration));
-        bulkRequestBuilder.add(client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(client.prepareBulk(), etmConfiguration);
+        bulkRequestBuilder.add(
+                enhanceRequest(
+                        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName),
+                        etmConfiguration
+                )
         );
         removeParserFromEndpoints(bulkRequestBuilder, parserName);
         bulkRequestBuilder.get();
@@ -450,13 +451,13 @@ public class SettingsService extends AbstractJsonService {
     }
 
     private void removeParserFromEndpoints(BulkRequestBuilder bulkRequestBuilder, String parserName) {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                        .must(QueryBuilders.termQuery(parserInEnpointTag, parserName)))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                        .must(QueryBuilders.termQuery(parserInEnpointTag, parserName))
+                );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             boolean updated = false;
@@ -493,20 +494,18 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.PARSER_SETTINGS_READ_WRITE)
     public String addParser(@PathParam("parserName") String parserName, String json) {
-        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration));
+        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(client.prepareBulk(), etmConfiguration);
         // Do a read and write of the parser to make sure it's valid.
         ExpressionParser expressionParser = this.expressionParserConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
 
-        bulkRequestBuilder.add(client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
+        bulkRequestBuilder.add(
+                enhanceRequest(
+                        client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName),
+                        etmConfiguration
+                )
                 .setDoc(this.expressionParserConverter.write(expressionParser), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
         );
         updateParserInEndpoints(bulkRequestBuilder, expressionParser);
         bulkRequestBuilder.get();
@@ -514,14 +513,13 @@ public class SettingsService extends AbstractJsonService {
     }
 
     private void updateParserInEndpoints(BulkRequestBuilder bulkRequestBuilder, ExpressionParser expressionParser) {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
                         .must(QueryBuilders.termQuery(parserInEnpointTag, expressionParser.getName()))
-                )
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             boolean updated = false;
@@ -538,9 +536,7 @@ public class SettingsService extends AbstractJsonService {
                         }
                     }
                 }
-                Iterator<DefaultTransformation> transformationIt = enhancer.getTransformations().iterator();
-                while (transformationIt.hasNext()) {
-                    DefaultTransformation transformation = transformationIt.next();
+                for (DefaultTransformation transformation : enhancer.getTransformations()) {
                     if (transformation.getExpressionParser().getName().equals(expressionParser.getName())) {
                         transformation.setExpressionParser(expressionParser);
                         updated = true;
@@ -558,11 +554,10 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE})
     public String getEndpoints() {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         StringBuilder result = new StringBuilder();
         result.append("{\"endpoints\": [");
@@ -598,12 +593,10 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)
     public String deleteEndpoint(@PathParam("endpointName") String endpointName) {
-        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .get();
+        enhanceRequest(
+                client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName),
+                etmConfiguration
+        ).get();
         return "{\"status\":\"success\"}";
     }
 
@@ -619,15 +612,12 @@ public class SettingsService extends AbstractJsonService {
     }
 
     private UpdateRequestBuilder createEndpointUpdateRequest(EndpointConfiguration endpointConfiguration) {
-        return client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointConfiguration.name)
+        return enhanceRequest(client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointConfiguration.name),
+                etmConfiguration
+        )
                 .setDoc(this.endpointConfigurationConverter.write(endpointConfiguration), XContentType.JSON)
                 .setDocAsUpsert(true)
-                .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());
+                .setDetectNoop(true);
     }
 
     @GET
@@ -635,11 +625,10 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE})
     public String getUsers() {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(new String[]{"*"}, new String[]{this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getSearchTemplatesTag(), this.etmPrincipalTags.getSearchHistoryTag()})
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
@@ -665,11 +654,10 @@ public class SettingsService extends AbstractJsonService {
     public Response getDownloadUsers(@QueryParam("q") String json) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         Map<String, Object> valueMap = toMap(json);
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(Arrays.stream(this.exportPrincipalFields).map(FieldLayout::getField).toArray(String[]::new), null)
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
@@ -766,10 +754,11 @@ public class SettingsService extends AbstractJsonService {
             principal = currentPrincipal;
         }
         principal.setLdapBase(true);
-        client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
+        enhanceRequest(
+                client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId()),
+                etmConfiguration
+        )
                 .setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
         return toStringWithoutNamespace(this.etmPrincipalConverter.writePrincipal(principal), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
     }
@@ -790,10 +779,10 @@ public class SettingsService extends AbstractJsonService {
                 throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
             }
         }
-        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .get();
+        enhanceRequest(
+                client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
+                etmConfiguration
+        ).get();
         return "{\"status\":\"success\"}";
     }
 
@@ -822,21 +811,21 @@ public class SettingsService extends AbstractJsonService {
             // Copy the ldap base of the original user because it may never be overwritten.
             newPrincipal.setLdapBase(currentPrincipal.isLdapBase());
         }
-        client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+        enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
+                etmConfiguration
+        )
                 .setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                 .get();
         if (currentPrincipal == null && etmConfiguration.getMaxSearchTemplateCount() >= 3) {
             // Add some default templates to the user if he/she is able to search.
-            client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+            enhanceRequest(
+                    client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
+                    etmConfiguration
+            )
                     .setDoc(new DefaultSearchTemplates().toJson(), XContentType.JSON)
-                    .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                    .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                    .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                     .get();
         }
         if (userId.equals(getEtmPrincipal().getId())) {
@@ -850,11 +839,10 @@ public class SettingsService extends AbstractJsonService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.GROUP_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE})
     public String getGroups() {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         StringBuilder result = new StringBuilder();
         result.append("{\"groups\": [");
@@ -929,10 +917,11 @@ public class SettingsService extends AbstractJsonService {
             group = currentGroup;
         }
         group.setLdapBase(true);
-        client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
+        enhanceRequest(
+                client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName),
+                etmConfiguration
+        )
                 .setSource(this.etmPrincipalConverter.writeGroup(group), XContentType.JSON)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
         return toStringWithoutNamespace(this.etmPrincipalConverter.writeGroup(group), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
     }
@@ -958,13 +947,13 @@ public class SettingsService extends AbstractJsonService {
             // Copy the ldap base of the original group because it may never be overwritten.
             newGroup.setLdapBase(currentGroup.isLdapBase());
         }
-        client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
+        enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName),
+                etmConfiguration
+        )
                 .setDoc(this.etmPrincipalConverter.writeGroup(newGroup), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount())
                 .get();
         // Force a reload of the principal if he/she is in the updated group.
         EtmPrincipal principal = getEtmPrincipal();
@@ -988,11 +977,12 @@ public class SettingsService extends AbstractJsonService {
                 throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
             }
         }
-        BulkRequestBuilder bulkRequestBuilder = client.prepareBulk()
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration));
-        bulkRequestBuilder.add(client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(client.prepareBulk(), etmConfiguration);
+        bulkRequestBuilder.add(
+                enhanceRequest(
+                        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName),
+                        etmConfiguration
+                )
         );
         removeGroupFromPrincipal(bulkRequestBuilder, groupName);
         bulkRequestBuilder.get();
@@ -1005,13 +995,13 @@ public class SettingsService extends AbstractJsonService {
     }
 
     private void removeGroupFromPrincipal(BulkRequestBuilder bulkRequestBuilder, String groupName) {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(false)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
-                        .must(QueryBuilders.termQuery(this.etmPrincipalTags.getGroupsTag(), groupName)))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                        .must(QueryBuilders.termQuery(this.etmPrincipalTags.getGroupsTag(), groupName))
+                );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             boolean updated = false;
@@ -1033,13 +1023,13 @@ public class SettingsService extends AbstractJsonService {
     }
 
     private UpdateRequestBuilder createPrincipalUpdateRequest(EtmPrincipal principal) {
-        return client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
+        return enhanceRequest(
+                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId()),
+                etmConfiguration
+        )
                 .setDoc(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
                 .setDocAsUpsert(true)
-                .setDetectNoop(true)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount());
+                .setDetectNoop(true);
     }
 
     /**
@@ -1103,14 +1093,13 @@ public class SettingsService extends AbstractJsonService {
      * empty list if non of the groups has any of the given roles.
      */
     private List<String> getGroupsWithRole(String... roles) {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
                         .must(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getRolesTag(), roles))
-                )
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+                );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         List<String> groups = new ArrayList<>();
         if (scrollableSearch.hasNext()) {
@@ -1152,12 +1141,11 @@ public class SettingsService extends AbstractJsonService {
                     .should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getGroupsTag(), adminGroups))
                     .minimumShouldMatch(1);
         }
-        SearchResponse response = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchResponse response = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(false)
                 .setSize(0)
                 .setQuery(query)
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .get();
         return response.getHits().getTotalHits();
     }

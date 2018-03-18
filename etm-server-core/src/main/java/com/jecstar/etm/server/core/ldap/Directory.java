@@ -178,7 +178,7 @@ public class Directory implements AutoCloseable {
     }
 
     /**
-     * Gets an principals. This method does not fully load the found
+     * Gets a principals. This method does not fully load the found
      * <code>EtmPrincipal</code> and <code>EtmGroup</code>s but only sets the
      * user id, full name and email address. For the <code>EtmGroup</code>s only
      * the name and ldapBase are set.

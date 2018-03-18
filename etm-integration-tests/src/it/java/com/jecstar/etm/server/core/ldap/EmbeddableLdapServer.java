@@ -280,7 +280,7 @@ public class EmbeddableLdapServer {
         entryUser.add(USER_NAME_ATTRIBUTE, userName);
         entryUser.add("sn", userId);
         entryUser.add(USER_ID_ATTRIBUTE, userId);
-        entryUser.add(USER_EMAIL_ATTRIBUTE, userId + "@localhost");
+        entryUser.add(USER_EMAIL_ATTRIBUTE, userId + "@jecstar.com");
         entryUser.add("userPassword", "password");
         service.getAdminSession().add(entryUser);
 

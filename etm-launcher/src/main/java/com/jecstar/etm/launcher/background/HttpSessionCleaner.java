@@ -1,5 +1,6 @@
 package com.jecstar.etm.launcher.background;
 
+import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
@@ -9,13 +10,11 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
-public class HttpSessionCleaner implements Runnable {
+public class HttpSessionCleaner extends AbstractJsonService implements Runnable {
 
     /**
      * The <code>LogWrapper</code> for this class.
@@ -39,9 +38,11 @@ public class HttpSessionCleaner implements Runnable {
         }
         try {
             // Not using a delete by query because it isn't able to delete in a certain type (by the Java api) and cannot delete documents with version equals to zero.
-            SearchRequestBuilder searchRequestBuilder = this.client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME).setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+            SearchRequestBuilder searchRequestBuilder = enhanceRequest(
+                    this.client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME).setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                    etmConfiguration
+            )
                     .setFetchSource(false)
-                    .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                     .setQuery(
                             QueryBuilders.boolQuery().must(
                                     QueryBuilders.rangeQuery(this.tags.getLastAccessedTag()).lt(System.currentTimeMillis() - this.etmConfiguration.getSessionTimeout()).from(0L)
@@ -54,19 +55,20 @@ public class HttpSessionCleaner implements Runnable {
             if (log.isInfoLevelEnabled()) {
                 log.logInfoMessage("Found " + scrollableSearch.getNumberOfHits() + " expired http sessions marked for deletion.");
             }
-            BulkRequestBuilder bulkRequestBuilder = createBulkRequestBuilder();
+            BulkRequestBuilder bulkRequestBuilder = enhanceRequest(this.client.prepareBulk(), etmConfiguration);
             for (SearchHit searchHit : scrollableSearch) {
                 if (Thread.currentThread().isInterrupted()) {
                     return;
                 }
                 bulkRequestBuilder.add(
-                        this.client.prepareDelete(searchHit.getIndex(), searchHit.getType(), searchHit.getId())
-                                .setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
-                                .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
+                        enhanceRequest(
+                                this.client.prepareDelete(searchHit.getIndex(), searchHit.getType(), searchHit.getId()),
+                                etmConfiguration
+                        )
                 );
                 if (bulkRequestBuilder.numberOfActions() >= 50) {
                     bulkRequestBuilder.get();
-                    bulkRequestBuilder = createBulkRequestBuilder();
+                    bulkRequestBuilder = enhanceRequest(this.client.prepareBulk(), etmConfiguration);
                 }
             }
             if (bulkRequestBuilder.numberOfActions() > 0) {
@@ -81,22 +83,5 @@ public class HttpSessionCleaner implements Runnable {
             }
         }
     }
-
-    private BulkRequestBuilder createBulkRequestBuilder() {
-        return this.client.prepareBulk()
-                .setWaitForActiveShards(getActiveShardCount(this.etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()));
-    }
-
-
-    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
-        if (-1 == etmConfiguration.getWaitForActiveShards()) {
-            return ActiveShardCount.ALL;
-        } else if (0 == etmConfiguration.getWaitForActiveShards()) {
-            return ActiveShardCount.NONE;
-        }
-        return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
-    }
-
 
 }

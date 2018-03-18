@@ -101,7 +101,7 @@ public class DirectoryTest {
         Directory directory = new Directory(ldapConfig);
         // Test user 1 is placed in user base dn and should be able to login.
         assertNotNull(directory.authenticate("test-user-1", "password"));
-        // Test users 2 & r are a level below the base dn and should also able to login.
+        // Test users 2 & 3 are a level below the base dn and should also able to login.
         assertNotNull(directory.authenticate("test-user-2", "password"));
         assertNotNull(directory.authenticate("test-user-3", "password"));
         directory.close();
