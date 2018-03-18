@@ -1,5 +1,10 @@
 == Changelog
 
+=== Version 3.0.3
+* LDAP Synchronization of users.
+* Fixed bug in removing account with user settings access.
+* Added features requested by Achmea.
+
 === Version 3.0.2
 * Fixed a bug that failed migrations from 2.x to 3.0.x because of metric fields containing NaN.
 * Changed spinner in top right corner to a pulsing Jecstar logo in the top left corner.
