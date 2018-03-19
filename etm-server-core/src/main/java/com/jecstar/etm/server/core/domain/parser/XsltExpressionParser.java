@@ -78,4 +78,13 @@ public class XsltExpressionParser extends AbstractExpressionParser {
         return this.template;
     }
 
+    @Override
+    public boolean isCapableOfReplacing() {
+        return true;
+    }
+
+    @Override
+    public String replace(String content, String replacement, boolean allValues) {
+        return evaluate(content);
+    }
 }

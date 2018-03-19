@@ -16,7 +16,18 @@ function buildEndpointPage() {
 		setValuesFromData(endpointData);
 		enableOrDisableButtons();
 	});
-	
+
+	$('#endpoint_form').on('change', '.etm-transformation-card > div > div > div .etm-expression-parser',  function (event) {
+	    event.preventDefault();
+	    var parser = parserMap[$(this).val()];
+	    var cardBody = $(this).parent().parent().parent();
+        if ('xslt' == parser.type) {
+            $(cardBody).children().slice(2).hide();
+        } else if ('regex' == parser.type) {
+            $(cardBody).children().slice(2).show();
+        }
+	});
+
 	$('#btn-confirm-save-endpoint').click(function(event) {
 		if (!document.getElementById('endpoint_form').checkValidity()) {
 			return;
@@ -99,7 +110,9 @@ function buildEndpointPage() {
 		});
         $('#link-add-transformation-field').click(function(event) {
             event.preventDefault();
-            $('#field-transformation-columns').append(createTransformationRow());
+            var row = createTransformationRow();
+            $('#field-transformation-columns').append(row);
+            $(row).find('.etm-expression-parser').trigger('change');
         });
 
 		$.ajax({
@@ -280,8 +293,7 @@ function buildEndpointPage() {
 		)
 		return card;
 	}
-	
-	
+
 	function endsWith(text, textToEndWith) {
 		return text.lastIndexOf(textToEndWith) == text.length - textToEndWith.length;
 	}
@@ -289,9 +301,7 @@ function buildEndpointPage() {
 	function startsWith(text, textToStartWith) {
 		return text.indexOf(textToStartWith) == 0;
 	}
-	
-	
-	
+
 	function sortSelectOptions($endpointSelect) {
 		var options = $endpointSelect.children('option');
 		options.detach().sort(function(a,b) {
@@ -401,8 +411,13 @@ function buildEndpointPage() {
 		$('.etm-transformation-card').each(function (index, block) {
             var transformation = {
                 parser: parserMap[$(block).find('.etm-expression-parser').val()],
-                replacement: $(block).find('.etm-replacement').val() ? $(block).find('.etm-replacement').val() : null,
-                replace_all: $(block).find('.etm-replace-all').val() == 'true' ? true : false
+            }
+            if ('regex' == transformation.parser.type) {
+                transformation.replacement = $(block).find('.etm-replacement').val() ? $(block).find('.etm-replacement').val() : null
+                transformation.replace_all = $(block).find('.etm-replace-all').val() == 'true' ? true : false
+            } else if ('xslt' == transformation.parser.type) {
+                transformation.replacement = null
+                transformation.replace_all = false
             }
             endpointData.enhancer.transformations.push(transformation);
         });
@@ -422,7 +437,9 @@ function buildEndpointPage() {
 			$('#field-extraction-columns').append(createFieldExtractionRow(field));
 		});
         $.each(endpointData.enhancer.transformations, function (index, transformation) {
-            $('#field-transformation-columns').append(createTransformationRow(transformation));
+            var row = createTransformationRow(transformation);
+            $('#field-transformation-columns').append(row);
+            $(row).find('.etm-expression-parser').trigger('change');
         });
 	}
 
