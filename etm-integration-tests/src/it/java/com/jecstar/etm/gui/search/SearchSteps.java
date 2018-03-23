@@ -184,15 +184,17 @@ public class SearchSteps extends AbstractSteps {
         // A user requests the shopping card page from our public http site.
         ZonedDateTime timestamp = ZonedDateTime.now();
         guiEndpointHandler.setHandlingTime(timestamp);
+        guiEndpointHandler
+                .addMetadata("User-Agent", "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0")
+                .addMetadata("Pragma", "no-cache");
         assertTrue(sendEventToEtm("http", this.httpEventWriter.write(new HttpTelemetryEventBuilder()
                 .setId(eventId)
                 .setPayload("GET http://www.my-company.com/shopping-card.html")
                 .setName("GetShoppingCard")
-                .setPayloadFormat(PayloadFormat.HTML)
+                .setPayloadFormat(PayloadFormat.TEXT)
                 .setHttpEventType(HttpTelemetryEvent.HttpEventType.GET)
                 .setExpiry(timestamp.plusSeconds(30))
-                .addMetadata("User-Agent", "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0")
-                .addMetadata("Pragma", "no-cache")
+                .addMetadata("BusinessProcess", "User views shopping card")
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("/shopping-card.html")
                         .addReadingEndpointHandler(guiEndpointHandler)

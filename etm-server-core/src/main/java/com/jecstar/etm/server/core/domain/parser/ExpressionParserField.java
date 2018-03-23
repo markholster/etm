@@ -8,7 +8,9 @@ public enum ExpressionParserField {
     CORRELATION_ID(new TelemetryEventTagsJsonImpl().getCorrelationIdTag()),
     NAME(new TelemetryEventTagsJsonImpl().getNameTag()),
     WRITER_TRANSACTION_ID(new TelemetryEventTagsJsonImpl().getEndpointsTag() + "." + new TelemetryEventTagsJsonImpl().getWritingEndpointHandlerTag() + "." + new TelemetryEventTagsJsonImpl().getEndpointHandlerTransactionIdTag()),
+    WRITER_METADATA(new TelemetryEventTagsJsonImpl().getEndpointsTag() + "." + new TelemetryEventTagsJsonImpl().getWritingEndpointHandlerTag() + "." + new TelemetryEventTagsJsonImpl().getMetadataTag() + "."),
     READER_TRANSACTION_ID(new TelemetryEventTagsJsonImpl().getEndpointsTag() + "." + new TelemetryEventTagsJsonImpl().getReadingEndpointHandlerTag() + "." + new TelemetryEventTagsJsonImpl().getEndpointHandlerTransactionIdTag()),
+    READER_METADATA(new TelemetryEventTagsJsonImpl().getEndpointsTag() + "." + new TelemetryEventTagsJsonImpl().getReadingEndpointHandlerTag() + "." + new TelemetryEventTagsJsonImpl().getMetadataTag() + "."),
     CORRELATION_DATA(new TelemetryEventTagsJsonImpl().getCorrelationDataTag() + "."),
     EXTRACTED_DATA(new TelemetryEventTagsJsonImpl().getExtractedDataTag() + "."),
     METADATA(new TelemetryEventTagsJsonImpl().getMetadataTag() + ".");

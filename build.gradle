@@ -2,7 +2,7 @@ ext {
     version_artemis = "2.3.0"
     version_cucumber = "2.3.1"
     version_elasticsearch_major = "6.2"
-    version_elasticsearch = version_elasticsearch_major + ".2"
+    version_elasticsearch = version_elasticsearch_major + ".3"
     version_junit = "5.1.0"
     version_resteasy = "3.1.4.Final"
     version_slf4j = "1.7.25"

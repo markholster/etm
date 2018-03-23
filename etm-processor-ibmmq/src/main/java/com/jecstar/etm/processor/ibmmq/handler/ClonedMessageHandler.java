@@ -58,24 +58,27 @@ public class ClonedMessageHandler extends AbstractMQEventHandler {
 
 
     private void parseMessage(MQMessage message) throws IOException {
-        putNonNullDataInMap("MQMD_CharacterSet", "" + message.characterSet, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_Format", message.format, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_Encoding", "" + message.encoding, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_AccountingToken", message.accountingToken, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_Persistence", "" + message.persistence, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_Priority", "" + message.priority, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_ReplyToQueueManager", message.replyToQueueManagerName, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_ReplyToQueue", message.replyToQueueName, this.messagingTelemetryEventBuilder.getMetadata());
-        putNonNullDataInMap("MQMD_BackoutCount", "" + message.backoutCount, this.messagingTelemetryEventBuilder.getMetadata());
+        EndpointHandlerBuilder endpointHandlerBuilder = new EndpointHandlerBuilder()
+                .setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis()), ZoneOffset.UTC));
+
+        putNonNullDataInMap("MQMD_CharacterSet", "" + message.characterSet, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_Format", message.format, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_Encoding", "" + message.encoding, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_AccountingToken", message.accountingToken, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_Persistence", "" + message.persistence, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_Priority", "" + message.priority, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_ReplyToQueueManager", message.replyToQueueManagerName, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_ReplyToQueue", message.replyToQueueName, endpointHandlerBuilder.getMetadata());
+        putNonNullDataInMap("MQMD_BackoutCount", "" + message.backoutCount, endpointHandlerBuilder.getMetadata());
 
         this.messagingTelemetryEventBuilder.setPayload(getContent(message));
+
 
         this.messagingTelemetryEventBuilder
                 .setId(byteArrayToString(message.messageId))
                 .setCorrelationId(byteArrayToString(message.correlationId))
                 .addOrMergeEndpoint(new EndpointBuilder()
-                        .setWritingEndpointHandler(new EndpointHandlerBuilder
-                                ().setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis()), ZoneOffset.UTC))));
+                        .setWritingEndpointHandler(endpointHandlerBuilder));
         if (message.expiry != CMQC.MQEI_UNLIMITED) {
             this.messagingTelemetryEventBuilder.setExpiry(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis() + (message.expiry * 100)), ZoneOffset.UTC));
         }

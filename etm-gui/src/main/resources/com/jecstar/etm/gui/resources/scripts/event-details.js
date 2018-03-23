@@ -146,8 +146,12 @@ function showEvent(scrollTo, type, id) {
 				if (this.writing_endpoint_handler) {
 					return this.writing_endpoint_handler.handling_time
 				}
-			}).get();			
-			appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			}).get();
+			if (writing_times.length == 0) {
+			    appendToContainerInRow($eventTab, 'First write time', '');
+			} else {
+			    appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			}
 		}
 		if ('log' === data.type || 'log' === data.source.object_type) {
 		    $tabHeader.text('Log');
@@ -254,40 +258,81 @@ function showEvent(scrollTo, type, id) {
 				}
 			}		
 		}
+		var metadataDetailMap;
 		if ("undefined" != typeof data.source.metadata) {
-	    	$eventTab.append(createDetailMap('metadata', data.source.metadata));
+		    metadataDetailMap = createDetailMap('metadata', data.source.metadata);
 	    }
+	    // Search for metadata in endpoint handlers
+        if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
+            $.each($endpoints, function (index, endpoint) {
+                var endpointData = {
+                    name: endpoint.name ? endpoint.name : null,
+                    readers: []
+                }
+                if (endpoint.writing_endpoint_handler && endpoint.writing_endpoint_handler.metadata) {
+                    var writerName = endpoint.writing_endpoint_handler.application && endpoint.writing_endpoint_handler.application.name ? endpoint.writing_endpoint_handler.application.name : 'Writer';
+                    endpointData.writer = {
+                        name: writerName,
+                        metadata: endpoint.writing_endpoint_handler.metadata
+                    }
+                }
+                if (endpoint.reading_endpoint_handlers) {
+                    $.each(endpoint.reading_endpoint_handlers, function (index, eh) {
+                        if (eh.metadata) {
+                            var readerName = eh.application && eh.application.name ? eh.application.name : 'Reader';
+                            var reader = {
+                                name: readerName,
+                                metadata: eh.metadata
+                            }
+                            endpointData.readers.push(reader);
+                        }
+                    });
+                }
+                if (endpointData.readers.length > 0 || endpointData.writer) {
+                    if(!metadataDetailMap) {
+                        metadataDetailMap = createDetailMap('metadata');
+                    }
+                    appendEndpointToDetailMap(metadataDetailMap, endpointData);
+                }
+            });
+        }
+        if (metadataDetailMap) {
+            $eventTab.append(metadataDetailMap);
+        }
+
 	    if ("undefined" != typeof data.source.extracted_data) {
 	    	$eventTab.append(createDetailMap('extracted data', data.source.extracted_data));
 	    }
 	    
 	    $eventTab.append($('<br/>'));
-	    var payloadCode = $('<code>').text(indentCode(data.source.payload, data.source.payload_format));
-	    var $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw payload to clipboard');
-	    $eventTab.append(
-	    		$('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
-	    				$('<div>').addClass('col-sm-12').append(
-	    						$clipboard,
-	    						$('<pre>').attr('style', 'white-space: pre-wrap;').append(
-	    								payloadCode
-	    						),
-	    						$('<pre>').attr('style', 'display: none').text(data.source.payload)
-	    						
-	    				)
-	    		)
-	    );
-	    clipboards.push(new Clipboard($clipboard[0], {
-	        text: function(trigger) {
-	            return $(trigger).next().next().text();
-	        }
-	    }));
-	    if (typeof(Worker) !== "undefined" && data.source.payload_length <= 1048576) {
-	    	// Only highlight for payload ~< 1 MiB
-	    	var worker = new Worker('../scripts/highlight-worker.js');
-	    	worker.onmessage = function(result) { 
-	    		payloadCode.html(result.data);
-	    	}
-	    	worker.postMessage([payloadCode.text(), data.source.payload_format]);
+	    if (data.source.payload) {
+            var payloadCode = $('<code>').text(indentCode(data.source.payload, data.source.payload_format));
+            var $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw payload to clipboard');
+            $eventTab.append(
+                    $('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
+                            $('<div>').addClass('col-sm-12').append(
+                                    $clipboard,
+                                    $('<pre>').attr('style', 'white-space: pre-wrap;').append(
+                                            payloadCode
+                                    ),
+                                    $('<pre>').attr('style', 'display: none').text(data.source.payload)
+
+                            )
+                    )
+            );
+            clipboards.push(new Clipboard($clipboard[0], {
+                text: function(trigger) {
+                    return $(trigger).next().next().text();
+                }
+            }));
+            if (typeof(Worker) !== "undefined" && data.source.payload_length <= 1048576) {
+                // Only highlight for payload ~< 1 MiB
+                var worker = new Worker('../scripts/highlight-worker.js');
+                worker.onmessage = function(result) {
+                    payloadCode.html(result.data);
+                }
+                worker.postMessage([payloadCode.text(), data.source.payload_format]);
+            }
 	    }
 	    if (('log' === data.type || 'log' === data.source.object_type) && "undefined" != typeof data.source.stack_trace) {
 	    	$eventTab.append(
@@ -339,6 +384,10 @@ function showEvent(scrollTo, type, id) {
 	
 	function createDetailMap(name, valueMap) {
 		var panelId = generateUUID();
+		var responsiveTableDiv = $('<div>').addClass('table-responsive');
+		if (valueMap) {
+		    appendTableToDetailMap(responsiveTableDiv, valueMap);
+		}
 		var $detailMap = $('<div>').addClass('panel panel-default').append(
 				$('<div>').addClass('panel-heading clearfix').append(
 						$('<div>').addClass('pull-left').append(
@@ -351,35 +400,61 @@ function showEvent(scrollTo, type, id) {
 						)
 				),
 				$('<div>').attr('id', panelId).addClass('panel-collapse collapse').append(
-						$('<div>').addClass('panel-body').append(
-								$('<div>').addClass('table-responsive').append(
-										$('<table>').addClass('table table-sm table-striped table-hover').append(
-												$('<thead>').append($('<tr>').append($('<th>').attr('style', 'padding: 0.1rem;').text('Name')).append($('<th>').attr('style', 'padding: 0.1rem;').text('Value')))
-										).append(function () {
-											var $tbody = $('<tbody>');
-											var detailItems = [];
-											$.each(valueMap, function(key, value) {
-								            	if (endsWith(key, '_as_number') || endsWith(key, '_as_boolean') || endsWith(key, '_as_date')) {
-								            		return true;
-								            	}
-											 	detailItems.push( { key: key, value: value } );
-											});
-											detailItems.sort(function(item1,item2){ return item1.key.localeCompare(item2.key);});
-								            $.each(detailItems, function(index, item) {
-								            	$tbody.append(
-								            			$('<tr>').append(
-								            					$('<td>').attr('style', 'padding: 0.1rem;').text(item.key),
-								            					$('<td>').attr('style', 'padding: 0.1rem;').text(item.value)
-								            			)
-								            	);
-								            });
-											return $tbody;
-										})
-								)
-						)
+				    $('<div>').addClass('panel-body').append(responsiveTableDiv)
 				)
 		);
 		return $detailMap;
+	}
+
+	function appendEndpointToDetailMap(metadataDetailMap, endpointData) {
+	    var responsiveTableDiv = $(metadataDetailMap).find('.table-responsive');
+	    if (endpointData.writer) {
+	        appendTableToDetailMap(responsiveTableDiv, endpointData.writer.metadata, endpointData.name == null ? endpointData.writer.name : endpointData.name + ' - ' + endpointData.writer.name);
+	    }
+	    if (endpointData.readers.length > 0) {
+	        $.each(endpointData.readers, function (index, reader) {
+	            appendTableToDetailMap(responsiveTableDiv, reader.metadata, endpointData.name == null ? reader.name : endpointData.name + ' - ' + reader.name);
+            });
+	    }
+
+	}
+
+	function appendTableToDetailMap(responsiveTableDiv, valueMap, caption) {
+        var $table = $('<table>').addClass('table table-sm table-striped table-hover')
+        if (caption) {
+            $table.append(
+                $('<caption>').attr('style', 'caption-side: top;').text(caption)
+            );
+        }
+        $table.append(
+            $('<thead>').append(
+                $('<tr>').append(
+                    $('<th>').attr('style', 'padding: 0.1rem;').text('Name')
+                ).append(
+                    $('<th>').attr('style', 'padding: 0.1rem;').text('Value')
+                )
+            )
+        ).append(function () {
+            var $tbody = $('<tbody>');
+            var detailItems = [];
+            $.each(valueMap, function(key, value) {
+                if (endsWith(key, '_as_number') || endsWith(key, '_as_boolean') || endsWith(key, '_as_date')) {
+                    return true;
+                }
+                detailItems.push( { key: key, value: value } );
+            });
+            detailItems.sort(function(item1,item2){ return item1.key.localeCompare(item2.key);});
+            $.each(detailItems, function(index, item) {
+                $tbody.append(
+                        $('<tr>').append(
+                                $('<td>').attr('style', 'padding: 0.1rem;').text(item.key),
+                                $('<td>').attr('style', 'padding: 0.1rem;').text(item.value)
+                        )
+                );
+            });
+            return $tbody;
+        });
+        $(responsiveTableDiv).append($table);
 	}
 	
 	function generateUUID(){

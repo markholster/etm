@@ -5,6 +5,7 @@ import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.Location;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 public class EndpointHandlerBuilder {
 
@@ -52,4 +53,25 @@ public class EndpointHandlerBuilder {
         this.endpointHandler.location = locationBuilder.build();
         return this;
     }
+
+    public EndpointHandlerBuilder setMetadata(Map<String, Object> metadata) {
+        this.endpointHandler.metadata = metadata;
+        return this;
+    }
+
+    public EndpointHandlerBuilder addMetadata(Map<String, Object> metadata) {
+        this.endpointHandler.metadata.putAll(metadata);
+        return this;
+    }
+
+    public EndpointHandlerBuilder addMetadata(String key, Object value) {
+        this.endpointHandler.metadata.put(key, value);
+        return this;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return this.endpointHandler.metadata;
+    }
+
+
 }

@@ -107,6 +107,10 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
             endpointHandler.location.latitude = getDouble(this.tags.getLatitudeTag(), locationValueMap);
             endpointHandler.location.longitude = getDouble(this.tags.getLongitudeTag(), locationValueMap);
         }
+        Map<String, Object> metaDataMap = getObject(this.tags.getMetadataTag(), valueMap);
+        if (metaDataMap != null && !metaDataMap.isEmpty()) {
+            endpointHandler.metadata.putAll(metaDataMap);
+        }
         return endpointHandler;
     }
 

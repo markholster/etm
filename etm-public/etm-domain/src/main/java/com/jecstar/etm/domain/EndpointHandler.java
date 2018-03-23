@@ -1,6 +1,8 @@
 package com.jecstar.etm.domain;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EndpointHandler {
 
@@ -31,6 +33,11 @@ public class EndpointHandler {
      */
     public Integer sequenceNumber;
 
+    /**
+     * Metadata of the endpoint handler. Not used by the application, but can be filled by the end user.
+     */
+    public Map<String, Object> metadata = new HashMap<>();
+
     //READ ONLY FIELDS
     /**
      * The time between the write and read of the event. This value is only
@@ -55,6 +62,7 @@ public class EndpointHandler {
         this.handlingTime = null;
         this.transactionId = null;
         this.sequenceNumber = null;
+        this.metadata.clear();
         // Initialize read only fields.
         this.latency = null;
         this.responseTime = null;
@@ -71,6 +79,7 @@ public class EndpointHandler {
         this.handlingTime = copy.handlingTime;
         this.transactionId = copy.transactionId;
         this.sequenceNumber = copy.sequenceNumber;
+        this.metadata.putAll(copy.metadata);
         // Initialize read only fields.
         this.latency = copy.latency;
         this.responseTime = copy.responseTime;

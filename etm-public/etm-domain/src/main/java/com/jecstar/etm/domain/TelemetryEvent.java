@@ -120,7 +120,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
         this.metadata.putAll(copy.metadata);
         this.name = copy.name;
         this.payload = copy.payload;
-        this.payloadEncoding = payloadEncoding;
+        this.payloadEncoding = copy.payloadEncoding;
         this.payloadFormat = copy.payloadFormat;
         // Initialize read only fields.
         this.correlations.addAll(copy.correlations);

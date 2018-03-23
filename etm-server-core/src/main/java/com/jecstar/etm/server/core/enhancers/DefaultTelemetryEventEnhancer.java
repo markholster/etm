@@ -195,11 +195,19 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
         } else if (field.getName().startsWith(ExpressionParserField.METADATA.getJsonTag())) {
             conditionallyPutInMap(event, field, ExpressionParserField.METADATA, event.metadata);
         } else if (ExpressionParserField.WRITER_TRANSACTION_ID.getJsonTag().equals(field.getName())) {
-            // transaction id can be on several levels. Add them to every position when the current value is not set.
             setWritingTransactionIdOnEndpoints(field, event);
         } else if (ExpressionParserField.READER_TRANSACTION_ID.getJsonTag().equals(field.getName())) {
-            // transaction id can be on several levels. Add them to every position when the current value is not set.
             setReadingTransactionIdOnEndpoints(field, event);
+        } else if (field.getName().startsWith(ExpressionParserField.WRITER_METADATA.getJsonTag())) {
+            for (Endpoint endpoint : event.endpoints) {
+                conditionallyPutInMap(event, field, ExpressionParserField.WRITER_METADATA, endpoint.writingEndpointHandler.metadata);
+            }
+        } else if (field.getName().startsWith(ExpressionParserField.READER_METADATA.getJsonTag())) {
+            for (Endpoint endpoint : event.endpoints) {
+                for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
+                    conditionallyPutInMap(event, field, ExpressionParserField.WRITER_METADATA, handler.metadata);
+                }
+            }
         }
     }
 

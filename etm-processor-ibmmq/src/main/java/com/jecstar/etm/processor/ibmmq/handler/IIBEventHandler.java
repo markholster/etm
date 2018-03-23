@@ -148,7 +148,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
             }
         }
         // Add some flow information
-        addSourceInformation(event, this.messagingTelemetryEventBuilder);
+        addCorrelationInformation(event, this.messagingTelemetryEventBuilder);
         EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event);
         if ("ComIbmMQInputNode".equals(nodeType) || "ComIbmMQGetNode".equals(nodeType)) {
             String endpoint = event.getEventPointData().getMessageFlowData().getNode().getDetail();
@@ -177,7 +177,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         }
         byte[] decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
         try {
-            parseBitstreamAsMqMessage(event, decoded, this.messagingTelemetryEventBuilder, encoding, ccsid);
+            parseBitstreamAsMqMessage(event, decoded, this.messagingTelemetryEventBuilder, endpointHandlerBuilder, encoding, ccsid);
         } catch (MQDataException | IOException e) {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Failed to parse MQ bitstream of event with id '" + byteArrayToString(messageId) + "'.", e);
@@ -211,7 +211,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         // TODO uitlezen local environment voor het id & correlationId.
         EndpointBuilder endpointBuilder = new EndpointBuilder();
         // Add some flow information
-        addSourceInformation(event, this.httpTelemetryEventBuilder);
+        addCorrelationInformation(event, this.httpTelemetryEventBuilder);
 
         EndpointHandlerBuilder endpointHandlerBuilder = createEndpointHandlerBuilder(event);
         String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
@@ -251,7 +251,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         }
         byte[] decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
         try {
-            parseBitstreamAsHttpMessage(decoded, this.httpTelemetryEventBuilder, endpointBuilder, encoding, ccsid);
+            parseBitstreamAsHttpMessage(decoded, this.httpTelemetryEventBuilder, endpointBuilder, endpointHandlerBuilder, encoding, ccsid);
         } catch (UnsupportedEncodingException e) {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Failed to parse HTTP bitstream of event with id '" + byteArrayToString(messageId) + "'.", e);
@@ -263,16 +263,10 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         return HandlerResult.failed();
     }
 
-    private void addSourceInformation(Event event, TelemetryEventBuilder<?, ?> builder) {
+    private void addCorrelationInformation(Event event, TelemetryEventBuilder<?, ?> builder) {
         putNonNullDataInMap("IIB_LocalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId(), builder.getCorrelationData());
         putNonNullDataInMap("IIB_ParentTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getParentTransactionId(), builder.getCorrelationData());
         putNonNullDataInMap("IIB_GlobalTransactionId", event.getEventPointData().getEventData().getEventCorrelation().getGlobalTransactionId(), builder.getCorrelationData());
-        putNonNullDataInMap("IIB_Node", event.getEventPointData().getMessageFlowData().getBroker().getName(), builder.getMetadata());
-        putNonNullDataInMap("IIB_Server", event.getEventPointData().getMessageFlowData().getExecutionGroup().getName(), builder.getMetadata());
-        putNonNullDataInMap("IIB_MessageFlow", event.getEventPointData().getMessageFlowData().getMessageFlow().getName(), builder.getMetadata());
-        putNonNullDataInMap("IIB_MessageFlowNode", event.getEventPointData().getMessageFlowData().getNode().getNodeLabel(), builder.getMetadata());
-        putNonNullDataInMap("IIB_MessageFlowNodeTerminal", event.getEventPointData().getMessageFlowData().getNode().getTerminal(), builder.getMetadata());
-        putNonNullDataInMap("IIB_MessageFlowNodeType", event.getEventPointData().getMessageFlowData().getNode().getNodeType(), builder.getMetadata());
     }
 
     private EndpointHandlerBuilder createEndpointHandlerBuilder(Event event) {
@@ -304,10 +298,17 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         builder.setApplication(new ApplicationBuilder().setName(appName).setVersion(appVersion));
         builder.setTransactionId(event.getEventPointData().getEventData().getEventCorrelation().getLocalTransactionId());
         builder.setSequenceNumber(event.getEventPointData().getEventData().getEventSequence().getCounter().intValue());
+        putNonNullDataInMap("IIB_Node", event.getEventPointData().getMessageFlowData().getBroker().getName(), builder.getMetadata());
+        putNonNullDataInMap("IIB_Server", event.getEventPointData().getMessageFlowData().getExecutionGroup().getName(), builder.getMetadata());
+        putNonNullDataInMap("IIB_MessageFlow", event.getEventPointData().getMessageFlowData().getMessageFlow().getName(), builder.getMetadata());
+        putNonNullDataInMap("IIB_MessageFlowNode", event.getEventPointData().getMessageFlowData().getNode().getNodeLabel(), builder.getMetadata());
+        putNonNullDataInMap("IIB_MessageFlowNodeTerminal", event.getEventPointData().getMessageFlowData().getNode().getTerminal(), builder.getMetadata());
+        putNonNullDataInMap("IIB_MessageFlowNodeType", event.getEventPointData().getMessageFlowData().getNode().getNodeType(), builder.getMetadata());
+
         return builder;
     }
 
-    private void parseBitstreamAsMqMessage(Event event, byte[] decodedBitstream, MessagingTelemetryEventBuilder builder, int encoding, int ccsid)
+    private void parseBitstreamAsMqMessage(Event event, byte[] decodedBitstream, MessagingTelemetryEventBuilder builder, EndpointHandlerBuilder endpointHandlerBuilder, int encoding, int ccsid)
             throws MQDataException, IOException {
         if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
             try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
@@ -317,15 +318,15 @@ public class IIBEventHandler extends AbstractMQEventHandler {
                 } else {
                     mqmd = new MQMD(inputData);
                 }
-                putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), builder.getMetadata());
-                putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, builder.getMetadata());
-                putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), builder.getMetadata());
-                putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), builder.getMetadata());
-                putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), builder.getMetadata());
-                putNonNullDataInMap("MQMD_Priority", "" + mqmd.getPriority(), builder.getMetadata());
-                putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr() != null ? mqmd.getReplyToQMgr().trim() : null, builder.getMetadata());
-                putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ() != null ? mqmd.getReplyToQ().trim() : null, builder.getMetadata());
-                putNonNullDataInMap("MQMD_BackoutCount", "" + mqmd.getBackoutCount(), builder.getMetadata());
+                putNonNullDataInMap("MQMD_CharacterSet", "" + mqmd.getCodedCharSetId(), endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_Format", mqmd.getFormat() != null ? mqmd.getFormat().trim() : null, endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_Encoding", "" + mqmd.getEncoding(), endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_AccountingToken", mqmd.getAccountingToken(), endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_Persistence", "" + mqmd.getPersistence(), endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_Priority", "" + mqmd.getPriority(), endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_ReplyToQueueManager", mqmd.getReplyToQMgr() != null ? mqmd.getReplyToQMgr().trim() : null, endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_ReplyToQueue", mqmd.getReplyToQ() != null ? mqmd.getReplyToQ().trim() : null, endpointHandlerBuilder.getMetadata());
+                putNonNullDataInMap("MQMD_BackoutCount", "" + mqmd.getBackoutCount(), endpointHandlerBuilder.getMetadata());
                 if (mqmd.getFormat().equals(MQConstants.MQFMT_RF_HEADER_2)) {
                     new MQRFH2(inputData, mqmd.getEncoding(), mqmd.getCodedCharSetId());
                     // TODO Do something with RFH2 header?
@@ -367,7 +368,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         }
     }
 
-    private void parseBitstreamAsHttpMessage(byte[] decoded, HttpTelemetryEventBuilder builder, EndpointBuilder endpointBuilder, int encoding, int ccsid) throws UnsupportedEncodingException {
+    private void parseBitstreamAsHttpMessage(byte[] decoded, HttpTelemetryEventBuilder builder, EndpointBuilder endpointBuilder, EndpointHandlerBuilder endpointHandlerBuilder, int encoding, int ccsid) throws UnsupportedEncodingException {
         String codepage = null;
         if (ccsid != -1) {
             codepage = CCSID.getCodepage(ccsid);
@@ -396,7 +397,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
                 if (inHeaders) {
                     int ix = line.indexOf(":");
                     if (ix != -1) {
-                        builder.getMetadata().put("http_" + line.substring(0, ix).trim(), line.substring(ix + 1).trim());
+                        endpointHandlerBuilder.getMetadata().put("http_" + line.substring(0, ix).trim(), line.substring(ix + 1).trim());
                     }
                 } else {
                     if (builder.getPayload() != null) {

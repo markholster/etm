@@ -48,8 +48,12 @@ public class XsltExpressionParser extends AbstractExpressionParser {
 
     @Override
     public String evaluate(String content) {
+        return doTransform(content, true);
+    }
+
+    private String doTransform(String content, boolean returnNullOnFailure) {
         if (this.transformer == null) {
-            return null;
+            return returnNullOnFailure ? null : content;
         }
         StringWriter writer = new StringWriter();
         try {
@@ -59,7 +63,7 @@ public class XsltExpressionParser extends AbstractExpressionParser {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("XSLT template '" + this.template + "' could not be applied on content '" + content + "'.", e);
             }
-            return null;
+            return returnNullOnFailure ? null : content;
         } catch (NamePoolLimitException e) {
             this.transformer = createTransformer(this.template);
             try {
@@ -69,7 +73,7 @@ public class XsltExpressionParser extends AbstractExpressionParser {
                 if (log.isDebugLevelEnabled()) {
                     log.logDebugMessage("XSLT template '" + this.template + "' could not be applied on content '" + content + "'.", e2);
                 }
-                return null;
+                return returnNullOnFailure ? null : content;
             }
         }
     }
@@ -85,6 +89,6 @@ public class XsltExpressionParser extends AbstractExpressionParser {
 
     @Override
     public String replace(String content, String replacement, boolean allValues) {
-        return evaluate(content);
+        return doTransform(content, false);
     }
 }
