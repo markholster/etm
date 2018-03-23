@@ -117,6 +117,7 @@ function validateMaxTemplates() {
 function setValuesFromTemplate(template) {
     // the template and query object are exactly the same.
     setValuesFromHistory(template);
+    $('#template-name').val(template.name).trigger('input');
 }
 
 function setValuesFromHistory(query) {
