@@ -2,6 +2,7 @@ package com.jecstar.etm.processor.ibmmq.handler;
 
 import com.ibm.mq.MQMessage;
 import com.ibm.mq.constants.CMQC;
+import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
@@ -78,7 +79,7 @@ public class ClonedMessageHandler extends AbstractMQEventHandler {
                 .setId(byteArrayToString(message.messageId))
                 .setCorrelationId(byteArrayToString(message.correlationId))
                 .addOrMergeEndpoint(new EndpointBuilder()
-                        .setWritingEndpointHandler(endpointHandlerBuilder));
+                        .addEndpointHandler(endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER)));
         if (message.expiry != CMQC.MQEI_UNLIMITED) {
             this.messagingTelemetryEventBuilder.setExpiry(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis() + (message.expiry * 100)), ZoneOffset.UTC));
         }

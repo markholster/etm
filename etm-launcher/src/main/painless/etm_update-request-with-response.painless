@@ -1,24 +1,31 @@
-boolean setResponseTimeOnReadingEndpointHandlers(List readingEndpointHandlers, String applicationName, long writerHandlingTime) {
-	if (readingEndpointHandlers == null) {
+boolean setResponseTimeOnEndpointHandlers(List endpointHandlers, String applicationName, long handlingTime, String handlerType) {
+	if (endpointHandlers == null) {
 		return false;
 	}
-	boolean readerUpdated = false;
-	for (Map readingEndpointHandler : readingEndpointHandlers) {
-		if (applicationName == null && (readingEndpointHandler.get("application") == null || ((Map)readingEndpointHandler.get("application")).get("name") == null)) {
-			long responseTime = writerHandlingTime - (long)readingEndpointHandler.get("handling_time");
+	boolean updated = false;
+	for (Map endpointHandler : endpointHandlers) {
+	    if (!handlerType.equals(endpointHandler.get("type"))) {
+            continue;
+        }
+		if (applicationName == null && (endpointHandler.get("application") == null || ((Map)endpointHandler.get("application")).get("name") == null)) {
+			long responseTime = handlingTime - (long)endpointHandler.get("handling_time");
 			if (responseTime >=0) {
-				readingEndpointHandler.put("response_time", responseTime);
-				readerUpdated = true;
+				endpointHandler.put("response_time", responseTime);
+				updated = true;
 			}
-		} else if (applicationName != null && readingEndpointHandler.get("application") != null && applicationName.equals(((Map)readingEndpointHandler.get("application")).get("name"))) {
-			long responseTime = writerHandlingTime - (long)readingEndpointHandler.get("handling_time");
+		} else if (applicationName != null && endpointHandler.get("application") != null && applicationName.equals(((Map)endpointHandler.get("application")).get("name"))) {
+			long responseTime = handlingTime - (long)endpointHandler.get("handling_time");
 			if (responseTime >=0) {
-				readingEndpointHandler.put("response_time", responseTime);
-				readerUpdated = true;
+				endpointHandler.put("response_time", responseTime);
+				updated = true;
 			}
 		}
 	}
-	return readerUpdated;
+	return updated;
+}
+
+boolean setResponseTimeOnReadingEndpointHandlers(List endpointHandlers, String applicationName, long writerHandlingTime) {
+    return setResponseTimeOnEndpointHandlers(endpointHandlers, applicationName, writerHandlingTime, "READER");
 }
 
 boolean setResponseTimeOnWritingEndpointHandlers(List endpoints, String applicationName, long readerHandlingTime) {
@@ -27,22 +34,21 @@ boolean setResponseTimeOnWritingEndpointHandlers(List endpoints, String applicat
 	}
 	boolean writerUpdated = false;
 	for (Map endpoint : endpoints) {
-		Map writingEndpointHandler = (Map)endpoint.get("writing_endpoint_handler");
-		if (applicationName == null && writingEndpointHandler != null && ( writingEndpointHandler.get("application") == null || ((Map)writingEndpointHandler.get("application")).get("name") == null)) {
-			long responseTime = readerHandlingTime - (long)writingEndpointHandler.get("handling_time");
-		    if (responseTime >= 0) {
-		    	writingEndpointHandler.put("response_time", responseTime);
-				writerUpdated = true;
-			}
-		} else if (applicationName != null && writingEndpointHandler != null && writingEndpointHandler.get("application") != null && applicationName.equals(((Map)writingEndpointHandler.get("application")).get("name"))) {
-			long responseTime = readerHandlingTime - (long)writingEndpointHandler.get("handling_time");
-		    if (responseTime >= 0) {
-		    	writingEndpointHandler.put("response_time", responseTime);
-				writerUpdated = true;
-			}
-		}
+	    writerUpdated = setResponseTimeOnEndpointHandlers((List)endpoint.get("endpoint_handlers"), applicationName, readerHandlingTime, "WRITER") || writerUpdated;
 	}
 	return writerUpdated;
+}
+
+Map getWritingEndpointHandler(List endpointHandlers) {
+    if (endpointHandlers == null) {
+        return null;
+    }
+    for (Map endpointHandler : endpointHandlers) {
+        if ("WRITER".equals(endpointHandler.get("type"))) {
+            return endpointHandler;
+        }
+    }
+    return null;
 }
 
 void addDataForReaders(Map source, long handlingTime, String applicationName) {
@@ -101,7 +107,7 @@ List inputEndpoints = (List)inputSource.get("endpoints");
 List targetEndpoints = (List)targetSource.get("endpoints");
 if (inputEndpoints != null) {
 	for (Map inputEndpoint : inputEndpoints) {
-		Map inputWritingEndpointHandler = (Map)inputEndpoint.get("writing_endpoint_handler");
+		Map inputWritingEndpointHandler = getWritingEndpointHandler( (List)inputEndpoint.get("endpoint_handlers") );
         if (inputWritingEndpointHandler != null && 
         	(inputWritingEndpointHandler.get("application") == null || ((Map)inputWritingEndpointHandler.get("application")).get("name") == null)) { 
 			// This is a writer on an endpoint without an application defined. Update the response time on target readers + writers without an application defined. 
@@ -109,13 +115,13 @@ if (inputEndpoints != null) {
         	boolean readerFound = false;
         	if (targetEndpoints != null) {
         		for (Map targetEndpoint : targetEndpoints) {
-        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("reading_endpoint_handlers"), null, writerHandlingTime) || readerFound;
+        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), null, writerHandlingTime) || readerFound;
         		}  
         	}
         	boolean writerFound = false;
         	if (!readerFound && targetEndpoints != null) {
         		for (Map targetEndpoint : targetEndpoints) {
-        			Map targetWritingEndpointHandler = (Map)targetEndpoint.get("writing_endpoint_handler");
+        			Map targetWritingEndpointHandler = getWritingEndpointHandler( (List)targetEndpoint.get("endpoint_handlers") );
 					if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get("application") == null) {
         				long responseTime = writerHandlingTime - (long)targetWritingEndpointHandler.get("handling_time");
         				if (responseTime >=0 ) {
@@ -138,34 +144,36 @@ if (inputEndpoints != null) {
         	boolean readerFound = false;
         	if (targetEndpoints != null) {
         		for (Map targetEndpoint : targetEndpoints) {
-        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("reading_endpoint_handlers"), writerAppName, writerHandlingTime) || readerFound;
+        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), writerAppName, writerHandlingTime) || readerFound;
         		}  
         	}
         	if (!readerFound) {
         		addDataForReaders(targetSource, writerHandlingTime, writerAppName);
         	}
         }
-        List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers");
-        if (inputReadingEndpointHandlers != null) {
-        	for (Map inputReadingEndpointHandler : inputReadingEndpointHandlers) {
-        		if (inputReadingEndpointHandler.get("application") == null || ((Map)inputReadingEndpointHandler.get("application")).get("name") == null) {
+        List inputEndpointHandlers = (List)inputEndpoint.get("endpoint_handlers");
+        if (inputEndpointHandlers != null) {
+        	for (Map inputEndpointHandler : inputEndpointHandlers) {
+                if (!"READER".equals(inputEndpointHandler.get("type"))) {
+                    continue;
+                }
+        		if (inputEndpointHandler.get("application") == null || ((Map)inputEndpointHandler.get("application")).get("name") == null) {
         			// This is a reader on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.
-		        	long readerHandlingTime = (long)inputReadingEndpointHandler.get("handling_time");
+		        	long readerHandlingTime = (long)inputEndpointHandler.get("handling_time");
         			boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, null, readerHandlingTime);
         			boolean readerFound = false;
         			if (!writerFound && targetEndpoints != null) {
 		        		for (Map targetEndpoint : targetEndpoints) {
-		        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("reading_endpoint_handlers"), null, readerHandlingTime) || readerFound;
+		        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), null, readerHandlingTime) || readerFound;
 		        		}  
         			}
         			if (!readerFound && !writerFound) {
         				addDataForWriter(targetSource, readerHandlingTime, null);
         			}
-        		} else if (inputReadingEndpointHandler.get("application") != null && 
-        			((Map)inputReadingEndpointHandler.get("application")).get("name") != null) {
-        			// This is a reader on an endpoint with an application defined. Update the response time on target writer with the same application defined. 
-		        	String readerAppName = (String)((Map)inputReadingEndpointHandler.get("application")).get("name");
-		        	long readerHandlingTime = (long)inputReadingEndpointHandler.get("handling_time");
+        		} else if (inputEndpointHandler.get("application") != null && ((Map)inputEndpointHandler.get("application")).get("name") != null) {
+        			// This is a reader on an endpoint with an application defined. Update the response time on target writer with the same application defined.
+		        	String readerAppName = (String)((Map)inputEndpointHandler.get("application")).get("name");
+		        	long readerHandlingTime = (long)inputEndpointHandler.get("handling_time");
         			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.
         			boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, readerAppName, readerHandlingTime);
 		        	if (!writerFound) {

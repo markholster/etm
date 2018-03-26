@@ -4,6 +4,7 @@ import com.jecstar.etm.domain.*;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.PayloadDecoder;
+import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -37,11 +38,15 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
             for (Map<String, Object> endpointMap : endpoints) {
                 Endpoint endpoint = new Endpoint();
                 endpoint.name = getString(this.tags.getEndpointNameTag(), endpointMap);
-                List<Map<String, Object>> endpointHandlers = getArray(this.tags.getReadingEndpointHandlersTag(), endpointMap);
+                List<Map<String, Object>> endpointHandlers = getArray(this.tags.getEndpointHandlersTag(), endpointMap);
                 if (endpointHandlers != null) {
-                    endpointHandlers.forEach(c -> endpoint.readingEndpointHandlers.add(createEndpointFormValueMapHandler(c)));
+                    for (Map<String, Object> eh : endpointHandlers) {
+                        EndpointHandler endpointHandler = createEndpointFormValueMapHandler(eh);
+                        endpoint.addEndpointHandler(endpointHandler);
+                    }
+                } else {
+                    addLegacyHandlers(endpoint, endpointMap);
                 }
-                endpoint.writingEndpointHandler.initialize(createEndpointFormValueMapHandler(getObject(this.tags.getWritingEndpointHandlerTag(), endpointMap)));
                 telemetryEvent.endpoints.add(endpoint);
             }
         }
@@ -56,6 +61,24 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
         }
         telemetryEvent.payload = this.payloadDecoder.decode(getString(this.tags.getPayloadTag(), valueMap), PayloadEncoding.safeValueOf(getString(this.tags.getPayloadEncodingTag(), valueMap)));
         telemetryEvent.payloadFormat = PayloadFormat.safeValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
+    }
+
+    @LegacyEndpointHandler("Method must be removed")
+    private void addLegacyHandlers(Endpoint endpoint, Map<String, Object> endpointMap) {
+        List<Map<String, Object>> endpointHandlers = getArray("reading_endpoint_handlers", endpointMap);
+        if (endpointHandlers != null) {
+            for (Map<String, Object> eh : endpointHandlers) {
+                EndpointHandler endpointHandler = createEndpointFormValueMapHandler(eh);
+                endpointHandler.type = EndpointHandler.EndpointHandlerType.READER;
+                endpoint.addEndpointHandler(endpointHandler);
+            }
+        }
+        Map<String, Object> eh = getObject("writing_endpoint_handler", endpointMap);
+        if (eh != null) {
+            EndpointHandler endpointHandler = createEndpointFormValueMapHandler(eh);
+            endpointHandler.type = EndpointHandler.EndpointHandlerType.WRITER;
+            endpoint.addEndpointHandler(endpointHandler);
+        }
     }
 
     private EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
@@ -97,6 +120,7 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
             endpointHandler.application.principal = getString(this.tags.getApplicationPrincipalTag(), applicationValueMap);
             endpointHandler.application.version = getString(this.tags.getApplicationVersionTag(), applicationValueMap);
         }
+        endpointHandler.type = EndpointHandler.EndpointHandlerType.safeValueOf(getString(this.tags.getEndpointHandlerTypeTag(), valueMap));
         endpointHandler.handlingTime = getZonedDateTime(this.tags.getEndpointHandlerHandlingTimeTag(), valueMap);
         endpointHandler.latency = getLong(this.tags.getEndpointHandlerLatencyTag(), valueMap);
         endpointHandler.responseTime = getLong(this.tags.getEndpointHandlerResponseTimeTag(), valueMap);

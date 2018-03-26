@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.search;
 
+import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
@@ -27,6 +28,7 @@ import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.util.DateUtils;
+import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -261,7 +263,7 @@ public class SearchService extends AbstractIndexMetadataService {
 
     private SearchRequestBuilder createRequestFromInput(SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
         if (parameters.getFields().isEmpty()) {
-            parameters.getFields().add(this.eventTags.getEndpointsTag() + "." + this.eventTags.getWritingEndpointHandlerTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());
+            parameters.getFields().add(this.eventTags.getEndpointsTag() + "." + this.eventTags.getEndpointHandlersTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());
             parameters.getFields().add(this.eventTags.getNameTag());
         }
         QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString())
@@ -411,13 +413,14 @@ public class SearchService extends AbstractIndexMetadataService {
         SearchHit searchHit = getEvent(eventType, eventId, true, null);
         if (searchHit != null) {
             auditLogBuilder.setFound(true);
+            Map<String, Object> valueMap = searchHit.getSourceAsMap();
+            replaceLegacyEndpointHandlerLocations(valueMap);
             result.append(", \"event\": {");
             addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
             addStringElementToJsonBuffer("type", searchHit.getType(), result, false);
             addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
-            result.append(", \"source\": ").append(searchHit.getSourceAsString());
+            result.append(", \"source\": ").append(toString(valueMap));
             result.append("}");
-            Map<String, Object> valueMap = searchHit.getSourceAsMap();
             // Add the name to the audit log.
             auditLogBuilder.setEventName(getString(this.eventTags.getNameTag(), valueMap));
             // Try to find an event this event is correlating to.
@@ -426,12 +429,15 @@ public class SearchService extends AbstractIndexMetadataService {
             if (correlatedToId != null && !correlatedToId.equals(eventId)) {
                 SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedToId);
                 if (correlatedEvent != null) {
+                    Map<String, Object> sourceAsMap = correlatedEvent.getSourceAsMap();
+                    // TODO meteen sourceAsString op het moment dat onderstaande methode wordt verwijderd.
+                    replaceLegacyEndpointHandlerLocations(sourceAsMap);
                     result.append(", \"correlated_events\": [");
                     result.append("{");
                     addStringElementToJsonBuffer("index", correlatedEvent.getIndex(), result, true);
                     addStringElementToJsonBuffer("type", correlatedEvent.getType(), result, false);
                     addStringElementToJsonBuffer("id", correlatedEvent.getId(), result, false);
-                    result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
+                    result.append(", \"source\": ").append(toString(sourceAsMap));
                     result.append("}");
                     correlationAdded = true;
                     auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
@@ -452,6 +458,9 @@ public class SearchService extends AbstractIndexMetadataService {
                     }
                     SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlationId);
                     if (correlatedEvent != null) {
+                        Map<String, Object> sourceAsMap = correlatedEvent.getSourceAsMap();
+                        // TODO meteen sourceAsString op het moment dat onderstaande methode wordt verwijderd.
+                        replaceLegacyEndpointHandlerLocations(sourceAsMap);
                         added++;
                         if (!correlationAdded) {
                             result.append(", \"correlated_events\": [");
@@ -462,7 +471,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         addStringElementToJsonBuffer("index", correlatedEvent.getIndex(), result, true);
                         addStringElementToJsonBuffer("type", correlatedEvent.getType(), result, false);
                         addStringElementToJsonBuffer("id", correlatedEvent.getId(), result, false);
-                        result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
+                        result.append(", \"source\": ").append(toString(sourceAsMap));
                         result.append("}");
                         correlationAdded = true;
                         auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
@@ -505,6 +514,34 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
                 .execute();
         return result.toString();
+    }
+
+    @LegacyEndpointHandler("Remove method")
+    private void replaceLegacyEndpointHandlerLocations(Map<String, Object> sourceMap) {
+        List<Map<String, Object>> endpointsMap = getArray(this.eventTags.getEndpointsTag(), sourceMap);
+        if (endpointsMap == null) {
+            return;
+        }
+        for (Map<String, Object> endpointMap : endpointsMap) {
+            List<Map<String, Object>> endpointHandlers = new ArrayList<>();
+            Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpointMap);
+            if (writingEndpointHandler != null) {
+                writingEndpointHandler.put(this.eventTags.getEndpointHandlerTypeTag(), EndpointHandler.EndpointHandlerType.WRITER.name());
+                endpointHandlers.add(writingEndpointHandler);
+                endpointMap.remove("writing_endpoint_handler");
+            }
+            List<Map<String, Object>> readingEndpointHandlers = getArray("reading_endpoint_handlers", endpointMap);
+            if (readingEndpointHandlers != null) {
+                for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+                    readingEndpointHandler.put(this.eventTags.getEndpointHandlerTypeTag(), EndpointHandler.EndpointHandlerType.READER.name());
+                    endpointHandlers.add(readingEndpointHandler);
+                }
+                endpointMap.remove("reading_endpoint_handlers");
+            }
+            if (endpointHandlers.size() > 0) {
+                endpointMap.put(this.eventTags.getEndpointHandlersTag(), endpointHandlers);
+            }
+        }
     }
 
     private ActionFuture<SearchResponse> findAuditLogsForEvent(String eventType, String eventId) {
@@ -602,26 +639,36 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/transaction/{application}/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @LegacyEndpointHandler("findEventsQuery must be changed to work with a single must instead of 3 shoulds.")
     public String getTransaction(@PathParam("application") String applicationName, @PathParam("id") String transactionId) {
         BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
                 .minimumShouldMatch(1)
                 .should(
                         new BoolQueryBuilder()
                                 .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                                        "." + this.eventTags.getReadingEndpointHandlersTag() +
+                                        "." + this.eventTags.getEndpointHandlersTag() +
                                         "." + this.eventTags.getEndpointHandlerApplicationTag() +
                                         "." + this.eventTags.getApplicationNameTag() + KEYWORD_SUFFIX, applicationName))
                                 .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                                        "." + this.eventTags.getReadingEndpointHandlersTag() +
+                                        "." + this.eventTags.getEndpointHandlersTag() +
                                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
                 ).should(
                         new BoolQueryBuilder()
                                 .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                                        "." + this.eventTags.getWritingEndpointHandlerTag() +
+                                        ".reading_endpoint_handlers" +
                                         "." + this.eventTags.getEndpointHandlerApplicationTag() +
                                         "." + this.eventTags.getApplicationNameTag() + KEYWORD_SUFFIX, applicationName))
                                 .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                                        "." + this.eventTags.getWritingEndpointHandlerTag() +
+                                        ".reading_endpoint_handlers" +
+                                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
+                ).should(
+                        new BoolQueryBuilder()
+                                .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
+                                        ".writing_endpoint_handler" +
+                                        "." + this.eventTags.getEndpointHandlerApplicationTag() +
+                                        "." + this.eventTags.getApplicationNameTag() + KEYWORD_SUFFIX, applicationName))
+                                .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
+                                        ".writing_endpoint_handler" +
                                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
                 );
 
@@ -659,39 +706,30 @@ public class SearchService extends AbstractIndexMetadataService {
             List<Map<String, Object>> endpoints = getArray(this.eventTags.getEndpointsTag(), source);
             if (endpoints != null) {
                 for (Map<String, Object> endpoint : endpoints) {
-                    Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
-                    if (isWithinTransaction(writingEndpointHandler, applicationName, transactionId)) {
-                        event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
-                        event.direction = "outgoing";
-                        event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-                        Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
-                        if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
-                            event.sequenceNumber = sequenceNumber;
-                        }
-                    } else {
-                        List<Map<String, Object>> readingEndpointHandlers = getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
-                        if (readingEndpointHandlers != null) {
-                            for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-                                if (isWithinTransaction(readingEndpointHandler, applicationName, transactionId)) {
-                                    event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
-                                    event.direction = "incoming";
-                                    event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-                                    Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
-                                    if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
-                                        event.sequenceNumber = sequenceNumber;
-                                    }
+                    List<Map<String, Object>> endpointHandlers = getArray(this.eventTags.getEndpointHandlersTag(), endpoint);
+                    if (endpointHandlers != null) {
+                        for (Map<String, Object> eh : endpointHandlers) {
+                            if (isWithinTransaction(eh, applicationName, transactionId)) {
+                                event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), eh);
+                                event.direction = EndpointHandler.EndpointHandlerType.WRITER.name().equals(getString(this.eventTags.getEndpointHandlerTypeTag(), eh)) ? "outgoing" : "incoming";
+                                event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
+                                Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), eh);
+                                if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
+                                    event.sequenceNumber = sequenceNumber;
                                 }
                             }
                         }
-                    }
-                    if ("http".equals(event.objectType)) {
-                        event.subType = getString(this.eventTags.getHttpEventTypeTag(), source);
-                    } else if ("messaging".equals(event.objectType)) {
-                        event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
-                    } else if ("sql".equals(event.objectType)) {
-                        event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
+                    } else {
+                        addLegacyHandlersToTransaction(event, applicationName, transactionId, endpoint);
                     }
                 }
+            }
+            if ("http".equals(event.objectType)) {
+                event.subType = getString(this.eventTags.getHttpEventTypeTag(), source);
+            } else if ("messaging".equals(event.objectType)) {
+                event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
+            } else if ("sql".equals(event.objectType)) {
+                event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
             }
             events.add(event);
         }
@@ -723,12 +761,42 @@ public class SearchService extends AbstractIndexMetadataService {
         return result.toString();
     }
 
+    @LegacyEndpointHandler("Method must be removed")
+    private void addLegacyHandlersToTransaction(TransactionEvent event, String applicationName, String transactionId, Map<String, Object> endpoint) {
+        Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpoint);
+        if (isWithinTransaction(writingEndpointHandler, applicationName, transactionId)) {
+            event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
+            event.direction = "outgoing";
+            event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
+            Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
+            if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
+                event.sequenceNumber = sequenceNumber;
+            }
+        } else {
+            List<Map<String, Object>> readingEndpointHandlers = getArray("reading_endpoint_handlers", endpoint);
+            if (readingEndpointHandlers != null) {
+                for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+                    if (isWithinTransaction(readingEndpointHandler, applicationName, transactionId)) {
+                        event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
+                        event.direction = "incoming";
+                        event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
+                        Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
+                        if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
+                            event.sequenceNumber = sequenceNumber;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     @SuppressWarnings("unchecked")
     @GET
     @Path("/event/{type}/{id}/chain")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @LegacyEndpointHandler("Remove old structure in earliestTransactionId determination")
     public String getEventChain(@PathParam("type") String eventType, @PathParam("id") String eventId) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .types(eventType)
@@ -751,24 +819,38 @@ public class SearchService extends AbstractIndexMetadataService {
         String earliestTransactionId = null;
         if (endpoints != null) {
             for (Map<String, Object> endpoint : endpoints) {
-                Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get(this.eventTags.getWritingEndpointHandlerTag());
-                if (writingEndpointHandler != null && writingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-                    String transactionId = (String) writingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-                    long handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
-                    if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
-                        lowestTransactionHandling = handlingTime;
-                        earliestTransactionId = transactionId;
-                    }
-                }
-                List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get(this.eventTags.getReadingEndpointHandlersTag());
-                if (readingEndpointHandlers != null) {
-                    for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-                        if (readingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-                            String transactionId = (String) readingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-                            long handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+                List<Map<String, Object>> endpointHandlers = getArray(this.eventTags.getEndpointHandlersTag(), endpoint);
+                if (endpointHandlers != null) {
+                    for (Map<String, Object> endpointHandler : endpointHandlers) {
+                        if (endpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+                            String transactionId = (String) endpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+                            long handlingTime = (long) endpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
                             if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
                                 lowestTransactionHandling = handlingTime;
                                 earliestTransactionId = transactionId;
+                            }
+                        }
+                    }
+                } else {
+                    Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get("writing_endpoint_handler");
+                    if (writingEndpointHandler != null && writingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+                        String transactionId = (String) writingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+                        long handlingTime = (long) writingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+                        if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
+                            lowestTransactionHandling = handlingTime;
+                            earliestTransactionId = transactionId;
+                        }
+                    }
+                    List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get("reading_endpoint_handlers");
+                    if (readingEndpointHandlers != null) {
+                        for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+                            if (readingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
+                                String transactionId = (String) readingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+                                long handlingTime = (long) readingEndpointHandler.get(this.eventTags.getEndpointHandlerHandlingTimeTag());
+                                if (handlingTime != 0 && handlingTime < lowestTransactionHandling) {
+                                    lowestTransactionHandling = handlingTime;
+                                    earliestTransactionId = transactionId;
+                                }
                             }
                         }
                     }
@@ -807,22 +889,47 @@ public class SearchService extends AbstractIndexMetadataService {
                     if (!first) {
                         result.append(",");
                     }
-                    result.append("{\"id\": ").append(escapeToJson(endpoint.getKey(), true)).append(", \"label\": ").append(escapeToJson(endpoint.getName(), true)).append(", \"event_id\": ").append(escapeToJson(event.getEventId(), true)).append(", \"event_type\": ").append(escapeToJson(event.getEventType(), true)).append(", \"node_type\": \"endpoint\"").append(", \"missing\": ").append(endpoint.isMissing()).append("}");
+                    result.append("{\"id\": ")
+                            .append(escapeToJson(endpoint.getKey(), true))
+                            .append(", \"label\": ")
+                            .append(escapeToJson(endpoint.getName(), true))
+                            .append(", \"event_id\": ")
+                            .append(escapeToJson(event.getEventId(), true))
+                            .append(", \"event_type\": ")
+                            .append(escapeToJson(event.getEventType(), true))
+                            .append(", \"node_type\": \"endpoint\"")
+                            .append(", \"missing\": ")
+                            .append(endpoint.isMissing())
+                            .append("}");
                     first = false;
                 }
-                // Add the reader as item.
+                // Add the writer as item.
                 if (endpoint.getWriter() != null) {
                     if (!first) {
                         result.append(",");
                     }
-                    result.append("{\"id\": ").append(escapeToJson(endpoint.getWriter().getKey(), true)).append(", \"label\": ").append(escapeToJson(endpoint.getWriter().getName(), true)).append(", \"event_id\": ").append(escapeToJson(event.getEventId(), true)).append(", \"event_type\": ").append(escapeToJson(event.getEventType(), true)).append(", \"endpoint\": ").append(escapeToJson(endpoint.getName(), true)).append(", \"transaction_id\": ").append(escapeToJson(endpoint.getWriter().getTransactionId(), true)).append(", \"node_type\": \"event\"").append(", \"missing\": ").append(endpoint.getWriter().isMissing());
+                    result.append("{\"id\": ")
+                            .append(escapeToJson(endpoint.getWriter().getKey(), true))
+                            .append(", \"label\": ")
+                            .append(escapeToJson(endpoint.getWriter().getName(), true))
+                            .append(", \"event_id\": ")
+                            .append(escapeToJson(event.getEventId(), true))
+                            .append(", \"event_type\": ")
+                            .append(escapeToJson(event.getEventType(), true))
+                            .append(", \"endpoint\": ")
+                            .append(escapeToJson(endpoint.getName(), true))
+                            .append(", \"transaction_id\": ")
+                            .append(escapeToJson(endpoint.getWriter().getTransactionId(), true))
+                            .append(", \"node_type\": \"event\"")
+                            .append(", \"missing\": ")
+                            .append(endpoint.getWriter().isMissing());
                     if (endpoint.getWriter().getApplication() != null) {
                         result.append(", \"parent\": ").append(escapeToJson(endpoint.getWriter().getApplication().getId(), true));
                     }
                     result.append("}");
                     first = false;
                 }
-                // Add all writer as item.
+                // Add all readers as item.
                 for (EventChainItem item : endpoint.getReaders()) {
                     if (!first) {
                         result.append(",");
@@ -940,6 +1047,7 @@ public class SearchService extends AbstractIndexMetadataService {
         return result.toString();
     }
 
+    @LegacyEndpointHandler("findEventsQuery must contain a single must instead of 3 shoulds")
     private void addTransactionToEventChain(EventChain eventChain, String transactionId) {
         if (eventChain.containsTransaction(transactionId)) {
             return;
@@ -947,10 +1055,13 @@ public class SearchService extends AbstractIndexMetadataService {
         BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
                 .minimumShouldMatch(1)
                 .should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                        "." + this.eventTags.getReadingEndpointHandlersTag() +
+                        "." + this.eventTags.getEndpointHandlersTag() +
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
                 .should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                        "." + this.eventTags.getWritingEndpointHandlerTag() +
+                        ".reading_endpoint_handlers" +
+                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
+                .should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
+                        ".writing_endpoint_handler" +
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId));
         if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
             findEventsQuery.filter(QueryBuilders.boolQuery()
@@ -994,24 +1105,12 @@ public class SearchService extends AbstractIndexMetadataService {
             if (endpoints != null) {
                 for (Map<String, Object> endpoint : endpoints) {
                     String endpointName = getString(this.eventTags.getEndpointNameTag(), endpoint);
-                    Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
-                    processEndpointHandlerForEventChain(eventChain,
-                            writingEndpointHandler,
-                            true,
-                            searchHit.getId(),
-                            eventName,
-                            getEventType(searchHit),
-                            correlationId,
-                            subType,
-                            endpointName,
-                            transactionId,
-                            expiry);
-                    List<Map<String, Object>> readingEndpointHandlers = getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
-                    if (readingEndpointHandlers != null) {
-                        for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+                    List<Map<String, Object>> endpointHandlers = getArray(this.eventTags.getEndpointHandlersTag(), endpoint);
+                    if (endpointHandlers != null) {
+                        for (Map<String, Object> eh : endpointHandlers) {
                             processEndpointHandlerForEventChain(eventChain,
-                                    readingEndpointHandler,
-                                    false,
+                                    eh,
+                                    EndpointHandler.EndpointHandlerType.WRITER.name().equals(getString(this.eventTags.getEndpointHandlerTypeTag(), eh)),
                                     searchHit.getId(),
                                     eventName,
                                     getEventType(searchHit),
@@ -1021,12 +1120,47 @@ public class SearchService extends AbstractIndexMetadataService {
                                     transactionId,
                                     expiry);
                         }
+                    } else {
+                        addLegacyHandlersToEventChain(eventChain, searchHit, eventName, correlationId, subType, endpointName, transactionId, expiry, endpoint);
                     }
                 }
             }
             // Check for request/response correlation and add those transactions as well.
             addRequestResponseConnectionToEventChain(eventChain, searchHit.getId(), correlationId, getEventType(searchHit), subType);
         }
+    }
+
+    @LegacyEndpointHandler("Method must be removed")
+    private void addLegacyHandlersToEventChain(EventChain eventChain, SearchHit searchHit, String eventName, String correlationId, String subType, String endpointName, String transactionId, Long expiry, Map<String, Object> endpoint) {
+        Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpoint);
+        processEndpointHandlerForEventChain(eventChain,
+                writingEndpointHandler,
+                true,
+                searchHit.getId(),
+                eventName,
+                getEventType(searchHit),
+                correlationId,
+                subType,
+                endpointName,
+                transactionId,
+                expiry);
+        List<Map<String, Object>> readingEndpointHandlers = getArray("reading_endpoint_handlers", endpoint);
+        if (readingEndpointHandlers != null) {
+            for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+                processEndpointHandlerForEventChain(eventChain,
+                        readingEndpointHandler,
+                        false,
+                        searchHit.getId(),
+                        eventName,
+                        getEventType(searchHit),
+                        correlationId,
+                        subType,
+                        endpointName,
+                        transactionId,
+                        expiry);
+            }
+        }
+
     }
 
     @SuppressWarnings("unchecked")
@@ -1102,23 +1236,40 @@ public class SearchService extends AbstractIndexMetadataService {
                 continue;
             }
             for (Map<String, Object> endpoint : endpoints) {
-                Map<String, Object> writingEndpointHandler = getObject(this.eventTags.getWritingEndpointHandlerTag(), endpoint);
-                String transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), writingEndpointHandler);
-                if (transactionId != null) {
-                    addTransactionToEventChain(eventChain, transactionId);
-                }
-                List<Map<String, Object>> readingEndpointHandlers = getArray(this.eventTags.getReadingEndpointHandlersTag(), endpoint);
-                if (readingEndpointHandlers != null) {
-                    for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-                        transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), readingEndpointHandler);
+                List<Map<String, Object>> endpointHandlers = getArray(this.eventTags.getEndpointHandlersTag(), endpoint);
+                if (endpointHandlers != null) {
+                    for (Map<String, Object> eh : endpointHandlers) {
+                        String transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), eh);
                         if (transactionId != null) {
                             addTransactionToEventChain(eventChain, transactionId);
                         }
                     }
+                } else {
+                    addLegacyRequestResponseToEventChain(eventChain, endpoint);
                 }
             }
         }
 
+    }
+
+    @LegacyEndpointHandler("Remove this method")
+    private void addLegacyRequestResponseToEventChain(EventChain eventChain, Map<String, Object> endpoint) {
+        Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpoint);
+        if (writingEndpointHandler != null) {
+            String transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), writingEndpointHandler);
+            if (transactionId != null) {
+                addTransactionToEventChain(eventChain, transactionId);
+            }
+        }
+        List<Map<String, Object>> readingEndpointHandlers = getArray("reading_endpoint_handlers", endpoint);
+        if (readingEndpointHandlers != null) {
+            for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
+                String transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), readingEndpointHandler);
+                if (transactionId != null) {
+                    addTransactionToEventChain(eventChain, transactionId);
+                }
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")

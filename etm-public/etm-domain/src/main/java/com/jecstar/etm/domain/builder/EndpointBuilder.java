@@ -26,29 +26,56 @@ public class EndpointBuilder {
         return this.endpoint.name;
     }
 
+    /**
+     * @deprecated Use {@link EndpointBuilder#addEndpointHandler(EndpointHandler)}
+     */
+    @Deprecated
     public EndpointBuilder setWritingEndpointHandler(EndpointHandler writingEndpointHandler) {
-        this.endpoint.writingEndpointHandler = writingEndpointHandler;
-        return this;
+        writingEndpointHandler.type = EndpointHandler.EndpointHandlerType.WRITER;
+        return addEndpointHandler(writingEndpointHandler);
     }
 
+    /**
+     * @deprecated Use {@link EndpointBuilder#addEndpointHandler(EndpointHandler)}
+     */
+    @Deprecated
     public EndpointBuilder setWritingEndpointHandler(EndpointHandlerBuilder writingEndpointHandlerBuilder) {
-        this.endpoint.writingEndpointHandler = writingEndpointHandlerBuilder.build();
-        return this;
+        return addEndpointHandler(writingEndpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER));
     }
 
+    /**
+     *
+     * @deprecated Use {@link EndpointBuilder#addEndpointHandler(EndpointHandler)}
+     */
+    @Deprecated
     public EndpointBuilder addReadingEndpointHandler(EndpointHandler readingEndpointHandler) {
-        this.endpoint.readingEndpointHandlers.add(readingEndpointHandler);
+        readingEndpointHandler.type = EndpointHandler.EndpointHandlerType.READER;
+        return addEndpointHandler(readingEndpointHandler);
+    }
+
+    /**
+     *
+     * @deprecated Use {@link EndpointBuilder#addEndpointHandler(EndpointHandler)}
+     */
+    @Deprecated
+    public EndpointBuilder addReadingEndpointHandler(EndpointHandlerBuilder readingEndpointHandlerBuilder) {
+        return addEndpointHandler(readingEndpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER));
+    }
+
+    public EndpointBuilder addEndpointHandler(EndpointHandler endpointHandler) {
+        this.endpoint.addEndpointHandler(endpointHandler);
         return this;
     }
 
-    public EndpointBuilder addReadingEndpointHandler(EndpointHandlerBuilder readingEndpointHandlerBuilder) {
-        this.endpoint.readingEndpointHandlers.add(readingEndpointHandlerBuilder.build());
+    public EndpointBuilder addEndpointHandler(EndpointHandlerBuilder endpointHandlerBuilder) {
+        this.endpoint.addEndpointHandler(endpointHandlerBuilder.build());
         return this;
     }
 
     public EndpointBuilder setWritingTimeToNow() {
-        if (this.endpoint.writingEndpointHandler != null) {
-            this.endpoint.writingEndpointHandler.handlingTime = ZonedDateTime.now();
+        EndpointHandler endpointHandler = this.endpoint.getWritingEndpointHandler();
+        if (endpointHandler != null) {
+            endpointHandler.handlingTime = ZonedDateTime.now();
         }
         return this;
     }

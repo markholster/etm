@@ -55,8 +55,8 @@ public class TelemetryEventTest {
                 .setExpiry(timestamp.plusSeconds(30))
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("BACKEND.QUEUE.1")
-                        .setWritingEndpointHandler(guiEndpointHandler)
-                        .addReadingEndpointHandler(backendEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
+                        .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
                 .build();
 
@@ -66,8 +66,8 @@ public class TelemetryEventTest {
                 .setExpiry(timestamp.plusSeconds(30))
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("BACKEND.QUEUE.1")
-                        .setWritingEndpointHandler(guiEndpointHandler)
-                        .addReadingEndpointHandler(backendEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
+                        .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
                 .build();
 

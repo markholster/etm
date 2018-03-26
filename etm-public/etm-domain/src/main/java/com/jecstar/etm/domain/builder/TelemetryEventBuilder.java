@@ -71,12 +71,9 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
             this.event.endpoints.add(endpoint);
         } else {
             Endpoint currentEndpoint = this.event.endpoints.get(ix);
-            if (!endpoint.writingEndpointHandler.isSet()) {
-                currentEndpoint.writingEndpointHandler.initialize(endpoint.writingEndpointHandler);
-            }
-            for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
+            for (EndpointHandler handler : endpoint.getEndpointHandlers()) {
                 if (handler.isSet()) {
-                    currentEndpoint.readingEndpointHandlers.add(handler);
+                    currentEndpoint.addEndpointHandler(handler);
                 }
             }
         }

@@ -37,11 +37,7 @@ public interface TelemetryEventTags {
 
     String getPayloadLengthTag();
 
-    String getReadingEndpointHandlerTag();
-
-    String getReadingEndpointHandlersTag();
-
-    String getWritingEndpointHandlerTag();
+    String getEndpointHandlersTag();
 
     // Endpoint attributes;
     String getEndpointsTag();
@@ -49,6 +45,8 @@ public interface TelemetryEventTags {
     String getEndpointNameTag();
 
     // EndpointHandler attributes
+    String getEndpointHandlerTypeTag();
+
     String getEndpointHandlerHandlingTimeTag();
 
     String getEndpointHandlerLatencyTag();

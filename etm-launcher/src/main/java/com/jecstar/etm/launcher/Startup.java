@@ -1,5 +1,6 @@
 package com.jecstar.etm.launcher;
 
+import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.builder.ApplicationBuilder;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
@@ -39,7 +40,8 @@ class Startup {
             EtmLoggerFactory.initialize(bulkProcessorWrapper);
             BusinessEventLogger.initialize(bulkProcessorWrapper,
                     new EndpointBuilder().setName(configuration.instanceName)
-                            .setWritingEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(ZonedDateTime.now())
+                            .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(ZonedDateTime.now())
+                                    .setType(EndpointHandler.EndpointHandlerType.WRITER)
                                     .setApplication(new ApplicationBuilder().setName("Enterprise Telemetry Monitor")
                                             .setVersion(System.getProperty("app.version"))
                                             .setInstance(configuration.instanceName)

@@ -203,7 +203,7 @@ public class EventChain {
         }
         // We found the time spent on the endpoint. Now find the root request to
         // calculate the percentage of time spend in the endpoint. We can't use
-        // the the total event time, because this item can be in a async branch.
+        // the the total event time, because this item can be in an async branch.
         EventChainEvent rootRequest = findRootRequest(event);
         if (rootRequest == null) {
             return null;
@@ -244,6 +244,15 @@ public class EventChain {
     }
 
     private EventChainEvent findRootRequest(EventChainEvent event) {
+        return findRootRequest(event, new ArrayList<>());
+    }
+
+    private EventChainEvent findRootRequest(EventChainEvent event, List<String> inspectedEventIds) {
+        if (inspectedEventIds.contains(event.getEventId())) {
+            // We've found a cyclic reference. Abort the mission.
+            return null;
+        }
+        inspectedEventIds.add(event.getEventId());
         if (event.isResponse()) {
             if (event.getCorrelationId() == null) {
                 return null;
@@ -252,7 +261,7 @@ public class EventChain {
             if (request == null) {
                 return null;
             }
-            return findRootRequest(request);
+            return findRootRequest(request, inspectedEventIds);
         }
         EventChainEndpoint endpoint = event.getEndpoints().get(0);
         if (endpoint.getWriter() != null && endpoint.getWriter().getTransactionId() != null) {
@@ -261,7 +270,7 @@ public class EventChain {
                 EventChainItem eventChainItem = transaction.getReaders().get(0);
                 EventChainEvent parent = this.events.get(eventChainItem.getEventId());
                 if (!parent.isAsync()) {
-                    return findRootRequest(parent);
+                    return findRootRequest(parent, inspectedEventIds);
                 }
             }
         }

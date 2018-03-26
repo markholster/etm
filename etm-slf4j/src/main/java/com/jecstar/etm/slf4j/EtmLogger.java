@@ -1,5 +1,6 @@
 package com.jecstar.etm.slf4j;
 
+import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.LogTelemetryEvent;
 import com.jecstar.etm.domain.builder.ApplicationBuilder;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
@@ -354,7 +355,8 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
                 .setPayload(payload)
                 .setStackTrace(stackTrace)
                 .addOrMergeEndpoint(new EndpointBuilder().setName(logLocation.fullInfo)
-                        .setWritingEndpointHandler(new EndpointHandlerBuilder()
+                        .addEndpointHandler(new EndpointHandlerBuilder()
+                                .setType(EndpointHandler.EndpointHandlerType.WRITER)
                                 .setHandlingTime(ZonedDateTime.now())
                                 .setApplication(new ApplicationBuilder()
                                         .setName(this.configuration.getApplicationName())

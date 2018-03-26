@@ -19,6 +19,11 @@ public class EndpointHandlerBuilder {
         return this.endpointHandler;
     }
 
+    public EndpointHandlerBuilder setType(EndpointHandler.EndpointHandlerType type) {
+        this.endpointHandler.type = type;
+        return this;
+    }
+
     public EndpointHandlerBuilder setHandlingTime(ZonedDateTime handlingTime) {
         this.endpointHandler.handlingTime = handlingTime;
         return this;

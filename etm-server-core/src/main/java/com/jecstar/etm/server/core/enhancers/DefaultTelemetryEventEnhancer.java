@@ -200,11 +200,14 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
             setReadingTransactionIdOnEndpoints(field, event);
         } else if (field.getName().startsWith(ExpressionParserField.WRITER_METADATA.getJsonTag())) {
             for (Endpoint endpoint : event.endpoints) {
-                conditionallyPutInMap(event, field, ExpressionParserField.WRITER_METADATA, endpoint.writingEndpointHandler.metadata);
+                EndpointHandler writingEndpointHandler = endpoint.getWritingEndpointHandler();
+                if (writingEndpointHandler != null) {
+                    conditionallyPutInMap(event, field, ExpressionParserField.WRITER_METADATA, writingEndpointHandler.metadata);
+                }
             }
         } else if (field.getName().startsWith(ExpressionParserField.READER_METADATA.getJsonTag())) {
             for (Endpoint endpoint : event.endpoints) {
-                for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
+                for (EndpointHandler handler : endpoint.getReadingEndpointHandlers()) {
                     conditionallyPutInMap(event, field, ExpressionParserField.WRITER_METADATA, handler.metadata);
                 }
             }
@@ -220,14 +223,20 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
             String transactionId = parseValue(field, event);
             if (transactionId != null) {
                 for (Endpoint endpoint : event.endpoints) {
-                    endpoint.writingEndpointHandler.transactionId = transactionId;
+                    EndpointHandler writingEndpointHandler = endpoint.getWritingEndpointHandler();
+                    if (writingEndpointHandler != null) {
+                        writingEndpointHandler.transactionId = transactionId;
+                    }
                 }
             }
         } else {
-            List<EndpointHandler> emptyEndpointHanlders = event.endpoints.stream().map(f -> f.writingEndpointHandler).filter(p -> p.transactionId == null).collect(Collectors.toList());
-            if (emptyEndpointHanlders != null && emptyEndpointHanlders.size() > 0) {
+            List<EndpointHandler> emptyEndpointHandlers = event.endpoints.stream()
+                    .filter(p -> p.getWritingEndpointHandler() != null)
+                    .map(f -> f.getWritingEndpointHandler())
+                    .filter(p -> p.transactionId == null).collect(Collectors.toList());
+            if (emptyEndpointHandlers != null && emptyEndpointHandlers.size() > 0) {
                 String transactionId = parseValue(field, event);
-                for (EndpointHandler endpointHandler : emptyEndpointHanlders) {
+                for (EndpointHandler endpointHandler : emptyEndpointHandlers) {
                     if ((field.getWritePolicy().equals(WritePolicy.OVERWRITE_WHEN_FOUND) && transactionId != null) || endpointHandler.transactionId == null) {
                         endpointHandler.transactionId = transactionId;
                     }
@@ -245,13 +254,16 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
             String transactionId = parseValue(field, event);
             if (transactionId != null) {
                 for (Endpoint endpoint : event.endpoints) {
-                    for (EndpointHandler handler : endpoint.readingEndpointHandlers) {
+                    for (EndpointHandler handler : endpoint.getReadingEndpointHandlers()) {
                         handler.transactionId = transactionId;
                     }
                 }
             }
         } else {
-            List<EndpointHandler> emptyEndpointHanlders = event.endpoints.stream().flatMap(f -> f.readingEndpointHandlers.stream()).filter(p -> p.transactionId == null).collect(Collectors.toList());
+            List<EndpointHandler> emptyEndpointHanlders = event.endpoints.stream()
+                    .flatMap(f -> f.getReadingEndpointHandlers().stream())
+                    .filter(p -> p.transactionId == null)
+                    .collect(Collectors.toList());
             if (emptyEndpointHanlders != null && emptyEndpointHanlders.size() > 0) {
                 String transactionId = parseValue(field, event);
                 for (EndpointHandler endpointHandler : emptyEndpointHanlders) {

@@ -11,6 +11,7 @@ import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
 import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
+import com.jecstar.etm.launcher.migrations.v3.EndpointHandlerToSingleListMigrator;
 import com.jecstar.etm.launcher.migrations.v3.Version2xTo3xMigrator;
 import com.jecstar.etm.launcher.migrations.v3.Version300To301Migrator;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
@@ -236,6 +237,10 @@ class Launcher {
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
             reinitialze = true;
+        }
+        etmMigrator = new EndpointHandlerToSingleListMigrator(client);
+        if (etmMigrator.shouldBeExecuted()) {
+            etmMigrator.migrate();
         }
         return reinitialze;
     }

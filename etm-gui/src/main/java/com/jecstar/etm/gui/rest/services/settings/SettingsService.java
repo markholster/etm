@@ -580,7 +580,7 @@ public class SettingsService extends AbstractJsonService {
             EndpointConfiguration defaultEndpointConfiguration = new EndpointConfiguration();
             defaultEndpointConfiguration.name = "*";
             defaultEndpointConfiguration.eventEnhancer = new DefaultTelemetryEventEnhancer();
-            result.append(this.endpointConfigurationConverter.write(defaultEndpointConfiguration));
+            result.append(toStringWithoutNamespace(this.endpointConfigurationConverter.write(defaultEndpointConfiguration), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
         }
 
         result.append("]}");

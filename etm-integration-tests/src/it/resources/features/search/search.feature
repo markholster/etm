@@ -5,9 +5,9 @@ Feature: Search
     And The user browses to /gui/search/index.html
     Then The search page should be visible
   # Test the presence of the search result table and the query in the query history
-    When The user searches for endpoints.writing_endpoint_handler.application.name: "Enterprise Telemetry Monitor" of types Log
+    When The user searches for endpoints.endpoint_handlers.application.name: "Enterprise Telemetry Monitor" of types Log
     Then The search result table should be visible and contain 2 columns
-    And The search history should contain endpoints.writing_endpoint_handler.application.name: "Enterprise Telemetry Monitor"
+    And The search history should contain endpoints.endpoint_handlers.application.name: "Enterprise Telemetry Monitor"
   # Test sorting the result table
     When The user sorts the search results by Name
     Then The result table should be sorted by Name

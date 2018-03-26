@@ -90,18 +90,13 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
     }
 
     @Override
-    public String getReadingEndpointHandlerTag() {
-        return "reading_endpoint_handler";
+    public String getEndpointHandlersTag() {
+        return "endpoint_handlers";
     }
 
     @Override
-    public String getReadingEndpointHandlersTag() {
-        return "reading_endpoint_handlers";
-    }
-
-    @Override
-    public String getWritingEndpointHandlerTag() {
-        return "writing_endpoint_handler";
+    public String getEndpointHandlerTypeTag() {
+        return "type";
     }
 
     @Override

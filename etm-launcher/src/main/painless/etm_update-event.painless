@@ -11,6 +11,18 @@ Map findEndpointByName(List endpoints, String name) {
 	return null;
 }
 
+boolean hasWritingEndpointHandler(List endpointHandlers) {
+    if (endpointHandlers == null) {
+        return false;
+    }
+    for (Map endpointHandler : endpointHandlers) {
+        if ("WRITER".equals(endpointHandler.get("type"))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {
 	Object sourceEntity = inputSource.get(entityName);
 	Object targetEntity = targetSource.get(entityName);
@@ -44,26 +56,29 @@ boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {
 	return true;
 }
 
-boolean updateResponseTimeInReaders(List endpoints, String applicationName, long handlingTime) {
+boolean updateResponseTimeInEndpointHandlers(List endpoints, String applicationName, long handlingTime, String handlerType) {
 	if (endpoints == null) {
 		return false;
 	}
 	boolean updated = false;
 	for (Map endpoint : endpoints) {
-		if (endpoint.get("reading_endpoint_handlers") != null) {
-			List readerEndpointHandlers = (List)endpoint.get("reading_endpoint_handlers");
-			for (Map readingEndpointHandler : readerEndpointHandlers) {
-				if (applicationName == null && (readingEndpointHandler.get("application") == null || ((Map)readingEndpointHandler.get("application")).get("name") == null)) {
-					long responseTime = handlingTime - (long)readingEndpointHandler.get("handling_time");
+		if (endpoint.get("endpoint_handlers") != null) {
+			List endpointHandlers = (List)endpoint.get("endpoint_handlers");
+			for (Map endpointHandler : endpointHandlers) {
+			    if (!handlerType.equals(endpointHandler.get("type"))) {
+			        continue;
+			    }
+				if (applicationName == null && (endpointHandler.get("application") == null || ((Map)endpointHandler.get("application")).get("name") == null)) {
+					long responseTime = handlingTime - (long)endpointHandler.get("handling_time");
 					if (responseTime >= 0) {
-					    readingEndpointHandler.put("response_time", responseTime);
-						updated = true;				
+					    endpointHandler.put("response_time", responseTime);
+						updated = true;
 					}
-				} else if (applicationName != null && readingEndpointHandler.get("application") != null && applicationName.equals(((Map)readingEndpointHandler.get("application")).get("name"))) {
-					long responseTime = handlingTime - (long)readingEndpointHandler.get("handling_time");
+				} else if (applicationName != null && endpointHandler.get("application") != null && applicationName.equals(((Map)endpointHandler.get("application")).get("name"))) {
+					long responseTime = handlingTime - (long)endpointHandler.get("handling_time");
 					if (responseTime >= 0) {
-					    readingEndpointHandler.put("response_time", responseTime);
-						updated = true;				
+					    endpointHandler.put("response_time", responseTime);
+						updated = true;
 					}
 				}
 			}
@@ -72,30 +87,12 @@ boolean updateResponseTimeInReaders(List endpoints, String applicationName, long
 	return updated;
 }
 
+boolean updateResponseTimeInReaders(List endpoints, String applicationName, long handlingTime) {
+    return updateResponseTimeInEndpointHandlers(endpoints, applicationName, handlingTime, "READER");
+}
+
 boolean updateResponseTimeInWriters(List endpoints, String applicationName, long handlingTime) {
-	if (endpoints == null) {
-		return false;
-	}
-	boolean updated = false;
-	for (Map endpoint : endpoints) {
-		Map writingEndpointHandler = endpoint.get("writing_endpoint_handler");
-		if (writingEndpointHandler != null) {
-			if (applicationName == null && (writingEndpointHandler.get("application") == null || ((Map)writingEndpointHandler.get("application")).get("name") == null)) {
-				long responseTime = handlingTime - (long)writingEndpointHandler.get("handling_time");
-				if (responseTime >=0) {
-				    writingEndpointHandler.put("response_time", responseTime);
-					updated = true;			
-				}	
-			} else if (applicationName != null && writingEndpointHandler.get("application") != null && applicationName.equals(((Map)writingEndpointHandler.get("application")).get("name"))) {
-				long responseTime = handlingTime - (long)writingEndpointHandler.get("handling_time");
-				if (responseTime >=0) {
-				    writingEndpointHandler.put("response_time", responseTime);
-					updated = true;			
-				}	
-			}
-		}
-	}
-	return updated;
+    return updateResponseTimeInEndpointHandlers(endpoints, applicationName, handlingTime, "WRITER");
 }
 
 Map inputSource = (Map)params.get("source");
@@ -155,20 +152,24 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
             }
             targetEndpoints.add(inputEndpoint);
         } else {
-        	Map inputWritingEndpointHandler = (Map)inputEndpoint.get("writing_endpoint_handler");
-            // Endpoint was present. Set writing handler to target.
-            if (inputWritingEndpointHandler != null) {
-            	targetEndpoint.put("writing_endpoint_handler", inputWritingEndpointHandler);
-            }
-            List inputReadingEndpointHandlers = (List)inputEndpoint.get("reading_endpoint_handlers"); 
-            if (inputReadingEndpointHandlers != null) {
-                // Add reading endpoint handlers to target.
-                List targetReadingEndpointHandlers = (List)targetEndpoint.get("reading_endpoint_handlers");
-                if (targetReadingEndpointHandlers == null) {
-                	targetReadingEndpointHandlers = new ArrayList();
-                    targetEndpoint.put("reading_endpoint_handlers", targetReadingEndpointHandlers);
+            // Endpoint was present. Copy endpoint handlers to target.
+            List inputEndpointHandlers = (List)inputEndpoint.get("endpoint_handlers");
+            if (inputEndpointHandlers != null) {
+                // Add endpoint handlers to target.
+                List targetEndpointHandlers = (List)targetEndpoint.get("endpoint_handlers");
+                if (targetEndpointHandlers == null) {
+                	targetEndpointHandlers = new ArrayList();
+                    targetEndpointHandlers.addAll(inputEndpointHandlers);
+                    targetEndpoint.put("endpoint_handlers", targetEndpointHandlers);
+                } else {
+                    boolean writerPresent = hasWritingEndpointHandler(targetEndpointHandlers);
+                    for (Map inputEndpointHandler : inputEndpointHandlers) {
+                        if ("WRITER".equals(inputEndpointHandler.get("type")) && writerPresent) {
+                            continue;
+                        }
+                        targetEndpointHandlers.add(inputEndpointHandler);
+                    }
                 }
-                targetReadingEndpointHandlers.addAll(inputReadingEndpointHandlers);
             }
         }
     }
@@ -176,15 +177,24 @@ if (inputEndpoints != null && !correlatedBeforeInserted) {
  
 // Recalculate latencies
 if (targetEndpoints != null) {
-    for (Map targetEndpont : targetEndpoints) {
-    	Map targetWritingEndpointHandler = (Map)targetEndpont.get("writing_endpoint_handler");
+    for (Map targetEndpoint : targetEndpoints) {
+    	Map targetWritingEndpointHandler = null;
+    	List endpointHandlers = (List)targetEndpoint.get("endpoint_handlers");
+    	if (endpointHandlers != null) {
+            for (Map endpointHandler : endpointHandlers) {
+                if ("WRITER".equals(endpointHandler.get("type"))) {
+                    targetWritingEndpointHandler = endpointHandler;
+                    break;
+                }
+            }
+        }
     	if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get("handling_time") != null) {
     	    long writeTime = (long)targetWritingEndpointHandler.get("handling_time");
-    	    List readingEndpointHandlers = (List)targetEndpont.get("reading_endpoint_handlers");
-    	    if (readingEndpointHandlers != null) {
-    	    	for (Map readingEndpointHandler : readingEndpointHandlers) {
-    	    		if (readingEndpointHandler.get("handling_time") != null) {
-    	    			readingEndpointHandler.put("latency",  ((long)readingEndpointHandler.get("handling_time")) - writeTime);
+    	    endpointHandlers = (List)targetEndpoint.get("endpoint_handlers");
+    	    if (endpointHandlers != null) {
+    	    	for (Map endpointHandler : endpointHandlers) {
+    	    		if ("READER".equals(endpointHandler.get("type")) && endpointHandler.get("handling_time") != null) {
+    	    			endpointHandler.put("latency",  ((long)endpointHandler.get("handling_time")) - writeTime);
     	    		}
     	    	}
     	    }

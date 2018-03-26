@@ -161,9 +161,8 @@ public class SearchSteps extends AbstractSteps {
             waitFor(c -> 8 == findById("transaction-detail-table").findElements(By.tagName("tr")).size());
         });
         Then("The event chain should be visible", () -> waitForShow("event-chain", false));
-        And("The event chain should contain (\\d+) canvas items", (Integer canvasCount) -> {
-            waitFor(c -> findById("event-chain").findElements(By.tagName("canvas")).size() == canvasCount);
-        });
+        And("The event chain should contain (\\d+) canvas items", (Integer canvasCount) ->
+                waitFor(c -> findById("event-chain").findElements(By.tagName("canvas")).size() == canvasCount));
     }
 
     private void addTransactionsToEtm(String eventId) throws IOException {
@@ -197,7 +196,7 @@ public class SearchSteps extends AbstractSteps {
                 .addMetadata("BusinessProcess", "User views shopping card")
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("/shopping-card.html")
-                        .addReadingEndpointHandler(guiEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
                 .build())));
 
@@ -212,7 +211,7 @@ public class SearchSteps extends AbstractSteps {
                 .setLogLevel("DEBUG")
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("com.my-company.gui.Httphandler.handleRequest(Httphandler.java:60")
-                        .setWritingEndpointHandler(guiEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )
                 .build())));
 
@@ -224,7 +223,7 @@ public class SearchSteps extends AbstractSteps {
                 .setLogLevel("DEBUG")
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("com.my-company.gui.Httphandler.handleRequest(Httphandler.java:59)")
-                        .setWritingEndpointHandler(guiEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )
                 .build())));
 
@@ -239,7 +238,7 @@ public class SearchSteps extends AbstractSteps {
                 .setLogLevel("DEBUG")
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("com.my-company.gui.MqRequestor.requestShoppingCar(MqRequestor.java:352)")
-                        .setWritingEndpointHandler(guiEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )
                 .build())));
 
@@ -259,8 +258,8 @@ public class SearchSteps extends AbstractSteps {
                 .setExpiry(timestamp.plusSeconds(30))
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("BACKEND.QUEUE.1")
-                        .setWritingEndpointHandler(guiEndpointHandler)
-                        .addReadingEndpointHandler(backendEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
+                        .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
                 .build())));
 
@@ -274,7 +273,7 @@ public class SearchSteps extends AbstractSteps {
                 .setLogLevel("DEBUG")
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("com.my-company.backend.MqHandler.handleRequest(MqHandler.java:103)")
-                        .setWritingEndpointHandler(backendEndpointHandler)
+                        .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )
                 .build())));
 
@@ -289,7 +288,7 @@ public class SearchSteps extends AbstractSteps {
                 .setPayloadFormat(PayloadFormat.SQL)
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("TAB_CUSTOMER")
-                        .setWritingEndpointHandler(backendEndpointHandler)
+                        .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )
                 .build())));
         timestamp = timestamp.plus(275, ChronoUnit.MILLIS);
@@ -302,7 +301,7 @@ public class SearchSteps extends AbstractSteps {
                 .setPayloadFormat(PayloadFormat.SQL)
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("TAB_CUSTOMER")
-                        .addReadingEndpointHandler(backendEndpointHandler)
+                        .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
                 .build())));
 
@@ -321,8 +320,8 @@ public class SearchSteps extends AbstractSteps {
                 .setExpiry(timestamp.plusSeconds(30))
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("FRONTEND.QUEUE.1")
-                        .setWritingEndpointHandler(backendEndpointHandler)
-                        .addReadingEndpointHandler(guiEndpointHandler)
+                        .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
                 .build())));
 
@@ -337,7 +336,7 @@ public class SearchSteps extends AbstractSteps {
                 .setName("ReturnShoppingCard")
                 .setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE)
                 .addOrMergeEndpoint(new EndpointBuilder()
-                        .setWritingEndpointHandler(guiEndpointHandler)
+                        .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )
                 .build())));
     }

@@ -7,6 +7,30 @@ import java.util.Map;
 public class EndpointHandler {
 
     /**
+     * Enum representing the endpoint handler type. An endpointhandler can read or writer from/to an Endpoint.
+     */
+    public enum EndpointHandlerType {
+        READER, WRITER;
+
+        public static EndpointHandlerType safeValueOf(String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return EndpointHandlerType.valueOf(value.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * The <code>EndpointHandlerType</code> determines if this handler was reading from an <code>Endpoint</code>,
+     * or writing to an <code>Endpoint</code>.
+     */
+    public EndpointHandlerType type;
+
+    /**
      * The <code>Application</code> that is handling the endpoint.
      */
     public Application application = new Application();
@@ -57,6 +81,7 @@ public class EndpointHandler {
     public Long responseTime;
 
     public EndpointHandler initialize() {
+        this.type = null;
         this.application.initialize();
         this.location.initialize();
         this.handlingTime = null;
@@ -74,6 +99,7 @@ public class EndpointHandler {
         if (copy == null) {
             return this;
         }
+        this.type = copy.type;
         this.application.initialize(copy.application);
         this.location.initialize(copy.location);
         this.handlingTime = copy.handlingTime;
@@ -87,11 +113,14 @@ public class EndpointHandler {
     }
 
     public boolean isSet() {
-        return this.handlingTime != null || this.transactionId != null || this.location.isSet() || this.application.isSet();
+        return this.type != null && (this.handlingTime != null || this.transactionId != null || this.location.isSet() || this.application.isSet());
     }
 
     public long getCalculatedHash() {
         long hash = 7;
+        if (this.type != null) {
+            hash = hash * 31 + this.type.name().hashCode();
+        }
         if (this.handlingTime != null) {
             hash = hash * 31 + this.handlingTime.toInstant().toEpochMilli();
         }

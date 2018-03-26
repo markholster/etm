@@ -3,6 +3,8 @@ package com.jecstar.etm.domain;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Endpoint {
 
@@ -12,43 +14,81 @@ public class Endpoint {
     public String name;
 
     /**
-     * The handlers that were reading the event.
+     * The handlers that were reading or writing the event. Each event can have a single writing event handler at most.
      */
-    public final List<EndpointHandler> readingEndpointHandlers = new ArrayList<>();
+    private final List<EndpointHandler> endpointHandlers = new ArrayList<>();
 
-    /**
-     * The handler that was writing the event.
-     */
-    public EndpointHandler writingEndpointHandler = new EndpointHandler();
 
     public void initialize() {
         this.name = null;
-        this.readingEndpointHandlers.clear();
-        this.writingEndpointHandler.initialize();
+        this.endpointHandlers.clear();
     }
 
     public void initialize(Endpoint copy) {
         this.name = copy.name;
-        this.readingEndpointHandlers.clear();
-        for (EndpointHandler endpointHandler : copy.readingEndpointHandlers) {
+        this.endpointHandlers.clear();
+        for (EndpointHandler endpointHandler : copy.endpointHandlers) {
             EndpointHandler copyEndpointHandler = new EndpointHandler();
             copyEndpointHandler.initialize(endpointHandler);
-            this.readingEndpointHandlers.add(copyEndpointHandler);
+            this.endpointHandlers.add(copyEndpointHandler);
         }
-        this.writingEndpointHandler.initialize(copy.writingEndpointHandler);
+    }
+
+    /**
+     * Add an <code>EndpointHandler</code> to this <code>Endpoint</code>.
+     * <p>
+     * When the <code>EndpointHandler</code> has the {@link EndpointHandler#type} set to {@link EndpointHandler.EndpointHandlerType#WRITER} and
+     * this <code>Endpoint</code> already has a writer in it's handler list the <code>EndpointHandler</code> will not
+     * be added to the list.
+     * <p>
+     * If the given <code>EndpointHandler</code> has an empty {@link EndpointHandler#type} this method will do nothing.
+     *
+     * @param endpointHandler The <code>EndpointHandler</code> to add.
+     */
+    public void addEndpointHandler(EndpointHandler endpointHandler) {
+        if (endpointHandler.type == null) {
+            return;
+        }
+        if (!endpointHandler.isSet()) {
+            return;
+        }
+        if (this.endpointHandlers.contains(endpointHandler)) {
+            return;
+        }
+        if (EndpointHandler.EndpointHandlerType.WRITER.equals(endpointHandler.type) && getWritingEndpointHandler() != null) {
+            return;
+        }
+        this.endpointHandlers.add(endpointHandler);
+    }
+
+    public EndpointHandler getWritingEndpointHandler() {
+        Optional<EndpointHandler> optionalHandler = this.endpointHandlers.stream().filter(p -> EndpointHandler.EndpointHandlerType.WRITER.equals(p.type)).findFirst();
+        if (optionalHandler.isPresent()) {
+            return optionalHandler.get();
+        }
+        return null;
+    }
+
+    public List<EndpointHandler> getReadingEndpointHandlers() {
+        return this.endpointHandlers.stream().filter(p -> EndpointHandler.EndpointHandlerType.READER.equals(p.type)).collect(Collectors.toList());
+    }
+
+    public List<EndpointHandler> getEndpointHandlers() {
+        return this.endpointHandlers;
     }
 
     public ZonedDateTime getEarliestHandlingTime() {
-        if (this.writingEndpointHandler.handlingTime != null) {
-            return this.writingEndpointHandler.handlingTime;
+        Optional<EndpointHandler> optionalHandler = this.endpointHandlers.stream().filter(p -> EndpointHandler.EndpointHandlerType.WRITER.equals(p.type)).findFirst();
+        if (optionalHandler.isPresent()) {
+            return optionalHandler.get().handlingTime;
         }
         return getEarliestReadTime();
     }
 
     public ZonedDateTime getEarliestReadTime() {
         ZonedDateTime earliest = null;
-        for (EndpointHandler endpointHandler : this.readingEndpointHandlers) {
-            if (earliest == null || (endpointHandler.handlingTime != null && endpointHandler.handlingTime.isBefore(earliest))) {
+        for (EndpointHandler endpointHandler : this.endpointHandlers) {
+            if (earliest == null || (EndpointHandler.EndpointHandlerType.READER.equals(endpointHandler.type) && endpointHandler.handlingTime != null && endpointHandler.handlingTime.isBefore(earliest))) {
                 earliest = endpointHandler.handlingTime;
             }
         }
@@ -83,8 +123,7 @@ public class Endpoint {
                 hash = hash * 31 + this.name.charAt(i);
             }
         }
-        hash = hash * 31 + this.writingEndpointHandler.getCalculatedHash();
-        for (EndpointHandler endpointHandler : this.readingEndpointHandlers) {
+        for (EndpointHandler endpointHandler : this.endpointHandlers) {
             hash = hash * 31 + endpointHandler.getCalculatedHash();
         }
         return hash;

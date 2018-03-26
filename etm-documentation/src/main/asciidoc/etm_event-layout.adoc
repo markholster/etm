@@ -28,8 +28,7 @@ All event types have a common set of attributes. This section describes these at
 |=======================
 |Name|Default value|Description
 |name||The name of the endpoint this event is logged on.
-|reading_endpoint_handlers|Empty list|A list with endpoint handlers that have read the event. See <<event-endpoint-handler-attributes>> to view the nested attributes.
-|writing_endpoint_handler||The endpoint handler that has written the event. See <<event-endpoint-handler-attributes>> to view the nested attributes. 
+|endpoint_handlers|Empty list|A list with endpoint handlers that have read or written the event. See <<event-endpoint-handler-attributes>> to view the nested attributes.
 |=======================
 
 [[event-endpoint-handler-attributes]]
@@ -37,6 +36,7 @@ All event types have a common set of attributes. This section describes these at
 [options="header"]
 |=======================
 |Name|Default value|Description
+|type||""WRITER"" when the endpoint handler has written to the endpoint or ""READER"" when the endpoint handler had read from the endpoint.
 |application||The application that handles the event. See <<event-application-attributes>> to view the nested attributes.
 |handling_time|Current date/time if this is the only handler for the event.|The date/time the event was handled by the endpoint handler.
 |location||The physical location the event was handled. See <<event-location-attributes>> to view the nested attributes.

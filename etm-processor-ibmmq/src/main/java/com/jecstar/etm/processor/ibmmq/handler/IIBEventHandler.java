@@ -4,6 +4,7 @@ import com.ibm.mq.MQMessage;
 import com.ibm.mq.constants.CMQC;
 import com.ibm.mq.constants.MQConstants;
 import com.ibm.mq.headers.*;
+import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.builder.*;
@@ -70,7 +71,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
     @SuppressWarnings("unchecked")
     public HandlerResults handleMessage(MQMessage message) {
         HandlerResults results = new HandlerResults();
-        try (Reader reader = new InputStreamReader(new ByteArrayInputStream(getContent(message).getBytes()));) {
+        try (Reader reader = new InputStreamReader(new ByteArrayInputStream(getContent(message).getBytes()))) {
             Event event = ((JAXBElement<Event>) this.unmarshaller.unmarshal(reader)).getValue();
             results.addHandlerResult(process(message.messageId, event));
         } catch (JAXBException | IOException e) {
@@ -155,9 +156,9 @@ public class IIBEventHandler extends AbstractMQEventHandler {
             if (endpointBuilder.getName() == null) {
                 endpointBuilder.setName(endpoint);
             }
-            endpointBuilder.addReadingEndpointHandler(endpointHandlerBuilder);
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER));
         } else {
-            endpointBuilder.setWritingEndpointHandler(endpointHandlerBuilder);
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER));
         }
         this.messagingTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
         if (event.getBitstreamData() == null || event.getBitstreamData().getBitstream() == null) {
@@ -220,9 +221,9 @@ public class IIBEventHandler extends AbstractMQEventHandler {
                 "ComIbmSOAPInputNode".equals(nodeType) ||
                 "ComIbmSOAPAsyncResponseNode".equals(nodeType) ||
                 "ComIbmRESTAsyncResponse".equals(nodeType)) {
-            endpointBuilder.addReadingEndpointHandler(endpointHandlerBuilder);
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER));
         } else {
-            endpointBuilder.setWritingEndpointHandler(endpointHandlerBuilder);
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER));
         }
         if ("ComIbmHTTPAsyncResponse".equals(nodeType) ||
                 "ComIbmWSReplyNode".equals(nodeType) ||
@@ -311,8 +312,8 @@ public class IIBEventHandler extends AbstractMQEventHandler {
     private void parseBitstreamAsMqMessage(Event event, byte[] decodedBitstream, MessagingTelemetryEventBuilder builder, EndpointHandlerBuilder endpointHandlerBuilder, int encoding, int ccsid)
             throws MQDataException, IOException {
         if (decodedBitstream[0] == 77 && decodedBitstream[1] == 68) {
-            try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream));) {
-                MQMD mqmd = null;
+            try (DataInputStream inputData = new DataInputStream(new ByteArrayInputStream(decodedBitstream))) {
+                MQMD mqmd;
                 if (encoding > 0 && ccsid > 0) {
                     mqmd = new MQMD(inputData, encoding, ccsid);
                 } else {

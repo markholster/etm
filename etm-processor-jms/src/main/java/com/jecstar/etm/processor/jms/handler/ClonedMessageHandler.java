@@ -1,5 +1,6 @@
 package com.jecstar.etm.processor.jms.handler;
 
+import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
@@ -25,7 +26,6 @@ public class ClonedMessageHandler extends AbstractJMSEventHandler {
     private static final LogWrapper log = LogFactory.getLogger(ClonedMessageHandler.class);
 
 
-    private final StringBuilder byteArrayBuilder = new StringBuilder();
     private final TelemetryCommandProcessor telemetryCommandProcessor;
     private final MessagingTelemetryEventBuilder messagingTelemetryEventBuilder = new MessagingTelemetryEventBuilder();
 
@@ -69,8 +69,9 @@ public class ClonedMessageHandler extends AbstractJMSEventHandler {
                 .setCorrelationId(parseId(message.getJMSCorrelationID()))
                 .setMessagingEventType(MessagingEventType.FIRE_FORGET)
                 .addOrMergeEndpoint(new EndpointBuilder()
-                        .setWritingEndpointHandler(new EndpointHandlerBuilder
-                                ().setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.getJMSTimestamp() != 0 ? message.getJMSTimestamp() : System.currentTimeMillis()), ZoneOffset.UTC))));
+                        .addEndpointHandler(new EndpointHandlerBuilder()
+                                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+                                .setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.getJMSTimestamp() != 0 ? message.getJMSTimestamp() : System.currentTimeMillis()), ZoneOffset.UTC))));
         if (message.getJMSExpiration() != 0) {
             this.messagingTelemetryEventBuilder.setExpiry(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.getJMSExpiration()), ZoneOffset.UTC));
         }
