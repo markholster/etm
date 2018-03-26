@@ -66,7 +66,7 @@ public class DirectoryTest {
         directory.close();
         assertEquals("ETM Administrator", principal.getName());
         assertEquals("etm-admin", principal.getId());
-        assertEquals("etm-admin@localhost", principal.getEmailAddress());
+        assertEquals("etm-admin@jecstar.com", principal.getEmailAddress());
         assertSame(2, principal.getGroups().size());
     }
 
