@@ -241,6 +241,7 @@ class Launcher {
         etmMigrator = new EndpointHandlerToSingleListMigrator(client);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
+            reinitialze = true;
         }
         return reinitialze;
     }

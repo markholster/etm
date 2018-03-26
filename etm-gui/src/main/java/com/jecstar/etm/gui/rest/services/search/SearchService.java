@@ -701,8 +701,6 @@ public class SearchService extends AbstractIndexMetadataService {
             Map<String, Object> source = searchHit.getSourceAsMap();
             event.name = getString(this.eventTags.getNameTag(), source);
             event.payload = getString(this.eventTags.getPayloadTag(), source);
-            // Make sure the sequence number is always filled because otherwise the compare on sequence will fail.
-            event.sequenceNumber = Integer.MAX_VALUE;
             List<Map<String, Object>> endpoints = getArray(this.eventTags.getEndpointsTag(), source);
             if (endpoints != null) {
                 for (Map<String, Object> endpoint : endpoints) {
@@ -713,10 +711,7 @@ public class SearchService extends AbstractIndexMetadataService {
                                 event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), eh);
                                 event.direction = EndpointHandler.EndpointHandlerType.WRITER.name().equals(getString(this.eventTags.getEndpointHandlerTypeTag(), eh)) ? "outgoing" : "incoming";
                                 event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-                                Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), eh);
-                                if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
-                                    event.sequenceNumber = sequenceNumber;
-                                }
+                                event.sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), eh);
                             }
                         }
                     } else {
@@ -730,6 +725,11 @@ public class SearchService extends AbstractIndexMetadataService {
                 event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
             } else if ("sql".equals(event.objectType)) {
                 event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
+            }
+
+            if (event.sequenceNumber == null) {
+                // Make sure the sequence number is always filled because otherwise the compare on sequence will fail.
+                event.sequenceNumber = Integer.MAX_VALUE;
             }
             events.add(event);
         }
@@ -780,10 +780,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
                         event.direction = "incoming";
                         event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-                        Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
-                        if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
-                            event.sequenceNumber = sequenceNumber;
-                        }
+                        event.sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
                     }
                 }
             }
