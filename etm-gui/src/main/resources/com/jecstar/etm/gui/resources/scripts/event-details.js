@@ -1062,6 +1062,9 @@ function showEvent(scrollTo, type, id) {
 							this.maxZoom(maxZoom);
 							this.center();  
 						});
+						cyEventChain.on('cxttap', function(event) {
+						    this.fit();
+						});
 						cyEventChain.on('tap', function(event) {
 							var evtTarget = event.target;
 							if( evtTarget !== cyEndpoints ) {

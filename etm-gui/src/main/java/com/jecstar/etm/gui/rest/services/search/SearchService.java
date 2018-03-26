@@ -524,7 +524,7 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         for (Map<String, Object> endpointMap : endpointsMap) {
             List<Map<String, Object>> endpointHandlers = new ArrayList<>();
-            Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpointMap);
+            Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpointMap, null);
             if (writingEndpointHandler != null) {
                 writingEndpointHandler.put(this.eventTags.getEndpointHandlerTypeTag(), EndpointHandler.EndpointHandlerType.WRITER.name());
                 endpointHandlers.add(writingEndpointHandler);

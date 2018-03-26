@@ -46,7 +46,7 @@ public class JsonConverter extends JsonWriter {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
+    public Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
         if (valueMap.containsKey(tag)) {
             return (Map<String, Object>) valueMap.get(tag);
         }
