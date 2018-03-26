@@ -174,15 +174,16 @@ function showEvent(scrollTo, type, id) {
 						var response_times = $endpoints.map(function () {
 						    var writingEndpointHandler = getWritingEndpointHandler(this.endpoint_handlers);
                             if (writingEndpointHandler) {
-                                return writingEndpointHandler.handling_time
+                                return writingEndpointHandler.response_time
                             }
 						}).get();
 						if (response_times) {
 							appendToContainerInRow($eventTab, 'Highest writer response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
 						}
 						response_times = $endpoints.map(function () {
-							if (this.reading_endpoint_handlers) {
-								return $(this.reading_endpoint_handlers).map(function () {
+							var readingEndpointHandlers = getReadingEndpointHandlers(this.endpoint_handlers);
+							if (readingEndpointHandlers) {
+								return $(readingEndpointHandlers).map(function () {
 									return this.response_time;
 								}).get();
 							}
@@ -208,7 +209,7 @@ function showEvent(scrollTo, type, id) {
 						var response_times = $endpoints.map(function () {
 						    var writingEndpointHandler = getWritingEndpointHandler(this.endpoint_handlers);
                             if (writingEndpointHandler) {
-                                return writingEndpointHandler.handling_time
+                                return writingEndpointHandler.response_time
                             }
 						}).get();
 						if (response_times) {
@@ -245,7 +246,7 @@ function showEvent(scrollTo, type, id) {
 						var response_times = $endpoints.map(function () {
 							var writingEndpointHandler = getWritingEndpointHandler(this.endpoint_handlers);
                             if (writingEndpointHandler) {
-                                return writingEndpointHandler.handling_time
+                                return writingEndpointHandler.response_time
                             }
 						}).get();
 						if (response_times) {
