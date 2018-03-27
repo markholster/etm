@@ -5,6 +5,12 @@ then
   echo "Version is still a SNAPSHOT"
   exit 1
 fi
+ETM_PUBLIC_VERSION=$(etm-public/gradlew properties -b etm-public/build.gradle | grep ^version: | sed 's/^.*: //')
+if [[ "$VERSION" != "$ETM_PUBLIC_VERSION" ]]
+then
+  echo "etm-public has a different version: $ETM_PUBLIC_VERSION. Expected version $VERSION."
+  exit 1
+fi
 echo "Releasing Enterprise Telemetry Monitor $VERSION"
 
 echo "Compiling the project"

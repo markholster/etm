@@ -45,7 +45,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
         EndpointConfiguration endpointConfiguration = new EndpointConfiguration();
         endpointConfiguration.name = this.converter.getString(this.tags.getNameTag(), valueMap);
         Map<String, Object> enhancerValues = this.converter.getObject(this.tags.getEnhancerTag(), valueMap);
-        if (!enhancerValues.isEmpty()) {
+        if (enhancerValues != null && !enhancerValues.isEmpty()) {
             String enhancerType = this.converter.getString(this.tags.getEnhancerTypeTag(), enhancerValues);
             if (!DEFAULT_ENHANCER_TYPE.equals(enhancerType)) {
                 try {

@@ -679,18 +679,18 @@ public class DashboardService extends AbstractIndexMetadataService {
         String index = getString("data_source", valueMap);
         String query = getString("query", valueMap, "*");
         SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
-        Map<String, Object> graphData = getObject(type, valueMap);
-        Map<String, Object> xAxisData = getObject("x_axis", graphData);
-        Map<String, Object> yAxisData = getObject("y_axis", graphData);
+        Map<String, Object> graphData = getObject(type, valueMap, Collections.emptyMap());
+        Map<String, Object> xAxisData = getObject("x_axis", graphData, Collections.emptyMap());
+        Map<String, Object> yAxisData = getObject("y_axis", graphData, Collections.emptyMap());
 
-        Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData);
+        Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData, Collections.emptyMap());
         BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, query));
         BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
         // First create the bucket aggregator
         AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();
         AggregationBuilder rootForMetricAggregators = bucketAggregatorBuilder;
         // Check for the presence of a sub aggregator
-        Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData);
+        Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData, Collections.emptyMap());
         if (!bucketSubAggregatorData.isEmpty()) {
             bucketSubAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketSubAggregatorData);
             rootForMetricAggregators = bucketSubAggregatorWrapper.getAggregationBuilder();
@@ -761,7 +761,7 @@ public class DashboardService extends AbstractIndexMetadataService {
         String query = getString("query", valueMap, "*");
         SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
 
-        Map<String, Object> numberData = getObject("number", valueMap);
+        Map<String, Object> numberData = getObject("number", valueMap, Collections.emptyMap());
         MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, numberData);
         if (dryRun) {
             return null;

@@ -87,7 +87,7 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
         }
         EndpointHandler endpointHandler = new EndpointHandler();
         Map<String, Object> applicationValueMap = getObject(this.tags.getEndpointHandlerApplicationTag(), valueMap);
-        if (!applicationValueMap.isEmpty()) {
+        if (applicationValueMap != null && !applicationValueMap.isEmpty()) {
             String stringHostAddress = getString(this.tags.getApplicationHostAddressTag(), applicationValueMap);
             String hostName = getString(this.tags.getApplicationHostNameTag(), applicationValueMap);
             if (stringHostAddress != null) {
@@ -127,7 +127,7 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
         endpointHandler.transactionId = getString(this.tags.getEndpointHandlerTransactionIdTag(), valueMap);
         endpointHandler.sequenceNumber = getInteger(this.tags.getEndpointHandlerSequenceNumberTag(), valueMap);
         Map<String, Object> locationValueMap = getObject(this.tags.getEndpointHandlerLocationTag(), valueMap);
-        if (locationValueMap != null) {
+        if (locationValueMap != null && !locationValueMap.isEmpty()) {
             endpointHandler.location.latitude = getDouble(this.tags.getLatitudeTag(), locationValueMap);
             endpointHandler.location.longitude = getDouble(this.tags.getLongitudeTag(), locationValueMap);
         }

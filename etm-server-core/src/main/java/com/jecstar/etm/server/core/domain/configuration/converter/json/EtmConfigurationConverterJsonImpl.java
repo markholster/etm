@@ -87,7 +87,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
     }
 
     public EtmConfiguration read(Map<String, Object> nodeMap, Map<String, Object> defaultMap, String nodeName) {
-        nodeMap = nodeMap != null ? this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, nodeMap) : null;
+        nodeMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, nodeMap);
         defaultMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, defaultMap);
         EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName);
         etmConfiguration.setSessionTimeout(getLongValue(this.tags.getSessionTimeoutTag(), defaultMap, nodeMap));

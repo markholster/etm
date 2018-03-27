@@ -11,9 +11,12 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JsonConverter extends JsonWriter {
 
@@ -42,12 +45,12 @@ public class JsonConverter extends JsonWriter {
     }
 
     public Map<String, Object> getObject(String tag, Map<String, Object> valueMap) {
-        return getObject(tag, valueMap, Collections.emptyMap());
+        return getObject(tag, valueMap, null);
     }
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> getObject(String tag, Map<String, Object> valueMap, Map<String, Object> defaultValue) {
-        if (valueMap.containsKey(tag)) {
+        if (valueMap != null && valueMap.containsKey(tag)) {
             return (Map<String, Object>) valueMap.get(tag);
         }
         return defaultValue;
@@ -55,7 +58,7 @@ public class JsonConverter extends JsonWriter {
 
     @SuppressWarnings("unchecked")
     public <T extends Collection<?>> T getArray(String tag, Map<String, Object> valueMap) {
-        if (valueMap.containsKey(tag)) {
+        if (valueMap != null && valueMap.containsKey(tag)) {
             return (T) valueMap.get(tag);
         }
         return null;
@@ -66,7 +69,7 @@ public class JsonConverter extends JsonWriter {
     }
 
     public Boolean getBoolean(String tag, Map<String, Object> valueMap, Boolean defaultValue) {
-        if (valueMap.get(tag) != null) {
+        if (valueMap != null && valueMap.get(tag) != null) {
             return (Boolean) valueMap.get(tag);
         }
         return defaultValue;
@@ -77,7 +80,7 @@ public class JsonConverter extends JsonWriter {
     }
 
     public String getString(String tag, Map<String, Object> valueMap, String defaultValue) {
-        if (valueMap.get(tag) != null) {
+        if (valueMap != null && valueMap.get(tag) != null) {
             return valueMap.get(tag).toString();
         }
         return defaultValue;
@@ -88,7 +91,7 @@ public class JsonConverter extends JsonWriter {
     }
 
     public Integer getInteger(String tag, Map<String, Object> valueMap, Integer defaultValue) {
-        if (valueMap.get(tag) != null) {
+        if (valueMap != null && valueMap.get(tag) != null) {
             return ((Number) valueMap.get(tag)).intValue();
         }
         return defaultValue;
@@ -99,7 +102,7 @@ public class JsonConverter extends JsonWriter {
     }
 
     private Long getLong(String tag, Map<String, Object> valueMap, Long defaultValue) {
-        if (valueMap.get(tag) != null) {
+        if (valueMap != null && valueMap.get(tag) != null) {
             return ((Number) valueMap.get(tag)).longValue();
         }
         return defaultValue;
@@ -110,7 +113,7 @@ public class JsonConverter extends JsonWriter {
     }
 
     public Double getDouble(String tag, Map<String, Object> valueMap, Double defaultValue) {
-        if (valueMap.get(tag) != null) {
+        if (valueMap != null && valueMap.get(tag) != null) {
             return ((Number) valueMap.get(tag)).doubleValue();
         }
         return defaultValue;
@@ -129,19 +132,6 @@ public class JsonConverter extends JsonWriter {
             }
             return null;
         }
-    }
-
-    public Object unescapeObjectFromJsonNameValuePair(String tag, Map<String, Object> valueMap) {
-        if (valueMap.containsKey(tag + "_as_number")) {
-            return valueMap.get(tag + "_as_number");
-        } else if (valueMap.containsKey(tag + "_as_boolean")) {
-            return valueMap.get(tag + "_as_boolean");
-        } else if (valueMap.containsKey(tag + "_as_date")) {
-            return new Date((long) valueMap.get(tag + "_as_date"));
-        } else if (valueMap.containsKey(tag)) {
-            return valueMap.get(tag);
-        }
-        return null;
     }
 
     public String encodeBase64(String stringToEncode, int rounds) {

@@ -5,6 +5,8 @@ import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
+import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptRequest;
+import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -30,6 +32,14 @@ public class EndpointHandlerToSingleListMigrator extends AbstractEtmMigrator {
 
     @Override
     public boolean shouldBeExecuted() {
+        GetStoredScriptResponse response = client.admin().cluster().getStoredScript(new GetStoredScriptRequest("etm_update-event")).actionGet();
+        if (response.getSource() != null && (response.getSource().getSource().contains("\"reading_endpoint_handlers\"") || response.getSource().getSource().contains("\"writing_endpoint_handler\""))) {
+            return true;
+        }
+        response = client.admin().cluster().getStoredScript(new GetStoredScriptRequest("etm_update-request-with-response")).actionGet();
+        if (response.getSource() != null && (response.getSource().getSource().contains("\"reading_endpoint_handlers\"") || response.getSource().getSource().contains("\"writing_endpoint_handler\""))) {
+            return true;
+        }
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
@@ -74,6 +84,7 @@ public class EndpointHandlerToSingleListMigrator extends AbstractEtmMigrator {
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
+                .setTimeout(TimeValue.timeValueMillis(30000))
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {

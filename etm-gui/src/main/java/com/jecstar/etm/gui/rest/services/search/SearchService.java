@@ -94,7 +94,7 @@ public class SearchService extends AbstractIndexMetadataService {
         if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
             return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + ", \"default_search_range\": " + etmPrincipal.getDefaultSearchRange() + "}";
         }
-        Map<String, Object> valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap());
+        Map<String, Object> valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap(), Collections.emptyMap());
         valueMap.put("max_search_templates", etmConfiguration.getMaxSearchTemplateCount());
         valueMap.put("default_search_range", etmPrincipal.getDefaultSearchRange());
         return toString(valueMap);
