@@ -7,6 +7,7 @@ import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptRequest;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
@@ -39,6 +40,10 @@ public class EndpointHandlerToSingleListMigrator extends AbstractEtmMigrator {
         response = client.admin().cluster().getStoredScript(new GetStoredScriptRequest("etm_update-request-with-response")).actionGet();
         if (response.getSource() != null && (response.getSource().getSource().contains("\"reading_endpoint_handlers\"") || response.getSource().getSource().contains("\"writing_endpoint_handler\""))) {
             return true;
+        }
+        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.CONFIGURATION_INDEX_NAME).get();
+        if (!indicesExistsResponse.isExists()) {
+            return false;
         }
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
