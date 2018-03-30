@@ -4,6 +4,7 @@ import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.gui.rest.services.search.TransactionEvent;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -12,14 +13,10 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.elasticsearch.search.SearchHit;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Supplier;
 
 public class QueryExporter {
 
@@ -30,9 +27,9 @@ public class QueryExporter {
             File outputFile = File.createTempFile("etm-", "-download");
             outputFile.deleteOnExit();
             if (FileType.CSV.equals(fileType)) {
-                createCsv(scrollableSearch, maxRows, outputFile, etmPrincipal, fields);
+                createCsv(() -> new ScrollableSearchSupplier(scrollableSearch), maxRows, outputFile, etmPrincipal, fields);
             } else if (FileType.XLSX.equals(fileType)) {
-                createXlsx(scrollableSearch, maxRows, outputFile, etmPrincipal, fields);
+                createXlsx(() -> new ScrollableSearchSupplier(scrollableSearch), maxRows, outputFile, etmPrincipal, fields);
             }
             return outputFile;
         } catch (IOException e) {
@@ -40,11 +37,36 @@ public class QueryExporter {
         }
     }
 
-    private void createCsv(ScrollableSearch scrollableSearch, int maxResults, File outputFile, EtmPrincipal etmPrincipal, FieldLayout... fields) throws IOException {
-        final String csvSeparator = ",";
+    public File exportToFile(List<TransactionEvent> events, FileType fileType, EtmPrincipal etmPrincipal) {
+        FieldLayout[] fields = new FieldLayout[]{
+                new FieldLayout("Id", "id", FieldType.PLAIN, MultiSelect.FIRST),
+                new FieldLayout("Name", eventTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST),
+                new FieldLayout("Date", eventTags.getEndpointHandlerHandlingTimeTag(), FieldType.ISO_TIMESTAMP, MultiSelect.FIRST),
+                new FieldLayout("Type", "type", FieldType.PLAIN, MultiSelect.FIRST),
+                new FieldLayout("Direction", "direction", FieldType.PLAIN, MultiSelect.FIRST),
+                new FieldLayout("Subtype", "subtype", FieldType.PLAIN, MultiSelect.FIRST),
+                new FieldLayout("Endpoint", "endpoint", FieldType.PLAIN, MultiSelect.FIRST),
+                new FieldLayout("Payload", eventTags.getPayloadTag(), FieldType.PLAIN, MultiSelect.FIRST),
+        };
 
+        try {
+            File outputFile = File.createTempFile("etm-", "-download");
+            outputFile.deleteOnExit();
+            if (FileType.CSV.equals(fileType)) {
+                createCsv(() -> new TransactionEventSupplier(events), Integer.MAX_VALUE, outputFile, etmPrincipal, fields);
+            } else if (FileType.XLSX.equals(fileType)) {
+                createXlsx(() -> new TransactionEventSupplier(events), Integer.MAX_VALUE, outputFile, etmPrincipal, fields);
+            }
+            return outputFile;
+        } catch (IOException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    private void createCsv(Supplier<Iterator<Map<String, Object>>> sourceSupplier, int maxResults, File outputFile, EtmPrincipal etmPrincipal, FieldLayout... fields) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath())) {
             boolean first = true;
+            String csvSeparator = ",";
             for (FieldLayout field : fields) {
                 if (!first) {
                     writer.append(csvSeparator);
@@ -52,10 +74,10 @@ public class QueryExporter {
                 writer.append(escapeToQuotedCsvField(field.getName()));
                 first = false;
             }
+            Iterator<Map<String, Object>> sourceIterator = sourceSupplier.get();
 
-            for (int i = 0; i < maxResults && scrollableSearch.hasNext(); i++) {
-                SearchHit searchHit = scrollableSearch.next();
-                Map<String, Object> sourceValues = searchHit.getSourceAsMap();
+            for (int i = 0; i < maxResults && sourceIterator.hasNext(); i++) {
+                Map<String, Object> sourceValues = sourceIterator.next();
                 writer.newLine();
                 first = true;
                 for (FieldLayout field : fields) {
@@ -64,10 +86,6 @@ public class QueryExporter {
                     }
                     first = false;
                     String dbFieldName = field.getField();
-                    if (Keyword.TYPE.getName().equals(dbFieldName)) {
-                        writer.append(escapeToQuotedCsvField(searchHit.getType()));
-                        continue;
-                    }
                     List<Object> values = collectValuesFromPath(dbFieldName, sourceValues);
                     if (values.isEmpty()) {
                         writer.append(escapeToQuotedCsvField(null));
@@ -78,10 +96,13 @@ public class QueryExporter {
                     writer.append(escapeToQuotedCsvField(formattedValue));
                 }
             }
+            if (sourceSupplier instanceof Closeable) {
+                ((Closeable) sourceSupplier).close();
+            }
         }
     }
 
-    private void createXlsx(ScrollableSearch scrollableSearch, int maxResults, File outputFile, EtmPrincipal etmPrincipal, FieldLayout... fields) throws IOException {
+    private void createXlsx(Supplier<Iterator<Map<String, Object>>> sourceSupplier, int maxResults, File outputFile, EtmPrincipal etmPrincipal, FieldLayout... fields) throws IOException {
         final int charsPerCell = 30000;
         // First make sure the payload field is at the end of the field list because it can be splitted into several cells.
         for (int i = fields.length - 2; i >= 0; i--) {
@@ -111,18 +132,13 @@ public class QueryExporter {
                 XSSFCell cell = row.createCell(cellIx++);
                 cell.setCellValue(field.getName());
             }
-            for (int i = 0; i < maxResults && scrollableSearch.hasNext(); i++) {
-                SearchHit searchHit = scrollableSearch.next();
-                Map<String, Object> sourceValues = searchHit.getSourceAsMap();
+            Iterator<Map<String, Object>> sourceIterator = sourceSupplier.get();
+            for (int i = 0; i < maxResults && sourceIterator.hasNext(); i++) {
+                Map<String, Object> sourceValues = sourceIterator.next();
                 row = sheet.createRow(rowIx++);
                 cellIx = 0;
                 for (FieldLayout field : fields) {
                     String dbFieldName = field.getField();
-                    if (Keyword.TYPE.getName().equals(dbFieldName)) {
-                        XSSFCell cell = row.createCell(cellIx++);
-                        cell.setCellValue(searchHit.getType());
-                        continue;
-                    }
                     List<Object> values = collectValuesFromPath(dbFieldName, sourceValues);
                     if (values.isEmpty()) {
                         cellIx++;
@@ -187,4 +203,71 @@ public class QueryExporter {
         }
         return "\"" + value.replaceAll("\"", "\"\"") + "\"";
     }
+
+    private class ScrollableSearchSupplier implements Iterator<Map<String, Object>>, Closeable {
+
+        private final ScrollableSearch scrollableSearch;
+
+        ScrollableSearchSupplier(ScrollableSearch scrollableSearch) {
+            this.scrollableSearch = scrollableSearch;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.scrollableSearch.hasNext();
+        }
+
+        @Override
+        public Map<String, Object> next() {
+            SearchHit next = this.scrollableSearch.next();
+            if (next != null) {
+                Map<String, Object> sourceAsMap = next.getSourceAsMap();
+                sourceAsMap.put(Keyword.ID.getName(), next.getId());
+                sourceAsMap.put(Keyword.TYPE.getName(), next.getType());
+                return sourceAsMap;
+            }
+            return null;
+        }
+
+        @Override
+        public void close() {
+            this.scrollableSearch.clearScrollIds();
+        }
+    }
+
+    private class TransactionEventSupplier implements Iterator<Map<String, Object>>, Closeable {
+
+        final Iterator<TransactionEvent> iterator;
+
+        TransactionEventSupplier(List<TransactionEvent> events) {
+            this.iterator = events.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.iterator.hasNext();
+        }
+
+        @Override
+        public Map<String, Object> next() {
+            TransactionEvent event = this.iterator.next();
+            Map<String, Object> values = new HashMap<>();
+            values.put("index", event.index);
+            values.put("type", event.objectType != null ? event.objectType : event.type);
+            values.put("id", event.id);
+            values.put(eventTags.getNameTag(), event.name);
+            values.put(eventTags.getEndpointHandlerHandlingTimeTag(), event.handlingTime);
+            values.put(eventTags.getEndpointHandlerSequenceNumberTag(), event.sequenceNumber);
+            values.put("direction", event.direction);
+            values.put(eventTags.getPayloadTag(), event.payload);
+            values.put("subtype", event.subtype);
+            values.put("endpoint", event.endpoint);
+            return values;
+        }
+
+        @Override
+        public void close() {
+        }
+    }
+
 }

@@ -388,6 +388,48 @@
     </div>
 </div>
 
+<div class="modal fade" id="modal-download-transaction">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="download-transaction-modal-label">Download transaction</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Select the options you desire, and click on the link below to download the results.</p>
+                <div class="form-group row">
+                    <label for="input-download-transaction-application"
+                           class="col-sm-3 col-form-label">Application</label>
+                    <div class="col-sm-9">
+                        <input id="input-download-transaction-application" type="text" class="form-control"
+                               disabled="disabled"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="input-download-transaction-id" class="col-sm-3 col-form-label">Transaction id</label>
+                    <div class="col-sm-9">
+                        <input id="input-download-transaction-id" type="text" class="form-control" disabled="disabled"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="sel-download-transaction-type" class="col-sm-3 col-form-label">File type</label>
+                    <div class="col-sm-9">
+                        <select id="sel-download-transaction-type" class="form-control custom-select">
+                            <option value="csv">Comma separated file (csv)</option>
+                            <option value="xlsx">Microsoft Excel (xlsx)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-download-transaction" type="button" class="btn btn-primary">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="../scripts/moment.min.js"></script>
 <script src="../scripts/moment-timezone-with-data.min.js"></script>
 <script src="../scripts/cytoscape.min.js"></script>

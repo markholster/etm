@@ -76,7 +76,6 @@ public class SearchService extends AbstractIndexMetadataService {
     private final AuditLogConverter<String, QueryAuditLog> queryAuditLogConverter = new QueryAuditLogConverterJsonImpl();
     private final AuditLogConverter<String, GetEventAuditLog> getEventAuditLogConverter = new GetEventAuditLogConverterJsonImpl();
 
-
     public static void initialize(Client client, EtmConfiguration etmConfiguration) {
         SearchService.client = client;
         SearchService.etmConfiguration = etmConfiguration;
@@ -381,7 +380,6 @@ public class SearchService extends AbstractIndexMetadataService {
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder, parameters.getStartIndex());
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
         File result = new QueryExporter().exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), etmPrincipal, parameters.toFieldLayouts());
-        scrollableSearch.clearScrollIds();
         ResponseBuilder response = Response.ok(result);
         response.header("Content-Disposition", "attachment; filename=etm-results." + fileType.name().toLowerCase());
         response.encoding(System.getProperty("file.encoding"));
@@ -639,8 +637,41 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/transaction/{application}/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
-    @LegacyEndpointHandler("findEventsQuery must be changed to work with a single must instead of 3 shoulds.")
     public String getTransaction(@PathParam("application") String applicationName, @PathParam("id") String transactionId) {
+        List<TransactionEvent> events = getTransactionEvents(applicationName, transactionId);
+        if (events == null) {
+            return null;
+        }
+        StringBuilder result = new StringBuilder();
+        result.append("{");
+        addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
+        result.append(",\"events\":[");
+        boolean first = true;
+        for (TransactionEvent event : events) {
+            if (first) {
+                result.append("{");
+                first = false;
+            } else {
+                result.append(", {");
+            }
+            addStringElementToJsonBuffer("index", event.index, result, true);
+            addStringElementToJsonBuffer("type", event.type, result, false);
+            addStringElementToJsonBuffer("object_type", event.objectType, result, false);
+            addStringElementToJsonBuffer("sub_type", event.subtype, result, false);
+            addStringElementToJsonBuffer("id", event.id, result, false);
+            addLongElementToJsonBuffer("handling_time", event.handlingTime, result, false);
+            addStringElementToJsonBuffer("name", event.name, result, false);
+            addStringElementToJsonBuffer("direction", event.direction, result, false);
+            addStringElementToJsonBuffer("payload", event.payload, result, false);
+            addStringElementToJsonBuffer("endpoint", event.endpoint, result, false);
+            result.append("}");
+        }
+        result.append("]}");
+        return result.toString();
+    }
+
+    @LegacyEndpointHandler("findEventsQuery must be changed to work with a single must instead of 3 shoulds.")
+    private List<TransactionEvent> getTransactionEvents(String applicationName, String transactionId) {
         BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
                 .minimumShouldMatch(1)
                 .should(
@@ -671,8 +702,6 @@ public class SearchService extends AbstractIndexMetadataService {
                                         ".writing_endpoint_handler" +
                                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
                 );
-
-
         SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
                 .addSort(SortBuilders.fieldSort("_doc"))
@@ -691,7 +720,6 @@ public class SearchService extends AbstractIndexMetadataService {
             return null;
         }
         List<TransactionEvent> events = new ArrayList<>();
-        StringBuilder result = new StringBuilder();
         for (SearchHit searchHit : scrollableSearch) {
             TransactionEvent event = new TransactionEvent();
             event.index = searchHit.getIndex();
@@ -720,11 +748,11 @@ public class SearchService extends AbstractIndexMetadataService {
                 }
             }
             if ("http".equals(event.objectType)) {
-                event.subType = getString(this.eventTags.getHttpEventTypeTag(), source);
+                event.subtype = getString(this.eventTags.getHttpEventTypeTag(), source);
             } else if ("messaging".equals(event.objectType)) {
-                event.subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
+                event.subtype = getString(this.eventTags.getMessagingEventTypeTag(), source);
             } else if ("sql".equals(event.objectType)) {
-                event.subType = getString(this.eventTags.getSqlEventTypeTag(), source);
+                event.subtype = getString(this.eventTags.getSqlEventTypeTag(), source);
             }
 
             if (event.sequenceNumber == null) {
@@ -734,31 +762,7 @@ public class SearchService extends AbstractIndexMetadataService {
             events.add(event);
         }
         events.sort(Comparator.comparing((TransactionEvent e) -> e.handlingTime).thenComparing(e -> e.sequenceNumber));
-        result.append("{");
-        addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
-        result.append(",\"events\":[");
-        boolean first = true;
-        for (TransactionEvent event : events) {
-            if (first) {
-                result.append("{");
-                first = false;
-            } else {
-                result.append(", {");
-            }
-            addStringElementToJsonBuffer("index", event.index, result, true);
-            addStringElementToJsonBuffer("type", event.type, result, false);
-            addStringElementToJsonBuffer("object_type", event.objectType, result, false);
-            addStringElementToJsonBuffer("sub_type", event.subType, result, false);
-            addStringElementToJsonBuffer("id", event.id, result, false);
-            addLongElementToJsonBuffer("handling_time", event.handlingTime, result, false);
-            addStringElementToJsonBuffer("name", event.name, result, false);
-            addStringElementToJsonBuffer("direction", event.direction, result, false);
-            addStringElementToJsonBuffer("payload", event.payload, result, false);
-            addStringElementToJsonBuffer("endpoint", event.endpoint, result, false);
-            result.append("}");
-        }
-        result.append("]}");
-        return result.toString();
+        return events;
     }
 
     @LegacyEndpointHandler("Method must be removed")
@@ -785,6 +789,29 @@ public class SearchService extends AbstractIndexMetadataService {
                 }
             }
         }
+    }
+
+    @GET
+    @Path("/download/transaction/{application}/{id}")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public Response getDownloadTransaction(
+            @QueryParam("q") String json,
+            @PathParam("application") String applicationName,
+            @PathParam("id") String transactionId) {
+        EtmPrincipal etmPrincipal = getEtmPrincipal();
+        Map<String, Object> valueMap = toMap(json);
+        List<TransactionEvent> events = getTransactionEvents(applicationName, transactionId);
+        if (events == null) {
+            return null;
+        }
+        FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
+        File result = new QueryExporter().exportToFile(events, fileType, etmPrincipal);
+        ResponseBuilder response = Response.ok(result);
+        response.header("Content-Disposition", "attachment; filename=etm-" + applicationName.replaceAll(" ", "_") + "-" + transactionId + "." + fileType.name().toLowerCase());
+        response.encoding(System.getProperty("file.encoding"));
+        response.header("Content-Type", fileType.getContentType());
+        return response.build();
     }
 
 

@@ -11,7 +11,7 @@ function showEvent(scrollTo, type, id) {
 	$('#tabcontents').children().slice(1).remove();
 	$('#event-tab').empty();
 	$('#event-tabs a:first').tab('show');
-	intialize();
+	initialize();
 
 	$.ajax({
 	    type: 'GET',
@@ -29,7 +29,16 @@ function showEvent(scrollTo, type, id) {
 	
 	$('#event-container').show();
 
-	function intialize() {
+    $('#btn-download-transaction').click(function(event) {
+        event.preventDefault();
+        $('#modal-download-transaction').modal('hide');
+        var q = {
+            fileType: $('#sel-download-transaction-type').val()
+        }
+        window.location.href = '../rest/search/download/transaction/' + encodeURIComponent($('#input-download-transaction-application').val()) + '/'+ encodeURIComponent($('#input-download-transaction-id').val())+ '?q=' + encodeURIComponent(JSON.stringify(q));
+    });
+
+	function initialize() {
 		if (cyEndpoints) {
 			cyEndpoints.destroy();
 		}
@@ -726,6 +735,8 @@ function showEvent(scrollTo, type, id) {
 	function displayTransactionDetails(container, applicationName, transactionId) {
 		var $container = $(container);
 		var $transactionTable = transactionMap[transactionId];
+		$('#input-download-transaction-application').val(applicationName);
+        $('#input-download-transaction-id').val(transactionId);
 		if ("undefined" != typeof $transactionTable) {
 			$container.append($transactionTable);
 		} else {
@@ -743,7 +754,13 @@ function showEvent(scrollTo, type, id) {
 			        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Id'),
 			        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Date'),
 			        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Type'),
-			        			$('<th>').attr('style' ,'padding: 0.1rem;')
+			        			$('<th>').attr('style' ,'padding: 0.1rem;').append(
+			        			    $('<a>').attr('href', "#").addClass('fa fa-download pull-right').attr('title', 'Download transaction')
+			        			    .on('click', function(event) {
+			        			        event.preventDefault();
+			        			        $('#modal-download-transaction').modal();
+			        			    })
+			        			)
 			        		)
 			        	)
 			        ).append(function () {

@@ -664,7 +664,6 @@ public class SettingsService extends AbstractJsonService {
         }
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
         File result = new QueryExporter().exportToFile(scrollableSearch, fileType, Integer.MAX_VALUE, etmPrincipal, this.exportPrincipalFields);
-        scrollableSearch.clearScrollIds();
         Response.ResponseBuilder response = Response.ok(result);
         response.header("Content-Disposition", "attachment; filename=etm-users." + fileType.name().toLowerCase());
         response.encoding(System.getProperty("file.encoding"));

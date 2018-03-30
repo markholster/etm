@@ -3,6 +3,7 @@
 === Version 3.2.0
 * [ETM-33] Fix upgrade documentation on website.
 * [ETM-34] Autocomplete not working in IE.
+* [ETM-35] Download transaction to file.
 
 === Version 3.1.0
 * LDAP Synchronization of users.

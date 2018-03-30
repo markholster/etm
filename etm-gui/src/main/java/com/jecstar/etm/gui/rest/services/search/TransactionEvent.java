@@ -1,6 +1,6 @@
 package com.jecstar.etm.gui.rest.services.search;
 
-class TransactionEvent {
+public class TransactionEvent {
 
     public String index;
     public String type;
@@ -11,7 +11,7 @@ class TransactionEvent {
     public Integer sequenceNumber;
     public String direction;
     public String payload;
-    public String subType;
+    public String subtype;
     public String endpoint;
 
     @Override
