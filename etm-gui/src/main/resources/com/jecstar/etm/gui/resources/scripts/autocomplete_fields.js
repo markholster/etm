@@ -66,26 +66,26 @@
                 return { "queryTerm": query, "queryType": "field"};
             }
             if (terms.length == 1) {
-                if (isQueryForFieldTerm(terms[0]) && query.endsWith(' ')) {
+                if (isQueryForFieldTerm(terms[0]) && endsWith(query, ' ')) {
                     return { "queryTerm": '', "queryType": "fieldTermValue"};
                 }
                 return { "queryTerm": query, "queryType": "field"};
             } else {
                 var lastTerm = terms[terms.length - 1];
                 var secondLastTerm = terms[terms.length - 2].trim();
-                if (isQueryForFieldTerm(secondLastTerm) && !query.endsWith(' ')) {
+                if (isQueryForFieldTerm(secondLastTerm) && !endsWith(query, ' ')) {
                     return { "queryTerm": lastTerm, "queryType": "fieldTermValue"};
                 }
-                if (isQueryForFieldTerm(lastTerm) && query.endsWith(' ')) {
+                if (isQueryForFieldTerm(lastTerm) && endsWith(query, ' ')) {
                     return { "queryTerm": '', "queryType": "fieldTermValue"};
                 }
-                if (secondLastTerm.endsWith(':')) {
+                if (endsWith(secondLastTerm, ':')) {
                     return { "queryTerm": null};
                 }
                 if (queryOperators.indexOf(secondLastTerm) != -1) {
                     return { "queryTerm": lastTerm, "queryType": "field"};
                 }
-                if (queryOperators.indexOf(lastTerm) != -1 && query.endsWith(' ')) {
+                if (queryOperators.indexOf(lastTerm) != -1 && endsWith(query, ' ')) {
                     return { "queryTerm": '', "queryType": "field"};
                 }
             }
