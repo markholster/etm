@@ -47,7 +47,11 @@ class Startup {
                                             .setInstance(configuration.instanceName)
                                             .setPrincipal(System.getProperty("user.name"))
                                             .setHostAddress(InetAddress.getByName(configuration.bindingAddress)))));
-            new Launcher().launch(commandLineParameters, configuration, bulkProcessorWrapper);
+            if (commandLineParameters.isTail()) {
+                new TailCommand().tail(configuration);
+            } else {
+                new LaunchEtmCommand().launch(commandLineParameters, configuration, bulkProcessorWrapper);
+            }
         } catch (FileNotFoundException e) {
             System.err.println("Configuration file not found: " + e.getMessage());
         } catch (UnknownHostException e) {

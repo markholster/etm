@@ -4,6 +4,7 @@
 * [ETM-33] Fix upgrade documentation on website.
 * [ETM-34] Autocomplete not working in IE.
 * [ETM-35] Download transaction to file.
+* [ETM-36] Option to show ETM logs from command line.
 
 === Version 3.1.0
 * LDAP Synchronization of users.

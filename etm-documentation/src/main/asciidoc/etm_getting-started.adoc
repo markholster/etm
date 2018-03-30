@@ -107,7 +107,7 @@ NoNodeAvailableException[None of the configured nodes are available: [{#transpor
         at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:54)
         at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:62)
         at com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator.createTemplates(ElasticsearchIndextemplateCreator.java:54)
-        at com.jecstar.etm.launcher.Launcher.launch(Launcher.java:57)
+        at com.jecstar.etm.launcher.LaunchEtmCommand.launch(Launcher.java:57)
         at com.jecstar.etm.launcher.Startup.main(Startup.java:32)
 ----
 

@@ -11,12 +11,14 @@ class CommandLineParameters {
     private static final String PARAM_DUMP_DEFAULT_CONFIG = "--dump-default-config";
     private static final String PARAM_REINITIALIZE = "--reinitialize";
     private static final String PARAM_QUIET = "--quiet";
+    private static final String PARAM_TAIL = "--tail";
 
     private String configDirectory = "config";
 
     private boolean quiet = false;
     private boolean reinitialize = false;
     private boolean proceedNormalStartup = true;
+    private boolean tail = false;
 
     CommandLineParameters(String[] arguments) {
         if (arguments == null || arguments.length == 0) {
@@ -36,6 +38,8 @@ class CommandLineParameters {
                 System.out.print(yaml.dumpAsMap(new Configuration()));
             } else if (argument.equals(PARAM_REINITIALIZE)) {
                 this.reinitialize = true;
+            } else if (argument.equals(PARAM_TAIL)) {
+                this.tail = true;
             }
         }
     }
@@ -56,4 +60,7 @@ class CommandLineParameters {
         return this.configDirectory;
     }
 
+    public boolean isTail() {
+        return this.tail;
+    }
 }

@@ -31,31 +31,19 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.cluster.block.ClusterBlockException;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.settings.Settings.Builder;
-import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.discovery.MasterNotDiscoveredException;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-class Launcher {
+class LaunchEtmCommand extends AbstractCommand {
 
     /**
      * The <code>LogWrapper</code> for this class.
      */
-    private static final LogWrapper log = LogFactory.getLogger(Launcher.class);
+    private static final LogWrapper log = LogFactory.getLogger(LaunchEtmCommand.class);
 
     private ElasticsearchIndexTemplateCreator indexTemplateCreator;
     private TelemetryCommandProcessor processor;
@@ -73,7 +61,9 @@ class Launcher {
         addShutdownHooks(configuration);
         InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
         try {
-            initializeElasticsearchClient(configuration);
+            if (this.elasticClient == null) {
+                this.elasticClient = createElasticsearchClient(configuration);
+            }
             this.bulkProcessorWrapper.setClient(this.elasticClient);
             boolean reinitializeTemplates = executeDatabaseMigrations(this.elasticClient);
             new MultiTypeDetector().detect(this.elasticClient);
@@ -86,6 +76,10 @@ class Launcher {
                 this.indexTemplateCreator.reinitialize();
                 if (!commandLineParameters.isQuiet()) {
                     System.out.println("Reinitialized system.");
+                }
+                if (commandLineParameters.isReinitialize()) {
+                    // When the --reinitialize option is passed to the command line, we stop processing over here because reinitializing is done.
+                    return;
                 }
             }
             MetricRegistry metricRegistry = new MetricRegistry();
@@ -133,64 +127,64 @@ class Launcher {
                 }
             } catch (Throwable t) {
             }
-            if (Launcher.this.indexTemplateCreator != null) {
+            if (LaunchEtmCommand.this.indexTemplateCreator != null) {
                 try {
-                    Launcher.this.indexTemplateCreator.removeConfigurationChangeNotificationListener();
+                    LaunchEtmCommand.this.indexTemplateCreator.removeConfigurationChangeNotificationListener();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.backgroundScheduler != null) {
+            if (LaunchEtmCommand.this.backgroundScheduler != null) {
                 try {
-                    Launcher.this.backgroundScheduler.shutdownNow();
+                    LaunchEtmCommand.this.backgroundScheduler.shutdownNow();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.kafkaProcessor != null) {
+            if (LaunchEtmCommand.this.kafkaProcessor != null) {
                 try {
-                    Launcher.this.kafkaProcessor.stop();
+                    LaunchEtmCommand.this.kafkaProcessor.stop();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.jmsProcessor != null) {
+            if (LaunchEtmCommand.this.jmsProcessor != null) {
                 try {
-                    Launcher.this.jmsProcessor.stop();
+                    LaunchEtmCommand.this.jmsProcessor.stop();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.ibmMqProcessor != null) {
+            if (LaunchEtmCommand.this.ibmMqProcessor != null) {
                 try {
-                    Launcher.this.ibmMqProcessor.stop();
+                    LaunchEtmCommand.this.ibmMqProcessor.stop();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.httpServer != null) {
+            if (LaunchEtmCommand.this.httpServer != null) {
                 try {
-                    Launcher.this.httpServer.stop();
+                    LaunchEtmCommand.this.httpServer.stop();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.processor != null) {
+            if (LaunchEtmCommand.this.processor != null) {
                 try {
-                    Launcher.this.processor.stopAll();
+                    LaunchEtmCommand.this.processor.stopAll();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.metricReporter != null) {
+            if (LaunchEtmCommand.this.metricReporter != null) {
                 try {
-                    Launcher.this.metricReporter.close();
+                    LaunchEtmCommand.this.metricReporter.close();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.bulkProcessorWrapper != null) {
+            if (LaunchEtmCommand.this.bulkProcessorWrapper != null) {
                 try {
                     BusinessEventLogger.logEtmShutdown();
-                    Launcher.this.bulkProcessorWrapper.close();
+                    LaunchEtmCommand.this.bulkProcessorWrapper.close();
                 } catch (Throwable t) {
                 }
             }
-            if (Launcher.this.elasticClient != null) {
+            if (LaunchEtmCommand.this.elasticClient != null) {
                 try {
-                    Launcher.this.elasticClient.close();
+                    LaunchEtmCommand.this.elasticClient.close();
                 } catch (Throwable t) {
                 }
             }
@@ -246,118 +240,6 @@ class Launcher {
         return reinitialze;
     }
 
-    private void initializeElasticsearchClient(Configuration configuration) {
-        if (this.elasticClient != null) {
-            return;
-        }
-        Builder settingsBuilder = Settings.builder()
-                .put("cluster.name", configuration.elasticsearch.clusterName)
-                .put("client.transport.sniff", true);
-        TransportClient transportClient;
-        if (configuration.elasticsearch.username != null && configuration.elasticsearch.password != null) {
-            settingsBuilder.put("xpack.security.user", configuration.elasticsearch.username + ":" + configuration.elasticsearch.password);
-            if (configuration.elasticsearch.sslKeyLocation != null) {
-                settingsBuilder.put("xpack.ssl.key", configuration.elasticsearch.sslKeyLocation.getAbsolutePath());
-            }
-            if (configuration.elasticsearch.sslCertificateLocation != null) {
-                settingsBuilder.put("xpack.ssl.certificate", configuration.elasticsearch.sslCertificateLocation.getAbsolutePath());
-            }
-            if (configuration.elasticsearch.sslCertificateAuthoritiesLocation != null) {
-                settingsBuilder.put("xpack.ssl.certificate_authorities", configuration.elasticsearch.sslCertificateAuthoritiesLocation.getAbsolutePath());
-            }
-            if (configuration.elasticsearch.sslEnabled) {
-                settingsBuilder.put("xpack.security.transport.ssl.enabled", "true");
-            }
-            transportClient = new PreBuiltXPackTransportClient(settingsBuilder.build());
-        } else {
-            transportClient = new PreBuiltTransportClient(settingsBuilder.build());
-        }
-        int hostsAdded = addElasticsearchHostsToTransportClient(configuration.elasticsearch.connectAddresses, transportClient);
-        if (configuration.elasticsearch.waitForConnectionOnStartup) {
-            while (hostsAdded == 0) {
-                // Currently this can only happen in docker swarm installations where the elasticsearch service isn't fully started when ETM starts. This will result in a
-                // UnknownHostException so that leaves with a transportclient without any hosts. Also this may happen when the end users misspells the hostname in the configuration.
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                hostsAdded = addElasticsearchHostsToTransportClient(configuration.elasticsearch.connectAddresses, transportClient);
-            }
-            waitForActiveConnection(transportClient);
-        }
-        this.elasticClient = transportClient;
-    }
-
-    private int addElasticsearchHostsToTransportClient(List<String> hosts, TransportClient transportClient) {
-        int added = 0;
-        for (String host : hosts) {
-            TransportAddress transportAddress = createTransportAddress(host);
-            if (transportAddress != null) {
-                transportClient.addTransportAddress(transportAddress);
-                added++;
-            }
-        }
-        return added;
-    }
-
-    private TransportAddress createTransportAddress(String host) {
-        int ix = host.lastIndexOf(":");
-        if (ix != -1) {
-            try {
-                InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
-                int port = Integer.parseInt(host.substring(ix + 1));
-                return new TransportAddress(inetAddress, port);
-            } catch (UnknownHostException e) {
-                if (log.isWarningLevelEnabled()) {
-                    log.logWarningMessage("Unable to connect to '" + host + "'", e);
-                }
-            }
-        }
-        return null;
-    }
-
-    private void waitForActiveConnection(TransportClient transportClient) {
-        while (transportClient.connectedNodes().isEmpty()) {
-            if (Thread.currentThread().isInterrupted()) {
-                return;
-            }
-            // Wait for any elasticsearch node to become active.
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        boolean esClusterInitialized = false;
-        while (!esClusterInitialized) {
-            try {
-                ClusterHealthResponse clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
-                if (clusterHealthResponse.getInitializingShards() == 0
-                        && clusterHealthResponse.getNumberOfPendingTasks() == 0
-                        && clusterHealthResponse.getNumberOfDataNodes() > 0) {
-                    esClusterInitialized = true;
-                }
-            } catch (MasterNotDiscoveredException | ClusterBlockException e) {
-            }
-            if (!esClusterInitialized) {
-                // Wait for all shards to be initialized and no more tasks pending and at least 1 data node to be available.
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                if (Thread.currentThread().isInterrupted()) {
-                    return;
-                }
-            }
-        }
-
-
-    }
 
     private void initializeMqProcessor(MetricRegistry metricRegistry, Configuration configuration) {
         try {
