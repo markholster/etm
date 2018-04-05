@@ -38,7 +38,7 @@ class SearchRequestParameters {
         this.startIndex = 0;
         this.maxResults = 50;
         TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
-        this.sortField = tags.getEndpointsTag() + "." + tags.getEndpointHandlersTag() + "." + tags.getEndpointHandlerHandlingTimeTag();
+        this.sortField = tags.getTimestampTag();
         this.sortOrder = "desc";
         this.types = new ArrayList<>(5);
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_BUSINESS);
@@ -47,12 +47,12 @@ class SearchRequestParameters {
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_MESSAGING);
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_SQL);
         this.fields = new ArrayList<>(2);
-        this.fields.add(tags.getEndpointsTag() + "." + tags.getEndpointHandlersTag() + "." + tags.getEndpointHandlerHandlingTimeTag());
+        this.fields.add(tags.getTimestampTag());
         this.fields.add(tags.getNameTag());
         this.fieldsLayout = new ArrayList<>();
         Map<String, Object> layout = new HashMap<>();
         layout.put("array", "lowest");
-        layout.put("field", tags.getEndpointsTag() + "." + tags.getEndpointHandlersTag() + "." + tags.getEndpointHandlerHandlingTimeTag());
+        layout.put("field", tags.getTimestampTag());
         layout.put("format", "isotimestamp");
         layout.put("link", true);
         layout.put("name", "Timestamp");

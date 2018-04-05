@@ -59,23 +59,27 @@ public abstract class AbstractIndexMetadataService extends AbstractJsonService {
         return names;
     }
 
-    protected String getSortProperty(Client client, String indexName, String indexType, String propertyName) {
+    protected String getSortProperty(Client client, String indexName, String propertyName) {
         GetFieldMappingsRequestBuilder fieldRequest = client.admin().indices().prepareGetFieldMappings(indexName)
                 .setFields(propertyName);
-        if (indexType != null) {
-            fieldRequest.addTypes(indexType);
-        }
         GetFieldMappingsResponse response = fieldRequest.get();
         if (response.mappings().isEmpty()) {
-            return propertyName;
+            return null;
         }
-        Map<String, Object> sourceMap = response.mappings().values().iterator().next().values().iterator().next().values().iterator().next().sourceAsMap();
-        String type = getString("type", getObject(propertyName, sourceMap, Collections.emptyMap()));
-        if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
-            return ("text".equals(type) || "keyword".equals(type)) ? propertyName + KEYWORD_SUFFIX : propertyName;
-        } else {
-            return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+        // Iterate over all mappings trying to find a field definition.
+        for (Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetaData>> indexMap : response.mappings().values()) {
+            for (Map<String, GetFieldMappingsResponse.FieldMappingMetaData> sourceMap : indexMap.values()) {
+                for (GetFieldMappingsResponse.FieldMappingMetaData fieldMappingMetaData : sourceMap.values()) {
+                    String type = getString("type", getObject(propertyName, fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
+                    if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
+                        return ("text".equals(type) || "keyword".equals(type)) ? propertyName + KEYWORD_SUFFIX : propertyName;
+                    } else {
+                        return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+                    }
+                }
+            }
         }
+        return null;
     }
 
     @SuppressWarnings("unchecked")

@@ -329,7 +329,10 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setFrom(parameters.getStartIndex())
                 .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults());
         if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-            requestBuilder.addSort(getSortProperty(client, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, null, parameters.getSortField()), "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+            String sortProperty = getSortProperty(client, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, parameters.getSortField());
+            if (sortProperty != null) {
+                requestBuilder.addSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+            }
         }
         return requestBuilder;
     }
