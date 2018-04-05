@@ -4,4 +4,5 @@ dependencies {
     compile project(":etm-server-core"), dep_elasticsearchClient, dep_poiOoxml, dep_resteasyJaxrs, dep_jaxb
     compile files('../lib/com.ibm.mq.allclient.jar', '../lib/integration-api-10.0.0.0.jar', '../lib/ibmjsseprovider2.jar')
     runtime files('../lib/jetty-io.jar', '../lib/jetty-util.jar', '../lib/websocket-api.jar', '../lib/websocket-client.jar', '../lib/websocket-common.jar')
+    testCompile dep_junit
 }

@@ -32,7 +32,6 @@ public class AbstractJsonService extends JsonConverter {
     @Context
     protected SecurityContext securityContext;
 
-
     protected EtmPrincipal getEtmPrincipal() {
         return (EtmPrincipal) this.securityContext.getUserPrincipal();
     }
@@ -41,20 +40,26 @@ public class AbstractJsonService extends JsonConverter {
         List<FilterQuery> result = new ArrayList<>();
         String filterQuery = getEtmPrincipal().getFilterQuery();
         if (filterQuery != null && filterQuery.trim().length() > 0) {
-            result.add(new FilterQuery(getEtmPrincipal().getFilterQueryOccurrence(),
+            FilterQuery fq = new FilterQuery(getEtmPrincipal().getFilterQueryOccurrence(),
                     new QueryStringQueryBuilder(filterQuery.trim())
                             .allowLeadingWildcard(true)
                             .analyzeWildcard(true)
-                            .timeZone(getEtmPrincipal().getTimeZone().getID())));
+                            .timeZone(getEtmPrincipal().getTimeZone().getID()));
+            if (!result.contains(fq)) {
+                result.add(fq);
+            }
         }
         Set<EtmGroup> groups = getEtmPrincipal().getGroups();
         for (EtmGroup group : groups) {
             if (group.getFilterQuery() != null && group.getFilterQuery().trim().length() > 0) {
-                result.add(new FilterQuery(group.getFilterQueryOccurrence(),
+                FilterQuery fq = new FilterQuery(group.getFilterQueryOccurrence(),
                         new QueryStringQueryBuilder(group.getFilterQuery().trim())
                                 .allowLeadingWildcard(true)
                                 .analyzeWildcard(true)
-                                .timeZone(getEtmPrincipal().getTimeZone().getID())));
+                                .timeZone(getEtmPrincipal().getTimeZone().getID()));
+                if (!result.contains(fq)) {
+                    result.add(fq);
+                }
             }
         }
         return result;
@@ -79,12 +84,16 @@ public class AbstractJsonService extends JsonConverter {
         if (filterQueries == null || filterQueries.isEmpty()) {
             return queryBuilder;
         }
+        BoolQueryBuilder boolFilter = QueryBuilders.boolQuery();
         for (FilterQuery filterQuery : filterQueries) {
             if (QueryOccurrence.MUST.equals(filterQuery.getQueryOccurrence())) {
                 queryBuilder.filter(filterQuery.getQuery());
             } else if (QueryOccurrence.MUST_NOT.equals(filterQuery.getQueryOccurrence())) {
-                queryBuilder.filter(QueryBuilders.boolQuery().mustNot(filterQuery.getQuery()));
+                boolFilter.mustNot(filterQuery.getQuery());
             }
+        }
+        if (boolFilter.mustNot().size() > 0) {
+            queryBuilder.filter(boolFilter);
         }
         return queryBuilder;
     }
