@@ -7,6 +7,7 @@
 * [ETM-36] Option to show ETM logs from command line.
 * [ETM-37] No results when sorting on non-existing field.
 * [ETM-38] Apply the same filterquery only one time.
+* [ETM-39] env connectAddresses not working in Docker.
 
 === Version 3.1.0
 * LDAP Synchronization of users.

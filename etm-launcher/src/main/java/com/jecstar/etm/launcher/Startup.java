@@ -22,6 +22,8 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 class Startup {
 
@@ -114,6 +116,9 @@ class Startup {
                         field.set(configurationInstance, new Integer(value));
                     } else if (field.getType().equals(File.class)) {
                         field.set(configurationInstance, new File(value));
+                    } else if (field.getType().equals(List.class)) {
+                        List<String> listValue = Arrays.asList(value.split(","));
+                        field.set(configurationInstance, listValue);
                     }
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                 }
