@@ -17,6 +17,7 @@ function showEvent(scrollTo, type, id) {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
+	    cache: false,
 	    success: function(data) {
 	        if (!data || !data.event) {
 	            return;
@@ -744,6 +745,7 @@ function showEvent(scrollTo, type, id) {
 			    type: 'GET',
 			    contentType: 'application/json',
 			    url: '../rest/search/transaction/' + encodeURIComponent(applicationName) + '/' + encodeURIComponent(transactionId),
+			    cache: false,
 			    success: function(transaction_data) {
 			        if (!transaction_data || !transaction_data.events) {
 			            return;
@@ -964,6 +966,7 @@ function showEvent(scrollTo, type, id) {
 				    type: 'GET',
 				    contentType: 'application/json',
 				    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id) + '/chain',
+				    cache: false,
 				    success: function(data) {
 				        if (!data) {
 				            return;
@@ -1095,6 +1098,7 @@ function showEvent(scrollTo, type, id) {
 									    contentType: 'application/json',
 									    async: false,
 									    url: '../rest/search/event/' + encodeURIComponent(eventId) + '/endpoints',
+									    cache: false,
 									    success: function(data) {
 									        if (!data || !data.event || !data.event.source) {
 									        	eventMap[eventId] = "";

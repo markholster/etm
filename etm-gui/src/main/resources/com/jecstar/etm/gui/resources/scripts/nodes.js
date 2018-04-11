@@ -47,6 +47,7 @@ function buildNodePage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/settings/cluster',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -59,6 +60,7 @@ function buildNodePage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/settings/nodes',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -107,6 +109,7 @@ function buildNodePage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/node/' + encodeURIComponent(nodeData.name),
+            cache: false,
             data: JSON.stringify(nodeData),
             success: function(data) {
                 if (!data) {
@@ -130,6 +133,7 @@ function buildNodePage() {
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/settings/node/' + encodeURIComponent(nodeName),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;

@@ -54,6 +54,7 @@ function buildNodePage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/iib/nodes',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -102,6 +103,7 @@ function buildNodePage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/iib/node/' + encodeURIComponent(nodeData.name),
+            cache: false,
             data: JSON.stringify(nodeData),
             success: function(data) {
                 if (!data) {
@@ -125,6 +127,7 @@ function buildNodePage() {
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/iib/node/' + encodeURIComponent(nodeName),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;

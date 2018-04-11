@@ -3,6 +3,7 @@ function buildGroupPage() {
         type: 'GET',
         contentType: 'application/json',
         url: '../rest/search/keywords/etm_event_all',
+        cache: false,
         success: function(data) {
             if (!data || !data.keywords) {
                 return;
@@ -73,6 +74,7 @@ function buildGroupPage() {
 		    type: 'GET',
 		    contentType: 'application/json',
 		    url: '../rest/settings/groups/ldap',
+		    cache: false,
 		    success: function(data) {
 		        if (!data) {
 		            return;
@@ -98,6 +100,7 @@ function buildGroupPage() {
 		    type: 'PUT',
 		    contentType: 'application/json',
 		    url: '../rest/settings/groups/ldap/import/' + encodeURIComponent(groupName),
+		    cache: false,
 		    success: function(group) {
 		        if (!group) {
 		            return;
@@ -125,6 +128,7 @@ function buildGroupPage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/settings/groups',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -176,6 +180,7 @@ function buildGroupPage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/group/' + encodeURIComponent(groupData.name),
+            cache: false,
             data: JSON.stringify(groupData),
             success: function(data) {
                 if (!data) {
@@ -199,6 +204,7 @@ function buildGroupPage() {
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/settings/group/' + encodeURIComponent(groupName),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;

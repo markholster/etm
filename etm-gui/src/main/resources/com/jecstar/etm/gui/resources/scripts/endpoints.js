@@ -64,6 +64,7 @@ function buildEndpointPage() {
 		    type: 'GET',
 		    contentType: 'application/json',
 		    url: '../rest/settings/parsers',
+		    cache: false,
 		    success: function(data) {
 		        if (!data) {
 		            return;
@@ -82,6 +83,7 @@ function buildEndpointPage() {
 		    type: 'GET',
 		    contentType: 'application/json',
 		    url: '../rest/settings/parserfields',
+		    cache: false,
 		    success: function(data) {
 		        if (!data) {
 		            return;
@@ -96,6 +98,7 @@ function buildEndpointPage() {
             type: 'GET',
             contentType: 'application/json',
             url: '../rest/audit/keywords/etm_event_all',
+            cache: false,
             success: function(data) {
                 if (!data || !data.keywords) {
                     return;
@@ -119,6 +122,7 @@ function buildEndpointPage() {
 		    type: 'GET',
 		    contentType: 'application/json',
 		    url: '../rest/settings/endpoints',
+		    cache: false,
 		    success: function(data) {
 		        if (!data) {
 		            return;
@@ -346,6 +350,7 @@ function buildEndpointPage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/endpoint/' + encodeURIComponent(endpointData.name),
+            cache: false,
             data: JSON.stringify(endpointData),
             success: function(data) {
                 if (!data) {
@@ -370,6 +375,7 @@ function buildEndpointPage() {
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/settings/endpoint/' + encodeURIComponent(getEndpointIdByName(endpointName)),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;

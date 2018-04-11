@@ -8,6 +8,7 @@ function buildUserPage() {
 	        type: 'GET',
 	        contentType: 'application/json',
 	        url: '../rest/search/keywords/etm_event_all',
+	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.keywords) {
 	                return;
@@ -23,6 +24,7 @@ function buildUserPage() {
 	        type: 'GET',
 	        contentType: 'application/json',
 	        url: '../rest/user/timezones',
+	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.time_zones) {
 	                return;
@@ -41,6 +43,7 @@ function buildUserPage() {
 	        type: 'GET',
 	        contentType: 'application/json',
 	        url: '../rest/user/locales',
+	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.locales) {
 	                return;
@@ -59,6 +62,7 @@ function buildUserPage() {
 	        type: 'GET',
 	        contentType: 'application/json',
 	        url: '../rest/settings/groups',
+	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.groups) {
 	            	// No groups, remove the fieldset.
@@ -82,6 +86,7 @@ function buildUserPage() {
 		    type: 'GET',
 		    contentType: 'application/json',
 		    url: '../rest/settings/users',
+		    cache: false,
 		    success: function(data) {
 		        if (!data) {
 		            return;
@@ -105,6 +110,7 @@ function buildUserPage() {
           $.ajax({
         	type: 'POST',
             url: "../rest/settings/users/ldap/search",
+            cache: false,
             contentType: 'application/json',
             data: JSON.stringify({ query: request.term }),
             success: function(data) {
@@ -157,6 +163,7 @@ function buildUserPage() {
 				    type: 'GET',
 				    contentType: 'application/json',
 				    url: '../rest/settings/user/' + encodeURIComponent(userData.id) + '/ldap/groups',
+				    cache: false,
 				    success: function(data) {
 				        if (!data) {
 				            return;
@@ -258,6 +265,7 @@ function buildUserPage() {
 		    type: 'PUT',
 		    contentType: 'application/json',
 		    url: '../rest/settings/users/ldap/import/' + encodeURIComponent(userId),
+		    cache: false,
 		    success: function(user) {
 		        if (!user) {
 		            return;
@@ -350,6 +358,7 @@ function buildUserPage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/user/' + encodeURIComponent(userData.id),
+            cache: false,
             data: JSON.stringify(userData),
             success: function(data) {
                 if (!data) {
@@ -373,6 +382,7 @@ function buildUserPage() {
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/settings/user/' + encodeURIComponent(userId),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;

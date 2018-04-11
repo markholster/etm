@@ -10,6 +10,7 @@ function buildGraphsPage(groupName) {
 	        type: 'GET',
 	        contentType: 'application/json',
 	        url: '../rest/visualization/keywords/etm_event_all',
+	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.keywords) {
 	                return;
@@ -21,6 +22,7 @@ function buildGraphsPage(groupName) {
 	        type: 'GET',
 	        contentType: 'application/json',
 	        url: '../rest/visualization/keywords/etm_metrics_all',
+	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.keywords) {
 	                return;
@@ -73,6 +75,7 @@ function buildGraphsPage(groupName) {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: contextRoot + 'graphs',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -638,6 +641,7 @@ function buildGraphsPage(groupName) {
             type: 'PUT',
             contentType: 'application/json',
             url: contextRoot + 'graph/' + encodeURIComponent(graphData.name),
+            cache: false,
             data: JSON.stringify(graphData),
             success: function(data) {
                 if (!data) {
@@ -662,6 +666,7 @@ function buildGraphsPage(groupName) {
             type: 'DELETE',
             contentType: 'application/json',
             url: contextRoot + 'graph/' + encodeURIComponent(graphName),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;
@@ -684,6 +689,7 @@ function buildGraphsPage(groupName) {
             type: 'POST',
             contentType: 'application/json',
             url: '../rest/visualization/graphdata',
+            cache: false,
             data: JSON.stringify(graphData),
             success: function(data) {
                 if (!data) {

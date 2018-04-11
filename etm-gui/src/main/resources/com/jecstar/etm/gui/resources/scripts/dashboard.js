@@ -37,6 +37,7 @@ function loadDashboardPage(groupName, dashboardName, readonly) {
             type: 'GET',
             contentType: 'application/json',
             url: contextRoot + 'dashboard/' + encodeURIComponent(dashboardName),
+            cache: false,
             success: function(data) {
                if (!data) {
                    return;
@@ -55,6 +56,7 @@ function initialize(doneFunction, readonly) {
                 type: 'GET',
                 contentType: 'application/json',
                 url: contextRoot + 'graphs',
+                cache: false,
                 success: function(data) {
                     if (!data) {
                         return;
@@ -79,6 +81,7 @@ function initialize(doneFunction, readonly) {
                 type: 'GET',
                 contentType: 'application/json',
                 url: pageContextRoot + 'keywords/etm_event_all',
+                cache: false,
                 success: function(data) {
                     if (!data || !data.keywords) {
                         return;
@@ -90,6 +93,7 @@ function initialize(doneFunction, readonly) {
                 type: 'GET',
                 contentType: 'application/json',
                 url: pageContextRoot + 'keywords/etm_metrics_all',
+                cache: false,
                 success: function(data) {
                     if (!data || !data.keywords) {
                         return;
@@ -101,6 +105,7 @@ function initialize(doneFunction, readonly) {
                 type: 'GET',
                 contentType: 'application/json',
                 url: contextRoot + 'graphs',
+                cache: false,
                 success: function(data) {
                     if (!data) {
                         return;
@@ -118,6 +123,7 @@ function initialize(doneFunction, readonly) {
                 type: 'GET',
                 contentType: 'application/json',
                 url: contextRoot + 'dashboards',
+                cache: false,
                 success: function(data) {
                     if (!data) {
                         return;
@@ -700,6 +706,7 @@ function saveDashboard(successFunction) {
         type: 'PUT',
         contentType: 'application/json',
         url: contextRoot + 'dashboard/' + encodeURIComponent(backendData.name),
+        cache: false,
         data: JSON.stringify(backendData),
         success: function(data) {
             if (!data) {
@@ -747,6 +754,7 @@ function updateChart(graphData, graph, cardBody) {
         type: 'GET',
         contentType: 'application/json',
         url: contextRoot + 'graphdata/' + encodeURIComponent(dashboardData.name) + '/' + encodeURIComponent(graph.id),
+        cache: false,
         success: function(data) {
             if (!data) {
                 return;
@@ -901,6 +909,7 @@ function removeDashboard(dashboardName) {
         type: 'DELETE',
         contentType: 'application/json',
         url: contextRoot + 'dashboard/' + encodeURIComponent(dashboardName),
+        cache: false,
         success: function(data) {
             if (!data) {
                 return;

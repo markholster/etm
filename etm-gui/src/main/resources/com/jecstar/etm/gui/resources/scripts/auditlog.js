@@ -19,6 +19,7 @@ function buildAuditLogPage() {
         type: 'GET',
         contentType: 'application/json',
         url: '../rest/audit/keywords/etm_audit_all',
+        cache: false,
         success: function(data) {
             if (!data || !data.keywords) {
                 return;
@@ -128,6 +129,7 @@ function buildAuditLogPage() {
             type: 'POST',
             contentType: 'application/json',
             url: '../rest/audit/query',
+            cache: false,
             data: JSON.stringify(queryParameters),
             success: function(data) {
                 if (!data) {
@@ -250,6 +252,7 @@ function buildAuditLogPage() {
             type: 'GET',
             contentType: 'application/json',
             url: '../rest/audit/' + encodeURIComponent(index) + '/' + encodeURIComponent(id),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;

@@ -82,6 +82,7 @@ function buildParserPage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/settings/parsers',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -130,6 +131,7 @@ function buildParserPage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/parser/' + encodeURIComponent(parserData.name),
+            cache: false,
             data: JSON.stringify(parserData),
             success: function(data) {
                 if (!data) {
@@ -153,6 +155,7 @@ function buildParserPage() {
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/settings/parser/' + encodeURIComponent(parserName),
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;

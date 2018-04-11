@@ -3,6 +3,7 @@ function buildIndexStatsPage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/settings/indicesstats',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;

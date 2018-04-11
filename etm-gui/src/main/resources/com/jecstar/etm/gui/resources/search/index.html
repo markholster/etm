@@ -459,6 +459,7 @@
         async: false,
         contentType: 'application/json',
         url: '../rest/search/keywords/etm_event_all',
+        cache: false,
         success: function(data) {
             if (!data || !data.keywords) {
                 return;
@@ -657,6 +658,7 @@
             type: 'POST',
             contentType: 'application/json',
             url: '../rest/search/query',
+            cache: false,
             data: JSON.stringify(queryParameters),
             success: function(data) {
                 if (!data) {

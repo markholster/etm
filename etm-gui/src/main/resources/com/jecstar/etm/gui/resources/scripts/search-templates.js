@@ -33,6 +33,7 @@ $('#btn-remove-template').click(function(event) {
         type: 'DELETE',
         contentType: 'application/json',
         url: '../rest/search/templates/' + encodeURIComponent(templateName),
+        cache: false,
         success: function() {
             $('#list-template-links > li > a').filter(function() {
                     return $(this).text() === templateName;
@@ -50,6 +51,7 @@ $.ajax({
     type: 'GET',
     contentType: 'application/json',
     url: '../rest/search/templates',
+    cache: false,
     success: function(data) {
         if (!data) {
             return;
@@ -83,6 +85,7 @@ $.ajax({
     type: 'GET',
     contentType: 'application/json',
     url: '../rest/search/history',
+    cache: false,
     success: function(data) {
         if (!data || !data.search_history) {
             return;
@@ -208,6 +211,7 @@ function storeTemplate(template, isOverwrite) {
         type: 'PUT',
         contentType: 'application/json',
         url: '../rest/search/templates/' + encodeURIComponent($('#template-name').val()),
+        cache: false,
         data: JSON.stringify(template),
         success: function() {
             $('#template-name').val('');

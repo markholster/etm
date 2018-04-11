@@ -158,6 +158,7 @@
                type: 'GET',
                contentType: 'application/json',
                url: '../rest/user/timezones',
+               cache: false,
                success: function(data) {
                    if (!data || !data.time_zones) {
                        return;
@@ -172,6 +173,7 @@
                type: 'GET',
                contentType: 'application/json',
                url: '../rest/user/locales',
+               cache: false,
                success: function(data) {
                    if (!data || !data.locales) {
                        return;
@@ -187,6 +189,7 @@
             type: 'GET',
             contentType: 'application/json',
             url: '../rest/user/settings',
+            cache: false,
             success: function(data) {
                 if (!data) {
                     return;
@@ -219,6 +222,7 @@
             $.ajax({
                 type: 'PUT',
                 url: '../rest/user/settings',
+                cache: false,
                 data: JSON.stringify(createUserSettings()),
                 contentType: 'application/json',
                 dataType: 'json',
@@ -263,6 +267,7 @@
         $.ajax({
             type: 'PUT',
             url: '../rest/user/password',
+            cache: false,
             data: JSON.stringify(json),
             contentType: 'application/json',
             dataType: 'json',

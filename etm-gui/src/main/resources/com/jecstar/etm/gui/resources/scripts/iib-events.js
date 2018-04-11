@@ -38,6 +38,7 @@ function buildEventPage() {
 			    type: 'GET',
 			    contentType: 'application/json',
 			    url: '../rest/iib/node/' + encodeURIComponent($('#sel-node').val()) + '/server/' + encodeURIComponent($(this).val()),
+			    cache: false,
 			    success: function(data) {
 			        if (!data) {
 			            return;
@@ -161,6 +162,7 @@ function buildEventPage() {
 			    type: 'POST',
 			    contentType: 'application/json',
 			    url: '../rest/iib/node/' + encodeURIComponent($('#sel-node').val()) + '/server/' + encodeURIComponent($('#sel-server').val()) + '/' + encodeURIComponent(objectType),
+			    cache: false,
 			    data: JSON.stringify(monitoringData),
 			    success: function(data) {
 			        if (!data) {
@@ -199,6 +201,7 @@ function buildEventPage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/iib/nodes',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -210,6 +213,7 @@ function buildEventPage() {
 				    type: 'GET',
 				    contentType: 'application/json',
 				    url: '../rest/iib/node/' + encodeURIComponent(node.name) + '/servers',
+				    cache: false,
 				    success: function(serverData) {
 				        if (!serverData) {
 				            return;

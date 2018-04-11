@@ -52,6 +52,7 @@ function buildClusterPage() {
 		    type: 'DELETE',
 		    contentType: 'application/json',
 		    url: '../rest/settings/ldap',
+		    cache: false,
 		    success: function(data) {
 		        if (!data) {
 		            return;
@@ -69,6 +70,7 @@ function buildClusterPage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/settings/cluster',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -81,6 +83,7 @@ function buildClusterPage() {
 	    type: 'GET',
 	    contentType: 'application/json',
 	    url: '../rest/settings/ldap',
+	    cache: false,
 	    success: function(data) {
 	        if (!data) {
 	            return;
@@ -96,6 +99,7 @@ function buildClusterPage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/cluster',
+            cache: false,
             data: JSON.stringify(clusterData),
             success: function(data) {
                 if (!data) {
@@ -112,6 +116,7 @@ function buildClusterPage() {
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/ldap',
+            cache: false,
             data: JSON.stringify(ldapData),
             success: function(data) {
                 if (!data) {
