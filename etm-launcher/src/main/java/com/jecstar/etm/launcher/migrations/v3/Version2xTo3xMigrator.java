@@ -263,23 +263,23 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
             List<String> roles = (List<String>) sourceMap.get(this.principalTags.getRolesTag());
             if (roles != null) {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
-                sourceMap.put(this.principalTags.getDefaultSearchRangeTag(), 86400000L);
-                List<Map<String, Object>> templates = (List<Map<String, Object>>) sourceMap.get(this.principalTags.getSearchTemplatesTag());
-                if (templates != null) {
-                    for (Map<String, Object> template : templates) {
-                        if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_LAST_60_MINS.equals(template.get("name"))) {
-                            template.put("query", "*");
-                            template.put("start_time", "now-1h");
-                            template.put("end_time", "now");
-                        } else if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_TODAY.equals(template.get("name"))) {
-                            template.put("query", "*");
-                            template.put("start_time", "now/d");
-                            template.put("end_time", "now/d");
-                        } else if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_YESTERDAY.equals(template.get("name"))) {
-                            template.put("query", "*");
-                            template.put("start_time", "now-1d/d");
-                            template.put("end_time", "now-1d/d");
-                        }
+            }
+            sourceMap.put(this.principalTags.getDefaultSearchRangeTag(), 86400000L);
+            List<Map<String, Object>> templates = (List<Map<String, Object>>) sourceMap.get(this.principalTags.getSearchTemplatesTag());
+            if (templates != null) {
+                for (Map<String, Object> template : templates) {
+                    if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_LAST_60_MINS.equals(template.get("name"))) {
+                        template.put("query", "*");
+                        template.put("start_time", "now-1h");
+                        template.put("end_time", "now");
+                    } else if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_TODAY.equals(template.get("name"))) {
+                        template.put("query", "*");
+                        template.put("start_time", "now/d");
+                        template.put("end_time", "now/d");
+                    } else if (DefaultSearchTemplates.TEMPLATE_NAME_EVENTS_OF_YESTERDAY.equals(template.get("name"))) {
+                        template.put("query", "*");
+                        template.put("start_time", "now-1d/d");
+                        template.put("end_time", "now-1d/d");
                     }
                 }
             }
