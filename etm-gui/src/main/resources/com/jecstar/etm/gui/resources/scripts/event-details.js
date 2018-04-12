@@ -101,9 +101,9 @@ function showEvent(scrollTo, type, id) {
 						hasTransactionId = true;
 						return false;
 					}
-					var reading_endpoint_handlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
-					if (reading_endpoint_handlers) {
-						$.each(reading_endpoint_handlers, function (index, eh) {
+					var readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
+					if (readingEndpointHandlers) {
+						$.each(readingEndpointHandlers, function (index, eh) {
 							if (eh.transaction_id) {
 								hasTransactionId = true;
 								return false;
@@ -154,17 +154,27 @@ function showEvent(scrollTo, type, id) {
 		appendToContainerInRow($eventTab, 'Payload format', data.source.payload_format);
 		var $endpoints = $(data.source.endpoints);
 		if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
-			var writing_times = $endpoints.map(function () {
+			var writingTimes = $endpoints.map(function () {
 			    var writingEndpointHandler = getWritingEndpointHandler(this.endpoint_handlers);
 				if (writingEndpointHandler) {
 					return writingEndpointHandler.handling_time
 				}
 			}).get();
-			if (writing_times.length == 0) {
-			    appendToContainerInRow($eventTab, 'First write time', '');
-			} else {
-			    appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writing_times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+			if (writingTimes.length != 0) {
+			    appendToContainerInRow($eventTab, 'First write time', moment.tz(Math.min.apply(Math, writingTimes), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			}
+			var readingTimes = $endpoints.map(function () {
+                var readingEndpointHandlers = getReadingEndpointHandlers(this.endpoint_handlers);
+                var times = $(readingEndpointHandlers).map(function () {
+                    return this.handling_time;
+                }).get();
+                if (times.length != 0) {
+                    return Math.min.apply(Math, times);
+                }
+            }).get();
+            if (readingTimes.length != 0) {
+                appendToContainerInRow($eventTab, 'First read time', moment.tz(Math.min.apply(Math, readingTimes), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+            }
 		}
 		if ('log' === data.type || 'log' === data.source.object_type) {
 		    $tabHeader.text('Log');
@@ -187,8 +197,8 @@ function showEvent(scrollTo, type, id) {
                                 return writingEndpointHandler.response_time
                             }
 						}).get();
-						if (response_times) {
-							appendToContainerInRow($eventTab, 'Highest writer response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+						if (response_times.length > 0) {
+							appendToContainerInRow($eventTab, 'Highest writer response time', Math.max.apply(Math, response_times));
 						}
 						response_times = $endpoints.map(function () {
 							var readingEndpointHandlers = getReadingEndpointHandlers(this.endpoint_handlers);
@@ -198,8 +208,8 @@ function showEvent(scrollTo, type, id) {
 								}).get();
 							}
 						}).get();
-						if (response_times) {
-							appendToContainerInRow($eventTab, 'Highest reader response time', response_times.length > 0 ? Math.max.apply(Math, response_times) : null);
+						if (response_times.length > 0) {
+							appendToContainerInRow($eventTab, 'Highest reader response time', Math.max.apply(Math, response_times));
 						}
 					}					
 				}

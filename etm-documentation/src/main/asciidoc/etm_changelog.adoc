@@ -10,6 +10,7 @@
 * [ETM-39] env connectAddresses not working in Docker.
 * [ETM-40] Default search templates not working anymore.
 * [ETM-41] Graphs not updating in IE.
+* [ETM-42] Add first reader time to event details screen.
 
 === Version 3.1.0
 * LDAP Synchronization of users.
