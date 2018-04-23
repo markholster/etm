@@ -24,7 +24,13 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
     public void convert(Map<String, Object> valueMap, Event telemetryEvent, String id) {
         telemetryEvent.initialize();
         telemetryEvent.id = id;
+        if (telemetryEvent.id != null && telemetryEvent.id.trim().length() == 0) {
+            telemetryEvent.id = null;
+        }
         telemetryEvent.correlationId = getString(this.tags.getCorrelationIdTag(), valueMap);
+        if (telemetryEvent.correlationId != null && telemetryEvent.correlationId.trim().length() == 0) {
+            telemetryEvent.correlationId = null;
+        }
         Map<String, Object> eventMap = getObject(this.tags.getCorrelationDataTag(), valueMap);
         List<String> correlations = getArray(this.tags.getCorrelationsTag(), valueMap);
         if (correlations != null && !correlations.isEmpty()) {
@@ -125,6 +131,9 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
         endpointHandler.latency = getLong(this.tags.getEndpointHandlerLatencyTag(), valueMap);
         endpointHandler.responseTime = getLong(this.tags.getEndpointHandlerResponseTimeTag(), valueMap);
         endpointHandler.transactionId = getString(this.tags.getEndpointHandlerTransactionIdTag(), valueMap);
+        if (endpointHandler.transactionId != null && endpointHandler.transactionId.trim().length() == 0) {
+            endpointHandler.transactionId = null;
+        }
         endpointHandler.sequenceNumber = getInteger(this.tags.getEndpointHandlerSequenceNumberTag(), valueMap);
         Map<String, Object> locationValueMap = getObject(this.tags.getEndpointHandlerLocationTag(), valueMap);
         if (locationValueMap != null && !locationValueMap.isEmpty()) {

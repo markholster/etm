@@ -1,7 +1,8 @@
 == Changelog
 
 === Version 3.2.0
-* [ETM-43] Start script always starts 'tail' functionality
+* [ETM-43] Start script always starts 'tail' functionality.
+* [ETM-44] Set empty id's to 'null' in processors.
 
 === Version 3.1.1
 * [ETM-33] Fix upgrade documentation on website.
