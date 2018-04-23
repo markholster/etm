@@ -83,6 +83,7 @@ The http event can be used when an application sends or receives a http request 
 |Name|Default value|Description
 |http_type||The http event type. Can be one of CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE or RESPONSE.
 |expiry||The moment the event expires.
+|status_code||The http status code used in the response of a request.
 |=======================
 
 === Log event

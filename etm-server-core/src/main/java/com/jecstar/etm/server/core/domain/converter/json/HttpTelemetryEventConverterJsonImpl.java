@@ -44,6 +44,7 @@ public class HttpTelemetryEventConverterJsonImpl extends HttpTelemetryEventWrite
         this.converter.convert(valueMap, event, id);
         event.expiry = this.converter.getZonedDateTime(getTags().getExpiryTag(), valueMap);
         event.httpEventType = HttpEventType.safeValueOf(this.converter.getString(getTags().getHttpEventTypeTag(), valueMap));
+        event.statusCode = this.converter.getInteger(getTags().getStatusCodeTag(), valueMap);
     }
 
 }

@@ -334,6 +334,7 @@ public class SearchSteps extends AbstractSteps {
                 .setPayloadFormat(PayloadFormat.HTML)
                 .setName("ReturnShoppingCard")
                 .setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE)
+                .setStatusCode(200)
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )

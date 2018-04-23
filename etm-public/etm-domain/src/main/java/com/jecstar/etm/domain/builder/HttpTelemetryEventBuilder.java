@@ -16,7 +16,6 @@ public class HttpTelemetryEventBuilder extends TelemetryEventBuilder<HttpTelemet
         return this;
     }
 
-
     public HttpTelemetryEventBuilder setHttpEventType(HttpEventType httpEventType) {
         this.event.httpEventType = httpEventType;
         return this;
@@ -24,5 +23,10 @@ public class HttpTelemetryEventBuilder extends TelemetryEventBuilder<HttpTelemet
 
     public HttpEventType getHttpEventType() {
         return this.event.httpEventType;
+    }
+
+    public HttpTelemetryEventBuilder setStatusCode(Integer statusCode) {
+        this.event.statusCode = statusCode;
+        return this;
     }
 }

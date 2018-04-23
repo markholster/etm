@@ -20,6 +20,7 @@ public class HttpTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEvent
         if (event.httpEventType != null) {
             added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getHttpEventTypeTag(), event.httpEventType.name(), buffer, !added) || added;
         }
+        added = this.jsonWriter.addIntegerElementToJsonBuffer(getTags().getStatusCodeTag(), event.statusCode, buffer, !added) || added;
         return added;
     }
 

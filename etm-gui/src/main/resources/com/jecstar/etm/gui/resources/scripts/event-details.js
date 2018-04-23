@@ -184,6 +184,7 @@ function showEvent(scrollTo, type, id) {
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			}
+			appendToContainerInRow($eventTab, 'Status code', data.source.status_code);
 			if (data.source.http_type) {
 				// http type known, determine request or response.
 				if ('RESPONSE' === data.source.http_type) {
