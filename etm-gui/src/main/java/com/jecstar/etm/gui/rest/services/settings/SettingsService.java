@@ -891,7 +891,7 @@ public class SettingsService extends AbstractJsonService {
             GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group.getName())
                     .get();
             if (getResponse.isExists()) {
-                Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+                Map<String, Object> sourceAsMap = toMapWithoutNamespace(getResponse.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
                 if (getBoolean(this.etmPrincipalTags.getLdapBaseTag(), sourceAsMap, Boolean.FALSE)) {
                     iterator.remove();
                 }

@@ -5,6 +5,7 @@
 * [ETM-44] Set empty id's to 'null' in processors.
 * [ETM-45] Add http status code field.
 * [ETM-46] Group visualizations not visible in some cases.
+* [ETM-47] LDAP groups of user not visible in users screen.
 
 === Version 3.1.1
 * [ETM-33] Fix upgrade documentation on website.
