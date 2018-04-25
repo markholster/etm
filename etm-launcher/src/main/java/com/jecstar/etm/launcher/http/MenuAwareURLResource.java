@@ -207,7 +207,7 @@ public class MenuAwareURLResource extends URLResource {
                     if (principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
                         // First display the group names
                         for (EtmGroup group : groups) {
-                            if (group.getDashboards().size() == 0 && principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ)) {
+                            if (group.getDashboards().size() == 0 && !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
                                 // Skip a group when it has no dashboards and the user has read only access.
                                 continue;
                             }
