@@ -6,6 +6,7 @@
 * [ETM-45] Add http status code field.
 * [ETM-46] Group visualizations not visible in some cases.
 * [ETM-47] LDAP groups of user not visible in users screen.
+* [ETM-49] Option to use secure cookies.
 
 === Version 3.1.1
 * [ETM-33] Fix upgrade documentation on website.

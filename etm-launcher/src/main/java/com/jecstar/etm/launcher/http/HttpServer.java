@@ -102,10 +102,13 @@ public class HttpServer {
         }
         this.server = builder.setHandler(root).build();
         SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
+        final ServletSessionConfig servletSessionConfig = new ServletSessionConfig();
+        servletSessionConfig.setHttpOnly(true).setSecure(configuration.http.secureCookies);
 
         if (configuration.http.restProcessorEnabled) {
             DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration.http.restProcessorLoginRequired ? identityManager : null);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
             manager.deploy();
             manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
@@ -134,6 +137,7 @@ public class HttpServer {
         if (configuration.http.guiEnabled) {
             DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
             manager.deploy();
             manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);

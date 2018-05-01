@@ -6,6 +6,7 @@ public class Http {
 
     public int httpPort = 8080;
     public int httpsPort = 8443;
+    public boolean secureCookies = false;
 
     public int ioThreads = 2;
     public int workerThreads = 16;

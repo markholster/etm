@@ -63,6 +63,8 @@ http:
   sslTruststorePassword: null
 # The truststore type
   sslTruststoreType: JKS
+# Should the secure flag be set on the session cookies? Set this value to true when your etm instance is accessed via https.
+  secureCookies: false
 
 # The IBM MQ configuration options.  
 ibmMq:
