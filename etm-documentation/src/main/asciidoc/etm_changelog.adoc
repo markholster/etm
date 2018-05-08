@@ -7,6 +7,7 @@
 * [ETM-46] Group visualizations not visible in some cases.
 * [ETM-47] LDAP groups of user not visible in users screen.
 * [ETM-49] Option to use secure cookies.
+* [ETM-52] Index of current day unwritable after migration from 2.4 to 3.1.1.
 
 === Version 3.1.1
 * [ETM-33] Fix upgrade documentation on website.
