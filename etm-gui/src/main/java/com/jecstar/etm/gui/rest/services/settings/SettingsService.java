@@ -72,11 +72,18 @@ public class SettingsService extends AbstractJsonService {
             new FieldLayout("E-mail", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
     };
 
-    private final String parserInEnpointTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
+    private final String parserInEnpointFieldsTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
             "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
             "." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
             "." + this.endpointConfigurationConverter.getTags().getParsersTag() +
             "." + this.endpointConfigurationConverter.getTags().getNameTag();
+
+    private final String parserInEnpointTransformationTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
+            "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
+            "." + this.endpointConfigurationConverter.getTags().getTransformationsTag() +
+            "." + this.endpointConfigurationConverter.getTags().getParserTag() +
+            "." + this.endpointConfigurationConverter.getTags().getNameTag();
+
 
     private static Client client;
     private static EtmConfiguration etmConfiguration;
@@ -456,7 +463,9 @@ public class SettingsService extends AbstractJsonService {
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                        .must(QueryBuilders.termQuery(parserInEnpointTag, parserName))
+                        .should(QueryBuilders.termQuery(parserInEnpointFieldsTag, parserName))
+                        .should(QueryBuilders.termQuery(parserInEnpointTransformationTag, parserName))
+                        .minimumShouldMatch(1)
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
@@ -518,7 +527,7 @@ public class SettingsService extends AbstractJsonService {
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                        .must(QueryBuilders.termQuery(parserInEnpointTag, expressionParser.getName()))
+                        .must(QueryBuilders.termQuery(parserInEnpointFieldsTag, expressionParser.getName()))
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {

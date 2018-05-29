@@ -8,6 +8,7 @@
 * [ETM-47] LDAP groups of user not visible in users screen.
 * [ETM-49] Option to use secure cookies.
 * [ETM-52] Index of current day unwritable after migration from 2.4 to 3.1.1.
+* [ETM-53] Parser keeps attached to endpoint when removed.
 
 === Version 3.1.1
 * [ETM-33] Fix upgrade documentation on website.
