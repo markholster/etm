@@ -380,13 +380,15 @@ function showEvent(scrollTo, type, id) {
 	    }
 	    
 	    function indentCode(code, format) {
-	    	if ('HTML' == format || 'SOAP' == format || 'XML' == format) {
-	    		return vkbeautify.xml(code, 4);
-	    	} else if ('SQL' == format) {
-	    		return vkbeautify.sql(code, 4);
-	    	} else if ('JSON' == format) {
-	    		return vkbeautify.json(code, 4);
-	    	}
+	        try {
+                if ('HTML' == format || 'SOAP' == format || 'XML' == format) {
+                    return vkbeautify.xml(code, 4);
+                } else if ('SQL' == format) {
+                    return vkbeautify.sql(code, 4);
+                } else if ('JSON' == format) {
+                    return vkbeautify.json(code, 4);
+                }
+            } catch (err) {}
 	    	return code;
 	    }
 	}
