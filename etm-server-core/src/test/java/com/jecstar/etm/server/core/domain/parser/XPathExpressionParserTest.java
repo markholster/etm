@@ -1,6 +1,5 @@
-package com.jecstar.etm.server.core.domain.parsers;
+package com.jecstar.etm.server.core.domain.parser;
 
-import com.jecstar.etm.server.core.domain.parser.XPathExpressionParser;
 import net.sf.saxon.om.NamePool;
 import org.junit.jupiter.api.Test;
 

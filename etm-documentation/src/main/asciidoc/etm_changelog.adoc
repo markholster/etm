@@ -10,6 +10,7 @@
 * [ETM-52] Index of current day unwritable after migration from 2.4 to 3.1.1.
 * [ETM-53] Parser keeps attached to endpoint when removed.
 * [ETM-54] Payload not visible when invalid payload_format is set.
+* [ETM-55] XsltExpressionParser is not thread safe.
 
 === Version 3.1.1
 * [ETM-33] Fix upgrade documentation on website.

@@ -1,7 +1,6 @@
-package com.jecstar.etm.server.core.domain.parsers;
+package com.jecstar.etm.server.core.domain.parser;
 
 
-import com.jecstar.etm.server.core.domain.parser.JsonPathExpressionParser;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

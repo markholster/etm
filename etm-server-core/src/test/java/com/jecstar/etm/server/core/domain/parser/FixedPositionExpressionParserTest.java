@@ -1,7 +1,5 @@
-package com.jecstar.etm.server.core.domain.parsers;
+package com.jecstar.etm.server.core.domain.parser;
 
-import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
-import com.jecstar.etm.server.core.domain.parser.FixedPositionExpressionParser;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
