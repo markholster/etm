@@ -143,6 +143,7 @@ function buildClusterPage() {
 		$("#input-search-max-history-size").val(data.max_search_history_count);
 		$("#input-visualization-max-graph-count").val(data.max_graph_count);
 		$("#input-visualization-max-dashboard-count").val(data.max_dashboard_count);
+		$("#input-signal-max-signal-count").val(data.max_signal_count);
 		$("#input-enhancing-handler-count").val(data.enhancing_handler_count);
 		$("#input-persisting-handler-count").val(data.persisting_handler_count);
 		$("#input-event-buffer-size").val(data.event_buffer_size);
@@ -162,6 +163,7 @@ function buildClusterPage() {
 			clusterData.max_search_history_count = Number($("#input-search-max-history-size").val());
 			clusterData.max_graph_count = Number($("#input-visualization-max-graph-count").val());
 			clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
+			clusterData.max_signal_count = Number($("#input-signal-max-signal-count").val());
 		} else if ('Elasticsearch' == context) {
 			clusterData.shards_per_index = Number($("#input-shards-per-index").val());
 			clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());

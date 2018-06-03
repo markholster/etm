@@ -1,8 +1,8 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
-import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.AggregationBuilder;

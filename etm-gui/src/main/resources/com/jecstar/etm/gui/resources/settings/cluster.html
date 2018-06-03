@@ -62,13 +62,6 @@
                             <a id="ldap-tab-header" data-toggle="tab" href="#ldap-tab" role="tab"
                                aria-controls="ldap-tab" aria-selected="false" class="nav-link">Ldap</a>
                         </li>
-                        <!--
-                                                <li class="nav-item">
-                                                    <a id="notifications-tab-header" data-toggle="tab" href="#notifications-tab" role="tab"
-                                                       aria-controls="notifications-tab" aria-selected="false"
-                                                       class="nav-link">Notifications</a>
-                                                </li>
-                        -->
                     </ul>
                     <div id="tabcontents" class="tab-content">
                         <br/>
@@ -122,6 +115,15 @@
                                            class="col-sm-3 col-form-label">Max dashboards</label>
                                     <div class="col-sm-9">
                                         <input id="input-visualization-max-dashboard-count" type="number"
+                                               class="form-control" min="0" required="required"/>
+                                    </div>
+                                </div>
+                                <hr/>
+                                <div class="form-group row">
+                                    <label for="input-signal-max-signal-count"
+                                           class="col-sm-3 col-form-label">Max signals</label>
+                                    <div class="col-sm-9">
+                                        <input id="input-signal-max-signal-count" type="number"
                                                class="form-control" min="0" required="required"/>
                                     </div>
                                 </div>

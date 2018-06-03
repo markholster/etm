@@ -15,6 +15,10 @@ public final class SecurityRoles {
     public static final String GROUP_DASHBOARD_READ = "group_dashboard_read";
     public static final String GROUP_DASHBOARD_READ_WRITE = "group_dashboard_read_write";
 
+    public static final String USER_SIGNAL_READ_WRITE = "user_signal_read_write";
+    public static final String GROUP_SIGNAL_READ = "group_signal_read";
+    public static final String GROUP_SIGNAL_READ_WRITE = "group_signal_read_write";
+
     public static final String IIB_NODE_READ = "iib_node_read";
     public static final String IIB_NODE_READ_WRITE = "iib_node_read_write";
 
@@ -40,6 +44,9 @@ public final class SecurityRoles {
     public static final String NODE_SETTINGS_READ = "node_settings_read";
     public static final String NODE_SETTINGS_READ_WRITE = "node_settings_read_write";
 
+    public static final String NOTIFIERS_READ = "notifiers_read";
+    public static final String NOTIFIERS_READ_WRITE = "notifiers_read_write";
+
     public static final String PARSER_SETTINGS_READ = "parser_settings_read";
     public static final String PARSER_SETTINGS_READ_WRITE = "parser_settings_read_write";
 
@@ -62,6 +69,8 @@ public final class SecurityRoles {
             GROUP_DASHBOARD_READ_WRITE,
             GROUP_SETTINGS_READ,
             GROUP_SETTINGS_READ_WRITE,
+            GROUP_SIGNAL_READ,
+            GROUP_SIGNAL_READ_WRITE,
             IIB_EVENT_READ,
             IIB_EVENT_READ_WRITE,
             IIB_NODE_READ,
@@ -71,12 +80,16 @@ public final class SecurityRoles {
             LICENSE_READ_WRITE,
             NODE_SETTINGS_READ,
             NODE_SETTINGS_READ_WRITE,
+            NOTIFIERS_READ,
+            NOTIFIERS_READ_WRITE,
             PARSER_SETTINGS_READ,
             PARSER_SETTINGS_READ_WRITE,
             USER_DASHBOARD_READ_WRITE,
             USER_SETTINGS_READ,
-            USER_SETTINGS_READ_WRITE
+            USER_SETTINGS_READ_WRITE,
+            USER_SIGNAL_READ_WRITE
     };
+
 
     /**
      * All roles defined a String that can be used in annotations.
@@ -94,6 +107,8 @@ public final class SecurityRoles {
             ",\"" + GROUP_DASHBOARD_READ_WRITE + "\"" +
             ",\"" + GROUP_SETTINGS_READ + "\"" +
             ",\"" + GROUP_SETTINGS_READ_WRITE + "\"" +
+            ",\"" + GROUP_SIGNAL_READ + "\"" +
+            ",\"" + GROUP_SIGNAL_READ_WRITE + "\"" +
             ",\"" + IIB_EVENT_READ + "\"" +
             ",\"" + IIB_EVENT_READ_WRITE + "\"" +
             ",\"" + IIB_NODE_READ + "\"" +
@@ -103,11 +118,14 @@ public final class SecurityRoles {
             ",\"" + LICENSE_READ_WRITE + "\"" +
             ",\"" + NODE_SETTINGS_READ + "\"" +
             ",\"" + NODE_SETTINGS_READ_WRITE + "\"" +
+            ",\"" + NOTIFIERS_READ + "\"" +
+            ",\"" + NOTIFIERS_READ_WRITE + "\"" +
             ",\"" + PARSER_SETTINGS_READ + "\"" +
             ",\"" + PARSER_SETTINGS_READ_WRITE + "\"" +
             ",\"" + USER_DASHBOARD_READ_WRITE + "\"" +
             ",\"" + USER_SETTINGS_READ + "\"" +
             ",\"" + USER_SETTINGS_READ_WRITE + "\"" +
+            ",\"" + USER_SIGNAL_READ_WRITE + "\"" +
             "}";
 
     /**
@@ -117,11 +135,7 @@ public final class SecurityRoles {
             .filter(p -> {
                 if (p.endsWith("_read") && Arrays.stream(ALL_ROLES_ARRAY).anyMatch(t -> t.equals(p + "_write"))) {
                     return false;
-                } else if (ETM_EVENT_WRITE.equals(p)) {
-                    // Skip etm_event_write because there's also an etm_event_read_write
-                    return false;
-                }
-                return true;
+                } else return !ETM_EVENT_WRITE.equals(p);
             })
             .toArray(String[]::new);
 

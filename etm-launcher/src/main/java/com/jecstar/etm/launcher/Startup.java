@@ -7,11 +7,11 @@ import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.slf4j.EtmLoggerFactory;
 import com.jecstar.etm.launcher.slf4j.LogConfiguration;
-import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
-import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 import com.jecstar.etm.processor.jms.configuration.CustomConnectionFactory;
 import com.jecstar.etm.processor.jms.configuration.JNDIConnectionFactory;
 import com.jecstar.etm.processor.jms.configuration.NativeConnectionFactory;
+import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
+import com.jecstar.etm.server.core.persisting.internal.InternalBulkProcessorWrapper;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -80,7 +80,7 @@ class Startup {
             throw new FileNotFoundException(configFile.getAbsolutePath());
         }
         Configuration configuration;
-        try (Reader reader = new FileReader(configFile);) {
+        try (Reader reader = new FileReader(configFile)) {
             Constructor constructor = new Constructor();
             constructor.addTypeDescription(new TypeDescription(NativeConnectionFactory.class, new Tag("!nativeConnectionFactory")));
             constructor.addTypeDescription(new TypeDescription(JNDIConnectionFactory.class, new Tag("!jndiConnectionFactory")));

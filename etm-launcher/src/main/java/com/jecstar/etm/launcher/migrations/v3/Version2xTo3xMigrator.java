@@ -1,6 +1,5 @@
 package com.jecstar.etm.launcher.migrations.v3;
 
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
@@ -11,9 +10,12 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequest;
@@ -23,12 +25,14 @@ import org.elasticsearch.action.update.UpdateAction;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -76,7 +80,6 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         if (!shouldBeExecuted()) {
             return;
         }
-
         GetIndexResponse indexResponse = this.client.admin().indices().prepareGetIndex().addIndices(this.migrationIndexPrefix + "*").get();
         if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
             System.out.println("Found migration indices from a previous run. Deleting those indices.");
@@ -142,6 +145,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
         deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
         deleteTemporaryIndexTemplate(this.client, this.migrationIndexPrefix);
+        updateDocMappingForCurrentEventIndex(this.client);
         checkAndCreateIndexExistence(client,
                 ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
@@ -149,7 +153,6 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                 ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL
         );
     }
-
 
     private boolean migrateMetrics(Client client, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
@@ -478,6 +481,80 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                 requestBuilder
         );
     }
+
+    /**
+     * The event index of will not work with the new index template so we need to make it compatible over here.
+     *
+     * @param client The elasticsearch client.
+     */
+    private void updateDocMappingForCurrentEventIndex(Client client) {
+        PutMappingRequestBuilder builder = client.admin().indices().preparePutMapping(ElasticsearchLayout.EVENT_INDEX_PREFIX + DateUtils.getIndexPerDayFormatter().format(ZonedDateTime.now()));
+        builder.setType("doc").setSource(
+                "{\n" +
+                        "  \"dynamic_templates\": [\n" +
+                        "    {\n" +
+                        "      \"location\": {\n" +
+                        "        \"match\": \"location\",\n" +
+                        "        \"mapping\": {\n" +
+                        "          \"type\": \"geo_point\"\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    },\n" +
+                        "    {\n" +
+                        "      \"handling_time\": {\n" +
+                        "        \"match\": \"handling_time\",\n" +
+                        "        \"mapping\": {\n" +
+                        "          \"type\": \"date\"\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    },\n" +
+                        "    {\n" +
+                        "      \"host_address\": {\n" +
+                        "        \"match\": \"host_address\",\n" +
+                        "        \"mapping\": {\n" +
+                        "          \"type\": \"ip\"\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    },\n" +
+                        "    {\n" +
+                        "      \"expiry\": {\n" +
+                        "        \"match\": \"expiry\",\n" +
+                        "        \"mapping\": {\n" +
+                        "          \"type\": \"date\"\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    },\n" +
+                        "    {\n" +
+                        "      \"timestamp\": {\n" +
+                        "        \"match\": \"timestamp\",\n" +
+                        "        \"mapping\": {\n" +
+                        "          \"type\": \"date\"\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    },\n" +
+                        "    {\n" +
+                        "        \"payload\": {\n" +
+                        "            \"match\": \"payload\",\n" +
+                        "            \"mapping\": {\n" +
+                        "                \"type\": \"text\",\n" +
+                        "                \"index\": \"analyzed\"\n" +
+                        "            }\n" +
+                        "        }\n" +
+                        "    },    \n" +
+                        "    {\n" +
+                        "      \"string_as_text\": {\n" +
+                        "        \"match_mapping_type\": \"string\",\n" +
+                        "        \"mapping\": {\n" +
+                        "          \"type\": \"keyword\"\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  ]\n" +
+                        "}",
+                XContentType.JSON
+        ).get();
+    }
+
 
     private boolean migrateEntity(String entityName, String index, String type, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
         System.out.println("Start migrating " + entityName + " to temporary index.");

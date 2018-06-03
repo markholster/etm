@@ -2,9 +2,9 @@ package com.jecstar.etm.launcher;
 
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;

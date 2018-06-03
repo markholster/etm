@@ -2,7 +2,7 @@ ext {
     version_artemis = "2.3.0"
     version_cucumber = "2.3.1"
     version_elasticsearch_major = "6.2"
-    version_elasticsearch = version_elasticsearch_major + ".3"
+    version_elasticsearch = version_elasticsearch_major + ".4"
     version_junit = "5.1.0"
     version_resteasy = "3.1.4.Final"
     version_slf4j = "1.7.25"
@@ -21,12 +21,10 @@ ext {
     dep_jms = "javax.jms:javax.jms-api:2.0.1"
     dep_jaxb = "javax.xml.bind:jaxb-api:2.3.0"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
-    dep_junit = "org.junit.jupiter:junit-jupiter-api:" + version_junit
-    dep_junitVintage = "org.junit.vintage:junit-vintage-engine:" + version_junit
     dep_kafka = "org.apache.kafka:kafka-clients:1.0.0"
     dep_ldaptive = "org.ldaptive:ldaptive:1.2.3"
     dep_log4jToSlf4j = "org.apache.logging.log4j:log4j-to-slf4j:2.9.1"
-    dep_mailApi = "javax.mail:javax.mail-api:1.6.0"
+    dep_mailApi = "com.sun.mail:javax.mail:1.6.1"
     dep_metricsCore = "io.dropwizard.metrics:metrics-core:3.2.5"
     dep_resteasyJaxrs = "org.jboss.resteasy:resteasy-jaxrs:" + version_resteasy
     dep_resteasyJacksonProvider = "org.jboss.resteasy:resteasy-jackson2-provider:" + version_resteasy
@@ -37,13 +35,13 @@ ext {
     dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_slf4jSimple = "org.slf4j:slf4j-simple:" + version_slf4j
     dep_snakeyaml = "org.yaml:snakeyaml:1.18"
-    dep_undertowServlet = "io.undertow:undertow-servlet:1.4.21.Final"
+    dep_undertowServlet = "io.undertow:undertow-servlet:2.0.4.Final"
 }
 
 allprojects {
     apply plugin: "eclipse"
     apply plugin: "idea"
-    version "3.1.1"
+    version "3.2.0-SNAPSHOT"
     group "com.jecstar.etm"
 
     repositories {
@@ -62,6 +60,29 @@ allprojects {
         compileTestJava {
             options.encoding = 'UTF-8'
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+
+
+        dependencies {
+            testCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+            testImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
+            testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
+        }
+
+        sourceSets.whenObjectAdded {
+            if ('integrationTest'.equals(it.name)) {
+                dependencies {
+                    integrationTestCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+                    integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+                    integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
+                    integrationTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
+                }
+            }
+        }
+
+        test {
+            useJUnitPlatform()
         }
     }
 }

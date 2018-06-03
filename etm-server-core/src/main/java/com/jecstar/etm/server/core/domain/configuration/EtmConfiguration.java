@@ -28,6 +28,7 @@ public class EtmConfiguration {
     private static final String CONFIG_KEY_MAX_SEARCH_HISTORY_COUNT = "maxSearchHistoryCount";
     private static final String CONFIG_KEY_MAX_GRAPH_COUNT = "maxGraphCount";
     private static final String CONFIG_KEY_MAX_DASHBOARD_COUNT = "maxDashboardCount";
+    private static final String CONFIG_KEY_MAX_SIGNAL_COUNT = "maxSignalCount";
 
     // Node configurations
     public static final String CONFIG_KEY_ENHANCING_HANDLER_COUNT = "enhancingHandlerCount";
@@ -71,6 +72,9 @@ public class EtmConfiguration {
     // Visualization options
     private int maxGraphCount = 100;
     private int maxDashboardCount = 10;
+
+    // Signal options
+    private int maxSignalCount = 10;
 
     // General options
     private long sessionTimeout = 30 * 60 * 1000;
@@ -357,12 +361,23 @@ public class EtmConfiguration {
     }
 
     public int getMaxDashboardCount() {
-        return maxDashboardCount;
+        return this.maxDashboardCount;
     }
 
     public EtmConfiguration setMaxDashboardCount(Integer maxDashboardCount) {
         if (maxDashboardCount != null && maxDashboardCount >= 0) {
             this.maxDashboardCount = maxDashboardCount;
+        }
+        return this;
+    }
+
+    public int getMaxSignalCount() {
+        return this.maxSignalCount;
+    }
+
+    public EtmConfiguration setMaxSignalCount(Integer maxSignalCount) {
+        if (maxSignalCount != null && maxSignalCount >= 0) {
+            this.maxSignalCount = maxSignalCount;
         }
         return this;
     }
@@ -514,6 +529,10 @@ public class EtmConfiguration {
         if (this.maxDashboardCount != etmConfiguration.getMaxDashboardCount()) {
             setMaxDashboardCount(etmConfiguration.getMaxDashboardCount());
             changed.add(CONFIG_KEY_MAX_DASHBOARD_COUNT);
+        }
+        if (this.maxSignalCount != etmConfiguration.getMaxSignalCount()) {
+            setMaxSignalCount(etmConfiguration.getMaxSignalCount());
+            changed.add(CONFIG_KEY_MAX_SIGNAL_COUNT);
         }
         if (this.sessionTimeout != etmConfiguration.getSessionTimeout()) {
             setSessionTimeout(etmConfiguration.getSessionTimeout());

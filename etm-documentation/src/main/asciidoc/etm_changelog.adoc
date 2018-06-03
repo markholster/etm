@@ -1,5 +1,19 @@
 == Changelog
 
+=== Version 3.2.0
+* [ETM-14] Add signals.
+* [ETM-43] Start script always starts 'tail' functionality.
+* [ETM-44] Set empty id's to 'null' in processors.
+* [ETM-45] Add http status code field.
+* [ETM-46] Group visualizations not visible in some cases.
+* [ETM-47] LDAP groups of user not visible in users screen.
+* [ETM-49] Option to use secure cookies.
+* [ETM-50] Label required fields italic.
+* [ETM-52] Index of current day unwritable after migration from 2.4 to 3.1.1.
+* [ETM-53] Parser keeps attached to endpoint when removed.
+* [ETM-54] Payload not visible when invalid payload_format is set.
+* [ETM-55] XsltExpressionParser is not thread safe.
+
 === Version 3.1.1
 * [ETM-33] Fix upgrade documentation on website.
 * [ETM-34] Autocomplete not working in IE.
@@ -80,7 +94,7 @@ Additional labels for pre-release and build metadata are available as extensions
 . Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
 . If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
 . Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
-. Dowload and uncompress {etm} to a new directory.
+. Download and uncompress {etm} to a new directory.
 . Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
 . Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
 . Check if any of the <<Version specific changes>> applies to your situation.

@@ -63,6 +63,8 @@ http:
   sslTruststorePassword: null
 # The truststore type
   sslTruststoreType: JKS
+# Should the secure flag be set on the session cookies? Set this value to true when your etm instance is accessed via https.
+  secureCookies: false
 
 # The IBM MQ configuration options.  
 ibmMq:
@@ -104,6 +106,7 @@ jms:
 #      type: queue
 #      messagesType: auto
 
+# The kafka configuration options.
 kafka:
 # Should the JMS processor be enabled. Set this option to true if you want to process events from a kafka topic.
   enabled: false
@@ -115,6 +118,11 @@ kafka:
 #    - "server2:9092"
 #    nrOfListeners: 1
 
+# The signaler configuration options.
+signaler:
+# Should the signaler be enabled. Set this value to true to let this node send signals to end users/systems.
+  enabled: true
+
 # The logging options.
 logging:
 # Set a specific logger to a specific level. For example
@@ -123,5 +131,5 @@ logging:
 #    com.jecstar.etm.gui: INFO
 # will log all classes of ETM in DEBUG level, with the exception of the classes in the gui component. They are logged in INFO level. 
   loggers: {}
- # The level of the root logger. Can be one of TRACE, DEBUG, INFO, WARNING, ERROR
+# The level of the root logger. Can be one of TRACE, DEBUG, INFO, WARNING, ERROR
   rootLogger: INFO

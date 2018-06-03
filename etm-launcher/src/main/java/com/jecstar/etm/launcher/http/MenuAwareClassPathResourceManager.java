@@ -44,6 +44,8 @@ class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
                     menuContext = MenuContext.SEARCH;
                 } else if (lowerCasePath.startsWith("/dashboard/")) {
                     menuContext = MenuContext.DASHBOARD;
+                } else if (lowerCasePath.startsWith("/signal/")) {
+                    menuContext = MenuContext.SIGNAL;
                 } else if (lowerCasePath.startsWith("/preferences/")) {
                     menuContext = MenuContext.PREFERENCES;
                 } else if (lowerCasePath.startsWith("/settings/") || lowerCasePath.startsWith("/iib/")) {

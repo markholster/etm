@@ -45,21 +45,21 @@ public enum DateInterval {
     }
 
     public static DateInterval safeValueOf(String interval) {
-        if ("seconds".equals(interval)) {
+        if ("seconds".equalsIgnoreCase(interval)) {
             return DateInterval.SECONDS;
-        } else if ("minutes".equals(interval)) {
+        } else if ("minutes".equalsIgnoreCase(interval)) {
             return DateInterval.MINUTES;
-        } else if ("hours".equals(interval)) {
+        } else if ("hours".equalsIgnoreCase(interval)) {
             return DateInterval.HOURS;
-        } else if ("days".equals(interval)) {
+        } else if ("days".equalsIgnoreCase(interval)) {
             return DateInterval.DAYS;
-        } else if ("weeks".equals(interval)) {
+        } else if ("weeks".equalsIgnoreCase(interval)) {
             return DateInterval.WEEKS;
-        } else if ("months".equals(interval)) {
+        } else if ("months".equalsIgnoreCase(interval)) {
             return DateInterval.MONTHS;
-        } else if ("quarters".equals(interval)) {
+        } else if ("quarters".equalsIgnoreCase(interval)) {
             return DateInterval.QUARTERS;
-        } else if ("years".equals(interval)) {
+        } else if ("years".equalsIgnoreCase(interval)) {
             return DateInterval.YEARS;
         }
         return DateInterval.DAYS;

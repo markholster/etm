@@ -4,7 +4,6 @@ import com.jecstar.etm.server.core.domain.configuration.*;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.ActionFuture;
@@ -26,7 +25,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     private final Client elasticClient;
     private final String elasticsearchIndexName;
     private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
-    private final LdapConfigurationConverter<String> ldapConfigurationConverter = new LdapConfigurationConverterJsonImpl();
+    private final LdapConfigurationConverter ldapConfigurationConverter = new LdapConfigurationConverter();
 
     private long lastCheckedForUpdates;
 
@@ -192,6 +191,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     }
 
     @Override
+    public int getMaxSignalCount() {
+        reloadConfigurationWhenNecessary();
+        return super.getMaxSignalCount();
+    }
+
+    @Override
     public long getSessionTimeout() {
         reloadConfigurationWhenNecessary();
         return super.getSessionTimeout();
@@ -257,7 +262,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
                     }
                 });
         this.elasticClient.prepareSearch(indexNameOfToday)
-                .setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.writing_endpoint_handler.application.name: \"Enterprise Telemetry Monitor\"")))
+                .setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.endpoint_handlers.application.name: \"Enterprise Telemetry Monitor\"")))
                 .execute(new ActionListener<SearchResponse>() {
                     @Override
                     public void onResponse(SearchResponse response) {

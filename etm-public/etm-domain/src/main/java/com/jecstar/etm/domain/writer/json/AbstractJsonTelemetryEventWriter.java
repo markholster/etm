@@ -135,7 +135,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
         buffer.append("{");
         boolean added = this.jsonWriter.addStringElementToJsonBuffer(tags.getEndpointHandlerTypeTag(), endpointHandler.type.name(), buffer, true);
         if (endpointHandler.handlingTime != null) {
-            added = this.jsonWriter.addLongElementToJsonBuffer(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime.toInstant().toEpochMilli(), buffer, !added) || added;
+            added = this.jsonWriter.addZonedDateTimeElementToJsonBuffer(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime, buffer, !added) || added;
             if (latencyStart != null) {
                 added = this.jsonWriter.addLongElementToJsonBuffer(tags.getEndpointHandlerLatencyTag(), endpointHandler.handlingTime.toInstant().toEpochMilli() - latencyStart.toInstant().toEpochMilli(), buffer, !added) || added;
             }

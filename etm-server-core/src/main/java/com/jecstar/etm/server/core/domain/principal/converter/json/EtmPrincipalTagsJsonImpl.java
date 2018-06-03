@@ -103,4 +103,9 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
     public String getGraphsTag() {
         return "graphs";
     }
+
+    @Override
+    public String getSignalsTag() {
+        return "signals";
+    }
 }

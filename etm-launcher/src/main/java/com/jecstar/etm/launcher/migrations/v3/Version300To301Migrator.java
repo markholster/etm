@@ -1,12 +1,12 @@
 package com.jecstar.etm.launcher.migrations.v3;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.ElasticBackedEtmConfiguration;
 import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
 import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;

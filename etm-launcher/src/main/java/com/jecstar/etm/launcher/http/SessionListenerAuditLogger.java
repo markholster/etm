@@ -1,9 +1,7 @@
 package com.jecstar.etm.launcher.http;
 
-import com.jecstar.etm.server.core.domain.audit.LogoutAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builder.LogoutAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.audit.converter.json.LogoutAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.LogoutAuditLogConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
@@ -27,7 +25,7 @@ class SessionListenerAuditLogger implements SessionListener {
 
     private final Client client;
     private final EtmConfiguration etmConfiguration;
-    private final AuditLogConverter<String, LogoutAuditLog> auditLogConverter = new LogoutAuditLogConverterJsonImpl();
+    private final LogoutAuditLogConverter auditLogConverter = new LogoutAuditLogConverter();
 
     public SessionListenerAuditLogger(Client client, EtmConfiguration etmConfiguration) {
         this.client = client;

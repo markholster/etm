@@ -3,6 +3,7 @@ package com.jecstar.etm.launcher.configuration;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
 import com.jecstar.etm.processor.jms.configuration.Jms;
 import com.jecstar.etm.processor.kafka.configuration.Kafka;
+import com.jecstar.etm.signaler.configuration.Signaler;
 
 public class Configuration {
 
@@ -15,6 +16,7 @@ public class Configuration {
     public final Elasticsearch elasticsearch = new Elasticsearch();
     public final Http http = new Http();
     public final Logging logging = new Logging();
+    public final Signaler signaler = new Signaler();
 
     public final IbmMq ibmMq = new IbmMq();
     public final Jms jms = new Jms();

@@ -89,8 +89,13 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                     break;
                 case EtmException.MAX_NR_OF_GRAPHS_REACHED:
                     errorMessage.setMessage("Maximum number of graphs reached");
+                    break;
                 case EtmException.MAX_NR_OF_DASHBOARDS_REACHED:
                     errorMessage.setMessage("Maximum number of dashboards reached");
+                    break;
+                case EtmException.MAX_NR_OF_SIGNALS_REACHED:
+                    errorMessage.setMessage("Maximum number of signals reached");
+                    break;
                 default:
                     break;
             }

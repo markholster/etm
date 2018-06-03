@@ -160,7 +160,9 @@ public class Directory implements AutoCloseable {
         Set<EtmGroup> groups = getGroups();
         groups.removeIf(etmGroup -> !groupDn.equals(etmGroup.getName()));
         if (groups.size() != 1) {
-            // TODO logging
+            if (log.isDebugLevelEnabled()) {
+                log.logDebugMessage("No ldap group found with DN '" + groupDn + "'");
+            }
             return null;
         }
         return groups.iterator().next();
@@ -190,7 +192,9 @@ public class Directory implements AutoCloseable {
     public EtmPrincipal getPrincipal(String userId, boolean includeGroups) {
         List<EtmPrincipal> principals = searchPrincipal(userId, includeGroups);
         if (principals.size() != 1) {
-            // TODO logging
+            if (log.isDebugLevelEnabled()) {
+                log.logDebugMessage("Expected a single principal, but found " + principals.size() + " principals with id '" + userId + "'.");
+            }
             return null;
         }
         return principals.get(0);

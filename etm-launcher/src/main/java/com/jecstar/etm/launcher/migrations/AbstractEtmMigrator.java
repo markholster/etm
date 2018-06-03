@@ -1,6 +1,6 @@
 package com.jecstar.etm.launcher.migrations;
 
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateAction;

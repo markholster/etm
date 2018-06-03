@@ -184,6 +184,7 @@ function showEvent(scrollTo, type, id) {
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
 			}
+			appendToContainerInRow($eventTab, 'Status code', data.source.status_code);
 			if (data.source.http_type) {
 				// http type known, determine request or response.
 				if ('RESPONSE' === data.source.http_type) {
@@ -379,13 +380,15 @@ function showEvent(scrollTo, type, id) {
 	    }
 	    
 	    function indentCode(code, format) {
-	    	if ('HTML' == format || 'SOAP' == format || 'XML' == format) {
-	    		return vkbeautify.xml(code, 4);
-	    	} else if ('SQL' == format) {
-	    		return vkbeautify.sql(code, 4);
-	    	} else if ('JSON' == format) {
-	    		return vkbeautify.json(code, 4);
-	    	}
+	        try {
+                if ('HTML' == format || 'SOAP' == format || 'XML' == format) {
+                    return vkbeautify.xml(code, 4);
+                } else if ('SQL' == format) {
+                    return vkbeautify.sql(code, 4);
+                } else if ('JSON' == format) {
+                    return vkbeautify.json(code, 4);
+                }
+            } catch (err) {}
 	    	return code;
 	    }
 	}
@@ -900,7 +903,7 @@ function showEvent(scrollTo, type, id) {
 				)
 		);
 		
-		$auditTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
+		var $auditTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
         	$('<thead>').append(
         		$('<tr>').append(
         			$('<th>').attr('style' ,'padding: 0.1rem;').text('Handling time'),
@@ -909,7 +912,7 @@ function showEvent(scrollTo, type, id) {
 	        	)
 	        )
 	    ).append(function () {
-	        $tbody = $('<tbody>');
+	        var $tbody = $('<tbody>');
 	        $.each(auditLogs, function(index, auditLog) {
 	        	$tbody.append(
 	        		$('<tr>').append(

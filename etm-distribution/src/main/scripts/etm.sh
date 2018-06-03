@@ -344,7 +344,7 @@ reinitialize() {
     eval $COMMAND_LINE
 }
 
-tail() {
+tailNode() {
     # The string passed to eval must handles spaces in paths correctly.
     COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -Xms256m -Xmx1024m -Xss256m -classpath \"$CLASSPATH\" -Djava.net.useSystemProxies=true -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\" --tail"
     eval $COMMAND_LINE
@@ -390,7 +390,7 @@ case "$1" in
         ;;
 
     'tail')
-        tail
+        tailNode
         ;;
     *)
         echo "Usage: $0 { console | start | stop | restart | status | dump | reinitialize | tail}"

@@ -120,15 +120,15 @@ public class JsonConverter extends JsonWriter {
     }
 
     public ZonedDateTime getZonedDateTime(String tag, Map<String, Object> valueMap) {
-        String stringDate = getString(tag, valueMap);
-        if (stringDate == null) {
+        Long epochTime = getLong(tag, valueMap);
+        if (epochTime == null) {
             return null;
         }
         try {
-            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(stringDate)), ZoneOffset.UTC);
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochTime), ZoneOffset.UTC);
         } catch (NumberFormatException nfe) {
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("'" + stringDate + "' could not be converted to a long. ZonedDateTime could not be determined.");
+                log.logDebugMessage("'" + epochTime + "' could not be converted to a long. ZonedDateTime could not be determined.");
             }
             return null;
         }

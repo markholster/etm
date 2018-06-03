@@ -4,7 +4,7 @@ import com.jecstar.etm.server.core.domain.audit.AuditLog;
 
 import java.time.ZonedDateTime;
 
-abstract class AbstractAuditLogBuilder<Audit extends AuditLog<Audit>, Builder extends AbstractAuditLogBuilder<Audit, Builder>> {
+abstract class AbstractAuditLogBuilder<Audit extends AuditLog, Builder extends AbstractAuditLogBuilder<Audit, Builder>> {
 
     final Audit audit;
 

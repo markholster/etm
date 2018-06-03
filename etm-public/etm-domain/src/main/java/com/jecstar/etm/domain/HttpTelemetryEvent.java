@@ -34,12 +34,18 @@ public class HttpTelemetryEvent extends TelemetryEvent<HttpTelemetryEvent> {
      */
     public ZonedDateTime expiry;
 
+    /**
+     * The http status codes returned by the server. This is only relevant when the {@link #httpEventType} is set to RESPONSE.
+     */
+    public Integer statusCode;
+
 
     @Override
     public HttpTelemetryEvent initialize() {
         super.internalInitialize();
         this.expiry = null;
         this.httpEventType = null;
+        this.statusCode = null;
         return this;
     }
 
@@ -48,6 +54,7 @@ public class HttpTelemetryEvent extends TelemetryEvent<HttpTelemetryEvent> {
         super.internalInitialize(copy);
         this.expiry = copy.expiry;
         this.httpEventType = copy.httpEventType;
+        this.statusCode = copy.statusCode;
         return this;
     }
 

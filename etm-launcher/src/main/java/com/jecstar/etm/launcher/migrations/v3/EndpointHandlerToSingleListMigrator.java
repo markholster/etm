@@ -1,10 +1,10 @@
 package com.jecstar.etm.launcher.migrations.v3;
 
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptRequest;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;

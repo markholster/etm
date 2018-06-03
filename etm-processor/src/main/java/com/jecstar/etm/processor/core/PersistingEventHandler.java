@@ -5,8 +5,8 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.processor.core.persisting.elastic.*;
 import com.jecstar.etm.server.core.domain.converter.json.*;
+import com.jecstar.etm.server.core.persisting.elastic.*;
 import com.lmax.disruptor.EventHandler;
 
 import java.io.Closeable;

@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest;
 
 import com.jecstar.etm.server.core.domain.QueryOccurrence;
+import com.jecstar.etm.server.core.domain.principal.FilterQuery;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;

@@ -50,6 +50,8 @@ public interface EtmConfigurationTags {
 
     String getMaxDashboardCountTag();
 
+    String getMaxSignalCountTag();
+
     // Search history tags
     String getSearchHistoryTag();
 

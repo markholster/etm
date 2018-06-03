@@ -102,10 +102,13 @@ public class HttpServer {
         }
         this.server = builder.setHandler(root).build();
         SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
+        final ServletSessionConfig servletSessionConfig = new ServletSessionConfig();
+        servletSessionConfig.setHttpOnly(true).setSecure(configuration.http.secureCookies);
 
         if (configuration.http.restProcessorEnabled) {
             DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration.http.restProcessorLoginRequired ? identityManager : null);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
             manager.deploy();
             manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
@@ -134,6 +137,7 @@ public class HttpServer {
         if (configuration.http.guiEnabled) {
             DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
             manager.deploy();
             manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
@@ -241,10 +245,10 @@ public class HttpServer {
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
         di.addSecurityConstraint(new SecurityConstraint()
                 .addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
-                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/graphs.html").addUrlPattern("/rest/dashboard/*")));
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/graphs.html").addUrlPattern("/dashboard/dashboards.html").addUrlPattern("/rest/dashboard/*")));
         di.addSecurityConstraint(new SecurityConstraint()
-                .addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)
-                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/dashboard/dashboards.html").addUrlPattern("/rest/dashboard/*")));
+                .addRolesAllowed(SecurityRoles.USER_SIGNAL_READ_WRITE, SecurityRoles.GROUP_SIGNAL_READ, SecurityRoles.GROUP_SIGNAL_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/signal/signals.html").addUrlPattern("/rest/signal/*")));
         di.addSecurityConstraint(new SecurityConstraint()
                 .addRolesAllowed(SecurityRoles.IIB_NODE_READ, SecurityRoles.IIB_NODE_READ_WRITE)
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/iib/nodes.html").addUrlPattern("/rest/iib/*")));

@@ -92,6 +92,8 @@ public interface TelemetryEventTags {
     // Http event attributes
     String getHttpEventTypeTag();
 
+    String getStatusCodeTag();
+
     // Sql event attributes
     String getSqlEventTypeTag();
 }

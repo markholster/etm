@@ -1,6 +1,7 @@
 package com.jecstar.etm.domain.writer.json;
 
 import java.net.InetAddress;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,55 +39,87 @@ public class JsonWriter {
         if (!firstElement) {
             buffer.append(", ");
         }
-        buffer.append(escapeToJson(elementName, true)).append(": ").append(escapeToJson(elementValue, true));
+        if (elementName == null) {
+            buffer.append(escapeToJson(elementValue, true));
+        } else {
+            buffer.append(escapeToJson(elementName, true)).append(": ").append(escapeToJson(elementValue, true));
+        }
         return true;
     }
 
     public boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean firstElement) {
-        return addLongElementToJsonBuffer(elementName, elementValue, buffer, false, firstElement);
+        return addLongElementToJsonBuffer(elementName, elementValue, false, buffer, firstElement);
     }
 
-    public boolean addLongElementToJsonBuffer(String elementName, Long elementValue, StringBuilder buffer, boolean writeWhenNull, boolean firstElement) {
+    public boolean addLongElementToJsonBuffer(String elementName, Long elementValue, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
         if (elementValue == null && !writeWhenNull) {
             return false;
         }
         if (!firstElement) {
             buffer.append(", ");
         }
-        buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
+        if (elementName == null) {
+            buffer.append(elementValue);
+        } else {
+            buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
+        }
         return true;
     }
 
     public boolean addDoubleElementToJsonBuffer(String elementName, Double elementValue, StringBuilder buffer, boolean firstElement) {
-        if (elementValue == null || elementValue.isNaN()) {
+        return addDoubleElementToJsonBuffer(elementName, elementValue, false, buffer, firstElement);
+    }
+
+    public boolean addDoubleElementToJsonBuffer(String elementName, Double elementValue, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
+        if ((elementValue == null || elementValue.isNaN()) && !writeWhenNull) {
             return false;
         }
         if (!firstElement) {
             buffer.append(", ");
         }
-        buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
+        if (elementName == null) {
+            buffer.append(elementValue != null && elementValue.isNaN() ? null : elementValue);
+        } else {
+            buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue != null && elementValue.isNaN() ? null : elementValue);
+        }
         return true;
     }
 
     public boolean addIntegerElementToJsonBuffer(String elementName, Integer elementValue, StringBuilder buffer, boolean firstElement) {
-        if (elementValue == null) {
+        return addIntegerElementToJsonBuffer(elementName, elementValue, false, buffer, firstElement);
+    }
+
+    public boolean addIntegerElementToJsonBuffer(String elementName, Integer elementValue, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
+        if (elementValue == null && !writeWhenNull) {
             return false;
         }
         if (!firstElement) {
             buffer.append(", ");
         }
-        buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
+        if (elementName == null) {
+            buffer.append(elementValue);
+        } else {
+            buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
+        }
         return true;
     }
 
     public boolean addBooleanElementToJsonBuffer(String elementName, Boolean elementValue, StringBuilder buffer, boolean firstElement) {
-        if (elementValue == null) {
+        return addBooleanElementToJsonBuffer(elementName, elementValue, false, buffer, firstElement);
+    }
+
+    public boolean addBooleanElementToJsonBuffer(String elementName, Boolean elementValue, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
+        if (elementValue == null && !writeWhenNull) {
             return false;
         }
         if (!firstElement) {
             buffer.append(", ");
         }
-        buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
+        if (elementName == null) {
+            buffer.append(elementValue);
+        } else {
+            buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue);
+        }
         return true;
     }
 
@@ -132,6 +165,14 @@ public class JsonWriter {
                 .collect(Collectors.joining(", ")));
         buffer.append("]");
         return true;
+    }
+
+    public boolean addZonedDateTimeElementToJsonBuffer(String elementName, ZonedDateTime value, StringBuilder buffer, boolean firstElement) {
+        return addLongElementToJsonBuffer(elementName, value == null ? null : value.toInstant().toEpochMilli(), buffer, firstElement);
+    }
+
+    public boolean addZonedDateTimeElementToJsonBuffer(String elementName, ZonedDateTime value, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
+        return addLongElementToJsonBuffer(elementName, value == null ? null : value.toInstant().toEpochMilli(), writeWhenNull, buffer, firstElement);
     }
 
     public String escapeToJson(String value, boolean quote) {

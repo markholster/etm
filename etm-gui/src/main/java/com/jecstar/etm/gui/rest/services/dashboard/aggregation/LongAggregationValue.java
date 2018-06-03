@@ -61,4 +61,27 @@ public class LongAggregationValue extends AbstractAggregationValue<Long> {
         return value != null;
     }
 
+    @Override
+    public boolean isEqualTo(int value) {
+        if (hasValidValue()) {
+            return this.value.compareTo((long) value) == 0;
+        }
+        return DEFAULT_MISSING_VALUE.compareTo((long) value) == 0;
+    }
+
+    @Override
+    public boolean isLessThan(int value) {
+        if (hasValidValue()) {
+            return this.value.compareTo((long) value) < 0;
+        }
+        return DEFAULT_MISSING_VALUE.compareTo((long) value) < 0;
+    }
+
+    @Override
+    public boolean isGreaterThan(int value) {
+        if (hasValidValue()) {
+            return this.value.compareTo((long) value) > 0;
+        }
+        return DEFAULT_MISSING_VALUE.compareTo((long) value) > 0;
+    }
 }

@@ -40,6 +40,9 @@ public class EtmException extends RuntimeException {
     public static final int MAX_NR_OF_GRAPHS_REACHED = 400_000;
     public static final int MAX_NR_OF_DASHBOARDS_REACHED = 400_001;
 
+    // 500_* reserved for visualization errors.
+    public static final int MAX_NR_OF_SIGNALS_REACHED = 500_000;
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

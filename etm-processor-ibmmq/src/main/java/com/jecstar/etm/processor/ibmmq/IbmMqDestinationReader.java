@@ -12,11 +12,11 @@ import com.jecstar.etm.processor.ibmmq.configuration.QueueManager;
 import com.jecstar.etm.processor.ibmmq.handler.ClonedMessageHandler;
 import com.jecstar.etm.processor.ibmmq.handler.EtmEventHandler;
 import com.jecstar.etm.processor.ibmmq.handler.IIBEventHandler;
-import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.reader.DestinationReader;
 import com.jecstar.etm.processor.reader.DestinationReaderInstantiationContext;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
 
 import javax.net.ssl.SSLContext;

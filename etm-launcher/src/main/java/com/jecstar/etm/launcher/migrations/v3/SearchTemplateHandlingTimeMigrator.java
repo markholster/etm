@@ -1,6 +1,5 @@
 package com.jecstar.etm.launcher.migrations.v3;
 
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
 import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
@@ -8,6 +7,7 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.search.SearchRequestBuilder;

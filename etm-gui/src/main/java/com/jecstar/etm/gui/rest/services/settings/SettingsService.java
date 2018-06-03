@@ -1,17 +1,18 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
-import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.gui.rest.export.*;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
+import com.jecstar.etm.server.core.domain.cluster.notifier.converter.NotifierConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.configuration.converter.json.LdapConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
@@ -27,6 +28,7 @@ import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.enhancers.DefaultTransformation;
 import com.jecstar.etm.server.core.ldap.Directory;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.BCrypt;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
@@ -57,10 +59,11 @@ import java.util.Map.Entry;
 
 @Path("/settings")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
-public class SettingsService extends AbstractJsonService {
+public class SettingsService extends AbstractGuiService {
 
     private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
-    private final LdapConfigurationConverterJsonImpl ldapConfigurationConverter = new LdapConfigurationConverterJsonImpl();
+    private final LdapConfigurationConverter ldapConfigurationConverter = new LdapConfigurationConverter();
+    private final NotifierConverter notifierConverter = new NotifierConverter();
     private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
     private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
@@ -72,11 +75,18 @@ public class SettingsService extends AbstractJsonService {
             new FieldLayout("E-mail", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
     };
 
-    private final String parserInEnpointTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
+    private final String parserInEnpointFieldsTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
             "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
             "." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
             "." + this.endpointConfigurationConverter.getTags().getParsersTag() +
             "." + this.endpointConfigurationConverter.getTags().getNameTag();
+
+    private final String parserInEnpointTransformationTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
+            "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
+            "." + this.endpointConfigurationConverter.getTags().getTransformationsTag() +
+            "." + this.endpointConfigurationConverter.getTags().getParserTag() +
+            "." + this.endpointConfigurationConverter.getTags().getNameTag();
+
 
     private static Client client;
     private static EtmConfiguration etmConfiguration;
@@ -340,7 +350,7 @@ public class SettingsService extends AbstractJsonService {
         NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
         StringBuilder result = new StringBuilder();
         result.append("{");
-        result.append("\"d3_formatter\": ").append(getD3Formatter());
+        result.append("\"d3_formatter\": ").append(getD3Formatter(getEtmPrincipal()));
         result.append(",\"totals\": {");
         addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted(), result, true);
         addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted()), result, false);
@@ -456,7 +466,9 @@ public class SettingsService extends AbstractJsonService {
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                        .must(QueryBuilders.termQuery(parserInEnpointTag, parserName))
+                        .should(QueryBuilders.termQuery(parserInEnpointFieldsTag, parserName))
+                        .should(QueryBuilders.termQuery(parserInEnpointTransformationTag, parserName))
+                        .minimumShouldMatch(1)
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
@@ -518,7 +530,9 @@ public class SettingsService extends AbstractJsonService {
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                        .must(QueryBuilders.termQuery(parserInEnpointTag, expressionParser.getName()))
+                        .must(QueryBuilders.termQuery(parserInEnpointFieldsTag, expressionParser.getName()))
+                        .should(QueryBuilders.termQuery(parserInEnpointTransformationTag, expressionParser.getName()))
+                        .minimumShouldMatch(1)
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
@@ -891,7 +905,7 @@ public class SettingsService extends AbstractJsonService {
             GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group.getName())
                     .get();
             if (getResponse.isExists()) {
-                Map<String, Object> sourceAsMap = getResponse.getSourceAsMap();
+                Map<String, Object> sourceAsMap = toMapWithoutNamespace(getResponse.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
                 if (getBoolean(this.etmPrincipalTags.getLdapBaseTag(), sourceAsMap, Boolean.FALSE)) {
                     iterator.remove();
                 }
@@ -992,6 +1006,122 @@ public class SettingsService extends AbstractJsonService {
         }
         return "{\"status\":\"success\"}";
     }
+
+    @GET
+    @Path("/notifiers")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({
+            SecurityRoles.NOTIFIERS_READ,
+            SecurityRoles.NOTIFIERS_READ_WRITE,
+            SecurityRoles.GROUP_SIGNAL_READ,
+            SecurityRoles.GROUP_SETTINGS_READ_WRITE,
+            SecurityRoles.USER_SIGNAL_READ_WRITE})
+    public String getNotifiers() {
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+                .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+                .setFetchSource(true)
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
+        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        StringBuilder result = new StringBuilder();
+        result.append("{\"notifiers\": [");
+        boolean first = true;
+        for (SearchHit searchHit : scrollableSearch) {
+            if (!first) {
+                result.append(",");
+            }
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
+            first = false;
+        }
+        result.append("]}");
+        return result.toString();
+    }
+
+    @PUT
+    @Path("/notifier/{notifierName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.NOTIFIERS_READ_WRITE)
+    public String addNotifier(@PathParam("notifierName") String notifierName, String json) {
+        // Do a read and write of the notifier to make sure it's valid.
+        Map<String, Object> objectMap = toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER);
+        Notifier notifier = this.notifierConverter.read(objectMap);
+
+        enhanceRequest(
+                client.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifier.getName()),
+                etmConfiguration
+        )
+                .setSource(this.notifierConverter.write(notifier), XContentType.JSON)
+                .get();
+        return "{ \"status\": \"success\" }";
+    }
+
+    @DELETE
+    @Path("/notifier/{notifierName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.NOTIFIERS_READ_WRITE)
+    public String deleteNotifier(@PathParam("notifierName") String notifierName) {
+        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(client.prepareBulk(), etmConfiguration);
+        bulkRequestBuilder.add(
+                enhanceRequest(
+                        client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName),
+                        etmConfiguration
+                )
+        );
+        removeNotifierFromSignals(bulkRequestBuilder, notifierName);
+        bulkRequestBuilder.get();
+        return "{\"status\":\"success\"}";
+    }
+
+    private void removeNotifierFromSignals(BulkRequestBuilder bulkRequestBuilder, String notifierName) {
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+                .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+                .setFetchSource(true)
+                .setQuery(QueryBuilders.boolQuery()
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getSignalsTag() + ".notifiers", notifierName))
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getSignalsTag() + ".notifiers", notifierName))
+                        .minimumShouldMatch(1)
+                );
+        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        for (SearchHit searchHit : scrollableSearch) {
+            boolean updated = false;
+            Map<String, Object> valueMap = searchHit.getSourceAsMap();
+            Map<String, Object> groupOrUserValueMap = null;
+            if (valueMap.containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
+                groupOrUserValueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, valueMap);
+            } else {
+                groupOrUserValueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, valueMap);
+            }
+            if (groupOrUserValueMap == null) {
+                continue;
+            }
+            List<Map<String, Object>> signals = getArray(this.etmPrincipalTags.getSignalsTag(), groupOrUserValueMap);
+            if (signals == null) {
+                continue;
+            }
+            for (Map<String, Object> signal : signals) {
+                List<String> notifiers = getArray("notifiers", signal);
+                if (notifiers == null) {
+                    continue;
+                }
+                Iterator<String> it = notifiers.iterator();
+                while (it.hasNext()) {
+                    if (notifierName.equals(it.next())) {
+                        it.remove();
+                        updated = true;
+                    }
+                }
+            }
+            if (updated) {
+                bulkRequestBuilder.add(enhanceRequest(client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, searchHit.getType(), searchHit.getId()),
+                        etmConfiguration
+                        )
+                                .setDoc(valueMap)
+                                .setDocAsUpsert(true)
+                                .setDetectNoop(true)
+                );
+            }
+        }
+    }
+
 
     private void removeGroupFromPrincipal(BulkRequestBuilder bulkRequestBuilder, String groupName) {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)

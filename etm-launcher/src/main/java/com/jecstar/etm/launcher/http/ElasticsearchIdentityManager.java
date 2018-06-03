@@ -1,10 +1,8 @@
 package com.jecstar.etm.launcher.http;
 
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
-import com.jecstar.etm.server.core.domain.audit.LoginAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builder.LoginAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.audit.converter.json.LoginAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.LoginAuditLogConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -48,7 +46,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
     private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
     private final JsonConverter jsonConverter = new JsonConverter();
-    private final AuditLogConverter<String, LoginAuditLog> auditLogConverter = new LoginAuditLogConverterJsonImpl();
+    private final LoginAuditLogConverter auditLogConverter = new LoginAuditLogConverter();
 
 
     public ElasticsearchIdentityManager(Client client, EtmConfiguration etmConfiguration) {

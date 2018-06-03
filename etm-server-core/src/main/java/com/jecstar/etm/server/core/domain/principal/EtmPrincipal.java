@@ -21,6 +21,7 @@ public class EtmPrincipal implements Principal, Serializable {
     private final Set<String> roles = new HashSet<>();
     private final Set<EtmGroup> groups = new HashSet<>();
     private Set<String> dashboards = new HashSet<>();
+    private Set<String> signals = new HashSet<>();
     private String passwordHash;
     private String name = null;
     private String emailAddress = null;
@@ -129,7 +130,7 @@ public class EtmPrincipal implements Principal, Serializable {
     }
 
     public void addGroup(EtmGroup group) {
-        if (group != null && !this.groups.contains(group)) {
+        if (group != null) {
             this.groups.add(group);
         }
     }
@@ -140,6 +141,14 @@ public class EtmPrincipal implements Principal, Serializable {
 
     public void addDashboard(String dashboard) {
         this.dashboards.add(dashboard);
+    }
+
+    public Set<String> getSignals() {
+        return this.signals;
+    }
+
+    public void addSignal(String signal) {
+        this.signals.add(signal);
     }
 
     public void addGroups(Collection<EtmGroup> groups) {

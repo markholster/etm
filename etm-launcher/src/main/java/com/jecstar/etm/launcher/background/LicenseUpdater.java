@@ -1,12 +1,12 @@
 package com.jecstar.etm.launcher.background;
 
-import com.jecstar.etm.gui.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.License;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import org.elasticsearch.client.Client;
 
 import java.io.BufferedReader;

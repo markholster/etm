@@ -23,6 +23,7 @@ public class EtmGroup implements Serializable {
     private boolean alwaysShowCorrelatedEvents = false;
     private boolean ldapBase;
     private Set<String> dashboards = new HashSet<>();
+    private Set<String> signals = new HashSet<>();
 
     public EtmGroup(String name) {
         this.name = name;
@@ -81,7 +82,7 @@ public class EtmGroup implements Serializable {
     }
 
     private void addRole(String role) {
-        if (role != null && !this.roles.contains(role)) {
+        if (role != null) {
             this.roles.add(role);
         }
     }
@@ -124,6 +125,15 @@ public class EtmGroup implements Serializable {
     public void addDashboard(String dashboard) {
         this.dashboards.add(dashboard);
     }
+
+    public Set<String> getSignals() {
+        return this.signals;
+    }
+
+    public void addSignal(String signal) {
+        this.signals.add(signal);
+    }
+
 
     @Override
     public boolean equals(Object obj) {

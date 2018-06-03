@@ -31,7 +31,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
         added = this.converter.addIntegerElementToJsonBuffer(this.tags.getSearchHistorySizeTag(), etmPrincipal.getHistorySize(), sb, !added) || added;
-        added = this.converter.addLongElementToJsonBuffer(this.tags.getDefaultSearchRangeTag(), etmPrincipal.getDefaultSearchRange(), sb, true, !added) || added;
+        added = this.converter.addLongElementToJsonBuffer(this.tags.getDefaultSearchRangeTag(), etmPrincipal.getDefaultSearchRange(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag(), sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;

@@ -1,6 +1,6 @@
 package com.jecstar.etm.gui.rest.services.user;
 
-import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Path("/user")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
 @PermitAll
-public class UserService extends AbstractJsonService {
+public class UserService extends AbstractGuiService {
 
     private static Client client;
     private static EtmConfiguration etmConfiguration;
@@ -75,7 +75,7 @@ public class UserService extends AbstractJsonService {
         Map<String, Object> updateMap = new HashMap<>();
         Map<String, Object> userObject = new HashMap<>();
 
-        if (etmPrincipal.isLdapBase()) {
+        if (!etmPrincipal.isLdapBase()) {
             userObject.put(this.tags.getNameTag(), valueMap.get(this.tags.getNameTag()));
             userObject.put(this.tags.getEmailTag(), valueMap.get(this.tags.getEmailTag()));
         }

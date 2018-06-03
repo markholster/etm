@@ -1,6 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
-import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
+import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.*;
 import com.jecstar.etm.server.core.EtmException;
@@ -10,11 +10,8 @@ import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
-import org.elasticsearch.action.get.GetRequestBuilder;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
@@ -41,7 +38,7 @@ import java.util.stream.Collectors;
 
 @Path("/visualization")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
-public class DashboardService extends AbstractIndexMetadataService {
+public class DashboardService extends AbstractUserAttributeService {
 
     private static Client client;
     private static EtmConfiguration etmConfiguration;
@@ -55,7 +52,7 @@ public class DashboardService extends AbstractIndexMetadataService {
     @GET
     @Path("/keywords/{indexName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
+    @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getKeywords(@PathParam("indexName") String indexName) {
         StringBuilder result = new StringBuilder();
         Map<String, List<Keyword>> names = getIndexFields(client, indexName);
@@ -116,7 +113,7 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The graphs of a user or group.
      */
     private String getGraphs(String groupName) {
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag());
         if (objectMap == null || objectMap.isEmpty()) {
             return "{\"max_graphs\": " + etmConfiguration.getMaxGraphCount() + "}";
         }
@@ -159,7 +156,7 @@ public class DashboardService extends AbstractIndexMetadataService {
         // Execute a dry run on all data.
         getGraphData(json, true);
         // Data seems ok, now store the graph.
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag());
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
         Map<String, Object> graphData = toMap(json);
         graphData.put("name", graphName);
@@ -184,7 +181,7 @@ public class DashboardService extends AbstractIndexMetadataService {
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getGraphsTag(), currentGraphs);
-        updateEntity(groupName, source);
+        updateEntity(client, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -219,7 +216,7 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The json result of the delete.
      */
     private String deleteGraph(String groupName, String graphName) {
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
 
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
         if (objectMap == null || objectMap.isEmpty()) {
@@ -273,7 +270,7 @@ public class DashboardService extends AbstractIndexMetadataService {
                 source.put(this.principalTags.getDashboardsTag(), dashboardsData);
             }
         }
-        updateEntity(groupName, source);
+        updateEntity(client, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -307,7 +304,7 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The dashboards of a user or group.
      */
     private String getDashboards(String groupName) {
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
         if (objectMap == null || objectMap.isEmpty()) {
             return null;
         }
@@ -358,7 +355,7 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The dashboard of a user or group.
      */
     private String getDashboard(String groupName, String dashboardName) {
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
         if (objectMap == null || objectMap.isEmpty()) {
             return null;
         }
@@ -413,7 +410,7 @@ public class DashboardService extends AbstractIndexMetadataService {
         // TODO validate all data
 //		getGraphData(json, true);
         // Data seems ok, now store the graph.
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
 
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
         Map<String, Object> valueMap = toMap(json);
@@ -439,7 +436,7 @@ public class DashboardService extends AbstractIndexMetadataService {
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getDashboardsTag(), currentDashboards);
-        updateEntity(groupName, source);
+        updateEntity(client, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -474,7 +471,7 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The json result of the delete.
      */
     private String deleteDashboard(String groupName, String dashboardName) {
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
         if (objectMap != null && objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             currentDashboards = getArray(this.principalTags.getDashboardsTag(), objectMap);
@@ -489,7 +486,7 @@ public class DashboardService extends AbstractIndexMetadataService {
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getDashboardsTag(), currentDashboards);
-        updateEntity(groupName, source);
+        updateEntity(client, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -533,7 +530,7 @@ public class DashboardService extends AbstractIndexMetadataService {
      * @return The live graph data.
      */
     private String getGraphData(String groupName, String dashboardName, String graphId) {
-        Map<String, Object> objectMap = getEntity(groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
         if (objectMap == null || !objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             return null;
         }
@@ -581,76 +578,6 @@ public class DashboardService extends AbstractIndexMetadataService {
             }
         }
         return null;
-    }
-
-    /**
-     * Loads the given attributes from an entity.
-     *
-     * @param groupName  The name of the group to load the graphs from. If <code>null</code> the graphs of the current user will be loaded.
-     * @param attributes The attributes to return.
-     * @return A <code>Map</code> with attributes from the given entity.
-     */
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> getEntity(String groupName, String... attributes) {
-        String[] prefixedAttributes = new String[attributes.length];
-        GetRequestBuilder builder;
-        if (groupName != null) {
-            if (!getEtmPrincipal().isInGroup(groupName)) {
-                throw new EtmException(EtmException.UNAUTHORIZED);
-            }
-            builder = client.prepareGet(
-                    ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                    ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
-            );
-            for (int i = 0; i < attributes.length; i++) {
-                prefixedAttributes[i] = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + attributes[i];
-            }
-        } else {
-            builder = client.prepareGet(
-                    ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                    ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
-            );
-            for (int i = 0; i < attributes.length; i++) {
-                prefixedAttributes[i] = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + attributes[i];
-            }
-        }
-        GetResponse getResponse = builder.setFetchSource(prefixedAttributes, null).get();
-        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
-            return new HashMap<>();
-        }
-        if (groupName != null) {
-            return (Map<String, Object>) getResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
-        }
-        return (Map<String, Object>) getResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
-    }
-
-    private void updateEntity(String groupName, Map<String, Object> source) {
-        Map<String, Object> objectMap = new HashMap<>();
-        UpdateRequestBuilder builder;
-        if (groupName != null) {
-            if (!getEtmPrincipal().isInGroup(groupName)) {
-                throw new EtmException(EtmException.UNAUTHORIZED);
-            }
-            builder = client.prepareUpdate(
-                    ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                    ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
-            );
-            objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, source);
-        } else {
-            builder = client.prepareUpdate(
-                    ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                    ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
-            );
-            objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, source);
-        }
-        enhanceRequest(builder, etmConfiguration)
-                .setDoc(objectMap)
-                .setDocAsUpsert(true)
-                .get();
     }
 
     private String getGraphData(String json, boolean dryRun) {
@@ -711,7 +638,7 @@ public class DashboardService extends AbstractIndexMetadataService {
         // Start building the response
         StringBuilder result = new StringBuilder();
         result.append("{");
-        result.append("\"d3_formatter\": ").append(getD3Formatter());
+        result.append("\"d3_formatter\": ").append(getD3Formatter(getEtmPrincipal()));
         addStringElementToJsonBuffer("type", type, result, false);
         result.append(",\"data\": ");
 
@@ -791,7 +718,7 @@ public class DashboardService extends AbstractIndexMetadataService {
                 .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
         if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(index)) {
             queryStringBuilder.defaultField("_all");
-            searchRequest.setQuery(addEtmPrincipalFilterQuery(new BoolQueryBuilder().must(queryStringBuilder)));
+            searchRequest.setQuery(addFilterQuery(getEtmPrincipal(), new BoolQueryBuilder().must(queryStringBuilder)));
         } else {
             searchRequest.setQuery(queryStringBuilder);
         }

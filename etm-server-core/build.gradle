@@ -1,8 +1,22 @@
 apply plugin: "java"
 
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/it/java'
+        }
+        resources {
+            srcDir 'src/it/resources'
+        }
+        compileClasspath += sourceSets.main.output.classesDirs
+        runtimeClasspath += sourceSets.main.output.classesDirs
+    }
+}
+
 dependencies {
     compile project(":etm-public:etm-domain")
-    compile dep_jacksonDatabind,
+    compile dep_elasticsearchClient,
+            dep_jacksonDatabind,
             dep_ldaptive,
             dep_saxonHE,
             dep_slf4jApi,
@@ -11,5 +25,22 @@ dependencies {
         exclude module: "json-smart"
         exclude module: "gson"
     }
-    testCompile dep_junit
+    integrationTestCompile project(":etm-server-core"),
+            dep_metricsCore,
+            dep_disruptor,
+            dep_elasticsearchClient,
+            dep_elasticsearchXpackTransportClient
+    integrationTestRuntime dep_log4jToSlf4j
+}
+
+
+eclipse {
+    classpath {
+        plusConfigurations += [configurations.integrationTestCompile, configurations.integrationTestRuntime]
+    }
+}
+
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
 }

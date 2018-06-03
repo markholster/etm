@@ -42,4 +42,6 @@ public interface EtmPrincipalTags {
 
     String getSearchTemplatesTag();
 
+    String getSignalsTag();
+
 }

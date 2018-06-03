@@ -302,6 +302,7 @@ The ''http'' section contains all options that are necessary to start the gui an
 |sslKeystoreLocation||The location of you ssl truststore. The trust store contains certificates of machines that are allowed to connect to this Node. When not provided, everybody is allowed to access this Node although a a username and password are still necessary to login.
 |sslKeystorePassword||The password of the ssl truststore.
 |sslKeystoreType|JSK|The ssl truststore type.
+|secureCookies|false|Should the secure flag be set on the session cookies? Set this value to true when your etm instance is accessed via https.
 |=======================
 
 ==== IBM MQ section in etm.yml
@@ -441,8 +442,18 @@ The ''kafka'' section contains all options that are necessary to process {etm} e
 |sslTruststoreType|JSK|The ssl truststore type.
 |=======================
 
+==== Signaler section in etm.yml
+The ''signaler'' section contains all options to configure the signaler.
+
+.Signaler configuration options
+[options="header"]
+|=======================
+|Name|Default value|Description
+|enabled|true|Should the signaler be enabled? Set this value to true to let this node send signals to end users/systems.
+
+
 ==== Logging section in etm.yml
-The ''logging'' section contains all options to configure the loggers and log levels. Log levels can be one of TRACE, DEBUG, INFO, WARNING or ERROR
+The ''logging'' section contains all options to configure the loggers and log levels. Log levels can be one of TRACE, DEBUG, INFO, WARNING or ERROR.
 
 .Logging configuration options
 [options="header"]

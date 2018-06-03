@@ -9,17 +9,13 @@ import com.jecstar.etm.gui.rest.export.FileType;
 import com.jecstar.etm.gui.rest.export.QueryExporter;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.search.eventchain.*;
+import com.jecstar.etm.server.core.domain.audit.AuditLog;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
-import com.jecstar.etm.server.core.domain.audit.QueryAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
 import com.jecstar.etm.server.core.domain.audit.builder.QueryAuditLogBuilder;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogConverter;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
-import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.audit.converter.json.GetEventAuditLogConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.audit.converter.json.QueryAuditLogConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.converter.GetEventAuditLogConverter;
+import com.jecstar.etm.server.core.domain.audit.converter.QueryAuditLogConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationTags;
@@ -27,6 +23,9 @@ import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfig
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
 import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
 import org.elasticsearch.action.ActionFuture;
@@ -66,15 +65,19 @@ import java.util.stream.Collectors;
 @DeclareRoles(SecurityRoles.ALL_ROLES)
 public class SearchService extends AbstractIndexMetadataService {
 
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(SearchService.class);
+
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
     private static Client client;
     private static EtmConfiguration etmConfiguration;
 
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
-    private final AuditLogTags auditLogTags = new AuditLogTagsJsonImpl();
     private final EtmConfigurationTags configurationTags = new EtmConfigurationTagsJsonImpl();
-    private final AuditLogConverter<String, QueryAuditLog> queryAuditLogConverter = new QueryAuditLogConverterJsonImpl();
-    private final AuditLogConverter<String, GetEventAuditLog> getEventAuditLogConverter = new GetEventAuditLogConverterJsonImpl();
+    private final QueryAuditLogConverter queryAuditLogConverter = new QueryAuditLogConverter();
+    private final GetEventAuditLogConverter getEventAuditLogConverter = new GetEventAuditLogConverter();
 
     public static void initialize(Client client, EtmConfiguration etmConfiguration) {
         SearchService.client = client;
@@ -243,7 +246,9 @@ public class SearchService extends AbstractIndexMetadataService {
                 requestBuilder.request().source().query().toXContent(contentBuilder, ToXContent.EMPTY_PARAMS);
                 executedQuery = contentBuilder.string();
             } catch (IOException e) {
-                // TODO error logging.
+                if (log.isErrorLevelEnabled()) {
+                    log.logErrorMessage(e.getMessage(), e);
+                }
             }
             auditLogBuilder
                     .setUserQuery(parameters.getQueryString())
@@ -324,7 +329,7 @@ public class SearchService extends AbstractIndexMetadataService {
             }
         }
         SearchRequestBuilder requestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
-                .setQuery(addEtmPrincipalFilterQuery(boolQueryBuilder))
+                .setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFetchSource(parameters.getFields().toArray(new String[parameters.getFields().size()]), null)
                 .setFrom(parameters.getStartIndex())
                 .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults());
@@ -404,7 +409,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setEventType(eventType)
                 .setFound(false);
         ActionFuture<SearchResponse> auditLogsForEvent = null;
-        if (getEtmPrincipal().isInAnyRole(SecurityRoles.AUDIT_LOG_READ)) {
+        if (getEtmPrincipal().isInRole(SecurityRoles.AUDIT_LOG_READ)) {
             // We've got an principal with audit logs roles requesting the event. Also add the audit logs of this event to the response.
             auditLogsForEvent = findAuditLogsForEvent(eventType, eventId);
         }
@@ -496,9 +501,9 @@ public class SearchService extends AbstractIndexMetadataService {
                             auditLogAdded = true;
                         }
                         result.append("{");
-                        addBooleanElementToJsonBuffer("direct", getString(this.auditLogTags.getEventIdTag(), auditLogValues).equals(eventId), result, true);
-                        addLongElementToJsonBuffer("handling_time", getLong(this.auditLogTags.getHandlingTimeTag(), auditLogValues), result, false);
-                        addStringElementToJsonBuffer("principal_id", getString(this.auditLogTags.getPrincipalIdTag(), auditLogValues), result, false);
+                        addBooleanElementToJsonBuffer("direct", getString(GetEventAuditLog.EVENT_ID, auditLogValues).equals(eventId), result, true);
+                        addLongElementToJsonBuffer("handling_time", getLong(AuditLog.HANDLING_TIME, auditLogValues), result, false);
+                        addStringElementToJsonBuffer("principal_id", getString(AuditLog.PRINCIPAL_ID, auditLogValues), result, false);
                         result.append("}");
                     }
                     result.append("]");
@@ -547,15 +552,15 @@ public class SearchService extends AbstractIndexMetadataService {
 
     private ActionFuture<SearchResponse> findAuditLogsForEvent(String eventType, String eventId) {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        boolQueryBuilder.must(new TermQueryBuilder("type", "getevent"));
-        boolQueryBuilder.must(new TermQueryBuilder(this.auditLogTags.getEventTypeTag() + KEYWORD_SUFFIX, eventType));
-        boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getEventIdTag() + KEYWORD_SUFFIX, eventId));
-        boolQueryBuilder.should(new TermQueryBuilder(this.auditLogTags.getCorrelatedEventsTag() + "." + this.auditLogTags.getEventIdTag() + KEYWORD_SUFFIX, eventId));
+        boolQueryBuilder.must(new TermQueryBuilder(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.AUDIT_LOG_OBJECT_TYPE_GET_EVENT));
+        boolQueryBuilder.must(new TermQueryBuilder(GetEventAuditLog.EVENT_TYPE + KEYWORD_SUFFIX, eventType));
+        boolQueryBuilder.should(new TermQueryBuilder(GetEventAuditLog.EVENT_ID + KEYWORD_SUFFIX, eventId));
+        boolQueryBuilder.should(new TermQueryBuilder(GetEventAuditLog.CORRELATED_EVENTS + "." + GetEventAuditLog.EVENT_ID + KEYWORD_SUFFIX, eventId));
         boolQueryBuilder.minimumShouldMatch(1);
         SearchRequestBuilder requestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(boolQueryBuilder)
-                .addSort(this.auditLogTags.getHandlingTimeTag(), SortOrder.DESC)
-                .setFetchSource(new String[]{this.auditLogTags.getHandlingTimeTag(), this.auditLogTags.getPrincipalIdTag(), this.auditLogTags.getEventIdTag()}, null)
+                .addSort(AuditLog.HANDLING_TIME, SortOrder.DESC)
+                .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID}, null)
                 .setFrom(0)
                 .setSize(500);
         return requestBuilder.execute();
@@ -591,7 +596,7 @@ public class SearchService extends AbstractIndexMetadataService {
         BoolQueryBuilder query = new BoolQueryBuilder();
         query.must(idsQueryBuilder);
         SearchRequestBuilder builder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
-                .setQuery(addEtmPrincipalFilterQuery(query))
+                .setQuery(addFilterQuery(getEtmPrincipal(), query))
                 .setFrom(0)
                 .setSize(1);
         if (fetchAll) {
@@ -612,7 +617,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 .addIds(eventId);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(idsQueryBuilder);
         SearchRequestBuilder builder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
-                .setQuery(alwaysShowCorrelatedEvents(getEtmPrincipal()) ? idsQueryBuilder : addEtmPrincipalFilterQuery(boolQueryBuilder))
+                .setQuery(alwaysShowCorrelatedEvents(getEtmPrincipal()) ? idsQueryBuilder : addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFrom(0)
                 .setSize(1)
                 .setFetchSource(true);
@@ -624,7 +629,7 @@ public class SearchService extends AbstractIndexMetadataService {
     }
 
     private boolean alwaysShowCorrelatedEvents(EtmPrincipal etmPrincipal) {
-        if (!hasFilterQueries()) {
+        if (!hasFilterQueries(getEtmPrincipal())) {
             // no filter queries, user is allowed to view everything.
             return true;
         }
@@ -706,7 +711,7 @@ public class SearchService extends AbstractIndexMetadataService {
                                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
                 );
         SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
-                .setQuery(addEtmPrincipalFilterQuery(findEventsQuery))
+                .setQuery(addFilterQuery(getEtmPrincipal(), findEventsQuery))
                 .addSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(new String[]{
                         this.eventTags.getObjectTypeTag(),

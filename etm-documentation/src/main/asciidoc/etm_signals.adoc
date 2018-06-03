@@ -1,0 +1,28 @@
+== Signals
+What's a monitoring tool without the option to send some signals? Right, useful but time consuming. Signals give you
+the possibility to let {etm} notify you when something relevant is happening.
+
+To add, modify or delete signals browse to http://localhost:8080/gui/signal/signal.html or select the menu option ''Signals''. Note that the menu option might be contain a submenu with your username and the groups you belong to. This extra submenu will give you the opportunity to create a signal for a group or just for yourself.
+
+Each signal is uniquely identified by it's name and selects data from a certain datasource. {etm} provides 2 datasources:
+
+. Events
+. Metrics
+
+The Events datasource contains all event you stored in {etm}. The Metrics datasource contains metric data of all {etm} instances. This information can be very helpful to monitor your {etm} cluster.
+To narrow down the data used in your signal you can provide a query. This query will be used as filter query for your statistics. Also, when you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
+
+{etm} will run the query's at a specified interval This interval can be adjusted by changing the ''Check every'' input value. To receive notification you must add 1 or more <<Notifiers>>. When a notifier with type ''Email'' is added {etm} might not send an email on every threshold exceedance.
+When, for example, the check interval is set to 1 minute and the threshold is exceeded for 2 hours your mailbox will be spammed with 120 emails all saying the same. To prevent this {etm} uses an exponential backoff policy. The time between two emails will be doubled on every consecutive failure,
+but will never be longer that 45 minutes. Finally, you will receive an email when the threshold is no longer exceeded.
+
+If the signal is added to a group and an email notifier is added the ''Email recipients'' box on the right gives you the option to notify all members of a group. Be aware that if your group is an LDAP group only members with an {etm} account and a valid email address will receive an email. In short
+this means that a user must have logged in at least once into {etm} or must be imported from LDAP by an administrator.
+
+The ''The threshold is exceeded when...'' block defines the limit you want to test for. Most of the settings are the same as described in the <<Graphs>> paragraph.
+
+The ''Send a signal when the threshold...'' block let you define how strict the notifiers should kick in. Should {etm} send an email when a single threshold is exceeded or are you monitoring a self healing application that will be given some time to recover itself?
+Remember that the check interval and the ''in the last'' interval may have some overlap. If you check every minute for an exceedance in the last 30 minutes you will trigger
+a signal every minute for the next 30 minutes. Depending on you requirements this might be desired, or not.
+
+Finally, when all required fields are entered, the visualization button will be enabled to give you a visual representation of the signal you've created.

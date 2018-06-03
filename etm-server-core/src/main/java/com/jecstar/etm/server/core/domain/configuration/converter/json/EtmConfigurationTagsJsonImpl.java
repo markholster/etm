@@ -125,6 +125,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
     }
 
     @Override
+    public String getMaxSignalCountTag() {
+        return "max_signal_count";
+    }
+
+    @Override
     public String getSearchHistoryTag() {
         return "search_history";
     }

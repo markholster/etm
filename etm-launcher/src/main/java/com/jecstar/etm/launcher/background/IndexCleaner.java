@@ -1,11 +1,11 @@
 package com.jecstar.etm.launcher.background;
 
 import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
-import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.AliasOrIndex;
 

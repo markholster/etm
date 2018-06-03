@@ -1,7 +1,7 @@
 package com.jecstar.etm.gui.rest.services;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import org.elasticsearch.action.admin.indices.mapping.get.*;
 import org.elasticsearch.client.Client;
@@ -11,7 +11,7 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import java.util.*;
 import java.util.Map.Entry;
 
-public abstract class AbstractIndexMetadataService extends AbstractJsonService {
+public abstract class AbstractIndexMetadataService extends AbstractGuiService {
 
     // Alphabetic ascending list of keywords that need to be excludes for the user.
     private static final String[] keywordsToExclude = new String[]{

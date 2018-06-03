@@ -286,7 +286,7 @@ function buildGraphsPage(groupName) {
 				)
 			),
 			$('<div>').addClass('form-group row').append(
-				$('<label>').attr('for', 'input-' + graphType + '-metrics-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
+				$('<label>').attr('for', 'input-' + graphType + '-metrics-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field').css('font-style', 'italic'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<input>').attr('id', 'input-' + graphType + '-metrics-field-' + ix).attr('type', 'text')
 					.attr('data-required', 'required')
@@ -316,13 +316,13 @@ function buildGraphsPage(groupName) {
 				)
 			),
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
-				$('<label>').attr('for', 'input-' + graphType + '-metrics-percentile-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Percentile'),
+				$('<label>').attr('for', 'input-' + graphType + '-metrics-percentile-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Percentile').css('font-style', 'italic'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<input>').attr('id', 'input-' + graphType + '-metrics-percentile-' + ix).attr('type', 'number').attr('data-required', 'required').addClass('form-control form-control-sm').attr('step', 'any').attr('min', '0').attr('max', '100').attr('value', '95')
 				)
 			),
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
-				$('<label>').attr('for', 'input-' + graphType + '-metrics-percentile-rank-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Rank'),
+				$('<label>').attr('for', 'input-' + graphType + '-metrics-percentile-rank-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Rank').css('font-style', 'italic'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<input>').attr('id', 'input-' + graphType + '-metrics-percentile-rank-' + ix).attr('type', 'number').attr('data-required', 'required').addClass('form-control form-control-sm').attr('step', 'any')
 				)
@@ -407,7 +407,7 @@ function buildGraphsPage(groupName) {
 				)
 			),
 			$('<div>').addClass('form-group row').append(
-				$('<label>').attr('for', 'input-' + graphType + '-bucket-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field'),
+				$('<label>').attr('for', 'input-' + graphType + '-bucket-field-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Field').css('font-style', 'italic'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<input>').attr('id', 'input-' + graphType + '-bucket-field-' + ix)
 					.attr('type', 'text')
@@ -459,7 +459,7 @@ function buildGraphsPage(groupName) {
 			),
 			// Histogram fields
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
-				$('<label>').attr('for', 'input-' + graphType + '-bucket-histogram-interval-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Interval'),
+				$('<label>').attr('for', 'input-' + graphType + '-bucket-histogram-interval-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Interval').css('font-style', 'italic'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<input>').attr('id', 'input-' + graphType + '-bucket-histogram-interval-' + ix)
 					.attr('type', 'number')
@@ -470,7 +470,7 @@ function buildGraphsPage(groupName) {
 			),
 			// Significant term fields
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
-				$('<label>').attr('for', 'sel-' + graphType + '-bucket-significant-term-top-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Top'),
+				$('<label>').attr('for', 'sel-' + graphType + '-bucket-significant-term-top-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Top').css('font-style', 'italic'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<input>').attr('id', 'sel-' + graphType + '-bucket-significant-term-top-' + ix).addClass('form-control form-control-sm')
 					.attr('type', 'number')
@@ -514,7 +514,7 @@ function buildGraphsPage(groupName) {
 				)
 			),
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
-				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-top-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Top'),
+				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-top-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Top').css('font-style', 'italic'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<input>').attr('id', 'sel-' + graphType + '-bucket-term-top-' + ix).addClass('form-control form-control-sm')
 					.attr('type', 'number')

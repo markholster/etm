@@ -1,13 +1,11 @@
 package com.jecstar.etm.server.core.domain.configuration.converter;
 
+import com.jecstar.etm.server.core.converter.JsonEntityConverter;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 
-public interface LdapConfigurationConverter<T> {
+public class LdapConfigurationConverter extends JsonEntityConverter<LdapConfiguration> {
 
-    LdapConfiguration read(T content);
-
-    T write(LdapConfiguration directory);
-
-    LdapConfigurationTags getTags();
-
+    public LdapConfigurationConverter() {
+        super(LdapConfiguration::new);
+    }
 }

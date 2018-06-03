@@ -195,6 +195,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
     }
 
     @Override
+    public String getStatusCodeTag() {
+        return "status_code";
+    }
+
+    @Override
     public String getSqlEventTypeTag() {
         return "sql_type";
     }

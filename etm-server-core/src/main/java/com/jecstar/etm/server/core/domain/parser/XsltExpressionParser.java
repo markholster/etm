@@ -7,10 +7,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.sf.saxon.om.NamePool.NamePoolLimitException;
 
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
@@ -23,21 +20,32 @@ public class XsltExpressionParser extends AbstractExpressionParser {
      */
     private static final LogWrapper log = LogFactory.getLogger(XsltExpressionParser.class);
 
-    private Transformer transformer;
+    private TransformerFactory transformerFactory;
     private final String template;
+    private final ErrorListener errorListener;
 
     public XsltExpressionParser(final String name, final String template) {
+        this(name, template, new XmlErrorListener());
+    }
+
+    XsltExpressionParser(final String name, final String template, ErrorListener errorListener) {
         super(name);
-        this.transformer = createTransformer(template);
+        this.errorListener = errorListener;
+        this.transformerFactory = createTransformerFactory(this.errorListener);
         this.template = template;
+        // Test if the transformer can be created.
+        createTransformer(template);
+    }
+
+    private TransformerFactory createTransformerFactory(ErrorListener errorListener) {
+        Configuration config = Configuration.newConfiguration();
+        config.setErrorListener(errorListener);
+        return new TransformerFactoryImpl(config);
     }
 
     private Transformer createTransformer(String template) {
-        try {
-            Configuration config = Configuration.newConfiguration();
-            config.setErrorListener(new XmlErrorListener());
-            TransformerFactory transformerFactory = new TransformerFactoryImpl(config);
-            return transformerFactory.newTransformer(new StreamSource(new StringReader(template)));
+        try (StringReader reader = new StringReader(template)) {
+            return this.transformerFactory.newTransformer(new StreamSource(reader));
         } catch (TransformerConfigurationException e) {
             if (log.isErrorLevelEnabled()) {
                 log.logErrorMessage("Error creating xslt template from '" + template + ".", e);
@@ -52,12 +60,9 @@ public class XsltExpressionParser extends AbstractExpressionParser {
     }
 
     private String doTransform(String content, boolean returnNullOnFailure) {
-        if (this.transformer == null) {
-            return returnNullOnFailure ? null : content;
-        }
         StringWriter writer = new StringWriter();
         try {
-            this.transformer.transform(new StreamSource(new StringReader(content)), new StreamResult(writer));
+            createTransformer(getTemplate()).transform(new StreamSource(new StringReader(content)), new StreamResult(writer));
             return writer.toString();
         } catch (TransformerException e) {
             if (log.isDebugLevelEnabled()) {
@@ -65,9 +70,9 @@ public class XsltExpressionParser extends AbstractExpressionParser {
             }
             return returnNullOnFailure ? null : content;
         } catch (NamePoolLimitException e) {
-            this.transformer = createTransformer(this.template);
+            this.transformerFactory = createTransformerFactory(this.errorListener);
             try {
-                this.transformer.transform(new StreamSource(new StringReader(content)), new StreamResult(writer));
+                createTransformer(getTemplate()).transform(new StreamSource(new StringReader(content)), new StreamResult(writer));
                 return writer.toString();
             } catch (TransformerException e2) {
                 if (log.isDebugLevelEnabled()) {

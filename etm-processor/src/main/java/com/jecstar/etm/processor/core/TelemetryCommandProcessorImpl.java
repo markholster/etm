@@ -7,7 +7,6 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.*;
 import com.jecstar.etm.domain.builder.*;
 import com.jecstar.etm.processor.TelemetryCommand;
-import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
 import com.jecstar.etm.processor.metrics.GarbageCollectorMetricSet;
 import com.jecstar.etm.processor.metrics.MemoryUsageMetricSet;
 import com.jecstar.etm.processor.metrics.NetworkMetricSet;
@@ -17,6 +16,7 @@ import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEven
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.lmax.disruptor.RingBuffer;
 
 import java.io.IOException;

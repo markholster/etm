@@ -1,7 +1,5 @@
 package com.jecstar.etm.launcher.background;
 
-import com.jecstar.etm.gui.rest.AbstractJsonService;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
@@ -10,6 +8,8 @@ import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalT
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.util.ObjectUtils;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;

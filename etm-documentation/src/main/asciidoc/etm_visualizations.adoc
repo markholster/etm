@@ -4,7 +4,7 @@ Besides searching for data {etm} provides a way to visualize statistics on any o
 === Graphs
 Graphs are the base items on <<Dashboards>>. Each graph represents a visual representation of a part of your data. A graph can be a single number, but also a chart.
 
-To add, modify or delete graphs browse to http://localhost:8080/gui/dashboard/graphs.html or select the menu option ''Visualizations -> Graphs''.
+To add, modify or delete graphs browse to http://localhost:8080/gui/dashboard/graphs.html or select the menu option ''Visualizations -> Graphs''. Note that the menu option might be contain a submenu with your username and the groups you belong to. This extra submenu will give you the opportunity to create a graph for a group or just for yourself.
 
 Each graph is uniquely identified by it's name and selects data from a certain datasource. {etm} provides 2 datasources:
 
@@ -12,7 +12,7 @@ Each graph is uniquely identified by it's name and selects data from a certain d
 . Metrics
 
 The Events datasource contains all event you stored in {etm}. The Metrics datasource contains metric data of all {etm} instances. This information can be very helpful to monitor your {etm} cluster.
-To narrow down the data used in your graph you can provide a query. This query will be used as filter query for your statistics. Also, if you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
+To narrow down the data used in your graph you can provide a query. This query will be used as filter query for your statistics. Also, when you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
 
 Finally, depending on your needs you can select a suitable graph type:
 [horizontal]
@@ -116,7 +116,7 @@ Significant term:: Group events on the most significant terms of the provided fi
 Term:: Groups events on the most or least occurred terms of the provided field. 
 
 === Dashboards
-After adding some <<Graphs>> it is time to create your first dashboard. To add, modify or delete dashboards browse to http://localhost:8080/gui/dashboard/dashboards.html or select the menu option ''Visualizations -> Dashboards''.
+After adding some <<Graphs>> it is time to create your first dashboard. To add, modify or delete dashboards browse to http://localhost:8080/gui/dashboard/dashboards.html or select the menu option ''Visualizations -> Dashboards''. Note that the menu option might be contain a submenu with your username and the groups you belong to. This extra submenu will give you the opportunity to create a dashboard for a group or just for yourself.
 A dashboard contains of a set of horizontal rows below each other. Each row can be split into columns and each column can contain a graph.
 
 On the first screen you can enter a dashboard name and add some rows. Change the number of columns per row as needed, and give the rows a suitable height. Don't worry over the exact height of each row right now. When the dashboard is create you can drag the height to the best fit for your screen. When you're done organizing your rows and columns click on the ''Save and show'' button to go to your dashboard. Your dashboard might look like the following image:
@@ -131,7 +131,7 @@ image::images/etm-v3/etm-dashboard-graph-settings.png["Dashboard graph settings"
 
 When finished hit the apply button and your graph will be added to the dashboard. There is no need to save the dashboard again, changes are automatically stored.
 
-A graph on a dashboard can have the follwing attributes:
+A graph on a dashboard can have the following attributes:
 
 .Dashboard graph attributes
 [options="header"]

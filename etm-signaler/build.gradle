@@ -1,0 +1,5 @@
+apply plugin: "java"
+
+dependencies {
+    compile project(":etm-server-core"), dep_elasticsearchClient, dep_mailApi
+}

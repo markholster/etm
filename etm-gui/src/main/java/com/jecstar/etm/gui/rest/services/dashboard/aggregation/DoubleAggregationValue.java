@@ -62,4 +62,28 @@ public class DoubleAggregationValue extends AbstractAggregationValue<Double> {
         return value != null && !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
+    @Override
+    public boolean isEqualTo(int value) {
+        if (hasValidValue()) {
+            return this.value.compareTo((double) value) == 0;
+        }
+        return DEFAULT_MISSING_VALUE.compareTo((double) value) == 0;
+    }
+
+    @Override
+    public boolean isLessThan(int value) {
+        if (hasValidValue()) {
+            return this.value.compareTo((double) value) < 0;
+        }
+        return DEFAULT_MISSING_VALUE.compareTo((double) value) < 0;
+    }
+
+    @Override
+    public boolean isGreaterThan(int value) {
+        if (hasValidValue()) {
+            return this.value.compareTo((double) value) > 0;
+        }
+        return DEFAULT_MISSING_VALUE.compareTo((double) value) > 0;
+    }
+
 }

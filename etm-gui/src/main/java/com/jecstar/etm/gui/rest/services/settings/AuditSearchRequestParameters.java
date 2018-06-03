@@ -1,7 +1,6 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
-import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.AuditLog;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 import java.util.Map;
@@ -22,8 +21,7 @@ class AuditSearchRequestParameters {
         this.queryString = query;
         this.startIndex = 0;
         this.maxResults = 50;
-        AuditLogTags tags = new AuditLogTagsJsonImpl();
-        this.sortField = tags.getHandlingTimeTag();
+        this.sortField = AuditLog.HANDLING_TIME;
         this.sortOrder = "desc";
     }
 

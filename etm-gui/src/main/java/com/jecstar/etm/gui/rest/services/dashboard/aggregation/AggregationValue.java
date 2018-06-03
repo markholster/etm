@@ -87,4 +87,30 @@ public interface AggregationValue<T> {
      * <code>false</code> otherwise.
      */
     boolean hasValidValue();
+
+    /**
+     * Checks if the value is equal to a given value. When the value is not set, the default missing value will be used for comparison.
+     *
+     * @param value The value to compare with.
+     * @return <code>true</code> when the values are equal, <code>false</code> otherwise.
+     */
+    boolean isEqualTo(int value);
+
+    /**
+     * Checks if the value is greater than a given value. When the value is not set, the default missing value will be used for comparison.
+     *
+     * @param value The value to compare with.
+     * @return <code>true</code> when the value is greater than the given value, <code>false</code> otherwise.
+     */
+    boolean isGreaterThan(int value);
+
+    /**
+     * Checks if the value is less than a given value. When the value is not set, the default missing value will be used for comparison.
+     *
+     * @param value The value to compare with.
+     * @return <code>true</code> when the value is less than the given value, <code>false</code> otherwise.
+     */
+    boolean isLessThan(int value);
+
+
 }

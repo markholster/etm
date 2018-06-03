@@ -1,7 +1,7 @@
 package com.jecstar.etm.util;
 
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;

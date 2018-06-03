@@ -25,7 +25,7 @@ public class PayloadDecoderTest {
     public void testBase64Decoding() {
         PayloadDecoder decoder = new PayloadDecoder();
         String data = "This is a test";
-        assertEquals(data, decoder.decode(Base64.getEncoder().encodeToString(data.getBytes()), PayloadEncoding.BASE64_CA_API_GATEWAY));
+        assertEquals(data, decoder.decode(Base64.getEncoder().encodeToString(data.getBytes()), PayloadEncoding.BASE64));
     }
 
     @Test

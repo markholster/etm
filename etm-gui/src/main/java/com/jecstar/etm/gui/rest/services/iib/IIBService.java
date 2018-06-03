@@ -2,9 +2,8 @@ package com.jecstar.etm.gui.rest.services.iib;
 
 import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
 import com.ibm.broker.config.proxy.ConfigurableService;
-import com.jecstar.etm.gui.rest.AbstractJsonService;
+import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.gui.rest.IIBApi;
-import com.jecstar.etm.gui.rest.services.ScrollableSearch;
 import com.jecstar.etm.gui.rest.services.iib.proxy.*;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -12,6 +11,7 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.Client;
@@ -29,7 +29,7 @@ import java.util.*;
 
 @Path("/iib")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
-public class IIBService extends AbstractJsonService {
+public class IIBService extends AbstractGuiService {
 
     /**
      * The <code>LogWrapper</code> for this class.
@@ -93,7 +93,7 @@ public class IIBService extends AbstractJsonService {
     @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
     public String addNode(@PathParam("nodeName") String nodeName, String json) {
         Node node = this.nodeConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
-        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
+        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
         }
         enhanceRequest(
@@ -122,7 +122,7 @@ public class IIBService extends AbstractJsonService {
         StringBuilder result = new StringBuilder();
         result.append("{\"servers\": [");
         boolean first = true;
-        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
+        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
             List<IIBIntegrationServer> integrationServers = nodeConnection.getServers();
             for (IIBIntegrationServer integrationServer : integrationServers) {
@@ -151,7 +151,7 @@ public class IIBService extends AbstractJsonService {
         }
         Node node = this.nodeConverter.read(getResponse.getSourceAsString());
         String result;
-        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
+        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
             nodeConnection.setSynchronous(240000);
             IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
@@ -209,7 +209,7 @@ public class IIBService extends AbstractJsonService {
         Node node = this.nodeConverter.read(getResponse.getSourceAsString());
         StringBuilder result = new StringBuilder();
         result.append("{\"deployments\": {");
-        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node);) {
+        try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
             IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
             List<IIBSubFlow> sharedLibrarySubFlows = new ArrayList<>();

@@ -19,8 +19,6 @@ dependencies {
             project(":etm-gui"),
             dep_cucumber,
             dep_cucumberJunit,
-            dep_junit,
-            dep_junitVintage,
             dep_seleniumJava,
             dep_htmlunitDriver,
             dep_apacheDs,

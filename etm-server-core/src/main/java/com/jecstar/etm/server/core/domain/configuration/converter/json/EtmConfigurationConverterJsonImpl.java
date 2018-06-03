@@ -47,6 +47,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxGraphCountTag(), defaultConfiguration.getMaxGraphCount(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxDashboardCountTag(), defaultConfiguration.getMaxDashboardCount(), sb, !added) || added;
+            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSignalCountTag(), defaultConfiguration.getMaxSignalCount(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), sb, !added) || added;
             added = this.converter.addLongElementToJsonBuffer(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
@@ -71,6 +72,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
             added = addIntegerWhenNotDefault(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), nodeConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getMaxGraphCountTag(), defaultConfiguration.getMaxGraphCount(), nodeConfiguration.getMaxGraphCount(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getMaxDashboardCountTag(), defaultConfiguration.getMaxDashboardCount(), nodeConfiguration.getMaxDashboardCount(), sb, !added) || added;
+            added = addIntegerWhenNotDefault(this.tags.getMaxSignalCountTag(), defaultConfiguration.getMaxSignalCount(), nodeConfiguration.getMaxSignalCount(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), nodeConfiguration.getWaitForActiveShards(), sb, !added) || added;
             added = addLongWhenNotDefault(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), nodeConfiguration.getQueryTimeout(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), nodeConfiguration.getRetryOnConflictCount(), sb, !added) || added;
@@ -109,6 +111,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         etmConfiguration.setMaxSearchTemplateCount(getIntValue(this.tags.getMaxSearchTemplateCountTag(), defaultMap, nodeMap));
         etmConfiguration.setMaxGraphCount(getIntValue(this.tags.getMaxGraphCountTag(), defaultMap, nodeMap));
         etmConfiguration.setMaxDashboardCount(getIntValue(this.tags.getMaxDashboardCountTag(), defaultMap, nodeMap));
+        etmConfiguration.setMaxSignalCount(getIntValue(this.tags.getMaxSignalCountTag(), defaultMap, nodeMap));
         etmConfiguration.setWaitForActiveShards(getIntValue(this.tags.getWaitForActiveShardsTag(), defaultMap, nodeMap));
         etmConfiguration.setQueryTimeout(getLongValue(this.tags.getQueryTimeoutTag(), defaultMap, nodeMap));
         etmConfiguration.setRetryOnConflictCount(getIntValue(this.tags.getRetryOnConflictCountTag(), defaultMap, nodeMap));

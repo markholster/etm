@@ -1,5 +1,11 @@
 package com.jecstar.etm.server.core.domain.configuration;
 
+import com.jecstar.etm.server.core.converter.JsonField;
+import com.jecstar.etm.server.core.converter.JsonNamespace;
+import com.jecstar.etm.server.core.converter.custom.Base64Converter;
+import com.jecstar.etm.server.core.converter.custom.EnumConverter;
+
+@JsonNamespace(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP)
 public class LdapConfiguration {
 
     public enum ConnectionSecurity {
@@ -19,31 +25,51 @@ public class LdapConfiguration {
     }
 
     // Connection settings
+    @JsonField("host")
     private String host;
+    @JsonField("port")
     private int port;
+    @JsonField(value = "connection_security", converterClass = EnumConverter.class)
     private ConnectionSecurity connectionSecurity;
+    @JsonField("bind_dn")
     private String bindDn;
+    @JsonField(value = "bind_password", converterClass = Base64Converter.class)
     private String bindPassword;
 
     // connection pool
+    @JsonField("min_pool_size")
     private int minPoolSize = 2;
+    @JsonField("max_pool_size")
     private int maxPoolSize = 10;
+    @JsonField("connection_test_base_dn")
     private String connectionTestBaseDn;
+    @JsonField("connection_test_search_filter")
     private String connectionTestSearchFilter;
 
     // User filters
+    @JsonField("user_base_dn")
     private String userBaseDn;
+    @JsonField("user_search_filter")
     private String userSearchFilter;
+    @JsonField("user_search_in_subtree")
     private boolean userSearchInSubtree;
+    @JsonField("user_identifier_attribute")
     private String userIdentifierAttribute;
+    @JsonField("user_full_name_attribute")
     private String userFullNameAttribute;
+    @JsonField("user_email_attribute")
     private String userEmailAttribute;
+    @JsonField("user_member_of_groups_attribute")
     private String userMemberOfGroupsAttribute;
+    @JsonField("user_groups_query_base_dn")
     private String userGroupsQueryBaseDn;
+    @JsonField("user_groups_query_filter")
     private String userGroupsQueryFilter;
 
     // Group filters.
+    @JsonField("group_base_dn")
     private String groupBaseDn;
+    @JsonField("group_search_filter")
     private String groupSearchFilter;
 
     public String getHost() {

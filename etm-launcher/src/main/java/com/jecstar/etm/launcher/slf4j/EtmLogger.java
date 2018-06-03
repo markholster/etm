@@ -6,7 +6,7 @@ import com.jecstar.etm.domain.builder.ApplicationBuilder;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.LogTelemetryEventBuilder;
-import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
+import com.jecstar.etm.server.core.persisting.internal.InternalBulkProcessorWrapper;
 import org.slf4j.Marker;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MarkerIgnoringBase;

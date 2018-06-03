@@ -1,6 +1,6 @@
 package com.jecstar.etm.launcher.slf4j;
 
-import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
+import com.jecstar.etm.server.core.persisting.internal.InternalBulkProcessorWrapper;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 

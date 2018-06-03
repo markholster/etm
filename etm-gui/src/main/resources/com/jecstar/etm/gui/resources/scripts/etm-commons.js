@@ -1,5 +1,4 @@
 // Utility class for common ETM functions. This script should be loaded after jQuery.
-
 // Method to retrieve query string parametetrs.
 var queryString = (function(a) {
     if (a == "") return {};
@@ -109,5 +108,13 @@ $(document).ready( function () {
             $el.next().css({"top": $el[0].offsetTop, "left": $parent.outerWidth() - 4});
         }
         return false;
+    });
+
+    // Change all labels of required fields to italic
+    $("[required='required']").each(function (index, item) {
+        var id = $(item).attr('id');
+        if (id) {
+            $('label[for="' + id + '"]').css('font-style', 'italic');
+        }
     });
 } );

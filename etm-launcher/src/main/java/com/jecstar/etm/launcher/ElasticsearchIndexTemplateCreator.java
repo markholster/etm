@@ -4,8 +4,7 @@ import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.audit.converter.AuditLogTags;
-import com.jecstar.etm.server.core.domain.audit.converter.json.AuditLogTagsJsonImpl;
+import com.jecstar.etm.server.core.domain.audit.AuditLog;
 import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -21,6 +20,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalC
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
+import com.jecstar.etm.signaler.domain.Signal;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptAction;
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.Alias;
@@ -59,7 +59,6 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
     private final MetricConverterTags metricTags = new MetricConverterTagsJsonImpl();
     private final EtmConfigurationTags configurationTags = new EtmConfigurationTagsJsonImpl();
-    private final AuditLogTags auditTags = new AuditLogTagsJsonImpl();
     private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
     private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
@@ -279,8 +278,8 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     private String createAuditMapping(String name) {
         return "{ \"" + name + "\": "
                 + "{\"dynamic_templates\": ["
-                + "{ \"" + this.auditTags.getTimestampTag() + "\": { \"match\": \"" + this.auditTags.getTimestampTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
-                + ", { \"" + this.auditTags.getHandlingTimeTag() + "\": { \"match\": \"" + this.auditTags.getHandlingTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + "{ \"" + AuditLog.TIMESTAMP + "\": { \"match\": \"" + AuditLog.TIMESTAMP + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + ", { \"" + AuditLog.HANDLING_TIME + "\": { \"match\": \"" + AuditLog.HANDLING_TIME + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + "]}"
                 + "}";
     }
@@ -290,6 +289,9 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + "{\"dynamic_templates\": ["
                 + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"" + Signal.LAST_EXECUTED + "\": { \"match\": \"" + Signal.LAST_EXECUTED + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + ", { \"" + Signal.LAST_FAILED + "\": { \"match\": \"" + Signal.LAST_FAILED + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + ", { \"" + Signal.LAST_PASSED + "\": { \"match\": \"" + Signal.LAST_PASSED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"string_as_keyword\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + "]}"
                 + "}";

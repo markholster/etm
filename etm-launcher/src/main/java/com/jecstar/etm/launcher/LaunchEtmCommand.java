@@ -20,8 +20,6 @@ import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
 import com.jecstar.etm.processor.ibmmq.IbmMqProcessor;
 import com.jecstar.etm.processor.ibmmq.configuration.IbmMq;
-import com.jecstar.etm.processor.internal.persisting.BusinessEventLogger;
-import com.jecstar.etm.processor.internal.persisting.InternalBulkProcessorWrapper;
 import com.jecstar.etm.processor.jms.JmsProcessor;
 import com.jecstar.etm.processor.jms.JmsProcessorImpl;
 import com.jecstar.etm.processor.kafka.KafkaProcessor;
@@ -29,7 +27,10 @@ import com.jecstar.etm.processor.kafka.KafkaProcessorImpl;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
+import com.jecstar.etm.server.core.persisting.internal.InternalBulkProcessorWrapper;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
+import com.jecstar.etm.signaler.Signaler;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Slf4JLoggerFactory;
 import org.elasticsearch.client.Client;
@@ -198,6 +199,9 @@ class LaunchEtmCommand extends AbstractCommand {
         if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
             threadPoolSize += 2;
         }
+        if (configuration.signaler.enabled) {
+            threadPoolSize++;
+        }
         this.backgroundScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_background_scheduler"));
         this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, client), 0, 6, TimeUnit.HOURS);
         this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 1, 15, TimeUnit.MINUTES);
@@ -205,10 +209,15 @@ class LaunchEtmCommand extends AbstractCommand {
             this.backgroundScheduler.scheduleAtFixedRate(new LdapSynchronizer(etmConfiguration, client), 1, 3, TimeUnit.HOURS);
             this.backgroundScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, client), 2, 15, TimeUnit.MINUTES);
         }
-
+        if (configuration.signaler.enabled) {
+            this.backgroundScheduler.scheduleAtFixedRate(new Signaler(configuration.clusterName, etmConfiguration, client), 1, 1, TimeUnit.MINUTES);
+        }
     }
 
     private void initializeProcessor(MetricRegistry metricRegistry, Configuration configuration, EtmConfiguration etmConfiguration) {
+        if (!configuration.ibmMq.enabled && !configuration.jms.enabled && !configuration.kafka.enabled && !configuration.http.restProcessorEnabled) {
+            return;
+        }
         if (this.processor == null) {
             this.processor = new TelemetryCommandProcessorImpl(metricRegistry);
             this.processor.start(new NamedThreadFactory("etm_processor"), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);

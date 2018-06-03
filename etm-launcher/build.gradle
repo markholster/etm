@@ -13,5 +13,4 @@ dependencies {
             dep_snakeyaml,
             dep_undertowServlet,
             dep_elasticsearchXpackTransportClient
-    testCompile dep_junit
 }

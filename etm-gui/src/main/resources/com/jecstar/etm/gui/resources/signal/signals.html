@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>Jecstar - Enterprise Telemetry Monitor</title>
+
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/font-awesome.min.css">
+    <link rel="stylesheet" href="../styles/jquery-ui.min.css">
+    <link rel="stylesheet" href="../styles/autocomplete.css">
+    <link rel="stylesheet" href="../styles/etm-commons.css">
+    <link rel="stylesheet" href="../styles/nv.d3.min.css">
+    <script src="../scripts/tether.min.js"></script>
+    <script src="../scripts/jquery.min.js"></script>
+    <script src="../scripts/jquery-ui.min.js"></script>
+    <script src="../scripts/popper.min.js"></script>
+    <script src="../scripts/bootstrap.min.js"></script>
+</head>
+<body>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+    <a class="navbar-brand animated infinite" href="https://www.jecstar.com" target="_blank">
+        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
+             alt="">
+        Jecstar
+    </a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
+            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="collapsing_navbar">
+        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
+            <li id="placeholder-for-MenuAwareURLResource"></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container-fluid" style="margin-top: 1em;">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card card-block">
+                <div class="card-body">
+                    <h5 class="card-title">Signals</h5>
+                    <div class="card-text">
+                        <div id="signals_errorBox" class="alert alert-danger errorBox" style="display: none;"
+                             role="alert"></div>
+                        <div id="signals_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                        <div id="signals_box">
+                            <div class="row">
+                                <div class=col-sm-12>
+                                    <select id="sel-signal" class="form-control form-control-sm custom-select"
+                                            autofocus="autofocus">
+                                        <option selected="selected"></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <hr/>
+                            <div class="row">
+                                <div class=col-sm-12>
+                                    <form id="signal_form">
+                                        <div class="form-group row">
+                                            <label for="input-signal-name"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">Name</label>
+                                            <div class="col-sm-9">
+                                                <input id="input-signal-name" type="text"
+                                                       class="form-control form-control-sm"
+                                                       data-required="required"
+                                                       required="required"/>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="sel-data-source"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">Data source</label>
+                                            <div class="col-sm-9">
+                                                <select id="sel-data-source"
+                                                        class="form-control form-control-sm custom-select">
+                                                    <option value="etm_event_all">Events</option>
+                                                    <option value="etm_metrics_all">Metrics</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="input-signal-query"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">Query</label>
+                                            <div class="col-sm-9">
+                                                <input id="input-signal-query" type="text"
+                                                       class="form-control form-control-sm"
+                                                       data-required-visualization="required"
+                                                       data-required="required"
+                                                       required="required"
+                                                       value="*"/>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="input-signal-check-timespan"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">Check every</label>
+                                            <div class="col-sm-4">
+                                                <input id="input-signal-check-timespan" type="number"
+                                                       class="form-control form-control-sm"
+                                                       value="30"
+                                                       min="1"
+                                                       data-required="required"
+                                                       required="required"/>
+                                            </div>
+                                            <div class="col-sm-5">
+                                                <select id="sel-signal-check-timeunit"
+                                                        class="form-control form-control-sm custom-select">
+                                                    <option id="check-minute" value="MINUTES">Minutes</option>
+                                                    <option id="check-hour" value="HOURS">Hours</option>
+                                                    <option id="check-day" value="DAYS">Days</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <a id="lnk-add-notifier" class="pull-right col-form-label-sm" href="#">Add
+                                                notifier</a>
+                                            <label class="col-form-label col-form-label-sm" style="font-style: italic;">Notifiers</label>
+                                            <ol id="list-notifiers">
+                                            </ol>
+                                        </div>
+                                        <hr/>
+                                        <p><b>The threshold is exceeded when...</b></p>
+                                        <div class="form-group row">
+                                            <label for="sel-signal-when"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">the</label>
+                                            <div class="col-sm-9">
+                                                <select id="sel-signal-when"
+                                                        class="form-control form-control-sm custom-select">
+                                                    <option value="AVERAGE">Average</option>
+                                                    <option value="COUNT">Count</option>
+                                                    <option value="MAX">Max</option>
+                                                    <option value="MEDIAN">Median</option>
+                                                    <option value="MIN">Min</option>
+                                                    <!--
+                                                                                                        <option value="percentile">Percentile</option>
+                                                                                                        <option value="percentile_rank">Percentile rank</option>
+                                                    -->
+                                                    <option value="SUM">Sum</option>
+                                                    <option value="CARDINALITY">Unique count</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="input-signal-per-timespan"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">per</label>
+                                            <div class="col-sm-4">
+                                                <input id="input-signal-per-timespan" type="number"
+                                                       class="form-control form-control-sm"
+                                                       value="5"
+                                                       min="1"
+                                                       data-required-visualization="required"
+                                                       data-required="required"
+                                                       required="required"/>
+                                            </div>
+                                            <div class="col-sm-5">
+                                                <select id="sel-signal-per-timeunit"
+                                                        class="form-control form-control-sm custom-select">
+                                                    <option id="per-minute" value="MINUTES">Minutes</option>
+                                                    <option id="per-hour" value="HOURS">Hours</option>
+                                                    <option id="per-day" value="DAYS">Days</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="input-signal-field"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">of the
+                                                field</label>
+                                            <div class="col-sm-9">
+                                                <input id="input-signal-field" type="text"
+                                                       class="form-control form-control-sm"
+                                                       data-element-type="autocomplete-input"
+                                                       data-required-visualization="required"
+                                                       data-required="required"
+                                                       required="required"/>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="input-signal-threshold"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">is</label>
+                                            <div class="col-sm-4">
+                                                <select id="sel-signal-is"
+                                                        class="form-control form-control-sm custom-select">
+                                                    <option value="LT">Less than</option>
+                                                    <option value="LTE">Less than or equal to</option>
+                                                    <option value="EQ">Equal to</option>
+                                                    <option value="GTE">Greater than or equal to</option>
+                                                    <option value="GT">Greater than</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-sm-5">
+                                                <input id="input-signal-threshold" type="number"
+                                                       class="form-control form-control-sm"
+                                                       data-required="required"
+                                                       required="required"/>
+                                            </div>
+                                        </div>
+                                        <hr/>
+                                        <p><b>Send a signal when the threshold...</b></p>
+                                        <div class="form-group row">
+                                            <label for="input-signal-exceeded-count"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">is exceeded</label>
+                                            <div class="col-sm-8">
+                                                <input id="input-signal-exceeded-count" type="number"
+                                                       class="form-control form-control-sm"
+                                                       value="1"
+                                                       min="1"
+                                                       data-required="required"
+                                                       required="required"/>
+                                            </div>
+                                            <label id="label-exceeded-count-time"
+                                                   class="col-sm-1 col-form-label col-form-label-sm">time</label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="input-signal-last-timespan"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">in the last</label>
+                                            <div class="col-sm-4">
+                                                <input id="input-signal-last-timespan" type="number"
+                                                       class="form-control form-control-sm"
+                                                       value="30"
+                                                       min="1"
+                                                       data-required-visualization="required"
+                                                       data-required="required"
+                                                       required="required"/>
+                                            </div>
+                                            <div class="col-sm-5">
+                                                <select id="sel-signal-last-timeunit"
+                                                        class="form-control form-control-sm custom-select">
+                                                    <option id="last-minute" value="MINUTES">Minutes</option>
+                                                    <option id="last-hour" value="HOURS">Hours</option>
+                                                    <option id="last-day" value="DAYS">Days</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <input type="submit" id="btn-confirm-remove-signal"
+                                                   data-element-type="acl-aware"
+                                                   class="btn btn-danger" value="Remove" formnovalidate="formnovalidate"
+                                                   disabled="disabled"/>
+                                            <input type="submit" id="btn-visualize-signal" class="btn btn-secondary"
+                                                   data-element-type="acl-aware"
+                                                   value="Visualize" formnovalidate="formnovalidate"
+                                                   disabled="disabled"/>
+                                            <input type="submit" id="btn-confirm-save-signal"
+                                                   data-element-type="acl-aware"
+                                                   class="btn btn-primary" value="Save" disabled="disabled"/>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+        </div>
+        <div class="col-md-6">
+            <div id="block-recipients" class="card card-block" style="display: none;">
+                <div class="card-body">
+                    <h5 class="card-title">Email recipients
+                        <small><a id="lnk-add-recipient" class="pull-right" href="#">Add recipient</a></small>
+                    </h5>
+                    <div class="card-text">
+                        <div id="block-email-all-group-members" class="form-group row" style="display:none;">
+                            <label for="sel-email-all-group-members" class="col-sm-3 col-form-label">Email all
+                                group members</label>
+                            <div class="col-sm-9">
+                                <select id="sel-email-all-group-members"
+                                        class="form-control form-control-sm custom-select">
+                                    <option value="true">Yes</option>
+                                    <option value="false" selected="selected">No</option>
+                                </select>
+                            </div>
+                        </div>
+                        <ol id="list-recipients">
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            <div class="card card-block">
+                <div class="card-body">
+                    <h5 class="card-title">Visualize</h5>
+                    <div class="card-text">
+                        <div id="preview_box" style="text-align: center;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-signal-overwrite">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="graph-overwrite-modal-label">Signal already exists</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                A signal with the name '<i id="overwrite-signal-name"></i>' already exists. Do you want to overwrite
+                that signal?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-save-signal" type="button" class="btn btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-signal-remove">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="signal-remove-modal-label">Confirm removal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove the signal '<i id="remove-signal-name"></i>'?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-remove-signal" type="button" class="btn btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../scripts/d3.min.js"></script>
+<script src="../scripts/nv.d3.min.js"></script>
+<script src="../scripts/autocomplete_fields.js"></script>
+<script src="../scripts/signals.js"></script>
+<script src="../scripts/etm-commons.js"></script>
+<script>
+    addAjaxHandlers(
+        null,
+        null,
+        function(event, jqXHR, settings, thrownError) {
+            if ("undefined" != typeof jqXHR.responseJSON) {
+                $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+            } else {
+                $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+            }
+            $('html,body').animate({scrollTop: 0},'fast');
+        },
+        null
+    );
+    buildSignalsPage(queryString['group']);
+
+</script>
+</body>
+</html>
