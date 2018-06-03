@@ -342,7 +342,7 @@ public class MenuAwareURLResource extends URLResource {
             } else {
                 html.append("<li class=\"nav-item\">");
             }
-            html.append("<a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("signal/signals.html/\"><span class=\"fa fa-bell fa-lg hidden-md-down\">&nbsp;</span>Signals</a>");
+            html.append("<a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("signal/signals.html\"><span class=\"fa fa-bell fa-lg hidden-md-down\">&nbsp;</span>Signals</a>");
             html.append("</li>");
         }
     }

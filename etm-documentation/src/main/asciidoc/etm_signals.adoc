@@ -26,3 +26,4 @@ Remember that the check interval and the ''in the last'' interval may have some 
 a signal every minute for the next 30 minutes. Depending on you requirements this might be desired, or not.
 
 Finally, when all required fields are entered, the visualization button will be enabled to give you a visual representation of the signal you've created.
+

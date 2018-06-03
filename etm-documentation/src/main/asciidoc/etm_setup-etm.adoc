@@ -450,7 +450,7 @@ The ''signaler'' section contains all options to configure the signaler.
 |=======================
 |Name|Default value|Description
 |enabled|true|Should the signaler be enabled? Set this value to true to let this node send signals to end users/systems.
-
+|=======================
 
 ==== Logging section in etm.yml
 The ''logging'' section contains all options to configure the loggers and log levels. Log levels can be one of TRACE, DEBUG, INFO, WARNING or ERROR.

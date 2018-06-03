@@ -488,7 +488,13 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
      * @param client The elasticsearch client.
      */
     private void updateDocMappingForCurrentEventIndex(Client client) {
-        PutMappingRequestBuilder builder = client.admin().indices().preparePutMapping(ElasticsearchLayout.EVENT_INDEX_PREFIX + DateUtils.getIndexPerDayFormatter().format(ZonedDateTime.now()));
+        final String currentIndex = ElasticsearchLayout.EVENT_INDEX_PREFIX + DateUtils.getIndexPerDayFormatter().format(ZonedDateTime.now());
+        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(currentIndex).get();
+        if (!indicesExistsResponse.isExists()) {
+            // Index of today does not exists.
+            return;
+        }
+        PutMappingRequestBuilder builder = client.admin().indices().preparePutMapping(currentIndex);
         builder.setType("doc").setSource(
                 "{\n" +
                         "  \"dynamic_templates\": [\n" +
