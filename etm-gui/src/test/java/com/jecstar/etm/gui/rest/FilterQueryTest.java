@@ -17,6 +17,8 @@ public class FilterQueryTest {
     /**
      * There's a bug in Elasticsearch which causes 2 QueryStringQueryBuilder to always equal when a timezone is added.
      * This testcase will fail once the bug is fixed. When that's the case the FilterQuery#query must be reverted to QueryBuilder.
+     *
+     * See https://github.com/elastic/elasticsearch/issues/29403 for more information. Work around no longer in place.
      */
     @Test
     public void testCompare() {
@@ -28,11 +30,12 @@ public class FilterQueryTest {
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)
                 .timeZone("Europe/Amsterdam");
-        // This should actually be false because the query is different. This assertion test the presence of an
-        // elasticsearch bug and hence the need for a work around in our code.
-        assertTrue(qb1.equals(qb2));
+        assertFalse(qb1.equals(qb2));
     }
 
+    /**
+     * See https://github.com/elastic/elasticsearch/issues/29403, work around no longer in place. Issue is fixed in ES 6.3
+     */
     @Test
     public void testWorkAround() {
         QueryStringQueryBuilder qb1 = new QueryStringQueryBuilder("This is a query")

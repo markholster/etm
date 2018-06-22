@@ -39,6 +39,7 @@ import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateActio
 import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
@@ -126,52 +127,52 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private void insertPainlessScripts() throws IOException {
         new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-                .setId("etm_update-search-template").setContent(JsonXContent.contentBuilder().startObject()
+                .setId("etm_update-search-template").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateSearchTemplateScript())
                 .endObject()
-                .endObject().bytes(), XContentType.JSON)
+                .endObject()), XContentType.JSON)
                 .get();
         new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-                .setId("etm_remove-search-template").setContent(JsonXContent.contentBuilder().startObject()
+                .setId("etm_remove-search-template").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createRemoveSearchTemplateScript())
                 .endObject()
-                .endObject().bytes(), XContentType.JSON)
+                .endObject()), XContentType.JSON)
                 .get();
         new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-                .setId("etm_update-search-history").setContent(JsonXContent.contentBuilder().startObject()
+                .setId("etm_update-search-history").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateSearchHistoryScript())
                 .endObject()
-                .endObject().bytes(), XContentType.JSON)
+                .endObject()), XContentType.JSON)
                 .get();
         new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-                .setId("etm_update-event").setContent(JsonXContent.contentBuilder().startObject()
+                .setId("etm_update-event").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateEventScript())
                 .endObject()
-                .endObject().bytes(), XContentType.JSON)
+                .endObject()), XContentType.JSON)
                 .get();
         new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-                .setId("etm_update-event-with-correlation").setContent(JsonXContent.contentBuilder().startObject()
+                .setId("etm_update-event-with-correlation").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateEventWithCorrelationScript())
                 .endObject()
-                .endObject().bytes(), XContentType.JSON)
+                .endObject()), XContentType.JSON)
                 .get();
         new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
-                .setId("etm_update-request-with-response").setContent(JsonXContent.contentBuilder().startObject()
+                .setId("etm_update-request-with-response").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateRequestWithResponseScript())
                 .endObject()
-                .endObject().bytes(), XContentType.JSON)
+                .endObject()), XContentType.JSON)
                 .get();
     }
 

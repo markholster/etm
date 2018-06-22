@@ -33,6 +33,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -244,7 +245,7 @@ public class SearchService extends AbstractIndexMetadataService {
             try {
                 XContentBuilder contentBuilder = XContentFactory.jsonBuilder();
                 requestBuilder.request().source().query().toXContent(contentBuilder, ToXContent.EMPTY_PARAMS);
-                executedQuery = contentBuilder.string();
+                executedQuery = Strings.toString(contentBuilder);
             } catch (IOException e) {
                 if (log.isErrorLevelEnabled()) {
                     log.logErrorMessage(e.getMessage(), e);
