@@ -89,17 +89,17 @@ class Startup {
 
             configuration = yaml.loadAs(reader, Configuration.class);
         }
-        addEnvironmentToConfigruation(configuration, null);
+        addEnvironmentToConfiguration(configuration, null);
         return configuration;
     }
 
-    private static void addEnvironmentToConfigruation(Object configurationInstance, String prefix) {
+    private static void addEnvironmentToConfiguration(Object configurationInstance, String prefix) {
         Field[] fields = configurationInstance.getClass().getDeclaredFields();
         for (Field field : fields) {
             if (field.getType().getName().startsWith("com.jecstar.")) {
                 // A nested configuration class.
                 try {
-                    addEnvironmentToConfigruation(field.get(configurationInstance), prefix == null ? field.getName() : prefix + "_" + field.getName());
+                    addEnvironmentToConfiguration(field.get(configurationInstance), prefix == null ? field.getName() : prefix + "_" + field.getName());
                 } catch (IllegalArgumentException | IllegalAccessException e) {
                 }
             } else {
