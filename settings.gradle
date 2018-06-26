@@ -1,4 +1,5 @@
 include 'etm-public:etm-domain',
+        'etm-public:etm-docker',
         'etm-server-core',
         'etm-processor',
         'etm-processor-rest',
@@ -13,5 +14,4 @@ include 'etm-public:etm-domain',
         'etm-integration-tests',
         'etm-license-generator',
         'etm-distribution',
-        'etm-documentation',
-        'etm-docker'
+        'etm-documentation'
