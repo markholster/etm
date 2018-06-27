@@ -46,3 +46,14 @@ if [ $? -ne 0 ]; then
 fi
 #docker push www.jecstar.com/etm:$VERSION
 
+
+#==== Push subtree
+#git subtree push --prefix=etm-public git@github.com:jecstarinnovations/etm.git develop
+#cd ../etm-public
+#git checkout develop
+#git pull
+#git checkout master
+#git merge develop
+#git tag -a $VERSION
+#git push --tags
+

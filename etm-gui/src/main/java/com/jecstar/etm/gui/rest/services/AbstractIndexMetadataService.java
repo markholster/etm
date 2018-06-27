@@ -70,7 +70,7 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
         for (Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetaData>> indexMap : response.mappings().values()) {
             for (Map<String, GetFieldMappingsResponse.FieldMappingMetaData> sourceMap : indexMap.values()) {
                 for (GetFieldMappingsResponse.FieldMappingMetaData fieldMappingMetaData : sourceMap.values()) {
-                    String type = getString("type", getObject(propertyName, fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
+                    String type = getString("type", getObject("name", fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
                     if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
                         return ("text".equals(type) || "keyword".equals(type)) ? propertyName + KEYWORD_SUFFIX : propertyName;
                     } else {

@@ -2,6 +2,7 @@
 
 === Version 3.3.0
 * [ETM-56] Migrate to Elasticsearch 6.3.
+* [ETM-57] Sorting not working on all fields.
 
 === Version 3.2.0
 * [ETM-14] Add signals.
