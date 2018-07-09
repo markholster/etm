@@ -254,6 +254,8 @@ General configuration options have no indentation in the etm.yml file. The follo
 |http||The http configuration. See <<Http section in etm.yml>> to view the nested options.
 |ibmMq||The IBM MQ configuration. See <<IBM MQ section in etm.yml>> to view the nested options.
 |jms||The JMS configuration. See <<JMS section in etm.yml>> to view the nested options.
+|kafka||The Kafka configuration. See <<Kafka section in etm.yml>> to view the nested options.
+|signaler||The signaler configuration. See <<Signaler section in etm.yml>> to view the nested options.
 |logging||The logging configuration. See <<Logging section in etm.yml>> to view the nested options.
 |======================= 
 
