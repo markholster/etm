@@ -1,5 +1,6 @@
 package com.jecstar.etm.signaler;
 
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.signaler.domain.Signal;
@@ -52,7 +53,7 @@ public class SignalSearchRequestBuilderBuilder {
         if (etmPrincipal != null) {
             queryStringBuilder.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
         }
-        queryStringBuilder.defaultField("_all");
+        queryStringBuilder.defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(queryStringBuilder);
         RangeQueryBuilder timestampFilter = new RangeQueryBuilder("timestamp");
         timestampFilter.gte("now-" + this.signal.getTimespanExpression());

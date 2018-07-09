@@ -128,7 +128,7 @@ public class AuditService extends AbstractIndexMetadataService {
     private SearchRequestBuilder createRequestFromInput(AuditSearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
         QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString()).allowLeadingWildcard(true)
                 .analyzeWildcard(true)
-                .defaultField("_all")
+                .defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME)
                 .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
