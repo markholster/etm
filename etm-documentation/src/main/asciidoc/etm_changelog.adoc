@@ -3,6 +3,7 @@
 === Version 3.3.0
 * [ETM-56] Migrate to Elasticsearch 6.3.
 * [ETM-57] Sorting not working on all fields.
+* [ETM-58] Query on dashboards should default to all attributes.
 
 === Version 3.2.0
 * [ETM-14] Add signals.

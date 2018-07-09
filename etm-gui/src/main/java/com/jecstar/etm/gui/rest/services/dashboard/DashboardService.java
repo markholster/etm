@@ -716,8 +716,8 @@ public class DashboardService extends AbstractUserAttributeService {
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)
                 .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+        queryStringBuilder.defaultField("*");
         if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(index)) {
-            queryStringBuilder.defaultField("_all");
             searchRequest.setQuery(addFilterQuery(getEtmPrincipal(), new BoolQueryBuilder().must(queryStringBuilder)));
         } else {
             searchRequest.setQuery(queryStringBuilder);
