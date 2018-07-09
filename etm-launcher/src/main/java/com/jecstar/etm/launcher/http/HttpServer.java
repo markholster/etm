@@ -167,6 +167,23 @@ public class HttpServer {
                 }
             }
         }
+        // Add the healthcheck servlet
+        try {
+            HealthCheckServlet.initialize(client);
+            DeploymentInfo di = Servlets.deployment()
+                    .setClassLoader(HealthCheckServlet.class.getClassLoader())
+                    .setContextPath("/")
+                    .setDeploymentName("Health check")
+                    .addServlets(Servlets.servlet("healthCheckServlet", HealthCheckServlet.class)
+                            .addMapping("/status"));
+            DeploymentManager manager = container.addDeployment(di);
+            manager.deploy();
+            root.addPrefixPath(di.getContextPath(), Handlers.requestLimitingHandler(10, 10, manager.start()));
+        } catch (ServletException e) {
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage("Error deploying health check servlet", e);
+            }
+        }
     }
 
     public void start() {
