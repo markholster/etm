@@ -23,6 +23,11 @@ public final class ElasticsearchLayout {
     public static final String ETM_DEFAULT_TYPE = "doc";
 
     /**
+     * The name of the attribute that is used to set to all attributes. Can be used to set the default search field to all attributes.
+     */
+    public static final String ETM_ALL_FIELDS_ATTRIBUTE_NAME = "*";
+
+    /**
      * The object name that holds the default configuration for an entity.
      */
     public static final String ETM_OBJECT_NAME_DEFAULT = "default_configuration";
