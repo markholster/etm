@@ -1,5 +1,5 @@
 FROM openjdk:8-jre-alpine
-LABEL maintainer "Jecstar Innovation <info@jecstar.com>"
+LABEL maintainer = "Jecstar Innovation <info@jecstar.com>"
 
 ENV PATH /usr/share/etm/bin:$PATH
 

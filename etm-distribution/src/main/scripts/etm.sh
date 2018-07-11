@@ -354,12 +354,13 @@ tailNode() {
 case "$1" in
 
     'console')
-        echo "Running $APP_LONG_NAME..."
+        echo "Starting $APP_LONG_NAME..."
         console $2 $3 $4 $5 $6
         ;;
 
     'docker')
-        console '--quiet'
+        echo "Starting $APP_LONG_NAME..."
+        console $2 $3 $4 $5 $6
         ;;
 
     'start')
@@ -393,7 +394,7 @@ case "$1" in
         tailNode
         ;;
     *)
-        echo "Usage: $0 { console | start | stop | restart | status | dump | reinitialize | tail}"
+        echo "Usage: $0 { console | start | stop | restart | status | dump | reinitialize | tail }"
         exit 1
         ;;
 esac

@@ -5,13 +5,11 @@ plugins {
 task copyDockerResources(type: Copy) {
     from 'src/main/docker'
     into buildDir.getName() + '/docker'
-    exclude 'Dockerfile.template'
 }
 
 build {
     doLast {
-        File dockerFile = file(buildDir.getName() + '/docker/Dockerfile')
-        dockerFile.text = file('src/main/docker/Dockerfile.template').text.replace('${etm-version}', project.version)
+        file(buildDir.getName() + '/docker/Dockerfile').text = file('src/main/docker/Dockerfile').text.replace('${etm-version}', project.version)
     }
 }
 

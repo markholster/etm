@@ -11,6 +11,13 @@ then
   echo "etm-public has a different version: $ETM_PUBLIC_VERSION. Expected version $VERSION."
   exit 1
 fi
+ES_VERSION=$(./gradlew properties | grep ^version_elasticsearch: | sed 's/^.*: //')
+ES_PUBLIC_VERSION=$(etm-public/gradlew properties -b etm-public/build.gradle | grep ^version_elasticsearch: | sed 's/^.*: //')
+if [[ "$ES_VERSION" != "$ES_PUBLIC_VERSION" ]]
+then
+  echo "etm-public has a different elasticsearch version: $ES_PUBLIC_VERSION. Expected version $ES_VERSION."
+  exit 1
+fi
 echo "Releasing Enterprise Telemetry Monitor $VERSION"
 
 echo "Compiling the project"

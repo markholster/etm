@@ -1,0 +1,21 @@
+import groovy.io.FileType
+
+plugins {
+    id 'base'
+}
+
+task copyDockerResources(type: Copy) {
+    from 'src/main/kubernetes'
+    into buildDir.getName() + '/kubernetes'
+}
+
+build {
+    doLast {
+        new File(buildDir, 'kubernetes').eachFile(FileType.FILES) {
+            ant.replace(file: it, token: '${elasticsearch-version}', value: version_elasticsearch)
+            ant.replace(file: it, token: '${etm-version}', value: project.version)
+        }
+    }
+}
+
+build.dependsOn copyDockerResources
