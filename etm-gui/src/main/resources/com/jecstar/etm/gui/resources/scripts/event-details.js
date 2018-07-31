@@ -1003,6 +1003,7 @@ function showEvent(scrollTo, type, id) {
 									event_type: node.event_type,
 									endpoint: node.endpoint,
 									transaction_id: node.transaction_id,
+                                    time_zone: timeZone,
 									type: node.node_type,
 									width: 'label',
 									color: color,
@@ -1105,7 +1106,6 @@ function showEvent(scrollTo, type, id) {
 								var eventId = evtTarget.data('event_id');
 								var eventData = eventMap[eventId];
 								if ("undefined" == typeof eventData) {
-									var eventType = evtTarget.data('event_type');
 									$.ajax({
 									    type: 'GET',
 									    contentType: 'application/json',
@@ -1129,7 +1129,7 @@ function showEvent(scrollTo, type, id) {
 									var endpointName = evtTarget.data('label')
 									$.each(eventData.source.endpoints, function (index, endpoint) {
 										if (endpointName == endpoint.name) {
-											displayEndpoint('event-chain-node-detail', 'event-chain-node-transaction-detail', endpoint, eventData.time_zone);
+											displayEndpoint('event-chain-node-detail', 'event-chain-node-transaction-detail', endpoint, evtTarget.data('time_zone'));
 											return false;
 										}
 									});
@@ -1140,14 +1140,14 @@ function showEvent(scrollTo, type, id) {
 										if (endpointName == endpoint.name) {
 										    var writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
 											if (writingEndpointHandler && transactionId == writingEndpointHandler.transaction_id) {
-												displayWritingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', writingEndpointHandler, eventData.time_zone);
+												displayWritingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', writingEndpointHandler, evtTarget.data('time_zone'));
 												return false;
 											}
 											var readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
 											if (readingEndpointHandlers) {
 												$.each(readingEndpointHandlers, function (index, eh) {
 													if (transactionId == eh.transaction_id) {
-														displayReadingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', eh, eventData.time_zone);
+														displayReadingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', eh, evtTarget.data('time_zone'));
 														return false;
 													}
 												});
