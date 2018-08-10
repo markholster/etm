@@ -161,13 +161,27 @@
                                 <div class="row form-group" style="margin-top: 5px;">
                                     <label for="query-string-from" class="col-sm-3 col-form-label">Start date</label>
                                     <div class="coll-sm">
-                                        <input id="query-string-from" type="text" class="form-control"/>
+                                        <div class="input-group flatpickr">
+                                            <input id="query-string-from" type="text" class="form-control" data-input />
+                                            <div class="input-group-append">
+                                                <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
+                                                    <i class="fa fa-calendar"></i>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <label for="query-string-till" class="col-sm-3 col-form-label">End date</label>
                                     <div class="coll-sm">
-                                        <input id="query-string-till" type="text" class="form-control"/>
+                                        <div class="input-group flatpickr">
+                                            <input id="query-string-till" type="text" class="form-control" data-input />
+                                            <div class="input-group-append">
+                                                <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
+                                                    <i class="fa fa-calendar"></i>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="row form-group">
@@ -467,7 +481,7 @@
             queryKeywords = data.keywords;
         }
     });
-    var flatPickrStartDate = $('#query-string-from')
+    var flatPickrStartDate = $('#query-string-from').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -475,9 +489,11 @@
             time_24hr: true,
             allowInput: true,
             defaultHour: 0,
-            defaultMinute: 0
+            defaultMinute: 0,
+            clickOpens: false,
+            wrap: true
         });
-    var flatPickrEndDate = $('#query-string-till')
+    var flatPickrEndDate = $('#query-string-till').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -485,7 +501,9 @@
             time_24hr: true,
             allowInput: true,
             defaultHour: 23,
-            defaultMinute: 59
+            defaultMinute: 59,
+            clickOpens: false,
+            wrap: true
         });
 
 </script>

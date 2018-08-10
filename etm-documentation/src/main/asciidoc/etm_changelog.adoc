@@ -7,6 +7,7 @@
 * [ETM-61] Add health check page.
 * [ETM-62] Move jvm options to separate file.
 * [ETM-63] Use user timezone in event chain details.
+* [ETM-64] Use button to open calendar in search screen.
 
 === Version 3.2.0
 * [ETM-14] Add signals.
