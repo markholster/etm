@@ -5,6 +5,7 @@
 * [ETM-57] Sorting not working on all fields.
 * [ETM-58] Query on dashboards should default to all attributes.
 * [ETM-61] Add health check page.
+* [ETM-62] Move jvm options to separate file.
 * [ETM-63] Use user timezone in event chain details.
 
 === Version 3.2.0

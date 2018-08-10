@@ -1,0 +1,8 @@
+# Memory options
+-Xms256m
+-Xmx1024m
+-Xss256m
+-XX:+HeapDumpOnOutOfMemoryError
+
+# Proxy options. An internet connection is needed for downloading the free license
+-Djava.net.useSystemProxies=true

@@ -60,10 +60,12 @@ if NOT "%ENDORSED_DIR%" == "" set CLASSPATH="%BASEDIR%"\%ENDORSED_DIR%\*;%CLASSP
 
 if NOT "%CLASSPATH_PREFIX%" == "" set CLASSPATH=%CLASSPATH_PREFIX%;%CLASSPATH%
 
+for /F "usebackq delims=" %%a in (`"%JAVACMD% -cp "!CLASSPATH!" "com.jecstar.etm.launcher.JvmOptionsParser" "!BASEDIR!/config/jvm.options" || echo jvm_options_parser_failed"`) do set JAVA_OPTS=%%a
+
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-%JAVACMD% %JAVA_OPTS% -Xms256m -Xmx1024m -Xss256m -classpath %CLASSPATH% -Djava.net.useSystemProxies=true -Dapp.name="${applicationName}" -Dapp.version="${applicationVersion}" -Dapp.repo="%REPO%" -Dapp.home="%BASEDIR%" -Dbasedir="%BASEDIR%" ${mainClassName} --config-dir="%BASEDIR%/config" %CMD_LINE_ARGS%
+%JAVACMD% %JAVA_OPTS% -classpath %CLASSPATH% -Dapp.name="${applicationName}" -Dapp.version="${applicationVersion}" -Dapp.repo="%REPO%" -Dapp.home="%BASEDIR%" -Dbasedir="%BASEDIR%" ${mainClassName} --config-dir="%BASEDIR%/config" %CMD_LINE_ARGS%
 if %ERRORLEVEL% NEQ 0 goto error
 goto end
 
