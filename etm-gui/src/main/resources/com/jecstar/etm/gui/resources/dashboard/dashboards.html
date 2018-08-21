@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../styles/autocomplete.css">
     <link rel="stylesheet" href="../styles/etm-commons.css">
     <link rel="stylesheet" href="../styles/nv.d3.min.css">
+    <link rel="stylesheet" href="../styles/flatpickr.min.css">
     <style type="text/css">
 .selectedColumn {
 	border: 2px solid rgba(0, 0, 0, 0.25);
@@ -28,6 +29,7 @@
     <script src="../scripts/jquery-ui.min.js"></script>
     <script src="../scripts/popper.min.js"></script>
     <script src="../scripts/bootstrap.min.js"></script>
+    <script src="../scripts/flatpickr.min.js"></script>
 </head>
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
@@ -115,6 +117,32 @@
                         <div class="col-sm-9">
                             <select id="sel-graph" class="form-control form-control-sm custom-select">
                             </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="input-graph-from" class="col-sm-3 col-form-label col-form-label-sm">Start date</label>
+                        <div class="col-sm-9">
+                            <div class="input-group input-group-sm flatpickr">
+                                <input id="input-graph-from" type="text" class="form-control form-control-sm" data-input />
+                                <div class="input-group-append">
+                                    <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
+                                        <i class="fa fa-calendar"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="input-graph-till" class="col-sm-3 col-form-label col-form-label-sm">End date</label>
+                        <div class="col-sm-9">
+                            <div class="input-group input-group-sm flatpickr">
+                                <input id="input-graph-till" type="text" class="form-control form-control-sm" data-input />
+                                <div class="input-group-append">
+                                    <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
+                                        <i class="fa fa-calendar"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group row">

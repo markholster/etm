@@ -5,6 +5,30 @@ function buildGraphsPage(groupName) {
     }
 	var graphMap = {};
 	var keywords = [];
+    $('#input-graph-from').parent()
+        .flatpickr({
+            dateFormat: "Y-m-dTH:i:S",
+            enableTime: true,
+            enableSeconds: true,
+            time_24hr: true,
+            allowInput: true,
+            defaultHour: 0,
+            defaultMinute: 0,
+            clickOpens: false,
+            wrap: true
+        });
+    $('#input-graph-till').parent()
+        .flatpickr({
+            dateFormat: "Y-m-dTH:i:S",
+            enableTime: true,
+            enableSeconds: true,
+            time_24hr: true,
+            allowInput: true,
+            defaultHour: 23,
+            defaultMinute: 59,
+            clickOpens: false,
+            wrap: true
+        });
 	$.when(
 		$.ajax({
 	        type: 'GET',
@@ -818,16 +842,18 @@ function buildGraphsPage(groupName) {
 		$('#input-graph-name').val(graphData.name);
 		$('#sel-data-source').val(graphData.data_source);
 		$('#sel-graph-type').val(graphData.type).trigger("change");
+        $('#input-graph-from').val(graphData.from);
+        $('#input-graph-till').val(graphData.till);
 		$('#input-graph-query').val(graphData.query ? graphData.query : '*');
-		if ('bar' == graphData.type) {
+		if ('bar' === graphData.type) {
 			setMultiBucketData(graphData.type, graphData.bar);
-		} else if ('line' == graphData.type) {
+		} else if ('line' === graphData.type) {
 			setMultiBucketData(graphData.type, graphData.line);
-		} else if ('number' == graphData.type) {
+		} else if ('number' === graphData.type) {
 			setNumberAggregatorData(graphData.number);
-		} else if ('pie' == graphData.type) {
+		} else if ('pie' === graphData.type) {
 			
-		} else if ('stacked_area' == graphData.type) {
+		} else if ('stacked_area' === graphData.type) {
 			setMultiBucketData(graphData.type, graphData.stacked_area);
 		}
 
@@ -872,6 +898,8 @@ function buildGraphsPage(groupName) {
 			name: $('#input-graph-name').val() ? $('#input-graph-name').val() : null,
 			type: $('#sel-graph-type').val(),
 			data_source: $('#sel-data-source').val(),
+            from: $('#input-graph-from').val() ? $('#input-graph-from').val() : null,
+            till: $('#input-graph-till').val() ? $('#input-graph-till').val() : null,
 			query: $('#input-graph-query').val() ? $('#input-graph-query').val() : null
 		};
 		if ('bar' == graphData.type) {

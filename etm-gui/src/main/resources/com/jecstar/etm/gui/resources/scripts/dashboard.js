@@ -76,6 +76,30 @@ function initialize(doneFunction, readonly) {
             })
         );
     } else {
+        $('#input-graph-from').parent()
+            .flatpickr({
+                dateFormat: "Y-m-dTH:i:S",
+                enableTime: true,
+                enableSeconds: true,
+                time_24hr: true,
+                allowInput: true,
+                defaultHour: 0,
+                defaultMinute: 0,
+                clickOpens: false,
+                wrap: true
+            });
+        $('#input-graph-till').parent()
+            .flatpickr({
+                dateFormat: "Y-m-dTH:i:S",
+                enableTime: true,
+                enableSeconds: true,
+                time_24hr: true,
+                allowInput: true,
+                defaultHour: 23,
+                defaultMinute: 59,
+                clickOpens: false,
+                wrap: true
+            });
         $.when(
             $.ajax({
                 type: 'GET',
@@ -162,13 +186,13 @@ function showSettings() {
         settingsListenersAdded = true;
         $('#dashboard-settings').on('click', 'a[data-row-action]', function(event) {
             event.preventDefault();
-            if ('row-up' == $(this).attr('data-row-action')) {
+            if ('row-up' === $(this).attr('data-row-action')) {
                 moveRowUp($(this).parent().parent().parent().parent());
-            } else if ('row-down' == $(this).attr('data-row-action')) {
+            } else if ('row-down' === $(this).attr('data-row-action')) {
                 moveRowDown($(this).parent().parent().parent().parent());
-            } else if ('row-remove' == $(this).attr('data-row-action')) {
+            } else if ('row-remove' === $(this).attr('data-row-action')) {
                 removeRow($(this).parent().parent().parent().parent());
-            } else if ('row-add' == $(this).attr('data-row-action')) {
+            } else if ('row-add' === $(this).attr('data-row-action')) {
                 $('#dashboard-settings-columns').append(createColumnSettingsRow());
                 updateRowActions('#dashboard-settings-columns .actionRow');
             }
@@ -577,6 +601,8 @@ function addListeners() {
         graph.title = $("#input-graph-title").val();
         graph.bordered = $('#sel-graph-border').val() == 'true' ? true : false;
         graph.name = $('#sel-graph').val();
+        graph.from = $('#input-graph-from').val() ? $('#input-graph-from').val() : null;
+        graph.till = $('#input-graph-till').val() ? $('#input-graph-till').val() : null;
         graph.query = $('#input-graph-query').val();
         graph.refresh_rate = $('#input-refresh-rate').val() ? Number($('#input-refresh-rate').val()) : null;
         var graphData = graphMap[graph.name];
@@ -597,6 +623,8 @@ function addListeners() {
         event.preventDefault();
         var graphData = graphMap[$(this).val()];
         if ('undefined' !== typeof graphData) {
+            $('#input-graph-from').val(graphData.from);
+            $('#input-graph-till').val(graphData.till);
             $('#input-graph-query').val(graphData.query);
             if (graphData.line) {
                 $('#row-graph-interpolation').show();
@@ -636,6 +664,8 @@ function editGraph(cellId) {
     $('#input-graph-title').val(graph.title);
     $('#sel-graph-border').val(graph.bordered ? 'true' : 'false');
     $('#sel-graph').val(graph.name);
+    $('#input-graph-from').val(graph.from);
+    $('#input-graph-till').val(graph.till);
     $('#input-graph-query').val(graph.query);
     $('#input-refresh-rate').val(graph.refresh_rate);
 
@@ -759,7 +789,7 @@ function updateChart(graphData, graph, cardBody) {
             if (!data) {
                 return;
             }
-            if ('bar' == data.type) {
+            if ('bar' === data.type) {
                 data.data.sort(function(a, b){
                     if (a.key < b.key) return -1;
                     if (b.key < a.key) return 1;
@@ -794,7 +824,7 @@ function updateChart(graphData, graph, cardBody) {
                         return graph.chart;
                     });
                 }
-            } else if ('line' == data.type) {
+            } else if ('line' === data.type) {
                 if (graph.chart && graph.chartData) {
                     graph.chartData.length = 0;
                     $.each(formatLineData(data.data), function(index, item) {
@@ -831,15 +861,15 @@ function updateChart(graphData, graph, cardBody) {
                         return graph.chart;
                     });
                 }
-            } else if ('number' == data.type) {
+            } else if ('number' === data.type) {
                 var $currentValue = $("div[data-cell-id='" + graph.id + "'] > .card-block > .card-body").find("h1[data-element-type='number-graph']");
                 if ($currentValue.length) {
                     $currentValue.text(data.value_as_string);
                 } else {
                     $(cardBody).append($('<h1>').attr('data-element-type', 'number-graph').text(data.value_as_string),$('<h4>').text(data.label));
                 }
-            } else if ('pie' == data.type) {
-            } else if ('stacked_area' == data.type) {
+            } else if ('pie' === data.type) {
+            } else if ('stacked_area' === data.type) {
                 if (graph.chart && graph.chartData) {
                     graph.chartData.length = 0;
                     $.each(formatLineData(data.data), function(index, item) {

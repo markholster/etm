@@ -15,6 +15,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
@@ -546,6 +547,8 @@ public class DashboardService extends AbstractUserAttributeService {
         if (dashboardsData == null) {
             return null;
         }
+        String dashboardFrom = null;
+        String dashboardTill = null;
         String dashboardQuery = null;
         String graphName = null;
         for (Map<String, Object> dashboardData : dashboardsData) {
@@ -559,6 +562,8 @@ public class DashboardService extends AbstractUserAttributeService {
                     if (colsValues != null) {
                         for (Map<String, Object> col : colsValues) {
                             if (graphId.equals(getString("id", col))) {
+                                dashboardFrom = getString("from", col);
+                                dashboardTill = getString("till", col);
                                 dashboardQuery = getString("query", col);
                                 graphName = getString("name", col);
                             }
@@ -573,6 +578,8 @@ public class DashboardService extends AbstractUserAttributeService {
         // now find the graph and return the data.
         for (Map<String, Object> graphData : graphsData) {
             if (graphName.equals(getString("name", graphData))) {
+                graphData.put("from", dashboardFrom);
+                graphData.put("till", dashboardTill);
                 graphData.put("query", dashboardQuery);
                 return getGraphData(graphData, false);
             }
@@ -604,14 +611,16 @@ public class DashboardService extends AbstractUserAttributeService {
         MultiBucketResult multiBucketResult = new MultiBucketResult();
         multiBucketResult.setAddMissingKeys(addMissingKeys);
         String index = getString("data_source", valueMap);
+        String from = getString("from", valueMap);
+        String till = getString("till", valueMap);
         String query = getString("query", valueMap, "*");
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
+        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, query);
         Map<String, Object> graphData = getObject(type, valueMap, Collections.emptyMap());
         Map<String, Object> xAxisData = getObject("x_axis", graphData, Collections.emptyMap());
         Map<String, Object> yAxisData = getObject("y_axis", graphData, Collections.emptyMap());
 
         Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData, Collections.emptyMap());
-        BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, query));
+        BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, from, till, query));
         BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
         // First create the bucket aggregator
         AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();
@@ -685,8 +694,10 @@ public class DashboardService extends AbstractUserAttributeService {
     private String getNumberData(Map<String, Object> valueMap, boolean dryRun) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         String index = getString("data_source", valueMap);
+        String from = getString("from", valueMap);
+        String till = getString("till", valueMap);
         String query = getString("query", valueMap, "*");
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, query);
+        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, query);
 
         Map<String, Object> numberData = getObject("number", valueMap, Collections.emptyMap());
         MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, numberData);
@@ -708,7 +719,7 @@ public class DashboardService extends AbstractUserAttributeService {
         return result.toString();
     }
 
-    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, String index, String query) {
+    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, String index, String from, String till, String query) {
         SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(index), etmConfiguration)
                 .setFetchSource(false)
                 .setSize(0);
@@ -717,10 +728,25 @@ public class DashboardService extends AbstractUserAttributeService {
                 .analyzeWildcard(true)
                 .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
         queryStringBuilder.defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME);
+
+        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+        boolQueryBuilder.must(queryStringBuilder);
+        if (from != null || till != null) {
+            RangeQueryBuilder timestampFilter = new RangeQueryBuilder("timestamp");
+            if (from != null) {
+                timestampFilter.gte(from);
+            }
+            if (till != null) {
+                timestampFilter.lte(till);
+            }
+            boolQueryBuilder.filter(timestampFilter);
+        }
+
+
         if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(index)) {
-            searchRequest.setQuery(addFilterQuery(getEtmPrincipal(), new BoolQueryBuilder().must(queryStringBuilder)));
+            searchRequest.setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder));
         } else {
-            searchRequest.setQuery(queryStringBuilder);
+            searchRequest.setQuery(boolQueryBuilder);
         }
         return searchRequest;
     }

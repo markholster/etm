@@ -12,7 +12,7 @@ Each graph is uniquely identified by it's name and selects data from a certain d
 . Metrics
 
 The Events datasource contains all event you stored in {etm}. The Metrics datasource contains metric data of all {etm} instances. This information can be very helpful to monitor your {etm} cluster.
-To narrow down the data used in your graph you can provide a query. This query will be used as filter query for your statistics. Also, when you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
+To narrow down the data used in your graph you can provide a query and a time range. This query will be used as filter query for your statistics. Also, when you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
 
 Finally, depending on your needs you can select a suitable graph type:
 [horizontal]
