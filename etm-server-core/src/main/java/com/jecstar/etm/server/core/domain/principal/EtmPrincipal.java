@@ -22,6 +22,8 @@ public class EtmPrincipal implements Principal, Serializable {
     private final Set<EtmGroup> groups = new HashSet<>();
     private Set<String> dashboards = new HashSet<>();
     private Set<String> signals = new HashSet<>();
+    private Set<String> dashboardDatasources = new HashSet<>();
+    private Set<String> signalDatasources = new HashSet<>();
     private String passwordHash;
     private String name = null;
     private String emailAddress = null;
@@ -135,12 +137,31 @@ public class EtmPrincipal implements Principal, Serializable {
         }
     }
 
+    public void addGroups(Collection<EtmGroup> groups) {
+        if (groups == null) {
+            return;
+        }
+        for (EtmGroup group : groups) {
+            addGroup(group);
+        }
+    }
+
     public Set<String> getDashboards() {
         return this.dashboards;
     }
 
     public void addDashboard(String dashboard) {
         this.dashboards.add(dashboard);
+    }
+
+    public void addDashboardDatasources(List<String> datasources) {
+        if (datasources != null) {
+            this.dashboardDatasources.addAll(datasources);
+        }
+    }
+
+    public Set<String> getDashboardDatasources() {
+        return this.dashboardDatasources;
     }
 
     public Set<String> getSignals() {
@@ -151,12 +172,13 @@ public class EtmPrincipal implements Principal, Serializable {
         this.signals.add(signal);
     }
 
-    public void addGroups(Collection<EtmGroup> groups) {
-        if (groups == null) {
-            return;
-        }
-        for (EtmGroup group : groups) {
-            addGroup(group);
+    public Set<String> getSignalDatasources() {
+        return this.signalDatasources;
+    }
+
+    public void addSignalDatasources(List<String> datasources) {
+        if (datasources != null) {
+            this.signalDatasources.addAll(datasources);
         }
     }
 
@@ -261,4 +283,5 @@ public class EtmPrincipal implements Principal, Serializable {
         dateFormat.setTimeZone(getTimeZone());
         return dateFormat;
     }
+
 }

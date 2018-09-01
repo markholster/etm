@@ -4,12 +4,14 @@ the possibility to let {etm} notify you when something relevant is happening.
 
 To add, modify or delete signals browse to http://localhost:8080/gui/signal/signal.html or select the menu option ''Signals''. Note that the menu option might be contain a submenu with your username and the groups you belong to. This extra submenu will give you the opportunity to create a signal for a group or just for yourself.
 
-Each signal is uniquely identified by it's name and selects data from a certain datasource. {etm} provides 2 datasources:
+Each signal is uniquely identified by it's name and selects data from a certain datasource. {etm} provides 3 datasources:
 
+. Audits
 . Events
 . Metrics
 
-The Events datasource contains all event you stored in {etm}. The Metrics datasource contains metric data of all {etm} instances. This information can be very helpful to monitor your {etm} cluster.
+The Events datasource contains all event you stored in {etm}. The Metrics datasource contains metric data of all {etm} instances. This information can be very helpful to monitor
+your {etm} cluster. Finally the Audits datasource tracks all activities run in {etm}. Depending on your authorizations you might not have access to all datasources.
 To narrow down the data used in your signal you can provide a query. This query will be used as filter query for your statistics. Also, when you have the datasource ''Events'' selected one or more <<Filter query>>'s might be applied.
 
 {etm} will run the query's at a specified interval This interval can be adjusted by changing the ''Check every'' input value. To receive notification you must add 1 or more <<Notifiers>>. When a notifier with type ''Email'' is added {etm} might not send an email on every threshold exceedance.

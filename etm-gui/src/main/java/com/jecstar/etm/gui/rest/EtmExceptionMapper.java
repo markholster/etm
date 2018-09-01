@@ -93,8 +93,14 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                 case EtmException.MAX_NR_OF_DASHBOARDS_REACHED:
                     errorMessage.setMessage("Maximum number of dashboards reached");
                     break;
+                case EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE:
+                    errorMessage.setMessage("Not authorized for dashboard data source");
+                    break;
                 case EtmException.MAX_NR_OF_SIGNALS_REACHED:
                     errorMessage.setMessage("Maximum number of signals reached");
+                    break;
+                case EtmException.NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE:
+                    errorMessage.setMessage("Not authorized for signal data source");
                     break;
                 default:
                     break;

@@ -36,9 +36,21 @@ function buildGroupPage() {
 			    $('#card-acl').find("option[value='" + role + "']").parent().val(role);
 			});
 		}
+        if (groupData.dashboard_datasources) {
+            $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
+            $.each(groupData.dashboard_datasources, function (index, ds) {
+                $('#check-dashboard-datasource-' + ds).prop('checked', true);
+            });
+        }
+        if (groupData.signal_datasources) {
+            $('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
+            $.each(groupData.signal_datasources, function (index, ds) {
+                $('#check-signal-datasource-' + ds).prop('checked', true);
+            });
+        }
 		enableOrDisableButtons();
 	});
-	
+
 	$('#btn-confirm-save-group').click(function(event) {
 		event.preventDefault();
 		if (!document.getElementById('group_form').checkValidity()) {
@@ -227,7 +239,17 @@ function buildGroupPage() {
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
 			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),		
 			always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,
-			roles: []
+            roles: [],
+            dashboard_datasources: $('#dashboard-datasource-block')
+                .find("input[type='checkbox']:checked")
+                .map(function () {
+                    return $(this).val();
+                }).get(),
+            signal_datasources: $('#signal-datasource-block')
+                .find("input[type='checkbox']:checked")
+                .map(function () {
+                    return $(this).val();
+                }).get()
 		}
 		$('#card-acl').find('select').each(function () {
 		    if ($(this).val() !== 'none') {

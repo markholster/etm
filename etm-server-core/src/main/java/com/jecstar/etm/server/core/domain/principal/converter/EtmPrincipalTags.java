@@ -44,4 +44,8 @@ public interface EtmPrincipalTags {
 
     String getSignalsTag();
 
+    String getDashboardDatasourcesTag();
+
+    String getSignalDatasourcesTag();
+
 }

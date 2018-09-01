@@ -29,29 +29,45 @@ function buildGraphsPage(groupName) {
             clickOpens: false,
             wrap: true
         });
-	$.when(
-		$.ajax({
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: contextRoot + 'datasources',
+        cache: false,
+        success: function (data) {
+            if (!data || !data.dashboard_datasources) {
+                return;
+            }
+            $dsSelect = $('#sel-data-source');
+            $.each(data.dashboard_datasources, function (index, datasource) {
+                $dsSelect.append($('<option>').attr('value', datasource).text(datasourceToText(datasource)));
+            });
+            sortSelectOptions($dsSelect);
+
+            function datasourceToText(datasource) {
+                if ('etm_audit_all' === datasource) {
+                    return 'Audits';
+                } else if ('etm_event_all' === datasource) {
+                    return 'Events';
+                } else if ('etm_metrics_all' === datasource) {
+                    return 'Metrics';
+                } else {
+                    return datasource;
+                }
+            }
+        }
+    });
+    $.when(
+        $.ajax({
 	        type: 'GET',
 	        contentType: 'application/json',
-	        url: '../rest/visualization/keywords/etm_event_all',
+            url: contextRoot + 'keywords',
 	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.keywords) {
 	                return;
 	            }
-	            keywords = $.merge(keywords, data.keywords);
-	        }
-	    }),
-	    $.ajax({
-	        type: 'GET',
-	        contentType: 'application/json',
-	        url: '../rest/visualization/keywords/etm_metrics_all',
-	        cache: false,
-	        success: function(data) {
-	            if (!data || !data.keywords) {
-	                return;
-	            }
-	            keywords = $.merge(keywords, data.keywords);
+                keywords = data.keywords;
 	        }
 	    })
 	).done(function () {
@@ -712,7 +728,7 @@ function buildGraphsPage(groupName) {
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
-            url: '../rest/visualization/graphdata',
+            url: contextRoot + 'graphdata',
             cache: false,
             data: JSON.stringify(graphData),
             success: function(data) {

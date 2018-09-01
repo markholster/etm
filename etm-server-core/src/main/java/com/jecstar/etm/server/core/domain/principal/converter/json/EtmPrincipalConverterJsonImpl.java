@@ -38,6 +38,8 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getChangePasswordOnLogonTag(), etmPrincipal.isChangePasswordOnLogon(), sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmPrincipal.isLdapBase(), sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles(), true, sb, !added) || added;
+        added = this.converter.addSetElementToJsonBuffer(this.tags.getDashboardDatasourcesTag(), etmPrincipal.getDashboardDatasources(), true, sb, !added) || added;
+        added = this.converter.addSetElementToJsonBuffer(this.tags.getSignalDatasourcesTag(), etmPrincipal.getSignalDatasources(), true, sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
         sb.append("}}");
@@ -62,6 +64,8 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmGroup.isLdapBase(), sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles(), true, sb, !added) || added;
+        added = this.converter.addSetElementToJsonBuffer(this.tags.getDashboardDatasourcesTag(), etmGroup.getDashboardDatasources(), true, sb, !added) || added;
+        added = this.converter.addSetElementToJsonBuffer(this.tags.getSignalDatasourcesTag(), etmGroup.getSignalDatasources(), true, sb, !added) || added;
         sb.append("}}");
         return sb.toString();
     }
@@ -96,6 +100,17 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         if (roles != null) {
             principal.addRoles(roles);
         }
+        List<String> datasources = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
+        if (datasources != null) {
+            principal.addDashboardDatasources(datasources);
+        }
+        datasources = this.converter.getArray(this.tags.getSignalDatasourcesTag(), valueMap);
+        if (datasources != null) {
+            principal.addSignalDatasources(datasources);
+        }
+        if (datasources != null) {
+            principal.addSignalDatasources(datasources);
+        }
         // Add the dashboard names. These are readonly properties added by the DashboardService.
         List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);
         if (dashboards != null) {
@@ -117,6 +132,14 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
         if (roles != null) {
             group.addRoles(roles);
+        }
+        List<String> datasources = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
+        if (datasources != null) {
+            group.addDashboardDatasources(datasources);
+        }
+        datasources = this.converter.getArray(this.tags.getSignalDatasourcesTag(), valueMap);
+        if (datasources != null) {
+            group.addSignalDatasources(datasources);
         }
         // Add the dashboard names. These are readonly properties added by the DashboardService.
         List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);

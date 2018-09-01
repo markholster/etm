@@ -108,4 +108,15 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
     public String getSignalsTag() {
         return "signals";
     }
+
+    @Override
+    public String getDashboardDatasourcesTag() {
+        return "dashboard_datasources";
+    }
+
+    @Override
+    public String getSignalDatasourcesTag() {
+        return "signal_datasources";
+    }
+
 }

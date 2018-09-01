@@ -92,7 +92,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
     }
 
     /**
-     * Method handles an entity. The entity will be retrieved, tested vor threshold exceedances and updated if necessary.
+     * Method handles an entity. The entity will be retrieved, tested for threshold exceedances and updated if necessary.
      *
      * @param batchStart           The moment the signal check batch started.
      * @param notificationExecutor The <code>NotificationExecutor</code> to be used to notify users.
@@ -202,7 +202,9 @@ public class Signaler extends AbstractJsonService implements Runnable {
     }
 
     /**
-     * Test a signal if the threshold is exceeded more often that the limit in the signal.
+     * Test a signal if the threshold is exceeded more often that the limit in the signal. Also check if the
+     * <code>EtmPrincipal</code> or <code>EtmGroup</code> is still authorized for the data source configured within the
+     * <code>Signal</code>
      *
      * @param signal       The <code>Signal</code> to test.
      * @param etmPrincipal The <code>EtmPrincipal</code> that has stored the given <code>Signal</code>. Set this value
@@ -219,8 +221,20 @@ public class Signaler extends AbstractJsonService implements Runnable {
         SearchRequestBuilder builder;
 
         if (etmPrincipal != null) {
+            if (!etmPrincipal.getSignalDatasources().contains(signal.getDataSource())) {
+                if (log.isErrorLevelEnabled()) {
+                    log.logErrorMessage("Signal '" + signal.getName() + "' is configured with data source '" + signal.getDataSource() + "' but user '" + etmPrincipal.getId() + "' is not authorized for that data source.");
+                }
+                return result.setExectued(false);
+            }
             builder = builderBuilder.build(q -> addFilterQuery(etmPrincipal, q), etmPrincipal);
         } else if (etmGroup != null) {
+            if (!etmGroup.getSignalDatasources().contains(signal.getDataSource())) {
+                if (log.isErrorLevelEnabled()) {
+                    log.logErrorMessage("Signal '" + signal.getName() + "' is configured with data source '" + signal.getDataSource() + "' but group '" + etmGroup.getName() + "' is not authorized for that data source.");
+                }
+                return result.setExectued(false);
+            }
             builder = builderBuilder.build(q -> addFilterQuery(etmGroup, q, null), null);
         } else {
             if (log.isErrorLevelEnabled()) {

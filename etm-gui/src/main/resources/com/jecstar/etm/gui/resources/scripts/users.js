@@ -153,6 +153,18 @@ function buildUserPage() {
                 $('#card-acl').find("option[value='" + role + "']").parent().val(role);
             });
 		}
+        if (userData.dashboard_datasources) {
+            $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
+            $.each(userData.dashboard_datasources, function (index, ds) {
+                $('#check-dashboard-datasource-' + ds).prop('checked', true);
+            });
+        }
+        if (userData.signal_datasources) {
+            $('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
+            $.each(userData.signal_datasources, function (index, ds) {
+                $('#check-signal-datasource-' + ds).prop('checked', true);
+            });
+        }
 		if (userData.groups) {
 			$.each(userData.groups, function(index, groupName) {
 				$('#list-groups').append(createGroupRow(groupName));
@@ -423,7 +435,17 @@ function buildUserPage() {
 			default_search_range: $('#input-default-search-range').val() ? Number($('#input-default-search-range').val()) * 1000 : null,
 			change_password_on_logon: $('#sel-change-password-on-logon').val() == 'true' ? true : false, 
 			roles: [],
-			groups: []
+            groups: [],
+            dashboard_datasources: $('#dashboard-datasource-block')
+                .find("input[type='checkbox']:checked")
+                .map(function () {
+                    return $(this).val();
+                }).get(),
+            signal_datasources: $('#signal-datasource-block')
+                .find("input[type='checkbox']:checked")
+                .map(function () {
+                    return $(this).val();
+                }).get()
 		}
         if ($('#input-new-password1').val()) {
         	userData.new_password = $('#input-new-password1').val();

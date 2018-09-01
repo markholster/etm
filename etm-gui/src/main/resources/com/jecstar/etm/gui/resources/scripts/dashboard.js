@@ -104,25 +104,13 @@ function initialize(doneFunction, readonly) {
             $.ajax({
                 type: 'GET',
                 contentType: 'application/json',
-                url: pageContextRoot + 'keywords/etm_event_all',
+                url: contextRoot + 'keywords',
                 cache: false,
                 success: function(data) {
                     if (!data || !data.keywords) {
                         return;
                     }
-                    keywords = $.merge(keywords, data.keywords);
-                }
-            }),
-            $.ajax({
-                type: 'GET',
-                contentType: 'application/json',
-                url: pageContextRoot + 'keywords/etm_metrics_all',
-                cache: false,
-                success: function(data) {
-                    if (!data || !data.keywords) {
-                        return;
-                    }
-                    keywords = $.merge(keywords, data.keywords);
+                    keywords = data.keywords;
                 }
             }),
             $.ajax({

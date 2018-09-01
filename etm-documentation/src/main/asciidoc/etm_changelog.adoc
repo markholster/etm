@@ -4,6 +4,7 @@
 * [ETM-56] Migrate to Elasticsearch 6.3.
 * [ETM-57] Sorting not working on all fields.
 * [ETM-58] Query on dashboards should default to all attributes.
+* [ETM-60] Expose and authorize all datasources in dashboard/signal.
 * [ETM-61] Add health check page.
 * [ETM-62] Move jvm options to separate file.
 * [ETM-63] Use user timezone in event chain details.
@@ -107,7 +108,7 @@ Additional labels for pre-release and build metadata are available as extensions
 . Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
 . Download and uncompress {etm} to a new directory.
 . Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
-. Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
+. Copy the 'config/etm.yml' & 'config/jvm.options' files from your old {etm} installation to the new one. Note that older versions of {etm} might not have a 'config/jvm.options' file.
 . Check if any of the <<Version specific changes>> applies to your situation.
 . Start your {etm} nodes.
 

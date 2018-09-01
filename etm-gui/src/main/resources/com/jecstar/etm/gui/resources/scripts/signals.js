@@ -7,23 +7,39 @@ function buildSignalsPage(groupName) {
     }
 	var signalMap = {};
 	var keywords = [];
-	$.when(
-		$.ajax({
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: contextRoot + 'datasources',
+        cache: false,
+        success: function (data) {
+            if (!data || !data.signal_datasources) {
+                return;
+            }
+            $dsSelect = $('#sel-data-source');
+            $.each(data.signal_datasources, function (index, datasource) {
+                $dsSelect.append($('<option>').attr('value', datasource).text(datasourceToText(datasource)));
+            });
+            sortSelectOptions($dsSelect);
+
+            function datasourceToText(datasource) {
+                if ('etm_audit_all' === datasource) {
+                    return 'Audits';
+                } else if ('etm_event_all' === datasource) {
+                    return 'Events';
+                } else if ('etm_metrics_all' === datasource) {
+                    return 'Metrics';
+                } else {
+                    return datasource;
+                }
+            }
+        }
+    });
+    $.when(
+        $.ajax({
 	        type: 'GET',
 	        contentType: 'application/json',
-	        url: '../rest/signal/keywords/etm_event_all',
-	        cache: false,
-	        success: function(data) {
-	            if (!data || !data.keywords) {
-	                return;
-	            }
-	            keywords = $.merge(keywords, data.keywords);
-	        }
-	    }),
-	    $.ajax({
-	        type: 'GET',
-	        contentType: 'application/json',
-	        url: '../rest/signal/keywords/etm_metrics_all',
+            url: contextRoot + 'keywords',
 	        cache: false,
 	        success: function(data) {
 	            if (!data || !data.keywords) {

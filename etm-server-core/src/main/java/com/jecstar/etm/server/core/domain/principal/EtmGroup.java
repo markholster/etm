@@ -3,10 +3,7 @@ package com.jecstar.etm.server.core.domain.principal;
 import com.jecstar.etm.server.core.domain.QueryOccurrence;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class EtmGroup implements Serializable {
 
@@ -24,6 +21,9 @@ public class EtmGroup implements Serializable {
     private boolean ldapBase;
     private Set<String> dashboards = new HashSet<>();
     private Set<String> signals = new HashSet<>();
+
+    private Set<String> dashboardDatasources = new HashSet<>();
+    private Set<String> signalDatasources = new HashSet<>();
 
     public EtmGroup(String name) {
         this.name = name;
@@ -126,6 +126,16 @@ public class EtmGroup implements Serializable {
         this.dashboards.add(dashboard);
     }
 
+    public void addDashboardDatasources(List<String> datasources) {
+        if (datasources != null) {
+            this.dashboardDatasources.addAll(datasources);
+        }
+    }
+
+    public Set<String> getDashboardDatasources() {
+        return this.dashboardDatasources;
+    }
+
     public Set<String> getSignals() {
         return this.signals;
     }
@@ -134,6 +144,15 @@ public class EtmGroup implements Serializable {
         this.signals.add(signal);
     }
 
+    public Set<String> getSignalDatasources() {
+        return this.signalDatasources;
+    }
+
+    public void addSignalDatasources(List<String> datasources) {
+        if (datasources != null) {
+            this.signalDatasources.addAll(datasources);
+        }
+    }
 
     @Override
     public boolean equals(Object obj) {

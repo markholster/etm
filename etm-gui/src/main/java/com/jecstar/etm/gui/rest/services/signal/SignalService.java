@@ -56,37 +56,100 @@ public class SignalService extends AbstractUserAttributeService {
     }
 
     @GET
-    @Path("/keywords/{indexName}")
+    @Path("/keywords")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.USER_SIGNAL_READ_WRITE, SecurityRoles.GROUP_SIGNAL_READ, SecurityRoles.GROUP_SIGNAL_READ_WRITE})
-    public String getKeywords(@PathParam("indexName") String indexName) {
+    @RolesAllowed({SecurityRoles.USER_SIGNAL_READ_WRITE})
+    public String getKeywords() {
+        return getKeywords(null);
+    }
+
+    @GET
+    @Path("/{groupName}/keywords")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.GROUP_SIGNAL_READ, SecurityRoles.GROUP_SIGNAL_READ_WRITE})
+    public Response getGroupKeywords(@PathParam("groupName") String groupName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getKeywords(groupName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
+    }
+
+    /**
+     * Gives the keywords of all indices the user of group has authorizations for.
+     *
+     * @param groupName The name of the group to retrieve the keywords for. When <code>null</code> the user keywords are returned.
+     * @return The keywords of a user or group.
+     */
+    private String getKeywords(String groupName) {
+        Map<String, Object> entity = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
+        List<String> datasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), entity);
         StringBuilder result = new StringBuilder();
-        Map<String, List<Keyword>> names = getIndexFields(client, indexName);
         result.append("{ \"keywords\":[");
-        Set<Map.Entry<String, List<Keyword>>> entries = names.entrySet();
         boolean first = true;
-        for (Map.Entry<String, List<Keyword>> entry : entries) {
-            if (!first) {
-                result.append(", ");
+        for (String indexName : datasources) {
+            Map<String, List<Keyword>> names = getIndexFields(client, indexName);
+            Set<Map.Entry<String, List<Keyword>>> entries = names.entrySet();
+            for (Map.Entry<String, List<Keyword>> entry : entries) {
+                if (!first) {
+                    result.append(", ");
+                }
+                first = false;
+                result.append("{");
+                result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+                result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
+                result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
+                    StringBuilder kw = new StringBuilder();
+                    kw.append("{");
+                    addStringElementToJsonBuffer("name", n.getName(), kw, true);
+                    addStringElementToJsonBuffer("type", n.getType(), kw, false);
+                    addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+                    addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+                    kw.append("}");
+                    return kw.toString();
+                }).collect(Collectors.joining(", "))).append("]");
+                result.append("}");
             }
-            first = false;
-            result.append("{");
-            result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-            result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
-            result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
-                StringBuilder kw = new StringBuilder();
-                kw.append("{");
-                addStringElementToJsonBuffer("name", n.getName(), kw, true);
-                addStringElementToJsonBuffer("type", n.getType(), kw, false);
-                addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-                addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-                kw.append("}");
-                return kw.toString();
-            }).collect(Collectors.joining(", "))).append("]");
-            result.append("}");
         }
         result.append("]}");
         return result.toString();
+    }
+
+    @GET
+    @Path("/datasources")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.USER_SIGNAL_READ_WRITE)
+    public String getDatasources() {
+        return getSignalDatasources(null);
+    }
+
+    @GET
+    @Path("/{groupName}/datasources/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.GROUP_SIGNAL_READ, SecurityRoles.GROUP_SIGNAL_READ_WRITE})
+    public Response getGroupDatasources(@PathParam("groupName") String groupName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getSignalDatasources(groupName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
+    }
+
+    /**
+     * Returns the signal datasources of a user or group.
+     *
+     * @param groupName The name of the group to query for signal datasources. When <code>null</code> the user signal datasources are returned.
+     * @return The signal datasources of a user or group.
+     */
+    private String getSignalDatasources(String groupName) {
+        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
+        return toString(objectMap);
     }
 
     @GET
@@ -161,7 +224,11 @@ public class SignalService extends AbstractUserAttributeService {
      */
     private String addSignal(String groupName, String signalName, String json) {
         Signal signal = this.signalConverter.read(json);
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag(), this.etmPrincipalTags.getSignalDatasourcesTag());
+        List<String> allowedDatasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), objectMap);
+        if (allowedDatasources.indexOf(signal.getDataSource()) < 0) {
+            throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE);
+        }
         List<Map<String, Object>> currentSignals = new ArrayList<>();
         Map<String, Object> signalData = toMap(this.signalConverter.write(signal));
         if (objectMap != null && !objectMap.isEmpty()) {
@@ -258,7 +325,9 @@ public class SignalService extends AbstractUserAttributeService {
     public String getGraphData(String json) {
         Signal signal = this.signalConverter.read(json);
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        return getGraphData(signal, etmPrincipal, null);
+        Map<String, Object> objectMap = getEntity(client, null, this.etmPrincipalTags.getSignalDatasourcesTag());
+        List<String> allowedDatasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), objectMap);
+        return getGraphData(signal, etmPrincipal, null, allowedDatasources);
     }
 
     @POST
@@ -275,15 +344,20 @@ public class SignalService extends AbstractUserAttributeService {
             return Response.noContent().build();
         }
         EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(getResponse.getSourceAsMap());
-        String content = getGraphData(signal, getEtmPrincipal(), etmGroup);
+        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
+        List<String> allowedDatasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), objectMap);
+        String content = getGraphData(signal, getEtmPrincipal(), etmGroup, allowedDatasources);
         if (content == null || content.trim().length() == 0) {
             return Response.noContent().build();
         }
         return Response.ok(content, MediaType.APPLICATION_JSON).build();
     }
 
-    private String getGraphData(Signal signal, EtmPrincipal etmPrincipal, EtmGroup etmGroup) {
+    private String getGraphData(Signal signal, EtmPrincipal etmPrincipal, EtmGroup etmGroup, List<String> allowedDatasources) {
         SignalSearchRequestBuilderBuilder signalSearchRequestBuilderBuilder = new SignalSearchRequestBuilderBuilder(client, etmConfiguration).setSignal(signal);
+        if (allowedDatasources.indexOf(signal.getDataSource()) < 0) {
+            throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
+        }
         SearchRequestBuilder requestBuilder;
         if (etmGroup != null) {
             requestBuilder = signalSearchRequestBuilderBuilder.build(q -> addFilterQuery(etmGroup, q, etmPrincipal), etmPrincipal);

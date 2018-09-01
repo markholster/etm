@@ -51,37 +51,100 @@ public class DashboardService extends AbstractUserAttributeService {
     }
 
     @GET
-    @Path("/keywords/{indexName}")
+    @Path("/keywords")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
-    public String getKeywords(@PathParam("indexName") String indexName) {
+    @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE})
+    public String getKeywords() {
+        return getKeywords(null);
+    }
+
+    @GET
+    @Path("/{groupName}/keywords")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
+    public Response getGroupKeywords(@PathParam("groupName") String groupName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getKeywords(groupName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
+    }
+
+    /**
+     * Gives the keywords of all indices the user of group has authorizations for.
+     *
+     * @param groupName The name of the group to retrieve the keywords for. When <code>null</code> the user keywords are returned.
+     * @return The keywords of a user or group.
+     */
+    private String getKeywords(String groupName) {
+        Map<String, Object> entity = getEntity(client, groupName, this.principalTags.getDashboardDatasourcesTag());
+        List<String> datasources = getArray(this.principalTags.getDashboardDatasourcesTag(), entity);
         StringBuilder result = new StringBuilder();
-        Map<String, List<Keyword>> names = getIndexFields(client, indexName);
         result.append("{ \"keywords\":[");
-        Set<Entry<String, List<Keyword>>> entries = names.entrySet();
         boolean first = true;
-        for (Entry<String, List<Keyword>> entry : entries) {
-            if (!first) {
-                result.append(", ");
+        for (String indexName : datasources) {
+            Map<String, List<Keyword>> names = getIndexFields(client, indexName);
+            Set<Entry<String, List<Keyword>>> entries = names.entrySet();
+            for (Entry<String, List<Keyword>> entry : entries) {
+                if (!first) {
+                    result.append(", ");
+                }
+                first = false;
+                result.append("{");
+                result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+                result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
+                result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
+                    StringBuilder kw = new StringBuilder();
+                    kw.append("{");
+                    addStringElementToJsonBuffer("name", n.getName(), kw, true);
+                    addStringElementToJsonBuffer("type", n.getType(), kw, false);
+                    addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+                    addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+                    kw.append("}");
+                    return kw.toString();
+                }).collect(Collectors.joining(", "))).append("]");
+                result.append("}");
             }
-            first = false;
-            result.append("{");
-            result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-            result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
-            result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
-                StringBuilder kw = new StringBuilder();
-                kw.append("{");
-                addStringElementToJsonBuffer("name", n.getName(), kw, true);
-                addStringElementToJsonBuffer("type", n.getType(), kw, false);
-                addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-                addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-                kw.append("}");
-                return kw.toString();
-            }).collect(Collectors.joining(", "))).append("]");
-            result.append("}");
         }
         result.append("]}");
         return result.toString();
+    }
+
+    @GET
+    @Path("/datasources")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE)
+    public String getDatasources() {
+        return getDashboardDatasources(null);
+    }
+
+    @GET
+    @Path("/{groupName}/datasources/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
+    public Response getGroupDatasources(@PathParam("groupName") String groupName) {
+        if (!getEtmPrincipal().isInGroup(groupName)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        String content = getDashboardDatasources(groupName);
+        if (content == null || content.trim().length() == 0) {
+            return Response.noContent().build();
+        }
+        return Response.ok(content, MediaType.APPLICATION_JSON).build();
+    }
+
+    /**
+     * Returns the dashboard datasources of a user or group.
+     *
+     * @param groupName The name of the group to query for dashboard datasources. When <code>null</code> the user dashboard datasources are returned.
+     * @return The dashboard datasources of a user or group.
+     */
+    private String getDashboardDatasources(String groupName) {
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardDatasourcesTag());
+        return toString(objectMap);
     }
 
     @GET
@@ -155,9 +218,10 @@ public class DashboardService extends AbstractUserAttributeService {
      */
     private String addGraph(String groupName, String graphName, String json) {
         // Execute a dry run on all data.
-        getGraphData(json, true);
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
+        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
+        getGraphData(json, allowedDatasources, true);
         // Data seems ok, now store the graph.
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag());
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
         Map<String, Object> graphData = toMap(json);
         graphData.put("name", graphName);
@@ -519,7 +583,19 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getPreviewGraphData(String json) {
-        return getGraphData(json, false);
+        Map<String, Object> objectMap = getEntity(client, null, this.principalTags.getDashboardDatasourcesTag());
+        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
+        return getGraphData(json, allowedDatasources, false);
+    }
+
+    @POST
+    @Path("/{groupName}/graphdata")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
+    public String getGroupPreviewGraphData(@PathParam("groupName") String groupName, String json) {
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardDatasourcesTag());
+        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
+        return getGraphData(json, allowedDatasources, false);
     }
 
     /**
@@ -531,7 +607,7 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The live graph data.
      */
     private String getGraphData(String groupName, String dashboardName, String graphId) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
         if (objectMap == null || !objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             return null;
         }
@@ -542,6 +618,7 @@ public class DashboardService extends AbstractUserAttributeService {
         if (graphsData == null) {
             return null;
         }
+        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
         // First find the dashboard
         List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), objectMap);
         if (dashboardsData == null) {
@@ -581,17 +658,21 @@ public class DashboardService extends AbstractUserAttributeService {
                 graphData.put("from", dashboardFrom);
                 graphData.put("till", dashboardTill);
                 graphData.put("query", dashboardQuery);
-                return getGraphData(graphData, false);
+                return getGraphData(graphData, allowedDatasources, false);
             }
         }
         return null;
     }
 
-    private String getGraphData(String json, boolean dryRun) {
-        return getGraphData(toMap(json), dryRun);
+    private String getGraphData(String json, List<String> allowedDatasources, boolean dryRun) {
+        return getGraphData(toMap(json), allowedDatasources, dryRun);
     }
 
-    private String getGraphData(Map<String, Object> valueMap, boolean dryRun) {
+    private String getGraphData(Map<String, Object> valueMap, List<String> allowedDatasources, boolean dryRun) {
+        String dataSource = getString("data_source", valueMap);
+        if (allowedDatasources.indexOf(dataSource) < 0) {
+            throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
+        }
         String type = getString("type", valueMap);
         if ("number".equals(type)) {
             return getNumberData(valueMap, dryRun);
