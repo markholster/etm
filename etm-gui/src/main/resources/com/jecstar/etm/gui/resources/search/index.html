@@ -561,9 +561,21 @@
 
     $('#result_card').on('click', '#search_result_table tbody a', function(event) {
     	event.preventDefault();
-        showEvent($(window).scrollTop(), $(this).attr('data-event-type'), $(this).attr('id'));
-        $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
-   	    $(event.target).parent().parent().addClass('event-selected');
+        if ('show-event' == $(this).attr('data-link-type')) {
+            showEvent($(window).scrollTop(), $(this).attr('data-event-type'), $(this).attr('id'));
+            $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
+            $(event.target).parent().parent().addClass('event-selected');
+        } else if ('set-as-start-for-query' == $(this).attr('data-link-type')) {
+            var value = $(this).parent().children(":first").text();
+            $('#query-string-from').val(value);
+        } else if ('set-as-end-for-query' == $(this).attr('data-link-type')) {
+            var value = $(this).parent().children(":first").text();
+            $('#query-string-till').val(value);
+        }
+    });
+
+    $('#result_card').on('mouseenter mouseleave', '#search_result_table tbody tr td', function () {
+        $(this).children("[data-link-type='set-as-start-for-query'], [data-link-type='set-as-end-for-query']").toggleClass('invisible');
     });
 
     $('#result_card').on('click', '#search_result_table thead th', function(event) {
@@ -780,11 +792,26 @@
                     $('<a>')
                         .attr('href', '?id=' + encodeURIComponent(searchResult.id) + '&type=' + encodeURIComponent(searchResult.type))
                         .attr('id', searchResult.id)
+                        .attr('data-link-type', 'show-event')
                         .attr('data-event-type', searchResult.type)
                         .text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
-                )
+                );
             } else {
-                $td.text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
+                $td.append($('<span>').text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone)));
+            }
+            if ('isotimestamp' == field.format || 'isoutctimestamp' == field.format) {
+                $td.append(
+                    $('<a style="padding-top: 0.2rem">')
+                        .addClass('fa fa-hourglass-end pull-right invisible')
+                        .attr('data-link-type', 'set-as-end-for-query')
+                        .attr('title', "Set as 'End date' for query")
+                        .attr('href', '#'),
+                    $('<a style="padding-top: 0.2rem">')
+                        .addClass('fa fa-hourglass-start pull-right invisible')
+                        .attr('data-link-type', 'set-as-start-for-query')
+                        .attr('title', "Set as 'Start date' for query")
+                        .attr('href', '#')
+                );
             }
             $tr.append($td);
         });

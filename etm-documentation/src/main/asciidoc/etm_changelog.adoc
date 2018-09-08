@@ -11,6 +11,7 @@
 * [ETM-64] Use button to open calendar in search screen.
 * [ETM-65] Add startdate and enddate fields on graphs.
 * [ETM-66] Make endpoint cache size configurable.
+* [ETM-67] Option to set timestamp fields in search result table as start or end date for the query.
 
 === Version 3.2.0
 * [ETM-14] Add signals.

@@ -50,7 +50,7 @@ This screen enables you to change sort settings and the number of results per pa
 |Name|Description
 |Name|The name of the column in the result table.
 |Field|The event attribute that should be retrieved.
-|Format|The format the result should have. Time values are stored as milliseconds since January 1st 1970. This is kind of hard to read so you it's easier to convert this value to an ISO timestamp.
+|Format|The format the result should have. Time values are stored as milliseconds since January 1st 1970. This is kind of hard to read so you it's easier to convert this value to an ISO timestamp. Note that timestamp formats will show two hourglasses when hovering over the cell in the result table. These hourglasses are shortcuts for using that specific time as start or end date for your next query.
 |Multiselect|Some attributes may occur more than ones in a single event. An event can have a writing event handler per endpoint. So if you want to show the handling time of a writing event handler of an event with multiple endpoints {etm} has to pick one. This option tells which value should be selected in case of a multi-occurrence attribute.  
 |Link|A checkbox that should be checked if the value should be clickable. If a value is clickable it will be presented as a link in the result table. When clicking this link the details of the event will be shown.
 |======================= 
