@@ -8,6 +8,8 @@ public interface EtmConfigurationTags {
 
     String getSessionTimeoutTag();
 
+    String getEndpointConfigurationCacheSizeTag();
+
     String getEnhancingHandlerCountTag();
 
     String getPersistingHandlerCountTag();

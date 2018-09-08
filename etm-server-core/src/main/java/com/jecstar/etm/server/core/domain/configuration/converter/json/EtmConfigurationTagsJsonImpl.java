@@ -20,6 +20,11 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
     }
 
     @Override
+    public String getEndpointConfigurationCacheSizeTag() {
+        return "endpoint_configuration_cache_size";
+    }
+
+    @Override
     public String getEnhancingHandlerCountTag() {
         return "enhancing_handler_count";
     }

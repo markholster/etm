@@ -203,6 +203,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     }
 
     @Override
+    public int getEndpointConfigurationCacheSize() {
+        reloadConfigurationWhenNecessary();
+        return super.getEndpointConfigurationCacheSize();
+    }
+
+    @Override
     public boolean isLicenseExpired() {
         reloadConfigurationWhenNecessary();
         return super.isLicenseExpired();

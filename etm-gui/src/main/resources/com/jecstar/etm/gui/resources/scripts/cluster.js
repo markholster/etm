@@ -130,6 +130,7 @@ function buildClusterPage() {
 	
 	function setClusterData(data) {
 		$("#input-session-timeout").val(data.session_timeout);
+        $("#input-endpoint-configuration-cache-size").val(data.endpoint_configuration_cache_size);
 		$("#input-shards-per-index").val(data.shards_per_index);
 		$("#input-replicas-per-index").val(data.replicas_per_index);
 		$("#input-max-event-indices").val(data.max_event_index_count);
@@ -158,6 +159,7 @@ function buildClusterPage() {
 		var clusterData = {};
 		if ('General' == context) {
 			clusterData.session_timeout = Number($("#input-session-timeout").val());
+            clusterData.endpoint_configuration_cache_size = Number($("#input-endpoint-configuration-cache-size").val());
 			clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
 			clusterData.max_search_template_count = Number($("#input-search-max-templates").val());
 			clusterData.max_search_history_count = Number($("#input-search-max-history-size").val());

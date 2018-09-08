@@ -29,6 +29,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
             // only add the defaults.
             boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT, sb, true);
             added = this.converter.addLongElementToJsonBuffer(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), sb, !added) || added;
+            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEndpointConfigurationCacheSizeTag(), defaultConfiguration.getEndpointConfigurationCacheSize(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;
@@ -54,6 +55,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         } else {
             boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, true);
             added = addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), sb, !added) || added;
+            added = addIntegerWhenNotDefault(this.tags.getEndpointConfigurationCacheSizeTag(), defaultConfiguration.getEndpointConfigurationCacheSize(), nodeConfiguration.getEndpointConfigurationCacheSize(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
             added = addIntegerWhenNotDefault(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), nodeConfiguration.getEventBufferSize(), sb, !added) || added;
@@ -93,6 +95,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         defaultMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, defaultMap);
         EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName);
         etmConfiguration.setSessionTimeout(getLongValue(this.tags.getSessionTimeoutTag(), defaultMap, nodeMap));
+        etmConfiguration.setEndpointEtmConfigurationCacheSize(getIntValue(this.tags.getEndpointConfigurationCacheSizeTag(), defaultMap, nodeMap));
         etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));
         etmConfiguration.setPersistingHandlerCount(getIntValue(this.tags.getPersistingHandlerCountTag(), defaultMap, nodeMap));
         etmConfiguration.setEventBufferSize(getIntValue(this.tags.getEventBufferSizeTag(), defaultMap, nodeMap));

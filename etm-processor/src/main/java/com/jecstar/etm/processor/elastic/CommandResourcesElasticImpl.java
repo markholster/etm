@@ -43,11 +43,12 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 
     private BulkProcessor bulkProcessor;
 
-    private final Map<String, EndpointConfiguration> endpointCache = new LruCache<>(1000);
+    private final LruCache<String, EndpointConfiguration> endpointCache;
 
     CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
         this.elasticClient = elasticClient;
         this.etmConfiguration = etmConfiguration;
+        this.endpointCache = new LruCache<>(etmConfiguration.getEndpointConfigurationCacheSize());
         this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
         this.bulkProcessor = createBulkProcessor();
         this.etmConfiguration.addConfigurationChangeListener(this);
@@ -143,6 +144,8 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
             this.bulkProcessor = createBulkProcessor();
             this.persisters.values().forEach(c -> ((AbstractElasticTelemetryEventPersister) c).setBulkProcessor(this.bulkProcessor));
             oldBulkProcessor.close();
+        } else if (event.isChanged(EtmConfiguration.CONFIG_KEY_ENDPOINT_CONFIGURATION_CACHE_SIZED)) {
+            this.endpointCache.setMaxSize(this.etmConfiguration.getEndpointConfigurationCacheSize());
         }
     }
 

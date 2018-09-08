@@ -128,6 +128,7 @@ The cluster page has grouped related configuration items into several tabs:
 |=======================
 |Name|Description
 |Http session timeout|The maximum idle time in milliseconds for an http session before it will be cleaned up. All http sessions are stored in Elasticsearch to provide maximum flexibility in starting and stopping different nodes. An http session will always be available on all nodes to provide High Availablilty out of the box. 
+|Endpoint configuration cache size|The cache size for endpoint configurations. This is the configuration for parsers and enhancers per endpoint. Set to zero to disable the cache. Be aware that setting the cache size to a large value may consume a lot of memory!
 |Search export max rows|The maximum number of rows that can be exported from the search page. If you set this value to high it might lead to a very high memory consumption of your {etm} Node.
 |Max search templates|The maximum number of search templates a user may store.
 |Max search history size|The maximum number of queries that are kept in the users query history. An individual user may configure a lower number for him/herself.
