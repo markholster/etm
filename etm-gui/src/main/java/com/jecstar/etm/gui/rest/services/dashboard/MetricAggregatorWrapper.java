@@ -14,19 +14,23 @@ class MetricAggregatorWrapper {
     private static final String AGGREGATOR_BASE = "metric";
 
     private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-    private final Map<String, Object> jsonData;
     private final JsonConverter jsonConverter = new JsonConverter();
-    private final String aggregatorType;
     private final String id;
+    private final Map<String, Object> jsonData;
+    private final String aggregatorType;
     private final String field;
     private final String label;
     private final Format fieldFormat;
     private final AggregationBuilder aggregationBuilder;
 
     public MetricAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData) {
+        this(etmPrincipal, jsonData, new JsonConverter().getString("id", jsonData));
+    }
+
+    MetricAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData, String id) {
+        this.id = id;
         this.jsonData = jsonData;
         this.aggregatorType = this.jsonConverter.getString("aggregator", jsonData);
-        this.id = this.jsonConverter.getString("id", jsonData);
         this.field = this.jsonConverter.getString("field", jsonData);
         String fieldType = this.jsonConverter.getString("field_type", jsonData);
         this.label = this.jsonConverter.getString("label", jsonData);
@@ -98,5 +102,9 @@ class MetricAggregatorWrapper {
 
     public Format getFieldFormat() {
         return this.fieldFormat;
+    }
+
+    public String getId() {
+        return this.id;
     }
 }

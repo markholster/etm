@@ -701,13 +701,24 @@ public class DashboardService extends AbstractUserAttributeService {
         Map<String, Object> yAxisData = getObject("y_axis", graphData, Collections.emptyMap());
 
         Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData, Collections.emptyMap());
+        Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData, Collections.emptyMap());
+        List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
+
         BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, from, till, query));
         BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
+
+        if (bucketAggregatorWrapper.needsMetricSubAggregatorForSorting() && !bucketAggregatorData.isEmpty()) {
+            // We are in the situation that all metric aggregators will bd put on the bucketSubAggregator but the (root)
+            // bucketAggregator needs a metric aggregator for sorting. We add the requested metric aggregator on the
+            // bucketAggregator and will strip it from the results as soon as the json result json is created.
+            bucketAggregatorWrapper.setSortOverrideAggregator(metricsAggregatorsData);
+
+        }
+
         // First create the bucket aggregator
         AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();
         AggregationBuilder rootForMetricAggregators = bucketAggregatorBuilder;
         // Check for the presence of a sub aggregator
-        Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData, Collections.emptyMap());
         if (!bucketSubAggregatorData.isEmpty()) {
             bucketSubAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketSubAggregatorData);
             rootForMetricAggregators = bucketSubAggregatorWrapper.getAggregationBuilder();
@@ -715,7 +726,6 @@ public class DashboardService extends AbstractUserAttributeService {
         }
 
         // And add every y-axis aggregator as sub aggregator
-        List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
         for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
             rootForMetricAggregators.subAggregation(new MetricAggregatorWrapper(etmPrincipal, metricsAggregatorData).getAggregationBuilder());
         }
@@ -739,6 +749,9 @@ public class DashboardService extends AbstractUserAttributeService {
         for (Bucket bucket : multiBucketsAggregation.getBuckets()) {
             AggregationKey key = getFormattedBucketKey(bucket, bucketAggregatorWrapper.getBucketFormat());
             for (Aggregation subAggregation : bucket.getAggregations()) {
+                if (BucketAggregatorWrapper.SORT_METRIC_ID.equals(subAggregation.getName())) {
+                    continue;
+                }
                 if (subAggregation instanceof MultiBucketsAggregation) {
                     // A sub aggregation on the x-axis.
                     MultiBucketsAggregation subBucketsAggregation = (MultiBucketsAggregation) subAggregation;

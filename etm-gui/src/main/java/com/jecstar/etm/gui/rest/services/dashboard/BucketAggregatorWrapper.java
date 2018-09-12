@@ -13,26 +13,31 @@ import org.elasticsearch.search.aggregations.metrics.min.Min;
 
 import java.text.Format;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 class BucketAggregatorWrapper {
 
     private static final String AGGREGATOR_BASE = "bucket";
+    public static final String SORT_METRIC_ID = "sort_metric";
 
     private static final String DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    private final EtmPrincipal etmPrincipal;
     private final Map<String, Object> jsonData;
     private final JsonConverter jsonConverter = new JsonConverter();
     private final String aggregatorType;
     private final String field;
     private final Format fieldFormat;
-    private final AggregationBuilder aggregationBuilder;
+    private AggregationBuilder aggregationBuilder;
     private DateInterval requiredDateInterval;
+    private MetricAggregatorWrapper sortOverrideAggregator;
 
     public BucketAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData) {
         this(etmPrincipal, jsonData, null);
     }
 
     public BucketAggregatorWrapper(EtmPrincipal etmPrincipal, Map<String, Object> jsonData, SearchRequestBuilder searchRequest) {
+        this.etmPrincipal = etmPrincipal;
         this.jsonData = jsonData;
         this.aggregatorType = this.jsonConverter.getString("aggregator", jsonData);
         String fieldType = this.jsonConverter.getString("field_type", jsonData);
@@ -47,7 +52,6 @@ class BucketAggregatorWrapper {
         } else {
             this.fieldFormat = "date".equals(fieldType) ? etmPrincipal.getDateFormat(DATE_FORMAT_ISO8601_WITHOUT_TIMEZONE) : etmPrincipal.getNumberFormat();
         }
-        this.aggregationBuilder = createBucketAggregationBuilder();
     }
 
 
@@ -82,12 +86,15 @@ class BucketAggregatorWrapper {
             BucketOrder termsOrder;
             if ("term".equals(orderBy)) {
                 termsOrder = BucketOrder.key("asc".equals(order));
-            } else if (orderBy.startsWith("metric_")) {
+            } else if (orderBy.startsWith("metric_") || SORT_METRIC_ID.equals(orderBy)) {
                 termsOrder = BucketOrder.aggregation(orderBy, "asc".equals(order));
             } else {
                 throw new IllegalArgumentException("'" + orderBy + "' is an invalid term order.");
             }
             builder = AggregationBuilders.terms(internalLabel).field(this.field).order(termsOrder).size(top);
+            if (this.sortOverrideAggregator != null) {
+                builder.subAggregation(this.sortOverrideAggregator.getAggregationBuilder());
+            }
         }
         if (builder == null) {
             throw new IllegalArgumentException("'" + this.aggregatorType + "' is an invalid bucket aggregator.");
@@ -98,6 +105,9 @@ class BucketAggregatorWrapper {
     }
 
     public AggregationBuilder getAggregationBuilder() {
+        if (this.aggregationBuilder == null) {
+            this.aggregationBuilder = createBucketAggregationBuilder();
+        }
         return this.aggregationBuilder;
     }
 
@@ -105,4 +115,23 @@ class BucketAggregatorWrapper {
         return this.fieldFormat;
     }
 
+
+    public boolean needsMetricSubAggregatorForSorting() {
+        String orderBy = this.jsonConverter.getString("order_by", this.jsonData);
+        return orderBy != null && orderBy.startsWith("metric_");
+    }
+
+    public void setSortOverrideAggregator(List<Map<String, Object>> metricsAggregatorsData) {
+        if (!needsMetricSubAggregatorForSorting()) {
+            throw new IllegalStateException();
+        }
+        String orderBy = this.jsonConverter.getString("order_by", this.jsonData);
+        for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
+            if (orderBy.equals(this.jsonConverter.getString("id", metricsAggregatorData))) {
+                this.jsonData.put("order_by", SORT_METRIC_ID);
+                this.sortOverrideAggregator = new MetricAggregatorWrapper(this.etmPrincipal, metricsAggregatorData, SORT_METRIC_ID);
+                break;
+            }
+        }
+    }
 }
