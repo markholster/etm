@@ -707,7 +707,7 @@ public class DashboardService extends AbstractUserAttributeService {
         BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, from, till, query));
         BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
 
-        if (bucketAggregatorWrapper.needsMetricSubAggregatorForSorting() && !bucketAggregatorData.isEmpty()) {
+        if (bucketAggregatorWrapper.needsMetricSubAggregatorForSorting() && !bucketSubAggregatorData.isEmpty()) {
             // We are in the situation that all metric aggregators will bd put on the bucketSubAggregator but the (root)
             // bucketAggregator needs a metric aggregator for sorting. We add the requested metric aggregator on the
             // bucketAggregator and will strip it from the results as soon as the json result json is created.
