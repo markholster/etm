@@ -1,7 +1,6 @@
 == Changelog
 
 === Version 3.3.0
-* [ETM-56] Migrate to Elasticsearch 6.3.
 * [ETM-57] Sorting not working on all fields.
 * [ETM-58] Query on dashboards should default to all attributes.
 * [ETM-60] Expose and authorize all datasources in dashboard/signal.
@@ -13,6 +12,7 @@
 * [ETM-66] Make endpoint cache size configurable.
 * [ETM-67] Option to set timestamp fields in search result table as start or end date for the query.
 * [ETM-68] Sorting on metric in term aggregator not working when sub aggregator is present.
+* [ETM-69] Migrate to Elasticsearch 6.4.
 
 === Version 3.2.0
 * [ETM-14] Add signals.
