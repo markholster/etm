@@ -317,6 +317,8 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     private void insertAdminUser(Client elasticClient) {
         EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
         adminUser.addRoles(Arrays.stream(SecurityRoles.ALL_READ_WRITE_SECURITY_ROLES).collect(Collectors.toCollection(ArrayList::new)));
+        adminUser.addSignalDatasources(Arrays.stream(ElasticsearchLayout.ALL_DATASOURCES).collect(Collectors.toCollection(ArrayList::new)));
+        adminUser.addDashboardDatasources(Arrays.stream(ElasticsearchLayout.ALL_DATASOURCES).collect(Collectors.toCollection(ArrayList::new)));
         adminUser.setChangePasswordOnLogon(true);
         elasticClient.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + adminUser.getId())
                 .setWaitForActiveShards(ActiveShardCount.ALL)

@@ -84,4 +84,6 @@ public final class ElasticsearchLayout {
 
     public static boolean OLD_EVENT_TYPES_PRESENT = true;
 
+    public static String[] ALL_DATASOURCES = new String[]{AUDIT_LOG_INDEX_ALIAS_ALL, EVENT_INDEX_ALIAS_ALL, METRICS_INDEX_ALIAS_ALL};
+
 }
