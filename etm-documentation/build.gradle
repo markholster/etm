@@ -17,7 +17,7 @@ asciidoctor {
     sources {
         include 'etm.adoc'
     }
-    attributes 'author': 'Milo Jacobs &amp; Mark Holster',
+    attributes 'author': 'Jecstar Innovation',
             'email': 'info@jecstar.com',
             'toc': 'right',
             'toc-title': 'Table of Contents',
