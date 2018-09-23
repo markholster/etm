@@ -165,6 +165,7 @@ $('#link-edit-table').click(function (event) {
     }
     
     function createRow(columnData) {
+        var checkboxId = generateUUID();
         var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
         $(row).append(
             $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name')),
@@ -189,7 +190,12 @@ $('#link-edit-table').click(function (event) {
                 .append($('<option>').attr('value', 'highest').text('Highest'))
                 .append($('<option>').attr('value', 'first').text('First'))
                 .append($('<option>').attr('value', 'last').text('Last'))),
-            $('<div>').addClass('col-sm-1').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm'))
+            $('<div>').addClass('col-sm-1').append(
+                $('<div>').addClass('custom-control custom-checkbox').append(
+                    $('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm custom-control-input').attr('id', checkboxId),
+                    $('<label>').addClass('custom-control-label').attr('for', checkboxId)
+                )
+            )
         );
         var actionDiv = $('<div>').addClass('col-sm-2').append(
             $('<div>').addClass('row actionRow').append(

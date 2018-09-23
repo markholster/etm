@@ -1,5 +1,8 @@
 // Utility class for common ETM functions. This script should be loaded after jQuery.
-// Method to retrieve query string parametetrs.
+
+/**
+ * Method to retrieve query string parameters.
+ */
 var queryString = (function(a) {
     if (a == "") return {};
     var b = {};
@@ -15,8 +18,8 @@ var queryString = (function(a) {
 })(window.location.search.substr(1).split('&'));
 
 /**
-* Determine if an element is in the viewport
-**/
+ * Determine if an element is in the viewport
+ */
 function isInViewport(elem) {
     	if (!$(elem).is(':visible')) {
     		return false;
@@ -29,8 +32,8 @@ function isInViewport(elem) {
 }
 
 /**
-* Add the ajax handlers that.
-**/
+ * Add the ajax handlers that.
+ */
 function addAjaxHandlers(startFunction, stopFunction, errorFunction, completeFunction) {
     $(document).ajaxStart(function () {
         if (startFunction) {
@@ -60,8 +63,8 @@ function addAjaxHandlers(startFunction, stopFunction, errorFunction, completeFun
 }
 
 /**
-* Sort the options on a select element.
-*/
+ * Sort the options on a select element.
+ */
 function sortSelectOptions($select) {
     var options = $select.children('option');
     options.detach().sort(function(a,b) {
@@ -73,14 +76,30 @@ function sortSelectOptions($select) {
 }
 
 /**
-* Function that hides one or more bootstrap modals.
-*/
+ * Function that hides one or more bootstrap modals.
+ */
 function hideModals(modals) {
     $.each(modals, function(index, modal) {
         if ($(modal).is(':visible')) {
             $(modal).modal('hide');
         }
     });
+}
+
+/**
+ * Function to create an UUID.
+ */
+function generateUUID() {
+    var d = new Date().getTime();
+    if (window.performance && typeof window.performance.now === "function") {
+        d += performance.now(); //use high-precision timer if available
+    }
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+    return uuid;
 }
 
 $(document).ready( function () {
