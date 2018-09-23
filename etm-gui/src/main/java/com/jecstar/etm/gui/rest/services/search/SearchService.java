@@ -137,6 +137,7 @@ public class SearchService extends AbstractIndexMetadataService {
         template.put("sort_order", getString("sort_order", requestValues));
         template.put("start_time", getString("start_time", requestValues));
         template.put("end_time", getString("end_time", requestValues));
+        template.put("time_filter_field", getString("time_filter_field", requestValues));
 
         scriptParams.put("template", template);
         scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());
@@ -282,7 +283,7 @@ public class SearchService extends AbstractIndexMetadataService {
 
         boolean notAfterFilterNecessary = true;
         if (parameters.getEndTime() != null || parameters.getStartTime() != null) {
-            RangeQueryBuilder timestampFilter = new RangeQueryBuilder("timestamp");
+            RangeQueryBuilder timestampFilter = new RangeQueryBuilder(parameters.getTimeFilterField());
             if (parameters.getEndTime() != null) {
                 try {
                     // Check if the endtime is given as an exact timestamp or an elasticsearch date math.
@@ -355,6 +356,8 @@ public class SearchService extends AbstractIndexMetadataService {
         query.put(this.configurationTags.getSortOrderTag(), parameters.getSortOrder());
         query.put(this.configurationTags.getStartTimeTag(), parameters.getStartTime());
         query.put(this.configurationTags.getEndTimeTag(), parameters.getEndTime());
+        query.put(this.configurationTags.getTimeFilterFieldTag(), parameters.getTimeFilterField());
+
 
         scriptParams.put("query", query);
         scriptParams.put("history_size", history_size);

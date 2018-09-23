@@ -74,4 +74,6 @@ public interface EtmConfigurationTags {
     String getStartTimeTag();
 
     String getEndTimeTag();
+
+    String getTimeFilterFieldTag();
 }

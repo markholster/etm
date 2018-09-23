@@ -183,4 +183,9 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
     public String getEndTimeTag() {
         return "end_time";
     }
+
+    @Override
+    public String getTimeFilterFieldTag() {
+        return "time_filter_field";
+    }
 }

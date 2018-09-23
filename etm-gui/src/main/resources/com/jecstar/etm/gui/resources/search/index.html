@@ -88,7 +88,7 @@
                                        placeholder="Template name..."
                                        disabled="disabled"/>
                                 <span class="input-group-btn btn-group-sm">
-                                    <button id="btn-save-template" class="btn btn-primary" type="button"
+                                    <button id="btn-save-template" class="btn btn-primary btn-sm" type="button"
                                             disabled="disabled">Save</button>
                                 </span>
                             </div>
@@ -158,13 +158,30 @@
                                            class="custom-control-input">
                                     <label class="custom-control-label" for="check-type-sql">SQL</label>
                                 </div>
-                                <div class="row form-group" style="margin-top: 5px;">
-                                    <label for="query-string-from" class="col-sm-3 col-form-label">Start date</label>
-                                    <div class="coll-sm">
+                                <div class="row" style="margin-top: 5px;">
+                                    <label for="query-string-from" class="col-sm-3 col-form-label-sm">Start date</label>
+                                    <div class="col-sm-3">
                                         <div class="input-group flatpickr">
-                                            <input id="query-string-from" type="text" class="form-control" data-input />
+                                            <input id="query-string-from" type="text"
+                                                   class="form-control form-control-sm" data-input/>
                                             <div class="input-group-append">
-                                                <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
+                                                <a class="btn btn-outline-secondary btn-sm" title="Toggle calendar"
+                                                   data-toggle>
+                                                    <i class="fa fa-calendar"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <label for="query-string-till" class="col-sm-3 col-form-label-sm">End date</label>
+                                    <div class="col-sm-3">
+                                        <div class="input-group flatpickr">
+                                            <input id="query-string-till" type="text"
+                                                   class="form-control form-control-sm" data-input/>
+                                            <div class="input-group-append">
+                                                <a class="btn btn-outline-secondary btn-sm" title="Toggle calendar"
+                                                   data-toggle>
                                                     <i class="fa fa-calendar"></i>
                                                 </a>
                                             </div>
@@ -172,15 +189,12 @@
                                     </div>
                                 </div>
                                 <div class="row form-group">
-                                    <label for="query-string-till" class="col-sm-3 col-form-label">End date</label>
-                                    <div class="coll-sm">
+                                    <label for="query-string-time-filter-field" class="col-sm-3 col-form-label-sm">Time
+                                        field</label>
+                                    <div class="col-sm-3">
                                         <div class="input-group flatpickr">
-                                            <input id="query-string-till" type="text" class="form-control" data-input />
-                                            <div class="input-group-append">
-                                                <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
-                                                    <i class="fa fa-calendar"></i>
-                                                </a>
-                                            </div>
+                                            <input id="query-string-time-filter-field" type="text"
+                                                   class="form-control form-control-sm" value="timestamp" data-input/>
                                         </div>
                                     </div>
                                 </div>
@@ -539,6 +553,22 @@
     		}
     );
 
+    $('#query-string-time-filter-field').bind('keydown', function (event) {
+        if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+            event.stopPropagation();
+        }
+    })
+        .autocompleteFieldQuery(
+            {
+                queryKeywords: queryKeywords,
+                mode: 'field',
+                keywordFilter: function (index, group, keyword) {
+                    return !keyword.date;
+                }
+            }
+        );
+
+
     $('#btn-search').click(function() {
     	startNewQuery();
     });
@@ -661,6 +691,7 @@
         } else {
             tableLayout.end_time = null;
         }
+        tableLayout.time_filter_field = $('#query-string-time-filter-field').val();
         var query = {
             query: tableLayout.current_query,
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
@@ -672,7 +703,8 @@
             fieldsLayout: tableLayout.fields,
             timestamp: tableLayout.timestamp,
             start_time: tableLayout.start_time,
-            end_time: tableLayout.end_time
+            end_time: tableLayout.end_time,
+            time_filter_field: tableLayout.time_filter_field
         };
         return query;
     }
@@ -772,7 +804,8 @@
                         sort_field: queryParameters.sort_field,
                         sort_order: queryParameters.sort_order,
                         start_time: queryParameters.start_time,
-                        end_time: queryParameters.end_time
+                        end_time: queryParameters.end_time,
+                        time_filter_field: queryParameters.time_filter_field
                     }
                     updateHistory(query, data.history_size);
                 }

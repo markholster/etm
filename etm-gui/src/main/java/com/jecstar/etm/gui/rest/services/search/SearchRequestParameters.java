@@ -31,6 +31,7 @@ class SearchRequestParameters {
     private List<String> fields;
     private final String startTime;
     private final String endTime;
+    private final String timeFilterField;
     private final List<Map<String, Object>> fieldsLayout;
 
     SearchRequestParameters(String query, String startTime, String endTime) {
@@ -66,6 +67,7 @@ class SearchRequestParameters {
         this.fieldsLayout.add(layout);
         this.startTime = startTime;
         this.endTime = endTime;
+        this.timeFilterField = "timestamp";
     }
 
 
@@ -87,6 +89,7 @@ class SearchRequestParameters {
         this.fieldsLayout = this.converter.getArray("fieldsLayout", requestValues);
         this.startTime = this.converter.getString("start_time", requestValues);
         this.endTime = this.converter.getString("end_time", requestValues);
+        this.timeFilterField = this.converter.getString("time_filter_field", requestValues);
     }
 
     public String toJsonSearchTemplate(String name) {
@@ -102,6 +105,7 @@ class SearchRequestParameters {
         this.converter.addIntegerElementToJsonBuffer("start_ix", this.getStartIndex(), result, false);
         this.converter.addStringElementToJsonBuffer("start_time", this.getStartTime(), result, false);
         this.converter.addStringElementToJsonBuffer("end_time", this.getEndTime(), result, false);
+        this.converter.addStringElementToJsonBuffer("time_filter_field", this.getTimeFilterField(), result, false);
         this.converter.addIntegerElementToJsonBuffer("results_per_page", this.getMaxResults(), result, false);
         this.converter.addStringElementToJsonBuffer("query", this.queryString, result, false);
         result.append(",\"fields\": [");
@@ -177,6 +181,10 @@ class SearchRequestParameters {
 
     public String getEndTime() {
         return this.endTime;
+    }
+
+    public String getTimeFilterField() {
+        return this.timeFilterField == null ? "timestamp" : this.timeFilterField;
     }
 
     public Long getNotAfterTimestamp() {

@@ -8,6 +8,7 @@ var tableLayout = {
     sort_order: 'desc',
     start_time: null,
     end_time: null,
+    time_filter_field: 'timestamp',
     // The timestamp the query is first executed
     timestamp: null,
     current_ix: 0,

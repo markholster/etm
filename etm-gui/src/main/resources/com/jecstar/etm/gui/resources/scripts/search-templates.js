@@ -149,6 +149,7 @@ function setValuesFromHistory(query) {
     } else {
         flatPickrEndDate.setDate(null);
     }
+    $('#query-string-time-filter-field').val(query.time_filter_field);
     tableLayout.current_ix = 0;
     tableLayout.fields = query.fields;
     tableLayout.results_per_page = query.results_per_page;
@@ -183,7 +184,8 @@ function createTemplate() {
         sort_field: tableLayout.sort_field,
         sort_order: tableLayout.sort_order,
         start_time: null,
-        end_time: null
+        end_time: null,
+        time_filter_field: null
     };
     var dateValue = $('#query-string-from').val();
     if (dateValue) {
@@ -203,6 +205,7 @@ function createTemplate() {
             template.end_time = dateValue;
         }
     }
+    template.time_filter_field = $('#query-string-time-filter-field').val();
     return template;
 }
 
