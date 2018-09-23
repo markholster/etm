@@ -627,6 +627,7 @@ public class DashboardService extends AbstractUserAttributeService {
         String dashboardFrom = null;
         String dashboardTill = null;
         String dashboardQuery = null;
+        String dashboardTimeFilterField = null;
         String graphName = null;
         for (Map<String, Object> dashboardData : dashboardsData) {
             if (!dashboardName.equals(getString("name", dashboardData))) {
@@ -641,6 +642,7 @@ public class DashboardService extends AbstractUserAttributeService {
                             if (graphId.equals(getString("id", col))) {
                                 dashboardFrom = getString("from", col);
                                 dashboardTill = getString("till", col);
+                                dashboardTimeFilterField = getString("time_filter_field", col);
                                 dashboardQuery = getString("query", col);
                                 graphName = getString("name", col);
                             }
@@ -657,6 +659,7 @@ public class DashboardService extends AbstractUserAttributeService {
             if (graphName.equals(getString("name", graphData))) {
                 graphData.put("from", dashboardFrom);
                 graphData.put("till", dashboardTill);
+                graphData.put("time_filter_field", dashboardTimeFilterField);
                 graphData.put("query", dashboardQuery);
                 return getGraphData(graphData, allowedDatasources, false);
             }
@@ -694,8 +697,9 @@ public class DashboardService extends AbstractUserAttributeService {
         String index = getString("data_source", valueMap);
         String from = getString("from", valueMap);
         String till = getString("till", valueMap);
+        String timeFilterField = getString("time_filter_field", valueMap);
         String query = getString("query", valueMap, "*");
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, query);
+        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, timeFilterField, query);
         Map<String, Object> graphData = getObject(type, valueMap, Collections.emptyMap());
         Map<String, Object> xAxisData = getObject("x_axis", graphData, Collections.emptyMap());
         Map<String, Object> yAxisData = getObject("y_axis", graphData, Collections.emptyMap());
@@ -704,7 +708,7 @@ public class DashboardService extends AbstractUserAttributeService {
         Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData, Collections.emptyMap());
         List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
 
-        BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, from, till, query));
+        BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, from, till, timeFilterField, query));
         BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
 
         if (bucketAggregatorWrapper.needsMetricSubAggregatorForSorting() && !bucketSubAggregatorData.isEmpty()) {
@@ -790,8 +794,9 @@ public class DashboardService extends AbstractUserAttributeService {
         String index = getString("data_source", valueMap);
         String from = getString("from", valueMap);
         String till = getString("till", valueMap);
+        String timeFilterField = getString("time_filter_field", valueMap);
         String query = getString("query", valueMap, "*");
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, query);
+        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, timeFilterField, query);
 
         Map<String, Object> numberData = getObject("number", valueMap, Collections.emptyMap());
         MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, numberData);
@@ -813,7 +818,7 @@ public class DashboardService extends AbstractUserAttributeService {
         return result.toString();
     }
 
-    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, String index, String from, String till, String query) {
+    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, String index, String from, String till, String timeFilterField, String query) {
         SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(index), etmConfiguration)
                 .setFetchSource(false)
                 .setSize(0);
@@ -826,7 +831,7 @@ public class DashboardService extends AbstractUserAttributeService {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
         if (from != null || till != null) {
-            RangeQueryBuilder timestampFilter = new RangeQueryBuilder("timestamp");
+            RangeQueryBuilder timestampFilter = new RangeQueryBuilder(timeFilterField != null ? timeFilterField : "timestamp");
             if (from != null) {
                 timestampFilter.gte(from);
             }

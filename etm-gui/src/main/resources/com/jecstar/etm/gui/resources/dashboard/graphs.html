@@ -102,7 +102,9 @@
                                             <label for="input-graph-from" class="col-sm-3 col-form-label col-form-label-sm">Start date</label>
                                             <div class="col-sm-9">
                                                 <div class="input-group input-group-sm flatpickr">
-                                                    <input id="input-graph-from" type="text" class="form-control form-control-sm" data-input  value="now-1h"/>
+                                                    <input id="input-graph-from" type="text"
+                                                           class="form-control form-control-sm" value="now-1h"
+                                                           data-input/>
                                                     <div class="input-group-append">
                                                         <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
                                                             <i class="fa fa-calendar"></i>
@@ -115,12 +117,23 @@
                                             <label for="input-graph-till" class="col-sm-3 col-form-label col-form-label-sm">End date</label>
                                             <div class="col-sm-9">
                                                 <div class="input-group input-group-sm flatpickr">
-                                                    <input id="input-graph-till" type="text" class="form-control form-control-sm" data-input value="now"/>
+                                                    <input id="input-graph-till" type="text"
+                                                           class="form-control form-control-sm" value="now" data-input/>
                                                     <div class="input-group-append">
                                                         <a class="btn btn-outline-secondary" title="Toggle calendar" data-toggle>
                                                             <i class="fa fa-calendar"></i>
                                                         </a>
                                                     </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row form-group">
+                                            <label for="input-graph-time-filter-field"
+                                                   class="col-sm-3 col-form-label col-form-label-sm">Time field</label>
+                                            <div class="col-sm-9">
+                                                <div class="input-group input-group-sm">
+                                                    <input id="input-graph-time-filter-field" type="text"
+                                                           class="form-control form-control-sm" value="timestamp"/>
                                                 </div>
                                             </div>
                                         </div>

@@ -149,7 +149,7 @@ function setValuesFromHistory(query) {
     } else {
         flatPickrEndDate.setDate(null);
     }
-    $('#query-string-time-filter-field').val(query.time_filter_field);
+    $('#query-string-time-filter-field').val(query.time_filter_field ? query.time_filter_field : 'timestamp');
     tableLayout.current_ix = 0;
     tableLayout.fields = query.fields;
     tableLayout.results_per_page = query.results_per_page;

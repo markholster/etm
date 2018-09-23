@@ -111,6 +111,34 @@ function initialize(doneFunction, readonly) {
                         return;
                     }
                     keywords = data.keywords;
+                    $('#input-graph-query').bind('keydown', function (event) {
+                        if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                            event.stopPropagation();
+                        }
+                    }).autocompleteFieldQuery(
+                        {
+                            queryKeywords: keywords,
+                            keywordIndexFilter: function (index) {
+                                return index != graphMap[$('#sel-graph').val()].data_source;
+                            }
+                        }
+                    );
+                    $('#input-graph-time-filter-field').bind('keydown', function (event) {
+                        if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                            event.stopPropagation();
+                        }
+                    }).autocompleteFieldQuery(
+                        {
+                            queryKeywords: keywords,
+                            mode: 'field',
+                            keywordFilter: function (index, group, keyword) {
+                                return !keyword.date;
+                            },
+                            keywordIndexFilter: function (index) {
+                                return index != graphMap[$('#sel-graph').val()].data_source;
+                            }
+                        }
+                    );
                 }
             }),
             $.ajax({
@@ -143,18 +171,6 @@ function initialize(doneFunction, readonly) {
                     currentDashboardNames = data.dashboards;
                 }
             }).done(function () {
-                $('#input-graph-query').bind('keydown', function( event ) {
-                    if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                        event.stopPropagation();
-                    }
-                }).autocompleteFieldQuery(
-                    {
-                        queryKeywords: keywords,
-                        keywordIndexFilter: function(index) {
-                            return index != graphMap[$('#sel-graph').val()].data_source;
-                        }
-                    }
-                );
                 if (doneFunction) {
                     doneFunction();
                 }
@@ -578,6 +594,7 @@ function addListeners() {
         graph.name = $('#sel-graph').val();
         graph.from = $('#input-graph-from').val() ? $('#input-graph-from').val() : null;
         graph.till = $('#input-graph-till').val() ? $('#input-graph-till').val() : null;
+        graph.time_filter_field = $('#input-graph-time-filter-field').val() ? $('#input-graph-time-filter-field').val() : null;
         graph.query = $('#input-graph-query').val();
         graph.refresh_rate = $('#input-refresh-rate').val() ? Number($('#input-refresh-rate').val()) : null;
         var graphData = graphMap[graph.name];
@@ -600,6 +617,7 @@ function addListeners() {
         if ('undefined' !== typeof graphData) {
             $('#input-graph-from').val(graphData.from);
             $('#input-graph-till').val(graphData.till);
+            $('#input-graph-time-filter-field').val(graphData.time_filter_field);
             $('#input-graph-query').val(graphData.query);
             if (graphData.line) {
                 $('#row-graph-interpolation').show();
@@ -641,6 +659,7 @@ function editGraph(cellId) {
     $('#sel-graph').val(graph.name);
     $('#input-graph-from').val(graph.from);
     $('#input-graph-till').val(graph.till);
+    $('#input-graph-time-filter-field').val(graph.time_filter_field);
     $('#input-graph-query').val(graph.query);
     $('#input-refresh-rate').val(graph.refresh_rate);
 

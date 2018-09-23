@@ -29,6 +29,7 @@ function buildGraphsPage(groupName) {
             clickOpens: false,
             wrap: true
         });
+
     $.ajax({
         type: 'GET',
         contentType: 'application/json',
@@ -82,6 +83,22 @@ function buildGraphsPage(groupName) {
         			return index != $('#sel-data-source').val();
         		}
         	}
+        );
+        $('#input-graph-time-filter-field').bind('keydown', function (event) {
+            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                event.stopPropagation();
+            }
+        }).autocompleteFieldQuery(
+            {
+                queryKeywords: keywords,
+                mode: 'field',
+                keywordFilter: function (index, group, keyword) {
+                    return !keyword.date;
+                },
+                keywordIndexFilter: function (index) {
+                    return index != $('#sel-data-source').val();
+                }
+            }
         );
         
         addMetricsAggregatorsBlock($('#bar-y-axis'),'bar', 0);
@@ -860,7 +877,8 @@ function buildGraphsPage(groupName) {
 		$('#sel-graph-type').val(graphData.type).trigger("change");
         $('#input-graph-from').val(graphData.from);
         $('#input-graph-till').val(graphData.till);
-		$('#input-graph-query').val(graphData.query ? graphData.query : '*');
+        $('#input-graph-time-filter-field').val(graphData.time_filter_field ? graphData.time_filter_field : 'timestamp');
+        $('#input-graph-query').val(graphData.query ? graphData.query : '*');
 		if ('bar' === graphData.type) {
 			setMultiBucketData(graphData.type, graphData.bar);
 		} else if ('line' === graphData.type) {
@@ -916,6 +934,7 @@ function buildGraphsPage(groupName) {
 			data_source: $('#sel-data-source').val(),
             from: $('#input-graph-from').val() ? $('#input-graph-from').val() : null,
             till: $('#input-graph-till').val() ? $('#input-graph-till').val() : null,
+            time_filter_field: $('#input-graph-time-filter-field').val() ? $('#input-graph-time-filter-field').val() : null,
 			query: $('#input-graph-query').val() ? $('#input-graph-query').val() : null
 		};
 		if ('bar' == graphData.type) {
