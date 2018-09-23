@@ -231,7 +231,7 @@ public class SignalService extends AbstractUserAttributeService {
         }
         List<Map<String, Object>> currentSignals = new ArrayList<>();
         Map<String, Object> signalData = toMap(this.signalConverter.write(signal));
-        if (objectMap != null && !objectMap.isEmpty()) {
+        if (objectMap != null && objectMap.containsKey(this.etmPrincipalTags.getSignalsTag())) {
             currentSignals = getArray(this.etmPrincipalTags.getSignalsTag(), objectMap);
         }
         ListIterator<Map<String, Object>> iterator = currentSignals.listIterator();

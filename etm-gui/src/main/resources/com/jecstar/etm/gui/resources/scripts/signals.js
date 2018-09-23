@@ -1,5 +1,5 @@
 function buildSignalsPage(groupName) {
-    $notifierSelect = $('<select>').addClass('form-control form-control-sm custom-select etm-notifier').attr('required', 'required');
+    $notifierSelect = $('<select>').addClass('form-control form-control-sm custom-select custom-select-sm etm-notifier').attr('required', 'required');
     var contextRoot = '../rest/signal/';
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/';

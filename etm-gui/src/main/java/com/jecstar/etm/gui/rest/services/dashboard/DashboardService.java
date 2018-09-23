@@ -225,7 +225,7 @@ public class DashboardService extends AbstractUserAttributeService {
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
         Map<String, Object> graphData = toMap(json);
         graphData.put("name", graphName);
-        if (objectMap != null && !objectMap.isEmpty()) {
+        if (objectMap != null && objectMap.containsKey(this.principalTags.getGraphsTag())) {
             currentGraphs = getArray(this.principalTags.getGraphsTag(), objectMap);
         }
         ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();

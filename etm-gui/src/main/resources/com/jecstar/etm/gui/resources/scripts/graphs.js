@@ -311,7 +311,7 @@ function buildGraphsPage(groupName) {
 					.attr('data-element-type', 'metrics-aggregator-selector')
 					.attr('data-graph-type', graphType)
 					.attr('data-aggregator-index', ix)
-					.addClass('form-control form-control-sm custom-select')
+                        .addClass('form-control form-control-sm custom-select custom-select-sm')
 					.append(
 						$('<option>').attr('value', 'average').text('Average'),
 						$('<option>').attr('value', 'count').text('Count'),
@@ -434,7 +434,7 @@ function buildGraphsPage(groupName) {
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-aggregator-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Aggregator'),
 				$('<div>').addClass('col-sm-9').append(
 					$('<select>').attr('id', 'sel-' + graphType + '-bucket-aggregator-' + ix)
-					.addClass('form-control form-control-sm custom-select')
+                        .addClass('form-control form-control-sm custom-select custom-select-sm')
 					.attr('data-element-type', 'bucket-aggregator-selector')
 					.attr('data-graph-type', graphType)
 					.attr('data-aggregator-index', ix)
@@ -483,7 +483,7 @@ function buildGraphsPage(groupName) {
 			$('<div>').addClass('form-group row').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Interval'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<select>').attr('id', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('form-control form-control-sm custom-select')
+                    $('<select>').attr('id', 'sel-' + graphType + '-bucket-date-interval-' + ix).addClass('form-control form-control-sm custom-select custom-select-sm')
 					.append(
 						$('<option>').attr('value', 'auto').attr('selected', 'selected').text('Auto'),	
 						$('<option>').attr('value', 'seconds').text('Seconds'),
@@ -523,7 +523,7 @@ function buildGraphsPage(groupName) {
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Order by'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<select>').attr('id', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('form-control form-control-sm custom-select')
+                    $('<select>').attr('id', 'sel-' + graphType + '-bucket-term-order-by-' + ix).addClass('form-control form-control-sm custom-select custom-select-sm')
 					.append(function () {
 						var optionArray = [];
 						optionArray.push($('<option>').attr('value', 'term').text('Term'))
@@ -545,7 +545,7 @@ function buildGraphsPage(groupName) {
 			$('<div>').addClass('form-group row').attr('style', 'display: none;').append(
 				$('<label>').attr('for', 'sel-' + graphType + '-bucket-term-order-' + ix).addClass('col-sm-3 col-form-label col-form-label-sm').text('Order'),
 				$('<div>').addClass('col-sm-9').append(
-					$('<select>').attr('id', 'sel-' + graphType + '-bucket-term-order-' + ix).addClass('form-control form-control-sm custom-select')
+                    $('<select>').attr('id', 'sel-' + graphType + '-bucket-term-order-' + ix).addClass('form-control form-control-sm custom-select custom-select-sm')
 					.append(
 						$('<option>').attr('value', 'asc').text('Ascending'),
 						$('<option>').attr('value', 'desc').text('Descending')
