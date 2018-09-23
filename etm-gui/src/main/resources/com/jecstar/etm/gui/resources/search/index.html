@@ -691,7 +691,7 @@
         } else {
             tableLayout.end_time = null;
         }
-        tableLayout.time_filter_field = $('#query-string-time-filter-field').val();
+        tableLayout.time_filter_field = $('#query-string-time-filter-field').val() ? $('#query-string-time-filter-field').val() : 'timestamp';
         var query = {
             query: tableLayout.current_query,
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),

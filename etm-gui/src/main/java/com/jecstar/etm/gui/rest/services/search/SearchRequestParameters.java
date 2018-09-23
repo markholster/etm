@@ -184,7 +184,7 @@ class SearchRequestParameters {
     }
 
     public String getTimeFilterField() {
-        return this.timeFilterField == null ? "timestamp" : this.timeFilterField;
+        return this.timeFilterField != null && this.timeFilterField.length() > 0 ? this.timeFilterField : "timestamp";
     }
 
     public Long getNotAfterTimestamp() {
