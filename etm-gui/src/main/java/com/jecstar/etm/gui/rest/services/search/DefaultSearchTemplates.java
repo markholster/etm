@@ -8,9 +8,9 @@ public class DefaultSearchTemplates {
 
     public String toJson() {
         String templates = "{\"user\": { \"search_templates\":[" +
-                new SearchRequestParameters("*", "now-1h", "now").toJsonSearchTemplate(TEMPLATE_NAME_EVENTS_OF_LAST_60_MINS) +
-                "," + new SearchRequestParameters("*", "now/d", "now/d").toJsonSearchTemplate(TEMPLATE_NAME_EVENTS_OF_TODAY) +
-                "," + new SearchRequestParameters("*", "now-1d/d", "now-1d/d").toJsonSearchTemplate(TEMPLATE_NAME_EVENTS_OF_YESTERDAY) +
+                new SearchRequestParameters("*", "now-1h", "now", null).toJsonSearchTemplate(TEMPLATE_NAME_EVENTS_OF_LAST_60_MINS) +
+                "," + new SearchRequestParameters("*", "now/d", "now/d", null).toJsonSearchTemplate(TEMPLATE_NAME_EVENTS_OF_TODAY) +
+                "," + new SearchRequestParameters("*", "now-1d/d", "now-1d/d", null).toJsonSearchTemplate(TEMPLATE_NAME_EVENTS_OF_YESTERDAY) +
                 "]}}";
         return templates;
     }

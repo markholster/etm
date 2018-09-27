@@ -58,10 +58,14 @@ public class JsonConverter extends JsonWriter {
 
     @SuppressWarnings("unchecked")
     public <T extends Collection<?>> T getArray(String tag, Map<String, Object> valueMap) {
+        return getArray(tag, valueMap, null);
+    }
+
+    public <T extends Collection<?>> T getArray(String tag, Map<String, Object> valueMap, T defaultValue) {
         if (valueMap != null && valueMap.containsKey(tag)) {
             return (T) valueMap.get(tag);
         }
-        return null;
+        return defaultValue;
     }
 
     public Boolean getBoolean(String tag, Map<String, Object> valueMap) {

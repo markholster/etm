@@ -7,11 +7,10 @@ import com.jecstar.etm.gui.rest.export.FieldType;
 import com.jecstar.etm.gui.rest.export.MultiSelect;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class SearchRequestParameters {
@@ -20,6 +19,7 @@ class SearchRequestParameters {
     private static final Integer DEFAULT_MAX_SIZE = 50;
 
     private final JsonConverter converter = new JsonConverter();
+    private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 
     private final String queryString;
     private final Integer startIndex;
@@ -33,8 +33,10 @@ class SearchRequestParameters {
     private final String endTime;
     private final String timeFilterField;
     private final List<Map<String, Object>> fieldsLayout;
+    private final EtmPrincipal etmPrincipal;
 
-    SearchRequestParameters(String query, String startTime, String endTime) {
+    SearchRequestParameters(String query, String startTime, String endTime, EtmPrincipal etmPrincipal) {
+        this.etmPrincipal = etmPrincipal;
         this.queryString = query;
         this.startIndex = 0;
         this.maxResults = 50;
@@ -48,8 +50,8 @@ class SearchRequestParameters {
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_MESSAGING);
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_SQL);
         this.fields = new ArrayList<>(2);
-        this.fields.add(tags.getTimestampTag());
-        this.fields.add(tags.getNameTag());
+        addField(tags.getTimestampTag());
+        addField(tags.getNameTag());
         this.fieldsLayout = new ArrayList<>();
         Map<String, Object> layout = new HashMap<>();
         layout.put("array", "lowest");
@@ -57,36 +59,36 @@ class SearchRequestParameters {
         layout.put("format", "isotimestamp");
         layout.put("link", true);
         layout.put("name", "Timestamp");
-        this.fieldsLayout.add(layout);
+        addFieldLayout(layout);
         layout = new HashMap<>();
         layout.put("array", "first");
         layout.put("field", tags.getNameTag());
         layout.put("format", "plain");
         layout.put("link", false);
         layout.put("name", "Name");
-        this.fieldsLayout.add(layout);
+        addFieldLayout(layout);
         this.startTime = startTime;
         this.endTime = endTime;
         this.timeFilterField = "timestamp";
     }
 
 
-    SearchRequestParameters(Map<String, Object> requestValues) {
+    SearchRequestParameters(Map<String, Object> requestValues, EtmPrincipal etmPrincipal) {
+        this.etmPrincipal = etmPrincipal;
         this.queryString = this.converter.getString("query", requestValues);
         this.startIndex = this.converter.getInteger("start_ix", requestValues, DEFAULT_START_IX);
         this.maxResults = this.converter.getInteger("max_results", requestValues, DEFAULT_MAX_SIZE);
         this.sortField = this.converter.getString("sort_field", requestValues);
         this.sortOrder = this.converter.getString("sort_order", requestValues);
         this.types = this.converter.getArray("types", requestValues);
-        this.fields = this.converter.getArray("fields", requestValues);
-        if (this.fields == null) {
-            this.fields = new ArrayList<>(2);
-        }
+        this.fields = new ArrayList<>(2);
+        this.converter.getArray("fields", requestValues, new ArrayList<String>()).forEach(c -> addField(c));
         this.notAfterTimestamp = this.converter.getLong("timestamp", requestValues);
         if (this.notAfterTimestamp == null) {
             this.notAfterTimestamp = System.currentTimeMillis();
         }
-        this.fieldsLayout = this.converter.getArray("fieldsLayout", requestValues);
+        this.fieldsLayout = new ArrayList<>();
+        this.converter.getArray("fieldsLayout", requestValues, new ArrayList<Map<String, Object>>()).forEach(c -> addFieldLayout(c));
         this.startTime = this.converter.getString("start_time", requestValues);
         this.endTime = this.converter.getString("end_time", requestValues);
         this.timeFilterField = this.converter.getString("time_filter_field", requestValues);
@@ -154,11 +156,29 @@ class SearchRequestParameters {
     }
 
     public List<String> getFields() {
-        return this.fields;
+        return Collections.unmodifiableList(this.fields);
+    }
+
+    public void addField(String field) {
+        if (this.tags.getPayloadTag().equals(field) && this.etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD)) {
+            return;
+        }
+        this.fields.add(field);
+    }
+
+    public boolean hasFields() {
+        return !this.fields.isEmpty();
     }
 
     public List<Map<String, Object>> getFieldsLayout() {
-        return this.fieldsLayout;
+        return Collections.unmodifiableList(this.fieldsLayout);
+    }
+
+    public void addFieldLayout(Map<String, Object> values) {
+        if (this.tags.getPayloadTag().equals(this.converter.getString("field", values)) && this.etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD)) {
+            return;
+        }
+        this.fieldsLayout.add(values);
     }
 
     public FieldLayout[] toFieldLayouts() {

@@ -731,6 +731,11 @@
                 	$('#link-request-download').show();
                 	$('#input-download-number-of-rows').attr('max', maxDownloads);
                 }
+                if (data.may_see_payload) {
+                    $('#sel-download-include-payload').removeAttr('disabled').val('true');
+                } else {
+                    $('#sel-download-include-payload').attr('disabled', 'disabled').val('false');
+                }
                 tableLayout.current_ix = data.start_ix;
                 if (appendToCurrent) {
                     var endIx = $('#search-stats').text().lastIndexOf(' ');

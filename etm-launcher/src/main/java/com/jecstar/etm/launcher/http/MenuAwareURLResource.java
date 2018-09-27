@@ -224,7 +224,7 @@ public class MenuAwareURLResource extends URLResource {
      * @param html      The html buffer.
      */
     private void addSearchMenuOption(EtmPrincipal principal, StringBuilder html) {
-        if (!principal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)) {
+        if (!principal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE)) {
             return;
         }
         if (MenuContext.SEARCH.equals(menuContext)) {

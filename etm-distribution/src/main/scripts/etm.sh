@@ -375,6 +375,7 @@ case "$1" in
         ;;
 
     'restart')
+        echo "Restarting $APP_LONG_NAME..."
         stopit
         start
         ;;
