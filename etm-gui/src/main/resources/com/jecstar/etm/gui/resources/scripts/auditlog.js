@@ -293,6 +293,7 @@ function buildAuditLogPage() {
     	appendToContainerInRow($('#event-detail'), 'Found', data.found ? 'Yes' : 'No');
     	appendToContainerInRow($('#event-detail'), 'Event id', data.event_id);
     	appendToContainerInRow($('#event-detail'), 'Event name', data.event_name);
+        appendToContainerInRow($('#event-detail'), 'Payload visible', data.payload_visible ? 'Yes' : 'No');
     	
     	if (data.correlated_events) {
         	$('#event-detail').append($('<br/>'));

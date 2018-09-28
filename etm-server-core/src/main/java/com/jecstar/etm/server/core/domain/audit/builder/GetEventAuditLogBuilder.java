@@ -33,4 +33,9 @@ public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAud
         return this;
     }
 
+    public GetEventAuditLogBuilder setPayloadVisible(boolean payloadVisible) {
+        this.audit.payloadVisible = payloadVisible;
+        return this;
+    }
+
 }

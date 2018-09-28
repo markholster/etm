@@ -16,6 +16,7 @@ public class GetEventAuditLog extends AuditLog {
     public static final String CORRELATED_EVENTS = "correlated_events";
     public static final String EVENT_ID = "event_id";
     public static final String EVENT_TYPE = "event_type";
+    public static final String PAYLOAD_VISIBLE = "payload_visible";
 
     /**
      * The id of the event that is requested.
@@ -46,5 +47,11 @@ public class GetEventAuditLog extends AuditLog {
      */
     @JsonField(value = CORRELATED_EVENTS, converterClass = CorrelatedEventsFieldsConverter.class)
     public final Map<String, String> correlatedEvents = new HashMap<>();
+
+    /**
+     * Whether or not the payload was visible for the user.
+     */
+    @JsonField(PAYLOAD_VISIBLE)
+    public boolean payloadVisible;
 
 }

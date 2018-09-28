@@ -10,7 +10,6 @@ public abstract class AuditLog {
     public static final String TIMESTAMP = "timestamp";
     public static final String PRINCIPAL_ID = "principal_id";
 
-
     /**
      * The time the audit was written to the database.
      */

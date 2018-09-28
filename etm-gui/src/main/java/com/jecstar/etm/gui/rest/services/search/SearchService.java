@@ -208,6 +208,7 @@ public class SearchService extends AbstractIndexMetadataService {
     public String executeQuery(String json) {
         long startTime = System.currentTimeMillis();
         EtmPrincipal etmPrincipal = getEtmPrincipal();
+        boolean payloadVisible = etmPrincipal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
 
         ZonedDateTime now = ZonedDateTime.now();
         QueryAuditLogBuilder auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
@@ -228,7 +229,7 @@ public class SearchService extends AbstractIndexMetadataService {
         result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1);
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"max_downloads\": ").append(etmConfiguration.getMaxSearchResultDownloadRows());
-        result.append(",\"may_see_payload\": ").append(etmPrincipal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE));
+        result.append(",\"may_see_payload\": ").append(payloadVisible);
         result.append(",\"results\": [");
         addSearchHits(result, response.getHits());
         result.append("]");
@@ -408,12 +409,14 @@ public class SearchService extends AbstractIndexMetadataService {
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
         ZonedDateTime now = ZonedDateTime.now();
+        boolean payloadVisible = getEtmPrincipal().isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
         GetEventAuditLogBuilder auditLogBuilder = new GetEventAuditLogBuilder()
                 .setTimestamp(now)
                 .setHandlingTime(now)
                 .setPrincipalId(getEtmPrincipal().getId())
                 .setEventId(eventId)
                 .setEventType(eventType)
+                .setPayloadVisible(payloadVisible)
                 .setFound(false);
         ActionFuture<SearchResponse> auditLogsForEvent = null;
         if (getEtmPrincipal().isInRole(SecurityRoles.AUDIT_LOG_READ)) {
@@ -423,7 +426,7 @@ public class SearchService extends AbstractIndexMetadataService {
         StringBuilder result = new StringBuilder();
         result.append("{");
         addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
-        SearchHit searchHit = getEvent(eventType, eventId, new String[]{"*"}, getEtmPrincipal().isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD) ? new String[]{this.eventTags.getPayloadTag()} : null);
+        SearchHit searchHit = getEvent(eventType, eventId, new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
         if (searchHit != null) {
             auditLogBuilder.setFound(true);
             Map<String, Object> valueMap = searchHit.getSourceAsMap();
@@ -511,6 +514,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         addBooleanElementToJsonBuffer("direct", getString(GetEventAuditLog.EVENT_ID, auditLogValues).equals(eventId), result, true);
                         addLongElementToJsonBuffer("handling_time", getLong(AuditLog.HANDLING_TIME, auditLogValues), result, false);
                         addStringElementToJsonBuffer("principal_id", getString(AuditLog.PRINCIPAL_ID, auditLogValues), result, false);
+                        addBooleanElementToJsonBuffer("payload_visible", getBoolean(GetEventAuditLog.PAYLOAD_VISIBLE, auditLogValues, true), result, false);
                         result.append("}");
                     }
                     result.append("]");
@@ -567,7 +571,7 @@ public class SearchService extends AbstractIndexMetadataService {
         SearchRequestBuilder requestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(boolQueryBuilder)
                 .addSort(AuditLog.HANDLING_TIME, SortOrder.DESC)
-                .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID}, null)
+                .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID, GetEventAuditLog.PAYLOAD_VISIBLE}, null)
                 .setFrom(0)
                 .setSize(500);
         return requestBuilder.execute();
