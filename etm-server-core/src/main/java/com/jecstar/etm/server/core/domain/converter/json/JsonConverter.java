@@ -61,6 +61,7 @@ public class JsonConverter extends JsonWriter {
         return getArray(tag, valueMap, null);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Collection<?>> T getArray(String tag, Map<String, Object> valueMap, T defaultValue) {
         if (valueMap != null && valueMap.containsKey(tag)) {
             return (T) valueMap.get(tag);
