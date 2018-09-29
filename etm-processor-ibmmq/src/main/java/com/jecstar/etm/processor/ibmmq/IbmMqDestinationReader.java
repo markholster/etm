@@ -80,7 +80,7 @@ class IbmMqDestinationReader implements DestinationReader {
         this.etmEventHandler = new EtmEventHandler(processor);
         this.iibEventHandler = new IIBEventHandler(processor);
         this.clonedMessageEventHandler = new ClonedMessageHandler(processor);
-        this.mqGetTimer = metricRegistry.timer("ibmmq-processor.mqget." + destination.getName().replaceAll("\\.", "_"));
+        this.mqGetTimer = metricRegistry.timer("ibmmq-processor.mqget." + queueManager.getName().replaceAll("\\.", "_") + "." + destination.getName().replaceAll("\\.", "_"));
         this.instantiationContext = instantiationContext;
     }
 
