@@ -17,6 +17,7 @@ public class GetEventAuditLog extends AuditLog {
     public static final String EVENT_ID = "event_id";
     public static final String EVENT_TYPE = "event_type";
     public static final String PAYLOAD_VISIBLE = "payload_visible";
+    public static final String DOWNLOADED = "downloaded";
 
     /**
      * The id of the event that is requested.
@@ -53,5 +54,11 @@ public class GetEventAuditLog extends AuditLog {
      */
     @JsonField(PAYLOAD_VISIBLE)
     public boolean payloadVisible;
+
+    /**
+     * Whether or not the event was downloaded by the user.
+     */
+    @JsonField(DOWNLOADED)
+    public boolean downloaded;
 
 }

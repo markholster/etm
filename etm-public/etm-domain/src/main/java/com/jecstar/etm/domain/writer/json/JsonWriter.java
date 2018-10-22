@@ -1,7 +1,7 @@
 package com.jecstar.etm.domain.writer.json;
 
 import java.net.InetAddress;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -167,12 +167,12 @@ public class JsonWriter {
         return true;
     }
 
-    public boolean addZonedDateTimeElementToJsonBuffer(String elementName, ZonedDateTime value, StringBuilder buffer, boolean firstElement) {
-        return addLongElementToJsonBuffer(elementName, value == null ? null : value.toInstant().toEpochMilli(), buffer, firstElement);
+    public boolean addInstantElementToJsonBuffer(String elementName, Instant value, StringBuilder buffer, boolean firstElement) {
+        return addLongElementToJsonBuffer(elementName, value == null ? null : value.toEpochMilli(), buffer, firstElement);
     }
 
-    public boolean addZonedDateTimeElementToJsonBuffer(String elementName, ZonedDateTime value, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
-        return addLongElementToJsonBuffer(elementName, value == null ? null : value.toInstant().toEpochMilli(), writeWhenNull, buffer, firstElement);
+    public boolean addInstantElementToJsonBuffer(String elementName, Instant value, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
+        return addLongElementToJsonBuffer(elementName, value == null ? null : value.toEpochMilli(), writeWhenNull, buffer, firstElement);
     }
 
     public String escapeToJson(String value, boolean quote) {

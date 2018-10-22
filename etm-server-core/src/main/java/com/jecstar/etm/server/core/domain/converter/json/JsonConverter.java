@@ -9,8 +9,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -124,13 +122,13 @@ public class JsonConverter extends JsonWriter {
         return defaultValue;
     }
 
-    public ZonedDateTime getZonedDateTime(String tag, Map<String, Object> valueMap) {
+    public Instant getInstant(String tag, Map<String, Object> valueMap) {
         Long epochTime = getLong(tag, valueMap);
         if (epochTime == null) {
             return null;
         }
         try {
-            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochTime), ZoneOffset.UTC);
+            return Instant.ofEpochMilli(epochTime);
         } catch (NumberFormatException nfe) {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("'" + epochTime + "' could not be converted to a long. ZonedDateTime could not be determined.");

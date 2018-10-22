@@ -4,7 +4,7 @@ import com.jecstar.etm.domain.Application;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.Location;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 public class EndpointHandlerBuilder {
@@ -24,7 +24,7 @@ public class EndpointHandlerBuilder {
         return this;
     }
 
-    public EndpointHandlerBuilder setHandlingTime(ZonedDateTime handlingTime) {
+    public EndpointHandlerBuilder setHandlingTime(Instant handlingTime) {
         this.endpointHandler.handlingTime = handlingTime;
         return this;
     }

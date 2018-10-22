@@ -1,6 +1,6 @@
 package com.jecstar.etm.domain;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +77,7 @@ public class Endpoint {
         return this.endpointHandlers;
     }
 
-    public ZonedDateTime getEarliestHandlingTime() {
+    public Instant getEarliestHandlingTime() {
         Optional<EndpointHandler> optionalHandler = this.endpointHandlers.stream().filter(p -> EndpointHandler.EndpointHandlerType.WRITER.equals(p.type)).findFirst();
         if (optionalHandler.isPresent()) {
             return optionalHandler.get().handlingTime;
@@ -85,8 +85,8 @@ public class Endpoint {
         return getEarliestReadTime();
     }
 
-    public ZonedDateTime getEarliestReadTime() {
-        ZonedDateTime earliest = null;
+    public Instant getEarliestReadTime() {
+        Instant earliest = null;
         for (EndpointHandler endpointHandler : this.endpointHandlers) {
             if (earliest == null || (EndpointHandler.EndpointHandlerType.READER.equals(endpointHandler.type) && endpointHandler.handlingTime != null && endpointHandler.handlingTime.isBefore(earliest))) {
                 earliest = endpointHandler.handlingTime;

@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
@@ -357,7 +357,7 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
                 .addOrMergeEndpoint(new EndpointBuilder().setName(logLocation.fullInfo)
                         .addEndpointHandler(new EndpointHandlerBuilder()
                                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                                .setHandlingTime(ZonedDateTime.now())
+                                .setHandlingTime(Instant.now())
                                 .setApplication(new ApplicationBuilder()
                                         .setName(this.configuration.getApplicationName())
                                         .setVersion(this.configuration.getApplicationVersion())

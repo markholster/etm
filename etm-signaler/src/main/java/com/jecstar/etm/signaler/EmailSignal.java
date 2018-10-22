@@ -7,6 +7,7 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
@@ -44,8 +45,8 @@ class EmailSignal implements Closeable {
     private final JsonConverter jsonConverter = new JsonConverter();
     private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags etmPrincipalTags = this.etmPrincipalConverter.getTags();
-    private final SimpleDateFormat defaultDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-    private final NumberFormat defaultNumberFormat = NumberFormat.getInstance();
+    final SimpleDateFormat defaultDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    final NumberFormat defaultNumberFormat = NumberFormat.getInstance();
     private final Map<String, SessionAndTransport> serverConnections = new HashMap<>();
 
     /**
@@ -57,7 +58,7 @@ class EmailSignal implements Closeable {
      * @param signal               The <code>Signal</code> of which the threshold is exceeded more often that the configured limit.
      * @param notifier             The <code>Notifier</code> to be used to send the email.
      * @param thresholdExceedances A <code>Map</code> with dates and their values when the threshold was exceeded.
-     * @param etmGroup             An <code>EtmGroup</code> to which the <code>Signal</code> belongs. <code>null</code> if the
+     * @param etmSecurityEntity    An <code>EtmSecurityEntity</code> to which the <code>Signal</code> belongs.
      */
     void sendExceedanceNotification(Client client,
                                     EtmConfiguration etmConfiguration,
@@ -65,11 +66,11 @@ class EmailSignal implements Closeable {
                                     Signal signal,
                                     Notifier notifier,
                                     Map<DateTime, Double> thresholdExceedances,
-                                    EtmGroup etmGroup
+                                    EtmSecurityEntity etmSecurityEntity
     ) {
         try {
             SessionAndTransport sessionAndTransport = getSessionAndTransport(notifier);
-            for (String recipient : determineRecipients(client, etmConfiguration, signal, etmGroup)) {
+            for (String recipient : determineRecipients(client, etmConfiguration, signal, etmSecurityEntity)) {
                 final String subject = "[" + clusterName + "] - Signal: " + signal.getName();
                 InternetAddress toAddress = new InternetAddress(recipient);
                 DateFormat dateFormat = this.defaultDateFormat;
@@ -114,23 +115,23 @@ class EmailSignal implements Closeable {
     /**
      * Send a no longer exceedance notification of a <code>Signal</code> by email.
      *
-     * @param client           The Elasticsearch client.
-     * @param etmConfiguration The <code>EtmConfiguration</code> instance.
-     * @param clusterName      The name of the ETM cluster.
-     * @param signal           The <code>Signal</code> of which the threshold is no longer exceeded.
-     * @param notifier         The <code>Notifier</code> to be used to send the email.
-     * @param etmGroup         An <code>EtmGroup</code> to which the <code>Signal</code> belongs. <code>null</code> if the
+     * @param client            The Elasticsearch client.
+     * @param etmConfiguration  The <code>EtmConfiguration</code> instance.
+     * @param clusterName       The name of the ETM cluster.
+     * @param signal            The <code>Signal</code> of which the threshold is no longer exceeded.
+     * @param notifier          The <code>Notifier</code> to be used to send the email.
+     * @param etmSecurityEntity An <code>etmSecurityEntity</code> to which the <code>Signal</code> belongs. <code>null</code> if the
      */
-    public void sendNoLongerExceededNotification(Client client,
-                                                 EtmConfiguration etmConfiguration,
-                                                 String clusterName,
-                                                 Signal signal,
-                                                 Notifier notifier,
-                                                 EtmGroup etmGroup
+    void sendNoLongerExceededNotification(Client client,
+                                          EtmConfiguration etmConfiguration,
+                                          String clusterName,
+                                          Signal signal,
+                                          Notifier notifier,
+                                          EtmSecurityEntity etmSecurityEntity
     ) {
         try {
             SessionAndTransport sessionAndTransport = getSessionAndTransport(notifier);
-            for (String recipient : determineRecipients(client, etmConfiguration, signal, etmGroup)) {
+            for (String recipient : determineRecipients(client, etmConfiguration, signal, etmSecurityEntity)) {
                 final String subject = "[" + clusterName + "] - Signal fixed: " + signal.getName();
                 InternetAddress toAddress = new InternetAddress(recipient);
                 EtmPrincipal etmRecipient = getUserByEmail(client, etmConfiguration, recipient);
@@ -175,9 +176,9 @@ class EmailSignal implements Closeable {
     private MimeMessage createMimeMessage(Session session, Notifier notifier, InternetAddress toAddress, String subject, String body) throws UnsupportedEncodingException, MessagingException {
         MimeMessage message = new MimeMessage(session);
         if (notifier.getName() != null) {
-            message.setFrom(new InternetAddress(notifier.getFromAddress(), notifier.getFromName()));
+            message.setFrom(new InternetAddress(notifier.getSmtpFromAddress(), notifier.getSmtpFromName()));
         } else {
-            message.setFrom(new InternetAddress(notifier.getFromAddress()));
+            message.setFrom(new InternetAddress(notifier.getSmtpFromAddress()));
         }
 
         message.addRecipient(Message.RecipientType.TO, toAddress);
@@ -191,13 +192,17 @@ class EmailSignal implements Closeable {
     /**
      * Determine all email recipients of a <code>Signal</code> and the owning <code>EtmGroup</code>.
      *
-     * @param client           The Elasticsearch client.
-     * @param etmConfiguration The <code>EtmConfiguration</code> instance.
-     * @param signal           The <code>Signal</code> to retrieve the recipients for.
-     * @param etmGroup         The <code>EtmGroup</code> if the given <code>Signal</code> is owned by an <code>EtmGroup</code>.
+     * @param client            The Elasticsearch client.
+     * @param etmConfiguration  The <code>EtmConfiguration</code> instance.
+     * @param signal            The <code>Signal</code> to retrieve the recipients for.
+     * @param etmSecurityEntity The <code>EtmSecurityEntity</code> if the given <code>Signal</code> is owned by an <code>EtmGroup</code>.
      * @return A <code>Set</code> with email addresses that should receive an email.
      */
-    private Set<String> determineRecipients(Client client, EtmConfiguration etmConfiguration, Signal signal, EtmGroup etmGroup) {
+    private Set<String> determineRecipients(Client client, EtmConfiguration etmConfiguration, Signal signal, EtmSecurityEntity etmSecurityEntity) {
+        EtmGroup etmGroup = null;
+        if (etmSecurityEntity instanceof EtmGroup) {
+            etmGroup = (EtmGroup) etmSecurityEntity;
+        }
         Set<String> recipients = new HashSet<>(signal.getEmailRecipients());
         if (signal.isEmailAllEtmGroupMembers() && etmGroup != null) {
             ScrollableSearch scrollableSearch = new ScrollableSearch(client, client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
@@ -228,6 +233,10 @@ class EmailSignal implements Closeable {
      * @return The first <code>EtmPrincipal</code> with the given email address, or <code>null</code> if no such principal found.
      */
     private EtmPrincipal getUserByEmail(Client client, EtmConfiguration etmConfiguration, String email) {
+        if (client == null || etmConfiguration == null || email == null) {
+            // Should only be reached in test cases.
+            return null;
+        }
         SearchResponse searchResponse = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
@@ -254,13 +263,13 @@ class EmailSignal implements Closeable {
         }
         Properties mailProps = new Properties();
         mailProps.put("mail.transport.protocol", "smtp");
-        mailProps.put("mail.smtp.host", notifier.getSmtpHost());
-        mailProps.put("mail.smtp.port", notifier.getSmtpPort());
+        mailProps.put("mail.smtp.host", notifier.getHost());
+        mailProps.put("mail.smtp.port", notifier.getPort());
         mailProps.put("mail.smtp.auth", notifier.getUsername() != null || notifier.getPassword() != null ? "true" : "false");
-        if (Notifier.ConnectionSecurity.STARTTLS.equals(notifier.getConnectionSecurity())) {
+        if (Notifier.SmtpConnectionSecurity.STARTTLS.equals(notifier.getSmtpConnectionSecurity())) {
             mailProps.put("mail.smtp.starttls.enable", "true");
             mailProps.put("mail.smtp.ssl.trust", "*");
-        } else if (Notifier.ConnectionSecurity.SSL_TLS.equals(notifier.getConnectionSecurity())) {
+        } else if (Notifier.SmtpConnectionSecurity.SSL_TLS.equals(notifier.getSmtpConnectionSecurity())) {
             mailProps.put("mail.smtp.ssl.enable", "true");
             mailProps.put("mail.smtp.ssl.trust", "*");
         }

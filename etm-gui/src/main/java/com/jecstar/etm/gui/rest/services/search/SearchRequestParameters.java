@@ -8,7 +8,6 @@ import com.jecstar.etm.gui.rest.export.MultiSelect;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -160,7 +159,7 @@ class SearchRequestParameters {
     }
 
     public void addField(String field) {
-        if (this.tags.getPayloadTag().equals(field) && this.etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD)) {
+        if (this.tags.getPayloadTag().equals(field) && !this.etmPrincipal.maySeeEventPayload()) {
             return;
         }
         this.fields.add(field);
@@ -175,21 +174,23 @@ class SearchRequestParameters {
     }
 
     public void addFieldLayout(Map<String, Object> values) {
-        if (this.tags.getPayloadTag().equals(this.converter.getString("field", values)) && this.etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD)) {
+        if (this.tags.getPayloadTag().equals(this.converter.getString("field", values)) && !this.etmPrincipal.maySeeEventPayload()) {
             return;
         }
         this.fieldsLayout.add(values);
     }
 
-    public FieldLayout[] toFieldLayouts() {
-        FieldLayout[] fieldLayouts = new FieldLayout[this.fieldsLayout.size()];
+    public List<FieldLayout> toFieldLayouts() {
+        List<FieldLayout> fieldLayouts = new ArrayList<>();
         for (int i = 0; i < this.fieldsLayout.size(); i++) {
             Map<String, Object> values = this.fieldsLayout.get(i);
-            fieldLayouts[i] = new FieldLayout(
-                    this.converter.getString("name", values),
-                    this.converter.getString("field", values),
-                    FieldType.fromJsonValue(this.converter.getString("format", values)),
-                    MultiSelect.valueOf(this.converter.getString("array", values).toUpperCase())
+            fieldLayouts.add(
+                    new FieldLayout(
+                            this.converter.getString("name", values),
+                            this.converter.getString("field", values),
+                            FieldType.fromJsonValue(this.converter.getString("format", values)),
+                            MultiSelect.valueOf(this.converter.getString("array", values).toUpperCase())
+                    )
             );
         }
         return fieldLayouts;
@@ -210,6 +211,5 @@ class SearchRequestParameters {
     public Long getNotAfterTimestamp() {
         return this.notAfterTimestamp;
     }
-
 
 }

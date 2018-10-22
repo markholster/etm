@@ -48,4 +48,6 @@ public interface EtmPrincipalTags {
 
     String getSignalDatasourcesTag();
 
+    String getNotifiersTag();
+
 }

@@ -102,6 +102,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                 case EtmException.NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE:
                     errorMessage.setMessage("Not authorized for signal data source");
                     break;
+                case EtmException.NOT_AUTHORIZED_FOR_NOTIFIER:
+                    errorMessage.setMessage("Not authorized for notifier");
+                    break;
                 default:
                     break;
             }

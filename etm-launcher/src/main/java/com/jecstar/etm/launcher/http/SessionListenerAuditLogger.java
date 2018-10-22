@@ -16,7 +16,7 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 
 class SessionListenerAuditLogger implements SessionListener {
@@ -33,7 +33,7 @@ class SessionListenerAuditLogger implements SessionListener {
     }
 
     private void logLogout(String id, boolean expired) {
-        ZonedDateTime now = ZonedDateTime.now();
+        Instant now = Instant.now();
         LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
                 .setPrincipalId(id).setExpired(expired);
         client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),

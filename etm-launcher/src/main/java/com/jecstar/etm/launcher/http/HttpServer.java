@@ -66,13 +66,13 @@ public class HttpServer {
                 .setIoThreads(configuration.http.ioThreads)
                 .setWorkerThreads(configuration.http.workerThreads);
 
-        if (configuration.getHttpPort() > 0) {
-            builder.addHttpListener(configuration.getHttpPort(), configuration.bindingAddress);
+        if (configuration.http.httpPort > 0) {
+            builder.addHttpListener(configuration.http.httpPort, configuration.bindingAddress);
             if (log.isInfoLevelEnabled()) {
-                log.logInfoMessage("Binding http listener to '" + configuration.bindingAddress + ":" + configuration.getHttpPort() + "'");
+                log.logInfoMessage("Binding http listener to '" + configuration.bindingAddress + ":" + configuration.http.httpPort + "'");
             }
         }
-        if (configuration.getHttpsPort() > 0) {
+        if (configuration.http.httpsPort > 0) {
             if (configuration.http.sslKeystoreLocation == null) {
                 if (log.isWarningLevelEnabled()) {
                     log.logWarningMessage("SSL keystore not provided. Https listener not started.");
@@ -88,10 +88,10 @@ public class HttpServer {
                             configuration.http.sslTruststoreType,
                             configuration.http.sslTruststorePassword == null ? null : configuration.http.sslTruststorePassword.toCharArray());
 
-                    builder.addHttpsListener(configuration.getHttpsPort(), configuration.bindingAddress, sslContext);
+                    builder.addHttpsListener(configuration.http.httpsPort, configuration.bindingAddress, sslContext);
                     builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true);
                     if (log.isInfoLevelEnabled()) {
-                        log.logInfoMessage("Binding https listener to '" + configuration.bindingAddress + ":" + configuration.getHttpsPort() + "'");
+                        log.logInfoMessage("Binding https listener to '" + configuration.bindingAddress + ":" + configuration.http.httpsPort + "'");
                     }
                 } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
                     if (log.isErrorLevelEnabled()) {

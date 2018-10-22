@@ -909,7 +909,8 @@ function showEvent(scrollTo, type, id) {
         			$('<th>').attr('style' ,'padding: 0.1rem;').text('Handling time'),
 	        		$('<th>').attr('style' ,'padding: 0.1rem;').text('Principal id'),
                     $('<th>').attr('style', 'padding: 0.1rem;').text('Direct'),
-                    $('<th>').attr('style', 'padding: 0.1rem;').text('Payload visible')
+                    $('<th>').attr('style', 'padding: 0.1rem;').text('Payload visible'),
+                    $('<th>').attr('style', 'padding: 0.1rem;').text('Downloaded')
 	        	)
 	        )
 	    ).append(function () {
@@ -920,7 +921,8 @@ function showEvent(scrollTo, type, id) {
 	        			$('<td>').attr('style' ,'padding: 0.1rem;').text(moment.tz(auditLog.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')),
 	        			$('<td>').attr('style' ,'padding: 0.1rem;').text(auditLog.principal_id),
                         $('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.direct ? 'Yes' : 'No'),
-                        $('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.payload_visible ? 'Yes' : 'No')
+                        $('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.payload_visible ? 'Yes' : 'No'),
+                        $('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.downloaded ? 'Yes' : 'No')
 	        		)
 	        	);	
 	        });

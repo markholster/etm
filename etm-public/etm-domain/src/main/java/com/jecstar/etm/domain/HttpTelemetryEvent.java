@@ -1,6 +1,6 @@
 package com.jecstar.etm.domain;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 /**
  * A <code>TelemetryEvent</code> that describes an http request or response sent or received from a web server.
@@ -32,7 +32,7 @@ public class HttpTelemetryEvent extends TelemetryEvent<HttpTelemetryEvent> {
      * even occurred added with the request timeout. This value should usually
      * be calculated by the client that is sending the http request.
      */
-    public ZonedDateTime expiry;
+    public Instant expiry;
 
     /**
      * The http status codes returned by the server. This is only relevant when the {@link #httpEventType} is set to RESPONSE.

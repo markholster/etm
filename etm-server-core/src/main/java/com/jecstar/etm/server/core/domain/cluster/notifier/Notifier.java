@@ -13,7 +13,7 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 public class Notifier {
 
     public enum NotifierType {
-        ETM_BUSINESS_EVENT, EMAIL;
+        ETM_BUSINESS_EVENT, EMAIL, SNMP;
 
         public static NotifierType safeValueOf(String value) {
             if (value == null) {
@@ -27,16 +27,61 @@ public class Notifier {
         }
     }
 
-    public enum ConnectionSecurity {
+    public enum SmtpConnectionSecurity {
 
         SSL_TLS, STARTTLS;
 
-        public static ConnectionSecurity safeValueOf(String value) {
+        public static SmtpConnectionSecurity safeValueOf(String value) {
             if (value == null) {
                 return null;
             }
             try {
-                return ConnectionSecurity.valueOf(value.toUpperCase());
+                return SmtpConnectionSecurity.valueOf(value.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
+    public enum SnmpVersion {
+        V1, V2C, V3;
+
+        public static SnmpVersion safeValueOf(String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return SnmpVersion.valueOf(value.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
+    public enum SnmpAuthenticationProtocol {
+        HMAC128SHA224, HMAC192SHA256, HMAC256SHA384, HMAC384SHA512, MD5, SHA;
+
+        public static SnmpAuthenticationProtocol safeValueOf(String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return SnmpAuthenticationProtocol.valueOf(value.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
+    public enum SnmpPrivacyProtocol {
+        TDES, AES128, AES192, AES192WITH3DES, AES256, AES256WITH3DES, DES;
+
+        public static SnmpPrivacyProtocol safeValueOf(String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return SnmpPrivacyProtocol.valueOf(value.toUpperCase());
             } catch (IllegalArgumentException e) {
                 return null;
             }
@@ -45,35 +90,55 @@ public class Notifier {
 
     public static final String NAME = "name";
     public static final String NOTIFIER_TYPE = "type";
-    public static final String SMTP_HOST = "smtp_host";
-    public static final String SMTP_PORT = "smtp_port";
-    public static final String CONNECTION_SECURITY = "connection_security";
+    public static final String HOST = "host";
+    public static final String PORT = "port";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
-    public static final String FROM_ADDRESS = "from_address";
-    public static final String FROM_NAME = "from_name";
+    // SMTP specific fields
+    public static final String SMTP_CONNECTION_SECURITY = "smtp_connection_security";
+    public static final String SMTP_FROM_ADDRESS = "smtp_from_address";
+    public static final String SMTP_FROM_NAME = "smtp_from_name";
+    // SNMP specific fields
+    public static final String SNMP_VERSION = "snmp_version";
+    public static final String SNMP_COMMUNITY = "snmp_community";
+    public static final String SNMP_AUTHENTICATION_PROTOCOL = "snmp_authentication_protocol";
+    public static final String SNMP_PRIVACY_PROTOCOL = "snmp_privacy_protocol";
+    public static final String SNMP_PRIVACY_PASSPHRASE = "snmp_privacy_passphrase";
 
     @JsonField(NAME)
     private String name;
     @JsonField(value = NOTIFIER_TYPE, converterClass = EnumConverter.class)
     private NotifierType notifierType;
 
-
     // Email fields
-    @JsonField(SMTP_HOST)
-    private String smtpHost;
-    @JsonField(SMTP_PORT)
-    private Integer smtpPort;
-    @JsonField(value = CONNECTION_SECURITY, converterClass = EnumConverter.class)
-    private ConnectionSecurity connectionSecurity;
+    @JsonField(HOST)
+    private String host;
+    @JsonField(PORT)
+    private Integer port;
     @JsonField(USERNAME)
     private String username;
     @JsonField(value = PASSWORD, converterClass = Base64Converter.class)
     private String password;
-    @JsonField(FROM_ADDRESS)
-    private String fromAddress;
-    @JsonField(FROM_NAME)
-    private String fromName;
+
+    // SMTP specific fields
+    @JsonField(value = SMTP_CONNECTION_SECURITY, converterClass = EnumConverter.class)
+    private SmtpConnectionSecurity smtpConnectionSecurity;
+    @JsonField(SMTP_FROM_ADDRESS)
+    private String smtpFromAddress;
+    @JsonField(SMTP_FROM_NAME)
+    private String smtpFromName;
+
+    // SNMP specific fields
+    @JsonField(value = SNMP_VERSION, converterClass = EnumConverter.class)
+    private SnmpVersion snmpVersion;
+    @JsonField(value = SNMP_COMMUNITY, converterClass = Base64Converter.class)
+    private String snmpCommunity;
+    @JsonField(value = SNMP_AUTHENTICATION_PROTOCOL, converterClass = EnumConverter.class)
+    private SnmpAuthenticationProtocol snmpAuthenticationProtocol;
+    @JsonField(value = SNMP_PRIVACY_PROTOCOL, converterClass = EnumConverter.class)
+    private SnmpPrivacyProtocol snmpPrivacyProtocol;
+    @JsonField(value = SNMP_PRIVACY_PASSPHRASE, converterClass = Base64Converter.class)
+    private String snmpPrivacyPassphrase;
 
     public String getName() {
         return this.name;
@@ -91,28 +156,28 @@ public class Notifier {
         this.notifierType = notifierType;
     }
 
-    public String getSmtpHost() {
-        return this.smtpHost;
+    public String getHost() {
+        return this.host;
     }
 
-    public void setSmtpHost(String smtpHost) {
-        this.smtpHost = smtpHost;
+    public void setHost(String host) {
+        this.host = host;
     }
 
-    public Integer getSmtpPort() {
-        return this.smtpPort;
+    public Integer getPort() {
+        return this.port;
     }
 
-    public void setSmtpPort(Integer smtpPort) {
-        this.smtpPort = smtpPort;
+    public void setPort(Integer port) {
+        this.port = port;
     }
 
-    public ConnectionSecurity getConnectionSecurity() {
-        return this.connectionSecurity;
+    public SmtpConnectionSecurity getSmtpConnectionSecurity() {
+        return this.smtpConnectionSecurity;
     }
 
-    public void setConnectionSecurity(ConnectionSecurity connectionSecurity) {
-        this.connectionSecurity = connectionSecurity;
+    public void setSmtpConnectionSecurity(SmtpConnectionSecurity smtpConnectionSecurity) {
+        this.smtpConnectionSecurity = smtpConnectionSecurity;
     }
 
     public String getUsername() {
@@ -131,19 +196,61 @@ public class Notifier {
         this.password = password;
     }
 
-    public String getFromAddress() {
-        return this.fromAddress;
+    public String getSmtpFromAddress() {
+        return this.smtpFromAddress;
     }
 
-    public void setFromAddress(String fromAddress) {
-        this.fromAddress = fromAddress;
+    public void setSmtpFromAddress(String smtpFromAddress) {
+        this.smtpFromAddress = smtpFromAddress;
     }
 
-    public String getFromName() {
-        return this.fromName;
+    public String getSmtpFromName() {
+        return this.smtpFromName;
     }
 
-    public void setFromName(String fromName) {
-        this.fromName = fromName;
+    public void setSmtpFromName(String smtpFromName) {
+        this.smtpFromName = smtpFromName;
     }
+
+    public SnmpVersion getSnmpVersion() {
+        return this.snmpVersion;
+    }
+
+    public void setSnmpVersion(SnmpVersion snmpVersion) {
+        this.snmpVersion = snmpVersion;
+    }
+
+    public String getSnmpCommunity() {
+        return this.snmpCommunity;
+    }
+
+    public void setSnmpCommunity(String snmpCommunity) {
+        this.snmpCommunity = snmpCommunity;
+    }
+
+    public SnmpAuthenticationProtocol getSnmpAuthenticationProtocol() {
+        return this.snmpAuthenticationProtocol;
+    }
+
+    public void setSnmpAuthenticationProtocol(SnmpAuthenticationProtocol snmpAuthenticationProtocol) {
+        this.snmpAuthenticationProtocol = snmpAuthenticationProtocol;
+    }
+
+    public SnmpPrivacyProtocol getSnmpPrivacyProtocol() {
+        return this.snmpPrivacyProtocol;
+    }
+
+    public void setSnmpPrivacyProtocol(SnmpPrivacyProtocol snmpPrivacyProtocol) {
+        this.snmpPrivacyProtocol = snmpPrivacyProtocol;
+    }
+
+    public String getSnmpPrivacyPassphrase() {
+        return snmpPrivacyPassphrase;
+    }
+
+    public void setSnmpPrivacyPassphrase(String snmpPrivacyPassphrase) {
+        this.snmpPrivacyPassphrase = snmpPrivacyPassphrase;
+    }
+
+
 }

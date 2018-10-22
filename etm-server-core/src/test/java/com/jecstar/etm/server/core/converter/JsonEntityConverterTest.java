@@ -2,7 +2,7 @@ package com.jecstar.etm.server.core.converter;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -157,30 +157,30 @@ class JsonEntityConverterTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void testZonedDateTimeConversion() {
-        ZonedDateTimeAnnotatedClass entity = new ZonedDateTimeAnnotatedClass();
-        ZonedDateTime zdt1 = ZonedDateTime.now();
-        ZonedDateTime zdt2 = ZonedDateTime.now();
-        entity.setFirstValue(zdt1);
-        entity.setSecondValue(zdt2);
+    void testInstantConversion() {
+        InstantAnnotatedClass entity = new InstantAnnotatedClass();
+        Instant instant1 = Instant.now();
+        Instant instant2 = Instant.now();
+        entity.setFirstValue(instant1);
+        entity.setSecondValue(instant2);
 
-        JsonEntityConverter converter = new JsonEntityConverter<>(ZonedDateTimeAnnotatedClass::new);
+        JsonEntityConverter converter = new JsonEntityConverter<>(InstantAnnotatedClass::new);
         String json = converter.write(entity);
-        assertEquals("{\"first_value\": " + zdt1.toInstant().toEpochMilli() + ", \"second_value\": " + zdt2.toInstant().toEpochMilli() + "}", json);
-        ZonedDateTimeAnnotatedClass entity2 = (ZonedDateTimeAnnotatedClass) converter.read(json);
+        assertEquals("{\"first_value\": " + instant1.toEpochMilli() + ", \"second_value\": " + instant2.toEpochMilli() + "}", json);
+        InstantAnnotatedClass entity2 = (InstantAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    void testZonedDateTimeConversionWithNull() {
-        ZonedDateTimeAnnotatedClass entity = new ZonedDateTimeAnnotatedClass();
+    void testInstantConversionWithNull() {
+        InstantAnnotatedClass entity = new InstantAnnotatedClass();
 
-        JsonEntityConverter converter = new JsonEntityConverter<>(ZonedDateTimeAnnotatedClass::new);
+        JsonEntityConverter converter = new JsonEntityConverter<>(InstantAnnotatedClass::new);
         String json = converter.write(entity);
         assertEquals("{\"second_value\": null}", json);
-        ZonedDateTimeAnnotatedClass entity2 = (ZonedDateTimeAnnotatedClass) converter.read(json);
+        InstantAnnotatedClass entity2 = (InstantAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
     }

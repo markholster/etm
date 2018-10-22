@@ -5,7 +5,7 @@ import com.jecstar.etm.server.core.domain.QueryOccurrence;
 import java.io.Serializable;
 import java.util.*;
 
-public class EtmGroup implements Serializable {
+public class EtmGroup implements EtmSecurityEntity, Serializable {
 
     /**
      * The serialVersionUID for this class.
@@ -20,13 +20,23 @@ public class EtmGroup implements Serializable {
     private boolean alwaysShowCorrelatedEvents = false;
     private boolean ldapBase;
     private Set<String> dashboards = new HashSet<>();
-    private Set<String> signals = new HashSet<>();
+    private Set<String> notifiers = new HashSet<>();
 
     private Set<String> dashboardDatasources = new HashSet<>();
     private Set<String> signalDatasources = new HashSet<>();
 
     public EtmGroup(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String getType() {
+        return "group";
+    }
+
+    @Override
+    public String getId() {
+        return this.name;
     }
 
     public String getName() {
@@ -118,6 +128,20 @@ public class EtmGroup implements Serializable {
         return true;
     }
 
+    @Override
+    public boolean isAuthorizedForDashboardDatasource(String datasourceName) {
+        return this.dashboardDatasources.contains(datasourceName);
+    }
+
+    public boolean isAuthorizedForSignalDatasource(String datasourceName) {
+        return this.signalDatasources.contains(datasourceName);
+    }
+
+    @Override
+    public boolean isAuthorizedForNotifier(String notifierName) {
+        return this.notifiers.contains(notifierName);
+    }
+
     public Set<String> getDashboards() {
         return this.dashboards;
     }
@@ -136,13 +160,16 @@ public class EtmGroup implements Serializable {
         return this.dashboardDatasources;
     }
 
-    public Set<String> getSignals() {
-        return this.signals;
+    public Set<String> getNotifiers() {
+        return this.notifiers;
     }
 
-    public void addSignal(String signal) {
-        this.signals.add(signal);
+    public void addNotifiers(List<String> notifiers) {
+        if (notifiers != null) {
+            this.notifiers.addAll(notifiers);
+        }
     }
+
 
     public Set<String> getSignalDatasources() {
         return this.signalDatasources;

@@ -9,13 +9,16 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DateTimeAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.signaler.SignalSearchRequestBuilderBuilder;
 import com.jecstar.etm.signaler.domain.Signal;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
@@ -23,6 +26,8 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
@@ -119,22 +124,22 @@ public class SignalService extends AbstractUserAttributeService {
     }
 
     @GET
-    @Path("/datasources")
+    @Path("/contextdata")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.USER_SIGNAL_READ_WRITE)
-    public String getDatasources() {
-        return getSignalDatasources(null);
+    public String getContextData() {
+        return getContextData(null);
     }
 
     @GET
-    @Path("/{groupName}/datasources/")
+    @Path("/{groupName}/contextdata/")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.GROUP_SIGNAL_READ, SecurityRoles.GROUP_SIGNAL_READ_WRITE})
-    public Response getGroupDatasources(@PathParam("groupName") String groupName) {
+    public Response getGroupContextData(@PathParam("groupName") String groupName) {
         if (!getEtmPrincipal().isInGroup(groupName)) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-        String content = getSignalDatasources(groupName);
+        String content = getContextData(groupName);
         if (content == null || content.trim().length() == 0) {
             return Response.noContent().build();
         }
@@ -142,13 +147,49 @@ public class SignalService extends AbstractUserAttributeService {
     }
 
     /**
-     * Returns the signal datasources of a user or group.
+     * Returns the signal context data of a user or group.
      *
-     * @param groupName The name of the group to query for signal datasources. When <code>null</code> the user signal datasources are returned.
-     * @return The signal datasources of a user or group.
+     * @param groupName The name of the group to query for signal context data. When <code>null</code> the user signal context data is returned.
+     * @return The signal context data of a user or group.
      */
-    private String getSignalDatasources(String groupName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
+    private String getContextData(String groupName) {
+        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
+        List<String> notifiers = getArray(this.etmPrincipalTags.getNotifiersTag(), objectMap, new ArrayList<>());
+        if (groupName == null) {
+            // We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
+            Set<EtmGroup> groups = getEtmPrincipal().getGroups();
+            for (EtmGroup group : groups) {
+                Map<String, Object> groupObjectMap = getEntity(client, group.getName(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
+                mergeCollectionInValueMap(groupObjectMap, objectMap, this.etmPrincipalTags.getSignalDatasourcesTag());
+                List<String> groupNotifiers = getArray(this.etmPrincipalTags.getNotifiersTag(), groupObjectMap, new ArrayList<>());
+                for (String notifier : groupNotifiers) {
+                    if (!notifiers.contains(notifier)) {
+                        notifiers.add(notifier);
+                    }
+                }
+            }
+        }
+        objectMap.remove(this.etmPrincipalTags.getNotifiersTag());
+        if (notifiers != null) {
+            ArrayList<Map<String, Object>> notifiersList = new ArrayList<>();
+            objectMap.put(this.etmPrincipalTags.getNotifiersTag(), notifiersList);
+            SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+                    .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+                    .setFetchSource(new String[]{
+                            ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NAME,
+                            ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NOTIFIER_TYPE
+                    }, null)
+                    .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
+            ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+            for (SearchHit searchHit : scrollableSearch) {
+                Map<String, Object> notifierMap = toMapWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER);
+                String notifierName = getString(Notifier.NAME, notifierMap);
+                if (notifiers.contains(notifierName)) {
+                    notifiersList.add(notifierMap);
+                }
+            }
+        }
+        // Load all notifiers because we need to give the notifier type to the signal page.
         return toString(objectMap);
     }
 
@@ -224,10 +265,15 @@ public class SignalService extends AbstractUserAttributeService {
      */
     private String addSignal(String groupName, String signalName, String json) {
         Signal signal = this.signalConverter.read(json);
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag(), this.etmPrincipalTags.getSignalDatasourcesTag());
-        List<String> allowedDatasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), objectMap);
-        if (allowedDatasources.indexOf(signal.getDataSource()) < 0) {
+        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(this.client, groupName);
+        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
+        if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE);
+        }
+        for (String notifier : signal.getNotifiers()) {
+            if (!etmSecurityEntity.isAuthorizedForNotifier(notifier)) {
+                throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_NOTIFIER);
+            }
         }
         List<Map<String, Object>> currentSignals = new ArrayList<>();
         Map<String, Object> signalData = toMap(this.signalConverter.write(signal));
@@ -260,6 +306,13 @@ public class SignalService extends AbstractUserAttributeService {
         source.put(this.etmPrincipalTags.getSignalsTag(), currentSignals);
         updateEntity(client, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
+    }
+
+    private EtmSecurityEntity getEtmSecurityEntity(Client client, String groupName) {
+        if (groupName != null) {
+            return getEtmGroup(client, groupName);
+        }
+        return getEtmPrincipal();
     }
 
     @DELETE

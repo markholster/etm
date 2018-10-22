@@ -1,0 +1,106 @@
+JECSTAR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        MODULE-IDENTITY, enterprises, OBJECT-TYPE, NOTIFICATION-TYPE, Integer32 FROM SNMPv2-SMI
+        MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP FROM SNMPv2-CONF;
+
+jecstar MODULE-IDENTITY
+     LAST-UPDATED "201809300000Z"
+     ORGANIZATION "Jecstar Innovation"
+     CONTACT-INFO
+        "Jecstar Innovation.
+        www.jecstar.com
+
+        EMail: info@jecstar.com"
+
+     DESCRIPTION
+        "This MIB contains definition of the SNMP Traps associated to alerts sent by Jecstar Innovation products"
+
+     REVISION
+        "201809300000Z"
+
+     DESCRIPTION
+        "First revision that only contains the signal notifications subtree"
+
+  ::= { enterprises 52111 }
+
+  enterpriseTelemetryMonitorMIB   OBJECT IDENTIFIER ::= { jecstar 1 }
+
+  etmNotifications OBJECT IDENTIFIER ::= { enterpriseTelemetryMonitorMIB 0 }
+  etmGroups OBJECT IDENTIFIER ::= { enterpriseTelemetryMonitorMIB 1 }
+  etmCompliances OBJECT IDENTIFIER ::= { enterpriseTelemetryMonitorMIB 2 }
+  etmObjects OBJECT IDENTIFIER ::= { enterpriseTelemetryMonitorMIB 3 }
+
+  etmNotificationObjects OBJECT IDENTIFIER ::= { etmObjects 1 }
+
+  etmGeneralNotification OBJECT IDENTIFIER ::= { etmNotificationObjects 1 }
+  etmSignalNotification OBJECT IDENTIFIER ::= { etmNotificationObjects 2 }
+
+-- Object groups
+  etmSignalNotificationOG OBJECT-GROUP
+    OBJECTS     { signalClusterName, signalName, signalThreshold, signalLimit, signalLimit, signalExceedences }
+    STATUS      current
+    DESCRIPTION "A collection of objects representing a Signal exceedence in Enterprise Telemetry Monitor"
+  ::= { etmGroups 1 }
+
+-- Notification groups
+  etmSignalNotificationNG NOTIFICATION-GROUP
+    NOTIFICATIONS     { etmSignalNotificationType }
+    STATUS      current
+    DESCRIPTION "A collection of notifications representing a Signal exceedence in Enterprise Telemetry Monitor"
+  ::= { etmNotifications 1 }
+
+-- Objects
+  signalClusterName	OBJECT-TYPE
+	SYNTAX		OCTET STRING
+	MAX-ACCESS	accessible-for-notify
+	STATUS		current
+	DESCRIPTION "The name of the Enterprise Telemetry Monitor cluster that fired the Signal"
+  ::= { etmSignalNotification 1 }
+
+  signalName OBJECT-TYPE
+    SYNTAX		OCTET STRING
+    MAX-ACCESS	accessible-for-notify
+    STATUS		current
+    DESCRIPTION "The name of the Signal"
+  ::= { etmSignalNotification 2 }
+
+  signalThreshold OBJECT-TYPE
+    SYNTAX		Integer32
+    MAX-ACCESS	accessible-for-notify
+    STATUS		current
+    DESCRIPTION "The threshold that is configured with the Signal"
+  ::= { etmSignalNotification 3 }
+
+  signalLimit OBJECT-TYPE
+    SYNTAX		Integer32
+    MAX-ACCESS	accessible-for-notify
+    STATUS		current
+    DESCRIPTION "The number of times the threshold may be exceeded before the Signal is fired."
+  ::= { etmSignalNotification 4 }
+
+  signalExceedences	OBJECT-TYPE
+    SYNTAX		Integer32
+    MAX-ACCESS	accessible-for-notify
+    STATUS		current
+    DESCRIPTION "The number of times the threshold was exceeded."
+  ::= { etmSignalNotification 5 }
+
+-- Notification types
+  etmSignalNotificationType NOTIFICATION-TYPE
+    OBJECTS     { signalClusterName, signalName, signalThreshold, signalLimit, signalLimit, signalExceedences }
+    STATUS      current
+    DESCRIPTION "A notification about a Signal that has a threshold exceedence."
+  ::= { etmNotifications 2 }
+
+-- Complianes
+  basicCompliance MODULE-COMPLIANCE
+			STATUS current
+			DESCRIPTION
+				"MGSOFT-MGBEEP-MIB-V2 MODULE-COMPLIANCE."
+			MODULE -- this module
+				MANDATORY-GROUPS { etmSignalNotificationOG, etmSignalNotificationNG }
+			::= { etmCompliances 1 }
+
+
+END

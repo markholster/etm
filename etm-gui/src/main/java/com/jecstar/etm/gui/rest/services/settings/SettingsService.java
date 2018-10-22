@@ -67,13 +67,13 @@ public class SettingsService extends AbstractGuiService {
     private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
     private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
-    private final EtmPrincipalTags etmPrincipalTags = this.etmPrincipalConverter.getTags();
+    private final EtmPrincipalTags principalTags = this.etmPrincipalConverter.getTags();
 
-    private final FieldLayout[] exportPrincipalFields = new FieldLayout[]{
-            new FieldLayout("Account ID", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST),
-            new FieldLayout("Name", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST),
-            new FieldLayout("E-mail", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
-    };
+    private final List<FieldLayout> exportPrincipalFields = Arrays.asList(
+            new FieldLayout("Account ID", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST),
+            new FieldLayout("Name", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST),
+            new FieldLayout("E-mail", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
+    );
 
     private final String parserInEnpointFieldsTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
             "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
@@ -641,7 +641,7 @@ public class SettingsService extends AbstractGuiService {
     public String getUsers() {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
-                .setFetchSource(new String[]{"*"}, new String[]{this.etmPrincipalTags.getPasswordHashTag(), this.etmPrincipalTags.getSearchTemplatesTag(), this.etmPrincipalTags.getSearchHistoryTag()})
+                .setFetchSource(new String[]{"*"}, new String[]{this.principalTags.getPasswordHashTag(), this.principalTags.getSearchTemplatesTag(), this.principalTags.getSearchHistoryTag()})
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
@@ -670,14 +670,21 @@ public class SettingsService extends AbstractGuiService {
         Map<String, Object> valueMap = toMap(json);
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
-                .setFetchSource(Arrays.stream(this.exportPrincipalFields).map(FieldLayout::getField).toArray(String[]::new), null)
+                .setFetchSource(this.exportPrincipalFields.stream().map(FieldLayout::getField).toArray(String[]::new), null)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
-        File result = new QueryExporter().exportToFile(scrollableSearch, fileType, Integer.MAX_VALUE, etmPrincipal, this.exportPrincipalFields);
+        File result = new QueryExporter().exportToFile(
+                scrollableSearch,
+                fileType,
+                Integer.MAX_VALUE,
+                etmPrincipal,
+                this.exportPrincipalFields,
+                null
+        );
         Response.ResponseBuilder response = Response.ok(result);
         response.header("Content-Disposition", "attachment; filename=etm-users." + fileType.name().toLowerCase());
         response.encoding(System.getProperty("file.encoding"));
@@ -850,7 +857,7 @@ public class SettingsService extends AbstractGuiService {
     @GET
     @Path("/groups")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.GROUP_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE})
+    @RolesAllowed({SecurityRoles.GROUP_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE, SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE})
     public String getGroups() {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
@@ -906,7 +913,7 @@ public class SettingsService extends AbstractGuiService {
                     .get();
             if (getResponse.isExists()) {
                 Map<String, Object> sourceAsMap = toMapWithoutNamespace(getResponse.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
-                if (getBoolean(this.etmPrincipalTags.getLdapBaseTag(), sourceAsMap, Boolean.FALSE)) {
+                if (getBoolean(this.principalTags.getLdapBaseTag(), sourceAsMap, Boolean.FALSE)) {
                     iterator.remove();
                 }
             }
@@ -1012,14 +1019,42 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({
             SecurityRoles.NOTIFIERS_READ,
-            SecurityRoles.NOTIFIERS_READ_WRITE,
-            SecurityRoles.GROUP_SIGNAL_READ,
-            SecurityRoles.GROUP_SETTINGS_READ_WRITE,
-            SecurityRoles.USER_SIGNAL_READ_WRITE})
+            SecurityRoles.NOTIFIERS_READ_WRITE})
     public String getNotifiers() {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
+        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        StringBuilder result = new StringBuilder();
+        result.append("{\"notifiers\": [");
+        boolean first = true;
+        for (SearchHit searchHit : scrollableSearch) {
+            if (!first) {
+                result.append(",");
+            }
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
+            first = false;
+        }
+        result.append("]}");
+        return result.toString();
+    }
+
+    @GET
+    @Path("/notifiers/basics")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({
+            SecurityRoles.USER_SETTINGS_READ,
+            SecurityRoles.USER_SETTINGS_READ_WRITE,
+            SecurityRoles.GROUP_SETTINGS_READ,
+            SecurityRoles.GROUP_SETTINGS_READ_WRITE})
+    public String getNotifiersBasics() {
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+                .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+                .setFetchSource(new String[]{
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NAME,
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NOTIFIER_TYPE
+                }, null)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         StringBuilder result = new StringBuilder();
@@ -1066,25 +1101,27 @@ public class SettingsService extends AbstractGuiService {
                         etmConfiguration
                 )
         );
-        removeNotifierFromSignals(bulkRequestBuilder, notifierName);
+        removeNotifierFromSignalsAndPrincipals(bulkRequestBuilder, notifierName);
         bulkRequestBuilder.get();
         return "{\"status\":\"success\"}";
     }
 
-    private void removeNotifierFromSignals(BulkRequestBuilder bulkRequestBuilder, String notifierName) {
+    private void removeNotifierFromSignalsAndPrincipals(BulkRequestBuilder bulkRequestBuilder, String notifierName) {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
-                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getSignalsTag() + ".notifiers", notifierName))
-                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getSignalsTag() + ".notifiers", notifierName))
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getNotifiersTag(), notifierName))
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getSignalsTag() + "." + this.principalTags.getNotifiersTag(), notifierName))
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.principalTags.getSignalsTag() + "." + this.principalTags.getNotifiersTag(), notifierName))
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.principalTags.getNotifiersTag(), notifierName))
                         .minimumShouldMatch(1)
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             boolean updated = false;
             Map<String, Object> valueMap = searchHit.getSourceAsMap();
-            Map<String, Object> groupOrUserValueMap = null;
+            Map<String, Object> groupOrUserValueMap;
             if (valueMap.containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
                 groupOrUserValueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, valueMap);
             } else {
@@ -1093,12 +1130,10 @@ public class SettingsService extends AbstractGuiService {
             if (groupOrUserValueMap == null) {
                 continue;
             }
-            List<Map<String, Object>> signals = getArray(this.etmPrincipalTags.getSignalsTag(), groupOrUserValueMap);
-            if (signals == null) {
-                continue;
-            }
+            // Remote the notifier from the signals
+            List<Map<String, Object>> signals = getArray(this.principalTags.getSignalsTag(), groupOrUserValueMap, Collections.emptyList());
             for (Map<String, Object> signal : signals) {
-                List<String> notifiers = getArray("notifiers", signal);
+                List<String> notifiers = getArray(this.principalTags.getNotifiersTag(), signal);
                 if (notifiers == null) {
                     continue;
                 }
@@ -1108,6 +1143,15 @@ public class SettingsService extends AbstractGuiService {
                         it.remove();
                         updated = true;
                     }
+                }
+            }
+            // Remove the notifier from the user or group
+            List<String> notifiers = getArray(this.principalTags.getNotifiersTag(), groupOrUserValueMap, Collections.emptyList());
+            Iterator<String> it = notifiers.iterator();
+            while (it.hasNext()) {
+                if (notifierName.equals(it.next())) {
+                    it.remove();
+                    updated = true;
                 }
             }
             if (updated) {
@@ -1129,7 +1173,7 @@ public class SettingsService extends AbstractGuiService {
                 .setFetchSource(false)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
-                        .must(QueryBuilders.termQuery(this.etmPrincipalTags.getGroupsTag(), groupName))
+                        .must(QueryBuilders.termQuery(this.principalTags.getGroupsTag(), groupName))
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
@@ -1185,7 +1229,7 @@ public class SettingsService extends AbstractGuiService {
     private EtmPrincipal loadPrincipal(Map<String, Object> principalObject) {
         EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(principalObject);
         Map<String, Object> principalValues = toMapWithoutNamespace(principalObject, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
-        Collection<String> groups = getArray(this.etmPrincipalTags.getGroupsTag(), principalValues);
+        Collection<String> groups = getArray(this.principalTags.getGroupsTag(), principalValues);
         if (groups != null && !groups.isEmpty()) {
             MultiGetRequestBuilder multiGetBuilder = client.prepareMultiGet();
             for (String group : groups) {
@@ -1227,7 +1271,7 @@ public class SettingsService extends AbstractGuiService {
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
-                        .must(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getRolesTag(), roles))
+                        .must(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.principalTags.getRolesTag(), roles))
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
         List<String> groups = new ArrayList<>();
@@ -1264,10 +1308,10 @@ public class SettingsService extends AbstractGuiService {
     private long getNumberOfUsersWithUserAdminRole(Collection<String> adminGroups) {
         BoolQueryBuilder query = QueryBuilders.boolQuery().must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         if (adminGroups == null || adminGroups.isEmpty()) {
-            query.must(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE));
+            query.must(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE));
         } else {
-            query.should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE))
-                    .should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getGroupsTag(), adminGroups))
+            query.should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getRolesTag(), SecurityRoles.USER_SETTINGS_READ_WRITE))
+                    .should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getGroupsTag(), adminGroups))
                     .minimumShouldMatch(1);
         }
         SearchResponse response = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)

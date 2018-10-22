@@ -19,7 +19,7 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.junit.jupiter.api.Test;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,14 +65,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
         final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                .setHandlingTime(ZonedDateTime.now())
+                .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
         final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.READER)
-                .setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+                .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
@@ -122,14 +122,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
         final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                .setHandlingTime(ZonedDateTime.now())
+                .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
         final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.READER)
-                .setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+                .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
@@ -178,14 +178,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
         final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                .setHandlingTime(ZonedDateTime.now())
+                .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
         final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.READER)
-                .setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+                .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
@@ -233,14 +233,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
         final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                .setHandlingTime(ZonedDateTime.now())
+                .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
         final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.READER)
-                .setHandlingTime(ZonedDateTime.now().plusSeconds(1))
+                .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
@@ -293,7 +293,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
         final String responseId = UUID.randomUUID().toString();
         final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final ZonedDateTime timeStamp = ZonedDateTime.now();
+        final Instant timeStamp = Instant.now();
         final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
                 .setHandlingTime(timeStamp)
@@ -358,7 +358,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
         final String responseId = UUID.randomUUID().toString();
         final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final ZonedDateTime timeStamp = ZonedDateTime.now();
+        final Instant timeStamp = Instant.now();
         final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.READER)
                 .setHandlingTime(timeStamp)
@@ -421,7 +421,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
         final String requestId = UUID.randomUUID().toString();
         final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final ZonedDateTime timeStamp = ZonedDateTime.now();
+        final Instant timeStamp = Instant.now();
         final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
                 .setHandlingTime(timeStamp)
@@ -466,7 +466,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
     public void testSetResponseTimeWithoutApplicationsRequestBeforeResponse() throws InterruptedException {
         final String requestId = UUID.randomUUID().toString();
         final String responseId = UUID.randomUUID().toString();
-        final ZonedDateTime timestamp = ZonedDateTime.now();
+        final Instant timestamp = Instant.now();
         final EndpointHandlerBuilder endpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
                 .setHandlingTime(timestamp);
@@ -505,7 +505,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
     public void testSetResponseTimeWithoutApplicationsResponseBeforeRequest() throws InterruptedException {
         final String requestId = UUID.randomUUID().toString();
         final String responseId = UUID.randomUUID().toString();
-        final ZonedDateTime timestamp = ZonedDateTime.now();
+        final Instant timestamp = Instant.now();
         final EndpointHandlerBuilder endpointHandler = new EndpointHandlerBuilder()
                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
                 .setHandlingTime(timestamp.plusSeconds(1));

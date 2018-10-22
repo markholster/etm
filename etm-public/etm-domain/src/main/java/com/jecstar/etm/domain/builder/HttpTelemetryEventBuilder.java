@@ -3,7 +3,7 @@ package com.jecstar.etm.domain.builder;
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class HttpTelemetryEventBuilder extends TelemetryEventBuilder<HttpTelemetryEvent, HttpTelemetryEventBuilder> {
 
@@ -11,7 +11,7 @@ public class HttpTelemetryEventBuilder extends TelemetryEventBuilder<HttpTelemet
         super(new HttpTelemetryEvent());
     }
 
-    public HttpTelemetryEventBuilder setExpiry(ZonedDateTime expiry) {
+    public HttpTelemetryEventBuilder setExpiry(Instant expiry) {
         this.event.expiry = expiry;
         return this;
     }

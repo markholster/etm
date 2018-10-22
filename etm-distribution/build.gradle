@@ -17,6 +17,12 @@ distributions {
             exclude '**/ibmjsseprovider2.jar'
             exclude '**/integration-api-*.jar'
             exclude '**/etm-distribution-*.jar'
+            into('resources') {
+                from {
+                    '../etm-signaler/src/main/resources/JECSTAR-ETM-MIB.mib'
+                }
+                rename('JECSTAR-ETM-MIB.mib', 'JECSTAR-ETM-MIB.txt')
+            }
         }
     }
 }

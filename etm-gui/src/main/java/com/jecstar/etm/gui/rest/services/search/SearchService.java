@@ -56,7 +56,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
@@ -210,7 +210,7 @@ public class SearchService extends AbstractIndexMetadataService {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         boolean payloadVisible = etmPrincipal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
 
-        ZonedDateTime now = ZonedDateTime.now();
+        Instant now = Instant.now();
         QueryAuditLogBuilder auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
 
         SearchRequestParameters parameters = new SearchRequestParameters(toMap(json), etmPrincipal);
@@ -395,7 +395,20 @@ public class SearchService extends AbstractIndexMetadataService {
 
         ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder, parameters.getStartIndex());
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
-        File result = new QueryExporter().exportToFile(scrollableSearch, fileType, Math.min(parameters.getMaxResults(), etmConfiguration.getMaxSearchResultDownloadRows()), etmPrincipal, parameters.toFieldLayouts());
+        File result = new QueryExporter().exportToFile(
+                scrollableSearch,
+                fileType,
+                Math.min(parameters.getMaxResults(),
+                        etmConfiguration.getMaxSearchResultDownloadRows()),
+                etmPrincipal,
+                parameters.toFieldLayouts(),
+                c -> enhanceRequest(
+                        client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                        etmConfiguration
+                )
+                        .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON)
+                        .execute()
+        );
         ResponseBuilder response = Response.ok(result);
         response.header("Content-Disposition", "attachment; filename=etm-results." + fileType.name().toLowerCase());
         response.encoding(System.getProperty("file.encoding"));
@@ -408,8 +421,8 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
-        ZonedDateTime now = ZonedDateTime.now();
-        boolean payloadVisible = getEtmPrincipal().isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
+        Instant now = Instant.now();
+        boolean payloadVisible = getEtmPrincipal().maySeeEventPayload();
         GetEventAuditLogBuilder auditLogBuilder = new GetEventAuditLogBuilder()
                 .setTimestamp(now)
                 .setHandlingTime(now)
@@ -417,6 +430,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setEventId(eventId)
                 .setEventType(eventType)
                 .setPayloadVisible(payloadVisible)
+                .setDownloaded(false)
                 .setFound(false);
         ActionFuture<SearchResponse> auditLogsForEvent = null;
         if (getEtmPrincipal().isInRole(SecurityRoles.AUDIT_LOG_READ)) {
@@ -515,6 +529,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         addLongElementToJsonBuffer("handling_time", getLong(AuditLog.HANDLING_TIME, auditLogValues), result, false);
                         addStringElementToJsonBuffer("principal_id", getString(AuditLog.PRINCIPAL_ID, auditLogValues), result, false);
                         addBooleanElementToJsonBuffer("payload_visible", getBoolean(GetEventAuditLog.PAYLOAD_VISIBLE, auditLogValues, true), result, false);
+                        addBooleanElementToJsonBuffer("downloaded", getBoolean(GetEventAuditLog.DOWNLOADED, auditLogValues, false), result, false);
                         result.append("}");
                     }
                     result.append("]");
@@ -571,7 +586,7 @@ public class SearchService extends AbstractIndexMetadataService {
         SearchRequestBuilder requestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(boolQueryBuilder)
                 .addSort(AuditLog.HANDLING_TIME, SortOrder.DESC)
-                .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID, GetEventAuditLog.PAYLOAD_VISIBLE}, null)
+                .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID, GetEventAuditLog.PAYLOAD_VISIBLE, GetEventAuditLog.DOWNLOADED}, null)
                 .setFrom(0)
                 .setSize(500);
         return requestBuilder.execute();
@@ -585,7 +600,7 @@ public class SearchService extends AbstractIndexMetadataService {
         StringBuilder result = new StringBuilder();
         result.append("{");
         addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
-        SearchHit searchHit = getEvent(null, eventId, null, new String[]{this.eventTags.getEndpointsTag() + ".*"});
+        SearchHit searchHit = getEvent(null, eventId, new String[]{this.eventTags.getEndpointsTag() + ".*"}, null);
         if (searchHit != null) {
             result.append(", \"event\": {");
             addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
@@ -821,7 +836,17 @@ public class SearchService extends AbstractIndexMetadataService {
             return null;
         }
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
-        File result = new QueryExporter().exportToFile(events, fileType, etmPrincipal);
+        File result = new QueryExporter().exportToFile(
+                events,
+                fileType,
+                etmPrincipal,
+                c -> enhanceRequest(
+                        client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                        etmConfiguration
+                )
+                        .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON)
+                        .execute()
+        );
         ResponseBuilder response = Response.ok(result);
         response.header("Content-Disposition", "attachment; filename=etm-" + applicationName.replaceAll(" ", "_") + "-" + transactionId + "." + fileType.name().toLowerCase());
         response.encoding(System.getProperty("file.encoding"));

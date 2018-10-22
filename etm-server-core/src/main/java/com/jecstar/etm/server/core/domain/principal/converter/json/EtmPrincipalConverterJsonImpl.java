@@ -40,6 +40,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles(), true, sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getDashboardDatasourcesTag(), etmPrincipal.getDashboardDatasources(), true, sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getSignalDatasourcesTag(), etmPrincipal.getSignalDatasources(), true, sb, !added) || added;
+        added = this.converter.addSetElementToJsonBuffer(this.tags.getNotifiersTag(), etmPrincipal.getNotifiers(), true, sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
         sb.append("}}");
@@ -66,6 +67,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles(), true, sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getDashboardDatasourcesTag(), etmGroup.getDashboardDatasources(), true, sb, !added) || added;
         added = this.converter.addSetElementToJsonBuffer(this.tags.getSignalDatasourcesTag(), etmGroup.getSignalDatasources(), true, sb, !added) || added;
+        added = this.converter.addSetElementToJsonBuffer(this.tags.getNotifiersTag(), etmGroup.getNotifiers(), true, sb, !added) || added;
         sb.append("}}");
         return sb.toString();
     }
@@ -100,16 +102,17 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         if (roles != null) {
             principal.addRoles(roles);
         }
-        List<String> datasources = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
-        if (datasources != null) {
-            principal.addDashboardDatasources(datasources);
+        List<String> list = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
+        if (list != null) {
+            principal.addDashboardDatasources(list);
         }
-        datasources = this.converter.getArray(this.tags.getSignalDatasourcesTag(), valueMap);
-        if (datasources != null) {
-            principal.addSignalDatasources(datasources);
+        list = this.converter.getArray(this.tags.getSignalDatasourcesTag(), valueMap);
+        if (list != null) {
+            principal.addSignalDatasources(list);
         }
-        if (datasources != null) {
-            principal.addSignalDatasources(datasources);
+        list = this.converter.getArray(this.tags.getNotifiersTag(), valueMap);
+        if (list != null) {
+            principal.addNotifiers(list);
         }
         // Add the dashboard names. These are readonly properties added by the DashboardService.
         List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);
@@ -133,13 +136,17 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         if (roles != null) {
             group.addRoles(roles);
         }
-        List<String> datasources = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
-        if (datasources != null) {
-            group.addDashboardDatasources(datasources);
+        List<String> list = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
+        if (list != null) {
+            group.addDashboardDatasources(list);
         }
-        datasources = this.converter.getArray(this.tags.getSignalDatasourcesTag(), valueMap);
-        if (datasources != null) {
-            group.addSignalDatasources(datasources);
+        list = this.converter.getArray(this.tags.getSignalDatasourcesTag(), valueMap);
+        if (list != null) {
+            group.addSignalDatasources(list);
+        }
+        list = this.converter.getArray(this.tags.getNotifiersTag(), valueMap);
+        if (list != null) {
+            group.addNotifiers(list);
         }
         // Add the dashboard names. These are readonly properties added by the DashboardService.
         List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);

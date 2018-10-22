@@ -1,8 +1,7 @@
 function buildUserPage() {
-	var defaultLocale;
-	var defaultTimeZone;
 	$groupSelect = $('<select>').addClass('form-control custom-select etm-group');
-	
+    $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
+
 	$.when(
 	    $.ajax({
 	        type: 'GET',
@@ -80,7 +79,24 @@ function buildUserPage() {
 	            }
 	            sortSelectOptions($groupSelect);
 	        }
-	    })	    
+        }),
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/settings/notifiers/basics',
+            cache: false,
+            success: function (data) {
+                if (!data || !data.notifiers) {
+                    // No groups, remove the fieldset.
+                    $('#lnk-add-notifier').parent().remove();
+                    return;
+                }
+                $.each(data.notifiers, function (index, notifier) {
+                    $notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
+                });
+                sortSelectOptions($notifierSelect);
+            }
+        })
 	).done(function () {
 		$.ajax({
 		    type: 'GET',
@@ -134,7 +150,7 @@ function buildUserPage() {
 			enableFieldsForNonLdapUser();
 			return;
 		}
-		$('#list-groups').empty();
+        $('#list-groups, #list-notifiers').empty();
 		$('#input-user-id').val(userData.id);
 		$('#input-user-name').val(userData.name);
 		$('#input-user-email').val(userData.email);
@@ -187,6 +203,11 @@ function buildUserPage() {
 				});				
 			}
 		}
+        if (userData.notifiers) {
+            $.each(userData.notifiers, function (index, notifierName) {
+                $('#list-notifiers').append(createNotifierRow(notifierName));
+            });
+        }
         $('#input-new-password1').val('');
         $('#input-new-password2').val('');
         if (userData.ldap_base) {
@@ -304,6 +325,11 @@ function buildUserPage() {
 		$('#list-groups').append(createGroupRow());
 	});
 
+    $('#lnk-add-notifier').click(function (event) {
+        event.preventDefault();
+        $('#list-notifiers').append(createNotifierRow());
+    });
+
 	$('#input-user-id').on('input', enableOrDisableButtons);
 		
 	function sortSelectOptions($select) {
@@ -343,7 +369,10 @@ function buildUserPage() {
 			$('<div>').addClass('input-group').append(
 				$groupSelect.clone(true),
 				$('<div>').addClass('input-group-append').append(
-                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {event.preventDefault(); removeGroupRow($(this));})
+                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+                        event.preventDefault();
+                        removeGroupOrNotifierRow($(this));
+                    })
                 )
 			)
 		);
@@ -353,10 +382,28 @@ function buildUserPage() {
     	return groupRow;
     }
 
-    function removeGroupRow(anchor) {
+    function createNotifierRow(notifierName) {
+        var notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+            $('<div>').addClass('input-group').append(
+                $notifierSelect.clone(true),
+                $('<div>').addClass('input-group-append').append(
+                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+                        event.preventDefault();
+                        removeGroupOrNotifierRow($(this));
+                    })
+                )
+            )
+        );
+        if (notifierName) {
+            $(notifierRow).find('.etm-notifier').val(notifierName)
+        }
+        return notifierRow;
+    }
+
+    function removeGroupOrNotifierRow(anchor) {
     	anchor.parent().parent().parent().remove();
     }
-    
+
 	function isUserExistent(userId) {
 		return "undefined" != typeof userMap[userId];
 	}
@@ -445,7 +492,8 @@ function buildUserPage() {
                 .find("input[type='checkbox']:checked")
                 .map(function () {
                     return $(this).val();
-                }).get()
+                }).get(),
+            notifiers: []
 		}
         if ($('#input-new-password1').val()) {
         	userData.new_password = $('#input-new-password1').val();
@@ -461,6 +509,12 @@ function buildUserPage() {
 				userData.groups.push(groupName);
 			}
 		});
+        $('.etm-notifier').each(function () {
+            var notifierName = $(this).val();
+            if (-1 == userData.notifiers.indexOf(notifierName)) {
+                userData.notifiers.push(notifierName);
+            }
+        });
 		return userData;
 	}
 

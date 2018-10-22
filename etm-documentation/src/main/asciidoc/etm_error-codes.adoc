@@ -30,4 +30,5 @@ During execution {etm} can run into an error. These may be shown to the end user
 |400002|Not authorized for dashboard data source.|You are not authorized for the specified dashboard data source.
 |500000|Maximum number of signals reached.|You are not allowed to store more signals. Delete a signal, or ask your {etm} administrator to raise the maximum number of signals that can be stored.
 |500001|Not authorized for signal data source.|You are not authorized for the specified signal data source.
+|500002|Not authorized for notifier.|You are not authorized for the specified notifier.
 |=======================

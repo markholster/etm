@@ -3,6 +3,7 @@
 **/out/
 **/build/
 **/bin/
+**/target/
 **/.classpath
 **/.project
 /.gradle/

@@ -3,7 +3,7 @@ package com.jecstar.etm.domain.builder;
 import com.jecstar.etm.domain.Endpoint;
 import com.jecstar.etm.domain.EndpointHandler;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class EndpointBuilder {
 
@@ -75,7 +75,7 @@ public class EndpointBuilder {
     public EndpointBuilder setWritingTimeToNow() {
         EndpointHandler endpointHandler = this.endpoint.getWritingEndpointHandler();
         if (endpointHandler != null) {
-            endpointHandler.handlingTime = ZonedDateTime.now();
+            endpointHandler.handlingTime = Instant.now();
         }
         return this;
     }

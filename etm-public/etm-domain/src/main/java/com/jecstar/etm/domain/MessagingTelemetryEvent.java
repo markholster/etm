@@ -1,6 +1,6 @@
 package com.jecstar.etm.domain;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 /**
  * A <code>TelemetryEvent</code> that describes a message received from or sent to a messaging infrastructure like ActiveMQ.
@@ -26,7 +26,7 @@ public class MessagingTelemetryEvent extends TelemetryEvent<MessagingTelemetryEv
     /**
      * The moment this event expires, in case of a request.
      */
-    public ZonedDateTime expiry;
+    public Instant expiry;
 
     /**
      * The messaging type that this event represents.

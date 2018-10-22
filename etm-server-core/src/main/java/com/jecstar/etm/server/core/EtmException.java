@@ -44,6 +44,7 @@ public class EtmException extends RuntimeException {
     // 500_* reserved for visualization errors.
     public static final int MAX_NR_OF_SIGNALS_REACHED = 500_000;
     public static final int NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE = 500_001;
+    public static final int NOT_AUTHORIZED_FOR_NOTIFIER = 500_002;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!

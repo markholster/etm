@@ -12,7 +12,6 @@ import java.time.temporal.ChronoField;
  */
 public class DateUtils {
 
-
     public static DateTimeFormatter getIndexPerDayFormatter() {
         return new DateTimeFormatterBuilder()
                 .appendValue(ChronoField.YEAR, 4)

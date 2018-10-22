@@ -8,6 +8,7 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.client.Client;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,4 +96,28 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
                 .setDocAsUpsert(true)
                 .get();
     }
+
+    /**
+     * Merge a <code>Collection</code> instance into another <code>Collection</code> instance.
+     *
+     * @param sourceMap      The <code>Map</code> that contains the source <code>Collection</code>.
+     * @param destinationMap The <code>Map</code> that contains the destination <code>Collection</code>.
+     * @param attribute      The attribute that holds the key to the <code>Collection</code>s in both <code>Map</code>s.
+     */
+    protected void mergeCollectionInValueMap(Map<String, Object> sourceMap, Map<String, Object> destinationMap, String attribute) {
+        Collection<Object> array = getArray(attribute, sourceMap, null);
+        if (array == null) {
+            return;
+        }
+        Collection<Object> destinationArray = getArray(attribute, destinationMap, null);
+        if (destinationArray == null) {
+            destinationMap.put(attribute, array);
+        }
+        for (Object item : array) {
+            if (item != null && !destinationArray.contains(item)) {
+                destinationArray.add(item);
+            }
+        }
+    }
+
 }

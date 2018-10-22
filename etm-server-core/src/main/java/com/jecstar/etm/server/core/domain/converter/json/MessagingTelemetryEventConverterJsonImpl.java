@@ -42,7 +42,7 @@ public class MessagingTelemetryEventConverterJsonImpl extends MessagingTelemetry
     @Override
     public void read(Map<String, Object> valueMap, MessagingTelemetryEvent event, String id) {
         this.converter.convert(valueMap, event, id);
-        event.expiry = this.converter.getZonedDateTime(getTags().getExpiryTag(), valueMap);
+        event.expiry = this.converter.getInstant(getTags().getExpiryTag(), valueMap);
         event.messagingEventType = MessagingEventType.safeValueOf(this.converter.getString(getTags().getMessagingEventTypeTag(), valueMap));
     }
 

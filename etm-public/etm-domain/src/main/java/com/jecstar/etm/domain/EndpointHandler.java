@@ -1,6 +1,6 @@
 package com.jecstar.etm.domain;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,7 +43,7 @@ public class EndpointHandler {
     /**
      * The time the handling took place.
      */
-    public ZonedDateTime handlingTime;
+    public Instant handlingTime;
 
     /**
      * The ID of the transaction this event belongs to. Events with the same
@@ -122,7 +122,7 @@ public class EndpointHandler {
             hash = hash * 31 + this.type.name().hashCode();
         }
         if (this.handlingTime != null) {
-            hash = hash * 31 + this.handlingTime.toInstant().toEpochMilli();
+            hash = hash * 31 + this.handlingTime.toEpochMilli();
         }
         if (this.transactionId != null) {
             for (int i = 0; i < this.transactionId.length(); i++) {

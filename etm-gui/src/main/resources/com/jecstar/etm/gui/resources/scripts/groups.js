@@ -1,19 +1,62 @@
 function buildGroupPage() {
-    $.ajax({
-        type: 'GET',
-        contentType: 'application/json',
-        url: '../rest/search/keywords/etm_event_all',
-        cache: false,
-        success: function(data) {
-            if (!data || !data.keywords) {
-                return;
-            }
-            $('#input-filter-query').bind('keydown', function( event ) {
-                if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                    event.stopPropagation();
+    $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
+
+    $.when(
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/search/keywords/etm_event_all',
+            cache: false,
+            success: function (data) {
+                if (!data || !data.keywords) {
+                    return;
                 }
-            }).autocompleteFieldQuery({queryKeywords: data.keywords});       
-        }
+                $('#input-filter-query').bind('keydown', function (event) {
+                    if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                        event.stopPropagation();
+                    }
+                }).autocompleteFieldQuery({queryKeywords: data.keywords});
+            }
+        }),
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/settings/notifiers/basics',
+            cache: false,
+            success: function (data) {
+                if (!data || !data.notifiers) {
+                    // No groups, remove the fieldset.
+                    $('#lnk-add-notifier').parent().remove();
+                    return;
+                }
+                $.each(data.notifiers, function (index, notifier) {
+                    $notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
+                });
+                sortSelectOptions($notifierSelect);
+            }
+        })
+    ).done(function () {
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/settings/groups',
+            cache: false,
+            success: function (data) {
+                if (!data) {
+                    return;
+                }
+                if (data.has_ldap) {
+                    $('#btn-confirm-import-group').show();
+                }
+                $groupSelect = $('#sel-group');
+                $.each(data.groups, function (index, group) {
+                    $groupSelect.append($('<option>').attr('value', group.name).text(group.name));
+                    groupMap[group.name] = group;
+                });
+                sortSelectOptions($groupSelect)
+                $groupSelect.val('');
+            }
+        });
     });
 
 	var groupMap = {};
@@ -24,6 +67,7 @@ function buildGroupPage() {
 			resetValues();
 			return;
 		}
+        $('#list-notifiers').empty();
 		$('#input-group-name').val(groupData.name);
 		$('#input-group-display-name').val(groupData.display_name);
 		$('#input-filter-query').val(groupData.filter_query);
@@ -46,6 +90,11 @@ function buildGroupPage() {
             $('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
             $.each(groupData.signal_datasources, function (index, ds) {
                 $('#check-signal-datasource-' + ds).prop('checked', true);
+            });
+        }
+        if (groupData.notifiers) {
+            $.each(groupData.notifiers, function (index, notifierName) {
+                $('#list-notifiers').append(createNotifierRow(notifierName));
             });
         }
 		enableOrDisableButtons();
@@ -133,30 +182,13 @@ function buildGroupPage() {
 		    hideModals($('#modal-group-import'));
         });
 	});
+
+    $('#lnk-add-notifier').click(function (event) {
+        event.preventDefault();
+        $('#list-notifiers').append(createNotifierRow());
+    });
 	
 	$('#input-group-name').on('input', enableOrDisableButtons);
-	
-	$.ajax({
-	    type: 'GET',
-	    contentType: 'application/json',
-	    url: '../rest/settings/groups',
-	    cache: false,
-	    success: function(data) {
-	        if (!data) {
-	            return;
-	        }
-	        if (data.has_ldap) {
-	        	$('#btn-confirm-import-group').show();
-	        }
-	        $groupSelect = $('#sel-group');
-	        $.each(data.groups, function(index, group) {
-	        	$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
-	        	groupMap[group.name] = group;
-	        });
-	        sortSelectOptions($groupSelect)
-	        $groupSelect.val('');
-	    }
-	});
 	
 	function sortSelectOptions($select) {
 		var options = $select.children('option');
@@ -231,6 +263,28 @@ function buildGroupPage() {
             hideModals($('#modal-group-remove'));
         });
 	}
+
+    function createNotifierRow(notifierName) {
+        var notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+            $('<div>').addClass('input-group').append(
+                $notifierSelect.clone(true),
+                $('<div>').addClass('input-group-append').append(
+                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+                        event.preventDefault();
+                        removeNotifierRow($(this));
+                    })
+                )
+            )
+        );
+        if (notifierName) {
+            $(notifierRow).find('.etm-notifier').val(notifierName)
+        }
+        return notifierRow;
+    }
+
+    function removeNotifierRow(anchor) {
+        anchor.parent().parent().parent().remove();
+    }
 	
 	function createGroupData() {
 		var groupData = {
@@ -249,13 +303,20 @@ function buildGroupPage() {
                 .find("input[type='checkbox']:checked")
                 .map(function () {
                     return $(this).val();
-                }).get()
+                }).get(),
+            notifiers: []
 		}
 		$('#card-acl').find('select').each(function () {
 		    if ($(this).val() !== 'none') {
 			    groupData.roles.push($(this).val());
 			}
 		});
+        $('.etm-notifier').each(function () {
+            var notifierName = $(this).val();
+            if (-1 == groupData.notifiers.indexOf(notifierName)) {
+                groupData.notifiers.push(notifierName);
+            }
+        });
 		return groupData;
 	}
 

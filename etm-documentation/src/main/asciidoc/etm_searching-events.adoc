@@ -148,9 +148,9 @@ searches for the ''My'' and ''Name'' terms with a term distance of 5.
 ==== Ranges
 Ranges can be specified to numeric and date attributes. Inclusive ranges are specified with square brackets ''[min TO max]'' and exclusive ranges with curly brackets ''{min TO max}''.
 
-All events of 2017 can be queried as follow
+All events of 2018 can be queried as follow
 ----
-endpoints.writing_endpoint_handler.handling_time: [2017-01-01 TO 2017-12-31]
+endpoints.endpoint_handlers.handling_time: [2018-01-01 TO 2018-12-31]
 ----
 
 Or all events with a payload length between 1000 and 2000 chars

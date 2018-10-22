@@ -10,28 +10,42 @@ function buildSignalsPage(groupName) {
     $.ajax({
         type: 'GET',
         contentType: 'application/json',
-        url: contextRoot + 'datasources',
+        url: contextRoot + 'contextdata',
         cache: false,
         success: function (data) {
-            if (!data || !data.signal_datasources) {
+            if (!data) {
                 return;
             }
-            $dsSelect = $('#sel-data-source');
-            $.each(data.signal_datasources, function (index, datasource) {
-                $dsSelect.append($('<option>').attr('value', datasource).text(datasourceToText(datasource)));
-            });
-            sortSelectOptions($dsSelect);
+            if (data.signal_datasources) {
+                $dsSelect = $('#sel-data-source');
+                $.each(data.signal_datasources, function (index, datasource) {
+                    $dsSelect.append($('<option>').attr('value', datasource).text(datasourceToText(datasource)));
+                });
+                sortSelectOptions($dsSelect);
 
-            function datasourceToText(datasource) {
-                if ('etm_audit_all' === datasource) {
-                    return 'Audits';
-                } else if ('etm_event_all' === datasource) {
-                    return 'Events';
-                } else if ('etm_metrics_all' === datasource) {
-                    return 'Metrics';
-                } else {
-                    return datasource;
+                function datasourceToText(datasource) {
+                    if ('etm_audit_all' === datasource) {
+                        return 'Audits';
+                    } else if ('etm_event_all' === datasource) {
+                        return 'Events';
+                    } else if ('etm_metrics_all' === datasource) {
+                        return 'Metrics';
+                    } else {
+                        return datasource;
+                    }
                 }
+            }
+            if (data.notifiers) {
+                $.each(data.notifiers, function (index, notifier) {
+                    $notifierSelect.append(
+                        $('<option>')
+                            .attr('value', notifier.name)
+                            .text(notifier.name)
+                            .attr('data-type', notifier.type)
+                    );
+                });
+                sortSelectOptions($notifierSelect)
+                $('#lnk-add-notifier').trigger('click');
             }
         }
     });
@@ -47,27 +61,6 @@ function buildSignalsPage(groupName) {
 	            }
 	            keywords = $.merge(keywords, data.keywords);
 	        }
-	    }),
-        $.ajax({
-            type: 'GET',
-            contentType: 'application/json',
-            url: '../rest/settings/notifiers',
-            cache: false,
-            success: function(data) {
-                if (!data || !data.notifiers) {
-                    return;
-                }
-                $.each(data.notifiers, function(index, notifier) {
-                    $notifierSelect.append(
-                        $('<option>')
-                            .attr('value', notifier.name)
-                            .text(notifier.name)
-                            .attr('data-type', notifier.type)
-                        );
-                });
-                sortSelectOptions($notifierSelect)
-                $('#lnk-add-notifier').trigger('click');
-            }
         })
 	).done(function () {
         $('#input-signal-query').bind('keydown', function( event ) {
@@ -226,7 +219,7 @@ function buildSignalsPage(groupName) {
         $('#lnk-add-notifier').trigger('click');
         enableOrDisableButtons();
         showOrHideRecipients();
-        $('#input-signal-per-timespan, #input-signal-last-timespan, #input-signal-check-timespan').trigger('change');
+        $('#sel-signal-when, #input-signal-per-timespan, #input-signal-last-timespan, #input-signal-check-timespan').trigger('change');
     }
 
     function setValuesFromData(signalData) {
@@ -261,7 +254,7 @@ function buildSignalsPage(groupName) {
         $('#input-signal-last-timespan').val(signalData.timespan);
         $('#sel-signal-last-timeunit').val(signalData.timespan_timeunit);
 
-        $('#input-signal-per-timespan, #input-signal-last-timespan, #input-signal-check-timespan').trigger('change');
+        $('#sel-signal-when, #input-signal-per-timespan, #input-signal-last-timespan, #input-signal-check-timespan').trigger('change');
     }
 
     function showOrHideRecipients() {

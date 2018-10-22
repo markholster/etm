@@ -4,7 +4,7 @@ import com.jecstar.etm.domain.*;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.TelemetryEventWriter;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -109,7 +109,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
             buffer.append(this.jsonWriter.escapeToJson(getTags().getEndpointHandlersTag(), true)).append(": [");
             added = false;
             EndpointHandler writingEndpointHandler = endpoint.getWritingEndpointHandler();
-            ZonedDateTime latencyStart = null;
+            Instant latencyStart = null;
             if (writingEndpointHandler != null) {
                 added = addEndpointHandlerToJsonBuffer(null, writingEndpointHandler, buffer, true, getTags()) || added;
                 latencyStart = writingEndpointHandler.handlingTime;
@@ -125,7 +125,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
         return added;
     }
 
-    private boolean addEndpointHandlerToJsonBuffer(ZonedDateTime latencyStart, EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags) {
+    private boolean addEndpointHandlerToJsonBuffer(Instant latencyStart, EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags) {
         if (!endpointHandler.isSet()) {
             return false;
         }
@@ -135,9 +135,9 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
         buffer.append("{");
         boolean added = this.jsonWriter.addStringElementToJsonBuffer(tags.getEndpointHandlerTypeTag(), endpointHandler.type.name(), buffer, true);
         if (endpointHandler.handlingTime != null) {
-            added = this.jsonWriter.addZonedDateTimeElementToJsonBuffer(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime, buffer, !added) || added;
+            added = this.jsonWriter.addInstantElementToJsonBuffer(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime, buffer, !added) || added;
             if (latencyStart != null) {
-                added = this.jsonWriter.addLongElementToJsonBuffer(tags.getEndpointHandlerLatencyTag(), endpointHandler.handlingTime.toInstant().toEpochMilli() - latencyStart.toInstant().toEpochMilli(), buffer, !added) || added;
+                added = this.jsonWriter.addLongElementToJsonBuffer(tags.getEndpointHandlerLatencyTag(), endpointHandler.handlingTime.toEpochMilli() - latencyStart.toEpochMilli(), buffer, !added) || added;
             }
         }
         added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getEndpointHandlerTransactionIdTag(), endpointHandler.transactionId, buffer, !added) || added;

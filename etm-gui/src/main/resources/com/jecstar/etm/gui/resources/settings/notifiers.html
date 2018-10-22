@@ -73,6 +73,7 @@
                                         <select id="sel-notifier-type" class="form-control custom-select">
                                             <option value="ETM_BUSINESS_EVENT">Business event</option>
                                             <option value="EMAIL">Email</option>
+                                            <option value="SNMP">SNMP</option>
                                         </select>
                                     </div>
                                 </div>
@@ -132,6 +133,102 @@
                                         <label for="input-from-name" class="col-sm-3 col-form-label">From name</label>
                                         <div class="col-sm-9">
                                             <input id="input-from-name" type="text" class="form-control"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="snmp-fields" style="display: none;">
+                                    <div class="form-group row">
+                                        <label for="input-snmp-host" class="col-sm-3 col-form-label">Snmp host</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-snmp-host" class="form-control" data-required="required"
+                                                   required="required"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="input-snmp-port" class="col-sm-3 col-form-label">Snmp port</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-snmp-port" type="number" class="form-control" min="1"
+                                                   max="65535" data-required="required" required="required"
+                                                   value="162"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="sel-snmp-version" class="col-sm-3 col-form-label">Snmp
+                                            version</label>
+                                        <div class="col-sm-9">
+                                            <select id="sel-snmp-version"
+                                                    class="form-control custom-select">
+                                                <option value="V1">Version 1</option>
+                                                <option value="V2C">Version 2c</option>
+                                                <option value="V3">Version 3</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row" id="group-snmp-community">
+                                        <label for="input-snmp-community"
+                                               class="col-sm-3 col-form-label">Community</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-snmp-community" type="password" class="form-control"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row" id="group-snmp-security-name" style="display: none;">
+                                        <label for="input-snmp-security-name"
+                                               class="col-sm-3 col-form-label">Security name</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-snmp-security-name" class="form-control"
+                                                   data-required="required" required="required"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row" id="group-snmp-authentication-protocol"
+                                         style="display: none;">
+                                        <label for="sel-snmp-authentication-protocol" class="col-sm-3 col-form-label">Authentication
+                                            protocol</label>
+                                        <div class="col-sm-9">
+                                            <select id="sel-snmp-authentication-protocol"
+                                                    class="form-control custom-select">
+                                                <option selected="selected"></option>
+                                                <option value="HMAC128SHA224">HMAC-128-SHA-224</option>
+                                                <option value="HMAC192SHA256">HMAC-192-SHA-256</option>
+                                                <option value="HMAC256SHA384">HMAC-256-SHA-384</option>
+                                                <option value="HMAC384SHA512">HMAC-384-SHA-512</option>
+                                                <option value="MD5">MD5</option>
+                                                <option value="SHA">SHA-1</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row" id="group-snmp-authentication-passphrase"
+                                         style="display: none;">
+                                        <label for="input-snmp-authentication-passphrase"
+                                               class="col-sm-3 col-form-label">Authentication passphrase</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-snmp-authentication-passphrase" type="password"
+                                                   class="form-control"/>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row" id="group-snmp-privacy-protocol" style="display: none;">
+                                        <label for="sel-snmp-privacy-protocol" class="col-sm-3 col-form-label">Privacy
+                                            protocol</label>
+                                        <div class="col-sm-9">
+                                            <select id="sel-snmp-privacy-protocol"
+                                                    class="form-control custom-select">
+                                                <option selected="selected"></option>
+                                                <option value="AES128">AES-128</option>
+                                                <option value="AES192">AES-192</option>
+                                                <option value="AES192WITH3DES">AES-192-3DES</option>
+                                                <option value="AES256">AES-256</option>
+                                                <option value="AES256WITH3DES">AES-256-3DES</option>
+                                                <option value="DES">DES</option>
+                                                <option value="TDES">3DES</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row" id="group-input-snmp-privacy-passphrase"
+                                         style="display: none;">
+                                        <label for="input-snmp-privacy-passphrase"
+                                               class="col-sm-3 col-form-label">Privacy passphrase</label>
+                                        <div class="col-sm-9">
+                                            <input id="input-snmp-privacy-passphrase" type="password"
+                                                   class="form-control"/>
                                         </div>
                                     </div>
                                 </div>

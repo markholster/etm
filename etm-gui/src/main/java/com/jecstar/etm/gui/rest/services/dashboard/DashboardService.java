@@ -6,7 +6,9 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.*;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
@@ -144,6 +146,14 @@ public class DashboardService extends AbstractUserAttributeService {
      */
     private String getDashboardDatasources(String groupName) {
         Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardDatasourcesTag());
+        if (groupName == null) {
+            // We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
+            Set<EtmGroup> groups = getEtmPrincipal().getGroups();
+            for (EtmGroup group : groups) {
+                Map<String, Object> groupObjectMap = getEntity(client, group.getName(), this.principalTags.getDashboardDatasourcesTag());
+                mergeCollectionInValueMap(groupObjectMap, objectMap, this.principalTags.getDashboardDatasourcesTag());
+            }
+        }
         return toString(objectMap);
     }
 
@@ -219,8 +229,9 @@ public class DashboardService extends AbstractUserAttributeService {
     private String addGraph(String groupName, String graphName, String json) {
         // Execute a dry run on all data.
         Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
-        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
-        getGraphData(json, allowedDatasources, true);
+        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(this.client, groupName);
+
+        getGraphData(json, etmSecurityEntity, true);
         // Data seems ok, now store the graph.
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
         Map<String, Object> graphData = toMap(json);
@@ -248,6 +259,13 @@ public class DashboardService extends AbstractUserAttributeService {
         source.put(this.principalTags.getGraphsTag(), currentGraphs);
         updateEntity(client, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
+    }
+
+    private EtmSecurityEntity getEtmSecurityEntity(Client client, String groupName) {
+        if (groupName != null) {
+            return getEtmGroup(client, groupName);
+        }
+        return getEtmPrincipal();
     }
 
     @DELETE
@@ -583,9 +601,7 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getPreviewGraphData(String json) {
-        Map<String, Object> objectMap = getEntity(client, null, this.principalTags.getDashboardDatasourcesTag());
-        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
-        return getGraphData(json, allowedDatasources, false);
+        return getGraphData(json, getEtmPrincipal(), false);
     }
 
     @POST
@@ -593,9 +609,7 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getGroupPreviewGraphData(@PathParam("groupName") String groupName, String json) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardDatasourcesTag());
-        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
-        return getGraphData(json, allowedDatasources, false);
+        return getGraphData(json, getEtmGroup(client, groupName), false);
     }
 
     /**
@@ -608,6 +622,7 @@ public class DashboardService extends AbstractUserAttributeService {
      */
     private String getGraphData(String groupName, String dashboardName, String graphId) {
         Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
+        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(client, groupName);
         if (objectMap == null || !objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             return null;
         }
@@ -618,7 +633,6 @@ public class DashboardService extends AbstractUserAttributeService {
         if (graphsData == null) {
             return null;
         }
-        List<String> allowedDatasources = getArray(this.principalTags.getDashboardDatasourcesTag(), objectMap);
         // First find the dashboard
         List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), objectMap);
         if (dashboardsData == null) {
@@ -661,19 +675,19 @@ public class DashboardService extends AbstractUserAttributeService {
                 graphData.put("till", dashboardTill);
                 graphData.put("time_filter_field", dashboardTimeFilterField);
                 graphData.put("query", dashboardQuery);
-                return getGraphData(graphData, allowedDatasources, false);
+                return getGraphData(graphData, etmSecurityEntity, false);
             }
         }
         return null;
     }
 
-    private String getGraphData(String json, List<String> allowedDatasources, boolean dryRun) {
-        return getGraphData(toMap(json), allowedDatasources, dryRun);
+    private String getGraphData(String json, EtmSecurityEntity etmSecurityEntity, boolean dryRun) {
+        return getGraphData(toMap(json), etmSecurityEntity, dryRun);
     }
 
-    private String getGraphData(Map<String, Object> valueMap, List<String> allowedDatasources, boolean dryRun) {
+    private String getGraphData(Map<String, Object> valueMap, EtmSecurityEntity etmSecurityEntity, boolean dryRun) {
         String dataSource = getString("data_source", valueMap);
-        if (allowedDatasources.indexOf(dataSource) < 0) {
+        if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(dataSource)) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
         String type = getString("type", valueMap);

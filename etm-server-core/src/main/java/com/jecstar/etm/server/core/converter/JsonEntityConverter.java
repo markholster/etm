@@ -10,8 +10,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -147,13 +145,13 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
                     } else {
                         field.setBoolean(entity, value);
                     }
-                } else if (fieldType.equals(ZonedDateTime.class)) {
+                } else if (fieldType.equals(Instant.class)) {
                     Long value = this.jsonConverter.getLong(jsonKey, valueMap);
                     if (value == null) {
                         field.set(entity, null);
                     } else {
-                        ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneOffset.UTC);
-                        field.set(entity, zonedDateTime);
+                        Instant instant = Instant.ofEpochMilli(value);
+                        field.set(entity, instant);
                     }
                 } else {
                     field.set(entity, valueMap.get(jsonKey));
@@ -216,9 +214,9 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
             added = this.jsonConverter.addIntegerElementToJsonBuffer(jsonKey, (Integer) value, writeWhenNull, buffer, !added) || added;
         } else if (entityClass.equals(Boolean.class) || entityClass.equals(boolean.class)) {
             added = this.jsonConverter.addBooleanElementToJsonBuffer(jsonKey, (Boolean) value, writeWhenNull, buffer, !added) || added;
-        } else if (entityClass.equals(ZonedDateTime.class)) {
-            ZonedDateTime zonedDateTime = (ZonedDateTime) value;
-            added = this.jsonConverter.addZonedDateTimeElementToJsonBuffer(jsonKey, zonedDateTime, writeWhenNull, buffer, !added) || added;
+        } else if (entityClass.equals(Instant.class)) {
+            Instant instant = (Instant) value;
+            added = this.jsonConverter.addInstantElementToJsonBuffer(jsonKey, instant, writeWhenNull, buffer, !added) || added;
         } else if (entityClass.equals(List.class)) {
             List<?> list = (List<?>) value;
             if (list == null) {

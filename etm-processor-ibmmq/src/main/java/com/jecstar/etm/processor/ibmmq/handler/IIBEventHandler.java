@@ -30,8 +30,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Map;
 import java.util.TimeZone;
@@ -286,7 +284,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         }
         EndpointHandlerBuilder builder = new EndpointHandlerBuilder();
         long epochMillis = event.getEventPointData().getEventData().getEventSequence().getCreationTime().toGregorianCalendar().getTimeInMillis();
-        builder.setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC));
+        builder.setHandlingTime(Instant.ofEpochMilli(epochMillis));
         if (appName == null) {
             String productVersion = event.getEventPointData().getEventData().getProductVersion();
             if (productVersion.startsWith("6") || productVersion.startsWith("7") || productVersion.startsWith("8")) {
@@ -350,11 +348,11 @@ public class IIBEventHandler extends AbstractMQEventHandler {
                 if (CMQC.MQEI_UNLIMITED != mqmd.getExpiry()) {
                     try {
                         long expiryTime = this.dateFormat.parse(mqmd.getPutDate() + mqmd.getPutTime()).getTime() + (mqmd.getExpiry() * 100);
-                        builder.setExpiry(ZonedDateTime.ofInstant(Instant.ofEpochMilli(expiryTime), ZoneOffset.UTC));
+                        builder.setExpiry(Instant.ofEpochMilli(expiryTime));
                     } catch (ParseException e) {
                         // Unable to parse put date/time. Calculate expiry based on event time.
                         long expiryTime = event.getEventPointData().getEventData().getEventSequence().getCreationTime().toGregorianCalendar().getTimeInMillis() + (mqmd.getExpiry() * 100);
-                        builder.setExpiry(ZonedDateTime.ofInstant(Instant.ofEpochMilli(expiryTime), ZoneOffset.UTC));
+                        builder.setExpiry(Instant.ofEpochMilli(expiryTime));
                     }
                 }
                 int ibmMsgType = mqmd.getMsgType();

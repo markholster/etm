@@ -14,8 +14,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 public class ClonedMessageHandler extends AbstractJMSEventHandler {
@@ -71,9 +69,9 @@ public class ClonedMessageHandler extends AbstractJMSEventHandler {
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .addEndpointHandler(new EndpointHandlerBuilder()
                                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                                .setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.getJMSTimestamp() != 0 ? message.getJMSTimestamp() : System.currentTimeMillis()), ZoneOffset.UTC))));
+                                .setHandlingTime(Instant.ofEpochMilli(message.getJMSTimestamp() != 0 ? message.getJMSTimestamp() : System.currentTimeMillis()))));
         if (message.getJMSExpiration() != 0) {
-            this.messagingTelemetryEventBuilder.setExpiry(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.getJMSExpiration()), ZoneOffset.UTC));
+            this.messagingTelemetryEventBuilder.setExpiry(Instant.ofEpochMilli(message.getJMSExpiration()));
         }
     }
 

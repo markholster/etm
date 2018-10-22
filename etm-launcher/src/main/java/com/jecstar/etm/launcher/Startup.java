@@ -21,7 +21,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,7 +42,7 @@ class Startup {
             EtmLoggerFactory.initialize(bulkProcessorWrapper);
             BusinessEventLogger.initialize(bulkProcessorWrapper,
                     new EndpointBuilder().setName(configuration.instanceName)
-                            .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(ZonedDateTime.now())
+                            .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(Instant.now())
                                     .setType(EndpointHandler.EndpointHandlerType.WRITER)
                                     .setApplication(new ApplicationBuilder().setName("Enterprise Telemetry Monitor")
                                             .setVersion(System.getProperty("app.version"))

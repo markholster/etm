@@ -7,7 +7,7 @@ import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 import org.junit.Test;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -47,7 +47,7 @@ public class TelemetryEventTest {
                 );
 
         // A user requests the shopping card page from our public http site.
-        ZonedDateTime timestamp = ZonedDateTime.now();
+        Instant timestamp = Instant.now();
 
         builder1.setPayload("<shoppingcard_request><customer_id>543214</customer_id></shoppingcard_request>")
                 .setPayloadFormat(PayloadFormat.XML)

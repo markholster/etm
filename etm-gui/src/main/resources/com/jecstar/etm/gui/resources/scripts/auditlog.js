@@ -294,7 +294,8 @@ function buildAuditLogPage() {
     	appendToContainerInRow($('#event-detail'), 'Event id', data.event_id);
     	appendToContainerInRow($('#event-detail'), 'Event name', data.event_name);
         appendToContainerInRow($('#event-detail'), 'Payload visible', data.payload_visible ? 'Yes' : 'No');
-    	
+        appendToContainerInRow($('#event-detail'), 'Downloaded', data.downloaded ? 'Yes' : 'No');
+
     	if (data.correlated_events) {
         	$('#event-detail').append($('<br/>'));
 	        $correlationTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(

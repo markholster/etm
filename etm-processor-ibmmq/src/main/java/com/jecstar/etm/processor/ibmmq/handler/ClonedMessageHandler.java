@@ -15,8 +15,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 public class ClonedMessageHandler extends AbstractMQEventHandler {
@@ -60,7 +58,7 @@ public class ClonedMessageHandler extends AbstractMQEventHandler {
 
     private void parseMessage(MQMessage message) throws IOException {
         EndpointHandlerBuilder endpointHandlerBuilder = new EndpointHandlerBuilder()
-                .setHandlingTime(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis()), ZoneOffset.UTC));
+                .setHandlingTime(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis()));
 
         putNonNullDataInMap("MQMD_CharacterSet", "" + message.characterSet, endpointHandlerBuilder.getMetadata());
         putNonNullDataInMap("MQMD_Format", message.format, endpointHandlerBuilder.getMetadata());
@@ -81,7 +79,7 @@ public class ClonedMessageHandler extends AbstractMQEventHandler {
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .addEndpointHandler(endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER)));
         if (message.expiry != CMQC.MQEI_UNLIMITED) {
-            this.messagingTelemetryEventBuilder.setExpiry(ZonedDateTime.ofInstant(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis() + (message.expiry * 100)), ZoneOffset.UTC));
+            this.messagingTelemetryEventBuilder.setExpiry(Instant.ofEpochMilli(message.putDateTime.getTimeInMillis() + (message.expiry * 100)));
         }
         if (message.messageType == CMQC.MQMT_REQUEST) {
             this.messagingTelemetryEventBuilder.setMessagingEventType(MessagingEventType.REQUEST);

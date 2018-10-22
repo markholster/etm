@@ -15,6 +15,8 @@
 * [ETM-69] Migrate to Elasticsearch 6.4.
 * [ETM-70] Allow search time filter on alle time fields.
 * [ETM-71] Add role that allows to see all but payload from event.
+* [ETM-72] Log downloads in audit log.
+* [ETM-73] Add SNMP notifier.
 
 === Version 3.2.0
 * [ETM-14] Add signals.

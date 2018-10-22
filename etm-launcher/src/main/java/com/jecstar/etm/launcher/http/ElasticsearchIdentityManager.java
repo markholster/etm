@@ -27,7 +27,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import java.security.cert.X509Certificate;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashMap;
@@ -254,7 +254,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
 
     private void logLoginAttempt(String id, boolean success) {
-        ZonedDateTime now = ZonedDateTime.now();
+        Instant now = Instant.now();
         LoginAuditLogBuilder auditLogBuilder = new LoginAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(id).setSuccess(success);
         this.client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))

@@ -2,7 +2,7 @@ package com.jecstar.etm.server.core.domain.audit;
 
 import com.jecstar.etm.server.core.converter.JsonField;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public abstract class AuditLog {
 
@@ -14,7 +14,7 @@ public abstract class AuditLog {
      * The time the audit was written to the database.
      */
     @JsonField(TIMESTAMP)
-    public ZonedDateTime timestamp;
+    public Instant timestamp;
 
     /**
      * The principalId that caused this log.
@@ -26,7 +26,7 @@ public abstract class AuditLog {
      * The time the audit event took place.
      */
     @JsonField(HANDLING_TIME)
-    public ZonedDateTime handlingTime;
+    public Instant handlingTime;
 
 
 }

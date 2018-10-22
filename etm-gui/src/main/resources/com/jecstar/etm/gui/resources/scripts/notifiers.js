@@ -26,32 +26,90 @@ function buildNotifiersPage() {
     $('#sel-notifier').change(function(event) {
         event.preventDefault();
         var notifierData = notifierMap[$(this).val()];
+        resetValues();
         if ('undefined' == typeof notifierData) {
-            resetValues();
             return;
         }
         $('#input-notifier-name').val(notifierData.name);
         $('#sel-notifier-type').val(notifierData.type).trigger('change');
-        $('#input-smtp-host').val(notifierData.smtp_host);
-        $('#input-smtp-port').val(notifierData.smtp_port);
-        $('#sel-smtp-connection-security').val(notifierData.connection_security);
-        $('#input-smtp-username').val(notifierData.username);
-        $('#input-smtp-password').val(decode(notifierData.password));
-        $('#input-from-address').val(notifierData.from_address);
-        $('#input-from-name').val(notifierData.from_name);
+        if ('EMAIL' == notifierData.type) {
+            $('#input-smtp-host').val(notifierData.host);
+            $('#input-smtp-port').val(notifierData.port);
+            $('#sel-smtp-connection-security').val(notifierData.smtp_connection_security);
+            $('#input-smtp-username').val(notifierData.username);
+            $('#input-smtp-password').val(decode(notifierData.password));
+            $('#input-from-address').val(notifierData.smtp_from_address);
+            $('#input-from-name').val(notifierData.smtp_from_name);
+        } else if ('SNMP' == notifierData.type) {
+            $('#input-snmp-host').val(notifierData.host);
+            $('#input-snmp-port').val(notifierData.port);
+            $('#sel-snmp-version').val(notifierData.snmp_version).trigger('change');
+            if ('V1' == notifierData.snmp_version || 'V2C' == notifierData.snmp_version) {
+                $('#input-snmp-community').val(decode(notifierData.snmp_community));
+            } else if ('V3' == notifierData.snmp_version) {
+                $('#input-snmp-security-name').val(notifierData.username);
+                $('#sel-snmp-authentication-protocol').val(notifierData.snmp_authentication_protocol);
+                $('#input-snmp-authentication-passphrase').val(decode(notifierData.password));
+                $('#sel-snmp-privacy-protocol').val(notifierData.snmp_privacy_protocol);
+                $('#input-snmp-privacy-passphrase').val(decode(notifierData.snmp_privacy_passphrase));
+            }
+            $('#sel-snmp-authentication-protocol').trigger('change');
+            $('#sel-snmp-privacy-protocol').trigger('change');
+        }
         enableOrDisableButtons();
     });
 
 	$('#sel-notifier-type').on('change', function(event) {
+        event.preventDefault();
 	    if ('ETM_BUSINESS_EVENT' == $(this).val()) {
-	        $('#email-fields').hide();
+            $('#email-fields, #snmp-fields').hide();
 	        $('#business-event-fields').show();
 	    } else if ('EMAIL' == $(this).val()) {
-	        $('#business-event-fields').hide();
+            $('#business-event-fields, #snmp-fields').hide();
 	        $('#email-fields').show();
-	    }
+        } else if ('SNMP' == $(this).val()) {
+            $('#business-event-fields, #email-fields').hide();
+            $('#snmp-fields').show();
+        }
 	    enableOrDisableButtons();
 	});
+
+    $('#sel-snmp-version').on('change', function (event) {
+        event.preventDefault();
+        if ('V1' == $(this).val() || 'V2C' == $(this).val()) {
+            $('#group-snmp-security-name' +
+                ', #group-snmp-authentication-protocol' +
+                ', #group-snmp-authentication-passphrase' +
+                ', #group-snmp-privacy-protocol' +
+                ', #group-input-snmp-privacy-passphrase').hide();
+            $('#group-snmp-community').show();
+        } else if ('V3' == $(this).val()) {
+            $('#group-snmp-community').hide();
+            $('#group-snmp-security-name' +
+                ', #group-snmp-authentication-protocol').show();
+
+            $('#sel-snmp-authentication-protocol').trigger('change');
+        }
+    });
+
+    $('#sel-snmp-authentication-protocol').on('change', function (event) {
+        event.preventDefault();
+        if ($(this).val()) {
+            $('#group-snmp-authentication-passphrase, #group-snmp-privacy-protocol').show();
+            $('#sel-snmp-privacy-protocol').trigger('change');
+        } else {
+            $('#group-snmp-authentication-passphrase, #group-snmp-privacy-protocol, #group-input-snmp-privacy-passphrase').hide();
+        }
+    });
+
+    $('#sel-snmp-privacy-protocol').on('change', function (event) {
+        event.preventDefault();
+        if ($(this).val()) {
+            $('#group-input-snmp-privacy-passphrase').show();
+        } else {
+            $('#group-input-snmp-privacy-passphrase').hide();
+        }
+    });
 
     $('#btn-confirm-save-notifier').click(function(event) {
         if (!document.getElementById('notifier_form').checkValidity()) {
@@ -154,13 +212,30 @@ function buildNotifiersPage() {
             type: $('#sel-notifier-type').val()
         };
         if ('EMAIL' == notifierData.type) {
-            notifierData.smtp_host = $('#input-smtp-host').val();
-            notifierData.smtp_port = Number($('#input-smtp-port').val());
-            notifierData.connection_security = $('#sel-smtp-connection-security').val() ? $('#sel-smtp-connection-security').val() : null;
+            notifierData.host = $('#input-smtp-host').val();
+            notifierData.port = Number($('#input-smtp-port').val());
+            notifierData.smtp_connection_security = $('#sel-smtp-connection-security').val() ? $('#sel-smtp-connection-security').val() : null;
             notifierData.username = $('#input-smtp-username').val() ? $('#input-smtp-username').val() : null;
             notifierData.password = encode($('#input-smtp-password').val());
-            notifierData.from_address = $('#input-from-address').val() ? $('#input-from-address').val() : null;
-            notifierData.from_name = $('#input-from-name').val() ? $('#input-from-name').val() : null;
+            notifierData.smtp_from_address = $('#input-from-address').val() ? $('#input-from-address').val() : null;
+            notifierData.smtp_from_name = $('#input-from-name').val() ? $('#input-from-name').val() : null;
+        } else if ('SNMP' == notifierData.type) {
+            notifierData.host = $('#input-snmp-host').val();
+            notifierData.port = Number($('#input-snmp-port').val());
+            notifierData.snmp_version = $('#sel-snmp-version').val();
+            if ('V1' == notifierData.snmp_version || 'V2C' == notifierData.snmp_version) {
+                notifierData.snmp_community = encode($('#input-snmp-community').val())
+            } else if ('V3' == notifierData.snmp_version) {
+                notifierData.username = $('#input-snmp-security-name').val() ? $('#input-snmp-security-name').val() : null;
+                if ($('#sel-snmp-authentication-protocol').val()) {
+                    notifierData.snmp_authentication_protocol = $('#sel-snmp-authentication-protocol').val();
+                    notifierData.password = encode($('#input-snmp-authentication-passphrase').val());
+                    if ($('#sel-snmp-privacy-protocol').val()) {
+                        notifierData.snmp_privacy_protocol = $('#sel-snmp-privacy-protocol').val();
+                        notifierData.snmp_privacy_passphrase = encode($('#input-snmp-privacy-passphrase').val());
+                    }
+                }
+            }
         }
         return notifierData;
     }
@@ -191,6 +266,7 @@ function buildNotifiersPage() {
 
     function resetValues() {
         document.getElementById('notifier_form').reset();
+        $('#sel-notifier-type').trigger('change');
         enableOrDisableButtons();
     }
 }

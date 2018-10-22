@@ -9,7 +9,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class EtmPrincipal implements Principal, Serializable {
+public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable {
 
     public static final int DEFAULT_HISTORY_SIZE = 5;
 
@@ -21,7 +21,7 @@ public class EtmPrincipal implements Principal, Serializable {
     private final Set<String> roles = new HashSet<>();
     private final Set<EtmGroup> groups = new HashSet<>();
     private Set<String> dashboards = new HashSet<>();
-    private Set<String> signals = new HashSet<>();
+    private Set<String> notifiers = new HashSet<>();
     private Set<String> dashboardDatasources = new HashSet<>();
     private Set<String> signalDatasources = new HashSet<>();
     private String passwordHash;
@@ -50,8 +50,18 @@ public class EtmPrincipal implements Principal, Serializable {
     }
 
     @Override
+    public String getType() {
+        return "user";
+    }
+
+    @Override
     public String getName() {
         return this.name == null ? this.id : this.name;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return this.name == null ? this.id : this.id + " (" + this.name + ")";
     }
 
     public void setName(String name) {
@@ -164,12 +174,14 @@ public class EtmPrincipal implements Principal, Serializable {
         return this.dashboardDatasources;
     }
 
-    public Set<String> getSignals() {
-        return this.signals;
+    public Set<String> getNotifiers() {
+        return this.notifiers;
     }
 
-    public void addSignal(String signal) {
-        this.signals.add(signal);
+    public void addNotifiers(List<String> notifiers) {
+        if (notifiers != null) {
+            this.notifiers.addAll(notifiers);
+        }
     }
 
     public Set<String> getSignalDatasources() {
@@ -206,6 +218,49 @@ public class EtmPrincipal implements Principal, Serializable {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean isAuthorizedForDashboardDatasource(String datasourceName) {
+        if (this.dashboardDatasources.contains(datasourceName)) {
+            return true;
+        }
+        for (EtmGroup group : this.groups) {
+            if (group.isAuthorizedForDashboardDatasource(datasourceName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isAuthorizedForSignalDatasource(String datasourceName) {
+        if (this.signalDatasources.contains(datasourceName)) {
+            return true;
+        }
+        for (EtmGroup group : this.groups) {
+            if (group.isAuthorizedForSignalDatasource(datasourceName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isAuthorizedForNotifier(String notifierName) {
+        if (this.notifiers.contains(notifierName)) {
+            return true;
+        }
+        for (EtmGroup group : this.groups) {
+            if (group.isAuthorizedForNotifier(notifierName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean maySeeEventPayload() {
+        // The ETM_EVENT_READ and ETM_EVENT_READ_WRITE are the only event roles that are allowed to see the event payload.
+        return isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
     }
 
     public boolean isInGroup(String groupName) {

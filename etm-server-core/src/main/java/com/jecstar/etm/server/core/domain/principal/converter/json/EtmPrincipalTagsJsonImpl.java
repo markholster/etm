@@ -119,4 +119,8 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
         return "signal_datasources";
     }
 
+    @Override
+    public String getNotifiersTag() {
+        return "notifiers";
+    }
 }

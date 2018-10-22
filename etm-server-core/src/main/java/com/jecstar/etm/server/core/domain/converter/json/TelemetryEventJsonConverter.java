@@ -127,7 +127,7 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
             endpointHandler.application.version = getString(this.tags.getApplicationVersionTag(), applicationValueMap);
         }
         endpointHandler.type = EndpointHandler.EndpointHandlerType.safeValueOf(getString(this.tags.getEndpointHandlerTypeTag(), valueMap));
-        endpointHandler.handlingTime = getZonedDateTime(this.tags.getEndpointHandlerHandlingTimeTag(), valueMap);
+        endpointHandler.handlingTime = getInstant(this.tags.getEndpointHandlerHandlingTimeTag(), valueMap);
         endpointHandler.latency = getLong(this.tags.getEndpointHandlerLatencyTag(), valueMap);
         endpointHandler.responseTime = getLong(this.tags.getEndpointHandlerResponseTimeTag(), valueMap);
         endpointHandler.transactionId = getString(this.tags.getEndpointHandlerTransactionIdTag(), valueMap);

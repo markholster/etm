@@ -4,13 +4,16 @@ import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.converter.NotifierConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.EtmSnmpConstants;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import com.jecstar.etm.signaler.backoff.BackoffPolicy;
 import com.jecstar.etm.signaler.domain.Signal;
@@ -29,13 +32,15 @@ import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
 import org.joda.time.DateTime;
+import org.snmp4j.smi.OctetString;
 
-import java.time.ZonedDateTime;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.time.Instant;
 import java.util.*;
 
 /**
- * Starting class for the alerting functionality. This class will request an alerting claim. When acknowledged by the
- * cluster, it will execute all alerts.
+ * Starting class for the alerting functionality.
  */
 public class Signaler extends AbstractJsonService implements Runnable {
 
@@ -43,6 +48,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(Signaler.class);
+    private static final long SYSTEM_START_TIME = System.currentTimeMillis();
     private static final int MAX_RETRIES = 5;
 
     private final String clusterName;
@@ -52,17 +58,53 @@ public class Signaler extends AbstractJsonService implements Runnable {
     private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
     private final SignalConverter signalConverter = new SignalConverter();
     private final NotifierConverter notifierConverter = new NotifierConverter();
+    private final byte[] snmpEngineId;
 
     public Signaler(String clusterName, EtmConfiguration etmConfiguration, Client client) {
         this.clusterName = clusterName;
         this.etmConfiguration = etmConfiguration;
         this.client = client;
+        OctetString engineId = createSnmpEngineId();
+        this.snmpEngineId = engineId.getValue();
+        BusinessEventLogger.logSnmpEngineIdAssignment(engineId.toHexString());
+
+    }
+
+    /**
+     * Create a new engine id based on the Jecstar PEN and the host we're running on.
+     *
+     * @return The engine id that is unique for the machine ETM is running on.
+     */
+    private OctetString createSnmpEngineId() {
+        byte[] engineID = new byte[5];
+        engineID[0] = (byte) (0x80 | ((EtmSnmpConstants.JECSTAR_PEN >> 24) & 0xFF));
+        engineID[1] = (byte) ((EtmSnmpConstants.JECSTAR_PEN >> 16) & 0xFF);
+        engineID[2] = (byte) ((EtmSnmpConstants.JECSTAR_PEN >> 8) & 0xFF);
+        engineID[3] = (byte) (EtmSnmpConstants.JECSTAR_PEN & 0xFF);
+        engineID[4] = 2;
+        OctetString os = new OctetString();
+        try {
+            byte[] b = InetAddress.getLocalHost().getAddress();
+            if (b.length == 4) {
+                engineID[4] = 1;
+            }
+            os.setValue(b);
+        } catch (UnknownHostException e) {
+            if (log.isDebugLevelEnabled()) {
+                log.logDebugMessage("Local host cannot be determined for creation of local engine ID", e);
+            }
+            engineID[4] = 4;
+            os.setValue("ETM".getBytes());
+        }
+        OctetString ownEngineID = new OctetString(engineID);
+        ownEngineID.append(os);
+        return ownEngineID;
     }
 
     @Override
     public void run() {
-        ZonedDateTime batchStart = ZonedDateTime.now();
-        try (NotificationExecutor thresholdExceededNotifier = new NotificationExecutor()) {
+        Instant batchStart = Instant.now();
+        try (NotificationExecutor thresholdExceededNotifier = new NotificationExecutor(this.snmpEngineId)) {
             BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
             boolQueryBuilder.should(new ExistsQueryBuilder(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getSignalsTag()));
             boolQueryBuilder.should(new ExistsQueryBuilder(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getSignalsTag()));
@@ -101,7 +143,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @param id                   The id of the entity.
      * @return <code>true</code> when the entity is handled, otherwise <code>false</code> will be returned.
      */
-    private boolean handleEntity(ZonedDateTime batchStart, NotificationExecutor notificationExecutor, String index, String type, String id) {
+    private boolean handleEntity(Instant batchStart, NotificationExecutor notificationExecutor, String index, String type, String id) {
         GetResponse getResponse = this.client.prepareGet(index, type, id)
                 .setFetchSource(
                         new String[]{
@@ -114,16 +156,15 @@ public class Signaler extends AbstractJsonService implements Runnable {
                 .get();
         Map<String, Object> sourceMap = getResponse.getSourceAsMap();
         Map<String, Object> entityObjectMap = null;
-        EtmPrincipal etmPrincipal = null;
-        EtmGroup etmGroup = null;
+        EtmSecurityEntity etmSecurityEntity = null;
         if (sourceMap.containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP)) {
             entityObjectMap = toMapWithoutNamespace(sourceMap, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
             String groupName = getString(this.etmPrincipalTags.getNameTag(), entityObjectMap);
-            etmGroup = getEtmGroup(groupName);
-        } else if (sourceMap.containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
+            etmSecurityEntity = getEtmGroup(groupName);
+        } else {
             entityObjectMap = toMapWithoutNamespace(sourceMap, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
             String userId = getString(this.etmPrincipalTags.getIdTag(), entityObjectMap);
-            etmPrincipal = getEtmPrincipal(userId);
+            etmSecurityEntity = getEtmPrincipal(userId);
         }
         List<Map<String, Object>> signals = getArray(this.etmPrincipalTags.getSignalsTag(), entityObjectMap);
         if (signals == null || signals.size() < 1) {
@@ -136,30 +177,30 @@ public class Signaler extends AbstractJsonService implements Runnable {
             if (Thread.currentThread().isInterrupted()) {
                 return false;
             }
-            ZonedDateTime lastExecuted = getZonedDateTime(Signal.LAST_EXECUTED, signalValues);
+            Instant lastExecuted = getInstant(Signal.LAST_EXECUTED, signalValues);
             Signal signal = this.signalConverter.read(signalValues);
-            if (lastExecuted != null && ZonedDateTime.now().isBefore(lastExecuted.plus(signal.getIntervalDuration()))) {
+            if (lastExecuted != null && Instant.now().isBefore(lastExecuted.plus(signal.getIntervalDuration()))) {
                 continue;
             }
-            SignalTestResult result = testThresholds(signal, etmPrincipal, etmGroup);
+            SignalTestResult result = testThresholds(signal, etmSecurityEntity);
             if (!result.isExecuted()) {
                 break;
             }
             signalsUpdated = true;
-            signalValues.put(Signal.LAST_EXECUTED, batchStart.toInstant().toEpochMilli());
+            signalValues.put(Signal.LAST_EXECUTED, batchStart.toEpochMilli());
             if (result.isLimitExceeded(signal)) {
-                signalValues.put(Signal.LAST_FAILED, batchStart.toInstant().toEpochMilli());
+                signalValues.put(Signal.LAST_FAILED, batchStart.toEpochMilli());
                 if (signalValues.containsKey(Signal.FAILED_SINCE)) {
                     long failedSince = getLong(Signal.FAILED_SINCE, signalValues);
                     result.setConsecutiveFailures(
                             Math.round(
-                                    (float) (batchStart.toInstant().toEpochMilli() - failedSince)
+                                    (float) (batchStart.toEpochMilli() - failedSince)
                                             / (float) result.getTestInterval().toMillis()
                             )
                                     + 1
                     );
                 } else {
-                    signalValues.put(Signal.FAILED_SINCE, batchStart.toInstant().toEpochMilli());
+                    signalValues.put(Signal.FAILED_SINCE, batchStart.toEpochMilli());
                     result.setConsecutiveFailures(1);
                 }
                 notificationMap.put(signal, result);
@@ -168,7 +209,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
                     fixedSet.add(signal);
                 }
                 signalValues.remove(Signal.FAILED_SINCE);
-                signalValues.put(Signal.LAST_PASSED, batchStart.toInstant().toEpochMilli());
+                signalValues.put(Signal.LAST_PASSED, batchStart.toEpochMilli());
             }
         }
         if (!signalsUpdated) {
@@ -193,10 +234,10 @@ public class Signaler extends AbstractJsonService implements Runnable {
         }
         // Current version updated, so no other node in the cluster has came this far. We have to send the notifications now.
         for (Map.Entry<Signal, SignalTestResult> entry : notificationMap.entrySet()) {
-            sendFailureNotifications(notificationExecutor, entry.getKey(), entry.getValue(), etmPrincipal, etmGroup);
+            sendFailureNotifications(notificationExecutor, entry.getKey(), entry.getValue(), etmSecurityEntity);
         }
         for (Signal signal : fixedSet) {
-            sendFixedNotifications(notificationExecutor, signal, etmPrincipal, etmGroup);
+            sendFixedNotifications(notificationExecutor, signal, etmSecurityEntity);
         }
         return true;
     }
@@ -207,41 +248,30 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * <code>Signal</code>
      *
      * @param signal       The <code>Signal</code> to test.
-     * @param etmPrincipal The <code>EtmPrincipal</code> that has stored the given <code>Signal</code>. Set this value
-     *                     to <code>null</code> when the <code>Signal</code> was added to an <code>EtmGroup</code>.
-     * @param etmGroup     The <code>EtmGroup</code> that has stored the given <code>Signal</code>. Set this value
-     *                     to <code>null</code> when the <code>Signal</code> was added to an <code>EtmPrincipal</code>.
+     * @param etmSecurityEntity The <code>EtmSecurityEntity</code> that has stored the given <code>Signal</code>.
      * @return A <code>SignalTestResult</code> instance with the test and notifyExceedance results.
      */
-    private SignalTestResult testThresholds(Signal signal, EtmPrincipal etmPrincipal, EtmGroup etmGroup) {
+    private SignalTestResult testThresholds(Signal signal, EtmSecurityEntity etmSecurityEntity) {
         SignalTestResult result = new SignalTestResult();
         result.setTestInterval(signal.getIntervalDuration());
         SignalSearchRequestBuilderBuilder builderBuilder = new SignalSearchRequestBuilderBuilder(this.client, this.etmConfiguration)
                 .setSignal(signal);
         SearchRequestBuilder builder;
 
-        if (etmPrincipal != null) {
-            if (!etmPrincipal.getSignalDatasources().contains(signal.getDataSource())) {
-                if (log.isErrorLevelEnabled()) {
-                    log.logErrorMessage("Signal '" + signal.getName() + "' is configured with data source '" + signal.getDataSource() + "' but user '" + etmPrincipal.getId() + "' is not authorized for that data source.");
-                }
-                return result.setExectued(false);
-            }
-            builder = builderBuilder.build(q -> addFilterQuery(etmPrincipal, q), etmPrincipal);
-        } else if (etmGroup != null) {
-            if (!etmGroup.getSignalDatasources().contains(signal.getDataSource())) {
-                if (log.isErrorLevelEnabled()) {
-                    log.logErrorMessage("Signal '" + signal.getName() + "' is configured with data source '" + signal.getDataSource() + "' but group '" + etmGroup.getName() + "' is not authorized for that data source.");
-                }
-                return result.setExectued(false);
-            }
-            builder = builderBuilder.build(q -> addFilterQuery(etmGroup, q, null), null);
-        } else {
+        if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getDataSource())) {
             if (log.isErrorLevelEnabled()) {
-                log.logErrorMessage("No EtmPrincipal or EtmGroup available. Unable to test signal '" + signal.getName() + "'.");
+                log.logErrorMessage("Signal '" + signal.getName() + "' is configured with data source '" + signal.getDataSource() + "' but " + etmSecurityEntity.getType() + " '" + etmSecurityEntity.getDisplayName() + "' is not authorized for that datasource.");
             }
             return result.setExectued(false);
         }
+        if (etmSecurityEntity instanceof EtmPrincipal) {
+            EtmPrincipal etmPrincipal = (EtmPrincipal) etmSecurityEntity;
+            builder = builderBuilder.build(q -> addFilterQuery(etmPrincipal, q), etmPrincipal);
+        } else {
+            EtmGroup etmGroup = (EtmGroup) etmSecurityEntity;
+            builder = builderBuilder.build(q -> addFilterQuery(etmGroup, q, null), null);
+        }
+
         SearchResponse searchResponse = builder.get();
         result.setExectued(true);
         MultiBucketsAggregation aggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
@@ -273,14 +303,22 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @param notificationExecutor The <code>NotificationExecutor</code> to be used to notify users.
      * @param signal               The <code>Signal</code> that has a threshold exceedance.
      * @param signalTestResult     The <code>SignalTestResult</code> instance.
-     * @param etmPrincipal         The <code>EtmPrincipal</code> that owns the <code>Signal</code>. <code>null</code> when the <code>Signal</code> is owned by an <code>EtmGroup</code>.
-     * @param etmGroup             The <code>EtmGroup</code> that owns the <code>Signal</code>. <code>null</code> when the <code>Signal</code> is owned by an <code>EtmPrincipal</code>.
+     * @param etmSecurityEntity    The <code>EtmSecurityEntity</code> that owns the <code>Signal</code>.
      */
-    private void sendFailureNotifications(NotificationExecutor notificationExecutor, Signal signal, SignalTestResult signalTestResult, EtmPrincipal etmPrincipal, EtmGroup etmGroup) {
+    private void sendFailureNotifications(NotificationExecutor notificationExecutor, Signal signal, SignalTestResult signalTestResult, EtmSecurityEntity etmSecurityEntity) {
         if (signal.getNotifiers() == null) {
             return;
         }
         for (String notifierName : signal.getNotifiers()) {
+            if (!etmSecurityEntity.isAuthorizedForNotifier(notifierName)) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("Signal '"
+                            + signal.getName()
+                            + "' of " + etmSecurityEntity.getType() + " '" + etmSecurityEntity.getDisplayName()
+                            + "' has a notifier '" + notifierName + "' configured but that " + etmSecurityEntity.getType() + " is not authorized for this notifier.");
+                }
+                continue;
+            }
             Notifier notifier = getNotifier(notifierName);
             if (notifier == null) {
                 if (log.isWarningLevelEnabled()) {
@@ -288,14 +326,14 @@ public class Signaler extends AbstractJsonService implements Runnable {
                             + notifierName
                             + "' not found. Signal '"
                             + signal.getName()
-                            + "' of " + (etmPrincipal != null ? "user '" + etmPrincipal.getId() + "'" : " group '" + etmGroup.getName() + "'")
-                            + " has an exceeded limit that cannot be notified.");
+                            + "' of " + etmSecurityEntity.getType() + " '" + etmSecurityEntity.getDisplayName()
+                            + "' has an exceeded limit that cannot be notified.");
                 }
                 continue;
             }
             BackoffPolicy backoffPolicy = signalTestResult.getNotificationBackoffPolicy(notifier);
             if (backoffPolicy.shouldBeNotified()) {
-                notificationExecutor.notifyExceedance(this.client, this.etmConfiguration, this.clusterName, signal, notifier, signalTestResult.getThresholdExceedances(), etmPrincipal, etmGroup);
+                notificationExecutor.notifyExceedance(this.client, this.etmConfiguration, this.clusterName, signal, notifier, signalTestResult.getThresholdExceedances(), etmSecurityEntity, SYSTEM_START_TIME);
             }
         }
     }
@@ -305,14 +343,22 @@ public class Signaler extends AbstractJsonService implements Runnable {
      *
      * @param notificationExecutor The <code>NotificationExecutor</code> to be used to notify users.
      * @param signal               The <code>Signal</code> that no longer has a threshold exceedance.
-     * @param etmPrincipal         The <code>EtmPrincipal</code> that owns the <code>Signal</code>. <code>null</code> when the <code>Signal</code> is owned by an <code>EtmGroup</code>.
-     * @param etmGroup             The <code>EtmGroup</code> that owns the <code>Signal</code>. <code>null</code> when the <code>Signal</code> is owned by an <code>EtmPrincipal</code>.
+     * @param etmSecurityEntity    The <code>EtmSecurityEntity</code> that owns the <code>Signal</code>.
      */
-    private void sendFixedNotifications(NotificationExecutor notificationExecutor, Signal signal, EtmPrincipal etmPrincipal, EtmGroup etmGroup) {
+    private void sendFixedNotifications(NotificationExecutor notificationExecutor, Signal signal, EtmSecurityEntity etmSecurityEntity) {
         if (signal.getNotifiers() == null) {
             return;
         }
         for (String notifierName : signal.getNotifiers()) {
+            if (!etmSecurityEntity.isAuthorizedForNotifier(notifierName)) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("Signal '"
+                            + signal.getName()
+                            + "' of " + etmSecurityEntity.getType() + " '" + etmSecurityEntity.getDisplayName()
+                            + "' has a notifier '" + notifierName + "' configured but that " + etmSecurityEntity.getType() + " is not authorized for this notifier.");
+                }
+                continue;
+            }
             Notifier notifier = getNotifier(notifierName);
             if (notifier == null) {
                 if (log.isWarningLevelEnabled()) {
@@ -320,12 +366,12 @@ public class Signaler extends AbstractJsonService implements Runnable {
                             + notifierName
                             + "' not found. Signal '"
                             + signal.getName()
-                            + "' of " + (etmPrincipal != null ? "user '" + etmPrincipal.getId() + "'" : " group '" + etmGroup.getName() + "'")
-                            + " has an exceeded limit that cannot be notified.");
+                            + "' of " + etmSecurityEntity.getType() + " '" + etmSecurityEntity.getDisplayName()
+                            + "' has an exceeded limit that cannot be notified.");
                 }
                 continue;
             }
-            notificationExecutor.notifyNoLongerExceeded(this.client, this.etmConfiguration, this.clusterName, signal, notifier, etmPrincipal, etmGroup);
+            notificationExecutor.notifyNoLongerExceeded(this.client, this.etmConfiguration, this.clusterName, signal, notifier, etmSecurityEntity);
         }
     }
 

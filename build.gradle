@@ -1,6 +1,6 @@
 ext {
     version_artemis = "2.3.0"
-    version_cucumber = "2.3.1"
+    version_citrus = "2.7.7"
     version_elasticsearch_major = "6.4"
     version_elasticsearch = version_elasticsearch_major + ".0"
     version_junit = "5.1.0"
@@ -11,8 +11,9 @@ ext {
     dep_artemisJmsClient = "org.apache.activemq:artemis-jms-client:" + version_artemis
     dep_artemisJmsServer = "org.apache.activemq:artemis-jms-server:" + version_artemis
     dep_artemisServer = "org.apache.activemq:artemis-server:" + version_artemis
-    dep_cucumber = "io.cucumber:cucumber-java8:" + version_cucumber
-    dep_cucumberJunit = "io.cucumber:cucumber-junit:" + version_cucumber
+    dep_citrus = "com.consol.citrus:citrus-java-dsl:" + version_citrus
+    dep_citrusMail = "com.consol.citrus:citrus-mail:" + version_citrus
+    dep_citrusSelenium = "com.consol.citrus:citrus-selenium:" + version_citrus
     dep_disruptor = "com.lmax:disruptor:3.3.7"
     dep_elasticsearchClient = "org.elasticsearch.client:transport:" + version_elasticsearch
     dep_elasticsearchXpackTransportClient = "org.elasticsearch.client:x-pack-transport:" + version_elasticsearch
@@ -31,10 +32,10 @@ ext {
     dep_resteasyWadl = "org.jboss.resteasy:resteasy-wadl:" + version_resteasy
     dep_poiOoxml = "org.apache.poi:poi-ooxml:3.17"
     dep_saxonHE = "net.sf.saxon:Saxon-HE:9.8.0-4"
-    dep_seleniumJava = "org.seleniumhq.selenium:selenium-java:3.9.1"
     dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_slf4jSimple = "org.slf4j:slf4j-simple:" + version_slf4j
     dep_snakeyaml = "org.yaml:snakeyaml:1.18"
+    dep_snmp4j = "org.snmp4j:snmp4j:2.6.3"
     dep_undertowServlet = "io.undertow:undertow-servlet:2.0.4.Final"
 }
 
@@ -66,8 +67,8 @@ allprojects {
         dependencies {
             testCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
             testImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
-            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
-            testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
+//            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
+//            testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
         }
 
         sourceSets.whenObjectAdded {
@@ -75,8 +76,8 @@ allprojects {
                 dependencies {
                     integrationTestCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
                     integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
-                    integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
-                    integrationTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
+//                    integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
+//                    integrationTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
                 }
             }
         }

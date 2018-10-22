@@ -38,4 +38,9 @@ public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAud
         return this;
     }
 
+    public GetEventAuditLogBuilder setDownloaded(boolean downloaded) {
+        this.audit.downloaded = downloaded;
+        return this;
+    }
+
 }
