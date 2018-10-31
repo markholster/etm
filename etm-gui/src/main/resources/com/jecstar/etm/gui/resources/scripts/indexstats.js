@@ -31,11 +31,11 @@ function buildIndexStatsPage() {
         ];
     }
 
-    function setStatisticsData(data) {
-        $("#text-total-events").text(data.totals.document_count_as_string);
-        $("#text-total-size").text(data.totals.size_in_bytes_as_string);
+    function setStatisticsData(response) {
+        $("#text-total-events").text(response.totals.document_count_as_string);
+        $("#text-total-size").text(response.totals.size_in_bytes_as_string);
 
-        data.indices.sort(function (a, b) {
+        response.indices.sort(function (a, b) {
             if (a.name == b.name) {
                 return 0;
             }
@@ -47,9 +47,15 @@ function buildIndexStatsPage() {
         });
         Highcharts.setOptions({
             lang: {
-                decimalPoint: data.locale.decimal,
-                thousandsSep: data.locale.thousands
+                decimalPoint: response.locale.decimal,
+                thousandsSep: response.locale.thousands,
+                timezone: response.locale.timezone
             }
+        });
+        d3.formatDefaultLocale({
+            decimal: response.locale.decimal,
+            thousands: response.locale.thousands,
+            currency: response.locale.currency
         });
 
         Highcharts.chart('count_chart', {
@@ -72,7 +78,7 @@ function buildIndexStatsPage() {
                 }
             },
             xAxis: {
-                categories: $.map(data.indices, function (index) {
+                categories: $.map(response.indices, function (index) {
                     return index.name;
                 })
             },
@@ -83,7 +89,7 @@ function buildIndexStatsPage() {
             },
             series: [{
                 name: 'Count',
-                data: $.map(data.indices, function (index) {
+                data: $.map(response.indices, function (index) {
                     return index.document_count;
                 })
             }]
@@ -103,7 +109,7 @@ function buildIndexStatsPage() {
                 text: 'Performance averages in milliseconds'
             },
             xAxis: {
-                categories: $.map(data.indices, function (index) {
+                categories: $.map(response.indices, function (index) {
                     return index.name;
                 })
             },
@@ -115,12 +121,7 @@ function buildIndexStatsPage() {
                     text: 'Milliseconds'
                 }
             },
-            series: getLineChartDataForPerformance(data.indices)
-        });
-        Highcharts.setOptions({
-            lang: {
-                numericSymbols: ["KB", "MB", "GB", "TB", "PB", "EB"]
-            }
+            series: getLineChartDataForPerformance(response.indices)
         });
         Highcharts.chart('size_chart', {
             credits: {
@@ -142,13 +143,18 @@ function buildIndexStatsPage() {
                 }
             },
             xAxis: {
-                categories: $.map(data.indices, function (index) {
+                categories: $.map(response.indices, function (index) {
                     return index.name;
                 })
             },
             yAxis: {
                 title: {
                     text: 'Index size'
+                },
+                labels: {
+                    formatter: function () {
+                        return formatLabel(".2s", this.value);
+                    }
                 }
             },
             tooltip: {
@@ -156,10 +162,22 @@ function buildIndexStatsPage() {
             },
             series: [{
                 name: 'Size',
-                data: $.map(data.indices, function (index) {
+                data: $.map(response.indices, function (index) {
                     return index.size_in_bytes;
                 })
             }]
         });
+
+        function formatLabel(labelFormat, labelValue) {
+            if (labelFormat) {
+                try {
+                    var format = d3.format(labelFormat);
+                    return format(labelValue);
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+            return labelValue;
+        }
     }
 }
