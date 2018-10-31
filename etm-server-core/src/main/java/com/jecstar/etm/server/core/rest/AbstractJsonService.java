@@ -155,6 +155,7 @@ public abstract class AbstractJsonService extends JsonConverter {
         addStringElementToJsonBuffer("decimal", "" + decimalFormatSymbols.getDecimalSeparator(), result, true);
         addStringElementToJsonBuffer("thousands", "" + decimalFormatSymbols.getGroupingSeparator(), result, false);
         addStringElementToJsonBuffer("timezone", "" + etmPrincipal.getTimeZone().toZoneId().toString(), result, false);
+        result.append(",\"currency\": [\"").append(numberFormat.getCurrency().getSymbol(etmPrincipal.getLocale())).append("\", \"\"]");
         result.append("}");
         return result.toString();
     }

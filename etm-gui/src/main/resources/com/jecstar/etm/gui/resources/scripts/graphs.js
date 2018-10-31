@@ -761,6 +761,11 @@ function buildGraphsPage(groupName) {
                         timezone: response.locale.timezone
                     }
                 });
+                d3.formatDefaultLocale({
+                    decimal: response.locale.decimal,
+                    thousands: response.locale.thousands,
+                    currency: response.locale.currency
+                });
                 if ('bar' == response.type) {
                     Highcharts.chart('preview_box', {
                         credits: {
@@ -787,7 +792,9 @@ function buildGraphsPage(groupName) {
                         },
                         yAxis: {
                             labels: {
-                                format: response.data.yAxis.format
+                                formatter: function () {
+                                    return formatLabel(response.data.yAxis.format, this.value)
+                                }
                             }
                         },
                         series: response.data.series
@@ -826,7 +833,9 @@ function buildGraphsPage(groupName) {
                         },
                         yAxis: {
                             labels: {
-                                format: response.data.yAxis.format
+                                formatter: function () {
+                                    return formatLabel(response.data.yAxis.format, this.value)
+                                }
                             }
                         },
                         series: response.data.series
@@ -868,7 +877,9 @@ function buildGraphsPage(groupName) {
                         },
                         yAxis: {
                             labels: {
-                                format: response.data.yAxis.format
+                                formatter: function () {
+                                    return formatLabel(response.data.yAxis.format, this.value)
+                                }
                             }
                         },
                         series: response.data.series
@@ -877,6 +888,18 @@ function buildGraphsPage(groupName) {
                 $('html,body').animate({scrollTop: $("#preview_box").parent().parent().offset().top}, 'fast');
             }
         });
+
+        function formatLabel(labelFormat, labelValue) {
+            if (labelFormat) {
+                try {
+                    var format = d3.format(labelFormat);
+                    return format(labelValue);
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+            return labelValue;
+        }
 	}
 	
 	function resetValues() {
