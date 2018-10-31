@@ -1,7 +1,7 @@
 package com.jecstar.etm.signaler;
 
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
+import com.jecstar.etm.server.core.domain.cluster.notifier.EmailNotifier;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -64,7 +64,7 @@ class EmailSignal implements Closeable {
                                     EtmConfiguration etmConfiguration,
                                     String clusterName,
                                     Signal signal,
-                                    Notifier notifier,
+                                    EmailNotifier notifier,
                                     Map<DateTime, Double> thresholdExceedances,
                                     EtmSecurityEntity etmSecurityEntity
     ) {
@@ -126,7 +126,7 @@ class EmailSignal implements Closeable {
                                           EtmConfiguration etmConfiguration,
                                           String clusterName,
                                           Signal signal,
-                                          Notifier notifier,
+                                          EmailNotifier notifier,
                                           EtmSecurityEntity etmSecurityEntity
     ) {
         try {
@@ -173,7 +173,7 @@ class EmailSignal implements Closeable {
      * @throws UnsupportedEncodingException If the name of sender cannot be encoded in the default encoding.
      * @throws MessagingException           When any other failure occurs.
      */
-    private MimeMessage createMimeMessage(Session session, Notifier notifier, InternetAddress toAddress, String subject, String body) throws UnsupportedEncodingException, MessagingException {
+    private MimeMessage createMimeMessage(Session session, EmailNotifier notifier, InternetAddress toAddress, String subject, String body) throws UnsupportedEncodingException, MessagingException {
         MimeMessage message = new MimeMessage(session);
         if (notifier.getName() != null) {
             message.setFrom(new InternetAddress(notifier.getSmtpFromAddress(), notifier.getSmtpFromName()));
@@ -257,7 +257,7 @@ class EmailSignal implements Closeable {
      * @param notifier The <code>Notifier</code> to retrieve the <code>SessionAndTransport</code> for.
      * @return The <code>SessionAndTransport</code> instance.
      */
-    private SessionAndTransport getSessionAndTransport(Notifier notifier) {
+    private SessionAndTransport getSessionAndTransport(EmailNotifier notifier) {
         if (this.serverConnections.containsKey(notifier.getName())) {
             return this.serverConnections.get(notifier.getName());
         }
@@ -266,10 +266,10 @@ class EmailSignal implements Closeable {
         mailProps.put("mail.smtp.host", notifier.getHost());
         mailProps.put("mail.smtp.port", notifier.getPort());
         mailProps.put("mail.smtp.auth", notifier.getUsername() != null || notifier.getPassword() != null ? "true" : "false");
-        if (Notifier.SmtpConnectionSecurity.STARTTLS.equals(notifier.getSmtpConnectionSecurity())) {
+        if (EmailNotifier.SmtpConnectionSecurity.STARTTLS.equals(notifier.getSmtpConnectionSecurity())) {
             mailProps.put("mail.smtp.starttls.enable", "true");
             mailProps.put("mail.smtp.ssl.trust", "*");
-        } else if (Notifier.SmtpConnectionSecurity.SSL_TLS.equals(notifier.getSmtpConnectionSecurity())) {
+        } else if (EmailNotifier.SmtpConnectionSecurity.SSL_TLS.equals(notifier.getSmtpConnectionSecurity())) {
             mailProps.put("mail.smtp.ssl.enable", "true");
             mailProps.put("mail.smtp.ssl.trust", "*");
         }

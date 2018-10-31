@@ -13,10 +13,11 @@
 * [ETM-67] Option to set timestamp fields in search result table as start or end date for the query.
 * [ETM-68] Sorting on metric in term aggregator not working when sub aggregator is present.
 * [ETM-69] Migrate to Elasticsearch 6.4.
-* [ETM-70] Allow search time filter on alle time fields.
+* [ETM-70] Allow search time filter on all time fields.
 * [ETM-71] Add role that allows to see all but payload from event.
 * [ETM-72] Log downloads in audit log.
 * [ETM-73] Add SNMP notifier.
+* [ETM-75] Drop nvd3 and migrate all charts to Highcharts.
 
 === Version 3.2.0
 * [ETM-14] Add signals.

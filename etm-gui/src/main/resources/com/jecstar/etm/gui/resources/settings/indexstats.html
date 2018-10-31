@@ -10,12 +10,13 @@
     <link rel="stylesheet" href="../styles/bootstrap.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/etm-commons.css">
-    <link rel="stylesheet" href="../styles/nv.d3.min.css">
+    <link rel="stylesheet" href="../styles/highcharts.css">
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/tether.min.js"></script>
     <script src="../scripts/jquery.min.js"></script>
     <script src="../scripts/popper.min.js"></script>
     <script src="../scripts/bootstrap.min.js"></script>
+    <script src="../scripts/highcharts.js"></script>
 </head>
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
@@ -60,20 +61,20 @@
                     </div>
                     <div class="row">
                         <div id="count_chart" class=col-sm-12>
-                            <p class="text-center">Event count per index</p>
-                            <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
+                            <!--<p class="text-center">Event count per index</p>-->
+                            <!--<svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>-->
                         </div>
                     </div>
                     <div class="row">
                         <div id="size_chart" class=col-sm-12>
-                            <p class="text-center">Size per index in bytes</p>
-                            <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
+                            <!--<p class="text-center">Size per index in bytes</p>-->
+                            <!--<svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>-->
                         </div>
                     </div>
                     <div class="row">
                         <div id="performance_chart" class=col-sm-12>
-                            <p class="text-center">Performance averages in milliseconds</p>
-                            <svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>
+                            <!--<p class="text-center">Performance averages in milliseconds</p>-->
+                            <!--<svg class="img-fluid" style="max-width: 100%; height: auto;"></svg>-->
                         </div>
                     </div>
                 </div>
@@ -82,8 +83,6 @@
     </div>
 </div>
 
-<script src="../scripts/d3.min.js"></script>
-<script src="../scripts/nv.d3.min.js"></script>
 <script src="../scripts/indexstats.js"></script>
 <script src="../scripts/etm-commons.js"></script>
 <script>

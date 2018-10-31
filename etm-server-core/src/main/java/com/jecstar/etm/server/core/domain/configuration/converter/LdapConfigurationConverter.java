@@ -6,6 +6,6 @@ import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 public class LdapConfigurationConverter extends JsonEntityConverter<LdapConfiguration> {
 
     public LdapConfigurationConverter() {
-        super(LdapConfiguration::new);
+        super(f -> new LdapConfiguration());
     }
 }

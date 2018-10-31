@@ -1,6 +1,8 @@
 package com.jecstar.etm.signaler;
 
+import com.jecstar.etm.server.core.domain.cluster.notifier.EmailNotifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
+import com.jecstar.etm.server.core.domain.cluster.notifier.SnmpNotifier;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
@@ -56,9 +58,9 @@ public class NotificationExecutor implements Closeable {
                                  long systemStartTime
     ) {
         if (Notifier.NotifierType.EMAIL.equals(notifier.getNotifierType())) {
-            this.emailSignal.sendExceedanceNotification(client, etmConfiguration, clusterName, signal, notifier, thresholdExceedances, etmSecurityEntity);
+            this.emailSignal.sendExceedanceNotification(client, etmConfiguration, clusterName, signal, (EmailNotifier) notifier, thresholdExceedances, etmSecurityEntity);
         } else if (Notifier.NotifierType.SNMP.equals(notifier.getNotifierType())) {
-            this.snmpSignal.sendExceedanceNotification(clusterName, signal, notifier, thresholdExceedances, systemStartTime);
+            this.snmpSignal.sendExceedanceNotification(clusterName, signal, (SnmpNotifier) notifier, thresholdExceedances, systemStartTime);
         } else if (Notifier.NotifierType.ETM_BUSINESS_EVENT.equals(notifier.getNotifierType())) {
             final StringBuilder buffer = new StringBuilder();
             buffer.append("{");
@@ -100,7 +102,7 @@ public class NotificationExecutor implements Closeable {
                                        EtmSecurityEntity etmSecurityEntity
     ) {
         if (Notifier.NotifierType.EMAIL.equals(notifier.getNotifierType())) {
-            this.emailSignal.sendNoLongerExceededNotification(client, etmConfiguration, clusterName, signal, notifier, etmSecurityEntity);
+            this.emailSignal.sendNoLongerExceededNotification(client, etmConfiguration, clusterName, signal, (EmailNotifier) notifier, etmSecurityEntity);
         } else if (Notifier.NotifierType.ETM_BUSINESS_EVENT.equals(notifier.getNotifierType())) {
             final StringBuilder buffer = new StringBuilder();
             buffer.append("{");

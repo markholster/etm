@@ -11,7 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Helper class that converts an object to a json string and back.
@@ -26,45 +26,12 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
 
     private final JsonConverter jsonConverter = new JsonConverter();
 
-    private final Supplier<T> supplier;
-    private final String jsonNamespace;
-    private final List<Field> fields = new ArrayList<>();
-    private final Map<Field, CustomFieldConverter> fieldConverters = new HashMap<>();
+    private final Function<Map<String, Object>, T> objectFactory;
 
-    public JsonEntityConverter(Supplier<T> supplier) {
-        this.supplier = supplier;
-        Class<?> clazz = this.supplier.get().getClass();
-        if (clazz.isAnnotationPresent(JsonNamespace.class)) {
-            JsonNamespace namespaceAnnotation = clazz.getAnnotation(JsonNamespace.class);
-            this.jsonNamespace = namespaceAnnotation.value();
-        } else {
-            this.jsonNamespace = null;
-        }
-        while (clazz != null) {
-            for (Field field : clazz.getDeclaredFields()) {
-                if (field.isAnnotationPresent(JsonField.class)) {
-                    if (!field.isAccessible()) {
-                        field.setAccessible(true);
-                    }
-                    JsonField jsonField = field.getAnnotation(JsonField.class);
-                    String jsonKey = jsonField.value();
-                    if (this.fields.stream().map(f -> f.getAnnotation(JsonField.class).value()).noneMatch(jsonKey::equals)) {
-                        this.fields.add(field);
-                        try {
-                            Constructor<? extends CustomFieldConverter> constructor = jsonField.converterClass().getDeclaredConstructor();
-                            if (!constructor.isAccessible()) {
-                                constructor.setAccessible(true);
-                            }
-                            this.fieldConverters.put(field, constructor.newInstance());
-                        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
-                            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
-                        }
-                    }
-                }
-            }
-            clazz = clazz.getSuperclass();
-        }
-        fields.sort(Comparator.comparing(f -> f.getAnnotation(JsonField.class).value()));
+    private final Map<Class<?>, ClassMetadata> classMetadataCache = new HashMap<>();
+
+    public JsonEntityConverter(Function<Map<String, Object>, T> objectFactory) {
+        this.objectFactory = objectFactory;
     }
 
     @Override
@@ -79,10 +46,7 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
         if (valueMap == null) {
             return null;
         }
-        if (this.jsonNamespace != null) {
-            return createEntity(this.jsonConverter.getObject(this.jsonNamespace, valueMap), this.fields);
-        }
-        return createEntity(valueMap, this.fields);
+        return createEntity(valueMap);
     }
 
     @Override
@@ -90,12 +54,21 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
         if (entity == null) {
             return null;
         }
-        return createJson(entity, this.fields);
+        return createJson(entity);
     }
 
-    private T createEntity(Map<String, Object> valueMap, List<Field> fields) {
-        T entity = this.supplier.get();
-        for (Field field : fields) {
+    private T createEntity(Map<String, Object> valueMap) {
+        T entity = this.objectFactory.apply(valueMap);
+        final Class<?> clazz = entity.getClass();
+        ClassMetadata classMetadata = this.classMetadataCache.get(clazz);
+        if (classMetadata == null) {
+            classMetadata = createClassMetadata(clazz);
+            this.classMetadataCache.put(clazz, classMetadata);
+        }
+        if (classMetadata.getJsonNamespace() != null) {
+            valueMap = this.jsonConverter.getObject(classMetadata.jsonNamespace, valueMap);
+        }
+        for (Field field : classMetadata.getFields()) {
             JsonField jsonField = field.getAnnotation(JsonField.class);
             Class<? extends CustomFieldConverter> converterClass = jsonField.converterClass();
             Class<?> fieldType = field.getType();
@@ -105,7 +78,7 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
                     continue;
                 }
                 if (!converterClass.equals(JsonField.DefaultCustomConverter.class)) {
-                    CustomFieldConverter fieldConverter = this.fieldConverters.get(field);
+                    CustomFieldConverter fieldConverter = classMetadata.getFieldConverters().get(field);
                     fieldConverter.setValueOnEntity(field, entity, valueMap.get(jsonKey));
                     continue;
                 }
@@ -165,17 +138,58 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
         return entity;
     }
 
+    private ClassMetadata createClassMetadata(Class<?> clazz) {
+        String jsonNamespace = null;
+        if (clazz.isAnnotationPresent(JsonNamespace.class)) {
+            JsonNamespace namespaceAnnotation = clazz.getAnnotation(JsonNamespace.class);
+            jsonNamespace = namespaceAnnotation.value();
+        }
+        ClassMetadata classMetadata = new ClassMetadata(jsonNamespace);
+        while (clazz != null) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(JsonField.class)) {
+                    if (!field.isAccessible()) {
+                        field.setAccessible(true);
+                    }
+                    JsonField jsonField = field.getAnnotation(JsonField.class);
+                    String jsonKey = jsonField.value();
+                    if (classMetadata.getFields().stream().map(f -> f.getAnnotation(JsonField.class).value()).noneMatch(jsonKey::equals)) {
+                        classMetadata.getFields().add(field);
+                        try {
+                            Constructor<? extends CustomFieldConverter> constructor = jsonField.converterClass().getDeclaredConstructor();
+                            if (!constructor.isAccessible()) {
+                                constructor.setAccessible(true);
+                            }
+                            classMetadata.getFieldConverters().put(field, constructor.newInstance());
+                        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+                            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+                        }
+                    }
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
+        classMetadata.getFields().sort(Comparator.comparing(f -> f.getAnnotation(JsonField.class).value()));
+        return classMetadata;
+    }
+
 
     @SuppressWarnings("unchecked")
-    private String createJson(T entity, List<Field> fields) {
+    private String createJson(T entity) {
         StringBuilder result = new StringBuilder();
         result.append("{");
-        if (this.jsonNamespace != null) {
-            this.jsonConverter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, this.jsonNamespace, result, true);
-            result.append(", " + this.jsonConverter.escapeToJson(this.jsonNamespace, true) + ": {");
+        Class<?> clazz = entity.getClass();
+        ClassMetadata classMetadata = this.classMetadataCache.get(entity.getClass());
+        if (classMetadata == null) {
+            classMetadata = createClassMetadata(clazz);
+            this.classMetadataCache.put(clazz, classMetadata);
+        }
+        if (classMetadata.getJsonNamespace() != null) {
+            this.jsonConverter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, classMetadata.getJsonNamespace(), result, true);
+            result.append(", " + this.jsonConverter.escapeToJson(classMetadata.getJsonNamespace(), true) + ": {");
         }
         boolean added = beforeJsonFields(entity, result, true);
-        for (Field field : fields) {
+        for (Field field : classMetadata.getFields()) {
             JsonField jsonField = field.getAnnotation(JsonField.class);
             Class<? extends CustomFieldConverter> converterClass = jsonField.converterClass();
             Class<?> fieldType = field.getType();
@@ -183,7 +197,7 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
             try {
                 Object value = field.get(entity);
                 if (!converterClass.equals(JsonField.DefaultCustomConverter.class)) {
-                    CustomFieldConverter fieldConverter = this.fieldConverters.get(field);
+                    CustomFieldConverter fieldConverter = classMetadata.getFieldConverters().get(field);
                     added = fieldConverter.addToJsonBuffer(jsonKey, value, result, !added) || added;
                     continue;
                 }
@@ -195,7 +209,7 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
             }
         }
         afterJsonFields(entity, result, added);
-        if (this.jsonNamespace != null) {
+        if (classMetadata.getJsonNamespace() != null) {
             result.append("}");
         }
         result.append("}");
@@ -272,4 +286,27 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
         return this.jsonConverter;
     }
 
+
+    private class ClassMetadata {
+
+        final String jsonNamespace;
+        final List<Field> fields = new ArrayList<>();
+        final Map<Field, CustomFieldConverter> fieldConverters = new HashMap<>();
+
+        ClassMetadata(String jsonNamespace) {
+            this.jsonNamespace = jsonNamespace;
+        }
+
+        public String getJsonNamespace() {
+            return this.jsonNamespace;
+        }
+
+        public List<Field> getFields() {
+            return this.fields;
+        }
+
+        public Map<Field, CustomFieldConverter> getFieldConverters() {
+            return this.fieldConverters;
+        }
+    }
 }

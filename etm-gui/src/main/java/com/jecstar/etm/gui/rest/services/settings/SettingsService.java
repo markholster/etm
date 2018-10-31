@@ -350,7 +350,7 @@ public class SettingsService extends AbstractGuiService {
         NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
         StringBuilder result = new StringBuilder();
         result.append("{");
-        result.append("\"d3_formatter\": ").append(getD3Formatter(getEtmPrincipal()));
+        result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
         result.append(",\"totals\": {");
         addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted(), result, true);
         addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted()), result, false);

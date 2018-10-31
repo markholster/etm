@@ -7,7 +7,7 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 public class LogoutAuditLogConverter extends JsonEntityConverter<LogoutAuditLog> {
 
     public LogoutAuditLogConverter() {
-        super(LogoutAuditLog::new);
+        super(f -> new LogoutAuditLog());
     }
 
     @Override

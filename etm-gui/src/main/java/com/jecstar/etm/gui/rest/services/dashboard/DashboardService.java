@@ -3,6 +3,8 @@ package com.jecstar.etm.gui.rest.services.dashboard;
 import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.*;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.*;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.GraphConverter;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
@@ -35,6 +37,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.Format;
+import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -46,6 +49,7 @@ public class DashboardService extends AbstractUserAttributeService {
     private static Client client;
     private static EtmConfiguration etmConfiguration;
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
+    private final GraphConverter graphConverter = new GraphConverter();
 
     public static void initialize(Client client, EtmConfiguration etmConfiguration) {
         DashboardService.client = client;
@@ -229,12 +233,14 @@ public class DashboardService extends AbstractUserAttributeService {
     private String addGraph(String groupName, String graphName, String json) {
         // Execute a dry run on all data.
         Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
-        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(this.client, groupName);
+        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(client, groupName);
 
-        getGraphData(json, etmSecurityEntity, true);
+        Graph graph = this.graphConverter.read(json);
+
+        getGraphData(graph, etmSecurityEntity, true);
         // Data seems ok, now store the graph.
         List<Map<String, Object>> currentGraphs = new ArrayList<>();
-        Map<String, Object> graphData = toMap(json);
+        Map<String, Object> graphData = toMap(this.graphConverter.write(graph));
         graphData.put("name", graphName);
         if (objectMap != null && objectMap.containsKey(this.principalTags.getGraphsTag())) {
             currentGraphs = getArray(this.principalTags.getGraphsTag(), objectMap);
@@ -242,8 +248,8 @@ public class DashboardService extends AbstractUserAttributeService {
         ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();
         boolean updated = false;
         while (iterator.hasNext()) {
-            Map<String, Object> graph = iterator.next();
-            if (graphName.equals(getString("name", graph))) {
+            Map<String, Object> graphMap = iterator.next();
+            if (graphName.equals(getString("name", graphMap))) {
                 iterator.set(graphData);
                 updated = true;
                 break;
@@ -601,7 +607,7 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getPreviewGraphData(String json) {
-        return getGraphData(json, getEtmPrincipal(), false);
+        return getGraphData(this.graphConverter.read(json), getEtmPrincipal(), false);
     }
 
     @POST
@@ -609,7 +615,7 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getGroupPreviewGraphData(@PathParam("groupName") String groupName, String json) {
-        return getGraphData(json, getEtmGroup(client, groupName), false);
+        return getGraphData(this.graphConverter.read(json), getEtmGroup(client, groupName), false);
     }
 
     /**
@@ -653,11 +659,11 @@ public class DashboardService extends AbstractUserAttributeService {
                     List<Map<String, Object>> colsValues = getArray("cols", row);
                     if (colsValues != null) {
                         for (Map<String, Object> col : colsValues) {
-                            if (graphId.equals(getString("id", col))) {
-                                dashboardFrom = getString("from", col);
-                                dashboardTill = getString("till", col);
-                                dashboardTimeFilterField = getString("time_filter_field", col);
-                                dashboardQuery = getString("query", col);
+                            if (graphId.equals(getString(Graph.ID, col))) {
+                                dashboardFrom = getString(Graph.FROM, col);
+                                dashboardTill = getString(Graph.TILL, col);
+                                dashboardTimeFilterField = getString(Graph.TIME_FILTER_FIELD, col);
+                                dashboardQuery = getString(Graph.QUERY, col);
                                 graphName = getString("name", col);
                             }
                         }
@@ -671,81 +677,62 @@ public class DashboardService extends AbstractUserAttributeService {
         // now find the graph and return the data.
         for (Map<String, Object> graphData : graphsData) {
             if (graphName.equals(getString("name", graphData))) {
-                graphData.put("from", dashboardFrom);
-                graphData.put("till", dashboardTill);
-                graphData.put("time_filter_field", dashboardTimeFilterField);
-                graphData.put("query", dashboardQuery);
-                return getGraphData(graphData, etmSecurityEntity, false);
+                graphData.put(Graph.FROM, dashboardFrom);
+                graphData.put(Graph.TILL, dashboardTill);
+                graphData.put(Graph.TIME_FILTER_FIELD, dashboardTimeFilterField);
+                graphData.put(Graph.QUERY, dashboardQuery);
+                return getGraphData(this.graphConverter.read(graphData), etmSecurityEntity, false);
             }
         }
         return null;
     }
 
-    private String getGraphData(String json, EtmSecurityEntity etmSecurityEntity, boolean dryRun) {
-        return getGraphData(toMap(json), etmSecurityEntity, dryRun);
-    }
-
-    private String getGraphData(Map<String, Object> valueMap, EtmSecurityEntity etmSecurityEntity, boolean dryRun) {
-        String dataSource = getString("data_source", valueMap);
-        if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(dataSource)) {
+    private String getGraphData(Graph graph, EtmSecurityEntity etmSecurityEntity, boolean dryRun) {
+        if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(graph.getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
-        String type = getString("type", valueMap);
-        if ("number".equals(type)) {
-            return getNumberData(valueMap, dryRun);
-        } else if ("bar".equals(type)) {
-            return getMultiBucketData(type, valueMap, true, dryRun);
-        } else if ("line".equals(type)) {
-            return getMultiBucketData(type, valueMap, true, dryRun);
-        } else if ("stacked_area".equals(type)) {
-            return getMultiBucketData(type, valueMap, true, dryRun);
+        if (NumberGraph.TYPE.equals(graph.getType())) {
+            return getNumberData((NumberGraph) graph, dryRun);
+        } else if (BarGraph.TYPE.equals(graph.getType())) {
+            return getMultiBucketData((MultiBucketGraph) graph, dryRun);
+        } else if (LineGraph.TYPE.equals(graph.getType())) {
+            return getMultiBucketData((MultiBucketGraph) graph, dryRun);
+        } else if (StackedAreaGraph.TYPE.equals(graph.getType())) {
+            return getMultiBucketData((MultiBucketGraph) graph, dryRun);
         } else {
-            throw new RuntimeException("Unknown type: '" + type + "'.");
+            throw new RuntimeException("Unknown type: '" + graph.getType() + "'.");
         }
     }
 
-    private String getMultiBucketData(String type, Map<String, Object> valueMap, boolean addMissingKeys, boolean dryRun) {
+    private String getMultiBucketData(MultiBucketGraph graph, boolean dryRun) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        MultiBucketResult multiBucketResult = new MultiBucketResult();
-        multiBucketResult.setAddMissingKeys(addMissingKeys);
-        String index = getString("data_source", valueMap);
-        String from = getString("from", valueMap);
-        String till = getString("till", valueMap);
-        String timeFilterField = getString("time_filter_field", valueMap);
-        String query = getString("query", valueMap, "*");
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, timeFilterField, query);
-        Map<String, Object> graphData = getObject(type, valueMap, Collections.emptyMap());
-        Map<String, Object> xAxisData = getObject("x_axis", graphData, Collections.emptyMap());
-        Map<String, Object> yAxisData = getObject("y_axis", graphData, Collections.emptyMap());
+        MultiBucketResult multiBucketResult = new MultiBucketResult(graph);
+        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, graph);
+        Axes axes = graph.getAxes();
 
-        Map<String, Object> bucketAggregatorData = getObject("aggregator", xAxisData, Collections.emptyMap());
-        Map<String, Object> bucketSubAggregatorData = getObject("sub_aggregator", xAxisData, Collections.emptyMap());
-        List<Map<String, Object>> metricsAggregatorsData = getArray("aggregators", yAxisData);
-
-        BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketAggregatorData, createGraphSearchRequest(etmPrincipal, index, from, till, timeFilterField, query));
+        BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, axes.getXAxis().getBucketAggregator(), createGraphSearchRequest(etmPrincipal, graph));
         BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
 
-        if (bucketAggregatorWrapper.needsMetricSubAggregatorForSorting() && !bucketSubAggregatorData.isEmpty()) {
-            // We are in the situation that all metric aggregators will bd put on the bucketSubAggregator but the (root)
+        if (bucketAggregatorWrapper.needsMetricSubAggregatorForSorting() && axes.getXAxis().getBucketSubAggregator() != null) {
+            // We are in the situation that all metric aggregators will be put on the bucketSubAggregator but the (root)
             // bucketAggregator needs a metric aggregator for sorting. We add the requested metric aggregator on the
             // bucketAggregator and will strip it from the results as soon as the json result json is created.
-            bucketAggregatorWrapper.setSortOverrideAggregator(metricsAggregatorsData);
-
+            bucketAggregatorWrapper.setSortOverrideAggregator(axes.getYAxis().getMetricAggregators());
         }
 
         // First create the bucket aggregator
         AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();
         AggregationBuilder rootForMetricAggregators = bucketAggregatorBuilder;
         // Check for the presence of a sub aggregator
-        if (!bucketSubAggregatorData.isEmpty()) {
-            bucketSubAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, bucketSubAggregatorData);
+        if (axes.getXAxis().getBucketSubAggregator() != null) {
+            bucketSubAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, axes.getXAxis().getBucketSubAggregator());
             rootForMetricAggregators = bucketSubAggregatorWrapper.getAggregationBuilder();
             bucketAggregatorBuilder.subAggregation(rootForMetricAggregators);
         }
 
         // And add every y-axis aggregator as sub aggregator
-        for (Map<String, Object> metricsAggregatorData : metricsAggregatorsData) {
-            rootForMetricAggregators.subAggregation(new MetricAggregatorWrapper(etmPrincipal, metricsAggregatorData).getAggregationBuilder());
+        for (MetricAggregator metricAggregator : axes.getYAxis().getMetricAggregators()) {
+            rootForMetricAggregators.subAggregation(new MetricAggregatorWrapper(etmPrincipal, metricAggregator).getAggregationBuilder());
         }
         if (dryRun) {
             return null;
@@ -756,8 +743,8 @@ public class DashboardService extends AbstractUserAttributeService {
         // Start building the response
         StringBuilder result = new StringBuilder();
         result.append("{");
-        result.append("\"d3_formatter\": ").append(getD3Formatter(getEtmPrincipal()));
-        addStringElementToJsonBuffer("type", type, result, false);
+        result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
+        addStringElementToJsonBuffer("type", graph.getType(), result, false);
         result.append(",\"data\": ");
 
         if (!(aggregation instanceof MultiBucketsAggregation)) {
@@ -765,6 +752,10 @@ public class DashboardService extends AbstractUserAttributeService {
         }
         MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
         for (Bucket bucket : multiBucketsAggregation.getBuckets()) {
+// When we provide the option to remove empty results from the list this if statement should be enabled.
+//            if (bucket.getDocCount() == 0) {
+//                continue;
+//            }
             AggregationKey key = getFormattedBucketKey(bucket, bucketAggregatorWrapper.getBucketFormat());
             for (Aggregation subAggregation : bucket.getAggregations()) {
                 if (BucketAggregatorWrapper.SORT_METRIC_ID.equals(subAggregation.getName())) {
@@ -774,6 +765,10 @@ public class DashboardService extends AbstractUserAttributeService {
                     // A sub aggregation on the x-axis.
                     MultiBucketsAggregation subBucketsAggregation = (MultiBucketsAggregation) subAggregation;
                     for (Bucket subBucket : subBucketsAggregation.getBuckets()) {
+// When we provide the option to remove empty results from the list this if statement should be enabled.
+//                        if (subBucket.getDocCount() == 0) {
+//                            continue;
+//                        }
                         AggregationKey subKey = getFormattedBucketKey(subBucket, bucketSubAggregatorWrapper.getBucketFormat());
                         for (Aggregation metricAggregation : subBucket.getAggregations()) {
                             AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(metricAggregation);
@@ -794,7 +789,7 @@ public class DashboardService extends AbstractUserAttributeService {
     private AggregationKey getFormattedBucketKey(Bucket bucket, Format format) {
         if (bucket.getKey() instanceof DateTime) {
             DateTime dateTime = (DateTime) bucket.getKey();
-            return new DateTimeAggregationKey(dateTime.getMillis(), format);
+            return new DateTimeAggregationKey(Instant.ofEpochMilli(dateTime.getMillis()), format);
         } else if (bucket.getKey() instanceof Double) {
             return new DoubleAggregationKey((Double) bucket.getKey(), format);
         } else if (bucket.getKey() instanceof Long) {
@@ -803,17 +798,14 @@ public class DashboardService extends AbstractUserAttributeService {
         return new StringAggregationKey(bucket.getKeyAsString());
     }
 
-    private String getNumberData(Map<String, Object> valueMap, boolean dryRun) {
+    private String getNumberData(NumberGraph graph, boolean dryRun) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        String index = getString("data_source", valueMap);
-        String from = getString("from", valueMap);
-        String till = getString("till", valueMap);
-        String timeFilterField = getString("time_filter_field", valueMap);
-        String query = getString("query", valueMap, "*");
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, index, from, till, timeFilterField, query);
+        SearchRequestBuilder searchRequest = createGraphSearchRequest(
+                etmPrincipal,
+                graph);
 
-        Map<String, Object> numberData = getObject("number", valueMap, Collections.emptyMap());
-        MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, numberData);
+
+        MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, graph.getMetricAggregator());
         if (dryRun) {
             return null;
         }
@@ -832,11 +824,11 @@ public class DashboardService extends AbstractUserAttributeService {
         return result.toString();
     }
 
-    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, String index, String from, String till, String timeFilterField, String query) {
-        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(index), etmConfiguration)
+    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, Graph graph) {
+        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(graph.getDataSource()), etmConfiguration)
                 .setFetchSource(false)
                 .setSize(0);
-        QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(query)
+        QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(graph.getQuery())
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)
                 .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
@@ -844,19 +836,19 @@ public class DashboardService extends AbstractUserAttributeService {
 
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
-        if (from != null || till != null) {
-            RangeQueryBuilder timestampFilter = new RangeQueryBuilder(timeFilterField != null ? timeFilterField : "timestamp");
-            if (from != null) {
-                timestampFilter.gte(from);
+        if (graph.getFrom() != null || graph.getTill() != null) {
+            RangeQueryBuilder timestampFilter = new RangeQueryBuilder(graph.getTimeFilterField() != null ? graph.getTimeFilterField() : "timestamp");
+            if (graph.getFrom() != null) {
+                timestampFilter.gte(graph.getFrom());
             }
-            if (till != null) {
-                timestampFilter.lte(till);
+            if (graph.getTill() != null) {
+                timestampFilter.lte(graph.getTill());
             }
             boolQueryBuilder.filter(timestampFilter);
         }
 
 
-        if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(index)) {
+        if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(graph.getDataSource())) {
             searchRequest.setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder));
         } else {
             searchRequest.setQuery(boolQueryBuilder);

@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.dashboard.aggregation;
 
+import com.jecstar.etm.domain.writer.json.JsonWriter;
+
 public class StringAggregationKey implements AggregationKey {
 
     private final String key;
@@ -19,8 +21,8 @@ public class StringAggregationKey implements AggregationKey {
     }
 
     @Override
-    public int getLength() {
-        return this.key.length();
+    public String toJsonValue(JsonWriter jsonWriter) {
+        return jsonWriter.escapeToJson(this.key, true);
     }
 
     @Override

@@ -19,7 +19,7 @@ public @interface JsonField {
     final class DefaultCustomConverter implements CustomFieldConverter {
         @Override
         public boolean addToJsonBuffer(String jsonKey, Object entity, StringBuilder result, boolean firstValue) {
-            return !firstValue;
+            return false;
         }
 
         @Override

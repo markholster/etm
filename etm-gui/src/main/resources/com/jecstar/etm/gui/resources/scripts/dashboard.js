@@ -552,7 +552,7 @@ function addListeners() {
         if (dragStatus) {
             $.each(dragStatus.row.cols, function(index, col) {
                 if (col.chart) {
-                    col.chart.update();
+                    col.chart.reflow();
                 }
             });
             var resizedDiv =  $('div[data-cell-id="' + dragStatus.id + '"]');
@@ -598,13 +598,6 @@ function addListeners() {
         graph.query = $('#input-graph-query').val();
         graph.refresh_rate = $('#input-refresh-rate').val() ? Number($('#input-refresh-rate').val()) : null;
         var graphData = graphMap[graph.name];
-        if ('undefined' != typeof graphData) {
-            if (graphData.line) {
-                graph.interpolation = $('#sel-graph-interpolation').val();
-            } else {
-                delete graph.interpolation;
-            }
-        }
 
         saveDashboard(function () {
             $("div[data-cell-id='" + graph.id + "']").empty().replaceWith(createCell(graph, false));
@@ -619,16 +612,6 @@ function addListeners() {
             $('#input-graph-till').val(graphData.till);
             $('#input-graph-time-filter-field').val(graphData.time_filter_field);
             $('#input-graph-query').val(graphData.query);
-            if (graphData.line) {
-                $('#row-graph-interpolation').show();
-                if (graphData.interpolation) {
-                    $('#sel-graph-interpolation').val(graphData.interpolation);
-                } else {
-                    $('#sel-graph-interpolation').val('linear');
-                }
-            } else {
-                $('#row-graph-interpolation').hide();
-            }
         }
     });
 
@@ -663,18 +646,6 @@ function editGraph(cellId) {
     $('#input-graph-query').val(graph.query);
     $('#input-refresh-rate').val(graph.refresh_rate);
 
-    $('#row-graph-interpolation').hide();
-    if (graph.name) {
-        var graphData = graphMap[graph.name];
-        if ('undefined' != graphData && graphData.line) {
-            $('#row-graph-interpolation').show();
-            if (graph.interpolation) {
-                $('#sel-graph-interpolation').val(graph.interpolation);
-            } else {
-                $('#sel-graph-interpolation').val('linear');
-            }
-        }
-    }
     $('#modal-graph-settings').modal();
 }
 
@@ -694,7 +665,6 @@ function createCell(graph, readonly) {
     if (!graph.bordered) {
         $card.addClass('noBorder');
     }
-    $cellTitle.text(graph.title);
     if (!readonly) {
         $cellTitle.append($('<a>').attr('href', '#').attr('data-link-action', 'edit-graph').addClass('fa fa-pencil-square-o pull-right invisible'));
     }
@@ -703,17 +673,16 @@ function createCell(graph, readonly) {
         clearInterval(graph.interval);
         delete graph.interval;
     }
+    if (graph.chart) {
+        graph.chart.destroy();
+    }
     delete graph.chart;
-    delete graph.chartData;
     if (graph.name) {
         var graphData = graphMap[graph.name];
         if ('undefined' !== typeof graphData) {
             var clonedGraphData = $.extend(true, {}, graphData);
             if (graph.query) {
                 clonedGraphData.query = graph.query;
-            }
-            if (graph.interpolation) {
-                clonedGraphData.interpolation = graph.interpolation;
             }
             updateChart(clonedGraphData, graph, $cardBody);
             if (graph.refresh_rate) {
@@ -779,153 +748,173 @@ function updateChart(graphData, graph, cardBody) {
         contentType: 'application/json',
         url: contextRoot + 'graphdata/' + encodeURIComponent(dashboardData.name) + '/' + encodeURIComponent(graph.id),
         cache: false,
-        success: function(data) {
-            if (!data) {
+        success: function (response) {
+            if (!response) {
                 return;
             }
-            if ('bar' === data.type) {
-                data.data.sort(function(a, b){
-                    if (a.key < b.key) return -1;
-                    if (b.key < a.key) return 1;
-                    return 0;
-                });
-                if (graph.chart && graph.chartData) {
-                    graph.chartData.length = 0;
-                    $.each(data.data, function(index, item) {
-                        graph.chartData.push(item);
-                    });
-                    graph.chart.update();
-                } else {
-                    var formatter = d3.locale(data.d3_formatter);
-                    var numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format ? graphData.bar.y_axis.format : ',f');
-                    nv.addGraph(function() {
-                        graph.chart = nv.models.multiBarChart()
-                            .x(function(d) { return d.label })
-                            .y(function(d) { return d.value })
-                            .staggerLabels(true)
-                            .wrapLabels(true)
-                            .showControls(true)
-                            .groupSpacing(0.1)
-                            .duration(250)
-                            ;
-                        graph.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-                        graph.chart.margin({left: 75, bottom: 50, right: 50});
-                        graph.chartData = data.data;
-                        d3.selectAll("div[data-cell-id='" + graph.id + "'] > .card-block > .card-body").append("svg").attr("style", "height: 100%;")
-                            .datum(graph.chartData)
-                            .call(graph.chart);
-                        nv.utils.windowResize(graph.chart.update);
-                        return graph.chart;
-                    });
+            Highcharts.setOptions({
+                lang: {
+                    decimalPoint: response.locale.decimal,
+                    thousandsSep: response.locale.thousands
                 }
-            } else if ('line' === data.type) {
-                if (graph.chart && graph.chartData) {
-                    graph.chartData.length = 0;
-                    $.each(formatLineData(data.data), function(index, item) {
-                        graph.chartData.push(item);
-                    });
-                    graph.chart.interpolate(graphData.interpolation);
-                    graph.chart.update();
-                } else {
-                    var formatter = d3.locale(data.d3_formatter);
-                    var numberFormatter = formatter.numberFormat(graphData.line.y_axis.format ? graphData.line.y_axis.format : ',f');
-                    nv.addGraph(function() {
-                        graph.chart = nv.models.lineChart()
-                            .showYAxis(true)
-                            .showXAxis(true)
-                            .useInteractiveGuideline(true)
-                            .showLegend(true)
-                            .duration(250)
-                            ;
-                        graph.chartData = formatLineData(data.data);
-                        graph.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-                        graph.chart.xAxis.tickFormat(function(d,s) {
-                            if (d < 0 || d >= graph.chartData[0].values.length) {
-                                return '';
-                            };
-                            return graph.chartData[0].values[d].label;
-                        });
 
-                        graph.chart.interpolate(graphData.interpolation);
-                        graph.chart.margin({left: 75, bottom: 50, right: 75});
-                        d3.select("div[data-cell-id='" + graph.id + "'] > .card-block > .card-body").append("svg").attr("style", "height: 100%;")
-                            .datum(graph.chartData)
-                            .call(graph.chart);
-                        nv.utils.windowResize(graph.chart.update);
-                        return graph.chart;
+            });
+            if ('bar' === response.type) {
+                if (graph.chart) {
+                    graph.chart.update({
+                        xAxis: {
+                            categories: response.data.categories
+                        },
+                        series: response.data.series
+                    });
+                } else {
+                    var graphContainer = $('<div style="height: 98%;">');
+                    $(cardBody).append(graphContainer);
+                    graph.chart = Highcharts.chart({
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            renderTo: $(graphContainer)[0],
+                            type: 'column'
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        title: {
+                            text: graph.title
+                        },
+                        tooltip: {
+                            shared: true
+                        },
+                        time: {
+                            timezone: response.locale.timezone
+                        },
+                        xAxis: {
+                            categories: response.data.categories,
+                            type: response.data.xAxis.type
+                        },
+                        yAxis: {
+                            labels: {
+                                format: response.data.yAxis.format
+                            }
+                        },
+                        series: response.data.series
                     });
                 }
-            } else if ('number' === data.type) {
-                var $currentValue = $("div[data-cell-id='" + graph.id + "'] > .card-block > .card-body").find("h1[data-element-type='number-graph']");
+            } else if ('line' === response.type) {
+                var graphContainer = $('<div style="height: 98%;">');
+                $(cardBody).append(graphContainer);
+                if (graph.chart) {
+                    graph.chart.update({
+                        xAxis: {
+                            categories: response.data.categories
+                        },
+                        series: response.data.series
+                    });
+                } else {
+                    graph.chart = Highcharts.chart({
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            renderTo: $(graphContainer)[0],
+                            type: 'spline'
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        title: {
+                            text: graph.title
+                        },
+                        tooltip: {
+                            shared: true
+                        },
+                        plotOptions: {
+                            spline: {
+                                marker: {
+                                    enabled: false
+                                }
+                            }
+                        },
+                        time: {
+                            timezone: response.locale.timezone,
+                        },
+                        xAxis: {
+                            categories: response.data.categories,
+                            type: response.data.xAxis.type
+                        },
+                        yAxis: {
+                            labels: {
+                                format: response.data.yAxis.format
+                            }
+                        },
+                        series: response.data.series
+                    });
+                }
+            } else if ('number' === response.type) {
+                var $currentValue = $("div[response-cell-id='" + graph.id + "'] > .card-block > .card-body").find("h1[response-element-type='number-graph']");
                 if ($currentValue.length) {
-                    $currentValue.text(data.value_as_string);
+                    $currentValue.text(response.value_as_string);
                 } else {
-                    $(cardBody).append($('<h1>').attr('data-element-type', 'number-graph').text(data.value_as_string),$('<h4>').text(data.label));
+                    $(cardBody).append($('<h1>').attr('response-element-type', 'number-graph').text(response.value_as_string), $('<h4>').text(response.label));
                 }
-            } else if ('pie' === data.type) {
-            } else if ('stacked_area' === data.type) {
-                if (graph.chart && graph.chartData) {
-                    graph.chartData.length = 0;
-                    $.each(formatLineData(data.data), function(index, item) {
-                        graph.chartData.push(item);
+            } else if ('pie' === response.type) {
+            } else if ('stacked_area' === response.type) {
+                var graphContainer = $('<div style="height: 98%;">');
+                $(cardBody).append(graphContainer);
+                if (graph.chart) {
+                    graph.chart.update({
+                        xAxis: {
+                            categories: response.data.categories
+                        },
+                        series: response.data.series
                     });
-                    graph.chart.update();
                 } else {
-                    var formatter = d3.locale(data.d3_formatter);
-                    var numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format ? graphData.stacked_area.y_axis.format : ',f');
-                    nv.addGraph(function() {
-                        graph.chart = nv.models.stackedAreaChart()
-                            .useInteractiveGuideline(true)
-                            .duration(250)
-                            .showControls(true)
-                            .clipEdge(true);
-                            ;
-                        graph.chartData = formatLineData(data.data);
-                        graph.chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-                        graph.chart.xAxis.tickFormat(function(d,s) {
-                            if (d < 0 || d >= graph.chartData[0].values.length) {
-                                return '';
-                            };
-                            return graph.chartData[0].values[d].label;
-                        });
-                        graph.chart.margin({left: 75, bottom: 50, right: 50});
-                        d3.selectAll("div[data-cell-id='" + graph.id + "'] > .card-block > .card-body").append("svg").attr("style", "height: 100%;")
-                            .datum(graph.chartData)
-                            .call(graph.chart);
-                        nv.utils.windowResize(graph.chart.update);
-                        return graph.chart;
+                    graph.chart = Highcharts.chart({
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            renderTo: $(graphContainer)[0],
+                            type: 'areaspline'
+                        },
+                        plotOptions: {
+                            areaspline: {
+                                stacking: 'normal',
+                                marker: {
+                                    enabled: false
+                                }
+                            }
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        title: {
+                            text: graph.title
+                        },
+                        tooltip: {
+                            shared: true
+                        },
+                        time: {
+                            timezone: response.locale.timezone
+                        },
+                        xAxis: {
+                            categories: response.data.categories,
+                            type: response.data.xAxis.type
+                        },
+                        yAxis: {
+                            labels: {
+                                format: response.data.yAxis.format
+                            }
+                        },
+                        series: response.data.series
                     });
                 }
             }
         }
     });
 
-    function formatLineData(lineData) {
-        var formattedData = [];
-        $.each(lineData, function(index, serie) {
-            var serieData = {
-                key: serie.key,
-                values: []
-            };
-            $.each(serie.values, function(serieIndex, point) {
-                serieData.values.push(
-                    {
-                        x: serieIndex,
-                        y: point.value,
-                        label: point.label
-
-                    }
-                );
-            });
-            formattedData.push(serieData);
-        });
-        formattedData.sort(function(a, b){
-            if (a.key < b.key) return -1;
-            if (b.key < a.key) return 1;
-            return 0;
-        });
-        return formattedData;
-    }
 }
 
 function removeDashboard(dashboardName) {

@@ -4,9 +4,21 @@ import com.jecstar.etm.domain.writer.json.JsonWriter;
 
 import java.text.Format;
 
+/**
+ * Abstract superclass for all <code>AggregationValue</code> instances.
+ *
+ * @param <T> The type of the value.
+ */
 public abstract class AbstractAggregationValue<T> implements AggregationValue<T> {
 
+    /**
+     * The label that belongs to the value.
+     */
     private final String label;
+
+    /**
+     * Boolean indicating this value is a percentage.
+     */
     private boolean percentage;
 
     AbstractAggregationValue(String label) {

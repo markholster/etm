@@ -1,4 +1,4 @@
-package com.jecstar.etm.gui.rest.services.dashboard;
+package com.jecstar.etm.gui.rest.services.dashboard.domain;
 
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 

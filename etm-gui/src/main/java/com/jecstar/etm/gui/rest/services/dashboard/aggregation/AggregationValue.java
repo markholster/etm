@@ -4,6 +4,11 @@ import com.jecstar.etm.domain.writer.json.JsonWriter;
 
 import java.text.Format;
 
+/**
+ * Interface for all values of an aggregation. Together with an <code>AggregationKey</code> these classes form a point (x,y) on a graph.
+ *
+ * @param <T> The value type.
+ */
 public interface AggregationValue<T> {
 
     /**

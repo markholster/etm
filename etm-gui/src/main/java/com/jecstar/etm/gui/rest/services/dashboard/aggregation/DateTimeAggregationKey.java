@@ -1,14 +1,17 @@
 package com.jecstar.etm.gui.rest.services.dashboard.aggregation;
 
+import com.jecstar.etm.domain.writer.json.JsonWriter;
+
 import java.text.Format;
+import java.time.Instant;
 
 public class DateTimeAggregationKey implements AggregationKey {
 
-    private final long epochtime;
+    private final Instant instant;
     private final Format format;
 
-    public DateTimeAggregationKey(long epochtime, Format format) {
-        this.epochtime = epochtime;
+    public DateTimeAggregationKey(Instant epochtime, Format format) {
+        this.instant = epochtime;
         this.format = format;
     }
 
@@ -16,32 +19,36 @@ public class DateTimeAggregationKey implements AggregationKey {
     public int compareTo(AggregationKey o) {
         if (o instanceof DateTimeAggregationKey) {
             DateTimeAggregationKey other = (DateTimeAggregationKey) o;
-            return Long.compare(this.epochtime, other.epochtime);
+            return this.instant.compareTo(other.instant);
         }
         return 0;
     }
 
     @Override
     public String getKeyAsString() {
-        return this.format.format(this.epochtime);
+        return this.format.format(this.instant);
     }
 
     @Override
-    public int getLength() {
-        return getKeyAsString().length();
+    public String toJsonValue(JsonWriter jsonWriter) {
+        return Long.toString(this.instant.toEpochMilli());
+    }
+
+    public Instant getInstant() {
+        return this.instant;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DateTimeAggregationKey) {
             DateTimeAggregationKey other = (DateTimeAggregationKey) obj;
-            return this.epochtime == other.epochtime;
+            return this.instant == other.instant;
         }
         return super.equals(obj);
     }
 
     @Override
     public int hashCode() {
-        return Long.hashCode(this.epochtime);
+        return this.instant.hashCode();
     }
 }

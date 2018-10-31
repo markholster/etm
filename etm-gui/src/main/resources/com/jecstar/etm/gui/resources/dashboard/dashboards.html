@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
     <link rel="stylesheet" href="../styles/etm-commons.css">
-    <link rel="stylesheet" href="../styles/nv.d3.min.css">
     <link rel="stylesheet" href="../styles/flatpickr.min.css">
+    <link rel="stylesheet" href="../styles/highcharts.css">
     <style type="text/css">
 .selectedColumn {
 	border: 2px solid rgba(0, 0, 0, 0.25);
@@ -30,6 +30,9 @@
     <script src="../scripts/popper.min.js"></script>
     <script src="../scripts/bootstrap.min.js"></script>
     <script src="../scripts/flatpickr.min.js"></script>
+    <script src="../scripts/moment.min.js"></script>
+    <script src="../scripts/moment-timezone-with-data.min.js"></script>
+    <script src="../scripts/highcharts.js"></script>
 </head>
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
@@ -162,25 +165,6 @@
                             <input id="input-graph-query" type="text" class="form-control form-control-sm"/>
                         </div>
                     </div>
-                    <div id="row-graph-interpolation" class="form-group row" style="display: none;">
-                        <label for="sel-graph-interpolation" class="col-sm-3 col-form-label col-form-label-sm">Interpolation</label>
-                        <div class="col-sm-9">
-                            <select id="sel-graph-interpolation"
-                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                <option value="basis">Basis</option>
-                                <option value="basis-closed">Basis closed</option>
-                                <option value="basis-open">Basis open</option>
-                                <option value="bundle">Bundle</option>
-                                <option value="cardinal">Cardinal</option>
-                                <option value="cardinal-closed">Cardinal closed</option>
-                                <option value="cardinal-open">Cardinal open</option>
-                                <option value="linear" selected="selected">Linear</option>
-                                <option value="monotone">Monotone</option>
-                                <option value="step-before">Step before</option>
-                                <option value="step-after">Step after</option>
-                            </select>
-                        </div>
-                    </div>
                     <div class="form-group row">
                         <label for="sel-graph-border" class="col-sm-3 col-form-label col-form-label-sm">Border</label>
                         <div class="col-sm-9">
@@ -250,8 +234,6 @@
     </div>
 </div>
 
-<script src="../scripts/d3.min.js"></script>
-<script src="../scripts/nv.d3.min.js"></script>
 <script src="../scripts/autocomplete_fields.js"></script>
 <script src="../scripts/etm-commons.js"></script>
 <script src="../scripts/dashboard.js"></script>

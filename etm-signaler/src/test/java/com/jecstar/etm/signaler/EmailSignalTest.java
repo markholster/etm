@@ -6,6 +6,7 @@ import com.consol.citrus.annotations.CitrusTest;
 import com.consol.citrus.dsl.junit.jupiter.CitrusExtension;
 import com.consol.citrus.dsl.runner.TestRunner;
 import com.consol.citrus.mail.message.MailMessage;
+import com.jecstar.etm.server.core.domain.cluster.notifier.EmailNotifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.signaler.domain.Signal;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
@@ -38,7 +39,7 @@ public class EmailSignalTest {
                 )
         );
 
-        Notifier notifier = new Notifier();
+        EmailNotifier notifier = new EmailNotifier();
         notifier.setNotifierType(Notifier.NotifierType.EMAIL);
         notifier.setHost("127.0.0.1");
         notifier.setPort(CitrusConfiguration.MAILSERVER_PORT);
@@ -112,7 +113,7 @@ public class EmailSignalTest {
         );
 
 
-        Notifier notifier = new Notifier();
+        EmailNotifier notifier = new EmailNotifier();
         notifier.setNotifierType(Notifier.NotifierType.EMAIL);
         notifier.setHost("127.0.0.1");
         notifier.setPort(CitrusConfiguration.MAILSERVER_PORT);

@@ -1,6 +1,6 @@
 package com.jecstar.etm.signaler;
 
-import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
+import com.jecstar.etm.server.core.domain.cluster.notifier.SnmpNotifier;
 import com.jecstar.etm.server.core.domain.configuration.EtmSnmpConstants;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -44,7 +44,7 @@ class SnmpSignal {
         this.engineId = engineId;
     }
 
-    void sendExceedanceNotification(String clusterName, Signal signal, Notifier notifier, Map<DateTime, Double> thresholdExceedances, long systemStartTime) {
+    void sendExceedanceNotification(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, long systemStartTime) {
         InetAddress inetAddress;
         try {
             inetAddress = InetAddress.getLocalHost();
@@ -54,11 +54,11 @@ class SnmpSignal {
             }
             return;
         }
-        if (Notifier.SnmpVersion.V1.equals(notifier.getSnmpVersion())) {
+        if (SnmpNotifier.SnmpVersion.V1.equals(notifier.getSnmpVersion())) {
             sendSnmpV1Trap(clusterName, signal, notifier, thresholdExceedances, inetAddress, systemStartTime);
-        } else if (Notifier.SnmpVersion.V2C.equals(notifier.getSnmpVersion())) {
+        } else if (SnmpNotifier.SnmpVersion.V2C.equals(notifier.getSnmpVersion())) {
             sendSnmpV2Notification(clusterName, signal, notifier, thresholdExceedances, inetAddress, systemStartTime);
-        } else if (Notifier.SnmpVersion.V3.equals(notifier.getSnmpVersion())) {
+        } else if (SnmpNotifier.SnmpVersion.V3.equals(notifier.getSnmpVersion())) {
             sendSnmpV3Notification(clusterName, signal, notifier, thresholdExceedances, inetAddress, systemStartTime);
         } else {
             if (log.isWarningLevelEnabled()) {
@@ -67,7 +67,7 @@ class SnmpSignal {
         }
     }
 
-    private void sendSnmpV1Trap(String clusterName, Signal signal, Notifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
+    private void sendSnmpV1Trap(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
         Snmp snmp = null;
         try {
             // Create Transport Mapping
@@ -108,7 +108,7 @@ class SnmpSignal {
         }
     }
 
-    private void sendSnmpV2Notification(String clusterName, Signal signal, Notifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
+    private void sendSnmpV2Notification(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
         Snmp snmp = null;
         try {
             // Create Transport Mapping
@@ -148,7 +148,7 @@ class SnmpSignal {
         }
     }
 
-    private void sendSnmpV3Notification(String clusterName, Signal signal, Notifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
+    private void sendSnmpV3Notification(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
         OctetString engineId = new OctetString(this.engineId);
 
         PrivacyProtocol privacyProtocol = null;
@@ -224,7 +224,7 @@ class SnmpSignal {
     }
 
 
-    private PrivacyProtocol toPrivacyProtocol(Notifier.SnmpPrivacyProtocol snmpPrivacyProtocol) {
+    private PrivacyProtocol toPrivacyProtocol(SnmpNotifier.SnmpPrivacyProtocol snmpPrivacyProtocol) {
         switch (snmpPrivacyProtocol) {
             case DES:
                 return new PrivDES();
@@ -245,7 +245,7 @@ class SnmpSignal {
         }
     }
 
-    private AuthenticationProtocol toAuthenticationProtocol(Notifier.SnmpAuthenticationProtocol snmpAuthenticationProtocol) {
+    private AuthenticationProtocol toAuthenticationProtocol(SnmpNotifier.SnmpAuthenticationProtocol snmpAuthenticationProtocol) {
         switch (snmpAuthenticationProtocol) {
             case MD5:
                 return new AuthMD5();

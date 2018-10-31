@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.dashboard.aggregation;
 
+import com.jecstar.etm.domain.writer.json.JsonWriter;
+
 import java.text.Format;
 
 public class DoubleAggregationKey implements AggregationKey {
@@ -27,8 +29,8 @@ public class DoubleAggregationKey implements AggregationKey {
     }
 
     @Override
-    public int getLength() {
-        return getKeyAsString().length();
+    public String toJsonValue(JsonWriter jsonWriter) {
+        return key != null && key.isNaN() ? null : key.toString();
     }
 
     @Override

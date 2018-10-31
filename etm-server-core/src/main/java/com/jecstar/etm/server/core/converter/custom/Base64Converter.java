@@ -20,7 +20,7 @@ public class Base64Converter implements CustomFieldConverter<String> {
         if (value != null) {
             return this.jsonConverter.addStringElementToJsonBuffer(jsonKey, this.jsonConverter.encodeBase64(value, rounds), buffer, firstElement) || !firstElement;
         }
-        return !firstElement;
+        return false;
     }
 
     @Override

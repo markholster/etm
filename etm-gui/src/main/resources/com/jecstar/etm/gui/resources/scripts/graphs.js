@@ -748,120 +748,135 @@ function buildGraphsPage(groupName) {
             url: contextRoot + 'graphdata',
             cache: false,
             data: JSON.stringify(graphData),
-            success: function(data) {
-                if (!data) {
+            success: function (response) {
+
+                if (!response) {
                     return;
                 }
                 $('#preview_box').empty();
-        		if ('bar' == data.type) {
-        			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(graphData.bar.y_axis.format);
-        		    nv.addGraph(function() {
-        		        var chart = nv.models.multiBarChart()
-        		            .x(function(d) { return d.label })
-        		            .y(function(d) { return d.value })
-        		            .staggerLabels(true)
-        		            .wrapLabels(true)
-        		            .showControls(true)
-        		            .groupSpacing(0.1) 
-        		            .duration(250)
-        		            ;
-        		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-        		        chart.margin({left: 75, bottom: 50, right: 50});
-        		        data.data.sort(function(a, b){
-        				    if (a.key < b.key) return -1;
-        				    if (b.key < a.key) return 1;
-        				    return 0;
-        				});
+                Highcharts.setOptions({
+                    lang: {
+                        decimalPoint: response.locale.decimal,
+                        thousandsSep: response.locale.thousands,
+                        timezone: response.locale.timezone
+                    }
+                });
+                if ('bar' == response.type) {
+                    Highcharts.chart('preview_box', {
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            type: 'column',
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        title: {
+                            text: 'Chart preview'
+                        },
+                        tooltip: {
+                            shared: true
+                        },
+                        time: {
+                            timezone: response.locale.timezone,
+                        },
+                        xAxis: {
+                            categories: response.data.categories,
+                            type: response.data.xAxis.type
+                        },
+                        yAxis: {
+                            labels: {
+                                format: response.data.yAxis.format
+                            }
+                        },
+                        series: response.data.series
+                    });
 
-        		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
-        		        	.datum(data.data)
-        		        	.call(chart);
-        		        nv.utils.windowResize(chart.update);
-        		        return chart;
-        		    });
-        		} else if ('line' == data.type) {
-        			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(graphData.line.y_axis.format);
-        		    nv.addGraph(function() {
-        		    	var i = 1
-        		        var chart = nv.models.lineChart()
-						    .showYAxis(true)
-						    .showXAxis(true)       
-        		            .useInteractiveGuideline(true)  
-        		            .showLegend(true)
-        		            .duration(250)
-        		            ;
-        		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-       		            chart.xAxis.tickFormat(function(d,s) { 
-       		            	if (d < 0 || d >= data.data[0].values.length) {
-       		            		return '';
-       		            	}; 
-       		            	return data.data[0].values[d].label;
-       		            });
-       		            chart.margin({left: 75, bottom: 50, right: 50});
-        		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
-        		        	.datum(formatLineData(data.data))
-        		        	.call(chart);
-        		        	nv.utils.windowResize(chart.update);
-        		        return chart;
-        		    });
-        		} else if ('number' == data.type) {
-        			$('#preview_box').append($('<h1>').text(data.value_as_string),$('<h4>').text(data.label));
-        		} else if ('pie' == data.type) {
-        		} else if ('stacked_area' == data.type) {
-        			formatter = d3.locale(data.d3_formatter);
-        			numberFormatter = formatter.numberFormat(graphData.stacked_area.y_axis.format);
-        		    nv.addGraph(function() {
-        		        var chart = nv.models.stackedAreaChart()
-        		            .useInteractiveGuideline(true)
-        		            .duration(250)
-        		            .showControls(true)
-        		            .clipEdge(true);
-        		            ;
-        		        chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-       		            chart.xAxis.tickFormat(function(d,s) { 
-       		            	if (d < 0 || d >= data.data[0].values.length) {
-       		            		return '';
-       		            	}; 
-       		            	return data.data[0].values[d].label;
-       		            });
-        		        chart.margin({left: 75, bottom: 50, right: 50});
-        		        d3.select('#preview_box').append("svg").attr("style", "height: 20em;")
-        		        	.datum(formatLineData(data.data))
-        		        	.call(chart);
-        		        nv.utils.windowResize(chart.update);
-        		        return chart;
-        		    });
-        		}
-        		$('html,body').animate({scrollTop: $("#preview_box").parent().parent().offset().top },'fast');
+                } else if ('line' == response.type) {
+                    Highcharts.chart('preview_box', {
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            type: 'spline'
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        title: {
+                            text: 'Chart preview'
+                        },
+                        tooltip: {
+                            shared: true
+                        },
+                        plotOptions: {
+                            spline: {
+                                marker: {
+                                    enabled: false
+                                }
+                            }
+                        },
+                        time: {
+                            timezone: response.locale.timezone,
+                        },
+                        xAxis: {
+                            categories: response.data.categories,
+                            type: response.data.xAxis.type
+                        },
+                        yAxis: {
+                            labels: {
+                                format: response.data.yAxis.format
+                            }
+                        },
+                        series: response.data.series
+                    });
+                } else if ('number' == response.type) {
+                    $('#preview_box').append($('<h1>').text(response.value_as_string), $('<h4>').text(response.label));
+                } else if ('pie' == response.type) {
+                } else if ('stacked_area' == response.type) {
+                    Highcharts.chart('preview_box', {
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            type: 'areaspline'
+                        },
+                        plotOptions: {
+                            areaspline: {
+                                stacking: 'normal',
+                                marker: {
+                                    enabled: false
+                                }
+                            }
+                        },
+                        legend: {
+                            enabled: true
+                        },
+                        title: {
+                            text: 'Chart preview'
+                        },
+                        tooltip: {
+                            shared: true
+                        },
+                        time: {
+                            timezone: response.locale.timezone,
+                        },
+                        xAxis: {
+                            categories: response.data.categories,
+                            type: response.data.xAxis.type
+                        },
+                        yAxis: {
+                            labels: {
+                                format: response.data.yAxis.format
+                            }
+                        },
+                        series: response.data.series
+                    });
+                }
+                $('html,body').animate({scrollTop: $("#preview_box").parent().parent().offset().top}, 'fast');
             }
         });
-        
-		function formatLineData(lineData) {
-			var formattedData = [];
-			$.each(lineData, function(index, serie) {
-				var serieData = {
-					key: serie.key,
-					values: []
-				};
-				$.each(serie.values, function(serieIndex, point) {
-					serieData.values.push(
-						{
-							x: serieIndex,
-							y: point.value
-						}
-					);
-				});
-				formattedData.push(serieData);
-			});
-			formattedData.sort(function(a, b){
-			    if (a.key < b.key) return -1;
-			    if (b.key < a.key) return 1;
-			    return 0;
-			});
-			return formattedData;
-		}
 	}
 	
 	function resetValues() {
@@ -961,7 +976,7 @@ function buildGraphsPage(groupName) {
 			}
 			data.y_axis.format = $('[id=input-' + type + '-y-axis-format]').val();
 			if (!data.y_axis.format) {
-				data.y_axis.format = '.f';
+                data.y_axis.format = null;
 			}
 			$('[id^=sel-' + type + '-metrics-aggregator-]').each(function(index) {
 				var barIx = $(this).attr('id').split('-')[4];

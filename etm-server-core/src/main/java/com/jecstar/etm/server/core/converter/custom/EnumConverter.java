@@ -20,7 +20,7 @@ public class EnumConverter implements CustomFieldConverter<Enum> {
         if (value != null) {
             return this.jsonConverter.addStringElementToJsonBuffer(jsonKey, value.name(), buffer, firstElement) || !firstElement;
         }
-        return !firstElement;
+        return false;
     }
 
     @Override

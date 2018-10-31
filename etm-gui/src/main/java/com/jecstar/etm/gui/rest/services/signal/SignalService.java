@@ -2,12 +2,13 @@ package com.jecstar.etm.gui.rest.services.signal;
 
 import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.gui.rest.services.dashboard.DateInterval;
-import com.jecstar.etm.gui.rest.services.dashboard.MultiBucketResult;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DateTimeAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.DateInterval;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.LineGraph;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.MultiBucketResult;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -41,6 +42,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.DateFormat;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -418,14 +420,13 @@ public class SignalService extends AbstractUserAttributeService {
             requestBuilder = signalSearchRequestBuilderBuilder.build(q -> addFilterQuery(etmPrincipal, q), etmPrincipal);
         }
 
-        MultiBucketResult multiBucketResult = new MultiBucketResult();
-        multiBucketResult.setAddMissingKeys(true);
+        MultiBucketResult multiBucketResult = new MultiBucketResult(new LineGraph());
         DateFormat bucketDateFormat = DateInterval.safeValueOf(signal.getCardinalityTimeunit().name()).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
 
         // Start building the response
         StringBuilder result = new StringBuilder();
         result.append("{");
-        result.append("\"d3_formatter\": ").append(getD3Formatter(getEtmPrincipal()));
+        result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
         result.append(",\"data\": ");
 
         int exceededCount = 0;
@@ -433,7 +434,7 @@ public class SignalService extends AbstractUserAttributeService {
         MultiBucketsAggregation aggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
         for (MultiBucketsAggregation.Bucket bucket : aggregation.getBuckets()) {
             DateTime dateTime = (DateTime) bucket.getKey();
-            AggregationKey key = new DateTimeAggregationKey(dateTime.getMillis(), bucketDateFormat);
+            AggregationKey key = new DateTimeAggregationKey(Instant.ofEpochMilli(dateTime.getMillis()), bucketDateFormat);
             for (Aggregation subAggregation : bucket.getAggregations()) {
                 AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
                 multiBucketResult.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);

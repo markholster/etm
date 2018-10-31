@@ -441,87 +441,65 @@ function buildSignalsPage(groupName) {
             url: contextRoot + 'visualize',
             cache: false,
             data: JSON.stringify(signalData),
-            success: function(data) {
-                if (!data) {
+            success: function (response) {
+                if (!response) {
                     return;
                 }
                 $('#preview_box').empty();
-                formatter = d3.locale(data.d3_formatter);
-                numberFormatter = formatter.numberFormat(',f');
-                nv.addGraph(function() {
-                    var i = 1
-                    var chart = nv.models.lineChart()
-                        .showYAxis(true)
-                        .showXAxis(true)
-                        .useInteractiveGuideline(true)
-                        .showLegend(true)
-                        .duration(250)
-                        ;
-                    chart.yAxis.tickFormat(function(d) {return numberFormatter(d)});
-                    chart.xAxis.tickFormat(function(d,s) {
-                        if (d < 0 || d >= data.data[0].values.length) {
-                            return '';
-                        };
-                        return data.data[0].values[d].label;
-                    });
-                    chart.margin({left: 75, bottom: 50, right: 50});
-                    d3.select('#preview_box').append('svg').attr('style', 'height: 20em;')
-                        .datum(formatLineData(data.data))
-                        .call(chart);
-
-                    return chart;
+                Highcharts.chart('preview_box', {
+                    credits: {
+                        enabled: false
+                    },
+                    chart: {
+                        type: 'spline'
+                    },
+                    legend: {
+                        enabled: true
+                    },
+                    title: {
+                        text: 'Signal visualization'
+                    },
+                    tooltip: {
+                        shared: true
+                    },
+                    plotOptions: {
+                        spline: {
+                            marker: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    time: {
+                        timezone: response.locale.timezone,
+                    },
+                    xAxis: {
+                        categories: response.data.categories,
+                        type: response.data.xAxis.type
+                    },
+                    yAxis: {
+                        plotLines: [{
+                            value: signalData.threshold,
+                            color: 'red',
+                            dashStyle: 'shortdash',
+                            width: 2,
+                            label: {
+                                text: 'Threshold limit'
+                            }
+                        }]
+                    },
+                    series: response.data.series
                 });
-                if (data.exceeded_count && signalData.limit) {
-                    if (data.exceeded_count >= signalData.limit) {
-                        $('#preview_box').append($('<p>').addClass('text-danger').text('The configured threshold is exceeded ' + data.exceeded_count + ' times and tops the maximum of ' + signalData.limit + '! This would have triggered a notification.'));
-                    } else if (data.exceeded_count > 0) {
-                        $('#preview_box').append($('<p>').text('The configured threshold is exceeded ' + data.exceeded_count + ' times but stays within the maximum of ' + signalData.limit + '.'));
+                if (response.exceeded_count && signalData.limit) {
+                    if (response.exceeded_count >= signalData.limit) {
+                        $('#preview_box').prepend($('<p>').addClass('text-danger').text('The configured threshold is exceeded ' + response.exceeded_count + ' times and tops the maximum of ' + signalData.limit + '! This would have triggered a notification.'));
+                    } else if (response.exceeded_count > 0) {
+                        $('#preview_box').prepend($('<p>').text('The configured threshold is exceeded ' + response.exceeded_count + ' times but stays within the maximum of ' + signalData.limit + '.'));
                     }
                 }
         		$('html,body').animate({scrollTop: $("#preview_box").parent().parent().offset().top },'fast');
             }
         });
 
-        function formatLineData(lineData) {
-            var formattedData = [];
-            $.each(lineData, function(index, serie) {
-                var serieData = {
-                    key: serie.key,
-                    values: []
-                };
-                var thresholdData = {
-                    key: 'Threshold',
-                    values: []
-                };
-
-                $.each(serie.values, function(serieIndex, point) {
-                    serieData.values.push(
-                        {
-                            x: serieIndex,
-                            y: point.value
-                        }
-                    );
-                    if ($('#input-signal-threshold').val()) {
-                        thresholdData.values.push(
-                            {
-                                x: serieIndex,
-                                y: Number($('#input-signal-threshold').val())
-                            }
-                        );
-                    }
-                });
-                formattedData.push(serieData);
-                if ($('#input-signal-threshold').val()) {
-                    formattedData.push(thresholdData);
-                }
-            });
-            formattedData.sort(function(a, b){
-                if (a.key < b.key) return -1;
-                if (b.key < a.key) return 1;
-                return 0;
-            });
-            return formattedData;
-        }
     }
 
     function isSignalExistent(signalName) {

@@ -6,6 +6,6 @@ import com.jecstar.etm.signaler.domain.Signal;
 public class SignalConverter extends JsonEntityConverter<Signal> {
 
     public SignalConverter() {
-        super(Signal::new);
+        super(f -> new Signal());
     }
 }

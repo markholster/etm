@@ -29,7 +29,7 @@ public class CorrelatedEventsFieldsConverter implements CustomFieldConverter<Map
             buffer.append("]");
             return true;
         }
-        return !firstElement;
+        return false;
     }
 
     @SuppressWarnings("unchecked")

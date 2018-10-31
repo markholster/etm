@@ -22,7 +22,6 @@ import java.text.DateFormatSymbols;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Abstract superclass for all services that handle json requests.
@@ -147,7 +146,7 @@ public abstract class AbstractJsonService extends JsonConverter {
         return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
     }
 
-    protected String getD3Formatter(EtmPrincipal etmPrincipal) {
+    protected String getLocalFormatting(EtmPrincipal etmPrincipal) {
         NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
         DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols(etmPrincipal.getLocale());
         DateFormatSymbols dateFormatSymbols = DateFormatSymbols.getInstance(etmPrincipal.getLocale());
@@ -155,17 +154,7 @@ public abstract class AbstractJsonService extends JsonConverter {
         result.append("{");
         addStringElementToJsonBuffer("decimal", "" + decimalFormatSymbols.getDecimalSeparator(), result, true);
         addStringElementToJsonBuffer("thousands", "" + decimalFormatSymbols.getGroupingSeparator(), result, false);
-        result.append(",\"grouping\": [").append(numberFormat.getMaximumFractionDigits()).append("]");
-        result.append(",\"currency\": [\"").append(numberFormat.getCurrency().getSymbol()).append("\", \"\"]");
-        // TODO dateTime and time should be dynamic and based on the locale.
-        addStringElementToJsonBuffer("dateTime", "%a %b %e %X %Y", result, false);
-        addStringElementToJsonBuffer("date", "%m/%d/%Y", result, false);
-        addStringElementToJsonBuffer("time", "%H:%M:%S", result, false);
-        result.append(",\"periods\": [\"").append(Arrays.stream(dateFormatSymbols.getAmPmStrings()).collect(Collectors.joining("\",\""))).append("\"]");
-        result.append(",\"days\": [\"").append(Arrays.stream(dateFormatSymbols.getWeekdays()).collect(Collectors.joining("\",\""))).append("\"]");
-        result.append(",\"shortDays\": [\"").append(Arrays.stream(dateFormatSymbols.getShortWeekdays()).collect(Collectors.joining("\",\""))).append("\"]");
-        result.append(",\"months\": [\"").append(Arrays.stream(dateFormatSymbols.getMonths()).collect(Collectors.joining("\",\""))).append("\"]");
-        result.append(",\"shortMonths\": [\"").append(Arrays.stream(dateFormatSymbols.getShortMonths()).collect(Collectors.joining("\",\""))).append("\"]");
+        addStringElementToJsonBuffer("timezone", "" + etmPrincipal.getTimeZone().toZoneId().toString(), result, false);
         result.append("}");
         return result.toString();
     }

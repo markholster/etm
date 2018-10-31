@@ -26,7 +26,7 @@ public class MapKeyValueConverter implements CustomFieldConverter<Map<String, Ob
             buffer.append("}");
             return true;
         }
-        return !firstElement;
+        return false;
     }
 
     @SuppressWarnings("unchecked")
