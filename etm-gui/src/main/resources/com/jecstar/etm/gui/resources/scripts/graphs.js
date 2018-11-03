@@ -841,7 +841,26 @@ function buildGraphsPage(groupName) {
                         series: response.data.series
                     });
                 } else if ('number' == response.type) {
-                    $('#preview_box').append($('<h1>').text(response.value_as_string), $('<h4>').text(response.label));
+                    Highcharts.chart('preview_box', {
+                        credits: {
+                            enabled: false
+                        },
+                        chart: {
+                            events: {
+                                load: function () {
+                                    this.renderer.text(response.data.value_as_string, this.chartWidth / 2, this.chartHeight / 2)
+                                        .css({
+                                            fontSize: '4em',
+                                        })
+                                        .attr('text-anchor', 'middle')
+                                        .add();
+                                }
+                            }
+                        },
+                        title: {
+                            text: 'Chart preview'
+                        }
+                    });
                 } else if ('pie' == response.type) {
                 } else if ('stacked_area' == response.type) {
                     Highcharts.chart('preview_box', {

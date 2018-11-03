@@ -523,12 +523,14 @@ function addListeners() {
             if (parts > dragStatus.columnPartsLeft + dragStatus.col.parts) {
                 parts = dragStatus.columnPartsLeft + dragStatus.col.parts;
             }
+            var resized = false;
             if (dragStatus.col.parts != parts) {
                 dragStatus.columnPartsLeft -= (parts - dragStatus.col.parts);
                 divToResize.removeClass(function (index, className) {
                     return (className.match (/(^|\s)col-lg-\S+/g) || []).join(' ');
                 }).addClass("col-lg-" + parts);
                 dragStatus.col.parts = parts;
+                resized = true;
             }
 
             // Resize the height
@@ -542,6 +544,24 @@ function addListeners() {
             if (dragStatus.row.height != heightRem) {
                 dragStatus.row.height = heightRem;
                 divToResize.parent().height(heightRem + 'rem');
+                resized = true;
+            }
+            if (resized) {
+                $.each(dragStatus.row.cols, function (index, col) {
+                    if (col.chart) {
+                        col.chart.reflow();
+                        if (col.chart.numberLbl) {
+                            // for (var rowIx=0; rowIx < dashboardData.rows.length; rowIx++) {
+                            //     for (var colIx=0; colIx < dashboardData.rows[rowIx].cols.length; colIx++) {
+                            //         if (dashboardData.rows[rowIx].cols[colIx].id == cellId) {
+                            //             graph = dashboardData.rows[rowIx].cols[colIx];
+                            //         }
+                            //     }
+                            // }
+                            $("div[data-cell-id='" + col.id + "']").empty().replaceWith(createCell(col, false));
+                        }
+                    }
+                });
             }
         }
     });
@@ -646,6 +666,46 @@ function editGraph(cellId) {
 }
 
 function createCell(graph, readonly) {
+
+    function createEmptyChart(graph, renderTo) {
+        graph.chart = Highcharts.chart({
+            credits: {
+                enabled: false
+            },
+            exporting: {
+                menuItemDefinitions: {
+                    editGraph: {
+                        onclick: function () {
+                            editGraph(graph.id);
+                        },
+                        text: 'Edit Graph'
+                    }
+                },
+                buttons: {
+                    contextButton: {
+                        menuItems: ['editGraph']
+                    }
+                }
+            },
+            chart: {
+                renderTo: $(renderTo)[0],
+                type: 'line',
+                height: '40%'
+            },
+            title: {
+                text: ''
+            },
+            legend: {
+                enabled: false
+            },
+            xAxis: {
+                categories: []
+            },
+            series: []
+        });
+    }
+
+
     var $cellContainer = $("<div>").attr('data-cell-id', graph.id);
     var $card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
     var $cardBody = $('<div>').addClass('card-body').attr('style', 'height: 100%;');
@@ -668,6 +728,8 @@ function createCell(graph, readonly) {
         graph.chart.destroy();
     }
     delete graph.chart;
+    var graphContainer = $('<div style="height: 100%;">');
+    $cardBody.append(graphContainer);
     if (graph.name) {
         var graphData = graphMap[graph.name];
         if ('undefined' !== typeof graphData) {
@@ -675,14 +737,21 @@ function createCell(graph, readonly) {
             if (graph.query) {
                 clonedGraphData.query = graph.query;
             }
-            updateChart(clonedGraphData, graph, $cardBody, readonly);
+            updateChart(clonedGraphData, graph, graphContainer, readonly);
             if (graph.refresh_rate) {
-                graph.interval = setInterval( function() { updateChart(clonedGraphData, graph, $cardBody); }, graph.refresh_rate * 1000 );
+                graph.interval = setInterval(function () {
+                    updateChart(clonedGraphData, graph, graphContainer);
+                }, graph.refresh_rate * 1000);
             }
+        } else if (!readonly) {
+            createEmptyChart(graph, graphContainer);
         }
+    } else if (!readonly) {
+        createEmptyChart(graph, graphContainer);
     }
     return $cellContainer;
 }
+
 
 function saveDashboard(successFunction) {
     var backendData = createDashboardData();
@@ -733,7 +802,7 @@ function enableOrDisableButtons() {
     }
 }
 
-function updateChart(graphData, graph, cardBody, readonly) {
+function updateChart(graphData, graph, container, readonly) {
     $.ajax({
         type: 'GET',
         contentType: 'application/json',
@@ -764,9 +833,7 @@ function updateChart(graphData, graph, cardBody, readonly) {
                         series: response.data.series
                     });
                 } else {
-                    var graphContainer = $('<div style="height: 100%;">');
-                    $(cardBody).append(graphContainer);
-                    graph.chart = createGraph(graphContainer, 'column', graph.title, undefined, response, readonly);
+                    graph.chart = createGraph(container, 'column', graph, undefined, response, readonly);
                 }
             } else if ('line' === response.type) {
                 if (graph.chart) {
@@ -777,8 +844,6 @@ function updateChart(graphData, graph, cardBody, readonly) {
                         series: response.data.series
                     });
                 } else {
-                    var graphContainer = $('<div style="height: 100%;">');
-                    $(cardBody).append(graphContainer);
                     var plotOptions = {
                         spline: {
                             marker: {
@@ -786,14 +851,15 @@ function updateChart(graphData, graph, cardBody, readonly) {
                             }
                         }
                     };
-                    graph.chart = createGraph(graphContainer, 'spline', graph.title, plotOptions, response, readonly);
+                    graph.chart = createGraph(container, 'spline', graph, plotOptions, response, readonly);
                 }
             } else if ('number' === response.type) {
-                var $currentValue = $("div[response-cell-id='" + graph.id + "'] > .card-block > .card-body").find("h1[response-element-type='number-graph']");
-                if ($currentValue.length) {
-                    $currentValue.text(response.value_as_string);
+                if (graph.chart) {
+                    graph.chart.numberLbl.attr({
+                        text: response.data.value_as_string
+                    });
                 } else {
-                    $(cardBody).append($('<h1>').attr('response-element-type', 'number-graph').text(response.value_as_string), $('<h4>').text(response.label));
+                    graph.chart = createGraph(container, 'number', graph, undefined, response, readonly);
                 }
             } else if ('pie' === response.type) {
             } else if ('stacked_area' === response.type) {
@@ -805,8 +871,6 @@ function updateChart(graphData, graph, cardBody, readonly) {
                         series: response.data.series
                     });
                 } else {
-                    var graphContainer = $('<div style="height: 100%;">');
-                    $(cardBody).append(graphContainer);
                     var plotOptions = {
                         areaspline: {
                             stacking: 'normal',
@@ -815,7 +879,7 @@ function updateChart(graphData, graph, cardBody, readonly) {
                             }
                         }
                     };
-                    graph.chart = createGraph(graphContainer, 'areaspline', graph.title, plotOptions, response, readonly);
+                    graph.chart = createGraph(container, 'areaspline', graph, plotOptions, response, readonly);
                 }
             }
         }
@@ -833,7 +897,7 @@ function updateChart(graphData, graph, cardBody, readonly) {
         return labelValue;
     }
 
-    function createGraph(renderTo, type, title, plotOptions, graphData, readonly) {
+    function createGraph(renderTo, type, graph, plotOptions, graphData, readonly) {
         var chartOptions = {
             credits: {
                 enabled: false
@@ -846,7 +910,7 @@ function updateChart(graphData, graph, cardBody, readonly) {
                 enabled: true
             },
             title: {
-                text: title
+                text: graph.title
             },
             tooltip: {
                 shared: true
@@ -855,18 +919,34 @@ function updateChart(graphData, graph, cardBody, readonly) {
                 timezone: graphData.locale.timezone
             },
             xAxis: {
-                categories: graphData.data.categories,
-                type: graphData.data.xAxis.type
+                categories: graphData.data.categories
             },
-            yAxis: {
+            series: graphData.data.series
+        };
+        if ('number' == type) {
+            chartOptions.chart.events = {
+                load: function () {
+                    this.numberLbl = this.renderer.text(graphData.data.value_as_string, this.chartWidth / 2, this.chartHeight / 6 * 5)
+                        .css({
+                            fontSize: '4em',
+                        })
+                        .attr('text-anchor', 'middle')
+                        .add();
+                }
+            }
+        }
+        if (graphData.data.xAxis) {
+            chartOptions.xAxis.type = graphData.data.xAxis.type;
+        }
+        if (graphData.data.yAxis) {
+            chartOptions.yAxis = {
                 labels: {
                     formatter: function () {
                         return formatLabel(graphData.data.yAxis.format, this.value)
                     }
                 }
-            },
-            series: graphData.data.series
-        };
+            }
+        }
         if (plotOptions) {
             chartOptions.plotOptions = plotOptions;
         }
@@ -886,7 +966,7 @@ function updateChart(graphData, graph, cardBody, readonly) {
                     // Custom definition
                     editGraph: {
                         onclick: function () {
-                            editGraph($(this.renderTo).parent().parent().parent().attr('data-cell-id'));
+                            editGraph(graph.id);
                         },
                         text: 'Edit Graph'
                     }

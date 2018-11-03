@@ -811,8 +811,10 @@ public class DashboardService extends AbstractUserAttributeService {
         }
         StringBuilder result = new StringBuilder();
         result.append("{");
-        addStringElementToJsonBuffer("type", "number", result, true);
-        addStringElementToJsonBuffer("aggregator", metricAggregatorWrapper.getAggregatorType(), result, false);
+        result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
+        addStringElementToJsonBuffer("type", "number", result, false);
+        result.append(", \"data\": {");
+        addStringElementToJsonBuffer("aggregator", metricAggregatorWrapper.getAggregatorType(), result, true);
 
         AggregationBuilder aggregatorBuilder = metricAggregatorWrapper.getAggregationBuilder();
         SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
@@ -820,7 +822,7 @@ public class DashboardService extends AbstractUserAttributeService {
         AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(aggregation);
         aggregationValue.appendToJsonBuffer(this, metricAggregatorWrapper.getFieldFormat(), result, false);
 
-        result.append("}");
+        result.append("}}");
         return result.toString();
     }
 
