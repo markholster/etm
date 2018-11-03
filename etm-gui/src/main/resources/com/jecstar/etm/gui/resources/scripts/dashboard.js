@@ -467,7 +467,6 @@ function addListeners() {
 
     $('#dashboard-container').on("mouseover", 'div[data-cell-id]', function(event) {
         if (!dragStatus) {
-            $(this).find("a[data-link-action='edit-graph']").removeClass('invisible');
             $(this).find("div[data-action='resize-graph']").removeClass('invisible');
             $(this).find(".card").addClass('selectedColumn');
             if ('false' == $(this).attr('data-col-bordered')) {
@@ -478,7 +477,6 @@ function addListeners() {
 
     $('#dashboard-container').on("mouseout", 'div[data-cell-id]', function(event) {
         if (!dragStatus) {
-            $(this).find("a[data-link-action='edit-graph']").addClass('invisible');
             $(this).find("div[data-action='resize-graph']").addClass('invisible');
             $(this).find(".card").removeClass('selectedColumn');
             if ('false' == $(this).attr('data-col-bordered')) {
@@ -597,8 +595,6 @@ function addListeners() {
         graph.time_filter_field = $('#input-graph-time-filter-field').val() ? $('#input-graph-time-filter-field').val() : null;
         graph.query = $('#input-graph-query').val();
         graph.refresh_rate = $('#input-refresh-rate').val() ? Number($('#input-refresh-rate').val()) : null;
-        var graphData = graphMap[graph.name];
-
         saveDashboard(function () {
             $("div[data-cell-id='" + graph.id + "']").empty().replaceWith(createCell(graph, false));
         });
@@ -653,9 +649,7 @@ function createCell(graph, readonly) {
     var $cellContainer = $("<div>").attr('data-cell-id', graph.id);
     var $card = $('<div>').addClass('card card-block').attr('style', 'height: 100%;');
     var $cardBody = $('<div>').addClass('card-body').attr('style', 'height: 100%;');
-    var $cellTitle = $('<h5>').addClass('card-title').attr('style', 'margin-bottom: 0px;');
 
-    $cardBody.append($cellTitle);
     if (!readonly) {
         $cardBody.append($('<div>').addClass('invisible').attr('data-action', 'resize-graph').attr('style', 'position:absolute;bottom:0px;right:0.5rem;margin:0;cursor:se-resize;').append($('<span>').addClass('fa fa-angle-right').attr('style', '-webkit-transform: rotate(45deg); -moz-transform: rotate(45deg); -ms-transform: rotate(45deg); -o-transform: rotate(45deg); transform: rotate(45deg);')));
     }
@@ -664,9 +658,6 @@ function createCell(graph, readonly) {
     $cellContainer.attr('data-col-bordered', graph.bordered).addClass('col-lg-' + graph.parts).attr('style', 'height: 100%;');
     if (!graph.bordered) {
         $card.addClass('noBorder');
-    }
-    if (!readonly) {
-        $cellTitle.append($('<a>').attr('href', '#').attr('data-link-action', 'edit-graph').addClass('fa fa-pencil-square-o pull-right invisible'));
     }
     if (graph.interval) {
     // Remove previous update if present.
@@ -684,7 +675,7 @@ function createCell(graph, readonly) {
             if (graph.query) {
                 clonedGraphData.query = graph.query;
             }
-            updateChart(clonedGraphData, graph, $cardBody);
+            updateChart(clonedGraphData, graph, $cardBody, readonly);
             if (graph.refresh_rate) {
                 graph.interval = setInterval( function() { updateChart(clonedGraphData, graph, $cardBody); }, graph.refresh_rate * 1000 );
             }
@@ -742,7 +733,7 @@ function enableOrDisableButtons() {
     }
 }
 
-function updateChart(graphData, graph, cardBody) {
+function updateChart(graphData, graph, cardBody, readonly) {
     $.ajax({
         type: 'GET',
         contentType: 'application/json',
@@ -773,45 +764,11 @@ function updateChart(graphData, graph, cardBody) {
                         series: response.data.series
                     });
                 } else {
-                    var graphContainer = $('<div style="height: 98%;">');
+                    var graphContainer = $('<div style="height: 100%;">');
                     $(cardBody).append(graphContainer);
-                    graph.chart = Highcharts.chart({
-                        credits: {
-                            enabled: false
-                        },
-                        chart: {
-                            renderTo: $(graphContainer)[0],
-                            type: 'column'
-                        },
-                        legend: {
-                            enabled: true
-                        },
-                        title: {
-                            text: graph.title
-                        },
-                        tooltip: {
-                            shared: true
-                        },
-                        time: {
-                            timezone: response.locale.timezone
-                        },
-                        xAxis: {
-                            categories: response.data.categories,
-                            type: response.data.xAxis.type
-                        },
-                        yAxis: {
-                            labels: {
-                                formatter: function () {
-                                    return formatLabel(response.data.yAxis.format, this.value)
-                                }
-                            }
-                        },
-                        series: response.data.series
-                    });
+                    graph.chart = createGraph(graphContainer, 'column', graph.title, undefined, response, readonly);
                 }
             } else if ('line' === response.type) {
-                var graphContainer = $('<div style="height: 98%;">');
-                $(cardBody).append(graphContainer);
                 if (graph.chart) {
                     graph.chart.update({
                         xAxis: {
@@ -820,46 +777,16 @@ function updateChart(graphData, graph, cardBody) {
                         series: response.data.series
                     });
                 } else {
-                    graph.chart = Highcharts.chart({
-                        credits: {
-                            enabled: false
-                        },
-                        chart: {
-                            renderTo: $(graphContainer)[0],
-                            type: 'spline'
-                        },
-                        legend: {
-                            enabled: true
-                        },
-                        title: {
-                            text: graph.title
-                        },
-                        tooltip: {
-                            shared: true
-                        },
-                        plotOptions: {
-                            spline: {
-                                marker: {
-                                    enabled: false
-                                }
+                    var graphContainer = $('<div style="height: 100%;">');
+                    $(cardBody).append(graphContainer);
+                    var plotOptions = {
+                        spline: {
+                            marker: {
+                                enabled: false
                             }
-                        },
-                        time: {
-                            timezone: response.locale.timezone,
-                        },
-                        xAxis: {
-                            categories: response.data.categories,
-                            type: response.data.xAxis.type
-                        },
-                        yAxis: {
-                            labels: {
-                                formatter: function () {
-                                    return formatLabel(response.data.yAxis.format, this.value)
-                                }
-                            }
-                        },
-                        series: response.data.series
-                    });
+                        }
+                    };
+                    graph.chart = createGraph(graphContainer, 'spline', graph.title, plotOptions, response, readonly);
                 }
             } else if ('number' === response.type) {
                 var $currentValue = $("div[response-cell-id='" + graph.id + "'] > .card-block > .card-body").find("h1[response-element-type='number-graph']");
@@ -870,8 +797,6 @@ function updateChart(graphData, graph, cardBody) {
                 }
             } else if ('pie' === response.type) {
             } else if ('stacked_area' === response.type) {
-                var graphContainer = $('<div style="height: 98%;">');
-                $(cardBody).append(graphContainer);
                 if (graph.chart) {
                     graph.chart.update({
                         xAxis: {
@@ -880,47 +805,17 @@ function updateChart(graphData, graph, cardBody) {
                         series: response.data.series
                     });
                 } else {
-                    graph.chart = Highcharts.chart({
-                        credits: {
-                            enabled: false
-                        },
-                        chart: {
-                            renderTo: $(graphContainer)[0],
-                            type: 'areaspline'
-                        },
-                        plotOptions: {
-                            areaspline: {
-                                stacking: 'normal',
-                                marker: {
-                                    enabled: false
-                                }
+                    var graphContainer = $('<div style="height: 100%;">');
+                    $(cardBody).append(graphContainer);
+                    var plotOptions = {
+                        areaspline: {
+                            stacking: 'normal',
+                            marker: {
+                                enabled: false
                             }
-                        },
-                        legend: {
-                            enabled: true
-                        },
-                        title: {
-                            text: graph.title
-                        },
-                        tooltip: {
-                            shared: true
-                        },
-                        time: {
-                            timezone: response.locale.timezone
-                        },
-                        xAxis: {
-                            categories: response.data.categories,
-                            type: response.data.xAxis.type
-                        },
-                        yAxis: {
-                            labels: {
-                                formatter: function () {
-                                    return formatLabel(response.data.yAxis.format, this.value)
-                                }
-                            }
-                        },
-                        series: response.data.series
-                    });
+                        }
+                    };
+                    graph.chart = createGraph(graphContainer, 'areaspline', graph.title, plotOptions, response, readonly);
                 }
             }
         }
@@ -936,6 +831,74 @@ function updateChart(graphData, graph, cardBody) {
             }
         }
         return labelValue;
+    }
+
+    function createGraph(renderTo, type, title, plotOptions, graphData, readonly) {
+        var chartOptions = {
+            credits: {
+                enabled: false
+            },
+            chart: {
+                renderTo: $(renderTo)[0],
+                type: type
+            },
+            legend: {
+                enabled: true
+            },
+            title: {
+                text: title
+            },
+            tooltip: {
+                shared: true
+            },
+            time: {
+                timezone: graphData.locale.timezone
+            },
+            xAxis: {
+                categories: graphData.data.categories,
+                type: graphData.data.xAxis.type
+            },
+            yAxis: {
+                labels: {
+                    formatter: function () {
+                        return formatLabel(graphData.data.yAxis.format, this.value)
+                    }
+                }
+            },
+            series: graphData.data.series
+        };
+        if (plotOptions) {
+            chartOptions.plotOptions = plotOptions;
+        }
+        if (readonly) {
+            chartOptions.exporting = {
+                fallbackToExportServer: false,
+                buttons: {
+                    contextButton: {
+                        menuItems: ['downloadPNG', 'downloadSVG']
+                    }
+                }
+            }
+        } else {
+            chartOptions.exporting = {
+                fallbackToExportServer: false,
+                menuItemDefinitions: {
+                    // Custom definition
+                    editGraph: {
+                        onclick: function () {
+                            editGraph($(this.renderTo).parent().parent().parent().attr('data-cell-id'));
+                        },
+                        text: 'Edit Graph'
+                    }
+                },
+                buttons: {
+                    contextButton: {
+                        menuItems: ['downloadPNG', 'downloadSVG', 'separator', 'editGraph']
+                    }
+                }
+            }
+        }
+        return Highcharts.chart(chartOptions);
     }
 }
 
