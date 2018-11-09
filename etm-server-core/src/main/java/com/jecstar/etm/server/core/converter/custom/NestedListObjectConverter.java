@@ -18,6 +18,7 @@ public abstract class NestedListObjectConverter<K, T extends List<K>> extends Js
     private final JsonConverter jsonConverter = new JsonConverter();
     private final JsonEntityConverter<K> entityConverter;
 
+    @SuppressWarnings("unchecked")
     public NestedListObjectConverter(JsonEntityConverter<K> entityConverter) {
         super(f -> (T) new ArrayList());
         this.entityConverter = entityConverter;
@@ -39,6 +40,7 @@ public abstract class NestedListObjectConverter<K, T extends List<K>> extends Js
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void setValueOnEntity(Field field, Object entity, Object jsonValue) {
         List<Map<String, Object>> jsonObjects = (List<Map<String, Object>>) jsonValue;
         List<K> values = jsonObjects.stream().map(this.entityConverter::read).collect(Collectors.toList());

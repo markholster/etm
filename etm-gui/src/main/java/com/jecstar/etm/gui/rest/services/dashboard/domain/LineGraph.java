@@ -18,4 +18,6 @@ public class LineGraph extends MultiBucketGraph {
     public Axes getAxes() {
         return this.axes;
     }
+
+
 }

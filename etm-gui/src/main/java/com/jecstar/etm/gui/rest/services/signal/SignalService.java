@@ -7,7 +7,6 @@ import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DateTimeAggregationKey;
 import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.DateInterval;
-import com.jecstar.etm.gui.rest.services.dashboard.domain.LineGraph;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.MultiBucketResult;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
@@ -420,7 +419,7 @@ public class SignalService extends AbstractUserAttributeService {
             requestBuilder = signalSearchRequestBuilderBuilder.build(q -> addFilterQuery(etmPrincipal, q), etmPrincipal);
         }
 
-        MultiBucketResult multiBucketResult = new MultiBucketResult(new LineGraph());
+        MultiBucketResult multiBucketResult = new MultiBucketResult(null);
         DateFormat bucketDateFormat = DateInterval.safeValueOf(signal.getCardinalityTimeunit().name()).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
 
         // Start building the response

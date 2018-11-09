@@ -60,7 +60,7 @@ if NOT "%ENDORSED_DIR%" == "" set CLASSPATH="%BASEDIR%"\%ENDORSED_DIR%\*;%CLASSP
 
 if NOT "%CLASSPATH_PREFIX%" == "" set CLASSPATH=%CLASSPATH_PREFIX%;%CLASSPATH%
 
-for /F "usebackq delims=" %%a in (`"%JAVACMD% -cp "!CLASSPATH!" "com.jecstar.etm.launcher.JvmOptionsParser" "!BASEDIR!/config/jvm.options" || echo jvm_options_parser_failed"`) do set JAVA_OPTS=%%a
+for /F "usebackq delims=" %%a in (`"%JAVACMD% -cp %CLASSPATH% "com.jecstar.etm.launcher.JvmOptionsParser" "%BASEDIR%/config/jvm.options" || echo jvm_options_parser_failed"`) do set JAVA_OPTS=%%a
 
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit

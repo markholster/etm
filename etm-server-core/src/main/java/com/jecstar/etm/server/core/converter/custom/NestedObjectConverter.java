@@ -35,6 +35,7 @@ public abstract class NestedObjectConverter<T> extends JsonEntityConverter<T> im
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void setValueOnEntity(Field field, Object entity, Object jsonValue) {
         T value = read((Map<String, Object>) jsonValue);
         try {

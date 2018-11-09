@@ -76,7 +76,7 @@ public class MultiBucketResult {
 
     private void writeYAxis(JsonWriter jsonWriter, StringBuilder buffer) {
         buffer.append(jsonWriter.escapeToJson("yAxis", true) + ": {");
-        jsonWriter.addStringElementToJsonBuffer("format", this.graph.getAxes().getYAxis().getFormat(), buffer, true);
+        jsonWriter.addStringElementToJsonBuffer("format", this.graph == null ? null : this.graph.getAxes().getYAxis().getFormat(), buffer, true);
         buffer.append("}");
     }
 
@@ -123,29 +123,4 @@ public class MultiBucketResult {
     private boolean isDateTimeBucketList() {
         return this.keys.stream().allMatch(p -> p instanceof DateTimeAggregationKey);
     }
-
-//    private long getStartTime() {
-//        if (this.keys.size() == 0) {
-//            return 0;
-//        }
-//        Iterator<AggregationKey> iterator = this.keys.stream()
-//                .sorted(SortOrder.ASC.equals(this.sortOrder) ? Comparator.naturalOrder() : Comparator.reverseOrder())
-//                .iterator();
-//        DateTimeAggregationKey aggregationKey = (DateTimeAggregationKey) iterator.next();
-//        return aggregationKey.getInstant().toEpochMilli();
-//    }
-//
-//    private long calculateInterval() {
-//        if (this.keys.size() < 2) {
-//            return 1;
-//        }
-//        Iterator<AggregationKey> iterator = this.keys.stream()
-//                .sorted(SortOrder.ASC.equals(this.sortOrder) ? Comparator.naturalOrder() : Comparator.reverseOrder())
-//                .iterator();
-//        DateTimeAggregationKey aggregationKey1 = (DateTimeAggregationKey) iterator.next();
-//        DateTimeAggregationKey aggregationKey2 = (DateTimeAggregationKey) iterator.next();
-//        return aggregationKey2.getInstant().toEpochMilli() - aggregationKey1.getInstant().toEpochMilli();
-//    }
-
-
 }

@@ -45,7 +45,7 @@ echo "Now make the distribution available on the website"
 read -n1 -r -p "Press any key when the distibution is available for download..." key
 
 echo "Generating docker image"
-cd etm-docker/build/docker
+cd etm-public/etm-docker/build/docker
 docker image build -t www.jecstar.com/etm:$VERSION .
 if [ $? -ne 0 ]; then
     echo "Generating docker image failed"
