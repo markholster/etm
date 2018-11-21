@@ -1,4 +1,6 @@
 == Changelog
+=== Version 3.4.0
+* [ETM-77] Fix "Accessing variable [ctx] via [params.ctx] from within a update script is deprecated in favor of directly accessing [ctx]".
 
 === Version 3.3.0
 * [ETM-57] Sorting not working on all fields.

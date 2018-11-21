@@ -329,28 +329,28 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private String createUpdateSearchTemplateScript() {
         return "if (params.template != null) {\n" +
-                "    if (params.ctx._source.user.search_templates != null) {\n" +
+                "    if (ctx._source.user.search_templates != null) {\n" +
                 "        boolean found = false;\n" +
-                "        for (int i=0; i < params.ctx._source.user.search_templates.size(); i++) {\n" +
-                "            if (params.ctx._source.user.search_templates[i].name.equals(params.template.name)) {\n" +
-                "                params.ctx._source.user.search_templates[i] = params.template;\n" +
+                "        for (int i=0; i < ctx._source.user.search_templates.size(); i++) {\n" +
+                "            if (ctx._source.user.search_templates[i].name.equals(params.template.name)) {\n" +
+                "                ctx._source.user.search_templates[i] = params.template;\n" +
                 "                found = true;\n" +
                 "             }\n" +
                 "        }\n" +
-                "        if (!found && params.ctx._source.user.search_templates.size() < params.max_templates) {\n" +
-                "            params.ctx._source.user.search_templates.add(params.template);\n" +
+                "        if (!found && ctx._source.user.search_templates.size() < params.max_templates) {\n" +
+                "            ctx._source.user.search_templates.add(params.template);\n" +
                 "        }\n" +
                 "    } else if (params.max_templates > 0) {\n" +
-                "        params.ctx._source.user.search_templates = new ArrayList();\n" +
-                "        params.ctx._source.user.search_templates.add(params.template);\n" +
+                "        ctx._source.user.search_templates = new ArrayList();\n" +
+                "        ctx._source.user.search_templates.add(params.template);\n" +
                 "    }\n" +
                 "}\n";
     }
 
     private String createRemoveSearchTemplateScript() {
         return "if (params.name != null) {\n" +
-                "    if (params.ctx._source.user.search_templates != null) {\n" +
-                "		 Iterator it = params.ctx._source.user.search_templates.iterator();\n" +
+                "    if (ctx._source.user.search_templates != null) {\n" +
+                "		 Iterator it = ctx._source.user.search_templates.iterator();\n" +
                 "        while (it.hasNext()) {\n" +
                 "            def item = it.next()\n;" +
                 "            if (item.name.equals(params.name)) {\n" +
@@ -363,22 +363,22 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private String createUpdateSearchHistoryScript() {
         return "if (params.query != null) {\n" +
-                "    if (params.ctx._source.user.search_history != null) {\n" +
-                "        for (int i=0; i < params.ctx._source.user.search_history.size(); i++) {\n" +
-                "            if (params.ctx._source.user.search_history[i].query.equals(params.query.query)) {\n" +
-                "                params.ctx._source.user.search_history.remove(i);\n" +
+                "    if (ctx._source.user.search_history != null) {\n" +
+                "        for (int i=0; i < ctx._source.user.search_history.size(); i++) {\n" +
+                "            if (ctx._source.user.search_history[i].query.equals(params.query.query)) {\n" +
+                "                ctx._source.user.search_history.remove(i);\n" +
                 "            }\n" +
                 "        }\n" +
-                "        params.ctx._source.user.search_history.add(params.query);\n" +
+                "        ctx._source.user.search_history.add(params.query);\n" +
                 "    } else {\n" +
-                "        params.ctx._source.user.search_history = new ArrayList();\n" +
-                "        params.ctx._source.user.search_history.add(params.query);\n" +
+                "        ctx._source.user.search_history = new ArrayList();\n" +
+                "        ctx._source.user.search_history.add(params.query);\n" +
                 "    }\n" +
                 "}\n" +
-                "if (params.ctx._source.user.search_history != null && params.history_size != null) {\n" +
-                "    int removeCount = params.ctx._source.user.search_history.size() - params.history_size;\n" +
+                "if (ctx._source.user.search_history != null && params.history_size != null) {\n" +
+                "    int removeCount = ctx._source.user.search_history.size() - params.history_size;\n" +
                 "    for (int i=0; i < removeCount; i++) {\n" +
-                "        params.ctx._source.user.search_history.remove(0);\n" +
+                "        ctx._source.user.search_history.remove(0);\n" +
                 "    }\n" +
                 "}\n";
     }
