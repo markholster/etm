@@ -217,6 +217,9 @@ public class EventChain {
             return null;
         }
         float percentage = (float) endpointTime / (float) responseTime;
+        if (Float.isInfinite(percentage)) {
+            return 0f;
+        }
         return percentage < 0.001f ? 0.001f : percentage;
     }
 
@@ -240,6 +243,9 @@ public class EventChain {
             return null;
         }
         float percentage = (float) handlingTime / (float) responseTime;
+        if (Float.isInfinite(percentage)) {
+            return 0f;
+        }
         return percentage < 0.01f ? 0.01f : percentage;
     }
 
