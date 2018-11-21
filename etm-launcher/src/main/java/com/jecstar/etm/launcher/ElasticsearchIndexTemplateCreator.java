@@ -369,16 +369,16 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "                ctx._source.user.search_history.remove(i);\n" +
                 "            }\n" +
                 "        }\n" +
-                "        ctx._source.user.search_history.add(params.query);\n" +
+                "        params.ctx._source.user.search_history.add(params.query);\n" +
                 "    } else {\n" +
-                "        ctx._source.user.search_history = new ArrayList();\n" +
-                "        ctx._source.user.search_history.add(params.query);\n" +
+                "        params.ctx._source.user.search_history = new ArrayList();\n" +
+                "        params.ctx._source.user.search_history.add(params.query);\n" +
                 "    }\n" +
                 "}\n" +
-                "if (ctx._source.user.search_history != null && params.history_size != null) {\n" +
-                "    int removeCount = ctx._source.user.search_history.size() - params.history_size;\n" +
+                "if (params.ctx._source.user.search_history != null && params.history_size != null) {\n" +
+                "    int removeCount = params.ctx._source.user.search_history.size() - params.history_size;\n" +
                 "    for (int i=0; i < removeCount; i++) {\n" +
-                "        ctx._source.user.search_history.remove(0);\n" +
+                "        params.ctx._source.user.search_history.remove(0);\n" +
                 "    }\n" +
                 "}\n";
     }
@@ -399,16 +399,16 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private String createUpdateEventScript() {
         return "Map findEndpointByName(List endpoints, String name) {\n" +
-                "    if (endpoints == null) {\n" +
-                "        return null;\n" +
-                "    }\n" +
-                "    for (Map endpoint : endpoints) {\n" +
-                "        String endpointName = (String)endpoint.get(\"name\");\n" +
-                "        if (endpointName != null && endpointName.equals(name)) {\n" +
-                "            return endpoint;\n" +
-                "        }\n" +
-                "    }\n" +
-                "    return null;\n" +
+                "\tif (endpoints == null) {\n" +
+                "\t\treturn null;\n" +
+                "\t}\n" +
+                "\tfor (Map endpoint : endpoints) {\n" +
+                "\t\tString endpointName = (String)endpoint.get(\"name\");\n" +
+                "\t\tif (endpointName != null && endpointName.equals(name)) {\n" +
+                "\t\t\treturn endpoint;\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "\treturn null;\n" +
                 "}\n" +
                 "\n" +
                 "boolean hasWritingEndpointHandler(List endpointHandlers) {\n" +
@@ -424,67 +424,67 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "}\n" +
                 "\n" +
                 "boolean mergeEntity(Map targetSource, Map inputSource, String entityName) {\n" +
-                "    Object sourceEntity = inputSource.get(entityName);\n" +
-                "    Object targetEntity = targetSource.get(entityName);\n" +
-                "    if (sourceEntity == null) {\n" +
-                "        return false;\n" +
-                "    }\n" +
-                "    if (sourceEntity instanceof List) {\n" +
-                "        // merge a list, adding all source items to the target list\n" +
-                "        if (targetEntity == null) {\n" +
-                "            targetEntity = sourceEntity;\n" +
-                "        } else {\n" +
-                "            ((List)targetEntity).addAll((List)sourceEntity);\n" +
-                "        }\n" +
-                "    } else if (sourceEntity instanceof Map) {\n" +
-                "        // merge a map, adding all items to the map if the target map didn't contain them.\n" +
-                "        if (targetEntity == null) {\n" +
-                "            targetEntity = sourceEntity;\n" +
-                "        } else {\n" +
-                "            Map original = (Map)targetEntity;\n" +
-                "            targetEntity = new HashMap((Map)sourceEntity);\n" +
-                "            ((Map)targetEntity).putAll(original);\n" +
-                "        }    \n" +
-                "    } else {\n" +
-                "        // Not a collection, add the value of the target is not null.\n" +
-                "        if (targetEntity != null) {\n" +
-                "            return false;\n" +
-                "        }\n" +
-                "        targetEntity = sourceEntity;\n" +
-                "    }\n" +
-                "    targetSource.put(entityName, targetEntity);    \n" +
-                "    return true;\n" +
+                "\tObject sourceEntity = inputSource.get(entityName);\n" +
+                "\tObject targetEntity = targetSource.get(entityName);\n" +
+                "\tif (sourceEntity == null) {\n" +
+                "\t\treturn false;\n" +
+                "\t}\n" +
+                "\tif (sourceEntity instanceof List) {\n" +
+                "\t\t// merge a list, adding all source items to the target list\n" +
+                "\t\tif (targetEntity == null) {\n" +
+                "\t\t\ttargetEntity = sourceEntity;\n" +
+                "\t\t} else {\n" +
+                "\t\t\t((List)targetEntity).addAll((List)sourceEntity);\n" +
+                "\t\t}\n" +
+                "\t} else if (sourceEntity instanceof Map) {\n" +
+                "\t\t// merge a map, adding all items to the map if the target map didn't contain them.\n" +
+                "\t\tif (targetEntity == null) {\n" +
+                "\t\t\ttargetEntity = sourceEntity;\n" +
+                "\t\t} else {\n" +
+                "\t\t\tMap original = (Map)targetEntity;\n" +
+                "\t\t\ttargetEntity = new HashMap((Map)sourceEntity);\n" +
+                "\t\t\t((Map)targetEntity).putAll(original);\n" +
+                "\t\t}\t\n" +
+                "\t} else {\n" +
+                "\t\t// Not a collection, add the value of the target is not null.\n" +
+                "\t\tif (targetEntity != null) {\n" +
+                "\t\t\treturn false;\n" +
+                "\t\t}\n" +
+                "\t\ttargetEntity = sourceEntity;\n" +
+                "\t}\n" +
+                "\ttargetSource.put(entityName, targetEntity);\t\n" +
+                "\treturn true;\n" +
                 "}\n" +
                 "\n" +
                 "boolean updateResponseTimeInEndpointHandlers(List endpoints, String applicationName, long handlingTime, String handlerType) {\n" +
-                "    if (endpoints == null) {\n" +
-                "        return false;\n" +
-                "    }\n" +
-                "    boolean updated = false;\n" +
-                "    for (Map endpoint : endpoints) {\n" +
-                "        if (endpoint.get(\"endpoint_handlers\") != null) {\n" +
-                "            List endpointHandlers = (List)endpoint.get(\"endpoint_handlers\");\n" +
-                "            for (Map endpointHandler : endpointHandlers) {\n" +
-                "                if (!handlerType.equals(endpointHandler.get(\"type\"))) {\n" +
-                "                    continue;\n" +
-                "                }\n" +
-                "                if (applicationName == null && (endpointHandler.get(\"application\") == null || ((Map)endpointHandler.get(\"application\")).get(\"name\") == null)) {\n" +
-                "                    long responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
-                "                    if (responseTime >= 0) {\n" +
-                "                        endpointHandler.put(\"response_time\", responseTime);\n" +
-                "                        updated = true;\n" +
-                "                    }\n" +
-                "                } else if (applicationName != null && endpointHandler.get(\"application\") != null && applicationName.equals(((Map)endpointHandler.get(\"application\")).get(\"name\"))) {\n" +
-                "                    long responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
-                "                    if (responseTime >= 0) {\n" +
-                "                        endpointHandler.put(\"response_time\", responseTime);\n" +
-                "                        updated = true;\n" +
-                "                    }\n" +
-                "                }\n" +
-                "            }\n" +
-                "        }\n" +
-                "    }\n" +
-                "    return updated;\n" +
+                "\tif (endpoints == null) {\n" +
+                "\t\treturn false;\n" +
+                "\t}\n" +
+                "\tboolean updated = false;\n" +
+                "\tfor (Map endpoint : endpoints) {\n" +
+                "\t\tif (endpoint.get(\"endpoint_handlers\") != null) {\n" +
+                "\t\t\tList endpointHandlers = (List)endpoint.get(\"endpoint_handlers\");\n" +
+                "\t\t\tfor (Map endpointHandler : endpointHandlers) {\n" +
+                "\t\t\t    if (!handlerType.equals(endpointHandler.get(\"type\"))) {\n" +
+                "\t\t\t        continue;\n" +
+                "\t\t\t    }\n" +
+                "\t\t\t\tif (applicationName == null && (endpointHandler.get(\"application\") == null || ((Map)endpointHandler.get(\"application\")).get(\"name\") == null)) {\n" +
+                "\t\t\t\t\tlong responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
+                "\t\t\t\t\tif (responseTime >= 0) {\n" +
+                "\t\t\t\t\t    endpointHandler.put(\"response_time\", responseTime);\n" +
+                "\t\t\t\t\t\tupdated = true;\n" +
+                "\t\t\t\t\t}\n" +
+                "\t\t\t\t} else if (applicationName != null && endpointHandler.get(\"application\") != null && applicationName.equals(((Map)endpointHandler.get(\"application\")).get(\"name\"))) {\n" +
+                "\t\t\t\t\tlong responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
+                "\t\t\t\t\tif (responseTime >= 0) {\n" +
+                "\t\t\t\t\t    endpointHandler.put(\"response_time\", responseTime);\n" +
+                "\t\t\t\t\t\tupdated = true;\n" +
+                "\t\t\t\t\t}\n" +
+                "\t\t\t\t}\n" +
+                "\t\t\t}\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "\treturn updated;\n" +
                 "}\n" +
                 "\n" +
                 "boolean updateResponseTimeInReaders(List endpoints, String applicationName, long handlingTime) {\n" +
@@ -495,186 +495,190 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "    return updateResponseTimeInEndpointHandlers(endpoints, applicationName, handlingTime, \"WRITER\");\n" +
                 "}\n" +
                 "\n" +
-                "Map inputSource = (Map)params.get(\"source\");\n" +
-                "Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" +
+                "boolean mainMethod(Map params) {\n" +
+                "    Map inputSource = (Map)params.get(\"source\");\n" +
+                "    Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" +
                 "\n" +
-                "// Check if we have handled this message before. Each message has an unique hashcode. We keep track of this hashcode in the elasticsearch db. \n" +
-                "// If the provided hashcode is already stored with the document we assume a duplicate offering for storage and quit processing.   \n" +
-                "long inputHash = ((List)inputSource.get(\"event_hashes\")).get(0);\n" +
-                "List targetHashes = (List)targetSource.get(\"event_hashes\");\n" +
-                "if (targetHashes != null) {\n" +
-                "    if (targetHashes.indexOf(inputHash) != -1) {\n" +
-                "        return false;\n" +
+                "    // Check if we have handled this message before. Each message has an unique hashcode. We keep track of this hashcode in the elasticsearch db.\n" +
+                "    // If the provided hashcode is already stored with the document we assume a duplicate offering for storage and quit processing.\n" +
+                "    long inputHash = ((List)inputSource.get(\"event_hashes\")).get(0);\n" +
+                "    List targetHashes = (List)targetSource.get(\"event_hashes\");\n" +
+                "    if (targetHashes != null) {\n" +
+                "        if (targetHashes.indexOf(inputHash) != -1) {\n" +
+                "            return false;\n" +
+                "        }\n" +
+                "        targetHashes.add(inputHash);\n" +
                 "    }\n" +
-                "    targetHashes.add(inputHash);\n" +
-                "}\n" +
                 "\n" +
-                "Map tempForCorrelations = (Map)targetSource.get(\"temp_for_correlations\");\n" +
-                "boolean correlatedBeforeInserted = false;\n" +
-                "if (targetSource.get(\"payload\") == null &&\n" +
-                "    targetSource.get(\"correlations\") != null) {\n" +
-                "    // The correlation to this event is stored before the event itself is stored. Merge the entire event.\n" +
-                "    correlatedBeforeInserted = true;\n" +
-                "    List correlations = (List)targetSource.get(\"correlations\");\n" +
-                "    \n" +
-                "    targetSource = inputSource;\n" +
-                "    targetSource.put(\"correlations\", correlations);\n" +
-                "    if (tempForCorrelations != null) {\n" +
-                "        targetSource.put(\"temp_for_correlations\", tempForCorrelations);\n" +
+                "    Map tempForCorrelations = (Map)targetSource.get(\"temp_for_correlations\");\n" +
+                "    boolean correlatedBeforeInserted = false;\n" +
+                "    if (targetSource.get(\"payload\") == null &&\n" +
+                "        targetSource.get(\"correlations\") != null) {\n" +
+                "        // The correlation to this event is stored before the event itself is stored. Merge the entire event.\n" +
+                "        correlatedBeforeInserted = true;\n" +
+                "        List correlations = (List)targetSource.get(\"correlations\");\n" +
+                "\n" +
+                "        targetSource = inputSource;\n" +
+                "        targetSource.put(\"correlations\", correlations);\n" +
+                "        if (tempForCorrelations != null) {\n" +
+                "            targetSource.put(\"temp_for_correlations\", tempForCorrelations);\n" +
+                "        }\n" +
+                "        ((Map)params.get(\"ctx\")).put(\"_source\", targetSource);\n" +
                 "    }\n" +
-                "    ((Map)params.get(\"ctx\")).put(\"_source\", targetSource);\n" +
-                "}\n" +
                 "\n" +
-                "// Merge several fields\n" +
-                "if (!correlatedBeforeInserted) {\n" +
-                "    for (String field : inputSource.keySet()) {\n" +
-                "        if (!\"endpoints\".equals(field)\n" +
-                "            && !\"event_hashes\".equals(field)\n" +
-                "           ) {\n" +
-                "                mergeEntity(targetSource, inputSource, field);        \n" +
+                "    // Merge several fields\n" +
+                "    if (!correlatedBeforeInserted) {\n" +
+                "        for (String field : inputSource.keySet()) {\n" +
+                "            if (!\"endpoints\".equals(field)\n" +
+                "                && !\"event_hashes\".equals(field)\n" +
+                "               ) {\n" +
+                "                    mergeEntity(targetSource, inputSource, field);\n" +
+                "            }\n" +
                 "        }\n" +
                 "    }\n" +
-                "}\n" +
                 "\n" +
-                "// Merge the endpoints.\n" +
-                "List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" +
-                "List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" +
-                "if (inputEndpoints != null && !correlatedBeforeInserted) {\n" +
-                "    // Merge endpoints\n" +
-                "    for (Map inputEndpoint : inputEndpoints) {\n" +
-                "        // Try to find if an endpoint with a given name is present.\n" +
-                "        Map targetEndpoint = findEndpointByName(targetEndpoints, (String)inputEndpoint.get(\"name\"));\n" +
-                "        if (targetEndpoint == null) {\n" +
-                "            // This endpoint was not present.\n" +
-                "            if (targetEndpoints == null) {\n" +
-                "                targetEndpoints = new ArrayList();\n" +
-                "                targetSource.put(\"endpoints\", targetEndpoints);\n" +
-                "            }\n" +
-                "            targetEndpoints.add(inputEndpoint);\n" +
-                "        } else {\n" +
-                "            // Endpoint was present. Copy endpoint handlers to target.\n" +
-                "            List inputEndpointHandlers = (List)inputEndpoint.get(\"endpoint_handlers\");\n" +
-                "            if (inputEndpointHandlers != null) {\n" +
-                "                // Add endpoint handlers to target.\n" +
-                "                List targetEndpointHandlers = (List)targetEndpoint.get(\"endpoint_handlers\");\n" +
-                "                if (targetEndpointHandlers == null) {\n" +
-                "                    targetEndpointHandlers = new ArrayList();\n" +
-                "                    targetEndpointHandlers.addAll(inputEndpointHandlers);\n" +
-                "                    targetEndpoint.put(\"endpoint_handlers\", targetEndpointHandlers);\n" +
-                "                } else {\n" +
-                "                    boolean writerPresent = hasWritingEndpointHandler(targetEndpointHandlers);\n" +
-                "                    for (Map inputEndpointHandler : inputEndpointHandlers) {\n" +
-                "                        if (\"WRITER\".equals(inputEndpointHandler.get(\"type\")) && writerPresent) {\n" +
-                "                            continue;\n" +
+                "    // Merge the endpoints.\n" +
+                "    List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" +
+                "    List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" +
+                "    if (inputEndpoints != null && !correlatedBeforeInserted) {\n" +
+                "        // Merge endpoints\n" +
+                "        for (Map inputEndpoint : inputEndpoints) {\n" +
+                "            // Try to find if an endpoint with a given name is present.\n" +
+                "            Map targetEndpoint = findEndpointByName(targetEndpoints, (String)inputEndpoint.get(\"name\"));\n" +
+                "            if (targetEndpoint == null) {\n" +
+                "                // This endpoint was not present.\n" +
+                "                if (targetEndpoints == null) {\n" +
+                "                    targetEndpoints = new ArrayList();\n" +
+                "                    targetSource.put(\"endpoints\", targetEndpoints);\n" +
+                "                }\n" +
+                "                targetEndpoints.add(inputEndpoint);\n" +
+                "            } else {\n" +
+                "                // Endpoint was present. Copy endpoint handlers to target.\n" +
+                "                List inputEndpointHandlers = (List)inputEndpoint.get(\"endpoint_handlers\");\n" +
+                "                if (inputEndpointHandlers != null) {\n" +
+                "                    // Add endpoint handlers to target.\n" +
+                "                    List targetEndpointHandlers = (List)targetEndpoint.get(\"endpoint_handlers\");\n" +
+                "                    if (targetEndpointHandlers == null) {\n" +
+                "                        targetEndpointHandlers = new ArrayList();\n" +
+                "                        targetEndpointHandlers.addAll(inputEndpointHandlers);\n" +
+                "                        targetEndpoint.put(\"endpoint_handlers\", targetEndpointHandlers);\n" +
+                "                    } else {\n" +
+                "                        boolean writerPresent = hasWritingEndpointHandler(targetEndpointHandlers);\n" +
+                "                        for (Map inputEndpointHandler : inputEndpointHandlers) {\n" +
+                "                            if (\"WRITER\".equals(inputEndpointHandler.get(\"type\")) && writerPresent) {\n" +
+                "                                continue;\n" +
+                "                            }\n" +
+                "                            targetEndpointHandlers.add(inputEndpointHandler);\n" +
                 "                        }\n" +
-                "                        targetEndpointHandlers.add(inputEndpointHandler);\n" +
                 "                    }\n" +
                 "                }\n" +
                 "            }\n" +
                 "        }\n" +
-                "    }\n" +
-                " }\n" +
-                " \n" +
-                "// Recalculate latencies\n" +
-                "if (targetEndpoints != null) {\n" +
-                "    for (Map targetEndpoint : targetEndpoints) {\n" +
-                "        Map targetWritingEndpointHandler = null;\n" +
-                "        List endpointHandlers = (List)targetEndpoint.get(\"endpoint_handlers\");\n" +
-                "        if (endpointHandlers != null) {\n" +
-                "            for (Map endpointHandler : endpointHandlers) {\n" +
-                "                if (\"WRITER\".equals(endpointHandler.get(\"type\"))) {\n" +
-                "                    targetWritingEndpointHandler = endpointHandler;\n" +
-                "                    break;\n" +
-                "                }\n" +
-                "            }\n" +
-                "        }\n" +
-                "        if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get(\"handling_time\") != null) {\n" +
-                "            long writeTime = (long)targetWritingEndpointHandler.get(\"handling_time\");\n" +
-                "            endpointHandlers = (List)targetEndpoint.get(\"endpoint_handlers\");\n" +
+                "     }\n" +
+                "\n" +
+                "    // Recalculate latencies\n" +
+                "    if (targetEndpoints != null) {\n" +
+                "        for (Map targetEndpoint : targetEndpoints) {\n" +
+                "            Map targetWritingEndpointHandler = null;\n" +
+                "            List endpointHandlers = (List)targetEndpoint.get(\"endpoint_handlers\");\n" +
                 "            if (endpointHandlers != null) {\n" +
                 "                for (Map endpointHandler : endpointHandlers) {\n" +
-                "                    if (\"READER\".equals(endpointHandler.get(\"type\")) && endpointHandler.get(\"handling_time\") != null) {\n" +
-                "                        endpointHandler.put(\"latency\",  ((long)endpointHandler.get(\"handling_time\")) - writeTime);\n" +
+                "                    if (\"WRITER\".equals(endpointHandler.get(\"type\"))) {\n" +
+                "                        targetWritingEndpointHandler = endpointHandler;\n" +
+                "                        break;\n" +
+                "                    }\n" +
+                "                }\n" +
+                "            }\n" +
+                "            if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get(\"handling_time\") != null) {\n" +
+                "                long writeTime = (long)targetWritingEndpointHandler.get(\"handling_time\");\n" +
+                "                endpointHandlers = (List)targetEndpoint.get(\"endpoint_handlers\");\n" +
+                "                if (endpointHandlers != null) {\n" +
+                "                    for (Map endpointHandler : endpointHandlers) {\n" +
+                "                        if (\"READER\".equals(endpointHandler.get(\"type\")) && endpointHandler.get(\"handling_time\") != null) {\n" +
+                "                            endpointHandler.put(\"latency\",  ((long)endpointHandler.get(\"handling_time\")) - writeTime);\n" +
+                "                        }\n" +
                 "                    }\n" +
                 "                }\n" +
                 "            }\n" +
                 "        }\n" +
                 "    }\n" +
+                "    // Check for response times to be updated\n" +
+                "    if (tempForCorrelations != null) {\n" +
+                "        List dataForReaders = (List)tempForCorrelations.get(\"data_for_readers\");\n" +
+                "        if (dataForReaders != null && targetEndpoints != null) {\n" +
+                "            Iterator it = dataForReaders.iterator();\n" +
+                "            while (it.hasNext()) {\n" +
+                "                Map dataForReader = (Map)it.next();\n" +
+                "                String appName = (String)dataForReader.get(\"name\");\n" +
+                "                long handlingTime = (long)dataForReader.get(\"handling_time\");\n" +
+                "                boolean updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);\n" +
+                "                if (!updated && appName == null) {\n" +
+                "                    // When the appName == null also update the writers\n" +
+                "                    updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);\n" +
+                "                }\n" +
+                "                if (updated) {\n" +
+                "                    it.remove();\n" +
+                "                }\n" +
+                "            }\n" +
+                "            if (dataForReaders.isEmpty()) {\n" +
+                "                tempForCorrelations.remove(\"data_for_readers\");\n" +
+                "            }\n" +
+                "        }\n" +
+                "        List dataForWriters = (List)tempForCorrelations.get(\"data_for_writers\");\n" +
+                "        if (dataForWriters != null && targetEndpoints != null) {\n" +
+                "            Iterator it = dataForWriters.iterator();\n" +
+                "            while (it.hasNext()) {\n" +
+                "                Map dataForWriter = (Map)it.next();\n" +
+                "                String appName = (String)dataForWriter.get(\"name\");\n" +
+                "                long handlingTime = (long)dataForWriter.get(\"handling_time\");\n" +
+                "                boolean updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);\n" +
+                "                if (!updated && appName == null) {\n" +
+                "                    // When the appName == null also update the readers\n" +
+                "                    updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);\n" +
+                "                }\n" +
+                "                if (updated) {\n" +
+                "                    it.remove();\n" +
+                "                }\n" +
+                "            }\n" +
+                "            if (dataForWriters.isEmpty()) {\n" +
+                "                tempForCorrelations.remove(\"data_for_writers\");\n" +
+                "            }\n" +
+                "        }\n" +
+                "\n" +
+                "        if (tempForCorrelations.isEmpty()) {\n" +
+                "            targetSource.remove(\"temp_for_correlations\");\n" +
+                "        }\n" +
+                "    }\n" +
+                "    return true;\n" +
                 "}\n" +
-                "// Check for response times to be updated\n" +
-                "if (tempForCorrelations != null) {\n" +
-                "    List dataForReaders = (List)tempForCorrelations.get(\"data_for_readers\");\n" +
-                "    if (dataForReaders != null && targetEndpoints != null) {\n" +
-                "        Iterator it = dataForReaders.iterator();\n" +
-                "        while (it.hasNext()) {\n" +
-                "            Map dataForReader = (Map)it.next();\n" +
-                "            String appName = (String)dataForReader.get(\"name\");\n" +
-                "            long handlingTime = (long)dataForReader.get(\"handling_time\");\n" +
-                "            boolean updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);\n" +
-                "            if (!updated && appName == null) {\n" +
-                "                // When the appName == null also update the writers\n" +
-                "                updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);\n" +
-                "            }\n" +
-                "            if (updated) {\n" +
-                "                it.remove();\n" +
-                "            }\n" +
-                "        }\n" +
-                "        if (dataForReaders.isEmpty()) {\n" +
-                "            tempForCorrelations.remove(\"data_for_readers\");\n" +
-                "        }\n" +
-                "    }\n" +
-                "    List dataForWriters = (List)tempForCorrelations.get(\"data_for_writers\");\n" +
-                "    if (dataForWriters != null && targetEndpoints != null) {\n" +
-                "        Iterator it = dataForWriters.iterator();\n" +
-                "        while (it.hasNext()) {\n" +
-                "            Map dataForWriter = (Map)it.next();\n" +
-                "            String appName = (String)dataForWriter.get(\"name\");\n" +
-                "            long handlingTime = (long)dataForWriter.get(\"handling_time\");\n" +
-                "            boolean updated = updateResponseTimeInWriters(targetEndpoints, appName, handlingTime);\n" +
-                "            if (!updated && appName == null) {\n" +
-                "                // When the appName == null also update the readers\n" +
-                "                updated = updateResponseTimeInReaders(targetEndpoints, appName, handlingTime);\n" +
-                "            }\n" +
-                "            if (updated) {\n" +
-                "                it.remove();\n" +
-                "            }            \n" +
-                "        }\n" +
-                "        if (dataForWriters.isEmpty()) {\n" +
-                "            tempForCorrelations.remove(\"data_for_writers\");\n" +
-                "        }\n" +
-                "    }\n" +
-                "    \n" +
-                "    if (tempForCorrelations.isEmpty()) {\n" +
-                "        targetSource.remove(\"temp_for_correlations\");\n" +
-                "    }\n" +
-                "}";
+                "mainMethod(params);";
     }
 
     private String createUpdateRequestWithResponseScript() {
         return "boolean setResponseTimeOnEndpointHandlers(List endpointHandlers, String applicationName, long handlingTime, String handlerType) {\n" +
-                "    if (endpointHandlers == null) {\n" +
-                "        return false;\n" +
-                "    }\n" +
-                "    boolean updated = false;\n" +
-                "    for (Map endpointHandler : endpointHandlers) {\n" +
-                "        if (!handlerType.equals(endpointHandler.get(\"type\"))) {\n" +
+                "\tif (endpointHandlers == null) {\n" +
+                "\t\treturn false;\n" +
+                "\t}\n" +
+                "\tboolean updated = false;\n" +
+                "\tfor (Map endpointHandler : endpointHandlers) {\n" +
+                "\t    if (!handlerType.equals(endpointHandler.get(\"type\"))) {\n" +
                 "            continue;\n" +
                 "        }\n" +
-                "        if (applicationName == null && (endpointHandler.get(\"application\") == null || ((Map)endpointHandler.get(\"application\")).get(\"name\") == null)) {\n" +
-                "            long responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
-                "            if (responseTime >=0) {\n" +
-                "                endpointHandler.put(\"response_time\", responseTime);\n" +
-                "                updated = true;\n" +
-                "            }\n" +
-                "        } else if (applicationName != null && endpointHandler.get(\"application\") != null && applicationName.equals(((Map)endpointHandler.get(\"application\")).get(\"name\"))) {\n" +
-                "            long responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
-                "            if (responseTime >=0) {\n" +
-                "                endpointHandler.put(\"response_time\", responseTime);\n" +
-                "                updated = true;\n" +
-                "            }\n" +
-                "        }\n" +
-                "    }\n" +
-                "    return updated;\n" +
+                "\t\tif (applicationName == null && (endpointHandler.get(\"application\") == null || ((Map)endpointHandler.get(\"application\")).get(\"name\") == null)) {\n" +
+                "\t\t\tlong responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
+                "\t\t\tif (responseTime >=0) {\n" +
+                "\t\t\t\tendpointHandler.put(\"response_time\", responseTime);\n" +
+                "\t\t\t\tupdated = true;\n" +
+                "\t\t\t}\n" +
+                "\t\t} else if (applicationName != null && endpointHandler.get(\"application\") != null && applicationName.equals(((Map)endpointHandler.get(\"application\")).get(\"name\"))) {\n" +
+                "\t\t\tlong responseTime = handlingTime - (long)endpointHandler.get(\"handling_time\");\n" +
+                "\t\t\tif (responseTime >=0) {\n" +
+                "\t\t\t\tendpointHandler.put(\"response_time\", responseTime);\n" +
+                "\t\t\t\tupdated = true;\n" +
+                "\t\t\t}\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "\treturn updated;\n" +
                 "}\n" +
                 "\n" +
                 "boolean setResponseTimeOnReadingEndpointHandlers(List endpointHandlers, String applicationName, long writerHandlingTime) {\n" +
@@ -682,14 +686,14 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "}\n" +
                 "\n" +
                 "boolean setResponseTimeOnWritingEndpointHandlers(List endpoints, String applicationName, long readerHandlingTime) {\n" +
-                "    if (endpoints == null) {\n" +
-                "        return false;\n" +
-                "    }\n" +
-                "    boolean writerUpdated = false;\n" +
-                "    for (Map endpoint : endpoints) {\n" +
-                "        writerUpdated = setResponseTimeOnEndpointHandlers((List)endpoint.get(\"endpoint_handlers\"), applicationName, readerHandlingTime, \"WRITER\") || writerUpdated;\n" +
-                "    }\n" +
-                "    return writerUpdated;\n" +
+                "\tif (endpoints == null) {\n" +
+                "\t\treturn false;\n" +
+                "\t}\n" +
+                "\tboolean writerUpdated = false;\n" +
+                "\tfor (Map endpoint : endpoints) {\n" +
+                "\t    writerUpdated = setResponseTimeOnEndpointHandlers((List)endpoint.get(\"endpoint_handlers\"), applicationName, readerHandlingTime, \"WRITER\") || writerUpdated;\n" +
+                "\t}\n" +
+                "\treturn writerUpdated;\n" +
                 "}\n" +
                 "\n" +
                 "Map getWritingEndpointHandler(List endpointHandlers) {\n" +
@@ -705,138 +709,142 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "}\n" +
                 "\n" +
                 "void addDataForReaders(Map source, long handlingTime, String applicationName) {\n" +
-                "    Map tempCorrelation = (Map)source.get(\"temp_for_correlations\");\n" +
-                "    if (tempCorrelation == null) {\n" +
-                "        tempCorrelation = new HashMap();\n" +
-                "        source.put(\"temp_for_correlations\", tempCorrelation);\n" +
-                "    }\n" +
-                "    List dataForReaders = tempCorrelation.get(\"data_for_readers\");\n" +
-                "    if (dataForReaders == null) {\n" +
-                "        dataForReaders = new ArrayList();\n" +
-                "        tempCorrelation.put(\"data_for_readers\", dataForReaders);\n" +
-                "    }                    \n" +
-                "    Map reader = new HashMap();\n" +
-                "    if (applicationName != null) {\n" +
-                "        reader.put(\"name\", applicationName);\n" +
-                "    }\n" +
-                "    reader.put(\"handling_time\", handlingTime);\n" +
-                "    dataForReaders.add(reader);\n" +
+                "\tMap tempCorrelation = (Map)source.get(\"temp_for_correlations\");\n" +
+                "\tif (tempCorrelation == null) {\n" +
+                "\t\ttempCorrelation = new HashMap();\n" +
+                "\t\tsource.put(\"temp_for_correlations\", tempCorrelation);\n" +
+                "\t}\n" +
+                "\tList dataForReaders = tempCorrelation.get(\"data_for_readers\");\n" +
+                "\tif (dataForReaders == null) {\n" +
+                "\t\tdataForReaders = new ArrayList();\n" +
+                "\t\ttempCorrelation.put(\"data_for_readers\", dataForReaders);\n" +
+                "\t}        \t\t\t\n" +
+                "\tMap reader = new HashMap();\n" +
+                "\tif (applicationName != null) {\n" +
+                "\t\treader.put(\"name\", applicationName);\n" +
+                "\t}\n" +
+                "\treader.put(\"handling_time\", handlingTime);\n" +
+                "\tdataForReaders.add(reader);\n" +
                 "}\n" +
                 "\n" +
                 "void addDataForWriter(Map source, long handlingTime, String applicationName) {\n" +
-                "    Map tempCorrelation = (Map)source.get(\"temp_for_correlations\");\n" +
-                "    if (tempCorrelation == null) {\n" +
-                "        tempCorrelation = new HashMap();\n" +
-                "        source.put(\"temp_for_correlations\", tempCorrelation);\n" +
-                "    }\n" +
-                "    List dataForWriters = tempCorrelation.get(\"data_for_writers\");\n" +
-                "    if (dataForWriters == null) {\n" +
-                "        dataForWriters = new ArrayList();\n" +
-                "        tempCorrelation.put(\"data_for_writers\", dataForWriters);\n" +
-                "    }                    \n" +
-                "    Map writer = new HashMap();\n" +
-                "    if (applicationName != null) {\n" +
-                "        writer.put(\"name\", applicationName);\n" +
-                "    }\n" +
-                "    writer.put(\"handling_time\", handlingTime);\n" +
-                "    dataForWriters.add(writer);\n" +
+                "\tMap tempCorrelation = (Map)source.get(\"temp_for_correlations\");\n" +
+                "\tif (tempCorrelation == null) {\n" +
+                "\t\ttempCorrelation = new HashMap();\n" +
+                "\t\tsource.put(\"temp_for_correlations\", tempCorrelation);\n" +
+                "\t}\n" +
+                "\tList dataForWriters = tempCorrelation.get(\"data_for_writers\");\n" +
+                "\tif (dataForWriters == null) {\n" +
+                "\t\tdataForWriters = new ArrayList();\n" +
+                "\t\ttempCorrelation.put(\"data_for_writers\", dataForWriters);\n" +
+                "\t}        \t\t\t\n" +
+                "\tMap writer = new HashMap();\n" +
+                "\tif (applicationName != null) {\n" +
+                "\t\twriter.put(\"name\", applicationName);\n" +
+                "\t}\n" +
+                "\twriter.put(\"handling_time\", handlingTime);\n" +
+                "\tdataForWriters.add(writer);\n" +
                 "}\n" +
                 "\n" +
-                "Map inputSource = (Map)params.get(\"source\");\n" +
-                "Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" +
-                "String inputEventId = (String)params.get(\"event_id\");\n" +
+                "boolean mainMethod(Map params) {\n" +
+                "    Map inputSource = (Map)params.get(\"source\");\n" +
+                "    Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" +
+                "    String inputEventId = (String)params.get(\"event_id\");\n" +
                 "\n" +
-                "List correlations = (List)targetSource.get(\"correlations\");\n" +
-                "// Add the ID as a correlation.\n" +
-                "if (correlations == null) {\n" +
-                "    correlations = new ArrayList();\n" +
-                "    targetSource.put(\"correlations\", correlations);\n" +
-                "}\n" +
-                "if (!correlations.contains(inputEventId)) {\n" +
-                "    correlations.add(inputEventId);\n" +
-                "}\n" +
-                "// Merge the response times back in the endpoints.\n" +
-                "List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" +
-                "List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" +
-                "if (inputEndpoints != null) {\n" +
-                "    for (Map inputEndpoint : inputEndpoints) {\n" +
-                "        Map inputWritingEndpointHandler = getWritingEndpointHandler( (List)inputEndpoint.get(\"endpoint_handlers\") );\n" +
-                "        if (inputWritingEndpointHandler != null && \n" +
-                "            (inputWritingEndpointHandler.get(\"application\") == null || ((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") == null)) { \n" +
-                "            // This is a writer on an endpoint without an application defined. Update the response time on target readers + writers without an application defined. \n" +
-                "            long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" +
-                "            boolean readerFound = false;\n" +
-                "            if (targetEndpoints != null) {\n" +
-                "                for (Map targetEndpoint : targetEndpoints) {\n" +
-                "                    readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"endpoint_handlers\"), null, writerHandlingTime) || readerFound;\n" +
-                "                }  \n" +
-                "            }\n" +
-                "            boolean writerFound = false;\n" +
-                "            if (!readerFound && targetEndpoints != null) {\n" +
-                "                for (Map targetEndpoint : targetEndpoints) {\n" +
-                "                    Map targetWritingEndpointHandler = getWritingEndpointHandler( (List)targetEndpoint.get(\"endpoint_handlers\") );\n" +
-                "                    if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get(\"application\") == null) {\n" +
-                "                        long responseTime = writerHandlingTime - (long)targetWritingEndpointHandler.get(\"handling_time\");\n" +
-                "                        if (responseTime >=0 ) {\n" +
-                "                            targetWritingEndpointHandler.put(\"response_time\", responseTime);\n" +
-                "                            writerFound = true;\n" +
+                "    List correlations = (List)targetSource.get(\"correlations\");\n" +
+                "    // Add the ID as a correlation.\n" +
+                "    if (correlations == null) {\n" +
+                "        correlations = new ArrayList();\n" +
+                "        targetSource.put(\"correlations\", correlations);\n" +
+                "    }\n" +
+                "    if (!correlations.contains(inputEventId)) {\n" +
+                "        correlations.add(inputEventId);\n" +
+                "    }\n" +
+                "    // Merge the response times back in the endpoints.\n" +
+                "    List inputEndpoints = (List)inputSource.get(\"endpoints\");\n" +
+                "    List targetEndpoints = (List)targetSource.get(\"endpoints\");\n" +
+                "    if (inputEndpoints != null) {\n" +
+                "        for (Map inputEndpoint : inputEndpoints) {\n" +
+                "            Map inputWritingEndpointHandler = getWritingEndpointHandler( (List)inputEndpoint.get(\"endpoint_handlers\") );\n" +
+                "            if (inputWritingEndpointHandler != null &&\n" +
+                "                (inputWritingEndpointHandler.get(\"application\") == null || ((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") == null)) {\n" +
+                "                // This is a writer on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.\n" +
+                "                long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" +
+                "                boolean readerFound = false;\n" +
+                "                if (targetEndpoints != null) {\n" +
+                "                    for (Map targetEndpoint : targetEndpoints) {\n" +
+                "                        readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"endpoint_handlers\"), null, writerHandlingTime) || readerFound;\n" +
+                "                    }\n" +
+                "                }\n" +
+                "                boolean writerFound = false;\n" +
+                "                if (!readerFound && targetEndpoints != null) {\n" +
+                "                    for (Map targetEndpoint : targetEndpoints) {\n" +
+                "                        Map targetWritingEndpointHandler = getWritingEndpointHandler( (List)targetEndpoint.get(\"endpoint_handlers\") );\n" +
+                "                        if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get(\"application\") == null) {\n" +
+                "                            long responseTime = writerHandlingTime - (long)targetWritingEndpointHandler.get(\"handling_time\");\n" +
+                "                            if (responseTime >=0 ) {\n" +
+                "                                targetWritingEndpointHandler.put(\"response_time\", responseTime);\n" +
+                "                                writerFound = true;\n" +
+                "                            }\n" +
                 "                        }\n" +
-                "                    }                     \n" +
-                "                }  \n" +
-                "            }\n" +
-                "            if (!readerFound && !writerFound) {\n" +
-                "                addDataForReaders(targetSource, writerHandlingTime, null);\n" +
-                "            }\n" +
-                "        } else if (inputWritingEndpointHandler != null && \n" +
-                "            inputWritingEndpointHandler.get(\"application\") != null && \n" +
-                "            ((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" +
-                "            // This is a writer on an endpoint with an application defined. Update the response time on target readers with the same application defined. \n" +
-                "            String writerAppName = (String)((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\");\n" +
-                "            long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" +
-                "            // The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.\n" +
-                "            boolean readerFound = false;\n" +
-                "            if (targetEndpoints != null) {\n" +
-                "                for (Map targetEndpoint : targetEndpoints) {\n" +
-                "                    readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"endpoint_handlers\"), writerAppName, writerHandlingTime) || readerFound;\n" +
-                "                }  \n" +
-                "            }\n" +
-                "            if (!readerFound) {\n" +
-                "                addDataForReaders(targetSource, writerHandlingTime, writerAppName);\n" +
-                "            }\n" +
-                "        }\n" +
-                "        List inputEndpointHandlers = (List)inputEndpoint.get(\"endpoint_handlers\");\n" +
-                "        if (inputEndpointHandlers != null) {\n" +
-                "            for (Map inputEndpointHandler : inputEndpointHandlers) {\n" +
-                "                if (!\"READER\".equals(inputEndpointHandler.get(\"type\"))) {\n" +
-                "                    continue;\n" +
+                "                    }\n" +
                 "                }\n" +
-                "                if (inputEndpointHandler.get(\"application\") == null || ((Map)inputEndpointHandler.get(\"application\")).get(\"name\") == null) {\n" +
-                "                    // This is a reader on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.\n" +
-                "                    long readerHandlingTime = (long)inputEndpointHandler.get(\"handling_time\");\n" +
-                "                    boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, null, readerHandlingTime);\n" +
-                "                    boolean readerFound = false;\n" +
-                "                    if (!writerFound && targetEndpoints != null) {\n" +
-                "                        for (Map targetEndpoint : targetEndpoints) {\n" +
-                "                            readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"endpoint_handlers\"), null, readerHandlingTime) || readerFound;\n" +
-                "                        }  \n" +
+                "                if (!readerFound && !writerFound) {\n" +
+                "                    addDataForReaders(targetSource, writerHandlingTime, null);\n" +
+                "                }\n" +
+                "            } else if (inputWritingEndpointHandler != null &&\n" +
+                "                inputWritingEndpointHandler.get(\"application\") != null &&\n" +
+                "                ((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" +
+                "                // This is a writer on an endpoint with an application defined. Update the response time on target readers with the same application defined.\n" +
+                "                String writerAppName = (String)((Map)inputWritingEndpointHandler.get(\"application\")).get(\"name\");\n" +
+                "                long writerHandlingTime = (long)inputWritingEndpointHandler.get(\"handling_time\");\n" +
+                "                // The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.\n" +
+                "                boolean readerFound = false;\n" +
+                "                if (targetEndpoints != null) {\n" +
+                "                    for (Map targetEndpoint : targetEndpoints) {\n" +
+                "                        readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"endpoint_handlers\"), writerAppName, writerHandlingTime) || readerFound;\n" +
                 "                    }\n" +
-                "                    if (!readerFound && !writerFound) {\n" +
-                "                        addDataForWriter(targetSource, readerHandlingTime, null);\n" +
+                "                }\n" +
+                "                if (!readerFound) {\n" +
+                "                    addDataForReaders(targetSource, writerHandlingTime, writerAppName);\n" +
+                "                }\n" +
+                "            }\n" +
+                "            List inputEndpointHandlers = (List)inputEndpoint.get(\"endpoint_handlers\");\n" +
+                "            if (inputEndpointHandlers != null) {\n" +
+                "                for (Map inputEndpointHandler : inputEndpointHandlers) {\n" +
+                "                    if (!\"READER\".equals(inputEndpointHandler.get(\"type\"))) {\n" +
+                "                        continue;\n" +
                 "                    }\n" +
-                "                } else if (inputEndpointHandler.get(\"application\") != null && ((Map)inputEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" +
-                "                    // This is a reader on an endpoint with an application defined. Update the response time on target writer with the same application defined.\n" +
-                "                    String readerAppName = (String)((Map)inputEndpointHandler.get(\"application\")).get(\"name\");\n" +
-                "                    long readerHandlingTime = (long)inputEndpointHandler.get(\"handling_time\");\n" +
-                "                    // The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.\n" +
-                "                    boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, readerAppName, readerHandlingTime);\n" +
-                "                    if (!writerFound) {\n" +
-                "                        addDataForWriter(targetSource, readerHandlingTime, readerAppName);\n" +
+                "                    if (inputEndpointHandler.get(\"application\") == null || ((Map)inputEndpointHandler.get(\"application\")).get(\"name\") == null) {\n" +
+                "                        // This is a reader on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.\n" +
+                "                        long readerHandlingTime = (long)inputEndpointHandler.get(\"handling_time\");\n" +
+                "                        boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, null, readerHandlingTime);\n" +
+                "                        boolean readerFound = false;\n" +
+                "                        if (!writerFound && targetEndpoints != null) {\n" +
+                "                            for (Map targetEndpoint : targetEndpoints) {\n" +
+                "                                readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get(\"endpoint_handlers\"), null, readerHandlingTime) || readerFound;\n" +
+                "                            }\n" +
+                "                        }\n" +
+                "                        if (!readerFound && !writerFound) {\n" +
+                "                            addDataForWriter(targetSource, readerHandlingTime, null);\n" +
+                "                        }\n" +
+                "                    } else if (inputEndpointHandler.get(\"application\") != null && ((Map)inputEndpointHandler.get(\"application\")).get(\"name\") != null) {\n" +
+                "                        // This is a reader on an endpoint with an application defined. Update the response time on target writer with the same application defined.\n" +
+                "                        String readerAppName = (String)((Map)inputEndpointHandler.get(\"application\")).get(\"name\");\n" +
+                "                        long readerHandlingTime = (long)inputEndpointHandler.get(\"handling_time\");\n" +
+                "                        // The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.\n" +
+                "                        boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, readerAppName, readerHandlingTime);\n" +
+                "                        if (!writerFound) {\n" +
+                "                            addDataForWriter(targetSource, readerHandlingTime, readerAppName);\n" +
+                "                        }\n" +
                 "                    }\n" +
                 "                }\n" +
                 "            }\n" +
                 "        }\n" +
                 "    }\n" +
-                "}";
+                "    return true;\n" +
+                "}\n" +
+                "mainMethod(params);";
     }
 
     public void addConfigurationChangeNotificationListener(EtmConfiguration etmConfiguration) {

@@ -89,98 +89,102 @@ void addDataForWriter(Map source, long handlingTime, String applicationName) {
 	dataForWriters.add(writer);
 }
 
-Map inputSource = (Map)params.get("source");
-Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
-String inputEventId = (String)params.get("event_id");
+boolean mainMethod(Map params) {
+    Map inputSource = (Map)params.get("source");
+    Map targetSource = (Map)((Map)params.get("ctx")).get("_source");
+    String inputEventId = (String)params.get("event_id");
 
-List correlations = (List)targetSource.get("correlations");
-// Add the ID as a correlation.
-if (correlations == null) {
-	correlations = new ArrayList();
-	targetSource.put("correlations", correlations);
-}
-if (!correlations.contains(inputEventId)) {
-	correlations.add(inputEventId);
-}
-// Merge the response times back in the endpoints.
-List inputEndpoints = (List)inputSource.get("endpoints");
-List targetEndpoints = (List)targetSource.get("endpoints");
-if (inputEndpoints != null) {
-	for (Map inputEndpoint : inputEndpoints) {
-		Map inputWritingEndpointHandler = getWritingEndpointHandler( (List)inputEndpoint.get("endpoint_handlers") );
-        if (inputWritingEndpointHandler != null && 
-        	(inputWritingEndpointHandler.get("application") == null || ((Map)inputWritingEndpointHandler.get("application")).get("name") == null)) { 
-			// This is a writer on an endpoint without an application defined. Update the response time on target readers + writers without an application defined. 
-			long writerHandlingTime = (long)inputWritingEndpointHandler.get("handling_time");
-        	boolean readerFound = false;
-        	if (targetEndpoints != null) {
-        		for (Map targetEndpoint : targetEndpoints) {
-        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), null, writerHandlingTime) || readerFound;
-        		}  
-        	}
-        	boolean writerFound = false;
-        	if (!readerFound && targetEndpoints != null) {
-        		for (Map targetEndpoint : targetEndpoints) {
-        			Map targetWritingEndpointHandler = getWritingEndpointHandler( (List)targetEndpoint.get("endpoint_handlers") );
-					if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get("application") == null) {
-        				long responseTime = writerHandlingTime - (long)targetWritingEndpointHandler.get("handling_time");
-        				if (responseTime >=0 ) {
-	        				targetWritingEndpointHandler.put("response_time", responseTime);
-							writerFound = true;
-						}
-					}        			 
-        		}  
-        	}
-        	if (!readerFound && !writerFound) {
-        		addDataForReaders(targetSource, writerHandlingTime, null);
-        	}
-        } else if (inputWritingEndpointHandler != null && 
-        	inputWritingEndpointHandler.get("application") != null && 
-        	((Map)inputWritingEndpointHandler.get("application")).get("name") != null) {
-        	// This is a writer on an endpoint with an application defined. Update the response time on target readers with the same application defined. 
-        	String writerAppName = (String)((Map)inputWritingEndpointHandler.get("application")).get("name");
-        	long writerHandlingTime = (long)inputWritingEndpointHandler.get("handling_time");
-        	// The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.
-        	boolean readerFound = false;
-        	if (targetEndpoints != null) {
-        		for (Map targetEndpoint : targetEndpoints) {
-        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), writerAppName, writerHandlingTime) || readerFound;
-        		}  
-        	}
-        	if (!readerFound) {
-        		addDataForReaders(targetSource, writerHandlingTime, writerAppName);
-        	}
-        }
-        List inputEndpointHandlers = (List)inputEndpoint.get("endpoint_handlers");
-        if (inputEndpointHandlers != null) {
-        	for (Map inputEndpointHandler : inputEndpointHandlers) {
-                if (!"READER".equals(inputEndpointHandler.get("type"))) {
-                    continue;
+    List correlations = (List)targetSource.get("correlations");
+    // Add the ID as a correlation.
+    if (correlations == null) {
+        correlations = new ArrayList();
+        targetSource.put("correlations", correlations);
+    }
+    if (!correlations.contains(inputEventId)) {
+        correlations.add(inputEventId);
+    }
+    // Merge the response times back in the endpoints.
+    List inputEndpoints = (List)inputSource.get("endpoints");
+    List targetEndpoints = (List)targetSource.get("endpoints");
+    if (inputEndpoints != null) {
+        for (Map inputEndpoint : inputEndpoints) {
+            Map inputWritingEndpointHandler = getWritingEndpointHandler( (List)inputEndpoint.get("endpoint_handlers") );
+            if (inputWritingEndpointHandler != null &&
+                (inputWritingEndpointHandler.get("application") == null || ((Map)inputWritingEndpointHandler.get("application")).get("name") == null)) {
+                // This is a writer on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.
+                long writerHandlingTime = (long)inputWritingEndpointHandler.get("handling_time");
+                boolean readerFound = false;
+                if (targetEndpoints != null) {
+                    for (Map targetEndpoint : targetEndpoints) {
+                        readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), null, writerHandlingTime) || readerFound;
+                    }
                 }
-        		if (inputEndpointHandler.get("application") == null || ((Map)inputEndpointHandler.get("application")).get("name") == null) {
-        			// This is a reader on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.
-		        	long readerHandlingTime = (long)inputEndpointHandler.get("handling_time");
-        			boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, null, readerHandlingTime);
-        			boolean readerFound = false;
-        			if (!writerFound && targetEndpoints != null) {
-		        		for (Map targetEndpoint : targetEndpoints) {
-		        			readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), null, readerHandlingTime) || readerFound;
-		        		}  
-        			}
-        			if (!readerFound && !writerFound) {
-        				addDataForWriter(targetSource, readerHandlingTime, null);
-        			}
-        		} else if (inputEndpointHandler.get("application") != null && ((Map)inputEndpointHandler.get("application")).get("name") != null) {
-        			// This is a reader on an endpoint with an application defined. Update the response time on target writer with the same application defined.
-		        	String readerAppName = (String)((Map)inputEndpointHandler.get("application")).get("name");
-		        	long readerHandlingTime = (long)inputEndpointHandler.get("handling_time");
-        			// The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.
-        			boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, readerAppName, readerHandlingTime);
-		        	if (!writerFound) {
-		        		addDataForWriter(targetSource, readerHandlingTime, readerAppName);
-		        	}
-        		}
-        	}
+                boolean writerFound = false;
+                if (!readerFound && targetEndpoints != null) {
+                    for (Map targetEndpoint : targetEndpoints) {
+                        Map targetWritingEndpointHandler = getWritingEndpointHandler( (List)targetEndpoint.get("endpoint_handlers") );
+                        if (targetWritingEndpointHandler != null && targetWritingEndpointHandler.get("application") == null) {
+                            long responseTime = writerHandlingTime - (long)targetWritingEndpointHandler.get("handling_time");
+                            if (responseTime >=0 ) {
+                                targetWritingEndpointHandler.put("response_time", responseTime);
+                                writerFound = true;
+                            }
+                        }
+                    }
+                }
+                if (!readerFound && !writerFound) {
+                    addDataForReaders(targetSource, writerHandlingTime, null);
+                }
+            } else if (inputWritingEndpointHandler != null &&
+                inputWritingEndpointHandler.get("application") != null &&
+                ((Map)inputWritingEndpointHandler.get("application")).get("name") != null) {
+                // This is a writer on an endpoint with an application defined. Update the response time on target readers with the same application defined.
+                String writerAppName = (String)((Map)inputWritingEndpointHandler.get("application")).get("name");
+                long writerHandlingTime = (long)inputWritingEndpointHandler.get("handling_time");
+                // The name of the application that has written the response is found. Now try to find that application in the reading endpoint handlers of the request.
+                boolean readerFound = false;
+                if (targetEndpoints != null) {
+                    for (Map targetEndpoint : targetEndpoints) {
+                        readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), writerAppName, writerHandlingTime) || readerFound;
+                    }
+                }
+                if (!readerFound) {
+                    addDataForReaders(targetSource, writerHandlingTime, writerAppName);
+                }
+            }
+            List inputEndpointHandlers = (List)inputEndpoint.get("endpoint_handlers");
+            if (inputEndpointHandlers != null) {
+                for (Map inputEndpointHandler : inputEndpointHandlers) {
+                    if (!"READER".equals(inputEndpointHandler.get("type"))) {
+                        continue;
+                    }
+                    if (inputEndpointHandler.get("application") == null || ((Map)inputEndpointHandler.get("application")).get("name") == null) {
+                        // This is a reader on an endpoint without an application defined. Update the response time on target readers + writers without an application defined.
+                        long readerHandlingTime = (long)inputEndpointHandler.get("handling_time");
+                        boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, null, readerHandlingTime);
+                        boolean readerFound = false;
+                        if (!writerFound && targetEndpoints != null) {
+                            for (Map targetEndpoint : targetEndpoints) {
+                                readerFound = setResponseTimeOnReadingEndpointHandlers((List)targetEndpoint.get("endpoint_handlers"), null, readerHandlingTime) || readerFound;
+                            }
+                        }
+                        if (!readerFound && !writerFound) {
+                            addDataForWriter(targetSource, readerHandlingTime, null);
+                        }
+                    } else if (inputEndpointHandler.get("application") != null && ((Map)inputEndpointHandler.get("application")).get("name") != null) {
+                        // This is a reader on an endpoint with an application defined. Update the response time on target writer with the same application defined.
+                        String readerAppName = (String)((Map)inputEndpointHandler.get("application")).get("name");
+                        long readerHandlingTime = (long)inputEndpointHandler.get("handling_time");
+                        // The name of the application that has read the response is found. Now try to find that application in the writing endpoint handlers of the request.
+                        boolean writerFound = setResponseTimeOnWritingEndpointHandlers(targetEndpoints, readerAppName, readerHandlingTime);
+                        if (!writerFound) {
+                            addDataForWriter(targetSource, readerHandlingTime, readerAppName);
+                        }
+                    }
+                }
+            }
         }
-	}
+    }
+    return true;
 }
+mainMethod(params);

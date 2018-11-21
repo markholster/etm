@@ -11,10 +11,7 @@ import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
 import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
-import com.jecstar.etm.launcher.migrations.v3.EndpointHandlerToSingleListMigrator;
-import com.jecstar.etm.launcher.migrations.v3.SearchTemplateHandlingTimeMigrator;
-import com.jecstar.etm.launcher.migrations.v3.Version2xTo3xMigrator;
-import com.jecstar.etm.launcher.migrations.v3.Version300To301Migrator;
+import com.jecstar.etm.launcher.migrations.v3.*;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
@@ -250,6 +247,11 @@ class LaunchEtmCommand extends AbstractCommand {
         etmMigrator = new SearchTemplateHandlingTimeMigrator(client);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
+        }
+        etmMigrator = new Elasticsearch65PainlessSupport(client);
+        if (etmMigrator.shouldBeExecuted()) {
+            etmMigrator.migrate();
+            reinitialze = true;
         }
         return reinitialze;
     }

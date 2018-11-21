@@ -1,8 +1,9 @@
 == Changelog
 === Version 3.4.0
 * [ETM-77] Fix "Accessing variable [ctx] via [params.ctx] from within a update script is deprecated in favor of directly accessing [ctx]".
-* [ETM-78] Unable to show event chain when responsetime is sub millisecond.
+* [ETM-78] Unable to show event chain when response time is sub millisecond.
 * [ETM-79] Payload correlated event is visible with role "Read without payload".
+* [ETM-80] Upgrade to Elasticsearch 6.5.x.
 
 === Version 3.3.0
 * [ETM-57] Sorting not working on all fields.
