@@ -457,7 +457,7 @@ public class SearchService extends AbstractIndexMetadataService {
             String correlatedToId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
             boolean correlationAdded = false;
             if (correlatedToId != null && !correlatedToId.equals(eventId)) {
-                SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedToId);
+                SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedToId, payloadVisible);
                 if (correlatedEvent != null) {
                     Map<String, Object> sourceAsMap = correlatedEvent.getSourceAsMap();
                     // TODO meteen sourceAsString op het moment dat onderstaande methode wordt verwijderd.
@@ -486,7 +486,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         // An event correlates to itself.
                         continue;
                     }
-                    SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlationId);
+                    SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlationId, payloadVisible);
                     if (correlatedEvent != null) {
                         Map<String, Object> sourceAsMap = correlatedEvent.getSourceAsMap();
                         // TODO meteen sourceAsString op het moment dat onderstaande methode wordt verwijderd.
@@ -633,7 +633,7 @@ public class SearchService extends AbstractIndexMetadataService {
         return response.getHits().getAt(0);
     }
 
-    private SearchHit conditionallyGetEvent(String eventType, String eventId) {
+    private SearchHit conditionallyGetEvent(String eventType, String eventId, boolean payloadVisible) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .types(eventType)
                 .addIds(eventId);
@@ -642,7 +642,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setQuery(alwaysShowCorrelatedEvents(getEtmPrincipal()) ? idsQueryBuilder : addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFrom(0)
                 .setSize(1)
-                .setFetchSource(true);
+                .setFetchSource(new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
         SearchResponse response = builder.get();
         if (response.getHits().getHits().length == 0) {
             return null;
