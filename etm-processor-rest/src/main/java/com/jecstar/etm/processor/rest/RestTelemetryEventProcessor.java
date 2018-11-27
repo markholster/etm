@@ -13,8 +13,9 @@ import java.io.InputStream;
 public class RestTelemetryEventProcessor extends AbstractJsonHandler {
 
     private static TelemetryCommandProcessor telemetryCommandProcessor;
+//    private static final String APM_PREFIX = "/apm";
 
-    public static void setProcessor(TelemetryCommandProcessor processor) {
+    static void setProcessor(TelemetryCommandProcessor processor) {
         RestTelemetryEventProcessor.telemetryCommandProcessor = processor;
     }
 
@@ -27,7 +28,6 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
     public Response addEvent(InputStream data) {
         HandlerResults results = handleSingleEvent(data);
         if (results.hasFailures()) {
@@ -42,7 +42,6 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
     @Path("/_bulk")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
     public Response addEvents(InputStream data) {
         HandlerResults results = handleBulkEvents(data);
         if (results.hasFailures()) {
@@ -51,4 +50,50 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
         }
         return Response.accepted("{ \"status\": \"acknowledged\" }").build();
     }
+
+//    @POST
+//    @Path(APM_PREFIX + "/assets/v1/sourcemaps")
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @SuppressWarnings("unchecked")
+//    public Response addApmAssets(InputStream data) {
+//        return printEvent(data);
+//    }
+//
+//    @POST
+//    @Path(APM_PREFIX + "/intake/v2/events")
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @SuppressWarnings("unchecked")
+//    public Response addApmEvents(InputStream data) {
+//        return printEvent(data);
+//    }
+//
+//    private Response printEvent(InputStream data) {
+//        JsonConverter jsonConverter = new JsonConverter();
+//        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new InflaterInputStream(data), StandardCharsets.UTF_8))) {
+//            bufferedReader
+//                    .lines()
+//                    .filter(str -> !str.isEmpty())
+//                    .forEach(c -> {
+//                        try {
+//                            Map<String, Object> event = this.objectMapper.readValue(c, HashMap.class);
+//                            System.out.println(jsonConverter.toString(event));
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    });
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return Response.ok().build();
+//    }
+//
+//    @GET
+//    @Path(APM_PREFIX)
+//    @Produces(MediaType.TEXT_PLAIN)
+//    @SuppressWarnings("unchecked")
+//    public Response apmHealthCheck() {
+//        System.out.println("System registered");
+//        return Response.ok("Enterprise Telemetry Monitor APM Bridge").build();
+//    }
 }
