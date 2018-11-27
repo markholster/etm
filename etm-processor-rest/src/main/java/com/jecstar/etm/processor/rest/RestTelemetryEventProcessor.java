@@ -96,4 +96,6 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
 //        System.out.println("System registered");
 //        return Response.ok("Enterprise Telemetry Monitor APM Bridge").build();
 //    }
+
+// Zie https://www.elastic.co/guide/en/apm/server/6.5/upgrading-to-65.html intake/v2/rum/events zou ook toegevoegd moeten worden als endpoint
 }
