@@ -1,11 +1,12 @@
 == Changelog
 === Version 3.4.0
 * [ETM-17] Migrate etm-domain to public repository.
-* [ETM-75] Advanced graphs.
+* [ETM-76] Advanced graphs.
 * [ETM-77] Fix "Accessing variable [ctx] via [params.ctx] from within a update script is deprecated in favor of directly accessing [ctx]".
 * [ETM-78] Unable to show event chain when response time is sub millisecond.
 * [ETM-79] Payload correlated event is visible with role "Read without payload".
 * [ETM-80] Upgrade to Elasticsearch 6.6.
+* [ETM-84] Remove WADL exposure.
 
 === Version 3.3.0
 * [ETM-57] Sorting not working on all fields.

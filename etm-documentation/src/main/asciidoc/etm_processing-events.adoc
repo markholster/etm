@@ -9,7 +9,7 @@ Depending on your current infrastructure and expected load you can pick any of t
 Performance wise there is no advantage in picking one specific processor. {etm} is capable of processing ~25.000 log events per second on a single instance. Of course the more information you provide in your event, the more time it will take to process the event. Also memory and disk speed can influence the throughput of events in a relatively high way.
 
 === Rest processor
-The rest processor is enabled by default. To check if the processor is configured make sure the option ''restProcessorEnabled'' is set to ''true'' in the <<Http section in etm.yml>>. When enabled a WADL can be downloaded from http://localhost:8080/rest/processor/application.wadl. 
+The rest processor is enabled by default. To check if the processor is configured make sure the option ''restProcessorEnabled'' is set to ''true'' in the <<Http section in etm.yml>>.
 
 ==== Add a single event
 To process a single event post some data to http://localhost:8080/rest/processor/event/. The data needs to be in JSON format and should contain a single json object with 2 keys: ''type'' and ''data''. Type should be one of the predefined event types for example ''log'', and data should contain the event data as described in the <<Event layout>> section.

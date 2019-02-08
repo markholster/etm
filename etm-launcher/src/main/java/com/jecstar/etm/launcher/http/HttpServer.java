@@ -30,7 +30,6 @@ import io.undertow.servlet.api.*;
 import org.elasticsearch.client.Client;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
-import org.jboss.resteasy.wadl.ResteasyWadlServlet;
 
 import javax.net.ssl.SSLContext;
 import javax.servlet.ServletException;
@@ -228,13 +227,6 @@ public class HttpServer {
         }
         di.setClassLoader(processorApplication.getClass().getClassLoader());
         di.setDeploymentName("Rest event processor - " + di.getContextPath());
-
-        // Add wadl generation support
-        ServletInfo resteasyWadlServlet = Servlets.servlet("ResteasyWadlServlet", ResteasyWadlServlet.class)
-                .setAsyncSupported(false)
-                .setLoadOnStartup(1)
-                .addMapping("/application.wadl");
-        di.addServlet(resteasyWadlServlet);
 
         // Add the logout servlet
         ServletInfo logoutServlet = Servlets.servlet("LogoutServlet", LogoutServlet.class)
