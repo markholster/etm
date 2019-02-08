@@ -7,6 +7,11 @@
 
     <title>Jecstar - Enterprise Telemetry Monitor</title>
 
+    <link rel="apple-touch-icon" sizes="180x180" href="../images/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
+    <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
+
     <link rel="stylesheet" href="../styles/bootstrap.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
@@ -42,7 +47,7 @@
     <div class="card card-block">
         <div class="card-body">
             <h5 class="card-title">Users
-                <small><a id="link-request-download" href="#" class="fa fa-download pull-right"
+                <small><a id="link-request-download" href="#" class="fa fa-download float-right"
                           title="Download users"></a></small>
             </h5>
             <div class="card-text">
@@ -80,7 +85,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <a id="lnk-add-group" class="pull-right" href="#">Add group</a>
+                                    <a id="lnk-add-group" class="float-right" href="#">Add group</a>
                                     <label>Groups</label>
                                     <ol id="list-groups">
                                     </ol>
@@ -193,7 +198,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <a id="lnk-add-notifier" class="pull-right" href="#">Add notifier</a>
+                                    <a id="lnk-add-notifier" class="float-right" href="#">Add notifier</a>
                                     <label>Notifiers</label>
                                     <ol id="list-notifiers">
                                     </ol>
@@ -551,7 +556,7 @@
 <script src="../scripts/users.js"></script>
 <script src="../scripts/etm-commons.js"></script>
 <script>
-    addAjaxHandlers(
+    commons.addAjaxHandlers(
         null,
         null,
         function(event, jqXHR, settings, thrownError) {

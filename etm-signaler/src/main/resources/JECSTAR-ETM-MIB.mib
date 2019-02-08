@@ -38,7 +38,7 @@ jecstar MODULE-IDENTITY
 
 -- Object groups
   etmSignalNotificationOG OBJECT-GROUP
-    OBJECTS     { signalClusterName, signalName, signalThreshold, signalLimit, signalLimit, signalExceedences }
+    OBJECTS     { signalClusterName, signalName, signalThreshold, signalMaxFrequencyOfExceedance, signalFrequencyOfExceedance }
     STATUS      current
     DESCRIPTION "A collection of objects representing a Signal exceedence in Enterprise Telemetry Monitor"
   ::= { etmGroups 1 }
@@ -72,23 +72,23 @@ jecstar MODULE-IDENTITY
     DESCRIPTION "The threshold that is configured with the Signal"
   ::= { etmSignalNotification 3 }
 
-  signalLimit OBJECT-TYPE
-    SYNTAX		Integer32
-    MAX-ACCESS	accessible-for-notify
-    STATUS		current
-    DESCRIPTION "The number of times the threshold may be exceeded before the Signal is fired."
-  ::= { etmSignalNotification 4 }
+  signalMaxFrequencyOfExceedance OBJECT-TYPE
+      SYNTAX		Integer32
+      MAX-ACCESS	accessible-for-notify
+      STATUS		current
+      DESCRIPTION "The number of times the threshold may be exceeded before the Signal is fired."
+    ::= { etmSignalNotification 4 }
 
-  signalExceedences	OBJECT-TYPE
-    SYNTAX		Integer32
-    MAX-ACCESS	accessible-for-notify
-    STATUS		current
-    DESCRIPTION "The number of times the threshold was exceeded."
-  ::= { etmSignalNotification 5 }
+  signalFrequencyOfExceedance OBJECT-TYPE
+      SYNTAX		Integer32
+      MAX-ACCESS	accessible-for-notify
+      STATUS		current
+      DESCRIPTION "The number of times the threshold was exceeded."
+    ::= { etmSignalNotification 5 }
 
 -- Notification types
   etmSignalNotificationType NOTIFICATION-TYPE
-    OBJECTS     { signalClusterName, signalName, signalThreshold, signalLimit, signalLimit, signalExceedences }
+    OBJECTS     { signalClusterName, signalName, signalThreshold, signalMaxFrequencyOfExceedance, signalFrequencyOfExceedance}
     STATUS      current
     DESCRIPTION "A notification about a Signal that has a threshold exceedence."
   ::= { etmNotifications 2 }

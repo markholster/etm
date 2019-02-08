@@ -87,26 +87,16 @@ function buildParserPage() {
 	        if (!data) {
 	            return;
 	        }
-	        $parserSelect = $('#sel-parser');
+            const $parserSelect = $('#sel-parser');
 	        $.each(data.parsers, function(index, parser) {
 	        	$parserSelect.append($('<option>').attr('value', parser.name).text(parser.name));
 	        	parserMap[parser.name] = parser;
 	        });
-	        sortSelectOptions($parserSelect)
+            commons.sortSelectOptions($parserSelect)
 	        $parserSelect.val('');
 	    }
 	});
-	
-	function sortSelectOptions($parserSelect) {
-		var options = $parserSelect.children('option');
-		options.detach().sort(function(a,b) {
-		    var at = $(a).text();
-		    var bt = $(b).text();         
-		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
-		});
-		options.appendTo($parserSelect);
-	}
-	
+
 	function enableOrDisableButtons() {
 		var parserName = $('#input-parser-name').val();
 		if (parserName) {
@@ -138,15 +128,15 @@ function buildParserPage() {
                     return;
                 }
         		if (!isParserExistent(parserData.name)) {
-        			$parserSelect = $('#sel-parser');
+                    const $parserSelect = $('#sel-parser');
         			$parserSelect.append($('<option>').attr('value', parserData.name).text(parserData.name));
-        			sortSelectOptions($parserSelect);
+                    commons.sortSelectOptions($parserSelect);
         		}
         		parserMap[parserData.name] = parserData;
         		$('#parsers_infoBox').text('Parser \'' + parserData.name + '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals($('#modal-parser-overwrite'));
+            commons.hideModals($('#modal-parser-overwrite'));
         });
 	}
 	
@@ -167,7 +157,7 @@ function buildParserPage() {
         		$('#parsers_infoBox').text('Parser \'' + parserName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals($('#modal-parser-remove'));
+            commons.hideModals($('#modal-parser-remove'));
         });
 	}
 	

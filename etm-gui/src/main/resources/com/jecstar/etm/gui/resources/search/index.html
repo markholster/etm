@@ -7,6 +7,11 @@
 
     <title>Jecstar - Enterprise Telemetry Monitor</title>
 
+    <link rel="apple-touch-icon" sizes="180x180" href="../images/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
+    <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
+
     <link rel="stylesheet" href="../styles/bootstrap.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
@@ -40,7 +45,6 @@
 .event-selected {
 	font-weight: bold;
 }
-
     </style>
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/tether.min.js"></script>
@@ -49,6 +53,13 @@
     <script src="../scripts/popper.min.js"></script>
     <script src="../scripts/bootstrap.min.js"></script>
     <script src="../scripts/flatpickr.min.js"></script>
+    <script src="../scripts/d3-format.v1.min.js"></script>
+    <script src="../scripts/highcharts/highcharts.js"></script>
+    <script src="../scripts/highcharts/xrange.js"></script>
+    <script src="../scripts/highcharts/sankey.js"></script>
+    <script src="../scripts/highcharts/exporting.js"></script>
+    <script src="../scripts/highcharts/offline-exporting.js"></script>
+    <script src="../scripts/highcharts/export-data.js"></script>
 
 </head>
 <body>
@@ -79,7 +90,7 @@
                         <div class="card-body">
                             <h5 class="card-title">Search templates</h5>
                             <div class="card-text">
-                                <ul id="list-template-links" style="padding-left: 1em; word-wrap: break-word;"></ul>
+                                <ul id="list-template-links" class="pl-1" style="word-wrap: break-word;"></ul>
                             </div>
                             <p id="no-more-tenplates-allowed" style="display: none;">Maximum number of templates
                                 reached!</p>
@@ -222,9 +233,9 @@
                             <h5 class="card-title">Search results
                                 <small id="search-stats"></small>
                                 <small style="font-size: 100%;"><a id="link-edit-table" href="#"
-                                                                   class="fa fa-pencil-square-o pull-right"
-                                                                   title="Edit result table"></a><a
-                                        id="link-request-download" href="#" class="fa fa-download pull-right"
+                                                                   class="fa fa-edit float-right"
+                                                                   title="Edit result table"></a>&nbsp;<a
+                                        id="link-request-download" href="#" class="mr-1 fa fa-download float-right"
                                         title="Download results"></a></small>
                             </h5>
                             <div id="result_card" class="card-text">
@@ -428,14 +439,6 @@
             <div class="modal-body">
                 <p>Select the options you desire, and click on the link below to download the results.</p>
                 <div class="form-group row">
-                    <label for="input-download-transaction-application"
-                           class="col-sm-3 col-form-label">Application</label>
-                    <div class="col-sm-9">
-                        <input id="input-download-transaction-application" type="text" class="form-control"
-                               disabled="disabled"/>
-                    </div>
-                </div>
-                <div class="form-group row">
                     <label for="input-download-transaction-id" class="col-sm-3 col-form-label">Transaction id</label>
                     <div class="col-sm-9">
                         <input id="input-download-transaction-id" type="text" class="form-control" disabled="disabled"/>
@@ -460,15 +463,12 @@
 
 <script src="../scripts/moment.min.js"></script>
 <script src="../scripts/moment-timezone-with-data.min.js"></script>
-<script src="../scripts/cytoscape.min.js"></script>
-<script src="../scripts/dagre.min.js"></script>
-<script src="../scripts/cytoscape-dagre.js"></script>
 <script src="../scripts/vkbeautify.js"></script>
 <script src="../scripts/clipboard.min.js"></script>
 <script src="../scripts/etm-commons.js"></script>
 
 <script>
-    addAjaxHandlers(
+    commons.addAjaxHandlers(
         null,
         null,
         function(event, jqXHR, settings, thrownError) {
@@ -526,7 +526,7 @@
 <script src="../scripts/event-details.js"></script>
 <script src="../scripts/search-templates.js"></script>
 <script>
-    var maxDownloads;
+    let maxDownloads;
     $('[id^=check-type-]').on('change', function() {
         enableOrDisableSearchButton();
         if ($('[id^=check-type-]:checked').length == 0) {
@@ -639,7 +639,7 @@
 
     function startNewQuery() {
         tableLayout.timestamp = new Date().getTime();
-    	var queryParams = createQuery(false);
+        const queryParams = createQuery(false);
     	queryParams.start_ix = 0;
         executeQuery(queryParams);
     }
@@ -669,9 +669,9 @@
         } else if (!tableLayout.current_query) {
         	return null;
         }
-        var dateValue = $('#query-string-from').val();
+        let dateValue = $('#query-string-from').val();
         if (dateValue) {
-            var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+            const momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
             if (momentValue.isValid()) {
                 tableLayout.start_time = Number(momentValue.valueOf());
             } else {
@@ -680,9 +680,9 @@
         } else {
             tableLayout.start_time = null;
         }
-        var dateValue = $('#query-string-till').val();
+        dateValue = $('#query-string-till').val();
         if (dateValue) {
-            var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+            const momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
             if (momentValue.isValid()) {
                 tableLayout.end_time = Number(momentValue.valueOf());
             } else {
@@ -692,7 +692,7 @@
             tableLayout.end_time = null;
         }
         tableLayout.time_filter_field = $('#query-string-time-filter-field').val() ? $('#query-string-time-filter-field').val() : 'timestamp';
-        var query = {
+        return {
             query: tableLayout.current_query,
             types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
             fields: tableLayout.getInternalFieldNames(),
@@ -706,10 +706,9 @@
             end_time: tableLayout.end_time,
             time_filter_field: tableLayout.time_filter_field
         };
-        return query;
     }
 
-    var queryInProgress = false;
+    let queryInProgress = false;
     function executeQuery(queryParameters, appendToCurrent) {
         if (!queryParameters || queryInProgress) {
             return;
@@ -747,7 +746,7 @@
                         })
                     });
                     if (!data.has_more_results) {
-                        var $body = $('#search_result_table > tfoot').remove();
+                        $('#search_result_table > tfoot').remove();
                     }
                 } else {
                     $('#result_card').empty();
@@ -756,7 +755,7 @@
                         $('#result_card').append($('<p>').text('No results found'));
                     } else {
                         $('#search-stats').text(':  Found ' + data.hits_as_string + ' results in ' + data.query_time_as_string + 'ms. Showing results ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
-                        var resultTable = $('<table id="search_result_table">');
+                        const resultTable = $('<table id="search_result_table">');
                         $(resultTable)
                             .addClass('table table-hover table-sm')
                             .append($('<thead>')
@@ -787,7 +786,7 @@
                                 }
                             })
                             .append(function() {
-                                var $body = $('<tbody>')
+                                const $body = $('<tbody>')
                                 $(data.results).each(function (index, searchResult) {
                                     $body.append(function () {
                                         return createResultTableRow(searchResult, data.time_zone);
@@ -796,12 +795,12 @@
                                 return $body;
                             });
                         $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
-                        if (!isInViewport($('#result_card'))) {
+                        if (!commons.isInViewport($('#result_card'))) {
                             $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
                         }
                     }
                     // Update recent queries
-                    var query = {
+                    const query = {
                         types: queryParameters.types,
                         query: queryParameters.query,
                         fields: queryParameters.fieldsLayout,
@@ -811,7 +810,7 @@
                         start_time: queryParameters.start_time,
                         end_time: queryParameters.end_time,
                         time_filter_field: queryParameters.time_filter_field
-                    }
+                    };
                     updateHistory(query, data.history_size);
                 }
             },
@@ -822,9 +821,9 @@
     }
 
     function createResultTableRow(searchResult, timeZone) {
-        var $tr = $('<tr>');
+        const $tr = $('<tr>');
         $(tableLayout.fields).each(function (index, field) {
-            var $td = $('<td style="padding: 0.1rem">');
+            const $td = $('<td style="padding: 0.1rem">');
             if (field.link) {
                 $td.append(
                     $('<a>')
@@ -840,12 +839,12 @@
             if ('isotimestamp' == field.format || 'isoutctimestamp' == field.format) {
                 $td.append(
                     $('<a style="padding-top: 0.2rem">')
-                        .addClass('fa fa-hourglass-end pull-right invisible')
+                        .addClass('fa fa-hourglass-end float-right invisible')
                         .attr('data-link-type', 'set-as-end-for-query')
                         .attr('title', "Set as 'End date' for query")
                         .attr('href', '#'),
                     $('<a style="padding-top: 0.2rem">')
-                        .addClass('fa fa-hourglass-start pull-right invisible')
+                        .addClass('fa fa-hourglass-start float-right invisible')
                         .attr('data-link-type', 'set-as-start-for-query')
                         .attr('title', "Set as 'Start date' for query")
                         .attr('href', '#')
@@ -875,26 +874,13 @@
 
 	$(window).scroll(function(event) {
 		var $showMoreLink = $('#lnk_show_more');
-		if (isInViewport($showMoreLink)) {
+        if (commons.isInViewport($showMoreLink)) {
 			$showMoreLink.click();
 		}
 	});
 
-    var queryString = (function(a) {
-        if (a == "") return {};
-        var b = {};
-        for (var i = 0; i < a.length; ++i) {
-            var p=a[i].split('=', 2);
-            if (p.length == 1) {
-                b[p[0]] = "";
-            } else {
-                b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-            }
-        }
-        return b;
-    })(window.location.search.substr(1).split('&'));
-    if (queryString['id'] && queryString['type']) {
-        showEvent(null, queryString['type'], queryString['id']);
+    if (commons.queryString['id'] && commons.queryString['type']) {
+        showEvent(null, commons.queryString['type'], commons.queryString['id']);
     }
 
 </script>

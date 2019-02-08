@@ -16,6 +16,6 @@ public final class EtmSnmpConstants {
     public static final String ETM_SIGNAL_NOTIFICATION_CLUSTER_NAME_SUFFIX = ".1";
     public static final String ETM_SIGNAL_NOTIFICATION_NAME_SUFFIX = ".2";
     public static final String ETM_SIGNAL_NOTIFICATION_THRESHOLD_SUFFIX = ".3";
-    public static final String ETM_SIGNAL_NOTIFICATION_LIMIT_SUFFIX = ".4";
-    public static final String ETM_SIGNAL_NOTIFICATION_COUNT_SUFFIX = ".5";
+    public static final String ETM_SIGNAL_NOTIFICATION_MAX_FREQUENCY_OF_EXCEEDANCE_SUFFIX = ".4";
+    public static final String ETM_SIGNAL_NOTIFICATION_FREQUENCY_OF_EXCEEDANCE_SUFFIX = ".5";
 }

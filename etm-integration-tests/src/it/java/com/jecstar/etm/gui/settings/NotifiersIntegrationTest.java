@@ -135,17 +135,33 @@ public class NotifiersIntegrationTest extends AbstractCitrusSeleniumTest {
         // Create the signal
         runner.selenium(action -> action.setInput(signalName).element(By.id("input-signal-name")));
         runner.selenium(action -> action.select(ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL).element(By.id("sel-data-source")));
-        runner.selenium(action -> action.setInput("1").element(By.id("input-signal-check-timespan")));
-        runner.selenium(action -> action.select("MINUTES").element(By.id("sel-signal-check-timeunit")));
-        runner.selenium(action -> action.select(notifierName).element(By.xpath("//*[@id='list-notifiers']/li[1]/div[1]/select")));
-        runner.selenium(action -> action.select("COUNT").element(By.id("sel-signal-when")));
-        runner.selenium(action -> action.setInput("5").element(By.id("input-signal-per-timespan")));
-        runner.selenium(action -> action.select("MINUTES").element(By.id("sel-signal-per-timeunit")));
-        runner.selenium(action -> action.select("GTE").element(By.id("sel-signal-is")));
+        runner.selenium(action -> action.setInput("now-1h").element(By.id("input-signal-from")));
+        runner.selenium(action -> action.setInput("now").element(By.id("input-signal-till")));
+        runner.selenium(action -> action.setInput("timestamp").element(By.id("input-signal-time-filter-field")));
+        runner.selenium(action -> action.setInput("*").element(By.id("input-signal-query")));
+
+        runner.selenium(action -> action.click().element(By.id("btn-heading-threshold")));
+        sleepWhenChrome(browser, 500);
+        runner.selenium(action -> action.select("GTE").element(By.id("sel-signal-comparison")));
         runner.selenium(action -> action.setInput("1").element(By.id("input-signal-threshold")));
-        runner.selenium(action -> action.setInput("1").element(By.id("input-signal-exceeded-count")));
-        runner.selenium(action -> action.setInput("60").element(By.id("input-signal-last-timespan")));
-        runner.selenium(action -> action.select("MINUTES").element(By.id("sel-signal-last-timeunit")));
+        runner.selenium(action -> action.setInput("5").element(By.id("input-signal-cardinality")));
+        runner.selenium(action -> action.select("MINUTES").element(By.id("sel-signal-cardinality-timeunit")));
+        // Remove all aggregators if present
+        elements = browser.getWebDriver().findElements(By.xpath("//*[@data-element-type='remove-metrics-aggregator']"));
+        while (elements.size() > 0) {
+            elements.get(0).click();
+            elements = browser.getWebDriver().findElements(By.xpath("//*[@data-element-type='remove-metrics-aggregator']"));
+        }
+        runner.selenium(action -> action.click().element(By.xpath("//*[@data-element-type='add-metrics-aggregator']")));
+        runner.selenium(action -> action.setInput("Count").element(By.id("input-metrics-name-threshold-0-0")));
+        runner.selenium(action -> action.select("count").element(By.id("sel-metrics-aggregator-threshold-0-0")));
+
+        runner.selenium(action -> action.click().element(By.id("btn-heading-notifications")));
+        sleepWhenChrome(browser, 500);
+        runner.selenium(action -> action.setInput("1").element(By.id("input-signal-interval")));
+        runner.selenium(action -> action.select("MINUTES").element(By.id("sel-signal-interval-timeunit")));
+        runner.selenium(action -> action.setInput("1").element(By.id("input-signal-max-frequency-of-exceedance")));
+        runner.selenium(action -> action.select(notifierName).element(By.className("etm-notifier")));
 
         // Visualize it
         sleepWhenChrome(browser, 2000);
@@ -154,7 +170,6 @@ public class NotifiersIntegrationTest extends AbstractCitrusSeleniumTest {
         waitForAjaxToComplete(runner);
         sleepWhenChrome(browser, 2000);
         runner.selenium(action -> action.find().element(By.xpath("//*[@id='preview_box']/p[@class='text-danger']")).text("@contains('This would have triggered a notification.')@"));
-
 
         // Start the SNMP receiver and save the Signal.
         this.snmpReceiver = new EmbeddableSnmpReceiver();

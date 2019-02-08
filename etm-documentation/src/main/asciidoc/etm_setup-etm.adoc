@@ -366,7 +366,7 @@ The ''jms'' section contains all options that are necessary to process {etm} eve
 |=======================
 |Name|Default value|Description
 |enabled|false|Should the JMS processor be enabled? Set this value to true to process events from defined JMS queue's.
-|connectionFactories||A list of connection factories to connect to. See <<connection-factory-options>> to view the nested options.
+|connectionFactories||A list of connection factories to connect to. See <<connection-factory-options,JMS Connection Factory instantiation>> for the nested options.
 |=======================
 
 [[connection-factory-options]]

@@ -47,7 +47,7 @@ class BulkProcessorListener implements BulkProcessor.Listener {
     public void beforeBulk(long executionId, BulkRequest request) {
         this.metricContext.put(executionId, this.bulkTimer.time());
         cleanupBlacklist();
-        Iterator<DocWriteRequest> it = request.requests().iterator();
+        Iterator<DocWriteRequest<?>> it = request.requests().iterator();
         while (it.hasNext()) {
             DocWriteRequest action = it.next();
             if (isBlacklisted(action)) {

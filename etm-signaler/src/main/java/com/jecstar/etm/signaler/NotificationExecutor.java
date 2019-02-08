@@ -67,8 +67,8 @@ public class NotificationExecutor implements Closeable {
             this.jsonConverter.addStringElementToJsonBuffer("signal", signal.getName(), buffer, true);
             this.jsonConverter.addStringElementToJsonBuffer("owner", etmSecurityEntity.getType(), buffer, false);
             this.jsonConverter.addStringElementToJsonBuffer("owner_id", etmSecurityEntity.getId(), buffer, false);
-            this.jsonConverter.addIntegerElementToJsonBuffer("threshold", signal.getThreshold(), buffer, false);
-            this.jsonConverter.addIntegerElementToJsonBuffer("limit", signal.getLimit(), buffer, false);
+            this.jsonConverter.addDoubleElementToJsonBuffer("threshold", signal.getThreshold().getValue(), buffer, false);
+            this.jsonConverter.addIntegerElementToJsonBuffer("max_frequency_of_exceedance", signal.getNotifications().getMaxFrequencyOfExceedance(), buffer, false);
             List<DateTime> keys = new ArrayList<>(thresholdExceedances.keySet());
             Collections.sort(keys);
             buffer.append(", " + this.jsonConverter.escapeToJson("threshold_exceedances", true) + ": [");
@@ -109,8 +109,8 @@ public class NotificationExecutor implements Closeable {
             this.jsonConverter.addStringElementToJsonBuffer("signal", signal.getName(), buffer, true);
             this.jsonConverter.addStringElementToJsonBuffer("owner", etmSecurityEntity.getType(), buffer, false);
             this.jsonConverter.addStringElementToJsonBuffer("owner_id", etmSecurityEntity.getId(), buffer, false);
-            this.jsonConverter.addIntegerElementToJsonBuffer("threshold", signal.getThreshold(), buffer, false);
-            this.jsonConverter.addIntegerElementToJsonBuffer("limit", signal.getLimit(), buffer, false);
+            this.jsonConverter.addDoubleElementToJsonBuffer("threshold", signal.getThreshold().getValue(), buffer, false);
+            this.jsonConverter.addIntegerElementToJsonBuffer("max_frequency_of_exceedance", signal.getNotifications().getMaxFrequencyOfExceedance(), buffer, false);
             buffer.append("}");
             BusinessEventLogger.logSignalThresholdNoLongerExceeded(buffer.toString());
         }

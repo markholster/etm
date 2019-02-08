@@ -23,6 +23,7 @@ import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
+import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
@@ -158,6 +159,7 @@ public class HttpServer {
                                 )
                         )
                 );
+                root.addExactPath("/favicon.ico", new ResourceHandler(new FavIconResourceSupplier()));
                 if (log.isInfoLevelEnabled()) {
                     log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
                 }

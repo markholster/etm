@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
 
 import java.io.IOException;
@@ -186,19 +185,14 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         waitForAjaxToComplete(runner);
         runner.selenium(action -> action.click().element(By.xpath("//ul[@id='event-tabs']/li/a[text()='Endpoints']")));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("endpoint-overview")));
-        // There should be 3 canvas items
-        assertEquals(3, browser.getWebDriver().findElement(By.id("endpoint-overview")).findElements(By.tagName("canvas")).size());
+        sleep(1000);
+        // There should be 1 svg items
+        assertEquals(1, browser.getWebDriver().findElement(By.id("endpoint-overview")).findElements(By.tagName("svg")).size());
         // Now select the application
-        List<WebElement> canvasElements = browser.getWebDriver().findElement(By.id("endpoint-overview")).findElements(By.tagName("canvas"));
-        WebElement canvas = canvasElements.get(0);
-        int clickPointXOffset = (canvas.getSize().getWidth() / 6) * 5;
-        int clickPointYOffset = (canvas.getSize().getHeight() / 3) * 2;
-        if (browser.getWebDriver() instanceof FirefoxDriver) {
-            // Firefox offset positioning is done from the center of the canvas instead of the top left corner;
-            clickPointXOffset = (canvas.getSize().getWidth() / 6) * 2;
-            clickPointYOffset = 0;
-        }
-        new Actions(browser.getWebDriver()).moveToElement(canvas, clickPointXOffset, clickPointYOffset).click().perform();
+        List<WebElement> nodeElements = browser.getWebDriver().findElement(By.id("endpoint-overview")).findElements(By.className("highcharts-node"));
+        assertEquals(2, nodeElements.size());
+        WebElement node = nodeElements.get(1);
+        new Actions(browser.getWebDriver()).moveToElement(node).click().perform();
         // The application is clicked, now the transaction should be visible
         waitForExistence(browser, By.id("transaction-detail-table"));
         // Wait for the table to be fully built.
@@ -208,7 +202,14 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         // Now check the event chain tab
         runner.selenium(action -> action.click().element(By.xpath("//ul[@id='event-tabs']/li/a[text()='Event chain']")));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("event-chain")));
-        assertEquals(3, browser.getWebDriver().findElement(By.id("event-chain")).findElements(By.tagName("canvas")).size());
+        sleep(1000);
+        nodeElements = browser.getWebDriver().findElement(By.id("event-chain")).findElements(By.cssSelector("g.highcharts-point"));
+        assertEquals(3, nodeElements.size());
+        node = nodeElements.get(0);
+        new Actions(browser.getWebDriver()).moveToElement(node).click().perform();
+        waitForExistence(browser, By.id("transaction-detail-table"));
+        sleep(500);
+        assertEquals(8, browser.getWebDriver().findElement(By.id("transaction-detail-table")).findElements(By.tagName("tr")).size());
     }
 
     private void removeSearchTemplates(TestRunner runner, SeleniumBrowser browser) {

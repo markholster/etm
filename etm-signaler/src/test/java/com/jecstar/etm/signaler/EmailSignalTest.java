@@ -8,7 +8,9 @@ import com.consol.citrus.dsl.runner.TestRunner;
 import com.consol.citrus.mail.message.MailMessage;
 import com.jecstar.etm.server.core.domain.cluster.notifier.EmailNotifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
+import com.jecstar.etm.signaler.domain.Notifications;
 import com.jecstar.etm.signaler.domain.Signal;
+import com.jecstar.etm.signaler.domain.Threshold;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
 import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
@@ -24,7 +26,6 @@ import java.util.*;
  */
 @ExtendWith(CitrusExtension.class)
 public class EmailSignalTest {
-
 
     @Test
     @CitrusTest
@@ -48,15 +49,21 @@ public class EmailSignalTest {
         List<String> recipients = new ArrayList<>();
         recipients.add("info@jecstar.com");
 
-        Map<String, Object> signalDataMap = new HashMap<>();
-        signalDataMap.put(Signal.EMAIL_RECIPIENTS, recipients);
-        signalDataMap.put(Signal.NAME, "Signal Test");
-        signalDataMap.put(Signal.THRESHOLD, 1);
-        signalDataMap.put(Signal.LIMIT, 3);
-        signalDataMap.put(Signal.EMAIL_ALL_ETM_GROUP_MEMBERS, false);
+        Map<String, Object> signalMap = new HashMap<>();
+        Map<String, Object> thresholdMap = new HashMap<>();
+        Map<String, Object> notificationsMap = new HashMap<>();
+        signalMap.put(Signal.NAME, "Signal Test");
+
+        thresholdMap.put(Threshold.VALUE, 1.0);
+        signalMap.put(Signal.THRESHOLD, thresholdMap);
+
+        notificationsMap.put(Notifications.MAX_FREQUENCY_OF_EXCEEDANCE, 3);
+        notificationsMap.put(Notifications.EMAIL_RECIPIENTS, recipients);
+        notificationsMap.put(Notifications.EMAIL_ALL_ETM_GROUP_MEMBERS, false);
+        signalMap.put(Signal.NOTIFICATIONS, notificationsMap);
 
         SignalConverter signalConverter = new SignalConverter();
-        Signal signal = signalConverter.read(signalDataMap);
+        Signal signal = signalConverter.read(signalMap);
 
 
         DateTime now = DateTime.now();
@@ -79,7 +86,7 @@ public class EmailSignalTest {
                             .subject("[Etm Test Cluster] - Signal: Signal Test")
                             .body("Hi,\n" +
                                     "\n" +
-                                    "The threshold (1) of signal 'Signal Test' has exceeded 4 times which tops the configured limit of 3.\n" +
+                                    "The threshold (1.0) of signal 'Signal Test' has exceeded 4 times which tops the configured max frequency of exceedance of 3.\n" +
                                     "\n" +
                                     "The following exceedances are recorded:\n" +
                                     emailSignal.defaultDateFormat.format(now.minusHours(4).toDate()) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(4))) + "\n" +
@@ -122,14 +129,20 @@ public class EmailSignalTest {
         List<String> recipients = new ArrayList<>();
         recipients.add("info@jecstar.com");
 
-        Map<String, Object> signalDataMap = new HashMap<>();
-        signalDataMap.put(Signal.EMAIL_RECIPIENTS, recipients);
-        signalDataMap.put(Signal.NAME, "Signal Test");
-        signalDataMap.put(Signal.THRESHOLD, 1);
-        signalDataMap.put(Signal.EMAIL_ALL_ETM_GROUP_MEMBERS, false);
+        Map<String, Object> signalMap = new HashMap<>();
+        Map<String, Object> thresholdMap = new HashMap<>();
+        Map<String, Object> notificationsMap = new HashMap<>();
+        signalMap.put(Signal.NAME, "Signal Test");
+
+        notificationsMap.put(Notifications.EMAIL_RECIPIENTS, recipients);
+        notificationsMap.put(Notifications.EMAIL_ALL_ETM_GROUP_MEMBERS, false);
+        signalMap.put(Signal.NOTIFICATIONS, notificationsMap);
+
+        thresholdMap.put(Threshold.VALUE, 1.0);
+        signalMap.put(Signal.THRESHOLD, thresholdMap);
 
         SignalConverter signalConverter = new SignalConverter();
-        Signal signal = signalConverter.read(signalDataMap);
+        Signal signal = signalConverter.read(signalMap);
 
         try (EmailSignal emailSignal = new EmailSignal()) {
             emailSignal.sendNoLongerExceededNotification(null, null, "Etm Test Cluster", signal, notifier, null);
@@ -143,7 +156,7 @@ public class EmailSignalTest {
                             .subject("[Etm Test Cluster] - Signal fixed: Signal Test")
                             .body("Hi,\n" +
                                     "\n" +
-                                    "The threshold (1) of signal 'Signal Test' is no longer exceeded.\n" +
+                                    "The threshold (1.0) of signal 'Signal Test' is no longer exceeded.\n" +
                                     "\n" +
                                     "Kind regards,\n" +
                                     "Your Enterprise Telemetry Monitor administrator", "text/plain; charset=us-ascii"))

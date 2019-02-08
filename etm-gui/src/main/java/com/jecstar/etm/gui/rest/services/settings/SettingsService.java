@@ -352,8 +352,9 @@ public class SettingsService extends AbstractGuiService {
         result.append("{");
         result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
         result.append(",\"totals\": {");
-        addLongElementToJsonBuffer("document_count", indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted(), result, true);
-        addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(indicesStatsResponse.getTotal().docs.getCount() - indicesStatsResponse.getTotal().docs.getDeleted()), result, false);
+        final long totalCount = indicesStatsResponse.getPrimaries().docs.getCount() - indicesStatsResponse.getPrimaries().docs.getDeleted();
+        addLongElementToJsonBuffer("document_count", totalCount, result, true);
+        addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(totalCount), result, false);
         addLongElementToJsonBuffer("size_in_bytes", indicesStatsResponse.getTotal().store.getSizeInBytes(), result, false);
         addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(indicesStatsResponse.getTotal().store.getSizeInBytes()), result, false);
         result.append("}, \"indices\": [");
@@ -364,22 +365,23 @@ public class SettingsService extends AbstractGuiService {
                 result.append(",");
             }
             result.append("{");
+            final long count = entry.getValue().getPrimaries().docs.getCount() - entry.getValue().getPrimaries().docs.getDeleted();
             addStringElementToJsonBuffer("name", entry.getKey(), result, true);
-            addLongElementToJsonBuffer("document_count", entry.getValue().getTotal().docs.getCount(), result, false);
-            addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(entry.getValue().getTotal().docs.getCount()), result, false);
+            addLongElementToJsonBuffer("document_count", count, result, false);
+            addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(count), result, false);
             addLongElementToJsonBuffer("size_in_bytes", entry.getValue().getTotal().store.getSizeInBytes(), result, false);
             addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(entry.getValue().getTotal().store.getSizeInBytes()), result, false);
 
-            long count = entry.getValue().getTotal().indexing.getTotal().getIndexCount();
-            if (count != 0) {
-                long averageIndexTime = entry.getValue().getTotal().indexing.getTotal().getIndexTime().millis() / count;
+            long indexCount = entry.getValue().getTotal().indexing.getTotal().getIndexCount();
+            if (indexCount != 0) {
+                long averageIndexTime = entry.getValue().getTotal().indexing.getTotal().getIndexTime().millis() / indexCount;
                 addLongElementToJsonBuffer("average_index_time", averageIndexTime, result, false);
                 addStringElementToJsonBuffer("average_index_time_as_string", numberFormat.format(averageIndexTime), result, false);
             }
 
-            count = entry.getValue().getTotal().search.getTotal().getQueryCount();
-            if (count != 0) {
-                long averageSearchTime = entry.getValue().getTotal().search.getTotal().getQueryTimeInMillis() / count;
+            indexCount = entry.getValue().getTotal().search.getTotal().getQueryCount();
+            if (indexCount != 0) {
+                long averageSearchTime = entry.getValue().getTotal().search.getTotal().getQueryTimeInMillis() / indexCount;
                 addLongElementToJsonBuffer("average_search_time", averageSearchTime, result, false);
                 addStringElementToJsonBuffer("average_search_time_as_string", numberFormat.format(averageSearchTime), result, false);
             }

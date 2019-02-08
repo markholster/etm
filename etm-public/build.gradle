@@ -1,5 +1,5 @@
 ext {
-    version_elasticsearch = "6.4.2"
+    version_elasticsearch = "6.6.0"
     dep_junit = "junit:junit:4.12"
 }
 

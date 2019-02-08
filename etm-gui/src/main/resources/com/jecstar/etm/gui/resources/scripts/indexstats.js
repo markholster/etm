@@ -1,4 +1,5 @@
 function buildIndexStatsPage() {
+    'use strict';
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -13,8 +14,8 @@ function buildIndexStatsPage() {
 	});
 
     function getLineChartDataForPerformance(indices) {
-        var search = []
-        var index = []
+        const search = [];
+        const index = [];
         $.each(indices, function (ix, value) {
             search.push(value.average_search_time ? value.average_search_time : 0);
             index.push(value.average_index_time ? value.average_index_time : 0);
@@ -36,10 +37,10 @@ function buildIndexStatsPage() {
         $("#text-total-size").text(response.totals.size_in_bytes_as_string);
 
         response.indices.sort(function (a, b) {
-            if (a.name == b.name) {
+            if (a.name === b.name) {
                 return 0;
             }
-            if (a.name > b.name) {
+            if (a.name < b.name) {
                 return -1;
             } else {
                 return 1;
@@ -171,7 +172,7 @@ function buildIndexStatsPage() {
         function formatLabel(labelFormat, labelValue) {
             if (labelFormat) {
                 try {
-                    var format = d3.format(labelFormat);
+                    const format = d3.format(labelFormat);
                     return format(labelValue);
                 } catch (err) {
                     console.log(err);

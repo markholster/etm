@@ -59,25 +59,15 @@ function buildNodePage() {
 	        if (!data) {
 	            return;
 	        }
-	        $nodeSelect = $('#sel-node');
+            const $nodeSelect = $('#sel-node');
 	        $.each(data.nodes, function(index, node) {
 	        	$nodeSelect.append($('<option>').attr('value', node.name).text(node.name));
 	        	nodeMap[node.name] = node;
 	        });
-	        sortSelectOptions($nodeSelect)
+            commons.sortSelectOptions($nodeSelect)
 	        $nodeSelect.val('');
 	    }
 	});
-	
-	function sortSelectOptions($select) {
-		var options = $select.children('option');
-		options.detach().sort(function(a,b) {
-		    var at = $(a).text();
-		    var bt = $(b).text();         
-		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
-		});
-		options.appendTo($select);
-	}
 	
 	function enableOrDisableButtons() {
 		var nodeName = $('#input-node-name').val();
@@ -110,15 +100,15 @@ function buildNodePage() {
                     return;
                 }
         		if (!isNodeExistent(nodeData.name)) {
-        			$nodeSelect = $('#sel-node');
+                    const $nodeSelect = $('#sel-node');
         			$nodeSelect.append($('<option>').attr('value', nodeData.name).text(nodeData.name));
-        			sortSelectOptions($nodeSelect);
+                    commons.sortSelectOptions($nodeSelect);
         		}
         		nodeMap[nodeData.name] = nodeData;
         		$('#nodes_infoBox').text('Node \'' + nodeData.name + '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals($('#modal-node-overwrite'));
+            commons.hideModals($('#modal-node-overwrite'));
         });
 	}
 	
@@ -139,7 +129,7 @@ function buildNodePage() {
         		$('#nodes_infoBox').text('Node \'' + nodeName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function() {
-            hideModals($('#modal-node-remove'));
+            commons.hideModals($('#modal-node-remove'));
         });
 	}
 	

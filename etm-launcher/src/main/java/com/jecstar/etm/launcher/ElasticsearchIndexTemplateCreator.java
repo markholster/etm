@@ -288,8 +288,8 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     private String createEtmConfigurationMapping(String name) {
         return "{ \"" + name + "\": "
                 + "{\"dynamic_templates\": ["
-                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
-                + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Signal.LAST_EXECUTED + "\": { \"match\": \"" + Signal.LAST_EXECUTED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Signal.LAST_FAILED + "\": { \"match\": \"" + Signal.LAST_FAILED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Signal.LAST_PASSED + "\": { \"match\": \"" + Signal.LAST_PASSED + "\", \"mapping\": {\"type\": \"date\"}}}"
@@ -369,16 +369,16 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "                ctx._source.user.search_history.remove(i);\n" +
                 "            }\n" +
                 "        }\n" +
-                "        params.ctx._source.user.search_history.add(params.query);\n" +
+                "        ctx._source.user.search_history.add(params.query);\n" +
                 "    } else {\n" +
-                "        params.ctx._source.user.search_history = new ArrayList();\n" +
-                "        params.ctx._source.user.search_history.add(params.query);\n" +
+                "        ctx._source.user.search_history = new ArrayList();\n" +
+                "        ctx._source.user.search_history.add(params.query);\n" +
                 "    }\n" +
                 "}\n" +
-                "if (params.ctx._source.user.search_history != null && params.history_size != null) {\n" +
-                "    int removeCount = params.ctx._source.user.search_history.size() - params.history_size;\n" +
+                "if (ctx._source.user.search_history != null && params.history_size != null) {\n" +
+                "    int removeCount = ctx._source.user.search_history.size() - params.history_size;\n" +
                 "    for (int i=0; i < removeCount; i++) {\n" +
-                "        params.ctx._source.user.search_history.remove(0);\n" +
+                "        ctx._source.user.search_history.remove(0);\n" +
                 "    }\n" +
                 "}\n";
     }

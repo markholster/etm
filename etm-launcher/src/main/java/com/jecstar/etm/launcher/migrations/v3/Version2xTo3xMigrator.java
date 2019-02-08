@@ -10,11 +10,9 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
-import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexAction;
@@ -34,7 +32,6 @@ import org.elasticsearch.search.SearchHits;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -80,16 +77,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         if (!shouldBeExecuted()) {
             return;
         }
-        GetIndexResponse indexResponse = this.client.admin().indices().prepareGetIndex().addIndices(this.migrationIndexPrefix + "*").get();
-        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
-            System.out.println("Found migration indices from a previous run. Deleting those indices.");
-            for (String index : indexResponse.getIndices()) {
-                this.client.admin().indices().prepareDelete(index).get();
-                System.out.println("Removed migration index '" + index + "'.");
-            }
-            deleteTemporaryIndexTemplate(this.client, this.migrationIndexPrefix);
-        }
-        createTemporaryIndexTemplate(this.client, this.migrationIndexPrefix, 1);
+        checkAndCleanupPreviousRun(this.client, this.migrationIndexPrefix);
 
         FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
         boolean succeeded = migrateMetrics(this.client, listener);
@@ -483,7 +471,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
     }
 
     /**
-     * The event index of will not work with the new index template so we need to make it compatible over here.
+     * The event index will not work with the new index template so we need to make it compatible over here.
      *
      * @param client The elasticsearch client.
      */
@@ -563,8 +551,6 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
 
 
     private boolean migrateEntity(String entityName, String index, String type, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
-        System.out.println("Start migrating " + entityName + " to temporary index.");
-        listener.reset();
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(index)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
                         .mustNot(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE)))
@@ -573,24 +559,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         if (type != null) {
             searchRequestBuilder.setTypes(type);
         }
-        ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
-        long total = searchHits.getNumberOfHits();
-        long current = 0, lastPrint = 0;
-        for (SearchHit searchHit : searchHits) {
-            if (!ElasticsearchLayout.ETM_DEFAULT_TYPE.equals((searchHit.getType()))) {
-                bulkProcessor.add(processor.apply(searchHit));
-            }
-            lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
-        }
-        bulkProcessor.flush();
-        try {
-            bulkProcessor.awaitClose(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        printPercentageWhenChanged(lastPrint, current, total);
-        System.out.println("Done migrating " + entityName + (listener.hasFailures() ? " temporary index with failures." : "."));
-        return !listener.hasFailures();
+        return migrateEntity(searchRequestBuilder, entityName, client, bulkProcessor, listener, processor);
     }
 
     /**

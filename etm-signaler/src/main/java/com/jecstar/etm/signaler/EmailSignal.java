@@ -87,9 +87,9 @@ class EmailSignal implements Closeable {
                 } else {
                     messageContent.append("Hi,\r\n\r\n");
                 }
-                messageContent.append("The threshold (" + signal.getThreshold() + ") of signal '" + signal.getName()
-                        + "' has exceeded " + thresholdExceedances.size() + " times which tops the configured limit of "
-                        + signal.getLimit() + ".\r\n");
+                messageContent.append("The threshold (" + signal.getThreshold().getValue() + ") of signal '" + signal.getName()
+                        + "' has exceeded " + thresholdExceedances.size() + " times which tops the configured max frequency of exceedance of "
+                        + signal.getNotifications().getMaxFrequencyOfExceedance() + ".\r\n");
                 messageContent.append("\r\n");
                 messageContent.append("The following exceedances are recorded:\r\n");
                 ArrayList<DateTime> dateTimes = new ArrayList<>(thresholdExceedances.keySet());
@@ -144,7 +144,7 @@ class EmailSignal implements Closeable {
                 } else {
                     messageContent.append("Hi,\r\n\r\n");
                 }
-                messageContent.append("The threshold (" + signal.getThreshold() + ") of signal '" + signal.getName()
+                messageContent.append("The threshold (" + signal.getThreshold().getValue() + ") of signal '" + signal.getName()
                         + "' is no longer exceeded.\r\n");
                 messageContent.append("\r\n");
                 messageContent.append("Kind regards,\r\n");
@@ -203,8 +203,8 @@ class EmailSignal implements Closeable {
         if (etmSecurityEntity instanceof EtmGroup) {
             etmGroup = (EtmGroup) etmSecurityEntity;
         }
-        Set<String> recipients = new HashSet<>(signal.getEmailRecipients());
-        if (signal.isEmailAllEtmGroupMembers() && etmGroup != null) {
+        Set<String> recipients = new HashSet<>(signal.getNotifications().getEmailRecipients());
+        if (signal.getNotifications().getEmailAllEtmGroupMembers() != null && signal.getNotifications().getEmailAllEtmGroupMembers() && etmGroup != null) {
             ScrollableSearch scrollableSearch = new ScrollableSearch(client, client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setQuery(QueryBuilders.boolQuery()
                             .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))

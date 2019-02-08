@@ -2,6 +2,8 @@ package com.jecstar.etm.gui.rest.services.dashboard.domain;
 
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.XAxisConverter;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConverter;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.graph.XAxis;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.graph.YAxis;
 import com.jecstar.etm.server.core.converter.JsonField;
 
 public class Axes {

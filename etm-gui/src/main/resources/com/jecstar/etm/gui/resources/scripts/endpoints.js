@@ -76,7 +76,7 @@ function buildEndpointPage() {
 		        	}
 		        	parserMap[parser.name] = parser;
 		        });
-		        sortSelectOptions($parserExtractionSelect);
+                commons.sortSelectOptions($parserExtractionSelect);
 		    }
 		}),
 		$.ajax({
@@ -91,7 +91,7 @@ function buildEndpointPage() {
 		        $.each(data.parserfields, function(index, parserField) {
 		        	$parserFieldSelect.append($('<option>').attr('value', parserField.name).text(parserField.name));
 		        });
-		        sortSelectOptions($parserFieldSelect);
+                commons.sortSelectOptions($parserFieldSelect);
 		    }
 		}),
         $.ajax({
@@ -127,14 +127,14 @@ function buildEndpointPage() {
 		        if (!data) {
 		            return;
 		        }
-		        $endpointSelect = $('#sel-endpoint');
+                const $endpointSelect = $('#sel-endpoint');
 		        $.each(data.endpoints, function(index, endpoint) {
-		        	if ('DEFAULT' == endpoint.enhancer.type) {
+                    if ('DEFAULT' === endpoint.enhancer.type) {
 		        		$endpointSelect.append($('<option>').attr('value', endpoint.name).text(getEndpointNameById(endpoint.name)));
 		        		endpointMap[endpoint.name] = endpoint;
 		        	}
 		        });
-		        sortSelectOptions($endpointSelect)
+                commons.sortSelectOptions($endpointSelect)
 		        $endpointSelect.val('');
 		    }
 		});
@@ -192,7 +192,10 @@ function buildEndpointPage() {
 		    $('<div>').addClass('card-body').append(
 				$('<div>').addClass('form-group row').append(
 					$('<div>').addClass('col-sm-12').append(
-						$('<a href="#">').addClass('pull-right').text('Remove this transformation').click(function (event) {event.preventDefault(); removeField($(this))})
+                        $('<a href="#">').addClass('float-right').text('Remove this transformation').click(function (event) {
+                            event.preventDefault();
+                            removeField($(this))
+                        })
 					)
 				),
 				$('<div>').addClass('form-group row').append(
@@ -269,7 +272,10 @@ function buildEndpointPage() {
 		    $('<div>').addClass('card-body').append(
 				$('<div>').addClass('form-group row').append(
 					$('<div>').addClass('col-sm-12').append(
-						$('<a href="#">').addClass('pull-right').text('Remove this field').click(function (event) {event.preventDefault(); removeField($(this))})
+                        $('<a href="#">').addClass('float-right').text('Remove this field').click(function (event) {
+                            event.preventDefault();
+                            removeField($(this))
+                        })
 					)
 				),
 				$('<div>').addClass('form-group row').append(
@@ -289,7 +295,10 @@ function buildEndpointPage() {
                 	$('<div>').addClass('col-sm-9').append(parsersSource)
                 ),
 				$('<fieldset>').addClass('form-group').append(
-					$('<a href="#">').addClass('pull-right').text('Add parser').click(function (event) {event.preventDefault(); addParserRow($(this))}),
+                    $('<a href="#">').addClass('float-right').text('Add parser').click(function (event) {
+                        event.preventDefault();
+                        addParserRow($(this))
+                    }),
 					$('<label>').text('Parsers'),
 					parserRow
 				)
@@ -306,26 +315,6 @@ function buildEndpointPage() {
 		return text.indexOf(textToStartWith) == 0;
 	}
 
-	function sortSelectOptions($endpointSelect) {
-		var options = $endpointSelect.children('option');
-		options.detach().sort(function(a,b) {
-		    var at = $(a).text();
-		    var bt = $(b).text();   
-		    if ('' == at) {
-		    	return -1;
-		    } else if ('' == bt) {
-		    	return 1;
-		    }
-		    if ('*' == at) {
-		    	return -1;
-		    } else if ('*' == bt) {
-		    	return 1;
-		    }
-		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
-		});
-		options.appendTo($endpointSelect);
-	}
-	
 	function enableOrDisableButtons() {
 		var endpointName = $('#input-endpoint-name').val();
 		if (endpointName) {
@@ -357,16 +346,16 @@ function buildEndpointPage() {
                     return;
                 }
         		if (!isEndpointExistent(getEndpointNameById(endpointData.name))) {
-        			$endpointSelect = $('#sel-endpoint');
+                    const $endpointSelect = $('#sel-endpoint');
         			$endpointSelect.append($('<option>').attr('value', endpointData.name).text(endpointData.name));
-        			sortSelectOptions($endpointSelect);
+                    commons.sortSelectOptions($endpointSelect);
         		}
         		endpointMap[endpointData.name] = endpointData;
         		$('#endpoints_infoBox').text('Endpoint \'' + getEndpointNameById(endpointData.name) + '\' saved.').show('fast').delay(5000).hide('fast');
         		enableOrDisableButtons();
             }
         }).always(function () {
-            hideModals($('#modal-endpoint-overwrite'));
+            commons.hideModals($('#modal-endpoint-overwrite'));
         });
 	}
 	
@@ -388,7 +377,7 @@ function buildEndpointPage() {
         		enableOrDisableButtons();
             }
         }).always(function () {
-            hideModals($('#modal-endpoint-remove'));
+            commons.hideModals($('#modal-endpoint-remove'));
         });
 	}
 	
@@ -464,15 +453,4 @@ function buildEndpointPage() {
 	function getEndpointNameById(endpointId) {
 		return endpointId == 'default_configuration' ? '*' : endpointId;
 	}
-	
-	function sortSelectOptions($select) {
-		var options = $select.children('option');
-		options.detach().sort(function(a,b) {
-		    var at = $(a).text();
-		    var bt = $(b).text();         
-		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
-		});
-		options.appendTo($select);
-	}
-	
 }

@@ -41,7 +41,7 @@ public class SignalTestResult {
     }
 
     boolean isLimitExceeded(Signal signal) {
-        return this.thresholdExceedances.size() >= signal.getLimit();
+        return this.thresholdExceedances.size() >= signal.getNotifications().getMaxFrequencyOfExceedance();
     }
 
     public SignalTestResult setConsecutiveFailures(int consecutiveFailures) {

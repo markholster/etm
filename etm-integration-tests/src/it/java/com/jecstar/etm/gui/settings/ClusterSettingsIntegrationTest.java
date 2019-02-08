@@ -35,7 +35,6 @@ public class ClusterSettingsIntegrationTest extends AbstractCitrusSeleniumTest {
     private void setup() {
         this.server = new EmbeddableLdapServer();
         this.server.startServer();
-
     }
 
     @AfterEach

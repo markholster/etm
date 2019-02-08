@@ -271,9 +271,9 @@ class SnmpSignal {
     private void addSignalVariables(PDU pdu, String clusterName, Signal signal, Map<DateTime, Double> thresholdExceedances) {
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_CLUSTER_NAME_SUFFIX)), new OctetString(clusterName)));
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_NAME_SUFFIX)), new OctetString(signal.getName())));
-        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_THRESHOLD_SUFFIX)), new Integer32(signal.getThreshold())));
-        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_LIMIT_SUFFIX)), new Integer32(signal.getLimit())));
-        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_COUNT_SUFFIX)), new Integer32(thresholdExceedances.size())));
+        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_THRESHOLD_SUFFIX)), new Integer32(new Double(signal.getThreshold().getValue()).intValue())));
+        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_MAX_FREQUENCY_OF_EXCEEDANCE_SUFFIX)), new Integer32(signal.getNotifications().getMaxFrequencyOfExceedance())));
+        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_FREQUENCY_OF_EXCEEDANCE_SUFFIX)), new Integer32(thresholdExceedances.size())));
     }
 
     private void closeSnmp(Snmp snmp) {

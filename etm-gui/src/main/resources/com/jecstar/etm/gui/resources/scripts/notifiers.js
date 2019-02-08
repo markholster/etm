@@ -11,12 +11,12 @@ function buildNotifiersPage() {
 	        if (!data) {
 	            return;
 	        }
-	        $notifierSelect = $('#sel-notifier');
+            const $notifierSelect = $('#sel-notifier');
 	        $.each(data.notifiers, function(index, notifier) {
 	        	$notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
 	        	notifierMap[notifier.name] = notifier;
 	        });
-	        sortSelectOptions($notifierSelect)
+            commons.sortSelectOptions($notifierSelect)
 	        $notifierSelect.val('');
 	    }
 	});
@@ -171,16 +171,16 @@ function buildNotifiersPage() {
                     return;
                 }
                 if (!isNotifierExistent(notifierData.name)) {
-                    $notifierSelect = $('#sel-notifier');
+                    const $notifierSelect = $('#sel-notifier');
                     $notifierSelect.append($('<option>').attr('value', notifierData.name).text(notifierData.name));
-                    sortSelectOptions($notifierSelect);
+                    commons.sortSelectOptions($notifierSelect);
                 }
                 notifierMap[notifierData.name] = notifierData;
                 $('#notifiers_infoBox').text('Notifier \'' + notifierData.name + '\' saved.').show('fast').delay(5000).hide('fast');
                 enableOrDisableButtons();
             }
         }).always(function () {
-            hideModals($('#modal-notifier-overwrite'));
+            commons.hideModals($('#modal-notifier-overwrite'));
         });
     }
 
@@ -202,7 +202,7 @@ function buildNotifiersPage() {
                 enableOrDisableButtons();
             }
         }).always(function () {
-            hideModals($('#modal-notifier-remove'));
+            commons.hideModals($('#modal-notifier-remove'));
         });
     }
 

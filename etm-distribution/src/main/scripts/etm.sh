@@ -190,7 +190,7 @@ getpid() {
                 if [ "$DIST_OS" = "macosx" ]; then
                   pidtest=`$PSEXE -p $pid -o command -ww | grep "$JAVACMD" | tail -1`
                 else
-                  pidtest=`$PSEXE -o args,pid | grep "$JAVACMD" | grep $pid | tail -1`
+                  pidtest=`$PSEXE -eo args,pid | grep "$JAVACMD" | grep $pid | tail -1`
                 fi
                 if [ "X$pidtest" = "X" ]
                 then
@@ -211,7 +211,7 @@ testpid() {
     if [ "$DIST_OS" = "macosx" ]; then
       pidtest=`$PSEXE -p $pid -o command -ww | grep "$JAVACMD" | tail -1`
     else
-      pidtest=`$PSEXE -o args,pid | grep "$JAVACMD" | grep $pid | tail -1`
+      pidtest=`$PSEXE -eo args,pid | grep "$JAVACMD" | grep $pid | tail -1`
     fi
     if [ "X$pidtest" = "X" ]
     then

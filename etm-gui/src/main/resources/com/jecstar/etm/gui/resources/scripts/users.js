@@ -77,7 +77,7 @@ function buildUserPage() {
 	            	// Only ldap groups present. remove the add-group link
 	            	$('#lnk-add-group').remove();
 	            }
-	            sortSelectOptions($groupSelect);
+                commons.sortSelectOptions($groupSelect);
 	        }
         }),
         $.ajax({
@@ -94,7 +94,7 @@ function buildUserPage() {
                 $.each(data.notifiers, function (index, notifier) {
                     $notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
                 });
-                sortSelectOptions($notifierSelect);
+                commons.sortSelectOptions($notifierSelect);
             }
         })
 	).done(function () {
@@ -110,12 +110,12 @@ function buildUserPage() {
 		        if (data.has_ldap) {
 		        	$('#btn-confirm-import-user').show();
 		        }
-		        $userSelect = $('#sel-user');
+                const $userSelect = $('#sel-user');
 		        $.each(data.users, function(index, user) {
 		        	$userSelect.append($('<option>').attr('value', user.id).text(user.id + ' - ' + user.name));
 		        	userMap[user.id] = user;
 		        });
-		        sortSelectOptions($userSelect)
+                commons.sortSelectOptions($userSelect)
 		        $userSelect.val('');
 		    }
 		});
@@ -243,7 +243,7 @@ function buildUserPage() {
 
     $('#btn-download-users').click(function(event) {
         event.preventDefault();
-        hideModals($('#modal-download-users'));
+        commons.hideModals($('#modal-download-users'));
         var q = {
             fileType: $('#sel-download-type').val()
         };
@@ -311,12 +311,12 @@ function buildUserPage() {
 				});
 				// Now add the updated user
 		        $('#sel-user').append($('<option>').attr('value', user.id).text(user.id + ' - ' + user.name));
-		        sortSelectOptions($('#sel-user'));
+                commons.sortSelectOptions($('#sel-user'));
 		        userMap[user.id] = user;
 		        $('#sel-user').val(user.id).trigger('change');
 		    }
 		}).always(function () {
-		    hideModals($('#modal-user-import'));
+            commons.hideModals($('#modal-user-import'));
         });
 	});
 	
@@ -332,16 +332,6 @@ function buildUserPage() {
 
 	$('#input-user-id').on('input', enableOrDisableButtons);
 		
-	function sortSelectOptions($select) {
-		var options = $select.children('option');
-		options.detach().sort(function(a,b) {
-		    var at = $(a).text();
-		    var bt = $(b).text();         
-		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
-		});
-		options.appendTo($select);
-	}
-	
 	function enableOrDisableButtons() {
 		var userId = $('#input-user-id').val();
 		if (userId) {
@@ -426,13 +416,13 @@ function buildUserPage() {
         		if (!isUserExistent(userData.id)) {
         			$userSelect = $('#sel-user');
         			$userSelect.append($('<option>').attr('value', userData.id).text(userData.name ? (userData.id + ' - ' + userData.name) : (userData.id + ' - ' + userData.id)));
-        			sortSelectOptions($userSelect);
+                    commons.sortSelectOptions($userSelect);
         		}
         		userMap[userData.id] = userData;
         		$('#users_infoBox').text('User \'' + userData.id+ '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals($('#modal-user-overwrite'));
+            commons.hideModals($('#modal-user-overwrite'));
         });
 	}
 	
@@ -453,7 +443,7 @@ function buildUserPage() {
         		$('#users_infoBox').text('User \'' + userId + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals($('#modal-user-remove'));
+            commons.hideModals($('#modal-user-remove'));
         });
 	}
 	

@@ -1,39 +1,68 @@
 function buildSignalsPage(groupName) {
-    $notifierSelect = $('<select>').addClass('form-control form-control-sm custom-select custom-select-sm etm-notifier').attr('required', 'required');
-    var contextRoot = '../rest/signal/';
+    'use strict';
+    const $notifierSelect = $('<select>').addClass('form-control form-control-sm custom-select custom-select-sm etm-notifier').attr('required', 'required');
+    let contextRoot = '../rest/signal/';
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/';
         $('#block-email-all-group-members').show();
     }
-	var signalMap = {};
-	var keywords = [];
+    const signalMap = {};
+    let keywords = [];
+    const $page = $('body > .container-fluid');
+
+    $('#input-signal-from').parent()
+        .flatpickr({
+            dateFormat: "Y-m-dTH:i:S",
+            enableTime: true,
+            enableSeconds: true,
+            time_24hr: true,
+            allowInput: true,
+            defaultHour: 0,
+            defaultMinute: 0,
+            clickOpens: false,
+            wrap: true
+        });
+    $('#input-signal-till').parent()
+        .flatpickr({
+            dateFormat: "Y-m-dTH:i:S",
+            enableTime: true,
+            enableSeconds: true,
+            time_24hr: true,
+            allowInput: true,
+            defaultHour: 23,
+            defaultMinute: 59,
+            clickOpens: false,
+            wrap: true
+        });
+
     $.ajax({
         type: 'GET',
         contentType: 'application/json',
         url: contextRoot + 'contextdata',
         cache: false,
         success: function (data) {
+            function datasourceToText(datasource) {
+                if ('etm_audit_all' === datasource) {
+                    return 'Audits';
+                } else if ('etm_event_all' === datasource) {
+                    return 'Events';
+                } else if ('etm_metrics_all' === datasource) {
+                    return 'Metrics';
+                } else {
+                    return datasource;
+                }
+            }
+
             if (!data) {
                 return;
             }
             if (data.signal_datasources) {
-                $dsSelect = $('#sel-data-source');
+                const $dsSelect = $('#sel-data-source');
                 $.each(data.signal_datasources, function (index, datasource) {
                     $dsSelect.append($('<option>').attr('value', datasource).text(datasourceToText(datasource)));
                 });
-                sortSelectOptions($dsSelect);
+                commons.sortSelectOptions($dsSelect);
 
-                function datasourceToText(datasource) {
-                    if ('etm_audit_all' === datasource) {
-                        return 'Audits';
-                    } else if ('etm_event_all' === datasource) {
-                        return 'Events';
-                    } else if ('etm_metrics_all' === datasource) {
-                        return 'Metrics';
-                    } else {
-                        return datasource;
-                    }
-                }
             }
             if (data.notifiers) {
                 $.each(data.notifiers, function (index, notifier) {
@@ -44,7 +73,7 @@ function buildSignalsPage(groupName) {
                             .attr('data-type', notifier.type)
                     );
                 });
-                sortSelectOptions($notifierSelect)
+                commons.sortSelectOptions($notifierSelect);
                 $('#lnk-add-notifier').trigger('click');
             }
         }
@@ -63,41 +92,23 @@ function buildSignalsPage(groupName) {
 	        }
         })
 	).done(function () {
-        $('#input-signal-query').bind('keydown', function( event ) {
-            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                event.stopPropagation();
-            }
-        }).autocompleteFieldQuery(
-            {
-                queryKeywords: keywords,
-                keywordIndexFilter: function(index) {
-                    return index != $('#sel-data-source').val();
-                }
-            }
-        );
+        aggregators.initialize({
+            keywords: keywords,
+            enableOrDisableButtons: enableOrDisableButtons
+        });
+        $page.on('input autocomplete:selected', 'input', enableOrDisableButtons);
+        $page.on('change', 'select', enableOrDisableButtons);
+        $page.on('change', '.etm-notifier', showOrHideRecipients);
 
-	    $('#input-signal-field').on('keydown', function(event) {
+        $('#input-signal-query').on('keydown', function (event) {
             if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
                 event.stopPropagation();
             }
         }).autocompleteFieldQuery(
             {
                 queryKeywords: keywords,
-                mode: 'field',
                 keywordIndexFilter: function(index) {
-                    return index != $('#sel-data-source').val();
-                },
-                keywordFilter: function(index, group, keyword) {
-                    var agg = $('#sel-signal-when').val();
-                    if ('AVERAGE' == agg || 'SUM' == agg || 'MEDIAN' == agg || 'PERCENTILE' == agg || 'PERCENTILE_RANK' == agg) {
-                        return !keyword.number;
-                    } else if ('MIN' == agg || 'MAX' == agg) {
-                        return !keyword.number && !keyword.date;
-                    } else if ('CARDINALITY' == agg) {
-                        return !keyword.number && !keyword.date && 'text' != keyword.type;
-                    } else {
-                        return true;
-                    }
+                    return index !== $('#sel-data-source').val();
                 }
             }
         );
@@ -112,79 +123,66 @@ function buildSignalsPage(groupName) {
             if (!data) {
                 return;
             }
-            $signalSelect = $('#sel-signal');
+            const $signalSelect = $('#sel-signal');
             $.each(data.signals, function(index, signal) {
                 $signalSelect.append($('<option>').attr('value', signal.name).text(signal.name));
                 signalMap[signal.name] = signal;
             });
-            sortSelectOptions($signalSelect)
+            commons.sortSelectOptions($signalSelect);
             $signalSelect.val('');
         }
     });
 
-    $('#signal_form').on('change', '.etm-notifier', showOrHideRecipients);
-    $('#signal_form').on('input', 'input[data-required]', enableOrDisableButtons);
-    $('#input-signal-field').on('autocomplete:selected', enableOrDisableButtons);
 
-	$('#sel-signal-when').on('change', function(event) {
-	    if ('COUNT' == $(this).val()) {
-	        $('#input-signal-field').parent().parent().hide();
-	    } else {
-	        $('#input-signal-field').parent().parent().show();
-	    }
-	    enableOrDisableButtons();
-	});
-
-    $('#lnk-add-notifier').click(function(event) {
+    $('#lnk-add-notifier').on('click', function (event) {
         event.preventDefault();
         $('#list-notifiers').append(createNotifierRow());
         showOrHideRecipients();
         enableOrDisableButtons();
     });
 
-    $('#lnk-add-recipient').click(function(event) {
+    $('#lnk-add-recipient').on('click', function (event) {
         event.preventDefault();
         $('#list-recipients').append(createRecipientRow());
     });
 
-    $('#sel-signal').change(function(event) {
+    $('#sel-signal').on('change', function (event) {
         event.preventDefault();
-        var signalData = signalMap[$(this).val()];
+        const signalData = signalMap[$(this).val()];
         if ('undefined' == typeof signalData) {
             resetValues();
             return;
         }
         setValuesFromData(signalData);
         enableOrDisableButtons();
+        showOrHideRecipients();
     });
 
-    $('#input-signal-per-timespan, #input-signal-last-timespan, #input-signal-check-timespan').on('change', function(event) {
-        var subtype = $(this).attr('id').substring(13, $(this).attr('id').indexOf('-timespan'));
-        if ($(this).val() != 1) {
-            $('#sel-signal-' + subtype + '-timeunit').children('#' + subtype + '-minute').text('Minutes')
-            $('#sel-signal-' + subtype + '-timeunit').children('#' + subtype + '-hour').text('Hours')
-            $('#sel-signal-' + subtype + '-timeunit').children('#' + subtype + '-day').text('Days')
+    $('#input-signal-interval, #input-signal-cardinality').on('change', function () {
+        const subtype = $(this).attr('id').substring(13);
+        const $signalTimeunit = $('#sel-signal-' + subtype + '-timeunit');
+        if (Number($(this).val()) !== 1) {
+            $signalTimeunit.children('#' + subtype + '-minute').text('Minutes');
+            $signalTimeunit.children('#' + subtype + '-hour').text('Hours');
+            $signalTimeunit.children('#' + subtype + '-day').text('Days');
         } else {
-            $('#sel-signal-' + subtype + '-timeunit').children('#' + subtype + '-minute').text('Minute')
-            $('#sel-signal-' + subtype + '-timeunit').children('#' + subtype + '-hour').text('Hour')
-            $('#sel-signal-' + subtype + '-timeunit').children('#' + subtype + '-day').text('Day')
+            $signalTimeunit.children('#' + subtype + '-minute').text('Minute');
+            $signalTimeunit.children('#' + subtype + '-hour').text('Hour');
+            $signalTimeunit.children('#' + subtype + '-day').text('Day');
         }
     });
 
-	$('#input-signal-exceeded-count').on('change', function(event) {
-	    if ($(this).val() != 1) {
+    $('#input-signal-max-frequency-of-exceedance').on('change', function () {
+        if (Number($(this).val()) !== 1) {
 	        $('#label-exceeded-count-time').text('times');
 	    } else {
 	        $('#label-exceeded-count-time').text('time');
 	    }
 	});
 
-    $('#btn-confirm-save-signal').click(function(event) {
-        if (!document.getElementById('signal_form').checkValidity()) {
-            return;
-        }
+    $('#btn-confirm-save-signal').on('click', function (event) {
         event.preventDefault();
-        var signalName = $('#input-signal-name').val();
+        const signalName = $('#input-signal-name').val();
         if (isSignalExistent(signalName)) {
             $('#overwrite-signal-name').text(signalName);
             $('#modal-signal-overwrite').modal();
@@ -193,162 +191,199 @@ function buildSignalsPage(groupName) {
         }
     });
 
-    $('#btn-save-signal').click(function(event) {
+    $('#btn-save-signal').on('click', function () {
         saveSignal();
     });
 
-    $('#btn-confirm-remove-signal').click(function(event) {
+    $('#btn-confirm-remove-signal').on('click', function (event) {
         event.preventDefault();
         $('#remove-signal-name').text($('#input-signal-name').val());
         $('#modal-signal-remove').modal();
     });
 
-    $('#btn-remove-signal').click(function(event) {
+    $('#btn-remove-signal').on('click', function () {
         removeSignal($('#input-signal-name').val());
     });
 
-    $('#btn-visualize-signal').click(function(event) {
+    $('#btn-visualize-signal').on('click', function (event) {
         event.preventDefault();
         visualize();
     });
 
     function resetValues() {
-        document.getElementById('signal_form').reset();
+        $('#input-signal-name').val('');
+        document.getElementById('form-data').reset();
+        document.getElementById('form-threshold').reset();
+        document.getElementById('form-notifications').reset();
+        $('div[data-aggregator-level="0"] > div.bucket-aggregator-header').nextAll().remove();
         $('#list-notifiers').empty();
         $('#list-recipients').empty();
         $('#lnk-add-notifier').trigger('click');
         enableOrDisableButtons();
         showOrHideRecipients();
-        $('#sel-signal-when, #input-signal-per-timespan, #input-signal-last-timespan, #input-signal-check-timespan').trigger('change');
+        $('#input-signal-interval, #input-signal-cardinality').trigger('change');
     }
 
     function setValuesFromData(signalData) {
         $('#input-signal-name').val(signalData.name);
-        $('#sel-data-source').val(signalData.data_source);
-        $('#input-signal-query').val(signalData.query);
-        $('#input-signal-check-timespan').val(signalData.interval)
-        $('#sel-signal-check-timeunit').val(signalData.interval_timeunit)
+        $('#sel-data-source').val(signalData.data.data_source);
+        $('#input-signal-from').val(signalData.data.from);
+        $('#input-signal-till').val(signalData.data.till);
+        $('#input-signal-time-filter-field').val(signalData.data.time_filter_field);
+        $('#input-signal-query').val(signalData.data.query);
+
+
+        $('#sel-signal-comparison').val(signalData.threshold.comparison);
+        $('#input-signal-threshold').val(signalData.threshold.value);
+        $('#input-signal-cardinality').val(signalData.threshold.cardinality);
+        $('#sel-signal-cardinality-timeunit').val(signalData.threshold.cardinality_timeunit);
+        if (signalData.threshold.aggregators) {
+            $('div[data-aggregator-level="0"] > div.bucket-aggregator-header').nextAll().remove();
+            const $aggregatorContainer = $('div[data-aggregator-level="0"]');
+            $.each(signalData.threshold.aggregators, function (index, aggregator) {
+                if ('metrics' === aggregator.type) {
+                    aggregators.addMetricsAggregator('threshold', $aggregatorContainer, 0, index, aggregator);
+                } else if ('bucket' === aggregator.type) {
+                    aggregators.addBucketAggregator('threshold', $aggregatorContainer, 1, index, aggregator);
+                } else if ('pipeline' === aggregator.type) {
+                    aggregators.addPipelineAggregator('threshold', $aggregatorContainer, 0, index, aggregator);
+                }
+            });
+        }
+
+        $('#input-signal-interval').val(signalData.notifications.interval);
+        $('#sel-signal-interval-timeunit').val(signalData.notifications.interval_timeunit);
+        $('#input-signal-max-frequency-of-exceedance').val(signalData.notifications.max_frequency_of_exceedance);
         $('#list-notifiers').empty();
-        if (signalData.notifiers) {
-            $.each(signalData.notifiers, function(index, notifierName) {
+        if (signalData.notifications.notifiers) {
+            $.each(signalData.notifications.notifiers, function (index, notifierName) {
                 $('#list-notifiers').append(createNotifierRow(notifierName));
             });
-            showOrHideRecipients();
         }
         $('#list-recipients').empty();
-        if (signalData.email_recipients) {
-            $('#sel-email-all-group-members').val(signalData.email_all_etm_group_members ? 'true' : 'false');
+        if (signalData.notifications.email_recipients) {
+            $('#sel-email-all-group-members').val(signalData.notifications.email_all_etm_group_members ? 'true' : 'false');
             $.each(signalData.email_recipients, function(index, email) {
                 $('#list-recipients').append(createRecipientRow(email));
             });
         }
-        $('#sel-signal-when').val(signalData.operation);
-        $('#input-signal-per-timespan').val(signalData.cardinality);
-        $('#sel-signal-per-timeunit').val(signalData.cardinality_timeunit);
-        if (signalData.field) {
-            $('#input-signal-field').val(signalData.field);
-        }
-        $('#input-signal-threshold').val(signalData.threshold);
-        $('#sel-signal-is').val(signalData.comparison);
-        $('#input-signal-exceeded-count').val(signalData.limit);
-        $('#input-signal-last-timespan').val(signalData.timespan);
-        $('#sel-signal-last-timeunit').val(signalData.timespan_timeunit);
-
-        $('#sel-signal-when, #input-signal-per-timespan, #input-signal-last-timespan, #input-signal-check-timespan').trigger('change');
+        $('#input-signal-interval, #input-signal-cardinality, [id^=sel-bucket-aggregator-], [id^=sel-metrics-aggregator-], [id^=sel-pipeline-aggregator-]').trigger('change');
     }
 
     function showOrHideRecipients() {
+        const $recipients = $('#block-recipients');
         if ($('.etm-notifier option:selected[data-type="EMAIL"]').length > 0) {
-            $('#block-recipients').show();
-            if ($('#block-recipients').next('br').length == 0) {
-                $('#block-recipients').after($('<br>'));
+            $recipients.show();
+            if ($recipients.next('br').length === 0) {
+                $recipients.after($('<br>'));
             }
         } else {
-            $('#block-recipients').hide().next('br').remove();
+            $recipients.hide().next('br').remove();
         }
     }
 
     function enableOrDisableButtons() {
-        // First check if we can show the visualize buttion
-        // Remove all required constraints
-        $('#signal_form input[data-required]').removeAttr('required');
-        // Set the required constrains on the visible fields for visualization
-        $('#signal_form :input[data-required-visualization]:visible').attr('required', 'required');
-        if (document.getElementById('signal_form').checkValidity()) {
+        // First check if we can show the visualize button
+        let valid = validateForm('form-data');
+        valid = valid && validateForm('form-threshold');
+        valid = valid && aggregators.validateNumberOfMetricsAndPipelines('form-threshold');
+        if (valid) {
             $('#btn-visualize-signal').removeAttr('disabled');
         } else {
             $('#btn-visualize-signal').attr('disabled', 'disabled');
         }
 
-        // Now set the required constrains on all visible (required) fields.
-        $('#signal_form :input[data-required]:visible').attr('required', 'required');
-        // Remove the required constrains on the hidden fields
-        $('#signal_form :input[data-required]:hidden').removeAttr('required');
+        const $signalName = $('#input-signal-name');
+        valid = valid && $signalName[0].checkValidity();
+        valid = valid && validateForm('form-notifications');
 
-        var notifierCount = createSignalData().notifiers.length;
+        const notifierCount = createSignalData().notifications.notifiers.length;
 
-        if (notifierCount >= 1 && document.getElementById('signal_form').checkValidity()) {
+        if (notifierCount >= 1 && valid) {
             $('#btn-confirm-save-signal').removeAttr('disabled');
         } else {
             $('#btn-confirm-save-signal').attr('disabled', 'disabled');
         }
-        var signalName = $('#input-signal-name').val();
-        if (signalName && isSignalExistent(signalName)) {
+        if ($signalName.val() && isSignalExistent($signalName.val())) {
             $('#btn-confirm-remove-signal').removeAttr('disabled');
         } else {
             $('#btn-confirm-remove-signal').attr('disabled', 'disabled');
         }
+
+        function validateForm(formId) {
+            const $form = $('#' + formId);
+            $form.find('div.form-group').each(function () {
+                if ($(this).css('display') === 'none') {
+                    $(this).find('[data-required="required"]').removeAttr('required');
+                }
+            });
+
+            let valid = false;
+            if ($form[0].checkValidity()) {
+                valid = true;
+            }
+            $form.find('[data-required]').attr('required', 'required');
+            return valid;
+        }
     }
 
     function createSignalData() {
-		var signalData = {
-			name: $('#input-signal-name').val() ? $('#input-signal-name').val() : null,
-			data_source: $('#sel-data-source').val(),
-			query: $('#input-signal-query').val() ? $('#input-signal-query').val() : null,
-			interval: $('#input-signal-check-timespan').val() ? Number($('#input-signal-check-timespan').val()) : null,
-			interval_timeunit: $('#sel-signal-check-timeunit').val() ? $('#sel-signal-check-timeunit').val() : null,
-
-		    operation: $('#sel-signal-when').val(),
-		    cardinality: $('#input-signal-per-timespan').val() ? Number($('#input-signal-per-timespan').val()) : null,
-		    cardinality_timeunit: $('#sel-signal-per-timeunit').val(),
-		    field: $('#input-signal-field').val() ? $('#input-signal-field').val() : null,
-		    comparison: $('#sel-signal-is').val(),
-		    threshold: $('#input-signal-threshold').val() ? Number($('#input-signal-threshold').val()) : null,
-
-		    limit: $('#input-signal-exceeded-count').val() ? Number($('#input-signal-exceeded-count').val()) : null,
-		    timespan: $('#input-signal-last-timespan').val() ? Number($('#input-signal-last-timespan').val()) : null,
-		    timespan_timeunit: $('#sel-signal-last-timeunit').val(),
-
-		    notifiers: [],
-		    email_recipients: [],
-		    email_all_etm_group_members: $('#sel-email-all-group-members').val() == 'true' ? true : false
-		};
+        const signalName = $('#input-signal-name').val();
+        const dataSource = $('#sel-data-source').val();
+        const signalFrom = $('#input-signal-from').val();
+        const signalTill = $('#input-signal-till').val();
+        const signalTimeFilterField = $('#input-signal-time-filter-field').val();
+        const signalQuery = $('#input-signal-query').val();
+        const signalData = {
+            name: signalName ? signalName : null,
+            data: {
+                data_source: dataSource,
+                from: signalFrom ? signalFrom : null,
+                till: signalTill ? signalTill : null,
+                time_filter_field: signalTimeFilterField ? signalTimeFilterField : null,
+                query: signalQuery ? signalQuery : null,
+            },
+            threshold: {
+                comparison: $('#sel-signal-comparison').val(),
+                value: Number($('#input-signal-threshold').val()),
+                cardinality: Number($('#input-signal-cardinality').val()),
+                cardinality_timeunit: $('#sel-signal-cardinality-timeunit').val(),
+                aggregators: aggregators.createAggregatorData('threshold', $('#acc-collapse-threshold > .card-body > .aggregator-container-block'))
+            },
+            notifications: {
+                interval: Number($('#input-signal-interval').val()),
+                interval_timeunit: $('#sel-signal-interval-timeunit').val(),
+                max_frequency_of_exceedance: Number($('#input-signal-max-frequency-of-exceedance').val()),
+                notifiers: [],
+                email_recipients: [],
+                email_all_etm_group_members: $('#sel-email-all-group-members').val() === 'true'
+            }
+        };
 
         $('.etm-notifier').each(function () {
-            var notifierName = $(this).val();
-            if (-1 == signalData.notifiers.indexOf(notifierName)) {
-                signalData.notifiers.push(notifierName);
+            const notifierName = $(this).val();
+            if (-1 === signalData.notifications.notifiers.indexOf(notifierName)) {
+                signalData.notifications.notifiers.push(notifierName);
             }
         });
 
         if ($('.etm-notifier option:selected[data-type="EMAIL"]').length > 0) {
             $('.etm-recipient').each(function () {
-                var email = $(this).val();
-                if (email && -1 == signalData.email_recipients.indexOf(email)) {
-                    signalData.email_recipients.push(email);
+                const email = $(this).val();
+                if (email && -1 === signalData.notifications.email_recipients.indexOf(email)) {
+                    signalData.notifications.email_recipients.push(email);
                 }
             });
         }
-
 		return signalData;
     }
 
     function createNotifierRow(notifierName) {
-    	var notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+        const notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
 			$('<div>').addClass('input-group').append(
 				$notifierSelect.clone(true),
 				$('<div>').addClass('input-group-append').append(
-                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').on('click', function (event) {
                         event.preventDefault();
                         removeRowFromList($(this));
                         showOrHideRecipients();
@@ -364,11 +399,11 @@ function buildSignalsPage(groupName) {
     }
 
     function createRecipientRow(email) {
-    	var recipientRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+        const recipientRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
 			$('<div>').addClass('input-group').append(
 				$('<input>').addClass('form-control form-control-sm etm-recipient').attr('type', 'email').attr('placeholder', 'user@host.com'),
 				$('<div>').addClass('input-group-append').append(
-                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').on('click', function (event) {
                         event.preventDefault();
                         removeRowFromList($(this));
                     })
@@ -386,7 +421,7 @@ function buildSignalsPage(groupName) {
     }
 
     function saveSignal() {
-        var signalData = createSignalData();
+        const signalData = createSignalData();
         $.ajax({
             type: 'PUT',
             contentType: 'application/json',
@@ -398,16 +433,16 @@ function buildSignalsPage(groupName) {
                     return;
                 }
                 if (!isSignalExistent(signalData.name)) {
-                    $signalSelect = $('#sel-signal');
+                    const $signalSelect = $('#sel-signal');
                     $signalSelect.append($('<option>').attr('value', signalData.name).text(signalData.name));
-                    sortSelectOptions($signalSelect);
+                    commons.sortSelectOptions($signalSelect);
                 }
                 signalMap[signalData.name] = signalData;
                 $('#signals_infoBox').text('Signal \'' + signalData.name + '\' saved.').show('fast').delay(5000).hide('fast');
                 enableOrDisableButtons();
             }
         }).always(function () {
-            hideModals($('#modal-signal-overwrite'));
+            commons.hideModals($('#modal-signal-overwrite'));
         });
     }
 
@@ -422,19 +457,19 @@ function buildSignalsPage(groupName) {
                     return;
                 }
                 delete signalMap[signalName];
-                $("#sel-signal > option").filter(function(i){
-                   return $(this).attr("value") == signalName;
+                $("#sel-signal > option").filter(function () {
+                    return $(this).attr("value") === signalName;
                 }).remove();
                 $('#signals_infoBox').text('Signal \'' + signalName + '\' removed.').show('fast').delay(5000).hide('fast');
                 enableOrDisableButtons();
             }
         }).always(function () {
-            hideModals($('#modal-signal-remove'));
+            commons.hideModals($('#modal-signal-remove'));
         });
     }
 
     function visualize() {
-		var signalData = createSignalData();
+        const signalData = createSignalData();
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
@@ -445,58 +480,17 @@ function buildSignalsPage(groupName) {
                 if (!response) {
                     return;
                 }
-                $('#preview_box').empty();
-                Highcharts.chart('preview_box', {
-                    credits: {
-                        enabled: false
-                    },
-                    chart: {
-                        type: 'spline'
-                    },
-                    legend: {
-                        enabled: true
-                    },
-                    title: {
-                        text: 'Signal visualization'
-                    },
-                    tooltip: {
-                        shared: true
-                    },
-                    plotOptions: {
-                        spline: {
-                            marker: {
-                                enabled: false
-                            }
-                        }
-                    },
-                    time: {
-                        timezone: response.locale.timezone,
-                    },
-                    xAxis: {
-                        categories: response.data.categories,
-                        type: response.data.xAxis.type
-                    },
-                    yAxis: {
-                        plotLines: [{
-                            value: signalData.threshold,
-                            color: 'red',
-                            dashStyle: 'shortdash',
-                            width: 2,
-                            label: {
-                                text: 'Threshold limit'
-                            }
-                        }]
-                    },
-                    series: response.data.series
-                });
-                if (response.exceeded_count && signalData.limit) {
-                    if (response.exceeded_count >= signalData.limit) {
-                        $('#preview_box').prepend($('<p>').addClass('text-danger').text('The configured threshold is exceeded ' + response.exceeded_count + ' times and tops the maximum of ' + signalData.limit + '! This would have triggered a notification.'));
+                const $previewBox = $('#preview_box').empty();
+                Highcharts.chart($previewBox.attr('id'), response.chart_config);
+
+                if (response.exceeded_count && signalData.notifications.max_frequency_of_exceedance) {
+                    if (response.exceeded_count >= signalData.notifications.max_frequency_of_exceedance) {
+                        $previewBox.prepend($('<p>').addClass('text-danger').text('The configured threshold is exceeded ' + response.exceeded_count + ' times and tops the maximum of ' + signalData.notifications.max_frequency_of_exceedance + '! This would have triggered a notification.'));
                     } else if (response.exceeded_count > 0) {
-                        $('#preview_box').prepend($('<p>').text('The configured threshold is exceeded ' + response.exceeded_count + ' times but stays within the maximum of ' + signalData.limit + '.'));
+                        $previewBox.prepend($('<p>').text('The configured threshold is exceeded ' + response.exceeded_count + ' times but stays within the maximum of ' + signalData.notifications.max_frequency_of_exceedance + '.'));
                     }
                 }
-        		$('html,body').animate({scrollTop: $("#preview_box").parent().parent().offset().top },'fast');
+                $('html,body').animate({scrollTop: $previewBox.parent().parent().offset().top}, 'fast');
             }
         });
 
@@ -505,5 +499,4 @@ function buildSignalsPage(groupName) {
     function isSignalExistent(signalName) {
         return "undefined" != typeof signalMap[signalName];
     }
-
 }

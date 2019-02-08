@@ -1,11 +1,11 @@
 (function ($) {
 	// TODO! Autocomplete on mobile devices.
 	$.fn.autocompleteFieldQuery = function(options) {
-	 
-	    var queryOperators = ['AND', 'AND NOT', 'OR'];
-	    var queryForFields = ['_exists_'];
-		
-        var settings = $.extend({
+
+        const queryOperators = ['AND', 'AND NOT', 'OR'];
+        const queryForFields = ['_exists_'];
+
+        const settings = $.extend({
             keywordIndexFilter: function(index) {
             	return false;
             },
@@ -71,8 +71,8 @@
                 }
                 return { "queryTerm": query, "queryType": "field"};
             } else {
-                var lastTerm = terms[terms.length - 1];
-                var secondLastTerm = terms[terms.length - 2].trim();
+                const lastTerm = terms[terms.length - 1];
+                const secondLastTerm = terms[terms.length - 2].trim();
                 if (isQueryForFieldTerm(secondLastTerm) && !endsWith(query, ' ')) {
                     return { "queryTerm": lastTerm, "queryType": "fieldTermValue"};
                 }
@@ -82,10 +82,10 @@
                 if (endsWith(secondLastTerm, ':')) {
                     return { "queryTerm": null};
                 }
-                if (queryOperators.indexOf(secondLastTerm) != -1) {
+                if (queryOperators.indexOf(secondLastTerm) !== -1) {
                     return { "queryTerm": lastTerm, "queryType": "field"};
                 }
-                if (queryOperators.indexOf(lastTerm) != -1 && endsWith(query, ' ')) {
+                if (queryOperators.indexOf(lastTerm) !== -1 && endsWith(query, ' ')) {
                     return { "queryTerm": '', "queryType": "field"};
                 }
             }
@@ -95,25 +95,25 @@
         function isQueryForFieldTerm(term) {
             if (!term) {
                 return false;
-            }  
-            var termToQuery = term.trim();
+            }
+            let termToQuery = term.trim();
             if (endsWith(termToQuery, ':')) {
                 termToQuery = termToQuery.substring(0, termToQuery.length - 1);
             }
-            return queryForFields.indexOf(termToQuery) != -1;
+            return queryForFields.indexOf(termToQuery) !== -1;
         }
 		
 	    return this.each(function() {
 	    	$(this).autocomplete({
 	            minLength: 0,
 	            source: function( request, response ) {
-	              var query = extractAutocompleteTerm(request.term);
+                    const query = extractAutocompleteTerm(request.term);
 	              if (query.queryTerm === null) {
 	                return;
 	              }
 	              if ("fieldTermValue" === query.queryType) {
-	                var fieldSuggestions = $.grep(getCurrentKeywords(), function( n, i ) {
-	                    return queryForFields.indexOf(n) == -1;
+                      const fieldSuggestions = $.grep(getCurrentKeywords(), function (n, i) {
+                          return queryForFields.indexOf(n) === -1;
 	                });
 	                response($.ui.autocomplete.filter(fieldSuggestions, query.queryTerm));
 	              } else if ("field" === query.queryType) {
@@ -125,12 +125,12 @@
 	              return false;
 	            },
 	            select: function( event, ui ) {
-	              var query = extractAutocompleteTerm(this.value);
+                    const query = extractAutocompleteTerm(this.value);
 	              if ('' === query.queryTerm) {
 	                this.value += ui.item.value;
 	              } else {
-	                var ix = this.value.lastIndexOf(query.queryTerm);
-	                if (ix != -1) {
+                      const ix = this.value.lastIndexOf(query.queryTerm);
+                      if (ix !== -1) {
 	                    this.value = this.value.substring(0, ix) + ui.item.value;
 	                }
 	              }

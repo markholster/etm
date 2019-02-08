@@ -186,7 +186,7 @@ public class MenuAwareURLResource extends URLResource {
                 addPreferencesMenuOption(principal, html);
                 addSettingsMenuOption(principal, html);
                 // The signout menu option
-                html.append("<li class=\"nav-item\"><a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("logout?source=./\"><span class=\"fa fa-sign-out fa-lg hidden-md-down\">&nbsp;</span>Sign out</a></li>");
+                html.append("<li class=\"nav-item\"><a class=\"nav-link\" href=\"").append(pathPrefixToContextRoot).append("logout?source=./\"><span class=\"fa fa-sign-out-alt fa-lg hidden-md-down\">&nbsp;</span>Sign out</a></li>");
                 return html.toString();
             }
         }
@@ -256,7 +256,7 @@ public class MenuAwareURLResource extends URLResource {
             } else {
                 html.append("<li class=\"nav-item dropdown\">");
             }
-            html.append("<a class=\"nav-link dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" href=\"#\"><span class=\"fa fa-dashboard fa-lg hidden-md-down\">&nbsp;</span>Visualizations</a>");
+            html.append("<a class=\"nav-link dropdown-toggle\" data-toggle=\"dropdown\" role=\"button\" aria-haspopup=\"true\" aria-expanded=\"false\" href=\"#\"><span class=\"fa fa-tachometer-alt fa-lg hidden-md-down\">&nbsp;</span>Visualizations</a>");
             html.append("<ul class=\"dropdown-menu\">");
             if (principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
                 // First display the group names

@@ -7,6 +7,11 @@
 
     <title>Jecstar - Enterprise Telemetry Monitor</title>
 
+    <link rel="apple-touch-icon" sizes="180x180" href="../images/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
+    <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
+
     <link rel="stylesheet" href="../styles/bootstrap.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
@@ -33,9 +38,10 @@
     <script src="../scripts/d3-format.v1.min.js"></script>
     <script src="../scripts/moment.min.js"></script>
     <script src="../scripts/moment-timezone-with-data.min.js"></script>
-    <script src="../scripts/highcharts.js"></script>
-    <script src="../scripts/exporting.js"></script>
-    <script src="../scripts/offline-exporting.js"></script>
+    <script src="../scripts/highcharts/highcharts.js"></script>
+    <script src="../scripts/highcharts/exporting.js"></script>
+    <script src="../scripts/highcharts/offline-exporting.js"></script>
+    <script src="../scripts/highcharts/export-data.js"></script>
 </head>
 <body>
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
@@ -185,6 +191,76 @@
                             <input id="input-refresh-rate" type="number" class="form-control form-control-sm" min="10"/>
                         </div>
                     </div>
+                    <div id="grp-graph-subtype" class="form-group row">
+                        <label for="sel-graph-subtype" class="col-sm-3 col-form-label col-form-label-sm">Graph
+                            subtype</label>
+                        <div class="col-sm-9">
+                            <select id="sel-graph-subtype"
+                                    class="form-control form-control-sm custom-select custom-select-sm">
+                            </select>
+                        </div>
+                    </div>
+                    <div id="grp-graph-line-type" class="form-group row">
+                        <label for="sel-graph-line-type"
+                               class="col-sm-3 col-form-label col-form-label-sm">Line type</label>
+                        <div class="col-sm-9">
+                            <select id="sel-graph-line-type"
+                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                <option value="SMOOTH">Smooth</option>
+                                <option value="STEP_CENTER">Step center</option>
+                                <option value="STEP_LEFT">Step left</option>
+                                <option value="STEP_RIGHT">Step right</option>
+                                <option value="STRAIGHT">Straight</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="grp-graph-orientation" class="form-group row">
+                        <label for="sel-graph-orientation"
+                               class="col-sm-3 col-form-label col-form-label-sm">Orientation</label>
+                        <div class="col-sm-9">
+                            <select id="sel-graph-orientation"
+                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                <option value="HORIZONTAL">Horizontal</option>
+                                <option value="VERTICAL">Vertical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="grp-graph-show-markers" class="form-group row">
+                        <label for="sel-graph-show-markers"
+                               class="col-sm-3 col-form-label col-form-label-sm">Show
+                            markers</label>
+                        <div class="col-sm-9">
+                            <select id="sel-graph-show-markers"
+                                    class="form-control form-control-sm custom-select custom-select-sm">f
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="grp-graph-show-data-labels" class="form-group row">
+                        <label for="sel-graph-show-data-labels"
+                               class="col-sm-3 col-form-label col-form-label-sm">Show
+                            data labels</label>
+                        <div class="col-sm-9">
+                            <select id="sel-graph-show-data-labels"
+                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="grp-graph-show-legend" class="form-group row">
+                        <label for="sel-graph-show-legend"
+                               class="col-sm-3 col-form-label col-form-label-sm">Show
+                            legend</label>
+                        <div class="col-sm-9">
+                            <select id="sel-graph-show-legend"
+                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button id="btn-apply-graph-settings" type="button" class="btn btn-primary">Apply</button>
@@ -239,10 +315,10 @@
 
 <script src="../scripts/autocomplete_fields.js"></script>
 <script src="../scripts/etm-commons.js"></script>
-<script src="../scripts/dashboard.js"></script>
+<script src="../scripts/dashboards.js"></script>
 
 <script>
-    addAjaxHandlers(
+    commons.addAjaxHandlers(
         null,
         null,
         function(event, jqXHR, settings, thrownError) {
@@ -254,10 +330,10 @@
         },
         null
     );
-    if ('new' == queryString['action']) {
-        newDashboardPage(queryString['group']);
+    if ('new' === commons.queryString['action']) {
+        newDashboardPage(commons.queryString['group']);
     } else {
-        loadDashboardPage(queryString['group'], queryString['name'], 'true' == queryString['readonly']);
+        loadDashboardPage(commons.queryString['group'], commons.queryString['name'], 'true' === commons.queryString['readonly']);
     }
 
 </script>

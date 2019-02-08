@@ -32,7 +32,7 @@ function buildGroupPage() {
                 $.each(data.notifiers, function (index, notifier) {
                     $notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
                 });
-                sortSelectOptions($notifierSelect);
+                commons.sortSelectOptions($notifierSelect);
             }
         })
     ).done(function () {
@@ -48,12 +48,12 @@ function buildGroupPage() {
                 if (data.has_ldap) {
                     $('#btn-confirm-import-group').show();
                 }
-                $groupSelect = $('#sel-group');
+                const $groupSelect = $('#sel-group');
                 $.each(data.groups, function (index, group) {
                     $groupSelect.append($('<option>').attr('value', group.name).text(group.name));
                     groupMap[group.name] = group;
                 });
-                sortSelectOptions($groupSelect)
+                commons.sortSelectOptions($groupSelect)
                 $groupSelect.val('');
             }
         });
@@ -140,11 +140,11 @@ function buildGroupPage() {
 		        if (!data) {
 		            return;
 		        }
-		        $groupSelect = $('#sel-import-group');
+                const $groupSelect = $('#sel-import-group');
 		        $.each(data.groups, function(index, group) {
 		        	$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
 		        });
-		        sortSelectOptions($groupSelect)
+                commons.sortSelectOptions($groupSelect)
 		        $groupSelect.val('');
 		        $('#modal-group-import').modal();
 		    }
@@ -174,12 +174,12 @@ function buildGroupPage() {
 				});
 				// Now add the updated group
 		        $('#sel-group').append($('<option>').attr('value', group.name).text(group.name));
-		        sortSelectOptions($('#sel-group'));
+                commons.sortSelectOptions($('#sel-group'));
 		        groupMap[group.name] = group;
 		        $('#sel-group').val(group.name).trigger('change');
 		    }
 		}).always(function () {
-		    hideModals($('#modal-group-import'));
+            commons.hideModals($('#modal-group-import'));
         });
 	});
 
@@ -189,16 +189,6 @@ function buildGroupPage() {
     });
 	
 	$('#input-group-name').on('input', enableOrDisableButtons);
-	
-	function sortSelectOptions($select) {
-		var options = $select.children('option');
-		options.detach().sort(function(a,b) {
-		    var at = $(a).text();
-		    var bt = $(b).text();         
-		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
-		});
-		options.appendTo($select);
-	}
 	
 	function enableOrDisableButtons() {
 		var groupName = $('#input-group-name').val();
@@ -231,15 +221,15 @@ function buildGroupPage() {
                     return;
                 }
         		if (!isGroupExistent(groupData.name)) {
-        			$groupSelect = $('#sel-group');
+                    const $groupSelect = $('#sel-group');
         			$groupSelect.append($('<option>').attr('value', groupData.name).text(groupData.name));
-        			sortSelectOptions($groupSelect);
+                    commons.sortSelectOptions($groupSelect);
         		}
         		groupMap[groupData.name] = groupData;
         		$('#groups_infoBox').text('Group \'' + groupData.name+ '\' saved.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals($('#modal-group-overwrite'));
+            commons.hideModals($('#modal-group-overwrite'));
         });
 	}
 	
@@ -260,7 +250,7 @@ function buildGroupPage() {
         		$('#groups_infoBox').text('Group \'' + groupName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
         }).always(function () {
-            hideModals($('#modal-group-remove'));
+            commons.hideModals($('#modal-group-remove'));
         });
 	}
 

@@ -51,7 +51,7 @@ var tableLayout = {
         } else {
             result = tableLayout.formatValue(values[0], tableColumn, timeZone);
         }
-        if (tableColumn.link && (typeof result === "undefined" || result == null || (!$.isNumeric(result) && result.trim().length == 0))) {
+        if (tableColumn.link && (typeof result === "undefined" || result == null || (!commons.isNumeric(result) && result.trim().length === 0))) {
             result = '?';
         }
         return result;
@@ -166,7 +166,7 @@ $('#link-edit-table').click(function (event) {
     }
     
     function createRow(columnData) {
-        var checkboxId = generateUUID();
+        var checkboxId = commons.generateUUID();
         var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
         $(row).append(
             $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name')),
@@ -194,7 +194,7 @@ $('#link-edit-table').click(function (event) {
             $('<div>').addClass('col-sm-1').append(
                 $('<div>').addClass('custom-control custom-checkbox').append(
                     $('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm custom-control-input').attr('id', checkboxId),
-                    $('<label>').addClass('custom-control-label').attr('for', checkboxId)
+                    $('<label>').addClass('custom-control-label').attr('for', checkboxId).attr('style', 'top: -0.75rem;')
                 )
             )
         );
@@ -255,7 +255,7 @@ $('#btn-apply-table-settings').click(function () {
         changed = true;
         tableLayout.sort_field = $('#table-settings-sort-field').val();
     }
-    if ($.isNumeric($('#table-settings-results-per-page').val()) && tableLayout.results_per_page !== parseInt($('#table-settings-results-per-page').val())) {
+    if (commons.isNumeric($('#table-settings-results-per-page').val()) && tableLayout.results_per_page !== parseInt($('#table-settings-results-per-page').val())) {
         changed = true;
         tableLayout.results_per_page = parseInt($('#table-settings-results-per-page').val());
     }
@@ -288,6 +288,6 @@ $('#btn-apply-table-settings').click(function () {
         tableLayout.timestamp = new Date().getTime();
         executeQuery(createQuery(true));
     }
-    hideModals($('#modal-table-settings'));
+    commons.hideModals($('#modal-table-settings'));
 });
 

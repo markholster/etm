@@ -15,7 +15,7 @@ function buildEventPage() {
 		$.each(serverData, function(index, server) {
 			$serverSelect.append($('<option>').attr('value', server).text(server));
 		});
-		sortSelectOptions($serverSelect);
+        commons.sortSelectOptions($serverSelect);
 		$serverSelect.removeAttr('disabled');
 		$serverSelect.val('');
 	});
@@ -60,9 +60,9 @@ function buildEventPage() {
 			});
 			$.each(deploymentData.flows, function(index, flow) {
 				$flowGroup.append($('<option>').attr('value', 'flow:' + flow.name).text(flow.name));
-			});	
-			sortSelectOptions($applicationGroup);
-			sortSelectOptions($flowGroup);
+            });
+            commons.sortSelectOptions($applicationGroup);
+            commons.sortSelectOptions($flowGroup);
 			$('#sel-container').removeAttr('disabled');			
 		}
 	});
@@ -222,20 +222,10 @@ function buildEventPage() {
 				    }
 				});
 	        });
-	        sortSelectOptions($nodeSelect);
+            commons.sortSelectOptions($nodeSelect);
 	        $nodeSelect.val('');
 	    }
 	});
-	
-	function sortSelectOptions($select) {
-		var options = $select.children('option');
-		options.detach().sort(function(a,b) {
-		    var at = $(a).text();
-		    var bt = $(b).text();         
-		    return (at > bt) ? 1 : ((at < bt) ? -1 : 0);
-		});
-		options.appendTo($select);
-	}
 	
 	function emptyServerSelect() {
 		$('#sel-server').children().slice(1).remove();

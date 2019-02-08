@@ -74,19 +74,21 @@ Although you may not have access right to see all events the Event chain tab wil
 Lets consider the following event chain:
 
 .Event chain
-image::images/etm-v3/etm-event-chain.png["Event chain",link="./images/etm-v3/etm-event-chain.png"]
+image::images/etm-v3/etm-hc-event-chain.png["Event chain",link="./images/etm-v3/etm-hc-event-chain.png"]
 
-This chain shows an incoming http request on the 'Gui application'. The 'Gui application' transforms the http request to an messaging requests and send it to endpoint 'BACKEND.QUEUE.1'. On that queue the application 'My Backend' receives the request and handles it. As you can see a thick red arrow show that handling this request takes 84% of the total chain time. When you are experiencing performance issues the 'My Backend' application is a good place to start your investigation. 
+This chain shows chronologically an incoming (received) http request, a sent ShoppingCardRequest and finally a received ShoppingCardRequest plotted on time. Hovering over one of the time bars show the application and endpoint information. As you can see the bottom time bar is filled for 87%. This indicates that 87% of the total transaction time is spent in that request. When you are experiencing performance issues the 'ShoppingCard (received)' event is a good place to start your investigation.
 
-By clicking on 'ShoppingCardReqest' you will see everything that happened within that transaction:
+By clicking on the bottom time bar you will see everything that happened within that transaction:
 
 .Transaction overview
 image::images/etm-v3/etm-transaction-overview.png["Transaction overview",link="./images/etm-v3/etm-transaction-overview.png"]
  
 As we can see the query that selected the shopping card from the database took about 300 milliseconds. Depending on your needs that might or might not be an issue. Nevertheless {etm} will give you a quick inside in what is happening where an what applications and components take most of the execution time of an entire application chain. That is awesome isn't it?
 
+You might have noticed the 'ShoppingCardRequest (sent)' event also takes about 1.9% of transaction time. That's a little bit odd isn't it? How can an event being sent take processing time? Well, it can't.. The percentage shown of sent events is the latency of the event before it is processed by an application, added with the latency of the response. In this example the sent request and received response have been on a queue for 1.9% of the total transaction time.
+
 [NOTE]
-If you have administrator rights and the audit logs are kept long enough you may see an extra ''Audit Logs'' tab. This tab shows information over who saw this particular event over time. When the column ''Direct'' contains the value ''true'' then the user clicked on this event. When the column contains the value ''false'' the event was retrieved as a correlated event. 
+If you have audit log access rights and the audit logs are kept long enough you may see an extra ''Audit Logs'' tab. This tab shows information over who saw this particular event over time. When the column ''Direct'' contains the value ''true'' then the user clicked on this event. When the column contains the value ''false'' the event was retrieved as a correlated event.
 
 === Query syntax
 The query syntax is quite extensive and at the base you can provide a series of terms and operators. By default all event attributes are matched, but specific attributes can be specified to narrow down the query. The query syntax is based on the https://www.elastic.co/guide/en/elasticsearch/reference/${elasticsearch-major-version}/query-dsl-query-string-query.html[Elasticsearch Query DSL].

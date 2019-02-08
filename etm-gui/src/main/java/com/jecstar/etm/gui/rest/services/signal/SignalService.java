@@ -2,13 +2,10 @@ package com.jecstar.etm.gui.rest.services.signal;
 
 import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationKey;
-import com.jecstar.etm.gui.rest.services.dashboard.aggregation.AggregationValue;
-import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DateTimeAggregationKey;
-import com.jecstar.etm.gui.rest.services.dashboard.aggregation.DoubleAggregationValue;
-import com.jecstar.etm.gui.rest.services.dashboard.domain.DateInterval;
-import com.jecstar.etm.gui.rest.services.dashboard.domain.MultiBucketResult;
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
+import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketKey;
+import com.jecstar.etm.server.core.domain.aggregator.metric.MetricValue;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
@@ -21,6 +18,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalC
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.signaler.SignalSearchRequestBuilderBuilder;
 import com.jecstar.etm.signaler.domain.Signal;
+import com.jecstar.etm.signaler.domain.Threshold;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -29,19 +27,17 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.HasAggregations;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
-import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
-import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
-import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
-import org.joda.time.DateTime;
+import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregation;
+import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
+import org.elasticsearch.search.aggregations.metrics.valuecount.InternalValueCount;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.text.DateFormat;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -237,7 +233,7 @@ public class SignalService extends AbstractUserAttributeService {
     @Path("/signal/{signalName}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.USER_SIGNAL_READ_WRITE)
-    public String addGraph(@PathParam("signalName") String signalName, String json) {
+    public String addSignal(@PathParam("signalName") String signalName, String json) {
         return addSignal(null, signalName, json);
     }
 
@@ -268,10 +264,10 @@ public class SignalService extends AbstractUserAttributeService {
         Signal signal = this.signalConverter.read(json);
         EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(this.client, groupName);
         Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
-        if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getDataSource())) {
+        if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getData().getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE);
         }
-        for (String notifier : signal.getNotifiers()) {
+        for (String notifier : signal.getNotifications().getNotifiers()) {
             if (!etmSecurityEntity.isAuthorizedForNotifier(notifier)) {
                 throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_NOTIFIER);
             }
@@ -409,7 +405,7 @@ public class SignalService extends AbstractUserAttributeService {
 
     private String getGraphData(Signal signal, EtmPrincipal etmPrincipal, EtmGroup etmGroup, List<String> allowedDatasources) {
         SignalSearchRequestBuilderBuilder signalSearchRequestBuilderBuilder = new SignalSearchRequestBuilderBuilder(client, etmConfiguration).setSignal(signal);
-        if (allowedDatasources.indexOf(signal.getDataSource()) < 0) {
+        if (allowedDatasources.indexOf(signal.getData().getDataSource()) < 0) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
         SearchRequestBuilder requestBuilder;
@@ -418,60 +414,135 @@ public class SignalService extends AbstractUserAttributeService {
         } else {
             requestBuilder = signalSearchRequestBuilderBuilder.build(q -> addFilterQuery(etmPrincipal, q), etmPrincipal);
         }
-
-        MultiBucketResult multiBucketResult = new MultiBucketResult(null);
-        DateFormat bucketDateFormat = DateInterval.safeValueOf(signal.getCardinalityTimeunit().name()).getDateFormat(etmPrincipal.getLocale(), etmPrincipal.getTimeZone());
-
         // Start building the response
         StringBuilder result = new StringBuilder();
         result.append("{");
         result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
-        result.append(",\"data\": ");
-
         int exceededCount = 0;
         SearchResponse searchResponse = requestBuilder.get();
-        MultiBucketsAggregation aggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
-        for (MultiBucketsAggregation.Bucket bucket : aggregation.getBuckets()) {
-            DateTime dateTime = (DateTime) bucket.getKey();
-            AggregationKey key = new DateTimeAggregationKey(Instant.ofEpochMilli(dateTime.getMillis()), bucketDateFormat);
-            for (Aggregation subAggregation : bucket.getAggregations()) {
-                AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
-                multiBucketResult.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
-                if (aggregationValue.hasValidValue() && signal.getThreshold() != null && signal.getComparison() != null) {
-                    if (Signal.Comparison.LT.equals(signal.getComparison()) && aggregationValue.isLessThan(signal.getThreshold())) {
-                        exceededCount++;
-                    } else if (Signal.Comparison.LTE.equals(signal.getComparison()) && (aggregationValue.isLessThan(signal.getThreshold()) || aggregationValue.isEqualTo(signal.getThreshold()))) {
-                        exceededCount++;
-                    } else if (Signal.Comparison.EQ.equals(signal.getComparison()) && aggregationValue.isEqualTo(signal.getThreshold())) {
-                        exceededCount++;
-                    } else if (Signal.Comparison.GTE.equals(signal.getComparison()) && (aggregationValue.isGreaterThan(signal.getThreshold()) || aggregationValue.isEqualTo(signal.getThreshold()))) {
-                        exceededCount++;
-                    } else if (Signal.Comparison.GT.equals(signal.getComparison()) && aggregationValue.isGreaterThan(signal.getThreshold())) {
-                        exceededCount++;
-                    }
+        Map<String, List<String>> seriesData = new LinkedHashMap<>();
+        MultiBucketsAggregation multiBucketsAggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
+        for (MultiBucketsAggregation.Bucket bucket : multiBucketsAggregation.getBuckets()) {
+            final BucketKey bucketKey = new BucketKey(bucket);
+            if (bucket.getAggregations().asList().size() == 0) {
+                String bucketName = multiBucketsAggregation.getMetaData().get(Aggregator.NAME) + "(" + bucket.getKey() + ")";
+                Map<String, Object> metaData = new HashMap<>();
+                metaData.put(Aggregator.NAME, bucketName);
+                final MetricValue metricValue = new MetricValue(new InternalValueCount(bucketName, bucket.getDocCount(), Collections.emptyList(), metaData));
+                addToSeries(seriesData, bucketKey, metricValue, bucketName);
+                if (metricValue.hasValidValue() && signal.getThreshold().getComparison().isExceeded(signal.getThreshold().getValue(), metricValue.getValue())) {
+                    exceededCount++;
                 }
+            } else {
+                exceededCount = processAggregations(bucketKey, bucket, seriesData, "", signal.getThreshold(), exceededCount);
             }
         }
-        multiBucketResult.appendAsArrayToJsonBuffer(this, result, true);
-        if (signal.getThreshold() != null && signal.getComparison() != null) {
+        if (signal.getThreshold() != null && signal.getThreshold().getComparison() != null) {
             addIntegerElementToJsonBuffer("exceeded_count", exceededCount, result, false);
         }
-        result.append("}");
+
+        result.append(", \"chart_config\": {");
+        result.append("\"credits\": {\"enabled\": false}");
+        result.append(", \"tooltip\": {\"shared\": true}");
+        result.append(", \"title\": {\"text\": \"Signal visualization\"}");
+        result.append(", \"time\": {\"timezone\": " + escapeToJson(etmPrincipal.getTimeZone().toZoneId().toString(), true) + "}");
+        result.append(", \"xAxis\": {\"type\": \"datetime\"}");
+        result.append(", \"yAxis\": {\"plotLines\": [{ \"value\": " + signal.getThreshold().getValue() + ", \"color\": \"red\", \"dashStyle\": \"shortdash\", \"width\": 2, \"label\": {\"text\": \"Threshold limit\"}}]}");
+        result.append(", \"chart\": {\"type\": \"spline\"}");
+        result.append(", \"plotOptions\": {\"spline\": {\"marker\": {\"enabled\": true}}}");
+
+        result.append(", \"series\": [");
+        boolean firstSerie = true;
+        for (Map.Entry<String, List<String>> entry : seriesData.entrySet()) {
+            if (!firstSerie) {
+                result.append(", ");
+            }
+            result.append("{ \"name\": " + escapeToJson(entry.getKey(), true));
+            result.append(", \"data\": [");
+            result.append(String.join(",", entry.getValue()));
+            result.append("], \"zones\": [");
+            if (Threshold.Comparison.GT.equals(signal.getThreshold().getComparison()) || Threshold.Comparison.GTE.equals(signal.getThreshold().getComparison())) {
+                result.append("{ \"value\": " + (Threshold.Comparison.GTE.equals(signal.getThreshold().getComparison()) ? signal.getThreshold().getValue() : signal.getThreshold().getValue() + 0.00000001) + "}");
+                result.append(", { \"color\": \"red\"}");
+            } else if (Threshold.Comparison.LT.equals(signal.getThreshold().getComparison()) || Threshold.Comparison.LTE.equals(signal.getThreshold().getComparison())) {
+                result.append("{ \"value\": " + (Threshold.Comparison.LTE.equals(signal.getThreshold().getComparison()) ? signal.getThreshold().getValue() + 0.00000001 : signal.getThreshold().getValue()) + ", \"color\": \"red\"}");
+            } else {
+                result.append("{ \"value\": " + (signal.getThreshold().getValue() - 0.00000001) + "}");
+                result.append(", { \"value\": " + (signal.getThreshold().getValue() + 0.00000001) + ", \"color\": \"red\"}");
+            }
+            result.append("]}");
+            firstSerie = false;
+        }
+        result.append("]}}");
         return result.toString();
     }
 
-    private AggregationValue<?> getMetricAggregationValueFromAggregator(Aggregation aggregation) {
-        if (aggregation instanceof Percentiles) {
-            Percentiles percentiles = (Percentiles) aggregation;
-            return new DoubleAggregationValue(aggregation.getName(), percentiles.iterator().next().getValue());
-        } else if (aggregation instanceof PercentileRanks) {
-            PercentileRanks percentileRanks = (PercentileRanks) aggregation;
-            return new DoubleAggregationValue(aggregation.getName(), percentileRanks.iterator().next().getPercent()).setPercentage(true);
-        } else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
-            NumericMetricsAggregation.SingleValue singleValue = (NumericMetricsAggregation.SingleValue) aggregation;
-            return new DoubleAggregationValue(aggregation.getName(), singleValue.value());
+    private int processAggregations(BucketKey root, HasAggregations aggregationHolder, Map<String, List<String>> seriesData, String currentName, Threshold threshold, int exceededCount) {
+        Iterator<Aggregation> iterator = aggregationHolder.getAggregations().iterator();
+        while (iterator.hasNext()) {
+            String name = currentName;
+            Aggregation aggregation = iterator.next();
+            boolean showOnGraph = (boolean) aggregation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
+            if (!showOnGraph) {
+                continue;
+            }
+            if (aggregation instanceof MultiBucketsAggregation) {
+                MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+                String bucketName = (String) multiBucketsAggregation.getMetaData().get(Aggregator.NAME);
+                name = createHierarchicalBucketName(name, bucketName);
+                for (MultiBucketsAggregation.Bucket subBucket : multiBucketsAggregation.getBuckets()) {
+                    final String subBucketName = name + "(" + subBucket.getKeyAsString() + ")";
+                    if (subBucket.getAggregations().asList().size() == 0) {
+                        Map<String, Object> metaData = new HashMap<>();
+                        metaData.put(Aggregator.NAME, subBucketName);
+                        final MetricValue metricValue = new MetricValue(new InternalValueCount(subBucketName, subBucket.getDocCount(), Collections.emptyList(), metaData));
+                        addToSeries(seriesData, root, metricValue, subBucketName);
+                        if (metricValue.hasValidValue() && threshold.getComparison().isExceeded(threshold.getValue(), metricValue.getValue())) {
+                            exceededCount++;
+                        }
+                    } else {
+                        exceededCount = processAggregations(root, subBucket, seriesData, name + "(" + subBucket.getKeyAsString() + ")", threshold, exceededCount);
+                    }
+                }
+            } else if (aggregation instanceof SingleBucketAggregation) {
+                SingleBucketAggregation singleBucketAggregation = (SingleBucketAggregation) aggregation;
+                String bucketName = (String) singleBucketAggregation.getMetaData().get(Aggregator.NAME);
+                name = createHierarchicalBucketName(name, bucketName);
+                exceededCount = processAggregations(root, singleBucketAggregation, seriesData, name, threshold, exceededCount);
+            } else if (aggregation instanceof InternalNumericMetricsAggregation.SingleValue || aggregation instanceof InternalNumericMetricsAggregation.MultiValue) {
+                final MetricValue metricValue = new MetricValue(aggregation);
+                if (name.length() == 0) {
+                    name = metricValue.getName();
+                } else {
+                    name += ": " + metricValue.getName();
+                }
+                addToSeries(seriesData, root, metricValue, name);
+                if (metricValue.hasValidValue() && threshold.getComparison().isExceeded(threshold.getValue(), metricValue.getValue())) {
+                    exceededCount++;
+                }
+            }
         }
-        throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");
+        return exceededCount;
     }
 
+    private String createHierarchicalBucketName(String currentName, String bucketName) {
+        if (currentName.length() != 0) {
+            currentName += " > ";
+        }
+        return currentName + bucketName;
+    }
+
+    private void addToSeries(Map<String, List<String>> serieData, BucketKey bucketKey, MetricValue metricValue, String seriesName) {
+        List<String> values = serieData.get(seriesName);
+        if (values == null) {
+            values = new ArrayList<>();
+            serieData.put(seriesName, values);
+        }
+        if (metricValue.hasValidValue()) {
+            // If we want to allow gaps in the graph we have to remove this if statement.
+            values.add("[" + bucketKey.getJsonValue() + ", " + metricValue.getJsonValue() + "]");
+        } else {
+            values.add("[" + bucketKey.getJsonValue() + ", " + 0 + "]");
+        }
+    }
 }

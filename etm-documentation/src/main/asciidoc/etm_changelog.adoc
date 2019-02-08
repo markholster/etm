@@ -1,9 +1,11 @@
 == Changelog
 === Version 3.4.0
+* [ETM-17] Migrate etm-domain to public repository.
+* [ETM-75] Advanced graphs.
 * [ETM-77] Fix "Accessing variable [ctx] via [params.ctx] from within a update script is deprecated in favor of directly accessing [ctx]".
 * [ETM-78] Unable to show event chain when response time is sub millisecond.
 * [ETM-79] Payload correlated event is visible with role "Read without payload".
-* [ETM-80] Upgrade to Elasticsearch 6.5.x.
+* [ETM-80] Upgrade to Elasticsearch 6.6.
 
 === Version 3.3.0
 * [ETM-57] Sorting not working on all fields.
@@ -112,7 +114,7 @@ Additional labels for pre-release and build metadata are available as extensions
 === Upgrades within the same MAJOR version.
 
 . Make sure you have a backup of all Elasticsearch data!
-. Download and uncompress the required Elasticsearch version to a new directory.
+. Download and uncompress the required Elasticsearch version to a new directory. See the <<Support matrix>> for the version you should run.
 . Stop all {etm} nodes.
 . Stop your current Elasticsearch nodes.
 . Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
@@ -127,6 +129,9 @@ Additional labels for pre-release and build metadata are available as extensions
 
 ==== Version specific changes
 Sometimes your {etm} configuration needs additional changes before it can be upgraded. This section describes these changes necessary before upgrading.
+
+===== Upgrade from versions before 3.4.0 to 3.4.x or higher
+. From version 3.4 and up a minimum version of Elasticsearch 6.5 is required.
 
 ===== Upgrade from versions before 2.3.0 to 2.3.x or higher
 . Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' under the http chapter in the file 'config/etm.yml'. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.

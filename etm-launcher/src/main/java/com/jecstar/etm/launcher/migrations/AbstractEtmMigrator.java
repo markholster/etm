@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher.migrations;
 
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateAction;
@@ -24,6 +25,7 @@ import org.elasticsearch.search.SearchHit;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Abstract superclass for all <code>EtmMigrator</code> instances.
@@ -104,10 +106,11 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                 }
                 bulkProcessor.flush();
                 try {
-                    bulkProcessor.awaitClose(10, TimeUnit.SECONDS);
+                    bulkProcessor.awaitClose(30, TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
+                flushIndices(client, index);
                 printPercentageWhenChanged(lastPrint, current, total);
             }
         }
@@ -131,6 +134,44 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         if (getResponse.getIndexTemplates().size() > 0) {
             new DeleteIndexTemplateRequestBuilder(client, DeleteIndexTemplateAction.INSTANCE, indexPrefix).get();
         }
+    }
+
+    protected void checkAndCleanupPreviousRun(Client client, String migrationIndexPrefix) {
+        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(migrationIndexPrefix + "*").get();
+        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
+            System.out.println("Found migration indices from a previous run. Deleting those indices.");
+            for (String index : indexResponse.getIndices()) {
+                client.admin().indices().prepareDelete(index).get();
+                System.out.println("Removed migration index '" + index + "'.");
+            }
+            deleteTemporaryIndexTemplate(client, migrationIndexPrefix);
+        }
+        createTemporaryIndexTemplate(client, migrationIndexPrefix, 1);
+    }
+
+    protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+        System.out.println("Start migrating " + entityName + " to temporary index.");
+        listener.reset();
+        ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
+        long total = searchHits.getNumberOfHits();
+        long current = 0, lastPrint = 0;
+        for (SearchHit searchHit : searchHits) {
+            bulkProcessor.add(processor.apply(searchHit));
+            lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
+        }
+        bulkProcessor.flush();
+        try {
+            bulkProcessor.awaitClose(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        printPercentageWhenChanged(lastPrint, current, total);
+        System.out.println("Done migrating " + entityName + (listener.hasFailures() ? " temporary index with failures." : "."));
+        return !listener.hasFailures();
+    }
+
+    protected void flushIndices(Client client, String... indices) {
+        client.admin().indices().prepareFlush(indices).setForce(true).get();
     }
 
     public class FailureDetectingBulkProcessorListener implements BulkProcessor.Listener {

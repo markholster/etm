@@ -9,18 +9,18 @@
 <body>
 <script type="text/javascript">
   (function(){
-	var contextRoot = '/gui/';  
-	var ix = window.location.pathname.indexOf(contextRoot);
-  	var path = './';
+      const contextRoot = '/gui/';
+      const ix = window.location.pathname.indexOf(contextRoot);
+      let path = './';
 	if (ix != -1) {
-		var requestPath = window.location.pathname.substring(ix + contextRoot.length);
-		var match = requestPath.match(/\//g);
-		var additions = match ? match.length : 0;
+        const requestPath = window.location.pathname.substring(ix + contextRoot.length);
+        const match = requestPath.match(/\//g);
+        const additions = match ? match.length : 0;
 		for (i = 0; i < additions; i++) {
 		    path += '../';
 		}
 	}
-  	var styles = document.createElement('link');
+      const styles = document.createElement('link');
   	styles.rel = 'stylesheet';
   	styles.type = 'text/css';
   	styles.media = 'screen';

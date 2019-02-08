@@ -79,7 +79,7 @@ function buildAuditLogPage() {
    
    $(window).scroll(function(event) {
 	   var $showMoreLink = $('#lnk_show_more');
-	   if (isInViewport($showMoreLink)) {
+       if (commons.isInViewport($showMoreLink)) {
 		   $showMoreLink.click();
 	   }
    });    
@@ -187,7 +187,7 @@ function buildAuditLogPage() {
                                 return $body;
                             });
                         $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
-                        if (!isInViewport($('#result_card'))) {
+                        if (!commons.isInViewport($('#result_card'))) {
                             $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
                         }
                     }
@@ -390,17 +390,4 @@ function buildAuditLogPage() {
 			);
 		}
 	}
-
-    
-    function isInViewport(elem) {
-    	if (!$(elem).is(':visible')) {
-    		return false;
-    	}
-        var docViewTop = $(window).scrollTop();
-        var docViewBottom = docViewTop + $(window).height();
-        var elemTop = $(elem).offset().top;
-        var elemBottom = elemTop + $(elem).height();
-        return docViewBottom > elemTop;
-    }
-
 }

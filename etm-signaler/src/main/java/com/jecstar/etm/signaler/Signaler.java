@@ -1,5 +1,7 @@
 package com.jecstar.etm.signaler;
 
+import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
+import com.jecstar.etm.server.core.domain.aggregator.metric.MetricValue;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.converter.NotifierConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -17,6 +19,7 @@ import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import com.jecstar.etm.signaler.backoff.BackoffPolicy;
 import com.jecstar.etm.signaler.domain.Signal;
+import com.jecstar.etm.signaler.domain.Threshold;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -27,7 +30,10 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.HasAggregations;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
+import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregation;
+import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
@@ -155,8 +161,8 @@ public class Signaler extends AbstractJsonService implements Runnable {
                         , null)
                 .get();
         Map<String, Object> sourceMap = getResponse.getSourceAsMap();
-        Map<String, Object> entityObjectMap = null;
-        EtmSecurityEntity etmSecurityEntity = null;
+        Map<String, Object> entityObjectMap;
+        EtmSecurityEntity etmSecurityEntity;
         if (sourceMap.containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP)) {
             entityObjectMap = toMapWithoutNamespace(sourceMap, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
             String groupName = getString(this.etmPrincipalTags.getNameTag(), entityObjectMap);
@@ -179,7 +185,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
             }
             Instant lastExecuted = getInstant(Signal.LAST_EXECUTED, signalValues);
             Signal signal = this.signalConverter.read(signalValues);
-            if (lastExecuted != null && Instant.now().isBefore(lastExecuted.plus(signal.getIntervalDuration()))) {
+            if (lastExecuted != null && Instant.now().isBefore(lastExecuted.plus(signal.getNotifications().getIntervalUnit().toDuration(signal.getNotifications().getInterval())))) {
                 continue;
             }
             SignalTestResult result = testThresholds(signal, etmSecurityEntity);
@@ -253,14 +259,14 @@ public class Signaler extends AbstractJsonService implements Runnable {
      */
     private SignalTestResult testThresholds(Signal signal, EtmSecurityEntity etmSecurityEntity) {
         SignalTestResult result = new SignalTestResult();
-        result.setTestInterval(signal.getIntervalDuration());
+        result.setTestInterval(signal.getNotifications().getIntervalUnit().toDuration(signal.getNotifications().getInterval()));
         SignalSearchRequestBuilderBuilder builderBuilder = new SignalSearchRequestBuilderBuilder(this.client, this.etmConfiguration)
                 .setSignal(signal);
         SearchRequestBuilder builder;
 
-        if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getDataSource())) {
+        if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getData().getDataSource())) {
             if (log.isErrorLevelEnabled()) {
-                log.logErrorMessage("Signal '" + signal.getName() + "' is configured with data source '" + signal.getDataSource() + "' but " + etmSecurityEntity.getType() + " '" + etmSecurityEntity.getDisplayName() + "' is not authorized for that datasource.");
+                log.logErrorMessage("Signal '" + signal.getName() + "' is configured with data source '" + signal.getData().getDataSource() + "' but " + etmSecurityEntity.getType() + " '" + etmSecurityEntity.getDisplayName() + "' is not authorized for that datasource.");
             }
             return result.setExectued(false);
         }
@@ -274,27 +280,36 @@ public class Signaler extends AbstractJsonService implements Runnable {
 
         SearchResponse searchResponse = builder.get();
         result.setExectued(true);
-        MultiBucketsAggregation aggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
-        for (MultiBucketsAggregation.Bucket bucket : aggregation.getBuckets()) {
-            DateTime dateTime = (DateTime) bucket.getKey();
-            for (Aggregation subAggregation : bucket.getAggregations()) {
-                Double aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
-                if (aggregationValue != null && !aggregationValue.isNaN() && !aggregationValue.isInfinite() && signal.getThreshold() != null && signal.getComparison() != null) {
-                    if (Signal.Comparison.LT.equals(signal.getComparison()) && aggregationValue.compareTo(signal.getThreshold().doubleValue()) < 0) {
-                        result.addThresholdExceedance(dateTime, aggregationValue);
-                    } else if (Signal.Comparison.LTE.equals(signal.getComparison()) && aggregationValue.compareTo(signal.getThreshold().doubleValue()) <= 0) {
-                        result.addThresholdExceedance(dateTime, aggregationValue);
-                    } else if (Signal.Comparison.EQ.equals(signal.getComparison()) && aggregationValue.compareTo(signal.getThreshold().doubleValue()) == 0) {
-                        result.addThresholdExceedance(dateTime, aggregationValue);
-                    } else if (Signal.Comparison.GTE.equals(signal.getComparison()) && aggregationValue.compareTo(signal.getThreshold().doubleValue()) >= 0) {
-                        result.addThresholdExceedance(dateTime, aggregationValue);
-                    } else if (Signal.Comparison.GT.equals(signal.getComparison()) && aggregationValue.compareTo(signal.getThreshold().doubleValue()) >= 0) {
-                        result.addThresholdExceedance(dateTime, aggregationValue);
-                    }
+        MultiBucketsAggregation multiBucketsAggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
+        for (MultiBucketsAggregation.Bucket bucket : multiBucketsAggregation.getBuckets()) {
+            processAggregations(bucket, bucket, signal.getThreshold(), result);
+        }
+        return result;
+    }
+
+    private void processAggregations(MultiBucketsAggregation.Bucket root, HasAggregations aggregationHolder, Threshold threshold, SignalTestResult signalTestResult) {
+        Iterator<Aggregation> iterator = aggregationHolder.getAggregations().iterator();
+        while (iterator.hasNext()) {
+            Aggregation aggregation = iterator.next();
+            boolean showOnGraph = (boolean) aggregation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
+            if (!showOnGraph) {
+                continue;
+            }
+            if (aggregation instanceof MultiBucketsAggregation) {
+                MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+                for (MultiBucketsAggregation.Bucket subBucket : multiBucketsAggregation.getBuckets()) {
+                    processAggregations(root, subBucket, threshold, signalTestResult);
+                }
+            } else if (aggregation instanceof SingleBucketAggregation) {
+                SingleBucketAggregation singleBucketAggregation = (SingleBucketAggregation) aggregation;
+                processAggregations(root, singleBucketAggregation, threshold, signalTestResult);
+            } else if (aggregation instanceof InternalNumericMetricsAggregation.SingleValue || aggregation instanceof InternalNumericMetricsAggregation.MultiValue) {
+                final MetricValue metricValue = new MetricValue(aggregation);
+                if (metricValue.hasValidValue() && threshold.getComparison().isExceeded(threshold.getValue(), metricValue.getValue())) {
+                    signalTestResult.addThresholdExceedance((DateTime) root.getKey(), metricValue.getValue());
                 }
             }
         }
-        return result;
     }
 
     /**
@@ -306,10 +321,10 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @param etmSecurityEntity    The <code>EtmSecurityEntity</code> that owns the <code>Signal</code>.
      */
     private void sendFailureNotifications(NotificationExecutor notificationExecutor, Signal signal, SignalTestResult signalTestResult, EtmSecurityEntity etmSecurityEntity) {
-        if (signal.getNotifiers() == null) {
+        if (signal.getNotifications().getNotifiers() == null) {
             return;
         }
-        for (String notifierName : signal.getNotifiers()) {
+        for (String notifierName : signal.getNotifications().getNotifiers()) {
             if (!etmSecurityEntity.isAuthorizedForNotifier(notifierName)) {
                 if (log.isWarningLevelEnabled()) {
                     log.logWarningMessage("Signal '"
@@ -346,10 +361,10 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @param etmSecurityEntity    The <code>EtmSecurityEntity</code> that owns the <code>Signal</code>.
      */
     private void sendFixedNotifications(NotificationExecutor notificationExecutor, Signal signal, EtmSecurityEntity etmSecurityEntity) {
-        if (signal.getNotifiers() == null) {
+        if (signal.getNotifications().getNotifiers() == null) {
             return;
         }
-        for (String notifierName : signal.getNotifiers()) {
+        for (String notifierName : signal.getNotifications().getNotifiers()) {
             if (!etmSecurityEntity.isAuthorizedForNotifier(notifierName)) {
                 if (log.isWarningLevelEnabled()) {
                     log.logWarningMessage("Signal '"

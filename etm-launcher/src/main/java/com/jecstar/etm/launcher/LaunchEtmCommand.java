@@ -253,6 +253,10 @@ class LaunchEtmCommand extends AbstractCommand {
             etmMigrator.migrate();
             reinitialze = true;
         }
+        etmMigrator = new VisualizationAndSignalMigrator(client);
+        if (etmMigrator.shouldBeExecuted()) {
+            etmMigrator.migrate();
+        }
         return reinitialze;
     }
 

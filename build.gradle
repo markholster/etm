@@ -1,10 +1,10 @@
 ext {
     version_artemis = "2.3.0"
-    version_citrus = "2.7.7"
-    version_elasticsearch_major = "6.4"
-    version_elasticsearch = version_elasticsearch_major + ".2"
-    version_junit = "5.1.0"
-    version_resteasy = "3.1.4.Final"
+    version_citrus = "2.8.0"
+    version_elasticsearch_major = "6.6"
+    version_elasticsearch = version_elasticsearch_major + ".0"
+    version_junit = "5.4.0"
+    version_resteasy = "3.6.2.Final"
     version_slf4j = "1.7.25"
 
     dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M24"
@@ -17,7 +17,6 @@ ext {
     dep_disruptor = "com.lmax:disruptor:3.3.7"
     dep_elasticsearchClient = "org.elasticsearch.client:transport:" + version_elasticsearch
     dep_elasticsearchXpackTransportClient = "org.elasticsearch.client:x-pack-transport:" + version_elasticsearch
-    dep_htmlunitDriver = "org.seleniumhq.selenium:htmlunit-driver:2.29.2"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:2.9.1"
     dep_jms = "javax.jms:javax.jms-api:2.0.1"
     dep_jaxb = "javax.xml.bind:jaxb-api:2.3.0"
@@ -31,12 +30,12 @@ ext {
     dep_resteasyJacksonProvider = "org.jboss.resteasy:resteasy-jackson2-provider:" + version_resteasy
     dep_resteasyWadl = "org.jboss.resteasy:resteasy-wadl:" + version_resteasy
     dep_poiOoxml = "org.apache.poi:poi-ooxml:3.17"
-    dep_saxonHE = "net.sf.saxon:Saxon-HE:9.8.0-4"
+    dep_saxonHE = "net.sf.saxon:Saxon-HE:9.9.1-1"
     dep_slf4jApi = "org.slf4j:slf4j-api:" + version_slf4j
     dep_slf4jSimple = "org.slf4j:slf4j-simple:" + version_slf4j
     dep_snakeyaml = "org.yaml:snakeyaml:1.18"
     dep_snmp4j = "org.snmp4j:snmp4j:2.6.3"
-    dep_undertowServlet = "io.undertow:undertow-servlet:2.0.4.Final"
+    dep_undertowServlet = "io.undertow:undertow-servlet:2.0.9.Final"
 }
 
 allprojects {

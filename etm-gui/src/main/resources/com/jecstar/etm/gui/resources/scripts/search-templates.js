@@ -22,7 +22,7 @@ $('#btn-save-template').click(function() {
 });
 
 $('#btn-overwrite-template').click(function() {
-    hideModals($('#modal-template-overwrite'));
+    commons.hideModals($('#modal-template-overwrite'));
     storeTemplate(createTemplate(), true);
 });
 
@@ -41,7 +41,7 @@ $('#btn-remove-template').click(function(event) {
             validateMaxTemplates();
         }
     }).always(function () {
-        hideModals($('#modal-template-remove'));
+        commons.hideModals($('#modal-template-remove'));
     });
 });
 
@@ -61,11 +61,11 @@ $.ajax({
             $.each(data.search_templates, function(index, template){
                 $('#list-template-links').append(
                     $('<li>').append(
-                        $('<a href="#">').click(function(event) {
+                        $('<a href="#">').on('click', function (event) {
                            event.preventDefault();
                            setValuesFromTemplate(template)
                         }).text(template.name),
-                        $('<a href="#" class="fa fa-times pull-right text-danger">').click(function(event) {
+                        $('<a href="#" class="fa fa-times text-danger float-right">').on('click', function (event) {
                            event.preventDefault();
                            askRemoveTemplate(template)
                         })
@@ -233,7 +233,7 @@ function storeTemplate(template, isOverwrite) {
                            event.preventDefault();
                            setValuesFromTemplate(template)
                         }).text(template.name),
-                        $('<a href="#" class="fa fa-times pull-right text-danger">').click(function(event) {
+                        $('<a href="#" class="fa fa-times float-right text-danger">').click(function (event) {
                            event.preventDefault();
                            askRemoveTemplate(template)
                         })

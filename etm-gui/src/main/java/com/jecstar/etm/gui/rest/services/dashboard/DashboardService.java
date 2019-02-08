@@ -2,10 +2,17 @@ package com.jecstar.etm.gui.rest.services.dashboard;
 
 import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.gui.rest.services.dashboard.aggregation.*;
-import com.jecstar.etm.gui.rest.services.dashboard.domain.*;
-import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.GraphConverter;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.Column;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.Dashboard;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.Data;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.GraphContainer;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.DashboardConverter;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.GraphContainerConverter;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.graph.*;
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
+import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketKey;
+import com.jecstar.etm.server.core.domain.aggregator.metric.MetricValue;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
@@ -21,14 +28,13 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.HasAggregations;
+import org.elasticsearch.search.aggregations.bucket.InternalSingleBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation.Bucket;
-import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
-import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation.SingleValue;
-import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
-import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
-import org.joda.time.DateTime;
+import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregation;
+import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
+import org.elasticsearch.search.aggregations.metrics.valuecount.InternalValueCount;
 import org.joda.time.DateTimeZone;
 
 import javax.annotation.security.DeclareRoles;
@@ -36,8 +42,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.text.Format;
-import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -49,7 +53,8 @@ public class DashboardService extends AbstractUserAttributeService {
     private static Client client;
     private static EtmConfiguration etmConfiguration;
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
-    private final GraphConverter graphConverter = new GraphConverter();
+    private final GraphContainerConverter graphContainerConverter = new GraphContainerConverter();
+    private final DashboardConverter dashboardConverter = new DashboardConverter();
 
     public static void initialize(Client client, EtmConfiguration etmConfiguration) {
         DashboardService.client = client;
@@ -234,35 +239,37 @@ public class DashboardService extends AbstractUserAttributeService {
         // Execute a dry run on all data.
         Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
         EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(client, groupName);
-
-        Graph graph = this.graphConverter.read(json);
-
-        getGraphData(graph, etmSecurityEntity, true);
-        // Data seems ok, now store the graph.
-        List<Map<String, Object>> currentGraphs = new ArrayList<>();
-        Map<String, Object> graphData = toMap(this.graphConverter.write(graph));
-        graphData.put("name", graphName);
-        if (objectMap != null && objectMap.containsKey(this.principalTags.getGraphsTag())) {
-            currentGraphs = getArray(this.principalTags.getGraphsTag(), objectMap);
+        GraphContainer graphContainer = this.graphContainerConverter.read(json);
+        if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(graphContainer.getData().getDataSource())) {
+            throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
-        ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();
+        createGraphSearchRequest(getEtmPrincipal(), graphContainer);
+
+        // Data seems ok, now store the graph.
+        List<Map<String, Object>> currentGraphContainers = new ArrayList<>();
+        Map<String, Object> graphContainerValues = toMap(this.graphContainerConverter.write(graphContainer));
+        graphContainerValues.put(GraphContainer.NAME, graphName);
+        if (objectMap != null && objectMap.containsKey(this.principalTags.getGraphsTag())) {
+            currentGraphContainers = getArray(this.principalTags.getGraphsTag(), objectMap);
+        }
+        ListIterator<Map<String, Object>> iterator = currentGraphContainers.listIterator();
         boolean updated = false;
         while (iterator.hasNext()) {
-            Map<String, Object> graphMap = iterator.next();
-            if (graphName.equals(getString("name", graphMap))) {
-                iterator.set(graphData);
+            Map<String, Object> graphContainerMap = iterator.next();
+            if (graphName.equals(getString(GraphContainer.NAME, graphContainerMap))) {
+                iterator.set(graphContainerValues);
                 updated = true;
                 break;
             }
         }
         if (!updated) {
-            if (currentGraphs.size() >= etmConfiguration.getMaxGraphCount()) {
+            if (currentGraphContainers.size() >= etmConfiguration.getMaxGraphCount()) {
                 throw new EtmException(EtmException.MAX_NR_OF_GRAPHS_REACHED);
             }
-            currentGraphs.add(graphData);
+            currentGraphContainers.add(graphContainerValues);
         }
         Map<String, Object> source = new HashMap<>();
-        source.put(this.principalTags.getGraphsTag(), currentGraphs);
+        source.put(this.principalTags.getGraphsTag(), currentGraphContainers);
         updateEntity(client, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
@@ -307,17 +314,17 @@ public class DashboardService extends AbstractUserAttributeService {
     private String deleteGraph(String groupName, String graphName) {
         Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
 
-        List<Map<String, Object>> currentGraphs = new ArrayList<>();
+        List<Map<String, Object>> currentGraphContainers = new ArrayList<>();
         if (objectMap == null || objectMap.isEmpty()) {
             return "{\"status\":\"success\"}";
         }
         if (objectMap.containsKey(this.principalTags.getGraphsTag())) {
-            currentGraphs = getArray(this.principalTags.getGraphsTag(), objectMap);
+            currentGraphContainers = getArray(this.principalTags.getGraphsTag(), objectMap);
         }
-        ListIterator<Map<String, Object>> iterator = currentGraphs.listIterator();
+        ListIterator<Map<String, Object>> iterator = currentGraphContainers.listIterator();
         while (iterator.hasNext()) {
-            Map<String, Object> graphData = iterator.next();
-            if (graphName.equals(getString("name", graphData))) {
+            Map<String, Object> graphContainerValues = iterator.next();
+            if (graphName.equals(getString(GraphContainer.NAME, graphContainerValues))) {
                 iterator.remove();
                 break;
             }
@@ -325,38 +332,22 @@ public class DashboardService extends AbstractUserAttributeService {
 
         Map<String, Object> source = new HashMap<>();
         // Prepare new source map with the remaining graphs.
-        source.put(this.principalTags.getGraphsTag(), currentGraphs);
+        source.put(this.principalTags.getGraphsTag(), currentGraphContainers);
 
         // Now remove the graph from all dashboards.
         if (objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             boolean dashboardsUpdated = false;
-            List<Map<String, Object>> dashboardsData = getArray(this.principalTags.getDashboardsTag(), objectMap);
-            if (dashboardsData != null) {
-                for (Map<String, Object> dashboardData : dashboardsData) {
-                    List<Map<String, Object>> rowsValues = getArray("rows", dashboardData);
-                    if (rowsValues != null) {
-                        for (Map<String, Object> rowValues : rowsValues) {
-                            List<Map<String, Object>> colsValues = getArray("cols", rowValues);
-                            if (colsValues != null) {
-                                for (Map<String, Object> colValues : colsValues) {
-                                    if (graphName.equals(colValues.get("name"))) {
-                                        Object id = colValues.get("id");
-                                        Object parts = colValues.get("parts");
-                                        Object bordered = colValues.get("bordered");
-                                        colValues.clear();
-                                        colValues.put("id", id);
-                                        colValues.put("parts", parts);
-                                        colValues.put("bordered", bordered);
-                                        dashboardsUpdated = true;
-                                    }
-                                }
-                            }
-                        }
+            List<Map<String, Object>> arrayData = getArray(this.principalTags.getDashboardsTag(), objectMap);
+            if (arrayData != null) {
+                List<Dashboard> dashboards = arrayData.stream().map(this.dashboardConverter::read).collect(Collectors.toList());
+                for (Dashboard dashboard : dashboards) {
+                    if (dashboard.removeGraph(graphName)) {
+                        dashboardsUpdated = true;
                     }
                 }
-            }
-            if (dashboardsUpdated) {
-                source.put(this.principalTags.getDashboardsTag(), dashboardsData);
+                if (dashboardsUpdated) {
+                    source.put(this.principalTags.getDashboardsTag(), dashboards.stream().map(d -> toMap(this.dashboardConverter.write(d))).collect(Collectors.toList()));
+                }
             }
         }
         updateEntity(client, etmConfiguration, groupName, source);
@@ -406,7 +397,7 @@ public class DashboardService extends AbstractUserAttributeService {
         }
         Set<String> dashboardNames = new HashSet<>();
         for (Map<String, Object> dashboardData : dashboardsData) {
-            dashboardNames.add(getString("name", dashboardData));
+            dashboardNames.add(getString(Dashboard.NAME, dashboardData));
         }
         Map<String, Object> response = new HashMap<>();
         response.put(this.principalTags.getDashboardsTag(), dashboardNames);
@@ -456,7 +447,7 @@ public class DashboardService extends AbstractUserAttributeService {
             return null;
         }
         for (Map<String, Object> dashboardData : dashboardsData) {
-            if (dashboardName.equals(getString("name", dashboardData))) {
+            if (dashboardName.equals(getString(Dashboard.NAME, dashboardData))) {
                 return toString(dashboardData);
             }
         }
@@ -495,24 +486,21 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The json result of the addition.
      */
     private String addDashboard(String groupName, String dashboardName, String json) {
-        // Execute a dry run on all data.
-        // TODO validate all data
-//		getGraphData(json, true);
+        Dashboard dashboard = this.dashboardConverter.read(json);
+        dashboard.setName(dashboardName);
         // Data seems ok, now store the graph.
         Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
 
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
-        Map<String, Object> valueMap = toMap(json);
-        valueMap.put("name", dashboardName);
         if (objectMap != null && objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             currentDashboards = getArray(this.principalTags.getDashboardsTag(), objectMap);
         }
-        ListIterator<Map<String, Object>> iterator = currentDashboards.listIterator();
+        ListIterator<Map<String, Object>> dashboardIterator = currentDashboards.listIterator();
         boolean updated = false;
-        while (iterator.hasNext()) {
-            Map<String, Object> dashboard = iterator.next();
-            if (dashboardName.equals(getString("name", dashboard))) {
-                iterator.set(valueMap);
+        while (dashboardIterator.hasNext()) {
+            Map<String, Object> db = dashboardIterator.next();
+            if (dashboardName.equals(getString(Dashboard.NAME, db))) {
+                dashboardIterator.set(toMap(this.dashboardConverter.write(dashboard)));
                 updated = true;
                 break;
             }
@@ -521,7 +509,7 @@ public class DashboardService extends AbstractUserAttributeService {
             if (currentDashboards.size() >= etmConfiguration.getMaxGraphCount()) {
                 throw new EtmException(EtmException.MAX_NR_OF_DASHBOARDS_REACHED);
             }
-            currentDashboards.add(valueMap);
+            currentDashboards.add(toMap(this.dashboardConverter.write(dashboard)));
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getDashboardsTag(), currentDashboards);
@@ -568,7 +556,7 @@ public class DashboardService extends AbstractUserAttributeService {
         ListIterator<Map<String, Object>> iterator = currentDashboards.listIterator();
         while (iterator.hasNext()) {
             Map<String, Object> dashboard = iterator.next();
-            if (dashboardName.equals(getString("name", dashboard))) {
+            if (dashboardName.equals(getString(Dashboard.NAME, dashboard))) {
                 iterator.remove();
                 break;
             }
@@ -607,7 +595,7 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getPreviewGraphData(String json) {
-        return getGraphData(this.graphConverter.read(json), getEtmPrincipal(), false);
+        return getGraphData(this.graphContainerConverter.read(json), getEtmPrincipal());
     }
 
     @POST
@@ -615,7 +603,7 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getGroupPreviewGraphData(@PathParam("groupName") String groupName, String json) {
-        return getGraphData(this.graphConverter.read(json), getEtmGroup(client, groupName), false);
+        return getGraphData(this.graphContainerConverter.read(json), getEtmGroup(client, groupName));
     }
 
     /**
@@ -644,193 +632,228 @@ public class DashboardService extends AbstractUserAttributeService {
         if (dashboardsData == null) {
             return null;
         }
-        String dashboardFrom = null;
-        String dashboardTill = null;
-        String dashboardQuery = null;
-        String dashboardTimeFilterField = null;
-        String graphName = null;
-        for (Map<String, Object> dashboardData : dashboardsData) {
-            if (!dashboardName.equals(getString("name", dashboardData))) {
+        List<Dashboard> dashboards = dashboardsData.stream().map(this.dashboardConverter::read).collect(Collectors.toList());
+        List<GraphContainer> graphContainers = graphsData.stream().map(this.graphContainerConverter::read).collect(Collectors.toList());
+
+        Column column = null;
+        for (Dashboard dashboard : dashboards) {
+            if (!dashboardName.equals(dashboard.getName())) {
                 continue;
             }
-            List<Map<String, Object>> rowsValues = getArray("rows", dashboardData);
-            if (rowsValues != null) {
-                for (Map<String, Object> row : rowsValues) {
-                    List<Map<String, Object>> colsValues = getArray("cols", row);
-                    if (colsValues != null) {
-                        for (Map<String, Object> col : colsValues) {
-                            if (graphId.equals(getString(Graph.ID, col))) {
-                                dashboardFrom = getString(Graph.FROM, col);
-                                dashboardTill = getString(Graph.TILL, col);
-                                dashboardTimeFilterField = getString(Graph.TIME_FILTER_FIELD, col);
-                                dashboardQuery = getString(Graph.QUERY, col);
-                                graphName = getString("name", col);
-                            }
-                        }
-                    }
-                }
-            }
+            column = dashboard.getColumnById(graphId);
+            break;
         }
-        if (graphName == null || dashboardQuery == null) {
+        if (column == null || column.getGraphName() == null) {
             return null;
         }
         // now find the graph and return the data.
-        for (Map<String, Object> graphData : graphsData) {
-            if (graphName.equals(getString("name", graphData))) {
-                graphData.put(Graph.FROM, dashboardFrom);
-                graphData.put(Graph.TILL, dashboardTill);
-                graphData.put(Graph.TIME_FILTER_FIELD, dashboardTimeFilterField);
-                graphData.put(Graph.QUERY, dashboardQuery);
-                return getGraphData(this.graphConverter.read(graphData), etmSecurityEntity, false);
+        for (GraphContainer graphContainer : graphContainers) {
+            if (column.getGraphName().equals(graphContainer.getName())) {
+                graphContainer.mergeFromColumn(column);
+                return getGraphData(graphContainer, etmSecurityEntity);
             }
         }
         return null;
     }
 
-    private String getGraphData(Graph graph, EtmSecurityEntity etmSecurityEntity, boolean dryRun) {
-        if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(graph.getDataSource())) {
+    private String getGraphData(GraphContainer graphContainer, EtmSecurityEntity etmSecurityEntity) {
+        if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(graphContainer.getData().getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
-        if (NumberGraph.TYPE.equals(graph.getType())) {
-            return getNumberData((NumberGraph) graph, dryRun);
-        } else if (BarGraph.TYPE.equals(graph.getType())) {
-            return getMultiBucketData((MultiBucketGraph) graph, dryRun);
-        } else if (LineGraph.TYPE.equals(graph.getType())) {
-            return getMultiBucketData((MultiBucketGraph) graph, dryRun);
-        } else if (StackedAreaGraph.TYPE.equals(graph.getType())) {
-            return getMultiBucketData((MultiBucketGraph) graph, dryRun);
+        if (NumberGraph.TYPE.equals(graphContainer.getGraph().getType())) {
+            return getSingleValueData(graphContainer);
+        } else if (BarGraph.TYPE.equals(graphContainer.getGraph().getType())) {
+            return getMultiBucketData(graphContainer);
+        } else if (LineGraph.TYPE.equals(graphContainer.getGraph().getType())) {
+            return getMultiBucketData(graphContainer);
+        } else if (AreaGraph.TYPE.equals(graphContainer.getGraph().getType())) {
+            return getMultiBucketData(graphContainer);
+        } else if (PieGraph.TYPE.equals(graphContainer.getGraph().getType())) {
+            return getMultiBucketData(graphContainer);
+        } else if (ScatterGraph.TYPE.equals(graphContainer.getGraph().getType())) {
+            return getMultiBucketData(graphContainer);
         } else {
-            throw new RuntimeException("Unknown type: '" + graph.getType() + "'.");
+            throw new RuntimeException("Unknown graph type: '" + graphContainer.getGraph().getType() + "'.");
         }
     }
 
-    private String getMultiBucketData(MultiBucketGraph graph, boolean dryRun) {
+    private String getSingleValueData(GraphContainer graphContainer) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        MultiBucketResult multiBucketResult = new MultiBucketResult(graph);
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(etmPrincipal, graph);
-        Axes axes = graph.getAxes();
-
-        BucketAggregatorWrapper bucketAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, axes.getXAxis().getBucketAggregator(), createGraphSearchRequest(etmPrincipal, graph));
-        BucketAggregatorWrapper bucketSubAggregatorWrapper = null;
-
-        if (bucketAggregatorWrapper.needsMetricSubAggregatorForSorting() && axes.getXAxis().getBucketSubAggregator() != null) {
-            // We are in the situation that all metric aggregators will be put on the bucketSubAggregator but the (root)
-            // bucketAggregator needs a metric aggregator for sorting. We add the requested metric aggregator on the
-            // bucketAggregator and will strip it from the results as soon as the json result json is created.
-            bucketAggregatorWrapper.setSortOverrideAggregator(axes.getYAxis().getMetricAggregators());
-        }
-
-        // First create the bucket aggregator
-        AggregationBuilder bucketAggregatorBuilder = bucketAggregatorWrapper.getAggregationBuilder();
-        AggregationBuilder rootForMetricAggregators = bucketAggregatorBuilder;
-        // Check for the presence of a sub aggregator
-        if (axes.getXAxis().getBucketSubAggregator() != null) {
-            bucketSubAggregatorWrapper = new BucketAggregatorWrapper(etmPrincipal, axes.getXAxis().getBucketSubAggregator());
-            rootForMetricAggregators = bucketSubAggregatorWrapper.getAggregationBuilder();
-            bucketAggregatorBuilder.subAggregation(rootForMetricAggregators);
-        }
-
-        // And add every y-axis aggregator as sub aggregator
-        for (MetricAggregator metricAggregator : axes.getYAxis().getMetricAggregators()) {
-            rootForMetricAggregators.subAggregation(new MetricAggregatorWrapper(etmPrincipal, metricAggregator).getAggregationBuilder());
-        }
-        if (dryRun) {
-            return null;
-        }
-        SearchResponse searchResponse = searchRequest.addAggregation(bucketAggregatorBuilder).get();
-        Aggregation aggregation = searchResponse.getAggregations().get(bucketAggregatorBuilder.getName());
-
-        // Start building the response
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
-        addStringElementToJsonBuffer("type", graph.getType(), result, false);
-        result.append(",\"data\": ");
-
-        if (!(aggregation instanceof MultiBucketsAggregation)) {
-            throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid multi bucket aggregation.");
-        }
-        MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
-        for (Bucket bucket : multiBucketsAggregation.getBuckets()) {
-// When we provide the option to remove empty results from the list this if statement should be enabled.
-//            if (bucket.getDocCount() == 0) {
-//                continue;
-//            }
-            AggregationKey key = getFormattedBucketKey(bucket, bucketAggregatorWrapper.getBucketFormat());
-            for (Aggregation subAggregation : bucket.getAggregations()) {
-                if (BucketAggregatorWrapper.SORT_METRIC_ID.equals(subAggregation.getName())) {
-                    continue;
-                }
-                if (subAggregation instanceof MultiBucketsAggregation) {
-                    // A sub aggregation on the x-axis.
-                    MultiBucketsAggregation subBucketsAggregation = (MultiBucketsAggregation) subAggregation;
-                    for (Bucket subBucket : subBucketsAggregation.getBuckets()) {
-// When we provide the option to remove empty results from the list this if statement should be enabled.
-//                        if (subBucket.getDocCount() == 0) {
-//                            continue;
-//                        }
-                        AggregationKey subKey = getFormattedBucketKey(subBucket, bucketSubAggregatorWrapper.getBucketFormat());
-                        for (Aggregation metricAggregation : subBucket.getAggregations()) {
-                            AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(metricAggregation);
-                            multiBucketResult.addValueToSerie(subKey.getKeyAsString() + ": " + aggregationValue.getLabel(), key, aggregationValue);
-                        }
-                    }
-                } else {
-                    AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(subAggregation);
-                    multiBucketResult.addValueToSerie(aggregationValue.getLabel(), key, aggregationValue);
-                }
+        SearchResponse searchResponse = createGraphSearchRequest(etmPrincipal, graphContainer).get();
+        Aggregation aggregation = null;
+        for (Aggregation aggregationUnderInvestigation : searchResponse.getAggregations().asList()) {
+            boolean showOnGraph = (boolean) aggregationUnderInvestigation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
+            if (showOnGraph) {
+                aggregation = aggregationUnderInvestigation;
+                break;
             }
         }
-        multiBucketResult.appendAsArrayToJsonBuffer(this, result, true);
-        result.append("}");
-        return result.toString();
-    }
-
-    private AggregationKey getFormattedBucketKey(Bucket bucket, Format format) {
-        if (bucket.getKey() instanceof DateTime) {
-            DateTime dateTime = (DateTime) bucket.getKey();
-            return new DateTimeAggregationKey(Instant.ofEpochMilli(dateTime.getMillis()), format);
-        } else if (bucket.getKey() instanceof Double) {
-            return new DoubleAggregationKey((Double) bucket.getKey(), format);
-        } else if (bucket.getKey() instanceof Long) {
-            return new LongAggregationKey((Long) bucket.getKey(), format);
+        final MetricValue metricValue = extractSingleLeafMetricValue(aggregation);
+        StringBuilder result = initializeGraphResult(etmPrincipal, graphContainer);
+        if (metricValue != null) {
+            result.append(", \"value\": " + metricValue.getJsonValue());
         }
-        return new StringAggregationKey(bucket.getKeyAsString());
-    }
-
-    private String getNumberData(NumberGraph graph, boolean dryRun) {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        SearchRequestBuilder searchRequest = createGraphSearchRequest(
-                etmPrincipal,
-                graph);
-
-
-        MetricAggregatorWrapper metricAggregatorWrapper = new MetricAggregatorWrapper(etmPrincipal, graph.getMetricAggregator());
-        if (dryRun) {
-            return null;
-        }
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
-        addStringElementToJsonBuffer("type", "number", result, false);
-        result.append(", \"data\": {");
-        addStringElementToJsonBuffer("aggregator", metricAggregatorWrapper.getAggregatorType(), result, true);
-
-        AggregationBuilder aggregatorBuilder = metricAggregatorWrapper.getAggregationBuilder();
-        SearchResponse searchResponse = searchRequest.addAggregation(aggregatorBuilder).get();
-        Aggregation aggregation = searchResponse.getAggregations().get(aggregatorBuilder.getName());
-        AggregationValue<?> aggregationValue = getMetricAggregationValueFromAggregator(aggregation);
-        aggregationValue.appendToJsonBuffer(this, metricAggregatorWrapper.getFieldFormat(), result, false);
-
+        result.append(", \"chart_config\": {");
+        result.append("\"credits\": {\"enabled\": false}");
+        graphContainer.getGraph().appendHighchartsConfig(result);
         result.append("}}");
         return result.toString();
     }
 
-    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, Graph graph) {
-        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(graph.getDataSource()), etmConfiguration)
+    /**
+     * Extracts a <code>MetricValue</code> from a tree of <code>Aggregation</code>s. If the tree does contain multibucket aggregators, or multiple aggregators in a single bucket aggregator <code>null</code> will be returned.
+     *
+     * @param aggregation The <code>Aggregation</code> to extract the leaf <code>MetricValue</code> from.
+     * @return The <code>MetricValue</code> or <code>null</code> if no or multiple <code>MetricValue</code>s could be extracted.
+     */
+    private MetricValue extractSingleLeafMetricValue(Aggregation aggregation) {
+        if (!(aggregation instanceof InternalNumericMetricsAggregation.SingleValue
+                || aggregation instanceof InternalNumericMetricsAggregation.MultiValue
+                || aggregation instanceof InternalSingleBucketAggregation)) {
+            throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is not a single value aggregation.");
+        }
+        if (aggregation instanceof InternalSingleBucketAggregation) {
+            List<Aggregation> aggregations = ((InternalSingleBucketAggregation) aggregation).getAggregations().asList();
+            if (aggregations.size() == 1) {
+                return extractSingleLeafMetricValue(aggregations.get(0));
+            }
+            return null;
+        }
+        return new MetricValue(aggregation);
+    }
+
+    private String getMultiBucketData(GraphContainer graphContainer) {
+        EtmPrincipal etmPrincipal = getEtmPrincipal();
+        SearchResponse searchResponse = createGraphSearchRequest(etmPrincipal, graphContainer).get();
+        Aggregation aggregation = searchResponse.getAggregations().asList().get(0);
+
+        // Start building the response
+        StringBuilder result = initializeGraphResult(etmPrincipal, graphContainer);
+
+        result.append(", \"chart_config\": {");
+        result.append("\"credits\": {\"enabled\": false}");
+        result.append(", \"tooltip\": {\"shared\": true}");
+        result.append(", \"time\": {\"timezone\": " + escapeToJson(etmPrincipal.getTimeZone().toZoneId().toString(), true) + "}");
+        graphContainer.getGraph().appendHighchartsConfig(result);
+        if (!(aggregation instanceof MultiBucketsAggregation)) {
+            throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid multi bucket aggregation.");
+        }
+        Map<String, List<String>> seriesData = new LinkedHashMap<>();
+        MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+        for (Bucket bucket : multiBucketsAggregation.getBuckets()) {
+            final BucketKey bucketKey = new BucketKey(bucket);
+            if (bucket.getAggregations().asList().size() == 0) {
+                String bucketName = multiBucketsAggregation.getMetaData().get(Aggregator.NAME) + "(" + bucket.getKey() + ")";
+                Map<String, Object> metaData = new HashMap<>();
+                metaData.put(Aggregator.NAME, bucketName);
+                final MetricValue metricValue = new MetricValue(new InternalValueCount(bucketName, bucket.getDocCount(), Collections.emptyList(), metaData));
+                addToSeries(seriesData, bucketKey, metricValue, bucketName);
+            } else {
+                processAggregations(bucketKey, bucket, seriesData, "");
+            }
+        }
+        result.append(", \"series\": [");
+        boolean firstSerie = true;
+        for (Entry<String, List<String>> entry : seriesData.entrySet()) {
+            if (!firstSerie) {
+                result.append(", ");
+            }
+            result.append("{ \"name\": " + escapeToJson(entry.getKey(), true));
+            result.append(", \"data\": [");
+            result.append(String.join(",", entry.getValue()));
+            result.append("]}");
+            firstSerie = false;
+        }
+        result.append("]");
+        result.append("}}");
+        return result.toString();
+    }
+
+    private StringBuilder initializeGraphResult(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
+        StringBuilder result = new StringBuilder();
+        result.append("{");
+        result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
+        addStringElementToJsonBuffer("type", graphContainer.getGraph().getType(), result, false);
+        addStringElementToJsonBuffer("valueFormat", graphContainer.getGraph().getValueFormat(), result, false);
+        return result;
+    }
+
+    /**
+     * Process all aggregations for a multi aggregationHolder graph.
+     *
+     * @param root              The root aggregationHolder.
+     * @param aggregationHolder The aggregationHolder to process.
+     * @param seriesData        The series data.
+     * @param currentName       The current name of the hierarchy.
+     */
+    private void processAggregations(BucketKey root, HasAggregations aggregationHolder, Map<String, List<String>> seriesData, String currentName) {
+        Iterator<Aggregation> iterator = aggregationHolder.getAggregations().iterator();
+        while (iterator.hasNext()) {
+            String name = currentName;
+            Aggregation aggregation = iterator.next();
+            boolean showOnGraph = (boolean) aggregation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
+            if (!showOnGraph) {
+                continue;
+            }
+            if (aggregation instanceof MultiBucketsAggregation) {
+                MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+                String bucketName = (String) multiBucketsAggregation.getMetaData().get(Aggregator.NAME);
+                name = createHierarchicalBucketName(name, bucketName);
+                for (Bucket subBucket : multiBucketsAggregation.getBuckets()) {
+                    final String subBucketName = name + "(" + subBucket.getKeyAsString() + ")";
+                    if (subBucket.getAggregations().asList().size() == 0) {
+                        Map<String, Object> metaData = new HashMap<>();
+                        metaData.put(Aggregator.NAME, subBucketName);
+                        final MetricValue metricValue = new MetricValue(new InternalValueCount(subBucketName, subBucket.getDocCount(), Collections.emptyList(), metaData));
+                        addToSeries(seriesData, root, metricValue, subBucketName);
+                    } else {
+                        processAggregations(root, subBucket, seriesData, subBucketName);
+                    }
+                }
+            } else if (aggregation instanceof SingleBucketAggregation) {
+                SingleBucketAggregation singleBucketAggregation = (SingleBucketAggregation) aggregation;
+                String bucketName = (String) singleBucketAggregation.getMetaData().get(Aggregator.NAME);
+                name = createHierarchicalBucketName(name, bucketName);
+                processAggregations(root, singleBucketAggregation, seriesData, name);
+            } else if (aggregation instanceof InternalNumericMetricsAggregation.SingleValue || aggregation instanceof InternalNumericMetricsAggregation.MultiValue) {
+                final MetricValue metricValue = new MetricValue(aggregation);
+                if (name.length() == 0) {
+                    name = metricValue.getName();
+                } else {
+                    name += ": " + metricValue.getName();
+                }
+                addToSeries(seriesData, root, metricValue, name);
+            }
+        }
+    }
+
+    private String createHierarchicalBucketName(String currentName, String bucketName) {
+        if (currentName.length() != 0) {
+            currentName += " > ";
+        }
+        return currentName + bucketName;
+    }
+
+    private void addToSeries(Map<String, List<String>> seriesData, BucketKey bucketKey, MetricValue metricValue, String serieName) {
+        List<String> values = seriesData.get(serieName);
+        if (values == null) {
+            values = new ArrayList<>();
+            seriesData.put(serieName, values);
+        }
+        if (metricValue.hasValidValue()) {
+            // If we want to allow gaps in the graph we have to remove this if statement.
+            values.add("[" + bucketKey.getJsonValue() + ", " + metricValue.getJsonValue() + "]");
+        } else {
+            values.add("[" + bucketKey.getJsonValue() + ", " + 0 + "]");
+        }
+    }
+
+    private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
+        Data data = graphContainer.getData();
+        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(data.getDataSource()), etmConfiguration)
                 .setFetchSource(false)
                 .setSize(0);
-        QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(graph.getQuery())
+        QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(data.getQuery())
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)
                 .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
@@ -838,39 +861,24 @@ public class DashboardService extends AbstractUserAttributeService {
 
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
-        if (graph.getFrom() != null || graph.getTill() != null) {
-            RangeQueryBuilder timestampFilter = new RangeQueryBuilder(graph.getTimeFilterField() != null ? graph.getTimeFilterField() : "timestamp");
-            if (graph.getFrom() != null) {
-                timestampFilter.gte(graph.getFrom());
+        if (data.getFrom() != null || data.getTill() != null) {
+            RangeQueryBuilder timestampFilter = new RangeQueryBuilder(data.getTimeFilterField() != null ? data.getTimeFilterField() : "timestamp");
+            if (data.getFrom() != null) {
+                timestampFilter.gte(data.getFrom());
             }
-            if (graph.getTill() != null) {
-                timestampFilter.lte(graph.getTill());
+            if (data.getTill() != null) {
+                timestampFilter.lte(data.getTill());
             }
             boolQueryBuilder.filter(timestampFilter);
         }
 
-
-        if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(graph.getDataSource())) {
+        if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(data.getDataSource())) {
             searchRequest.setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder));
         } else {
             searchRequest.setQuery(boolQueryBuilder);
         }
+        graphContainer.getGraph().prepareForSearch(searchRequest);
+        graphContainer.getGraph().addAggregators(searchRequest);
         return searchRequest;
     }
-
-    private AggregationValue<?> getMetricAggregationValueFromAggregator(Aggregation aggregation) {
-        Map<String, Object> metadata = aggregation.getMetaData();
-        if (aggregation instanceof Percentiles) {
-            Percentiles percentiles = (Percentiles) aggregation;
-            return new DoubleAggregationValue(metadata.get("label").toString(), percentiles.iterator().next().getValue());
-        } else if (aggregation instanceof PercentileRanks) {
-            PercentileRanks percentileRanks = (PercentileRanks) aggregation;
-            return new DoubleAggregationValue(metadata.get("label").toString(), percentileRanks.iterator().next().getPercent()).setPercentage(true);
-        } else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
-            NumericMetricsAggregation.SingleValue singleValue = (SingleValue) aggregation;
-            return new DoubleAggregationValue(metadata.get("label").toString(), singleValue.value());
-        }
-        throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");
-    }
-
 }

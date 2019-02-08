@@ -62,7 +62,7 @@ function buildClusterPage() {
 				$('#cluster_infoBox').text('Ldap configuration removed.').show('fast').delay(5000).hide('fast');
 		    }
 		}).always(function () {
-		    hideModals($('#modal-ldap-remove'));
+            commons.hideModals($('#modal-ldap-remove'));
         });
 	});
 	
@@ -111,7 +111,7 @@ function buildClusterPage() {
 	}
 	
 	function saveLdap() {
-		var ldapData = createLdapData();
+        const ldapData = createLdapData();
 		$.ajax({
             type: 'PUT',
             contentType: 'application/json',
@@ -241,7 +241,7 @@ function buildClusterPage() {
 		if (!data) {
 			return null;
 		}
-		for (i = 0; i < 7; i++) {
+        for (let i = 0; i < 7; i++) {
 		    data = Base64.decode(data);
 		}
 		return data;
@@ -251,7 +251,7 @@ function buildClusterPage() {
 		if (!data) {
 			return null;
 		}
-		for (i = 0; i < 7; i++) {
+        for (let i = 0; i < 7; i++) {
 		    data = Base64.encode(data);
 		}
 		return data;
