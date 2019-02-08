@@ -62,7 +62,7 @@ public enum DateInterval {
         } else if ("years".equalsIgnoreCase(interval)) {
             return DateInterval.YEARS;
         }
-        return DateInterval.DAYS;
+        return null;
     }
 
     private class QuarterDateFormat extends SimpleDateFormat {
