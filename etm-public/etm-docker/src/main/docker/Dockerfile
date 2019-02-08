@@ -1,13 +1,13 @@
-FROM openjdk:8-jre-alpine
+FROM adoptopenjdk/openjdk11:alpine-slim
 LABEL maintainer = "Jecstar Innovation <info@jecstar.com>"
 
 ENV PATH /usr/share/etm/bin:$PATH
 
-RUN addgroup -g 1000 etm && adduser -u 1000 -G etm -D -h /usr/share/etm etm
-
 WORKDIR /usr/share/etm
 
-RUN apk update && \                                                                                                                                                                                                                        
+RUN addgroup -g 1000 etm && \
+    adduser -u 1000 -G etm -D -h /usr/share/etm etm && \
+    apk update && \
     apk add ca-certificates wget && \                                                                                                                                                                                                      
     update-ca-certificates && \
     wget https://www.jecstar.com/downloads/etm/etm-${etm-version}.tgz && \

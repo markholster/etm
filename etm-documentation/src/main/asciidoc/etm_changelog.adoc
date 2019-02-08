@@ -7,6 +7,7 @@
 * [ETM-79] Payload correlated event is visible with role "Read without payload".
 * [ETM-80] Upgrade to Elasticsearch 6.6.
 * [ETM-84] Remove WADL exposure.
+* [ETM-85] Migrate docker image to AdoptOpenJdk 11.
 
 === Version 3.3.0
 * [ETM-57] Sorting not working on all fields.
